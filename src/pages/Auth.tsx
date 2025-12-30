@@ -1,0 +1,134 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, ArrowRight, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+
+export default function Auth() {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email.endsWith("@jetimob.com")) {
+      toast.error("Apenas e-mails @jetimob.com são permitidos");
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    setIsLoading(false);
+    setEmailSent(true);
+    toast.success("Magic link enviado!");
+  };
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-success" />
+            </div>
+            <CardTitle className="text-2xl">Verifique seu e-mail</CardTitle>
+            <CardDescription className="text-base">
+              Enviamos um link mágico para <strong>{email}</strong>. Clique no
+              link para acessar o Hub.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setEmailSent(false)}
+            >
+              Usar outro e-mail
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:flex-1 gradient-hero items-center justify-center p-12">
+        <div className="max-w-md text-center">
+          <div className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8">
+            <span className="text-4xl font-bold text-accent-foreground">J</span>
+          </div>
+          <h1 className="text-4xl font-bold text-primary-foreground mb-4">
+            Hub Jetimob
+          </h1>
+          <p className="text-lg text-primary-foreground/80">
+            A plataforma central da Jetimob para gestão de pessoas, times, OKRs
+            e muito mais.
+          </p>
+        </div>
+      </div>
+
+      {/* Right side - Login form */}
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-12">
+        <Card className="w-full max-w-md border-0 shadow-none lg:border lg:shadow-lg">
+          <CardHeader className="space-y-1">
+            <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
+              <span className="text-xl font-bold text-primary-foreground">J</span>
+            </div>
+            <CardTitle className="text-2xl">Entrar no Hub</CardTitle>
+            <CardDescription>
+              Use seu e-mail @jetimob.com para acessar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail corporativo</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu.nome@jetimob.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                variant="accent"
+                className="w-full gap-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  "Enviando..."
+                ) : (
+                  <>
+                    Continuar com Magic Link
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <p className="text-xs text-muted-foreground text-center mt-6">
+              Ao continuar, você concorda com os termos de uso e política de
+              privacidade da Jetimob.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

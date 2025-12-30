@@ -1,13 +1,46 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { HubLayout } from "@/components/layout/HubLayout";
+import { ModulesBlock } from "@/components/home/ModulesBlock";
+import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
+import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
+import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
+import { QuickStats } from "@/components/home/QuickStats";
 
 const Index = () => {
+  // Get current greeting based on time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Bom dia";
+    if (hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <HubLayout>
+      <div className="space-y-8">
+        {/* Hero Section */}
+        <section className="animate-fade-in">
+          <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
+            {getGreeting()}, João! 👋
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Bem-vindo ao Hub da Jetimob. Aqui você encontra tudo sobre a nossa empresa.
+          </p>
+        </section>
+
+        {/* Quick Stats */}
+        <QuickStats />
+
+        {/* Modules Section */}
+        <ModulesBlock />
+
+        {/* People Blocks */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <NewJetimobersBlock />
+          <BirthdaysBlock />
+          <WorkAnniversariesBlock />
+        </div>
       </div>
-    </div>
+    </HubLayout>
   );
 };
 
