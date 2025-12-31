@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,15 +94,30 @@ export default function Auth() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:flex-1 gradient-hero items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <div className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8"
+          >
             <img src={JetimobIcon} alt="Jetimob" className="w-12 h-12" />
-          </div>
-          <h1 className="text-4xl font-bold text-primary-foreground mb-4">
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+            className="text-4xl font-bold text-primary-foreground mb-4"
+          >
             Hub Jetimob
-          </h1>
-          <p className="text-lg text-primary-foreground/80">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
+            className="text-lg text-primary-foreground/80"
+          >
             O ponto de encontro dos Jetimobers para evoluir, executar e simplificar o morar.
-          </p>
+          </motion.p>
         </div>
       </div>
 
