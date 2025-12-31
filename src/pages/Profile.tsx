@@ -26,6 +26,7 @@ const profileSchema = z.object({
   birth_day: z.number().min(1).max(31).nullable().optional(),
   birth_month: z.number().min(1).max(12).nullable().optional(),
   slack_id: z.string().max(50).nullable().optional(),
+  instagram_id: z.string().max(50).nullable().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -48,6 +49,7 @@ interface FullProfile {
   birth_day: number | null;
   birth_month: number | null;
   slack_id: string | null;
+  instagram_id: string | null;
   team_id: string | null;
 }
 
@@ -126,6 +128,7 @@ export default function Profile() {
         birth_day: profile.birth_day,
         birth_month: profile.birth_month,
         slack_id: profile.slack_id,
+        instagram_id: profile.instagram_id,
       });
     }
   }, [profile]);
@@ -538,6 +541,15 @@ export default function Profile() {
                       id="slack_id"
                       value={formData.slack_id || ''}
                       onChange={(e) => handleChange('slack_id', e.target.value || null)}
+                      placeholder="@usuario"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram_id">Instagram</Label>
+                    <Input
+                      id="instagram_id"
+                      value={formData.instagram_id || ''}
+                      onChange={(e) => handleChange('instagram_id', e.target.value || null)}
                       placeholder="@usuario"
                     />
                   </div>
