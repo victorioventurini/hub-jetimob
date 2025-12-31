@@ -10,6 +10,7 @@ import Users from "./pages/Users";
 import Teams from "./pages/Teams";
 import Modules from "./pages/Modules";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
+import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <OkrsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/okrs/ceo"
+              element={
+                <ProtectedRoute>
+                  <CeoDashboardPage />
                 </ProtectedRoute>
               }
             />
