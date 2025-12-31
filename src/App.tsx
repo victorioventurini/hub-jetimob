@@ -10,6 +10,7 @@ import Users from "./pages/Users";
 import Teams from "./pages/Teams";
 import Modules from "./pages/Modules";
 import Profile from "./pages/Profile";
+import Integrations from "./pages/Integrations";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import Auth from "./pages/Auth";
@@ -63,6 +64,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/integrations"
+              element={
+                <ProtectedRoute>
+                  <Integrations />
                 </ProtectedRoute>
               }
             />
