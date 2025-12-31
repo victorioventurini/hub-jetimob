@@ -3,6 +3,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 
+// Allowed email domain for security
+const ALLOWED_EMAIL_DOMAIN = "@jetimob.com";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -25,6 +28,12 @@ interface AuthEmailPayload {
   };
 }
 
+// Validate email format and domain
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
+}
+
 async function sendMagicLinkEmail(email: string, magicLink: string, userName?: string): Promise<void> {
   const displayName = userName || email.split('@')[0];
   
@@ -41,10 +50,10 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
           subject: "Seu link de acesso ao Hub Jetimob",
         },
       ],
-        from: {
-          email: "no-reply@hub.jetimob.com",
-          name: "Hub Jetimob",
-        },
+      from: {
+        email: "no-reply@hub.jetimob.com",
+        name: "Hub Jetimob",
+      },
       content: [
         {
           type: "text/html",
@@ -114,10 +123,28 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const payload: AuthEmailPayload = await req.json();
     
-    console.log("Received auth email hook payload:", JSON.stringify(payload, null, 2));
+    console.log("Received auth email hook payload for:", payload.user?.email);
 
     const { user, email_data } = payload;
     const { token_hash, redirect_to, email_action_type } = email_data;
+
+    // Server-side validation: Only allow @jetimob.com emails
+    // This provides defense-in-depth even though Supabase controls when this hook is called
+    if (!isValidEmail(user.email)) {
+      console.warn("Auth hook called with invalid email domain:", user.email.split('@')[1] || 'unknown');
+      return new Response(
+        JSON.stringify({ 
+          error: {
+            http_code: 403,
+            message: "Only @jetimob.com emails are allowed" 
+          }
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     // Construct the magic link URL
     const magicLink = `${SUPABASE_URL}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodeURIComponent(redirect_to)}`;
