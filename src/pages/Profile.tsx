@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { HubLayout } from '@/components/layout/HubLayout';
@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Mail, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera } from 'lucide-react';
+import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
 
 const profileSchema = z.object({
   first_name: z.string().trim().min(1, 'Nome é obrigatório').max(100),
@@ -78,8 +77,10 @@ const months = [
 export default function Profile() {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ProfileFormData | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['my-profile', user?.id],
@@ -156,6 +157,111 @@ export default function Profile() {
       toast.error('Erro ao atualizar perfil. Tente novamente.');
     },
   });
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id || !profile?.id) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato não suportado. Use JPG, PNG, WEBP ou GIF.');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    
+    try {
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+
+      // Delete old avatar if exists
+      if (profile.photo_url) {
+        const oldPath = profile.photo_url.split('/avatars/')[1];
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([oldPath]);
+        }
+      }
+
+      // Upload new avatar
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new photo URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          photo_url: urlData.publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      toast.success('Foto atualizada com sucesso!');
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error('Erro ao fazer upload da foto. Tente novamente.');
+    } finally {
+      setIsUploadingPhoto(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!profile?.id || !profile.photo_url) return;
+
+    setIsUploadingPhoto(true);
+    
+    try {
+      // Delete from storage
+      const oldPath = profile.photo_url.split('/avatars/')[1];
+      if (oldPath) {
+        await supabase.storage.from('avatars').remove([oldPath]);
+      }
+
+      // Update profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          photo_url: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      toast.success('Foto removida com sucesso!');
+    } catch (error) {
+      console.error('Error removing photo:', error);
+      toast.error('Erro ao remover foto. Tente novamente.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,15 +384,28 @@ export default function Profile() {
                     {getInitials(profile.display_name)}
                   </AvatarFallback>
                 </Avatar>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  disabled
-                  title="Em breve"
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
+                {isUploadingPhoto ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
               </div>
               <div className="flex-1 space-y-1">
                 <h2 className="text-2xl font-bold">{profile.display_name}</h2>
@@ -295,6 +414,31 @@ export default function Profile() {
                   <Badge variant="outline">{getRoleLabel(role)}</Badge>
                   <Badge variant="secondary">{getWorkModeLabel(profile.work_mode)}</Badge>
                   {team && <Badge variant="outline"><Building2 className="w-3 h-3 mr-1" />{team.name}</Badge>}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingPhoto}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {profile.photo_url ? 'Alterar foto' : 'Adicionar foto'}
+                  </Button>
+                  {profile.photo_url && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemovePhoto}
+                      disabled={isUploadingPhoto}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Remover
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
