@@ -100,8 +100,7 @@ export default function Auth() {
             Hub Jetimob
           </h1>
           <p className="text-lg text-primary-foreground/80">
-            A plataforma central da Jetimob para gestão de pessoas, times, OKRs
-            e muito mais.
+            O ponto de encontro dos Jetimobers para evoluir, executar e simplificar o morar.
           </p>
         </div>
       </div>
