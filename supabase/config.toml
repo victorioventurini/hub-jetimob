@@ -1,1 +1,7 @@
 project_id = "oiwnghihyqdsinouwmga"
+
+[functions.send-magic-link]
+verify_jwt = false
+
+[functions.auth-email-hook]
+verify_jwt = false
