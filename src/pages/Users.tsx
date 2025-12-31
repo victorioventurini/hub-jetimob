@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -28,118 +30,126 @@ import {
 import {
   Search,
   Plus,
-  Upload,
   MoreHorizontal,
   Mail,
   Building2,
   MapPin,
+  Users,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 
-interface User {
+interface ProfileWithTeam {
   id: string;
-  firstName: string;
-  lastName: string;
-  displayName: string;
-  workEmail: string;
-  jobTitle: string;
-  team: string;
-  manager: string;
-  workMode: "presencial" | "híbrido" | "remoto";
+  user_id: string | null;
+  first_name: string;
+  last_name: string;
+  display_name: string;
+  work_email: string;
+  job_title: string;
+  photo_url: string | null;
   city: string;
   state: string;
-  employmentStatus: "ativo" | "férias" | "desligado";
-  photoUrl?: string;
+  work_mode: "onsite" | "hybrid" | "remote";
+  employment_status: "active" | "vacation" | "terminated";
+  team: { id: string; name: string } | null;
+  manager: { id: string; display_name: string } | null;
 }
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    firstName: "João",
-    lastName: "Silva",
-    displayName: "João Silva",
-    workEmail: "joao.silva@jetimob.com",
-    jobTitle: "Software Engineer",
-    team: "Engenharia",
-    manager: "Lucas Oliveira",
-    workMode: "híbrido",
-    city: "Porto Alegre",
-    state: "RS",
-    employmentStatus: "ativo",
-  },
-  {
-    id: "2",
-    firstName: "Maria",
-    lastName: "Santos",
-    displayName: "Maria Santos",
-    workEmail: "maria.santos@jetimob.com",
-    jobTitle: "Product Designer",
-    team: "Design",
-    manager: "Ana Costa",
-    workMode: "remoto",
-    city: "São Paulo",
-    state: "SP",
-    employmentStatus: "ativo",
-  },
-  {
-    id: "3",
-    firstName: "Pedro",
-    lastName: "Oliveira",
-    displayName: "Pedro Oliveira",
-    workEmail: "pedro.oliveira@jetimob.com",
-    jobTitle: "Customer Success",
-    team: "CS",
-    manager: "Fernanda Lima",
-    workMode: "presencial",
-    city: "Porto Alegre",
-    state: "RS",
-    employmentStatus: "férias",
-  },
-  {
-    id: "4",
-    firstName: "Ana",
-    lastName: "Costa",
-    displayName: "Ana Costa",
-    workEmail: "ana.costa@jetimob.com",
-    jobTitle: "Design Lead",
-    team: "Design",
-    manager: "Ricardo Mendes",
-    workMode: "híbrido",
-    city: "Florianópolis",
-    state: "SC",
-    employmentStatus: "ativo",
-  },
-  {
-    id: "5",
-    firstName: "Lucas",
-    lastName: "Oliveira",
-    displayName: "Lucas Oliveira",
-    workEmail: "lucas.oliveira@jetimob.com",
-    jobTitle: "Tech Lead",
-    team: "Engenharia",
-    manager: "Ricardo Mendes",
-    workMode: "híbrido",
-    city: "Porto Alegre",
-    state: "RS",
-    employmentStatus: "ativo",
-  },
-];
-
-const workModeLabels = {
-  presencial: "Presencial",
-  híbrido: "Híbrido",
-  remoto: "Remoto",
+const workModeLabels: Record<string, string> = {
+  onsite: "Presencial",
+  hybrid: "Híbrido",
+  remote: "Remoto",
 };
 
-const statusColors = {
-  ativo: "bg-success/10 text-success border-success/20",
-  férias: "bg-warning/10 text-warning border-warning/20",
-  desligado: "bg-muted text-muted-foreground border-muted",
+const statusLabels: Record<string, string> = {
+  active: "Ativo",
+  vacation: "Férias",
+  terminated: "Desligado",
 };
 
-export default function Users() {
+const statusColors: Record<string, string> = {
+  active: "bg-success/10 text-success border-success/20",
+  vacation: "bg-warning/10 text-warning border-warning/20",
+  terminated: "bg-muted text-muted-foreground border-muted",
+};
+
+export default function UsersPage() {
+  const { isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
+
+  const { data: profiles, isLoading } = useQuery({
+    queryKey: ["profiles", statusFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("profiles")
+        .select(`
+          id,
+          user_id,
+          first_name,
+          last_name,
+          display_name,
+          work_email,
+          job_title,
+          photo_url,
+          city,
+          state,
+          work_mode,
+          employment_status,
+          team_id,
+          teams(id, name),
+          manager_user_id
+        `)
+        .is("deleted_at", null)
+        .order("display_name");
+
+      if (statusFilter === "active") {
+        query = query.neq("employment_status", "terminated" as const);
+      } else if (statusFilter !== "all") {
+        query = query.eq("employment_status", statusFilter as "active" | "vacation" | "terminated");
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      // Transform data to match expected shape
+      return (data || []).map(p => ({
+        id: p.id,
+        user_id: p.user_id,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        display_name: p.display_name,
+        work_email: p.work_email,
+        job_title: p.job_title,
+        photo_url: p.photo_url,
+        city: p.city,
+        state: p.state,
+        work_mode: p.work_mode,
+        employment_status: p.employment_status,
+        team: p.teams as { id: string; name: string } | null,
+        manager: null as { id: string; display_name: string } | null,
+      })) as ProfileWithTeam[];
+    },
+  });
+
+  const { data: teams } = useQuery({
+    queryKey: ["teams-filter"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("id, name")
+        .is("deleted_at", null)
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const getInitials = (name: string) =>
     name
@@ -149,23 +159,32 @@ export default function Users() {
       .toUpperCase()
       .slice(0, 2);
 
-  const teams = [...new Set(mockUsers.map((u) => u.team))];
-
-  const filteredUsers = mockUsers.filter((user) => {
+  const filteredProfiles = profiles?.filter((profile) => {
     const matchesSearch =
-      user.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.workEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesTeam = teamFilter === "all" || user.team === teamFilter;
-    
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && user.employmentStatus !== "desligado") ||
-      user.employmentStatus === statusFilter;
+      profile.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      profile.work_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      profile.job_title.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch && matchesTeam && matchesStatus;
+    const matchesTeam =
+      teamFilter === "all" || profile.team?.id === teamFilter;
+
+    return matchesSearch && matchesTeam;
   });
+
+  const handleEdit = (profile: ProfileWithTeam) => {
+    setEditingProfile(profile);
+    setDialogOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditingProfile(null);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setEditingProfile(null);
+  };
 
   return (
     <HubLayout>
@@ -178,16 +197,14 @@ export default function Users() {
               Diretório de colaboradores da Jetimob
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2">
-              <Upload className="h-4 w-4" />
-              Importar
-            </Button>
-            <Button variant="accent" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Jetimober
-            </Button>
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-3">
+              <Button variant="accent" className="gap-2" onClick={handleCreate}>
+                <Plus className="h-4 w-4" />
+                Novo Jetimober
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
@@ -207,9 +224,9 @@ export default function Users() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os times</SelectItem>
-              {teams.map((team) => (
-                <SelectItem key={team} value={team}>
-                  {team}
+              {teams?.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -221,16 +238,24 @@ export default function Users() {
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="active">Ativos</SelectItem>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="férias">Férias</SelectItem>
-              <SelectItem value="desligado">Desligado</SelectItem>
+              <SelectItem value="vacation">Férias</SelectItem>
+              <SelectItem value="terminated">Desligados</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Results count */}
         <p className="text-sm text-muted-foreground">
-          {filteredUsers.length} {filteredUsers.length === 1 ? "pessoa encontrada" : "pessoas encontradas"}
+          {isLoading ? (
+            <Skeleton className="h-4 w-32 inline-block" />
+          ) : (
+            <>
+              {filteredProfiles?.length || 0}{" "}
+              {filteredProfiles?.length === 1
+                ? "pessoa encontrada"
+                : "pessoas encontradas"}
+            </>
+          )}
         </p>
 
         {/* Table */}
@@ -245,81 +270,127 @@ export default function Users() {
                 <TableHead className="font-semibold">Localização</TableHead>
                 <TableHead className="font-semibold">Modalidade</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="w-10"></TableHead>
+                {isAdmin && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/30">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={user.photoUrl} />
-                        <AvatarFallback className="bg-accent/10 text-accent text-sm font-semibold">
-                          {getInitials(user.displayName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {user.displayName}
-                        </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {user.workEmail}
-                        </p>
+              {isLoading ? (
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-9 w-9 rounded-full" />
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-40" />
+                        </div>
                       </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-14" /></TableCell>
+                    {isAdmin && <TableCell></TableCell>}
+                  </TableRow>
+                ))
+              ) : filteredProfiles && filteredProfiles.length > 0 ? (
+                filteredProfiles.map((profile) => (
+                  <TableRow key={profile.id} className="hover:bg-muted/30">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={profile.photo_url || undefined} />
+                          <AvatarFallback className="bg-accent/10 text-accent text-sm font-semibold">
+                            {getInitials(profile.display_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {profile.display_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {profile.work_email}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{profile.job_title}</TableCell>
+                    <TableCell>
+                      {profile.team ? (
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          {profile.team.name}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {profile.manager?.display_name || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        {profile.city}, {profile.state}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {workModeLabels[profile.work_mode] || profile.work_mode}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={statusColors[profile.employment_status]}
+                      >
+                        {statusLabels[profile.employment_status]}
+                      </Badge>
+                    </TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(profile)}>
+                              Editar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 8 : 7} className="h-32">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <Users className="h-10 w-10 text-muted-foreground mb-2" />
+                      <p className="font-medium">Nenhum Jetimober encontrado</p>
+                      <p className="text-sm text-muted-foreground">
+                        {searchQuery || teamFilter !== "all"
+                          ? "Tente ajustar os filtros"
+                          : "Adicione o primeiro colaborador"}
+                      </p>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{user.jobTitle}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      {user.team}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {user.manager}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      {user.city}, {user.state}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {workModeLabels[user.workMode]}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={statusColors[user.employmentStatus]}
-                    >
-                      {user.employmentStatus.charAt(0).toUpperCase() +
-                        user.employmentStatus.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Ver perfil</DropdownMenuItem>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          Desativar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
+
+      <JetimoberDialog
+        open={dialogOpen}
+        onOpenChange={handleCloseDialog}
+        profile={editingProfile}
+      />
     </HubLayout>
   );
 }
