@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +42,7 @@ import {
   ExternalLink,
   Check,
   X,
+  Settings,
 } from 'lucide-react';
 
 interface Integration {
@@ -118,6 +120,7 @@ const getIntegrationTemplate = (slug: string) => {
 };
 
 export default function Integrations() {
+  const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -327,28 +330,32 @@ export default function Integrations() {
                       </div>
                     )}
 
-                    {isAdmin && (
-                      <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/integrations/${integration.id}`)}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        Configurar
+                      </Button>
+                      {isAdmin && (
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={integration.status}
                             onCheckedChange={() => handleToggleStatus(integration)}
                             disabled={updateMutation.isPending}
                           />
-                          <span className="text-sm text-muted-foreground">
-                            {integration.status ? 'Ativa' : 'Inativa'}
-                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEdit(integration)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenEdit(integration)}
-                        >
-                          <Pencil className="w-4 h-4 mr-1" />
-                          Editar
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );

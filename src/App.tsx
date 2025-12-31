@@ -11,6 +11,7 @@ import Teams from "./pages/Teams";
 import Modules from "./pages/Modules";
 import Profile from "./pages/Profile";
 import Integrations from "./pages/Integrations";
+import IntegrationDetails from "./pages/IntegrationDetails";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import Auth from "./pages/Auth";
@@ -72,6 +73,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Integrations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/integrations/:id"
+              element={
+                <ProtectedRoute>
+                  <IntegrationDetails />
                 </ProtectedRoute>
               }
             />

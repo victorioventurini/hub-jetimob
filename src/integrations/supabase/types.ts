@@ -103,6 +103,94 @@ export type Database = {
           },
         ]
       }
+      integration_configs: {
+        Row: {
+          config_key: string
+          config_value: string | null
+          created_at: string
+          description: string | null
+          id: string
+          integration_id: string
+          is_secret: boolean
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_value?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          integration_id: string
+          is_secret?: boolean
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          integration_id?: string
+          is_secret?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_configs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_webhooks: {
+        Row: {
+          created_at: string
+          headers: Json | null
+          id: string
+          integration_id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          method: string
+          name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          headers?: Json | null
+          id?: string
+          integration_id: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          method?: string
+          name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          headers?: Json | null
+          id?: string
+          integration_id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          method?: string
+          name?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_webhooks_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           created_at: string
