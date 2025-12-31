@@ -8,6 +8,9 @@ import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { useOrgKeyResults } from '../hooks/useOkrData';
 import { CreateOrgKrDialog } from './CreateOrgKrDialog';
+import { EditOrgObjectiveDialog } from './EditOrgObjectiveDialog';
+import { EditOrgKrDialog } from './EditOrgKrDialog';
+import type { OkrStatus, OkrRagStatus, OkrDirection } from '../types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +24,7 @@ interface OrgObjectiveCardProps {
     title: string;
     description?: string | null;
     year: number;
-    status: 'draft' | 'active' | 'completed' | 'cancelled';
+    status: OkrStatus;
     owner_user_id?: string | null;
   };
 }
@@ -29,6 +32,18 @@ interface OrgObjectiveCardProps {
 export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingKr, setEditingKr] = useState<{
+    id: string;
+    org_objective_id: string;
+    title: string;
+    baseline: number;
+    current_value: number;
+    target: number;
+    direction: OkrDirection;
+    unit: string;
+    status: OkrRagStatus;
+  } | null>(null);
   const { data: keyResults, isLoading } = useOrgKeyResults(objective.id);
 
   const activeKrs = keyResults?.filter(kr => !kr.deleted_at) || [];
@@ -88,7 +103,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
@@ -180,7 +195,18 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                 activeKrs.map((kr, index) => (
                   <div
                     key={kr.id}
-                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => setEditingKr({
+                      id: kr.id,
+                      org_objective_id: kr.org_objective_id,
+                      title: kr.title,
+                      baseline: kr.baseline,
+                      current_value: kr.current_value,
+                      target: kr.target,
+                      direction: kr.direction as OkrDirection,
+                      unit: kr.unit,
+                      status: kr.status as OkrRagStatus,
+                    })}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-sm font-medium text-muted-foreground w-5 flex-shrink-0">
@@ -199,7 +225,31 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                           className="mt-2"
                         />
                       </div>
-                      <OkrStatusBadge status={kr.status as 'green' | 'yellow' | 'red' | 'not_started'} type="kr" />
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingKr({
+                              id: kr.id,
+                              org_objective_id: kr.org_objective_id,
+                              title: kr.title,
+                              baseline: kr.baseline,
+                              current_value: kr.current_value,
+                              target: kr.target,
+                              direction: kr.direction as OkrDirection,
+                              unit: kr.unit,
+                              status: kr.status as OkrRagStatus,
+                            });
+                          }}
+                          title="Editar KR"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <OkrStatusBadge status={kr.status as 'green' | 'yellow' | 'red' | 'not_started'} type="kr" />
+                      </div>
                     </div>
                   </div>
                 ))
@@ -218,6 +268,20 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
         onOpenChange={setShowAddKrDialog}
         objectiveId={objective.id}
       />
+
+      <EditOrgObjectiveDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        objective={objective}
+      />
+
+      {editingKr && (
+        <EditOrgKrDialog
+          open={!!editingKr}
+          onOpenChange={(open) => !open && setEditingKr(null)}
+          kr={editingKr}
+        />
+      )}
     </>
   );
 }

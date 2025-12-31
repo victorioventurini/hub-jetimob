@@ -9,6 +9,9 @@ import { OkrProgressBar } from './OkrProgressBar';
 import { useTeamKeyResults } from '../hooks/useOkrData';
 import { CreateTeamKrDialog } from './CreateTeamKrDialog';
 import { CheckinDialog } from './CheckinDialog';
+import { EditTeamObjectiveDialog } from './EditTeamObjectiveDialog';
+import { EditTeamKrDialog } from './EditTeamKrDialog';
+import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +26,7 @@ interface TeamObjectiveCardProps {
     description?: string | null;
     team_id: string;
     org_objective_id: string;
-    status: 'draft' | 'active' | 'completed' | 'cancelled';
+    status: OkrStatus;
   };
   teams: Array<{ id: string; name: string }>;
 }
@@ -31,6 +34,7 @@ interface TeamObjectiveCardProps {
 export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [checkinKr, setCheckinKr] = useState<{
     id: string;
     title: string;
@@ -41,6 +45,19 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
     unit: string;
     status: 'green' | 'yellow' | 'red' | 'not_started';
     team_id: string;
+  } | null>(null);
+  const [editingKr, setEditingKr] = useState<{
+    id: string;
+    team_id: string;
+    team_objective_id?: string | null;
+    title: string;
+    type: OkrKrType;
+    baseline: number;
+    current_value: number;
+    target: number;
+    direction: OkrDirection;
+    unit: string;
+    status: OkrRagStatus;
   } | null>(null);
   const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.team_id);
 
@@ -104,7 +121,7 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
@@ -220,6 +237,27 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
+                          onClick={() => setEditingKr({
+                            id: kr.id,
+                            team_id: kr.team_id,
+                            team_objective_id: kr.team_objective_id,
+                            title: kr.title,
+                            type: kr.type as OkrKrType,
+                            baseline: kr.baseline,
+                            current_value: kr.current_value,
+                            target: kr.target,
+                            direction: kr.direction as OkrDirection,
+                            unit: kr.unit,
+                            status: kr.status as OkrRagStatus,
+                          })}
+                          title="Editar KR"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => setCheckinKr({
                             id: kr.id,
                             title: kr.title,
@@ -257,11 +295,25 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
         teamId={objective.team_id}
       />
 
+      <EditTeamObjectiveDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        objective={objective}
+      />
+
       {checkinKr && (
         <CheckinDialog
           open={!!checkinKr}
           onOpenChange={(open) => !open && setCheckinKr(null)}
           kr={checkinKr}
+        />
+      )}
+
+      {editingKr && (
+        <EditTeamKrDialog
+          open={!!editingKr}
+          onOpenChange={(open) => !open && setEditingKr(null)}
+          kr={editingKr}
         />
       )}
     </>
