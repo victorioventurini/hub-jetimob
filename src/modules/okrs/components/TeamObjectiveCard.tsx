@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { useTeamKeyResults } from '../hooks/useOkrData';
 import { CreateTeamKrDialog } from './CreateTeamKrDialog';
+import { CheckinDialog } from './CheckinDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,17 @@ interface TeamObjectiveCardProps {
 export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
+  const [checkinKr, setCheckinKr] = useState<{
+    id: string;
+    title: string;
+    baseline: number;
+    current_value: number;
+    target: number;
+    direction: 'up' | 'down';
+    unit: string;
+    status: 'green' | 'yellow' | 'red' | 'not_started';
+    team_id: string;
+  } | null>(null);
   const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.team_id);
 
   const teamName = teams.find(t => t.id === objective.team_id)?.name || 'Time';
@@ -203,7 +215,28 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
                           className="mt-2"
                         />
                       </div>
-                      <OkrStatusBadge status={kr.status as 'green' | 'yellow' | 'red' | 'not_started'} type="kr" />
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => setCheckinKr({
+                            id: kr.id,
+                            title: kr.title,
+                            baseline: kr.baseline,
+                            current_value: kr.current_value,
+                            target: kr.target,
+                            direction: kr.direction as 'up' | 'down',
+                            unit: kr.unit,
+                            status: kr.status as 'green' | 'yellow' | 'red' | 'not_started',
+                            team_id: kr.team_id,
+                          })}
+                          title="Registrar check-in"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </Button>
+                        <OkrStatusBadge status={kr.status as 'green' | 'yellow' | 'red' | 'not_started'} type="kr" />
+                      </div>
                     </div>
                   </div>
                 ))
@@ -223,6 +256,14 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
         objectiveId={objective.id}
         teamId={objective.team_id}
       />
+
+      {checkinKr && (
+        <CheckinDialog
+          open={!!checkinKr}
+          onOpenChange={(open) => !open && setCheckinKr(null)}
+          kr={checkinKr}
+        />
+      )}
     </>
   );
 }
