@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Users from "./pages/Users";
 import Teams from "./pages/Teams";
 import Modules from "./pages/Modules";
+import Profile from "./pages/Profile";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import Auth from "./pages/Auth";
@@ -54,6 +55,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Modules />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />
