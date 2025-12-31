@@ -426,6 +426,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_ceo: { Args: { _user_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_entity_id?: string
+          p_entity_type: string
+          p_new_values?: Json
+          p_old_values?: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "ceo" | "admin" | "team_leader" | "collaborator"

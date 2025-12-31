@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Home,
   Users,
@@ -40,6 +41,7 @@ const adminNavigation = [
 
 export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   const NavItem = ({ item }: { item: typeof navigation[0] }) => {
     const isActive = location.pathname === item.href;
@@ -113,16 +115,18 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
             ))}
           </div>
 
-          <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
-            {!collapsed && (
-              <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-                Admin
-              </p>
-            )}
-            {adminNavigation.map((item) => (
-              <NavItem key={item.href} item={item} />
-            ))}
-          </div>
+          {isAdmin && (
+            <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
+              {!collapsed && (
+                <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                  Admin
+                </p>
+              )}
+              {adminNavigation.map((item) => (
+                <NavItem key={item.href} item={item} />
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* Collapse button */}
