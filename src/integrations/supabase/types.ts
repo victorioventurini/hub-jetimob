@@ -733,6 +733,7 @@ export type Database = {
           employment_status: Database["public"]["Enums"]["employment_status"]
           first_name: string
           id: string
+          instagram_id: string | null
           job_title: string
           last_name: string
           manager_user_id: string | null
@@ -757,6 +758,7 @@ export type Database = {
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name: string
           id?: string
+          instagram_id?: string | null
           job_title: string
           last_name: string
           manager_user_id?: string | null
@@ -781,6 +783,7 @@ export type Database = {
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name?: string
           id?: string
+          instagram_id?: string | null
           job_title?: string
           last_name?: string
           manager_user_id?: string | null
