@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Dialog,
   DialogContent,
@@ -35,12 +36,15 @@ export function CreateOrgObjectiveDialog({
   year,
 }: CreateOrgObjectiveDialogProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'draft' | 'active'>('draft');
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error('Usuário não autenticado');
+      
       const { data, error } = await supabase
         .from('okr_org_objectives')
         .insert({
@@ -48,6 +52,7 @@ export function CreateOrgObjectiveDialog({
           description: description || null,
           year,
           status,
+          owner_user_id: user.id,
         })
         .select()
         .single();
@@ -60,9 +65,13 @@ export function CreateOrgObjectiveDialog({
       toast.success('Objetivo organizacional criado com sucesso!');
       handleClose();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error creating objective:', error);
-      toast.error('Erro ao criar objetivo. Tente novamente.');
+      if (error.message?.includes('row-level security')) {
+        toast.error('Apenas administradores podem criar objetivos organizacionais.');
+      } else {
+        toast.error('Erro ao criar objetivo. Tente novamente.');
+      }
     },
   });
 
