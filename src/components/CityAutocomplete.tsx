@@ -13,6 +13,7 @@ interface CityPrediction {
 
 interface CityAutocompleteProps {
   value: string;
+  state?: string;
   onChange: (city: string, state: string) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -20,11 +21,15 @@ interface CityAutocompleteProps {
 
 export function CityAutocomplete({
   value,
+  state,
   onChange,
   placeholder = "Digite o nome da cidade",
   disabled = false,
 }: CityAutocompleteProps) {
-  const [inputValue, setInputValue] = useState(value);
+  // Exibe "Cidade, UF" no input
+  const displayValue = value && state ? `${value}, ${state}` : value || '';
+  
+  const [inputValue, setInputValue] = useState(displayValue);
   const [predictions, setPredictions] = useState<CityPrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -35,11 +40,15 @@ export function CityAutocomplete({
 
   // Sincroniza o valor externo
   useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+    const newDisplay = value && state ? `${value}, ${state}` : value || '';
+    setInputValue(newDisplay);
+  }, [value, state]);
 
   const searchCities = useCallback(async (query: string) => {
-    if (query.length < 2) {
+    // Remove o estado da busca se o usuário digitou "Cidade, UF"
+    const searchQuery = query.split(',')[0].trim();
+    
+    if (searchQuery.length < 2) {
       setPredictions([]);
       setIsOpen(false);
       return;
@@ -48,12 +57,12 @@ export function CityAutocomplete({
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('search-cities', {
-        body: { query },
+        body: { query: searchQuery },
       });
 
       if (error) throw error;
 
-      setPredictions(data.predictions || []);
+      setPredictions(data?.predictions || []);
       setIsOpen(true);
       setSelectedIndex(-1);
     } catch (error) {
@@ -79,7 +88,8 @@ export function CityAutocomplete({
   };
 
   const handleSelect = (prediction: CityPrediction) => {
-    setInputValue(prediction.city);
+    const display = `${prediction.city}, ${prediction.state}`;
+    setInputValue(display);
     onChange(prediction.city, prediction.state);
     setPredictions([]);
     setIsOpen(false);
@@ -147,7 +157,12 @@ export function CityAutocomplete({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => inputValue.length >= 2 && predictions.length > 0 && setIsOpen(true)}
+          onFocus={() => {
+            // Ao focar, se já tem valor, busca novamente
+            if (inputValue.length >= 2) {
+              searchCities(inputValue);
+            }
+          }}
           onBlur={handleBlur}
           placeholder={placeholder}
           disabled={disabled}
@@ -179,7 +194,7 @@ export function CityAutocomplete({
             >
               <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <span>
-                {prediction.city}
+                <span className="font-medium">{prediction.city}</span>
                 {prediction.state && (
                   <span className="text-muted-foreground">, {prediction.state}</span>
                 )}

@@ -615,43 +615,21 @@ export default function Profile() {
                   <MapPin className="w-4 h-4" />
                   Localização
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Cidade *</Label>
-                    <CityAutocomplete
-                      value={formData.city}
-                      onChange={(city, state) => {
-                        setFormData({ ...formData, city, state: state || formData.state });
-                        if (errors.city) setErrors({ ...errors, city: undefined });
-                        if (errors.state && state) setErrors({ ...errors, state: undefined });
-                      }}
-                      placeholder="Digite o nome da cidade"
-                    />
-                    {errors.city && (
-                      <p className="text-xs text-destructive">{errors.city}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">Estado *</Label>
-                    <Select
-                      value={formData.state}
-                      onValueChange={(v) => handleChange('state', v)}
-                    >
-                      <SelectTrigger className={errors.state ? 'border-destructive' : ''}>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brazilianStates.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.state && (
-                      <p className="text-xs text-destructive">{errors.state}</p>
-                    )}
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">Cidade *</Label>
+                  <CityAutocomplete
+                    value={formData.city}
+                    state={formData.state}
+                    onChange={(city, state) => {
+                      setFormData({ ...formData, city, state: state || formData.state });
+                      if (errors.city) setErrors({ ...errors, city: undefined });
+                      if (errors.state && state) setErrors({ ...errors, state: undefined });
+                    }}
+                    placeholder="Digite o nome da cidade"
+                  />
+                  {(errors.city || errors.state) && (
+                    <p className="text-xs text-destructive">{errors.city || errors.state}</p>
+                  )}
                 </div>
               </div>
 
