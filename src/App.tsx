@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import Users from "./pages/Users";
 import Teams from "./pages/Teams";
 import Modules from "./pages/Modules";
-import OKRs from "./pages/OKRs";
+import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -60,7 +60,7 @@ const App = () => (
               path="/okrs"
               element={
                 <ProtectedRoute>
-                  <OKRs />
+                  <OkrsPage />
                 </ProtectedRoute>
               }
             />
