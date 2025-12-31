@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Mail, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -93,7 +94,7 @@ export default function Auth() {
       <div className="hidden lg:flex lg:flex-1 gradient-hero items-center justify-center p-12">
         <div className="max-w-md text-center">
           <div className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8">
-            <span className="text-4xl font-bold text-accent-foreground">J</span>
+            <img src={JetimobIcon} alt="Jetimob" className="w-12 h-12" />
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-4">
             Hub Jetimob
@@ -110,7 +111,7 @@ export default function Auth() {
         <Card className="w-full max-w-md border-0 shadow-none lg:border lg:shadow-lg">
           <CardHeader className="space-y-1">
             <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
-              <span className="text-xl font-bold text-primary-foreground">J</span>
+              <img src={JetimobIcon} alt="Jetimob" className="w-8 h-8" />
             </div>
             <CardTitle className="text-2xl">Entrar no Hub</CardTitle>
             <CardDescription>
