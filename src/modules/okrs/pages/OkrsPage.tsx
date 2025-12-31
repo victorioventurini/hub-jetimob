@@ -2,23 +2,30 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Building2, Users, Target, AlertTriangle } from 'lucide-react';
+import { Plus, Building2, Users, AlertTriangle } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
-import { OkrCard } from '../components/OkrCard';
 import { OkrEmptyState } from '../components/OkrEmptyState';
-import { useOrgObjectives, useTeamObjectives, useTeams } from '../hooks/useOkrData';
+import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams } from '../hooks/useOkrData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OrgObjectiveCard } from '../components/OrgObjectiveCard';
+import { TeamObjectiveCard } from '../components/TeamObjectiveCard';
+import { CreateOrgObjectiveDialog } from '../components/CreateOrgObjectiveDialog';
+import { CreateTeamObjectiveDialog } from '../components/CreateTeamObjectiveDialog';
 
 export default function OkrsPage() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
+  const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(false);
+  const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('org');
 
   const { data: orgObjectives, isLoading: loadingOrg } = useOrgObjectives(selectedYear);
   const { data: teamObjectives, isLoading: loadingTeam } = useTeamObjectives(
     selectedTeam !== 'all' ? selectedTeam : undefined
   );
+  const { data: teamKeyResults } = useTeamKeyResults();
   const { data: teams } = useTeams();
 
   const years = [currentYear - 1, currentYear, currentYear + 1];
@@ -26,9 +33,15 @@ export default function OkrsPage() {
   // Calculate summary stats
   const totalOrgObjectives = orgObjectives?.length || 0;
   const totalTeamObjectives = teamObjectives?.length || 0;
-  const atRiskKrs = teamObjectives?.reduce((acc, obj) => {
-    return acc + (obj.key_results?.filter(kr => kr.status === 'red').length || 0);
-  }, 0) || 0;
+  const atRiskKrs = teamKeyResults?.filter(kr => kr.status === 'red').length || 0;
+
+  const handleCreateClick = () => {
+    if (activeTab === 'org') {
+      setShowCreateOrgDialog(true);
+    } else {
+      setShowCreateTeamDialog(true);
+    }
+  };
 
   return (
     <HubLayout>
@@ -54,7 +67,7 @@ export default function OkrsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button>
+            <Button onClick={handleCreateClick}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Objetivo
             </Button>
@@ -102,36 +115,17 @@ export default function OkrsPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="org" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="org" className="gap-2">
-                <Building2 className="w-4 h-4" />
-                Organizacionais
-              </TabsTrigger>
-              <TabsTrigger value="team" className="gap-2">
-                <Users className="w-4 h-4" />
-                Times
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Team filter - only visible on team tab */}
-            <div className="hidden data-[state=team]:flex" data-state="team">
-              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Todos os times" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os times</SelectItem>
-                  {teams?.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="org" className="gap-2">
+              <Building2 className="w-4 h-4" />
+              Organizacionais
+            </TabsTrigger>
+            <TabsTrigger value="team" className="gap-2">
+              <Users className="w-4 h-4" />
+              Times
+            </TabsTrigger>
+          </TabsList>
 
           {/* Org Objectives */}
           <TabsContent value="org" className="space-y-4">
@@ -153,14 +147,9 @@ export default function OkrsPage() {
             ) : orgObjectives && orgObjectives.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {orgObjectives.map((objective) => (
-                  <OkrCard
+                  <OrgObjectiveCard
                     key={objective.id}
                     objective={objective}
-                    type="org"
-                    onClick={() => {
-                      // TODO: Navigate to objective detail
-                      console.log('Navigate to', objective.id);
-                    }}
                   />
                 ))}
               </div>
@@ -169,7 +158,7 @@ export default function OkrsPage() {
                 title="Nenhum objetivo organizacional"
                 description="Comece definindo os objetivos estratégicos da Jetimob para o ano."
                 actionLabel="Criar Objetivo Organizacional"
-                onAction={() => console.log('Create org objective')}
+                onAction={() => setShowCreateOrgDialog(true)}
               />
             )}
           </TabsContent>
@@ -210,14 +199,10 @@ export default function OkrsPage() {
             ) : teamObjectives && teamObjectives.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {teamObjectives.map((objective) => (
-                  <OkrCard
+                  <TeamObjectiveCard
                     key={objective.id}
                     objective={objective}
-                    type="team"
-                    onClick={() => {
-                      // TODO: Navigate to objective detail
-                      console.log('Navigate to', objective.id);
-                    }}
+                    teams={teams || []}
                   />
                 ))}
               </div>
@@ -226,12 +211,25 @@ export default function OkrsPage() {
                 title="Nenhum objetivo de time"
                 description="Os times ainda não criaram objetivos vinculados aos OKRs organizacionais."
                 actionLabel="Criar Objetivo de Time"
-                onAction={() => console.log('Create team objective')}
+                onAction={() => setShowCreateTeamDialog(true)}
               />
             )}
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialogs */}
+      <CreateOrgObjectiveDialog
+        open={showCreateOrgDialog}
+        onOpenChange={setShowCreateOrgDialog}
+        year={selectedYear}
+      />
+      <CreateTeamObjectiveDialog
+        open={showCreateTeamDialog}
+        onOpenChange={setShowCreateTeamDialog}
+        teams={teams || []}
+        orgObjectives={orgObjectives || []}
+      />
     </HubLayout>
   );
 }
