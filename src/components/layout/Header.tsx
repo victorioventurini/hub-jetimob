@@ -1,4 +1,4 @@
-import { Bell, Search, Menu, LogOut } from "lucide-react";
+import { Bell, Search, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,26 +11,38 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
 }
 
-export function Header({ sidebarCollapsed }: HeaderProps) {
-  // Mock user data - will come from auth context
-  const user = {
-    name: "João Silva",
-    email: "joao.silva@jetimob.com",
-    avatar: null,
-    role: "Colaborador",
-  };
+const roleLabels: Record<string, string> = {
+  ceo: "CEO",
+  admin: "Administrador",
+  team_leader: "Líder de Time",
+  collaborator: "Colaborador",
+};
 
-  const initials = user.name
+export function Header({ sidebarCollapsed }: HeaderProps) {
+  const { profile, role, signOut } = useAuth();
+
+  const displayName = profile?.display_name || "Jetimober";
+  const email = profile?.work_email || "";
+  const roleLabel = role ? roleLabels[role] : "Colaborador";
+
+  const initials = displayName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Você saiu do Hub");
+  };
 
   return (
     <header
@@ -71,31 +83,36 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-3 px-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar || undefined} />
+                  <AvatarImage src={profile?.photo_url || undefined} />
                   <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium">{user.name}</span>
-                  <span className="text-xs text-muted-foreground">{user.role}</span>
+                  <span className="text-sm font-medium">{displayName}</span>
+                  <span className="text-xs text-muted-foreground">{roleLabel}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col">
-                  <span>{user.name}</span>
+                  <span>{displayName}</span>
                   <span className="text-xs font-normal text-muted-foreground">
-                    {user.email}
+                    {email}
                   </span>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Meu Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Preferências</DropdownMenuItem>
+              <DropdownMenuItem>
+                <User className="h-4 w-4 mr-2" />
+                Meu Perfil
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive cursor-pointer"
+                onClick={handleSignOut}
+              >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
               </DropdownMenuItem>
