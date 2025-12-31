@@ -126,7 +126,7 @@ export default function Auth() {
         <Card className="w-full max-w-md border-0 shadow-none lg:border lg:shadow-lg">
           <CardHeader className="space-y-1">
             <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
-              <img src={JetimobIcon} alt="Jetimob" className="w-8 h-8" />
+              <img src={JetimobIcon} alt="Jetimob" className="w-8 h-8 text-white" style={{ filter: 'brightness(0) invert(1)' }} />
             </div>
             <CardTitle className="text-2xl">Entrar no Hub</CardTitle>
             <CardDescription>
