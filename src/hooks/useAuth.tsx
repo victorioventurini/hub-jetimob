@@ -1,6 +1,34 @@
+/**
+ * Authentication Context and Provider
+ * 
+ * SECURITY NOTE: Client-Side vs Server-Side Authorization
+ * =========================================================
+ * The `isAdmin` flag and `role` state in this hook are fetched client-side
+ * and used ONLY for UI/UX purposes (showing/hiding admin navigation, etc.).
+ * 
+ * IMPORTANT: These client-side checks are NOT security controls.
+ * All actual authorization is enforced server-side via:
+ * 
+ * 1. RLS Policies - All database tables have Row-Level Security policies
+ *    that use the `is_admin_or_ceo(auth.uid())` SECURITY DEFINER function
+ *    to validate admin access at the database level.
+ * 
+ * 2. Database Functions - The `is_admin_or_ceo()` function queries the
+ *    `user_roles` table directly with elevated privileges, making it
+ *    impossible to bypass via client manipulation.
+ * 
+ * Even if an attacker manipulates the client-side `isAdmin` flag:
+ * - They will see admin UI elements but cannot access admin data
+ * - All data operations will fail due to RLS policy enforcement
+ * - The backend remains secure regardless of client state
+ * 
+ * This follows the defense-in-depth principle where UI controls provide
+ * good UX while RLS provides actual security.
+ */
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+
 interface Profile {
   id: string;
   first_name: string;
@@ -148,6 +176,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(null);
   }
 
+  /**
+   * isAdmin flag for UI purposes only.
+   * Actual authorization is enforced via RLS policies using is_admin_or_ceo() function.
+   * See security note at the top of this file.
+   */
   const isAdmin = role === 'admin' || role === 'ceo';
 
   return (

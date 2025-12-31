@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 
+// Allowed email domain for security
+const ALLOWED_EMAIL_DOMAIN = "@jetimob.com";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -10,6 +13,12 @@ const corsHeaders = {
 interface MagicLinkRequest {
   email: string;
   magicLink: string;
+}
+
+// Validate email format and domain
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -21,11 +30,31 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, magicLink }: MagicLinkRequest = await req.json();
 
-    console.log("Sending magic link email to:", email);
-
+    // Server-side validation: Email and magicLink are required
     if (!email || !magicLink) {
-      throw new Error("Email and magicLink are required");
+      console.warn("Missing required fields: email or magicLink");
+      return new Response(
+        JSON.stringify({ error: "Email and magicLink are required" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
+
+    // Server-side validation: Only allow @jetimob.com emails
+    if (!isValidEmail(email)) {
+      console.warn("Invalid email domain attempted:", email.split('@')[1] || 'unknown');
+      return new Response(
+        JSON.stringify({ error: "Only @jetimob.com emails are allowed" }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log("Sending magic link email to:", email);
 
     const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
