@@ -746,7 +746,6 @@ export type Database = {
           whatsapp_personal: string | null
           work_email: string
           work_mode: Database["public"]["Enums"]["work_mode"]
-          work_phone: string | null
         }
         Insert: {
           birth_day?: number | null
@@ -771,7 +770,6 @@ export type Database = {
           whatsapp_personal?: string | null
           work_email: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
-          work_phone?: string | null
         }
         Update: {
           birth_day?: number | null
@@ -796,7 +794,6 @@ export type Database = {
           whatsapp_personal?: string | null
           work_email?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
-          work_phone?: string | null
         }
         Relationships: [
           {
