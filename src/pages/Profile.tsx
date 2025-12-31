@@ -20,7 +20,6 @@ const profileSchema = z.object({
   first_name: z.string().trim().min(1, 'Nome é obrigatório').max(100),
   last_name: z.string().trim().min(1, 'Sobrenome é obrigatório').max(100),
   display_name: z.string().trim().min(1, 'Nome de exibição é obrigatório').max(150),
-  work_phone: z.string().max(20).nullable().optional(),
   whatsapp_personal: z.string().max(20).nullable().optional(),
   city: z.string().trim().min(1, 'Cidade é obrigatória').max(100),
   state: z.string().trim().min(1, 'Estado é obrigatório').max(2),
@@ -40,7 +39,6 @@ interface FullProfile {
   work_email: string;
   job_title: string;
   photo_url: string | null;
-  work_phone: string | null;
   whatsapp_personal: string | null;
   city: string;
   state: string;
@@ -122,7 +120,6 @@ export default function Profile() {
         first_name: profile.first_name,
         last_name: profile.last_name,
         display_name: profile.display_name,
-        work_phone: profile.work_phone,
         whatsapp_personal: profile.whatsapp_personal,
         city: profile.city,
         state: profile.state,
@@ -289,6 +286,28 @@ export default function Profile() {
     if (errors[field]) {
       setErrors({ ...errors, [field]: undefined });
     }
+  };
+
+  // Phone mask with DDI: +55 (51) 99999-9999
+  const formatPhoneWithDDI = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    
+    if (digits.length === 0) return '';
+    if (digits.length <= 2) return `+${digits}`;
+    if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
+    if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
+    if (digits.length <= 13) {
+      const areaCode = digits.slice(2, 4);
+      const firstPart = digits.slice(4, 9);
+      const secondPart = digits.slice(9, 13);
+      return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? '-' + secondPart : ''}`;
+    }
+    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhoneWithDDI(value);
+    handleChange('whatsapp_personal', formatted || null);
   };
 
   const getInitials = (name: string) => {
@@ -496,6 +515,7 @@ export default function Profile() {
                     <Label htmlFor="work_email">E-mail corporativo</Label>
                     <Input
                       id="work_email"
+                      type="email"
                       value={profile.work_email}
                       disabled
                       className="bg-muted"
@@ -503,22 +523,14 @@ export default function Profile() {
                     <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="work_phone">Telefone comercial</Label>
-                    <Input
-                      id="work_phone"
-                      value={formData.work_phone || ''}
-                      onChange={(e) => handleChange('work_phone', e.target.value || null)}
-                      placeholder="(51) 99999-9999"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="whatsapp_personal">WhatsApp pessoal</Label>
                     <Input
                       id="whatsapp_personal"
                       value={formData.whatsapp_personal || ''}
-                      onChange={(e) => handleChange('whatsapp_personal', e.target.value || null)}
-                      placeholder="(51) 99999-9999"
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      placeholder="+55 (51) 99999-9999"
                     />
+                    <p className="text-xs text-muted-foreground">Formato: +55 (DDD) XXXXX-XXXX</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="slack_id">Slack ID</Label>
