@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
 
 const profileSchema = z.object({
@@ -617,12 +618,14 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city">Cidade *</Label>
-                    <Input
-                      id="city"
+                    <CityAutocomplete
                       value={formData.city}
-                      onChange={(e) => handleChange('city', e.target.value)}
-                      placeholder="Porto Alegre"
-                      className={errors.city ? 'border-destructive' : ''}
+                      onChange={(city, state) => {
+                        setFormData({ ...formData, city, state: state || formData.state });
+                        if (errors.city) setErrors({ ...errors, city: undefined });
+                        if (errors.state && state) setErrors({ ...errors, state: undefined });
+                      }}
+                      placeholder="Digite o nome da cidade"
                     />
                     {errors.city && (
                       <p className="text-xs text-destructive">{errors.city}</p>
