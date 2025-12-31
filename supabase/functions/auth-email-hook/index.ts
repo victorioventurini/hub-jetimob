@@ -41,10 +41,10 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
           subject: "Seu link de acesso ao Hub Jetimob",
         },
       ],
-      from: {
-        email: "noreply@jetimob.com",
-        name: "Hub Jetimob",
-      },
+        from: {
+          email: "no-reply@hub.jetimob.com",
+          name: "Hub Jetimob",
+        },
       content: [
         {
           type: "text/html",

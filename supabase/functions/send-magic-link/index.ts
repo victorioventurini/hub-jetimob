@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
           },
         ],
         from: {
-          email: "noreply@jetimob.com",
+          email: "no-reply@hub.jetimob.com",
           name: "Hub Jetimob",
         },
         content: [
