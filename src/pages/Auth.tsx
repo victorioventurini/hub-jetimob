@@ -158,8 +158,25 @@ export default function Auth() {
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-6">
-              Ao continuar, você concorda com os termos de uso e política de
-              privacidade da Jetimob.
+              Ao continuar, você concorda com os{" "}
+              <a
+                href="https://www.jetimob.com/termos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                termos de uso
+              </a>{" "}
+              e{" "}
+              <a
+                href="https://www.jetimob.com/politica"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                política de privacidade
+              </a>{" "}
+              da Jetimob.
             </p>
           </CardContent>
         </Card>
