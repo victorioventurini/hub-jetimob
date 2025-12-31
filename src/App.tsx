@@ -7,7 +7,8 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
-import Teams from "./pages/Teams";
+import TeamsPage from "./modules/teams/pages/TeamsPage";
+import TeamDetailPage from "./modules/teams/pages/TeamDetailPage";
 import Modules from "./pages/Modules";
 import Profile from "./pages/Profile";
 import Integrations from "./pages/Integrations";
@@ -48,7 +49,15 @@ const App = () => (
               path="/teams"
               element={
                 <ProtectedRoute>
-                  <Teams />
+                  <TeamsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teams/:id"
+              element={
+                <ProtectedRoute>
+                  <TeamDetailPage />
                 </ProtectedRoute>
               }
             />
