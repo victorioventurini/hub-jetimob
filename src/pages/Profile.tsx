@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { HubLayout } from '@/components/layout/HubLayout';
@@ -11,6 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,8 +89,11 @@ export default function Profile() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ProfileFormData | null>(null);
+  const [originalFormData, setOriginalFormData] = useState<ProfileFormData | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['my-profile', user?.id],
@@ -118,7 +131,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (profile) {
-      setFormData({
+      const initialData: ProfileFormData = {
         first_name: profile.first_name,
         last_name: profile.last_name,
         display_name: profile.display_name,
@@ -129,9 +142,46 @@ export default function Profile() {
         birth_month: profile.birth_month,
         slack_id: profile.slack_id,
         instagram_id: profile.instagram_id,
-      });
+      };
+      setFormData(initialData);
+      setOriginalFormData(initialData);
     }
   }, [profile]);
+
+  // Check if form has unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    if (!formData || !originalFormData) return false;
+    return JSON.stringify(formData) !== JSON.stringify(originalFormData);
+  }, [formData, originalFormData]);
+
+  // Browser beforeunload warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  const handleDiscardChanges = () => {
+    if (originalFormData) {
+      setFormData({ ...originalFormData });
+    }
+    setShowDiscardDialog(false);
+    if (pendingNavigation) {
+      pendingNavigation();
+      setPendingNavigation(null);
+    }
+  };
+
+  const handleCancelDiscard = () => {
+    setShowDiscardDialog(false);
+    setPendingNavigation(null);
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
@@ -680,9 +730,18 @@ export default function Profile() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3 mt-6">
+            {hasUnsavedChanges && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDiscardDialog(true)}
+              >
+                Descartar alterações
+              </Button>
+            )}
             <Button
               type="submit"
-              disabled={updateMutation.isPending}
+              disabled={updateMutation.isPending || !hasUnsavedChanges}
             >
               {updateMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -693,6 +752,22 @@ export default function Profile() {
             </Button>
           </div>
         </form>
+
+        {/* Discard Changes Dialog */}
+        <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você tem alterações não salvas. Tem certeza que deseja descartá-las? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelDiscard}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDiscardChanges}>Descartar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </HubLayout>
   );
