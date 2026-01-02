@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { Sidebar } from "./Sidebar";
+import { DynamicSidebar } from "./DynamicSidebar";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ export function HubLayout({ children }: HubLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar 
+      <DynamicSidebar 
         collapsed={sidebarCollapsed} 
         onCollapse={setSidebarCollapsed} 
       />
