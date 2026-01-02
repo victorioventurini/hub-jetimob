@@ -107,7 +107,7 @@ export function useUpdateBu() {
     mutationFn: async ({ id, ...updates }: Partial<BuUnit> & { id: string }) => {
       const { data, error } = await supabase
         .from("bu_units")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
@@ -118,6 +118,7 @@ export function useUpdateBu() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["all-bus"] });
       queryClient.invalidateQueries({ queryKey: ["bu-unit", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-bus"] });
     },
   });
 }

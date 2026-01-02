@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useBuBranding } from "@/modules/bu/hooks/useBuBranding";
 import {
   Home,
   Users,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -44,6 +46,7 @@ const adminNavigation = [
 export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
   const location = useLocation();
   const { isAdmin } = useAuth();
+  const { symbolUrl, buName, primaryColor } = useBuBranding();
 
   const NavItem = ({ item }: { item: typeof navigation[0] }) => {
     const isActive = location.pathname === item.href;
@@ -94,16 +97,26 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
           collapsed ? "w-20" : "w-64"
         )}
       >
-        {/* Logo */}
+        {/* Logo - Dynamic BU Branding */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-sidebar-primary-foreground">J</span>
-            </div>
+            <Avatar className="w-10 h-10 rounded-xl">
+              <AvatarImage
+                src={symbolUrl || undefined}
+                alt={buName}
+                className="object-contain"
+              />
+              <AvatarFallback
+                className="rounded-xl text-xl font-bold text-white"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {buName.slice(0, 1).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-sidebar-foreground">Hub</span>
-                <span className="text-xs text-sidebar-foreground/60">Jetimob</span>
+                <span className="text-xs text-sidebar-foreground/60">{buName}</span>
               </div>
             )}
           </Link>
