@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { checkEmailDomainAllowed } from "@/modules/bu/hooks/useBuData";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingDomain, setIsCheckingDomain] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [domainError, setDomainError] = useState<string | null>(null);
   const { user, isLoading: authLoading, signInWithMagicLink } = useAuth();
   const navigate = useNavigate();
 
@@ -24,11 +27,31 @@ export default function Auth() {
     }
   }, [user, authLoading, navigate]);
 
+  // Clear domain error when email changes
+  useEffect(() => {
+    setDomainError(null);
+  }, [email]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setDomainError(null);
 
-    if (!email.endsWith("@jetimob.com")) {
-      toast.error("Apenas e-mails @jetimob.com são permitidos");
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("E-mail inválido");
+      return;
+    }
+
+    // Check if email domain is allowed
+    setIsCheckingDomain(true);
+    const { allowed } = await checkEmailDomainAllowed(email);
+    setIsCheckingDomain(false);
+
+    if (!allowed) {
+      const domain = email.split("@")[1];
+      setDomainError(`O domínio @${domain} não está autorizado para acesso ao Hub.`);
+      toast.error("Domínio não autorizado");
       return;
     }
 
@@ -142,23 +165,34 @@ export default function Auth() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="seu.nome@jetimob.com"
+                    placeholder="seu.nome@empresa.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className={`pl-10 ${domainError ? "border-destructive" : ""}`}
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isCheckingDomain}
                   />
                 </div>
+                {domainError && (
+                  <div className="flex items-center gap-2 text-destructive text-sm">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{domainError}</span>
+                  </div>
+                )}
               </div>
 
               <Button
                 type="submit"
                 variant="accent"
                 className="w-full gap-2"
-                disabled={isLoading}
+                disabled={isLoading || isCheckingDomain}
               >
-                {isLoading ? (
+                {isCheckingDomain ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verificando domínio...
+                  </>
+                ) : isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Enviando...
