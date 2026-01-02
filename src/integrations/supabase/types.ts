@@ -53,6 +53,77 @@ export type Database = {
         }
         Relationships: []
       }
+      bu_units: {
+        Row: {
+          allowed_email_domains: string[]
+          created_at: string
+          description: string | null
+          id: string
+          legal_entity: string | null
+          name: string
+          status: Database["public"]["Enums"]["bu_status"]
+          updated_at: string
+        }
+        Insert: {
+          allowed_email_domains?: string[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          legal_entity?: string | null
+          name: string
+          status?: Database["public"]["Enums"]["bu_status"]
+          updated_at?: string
+        }
+        Update: {
+          allowed_email_domains?: string[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          legal_entity?: string | null
+          name?: string
+          status?: Database["public"]["Enums"]["bu_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bu_user_memberships: {
+        Row: {
+          bu_id: string
+          created_at: string
+          id: string
+          is_default: boolean
+          role_in_bu: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          role_in_bu?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          role_in_bu?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cycles: {
         Row: {
           created_at: string
@@ -234,6 +305,7 @@ export type Database = {
       }
       kpi_metrics: {
         Row: {
+          bu_id: string | null
           category: Database["public"]["Enums"]["kpi_category"]
           created_at: string
           deleted_at: string | null
@@ -241,6 +313,7 @@ export type Database = {
           direction: Database["public"]["Enums"]["kpi_direction"]
           frequency: Database["public"]["Enums"]["kpi_frequency"]
           id: string
+          is_global: boolean
           name: string
           owner_user_id: string | null
           status: Database["public"]["Enums"]["kpi_status"]
@@ -250,6 +323,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bu_id?: string | null
           category: Database["public"]["Enums"]["kpi_category"]
           created_at?: string
           deleted_at?: string | null
@@ -257,6 +331,7 @@ export type Database = {
           direction?: Database["public"]["Enums"]["kpi_direction"]
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
           id?: string
+          is_global?: boolean
           name: string
           owner_user_id?: string | null
           status?: Database["public"]["Enums"]["kpi_status"]
@@ -266,6 +341,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bu_id?: string | null
           category?: Database["public"]["Enums"]["kpi_category"]
           created_at?: string
           deleted_at?: string | null
@@ -273,6 +349,7 @@ export type Database = {
           direction?: Database["public"]["Enums"]["kpi_direction"]
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
           id?: string
+          is_global?: boolean
           name?: string
           owner_user_id?: string | null
           status?: Database["public"]["Enums"]["kpi_status"]
@@ -282,6 +359,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "kpi_metrics_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "kpi_metrics_owner_user_id_fkey"
             columns: ["owner_user_id"]
@@ -617,6 +701,7 @@ export type Database = {
       okr_org_key_results: {
         Row: {
           baseline: number
+          bu_id: string | null
           created_at: string
           current_value: number
           deleted_at: string | null
@@ -633,6 +718,7 @@ export type Database = {
         }
         Insert: {
           baseline?: number
+          bu_id?: string | null
           created_at?: string
           current_value?: number
           deleted_at?: string | null
@@ -649,6 +735,7 @@ export type Database = {
         }
         Update: {
           baseline?: number
+          bu_id?: string | null
           created_at?: string
           current_value?: number
           deleted_at?: string | null
@@ -664,6 +751,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "okr_org_key_results_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "okr_org_key_results_metric_id_fkey"
             columns: ["metric_id"]
@@ -682,6 +776,7 @@ export type Database = {
       }
       okr_org_objectives: {
         Row: {
+          bu_id: string | null
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -693,6 +788,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          bu_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -704,6 +800,7 @@ export type Database = {
           year: number
         }
         Update: {
+          bu_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -714,7 +811,15 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "okr_org_objectives_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       okr_reports_config: {
         Row: {
@@ -758,6 +863,7 @@ export type Database = {
       okr_team_key_results: {
         Row: {
           baseline: number
+          bu_id: string | null
           co_responsibles: string[] | null
           created_at: string
           current_value: number
@@ -780,6 +886,7 @@ export type Database = {
         }
         Insert: {
           baseline?: number
+          bu_id?: string | null
           co_responsibles?: string[] | null
           created_at?: string
           current_value?: number
@@ -802,6 +909,7 @@ export type Database = {
         }
         Update: {
           baseline?: number
+          bu_id?: string | null
           co_responsibles?: string[] | null
           created_at?: string
           current_value?: number
@@ -823,6 +931,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "okr_team_key_results_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "okr_team_key_results_linked_org_kr_id_fkey"
             columns: ["linked_org_kr_id"]
@@ -862,6 +977,7 @@ export type Database = {
       }
       okr_team_objectives: {
         Row: {
+          bu_id: string | null
           created_at: string
           cycle_id: string | null
           deleted_at: string | null
@@ -875,6 +991,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bu_id?: string | null
           created_at?: string
           cycle_id?: string | null
           deleted_at?: string | null
@@ -888,6 +1005,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bu_id?: string | null
           created_at?: string
           cycle_id?: string | null
           deleted_at?: string | null
@@ -901,6 +1019,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "okr_team_objectives_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "okr_team_objectives_cycle_id_fkey"
             columns: ["cycle_id"]
@@ -928,6 +1053,7 @@ export type Database = {
         Row: {
           birth_day: number | null
           birth_month: number | null
+          bu_id: string | null
           city: string
           created_at: string
           deleted_at: string | null
@@ -953,6 +1079,7 @@ export type Database = {
         Insert: {
           birth_day?: number | null
           birth_month?: number | null
+          bu_id?: string | null
           city: string
           created_at?: string
           deleted_at?: string | null
@@ -978,6 +1105,7 @@ export type Database = {
         Update: {
           birth_day?: number | null
           birth_month?: number | null
+          bu_id?: string | null
           city?: string
           created_at?: string
           deleted_at?: string | null
@@ -1009,6 +1137,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profiles_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_manager_user_id_fkey"
             columns: ["manager_user_id"]
             isOneToOne: false
@@ -1019,6 +1154,7 @@ export type Database = {
       }
       teams: {
         Row: {
+          bu_id: string | null
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -1030,6 +1166,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bu_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -1041,6 +1178,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bu_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -1052,6 +1190,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "teams_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "teams_leader_user_id_fkey"
             columns: ["leader_user_id"]
@@ -1106,7 +1251,10 @@ export type Database = {
         }
         Returns: number
       }
+      get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
+      get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1115,6 +1263,11 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_ceo: { Args: { _user_id: string }; Returns: boolean }
+      is_bu_admin: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_email_domain_allowed: { Args: { p_email: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           p_action: string
@@ -1125,9 +1278,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      user_has_bu_access: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "ceo" | "admin" | "team_leader" | "collaborator"
+      bu_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
       kpi_category:
         | "financeiro"
@@ -1280,6 +1438,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["ceo", "admin", "team_leader", "collaborator"],
+      bu_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
       kpi_category: [
         "financeiro",

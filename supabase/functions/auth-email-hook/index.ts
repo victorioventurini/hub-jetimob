@@ -1,10 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-
-// Allowed email domain for security
-const ALLOWED_EMAIL_DOMAIN = "@jetimob.com";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,14 +27,44 @@ interface AuthEmailPayload {
   };
 }
 
-// Validate email format and domain
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
+// Check if email domain is allowed in any active BU
+async function isEmailDomainAllowed(email: string): Promise<{ allowed: boolean; buName: string | null }> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Missing Supabase credentials for domain validation");
+    return { allowed: false, buName: null };
+  }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!domain) {
+    return { allowed: false, buName: null };
+  }
+
+  const { data, error } = await supabase
+    .from("bu_units")
+    .select("id, name, allowed_email_domains")
+    .eq("status", "active");
+
+  if (error) {
+    console.error("Error checking email domain:", error);
+    return { allowed: false, buName: null };
+  }
+
+  // Check if domain exists in any BU's allowed_email_domains
+  for (const bu of data || []) {
+    const allowedDomains = bu.allowed_email_domains || [];
+    if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+      return { allowed: true, buName: bu.name };
+    }
+  }
+
+  return { allowed: false, buName: null };
 }
 
-async function sendMagicLinkEmail(email: string, magicLink: string, userName?: string): Promise<void> {
+async function sendMagicLinkEmail(email: string, magicLink: string, userName?: string, buName?: string): Promise<void> {
   const displayName = userName || email.split('@')[0];
+  const orgName = buName || "Jetimob";
   
   const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
@@ -47,12 +76,12 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
       personalizations: [
         {
           to: [{ email }],
-          subject: "Seu link de acesso ao Hub Jetimob",
+          subject: `Seu link de acesso ao Hub ${orgName}`,
         },
       ],
       from: {
         email: "no-reply@hub.jetimob.com",
-        name: "Hub Jetimob",
+        name: `Hub ${orgName}`,
       },
       content: [
         {
@@ -70,7 +99,7 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
                   <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                     <span style="color: white; font-size: 28px; font-weight: bold;">J</span>
                   </div>
-                  <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub Jetimob</h1>
+                  <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub ${orgName}</h1>
                 </div>
                 
                 <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
@@ -78,12 +107,12 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
                 </p>
                 
                 <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-                  Clique no botão abaixo para acessar o Hub Jetimob. Este link é válido por 1 hora.
+                  Clique no botão abaixo para acessar o Hub. Este link é válido por 1 hora.
                 </p>
                 
                 <div style="text-align: center; margin-bottom: 32px;">
                   <a href="${magicLink}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                    Acessar Hub Jetimob
+                    Acessar Hub ${orgName}
                   </a>
                 </div>
                 
@@ -94,7 +123,7 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
                 <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;">
                 
                 <p style="color: #a1a1aa; font-size: 12px; text-align: center; margin: 0;">
-                  O ponto de encontro dos Jetimobers para evoluir, executar e simplificar o morar.
+                  O ponto de encontro para evoluir, executar e simplificar o morar.
                 </p>
               </div>
             </body>
@@ -128,15 +157,17 @@ const handler = async (req: Request): Promise<Response> => {
     const { user, email_data } = payload;
     const { token_hash, redirect_to, email_action_type } = email_data;
 
-    // Server-side validation: Only allow @jetimob.com emails
-    // This provides defense-in-depth even though Supabase controls when this hook is called
-    if (!isValidEmail(user.email)) {
-      console.warn("Auth hook called with invalid email domain:", user.email.split('@')[1] || 'unknown');
+    // Validate email domain against BU allowed domains
+    const { allowed, buName } = await isEmailDomainAllowed(user.email);
+    
+    if (!allowed) {
+      const domain = user.email.split('@')[1] || 'unknown';
+      console.warn("Auth hook called with unauthorized email domain:", domain);
       return new Response(
         JSON.stringify({ 
           error: {
             http_code: 403,
-            message: "Only @jetimob.com emails are allowed" 
+            message: `O domínio @${domain} não está autorizado para acesso ao Hub.` 
           }
         }),
         {
@@ -149,13 +180,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Construct the magic link URL
     const magicLink = `${SUPABASE_URL}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodeURIComponent(redirect_to)}`;
 
-    console.log("Constructed magic link for:", user.email);
+    console.log("Constructed magic link for:", user.email, "BU:", buName);
 
     // Send email via SendGrid
     await sendMagicLinkEmail(
       user.email,
       magicLink,
-      user.user_metadata?.first_name || user.user_metadata?.display_name
+      user.user_metadata?.first_name || user.user_metadata?.display_name,
+      buName || undefined
     );
 
     return new Response(JSON.stringify({ success: true }), {

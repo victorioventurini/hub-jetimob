@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { BuProvider } from "@/contexts/BuContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
@@ -17,6 +18,7 @@ import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import OkrDashboardPage from "./modules/okrs/pages/OkrDashboardPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import KpiDashboardPage from "./modules/kpis/pages/KpiDashboardPage";
+import BuManagementPage from "./modules/bu/pages/BuManagementPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +31,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <BuProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
@@ -127,9 +130,18 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/business-units"
+              element={
+                <ProtectedRoute>
+                  <BuManagementPage />
+                </ProtectedRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </BuProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -14,6 +14,7 @@ import {
   Calendar,
   Plug,
   Shield,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -35,6 +36,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
+  { name: "Business Units", href: "/business-units", icon: Briefcase },
   { name: "Configurações", href: "/settings", icon: Settings },
   { name: "Auditoria", href: "/audit", icon: Shield },
 ];

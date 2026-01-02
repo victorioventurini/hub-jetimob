@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { BuSelector } from "@/modules/bu/components/BuSelector";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -73,6 +74,9 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
         {/* Right section */}
         <div className="flex items-center gap-2">
+          {/* BU Selector */}
+          <BuSelector />
+
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />

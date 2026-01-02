@@ -125,10 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
-    // Validate @jetimob.com email
-    if (!email.endsWith('@jetimob.com')) {
-      return { error: new Error('Apenas e-mails @jetimob.com são permitidos') };
-    }
+    // Email domain validation is now done by the BU system
+    // The Auth page checks against bu_units.allowed_email_domains
+    // The edge function also validates domains against the database
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signInWithOtp({
