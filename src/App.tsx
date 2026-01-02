@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Integrations from "./pages/Integrations";
 import IntegrationDetails from "./pages/IntegrationDetails";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
+import OkrDashboardPage from "./modules/okrs/pages/OkrDashboardPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -95,6 +96,14 @@ const App = () => (
             />
             <Route
               path="/okrs"
+              element={
+                <ProtectedRoute>
+                  <OkrDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/okrs/manage"
               element={
                 <ProtectedRoute>
                   <OkrsPage />

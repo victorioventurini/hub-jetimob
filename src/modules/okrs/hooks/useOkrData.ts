@@ -25,6 +25,43 @@ export function useOrgObjectives(year?: number) {
   });
 }
 
+export function useOrgObjectivesWithKrs(year?: number) {
+  return useQuery({
+    queryKey: ['okr-org-objectives-with-krs', year],
+    queryFn: async () => {
+      // First get objectives
+      let objQuery = supabase
+        .from('okr_org_objectives')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (year) {
+        objQuery = objQuery.eq('year', year);
+      }
+
+      const { data: objectives, error: objError } = await objQuery;
+      if (objError) throw objError;
+
+      // Then get all org key results
+      const { data: allKrs, error: krsError } = await supabase
+        .from('okr_org_key_results')
+        .select('*')
+        .is('deleted_at', null);
+      
+      if (krsError) throw krsError;
+
+      // Map KRs to objectives
+      const objectivesWithKrs = objectives?.map(obj => ({
+        ...obj,
+        key_results: allKrs?.filter(kr => kr.org_objective_id === obj.id) || []
+      }));
+
+      return objectivesWithKrs;
+    },
+  });
+}
+
 export function useOrgObjective(id: string) {
   return useQuery({
     queryKey: ['okr-org-objective', id],
@@ -42,20 +79,39 @@ export function useOrgObjective(id: string) {
   });
 }
 
-export function useOrgKeyResults(objectiveId: string) {
+export function useOrgKeyResults(objectiveId?: string) {
   return useQuery({
     queryKey: ['okr-org-key-results', objectiveId],
+    queryFn: async () => {
+      let query = supabase
+        .from('okr_org_key_results')
+        .select('*')
+        .is('deleted_at', null);
+        
+      if (objectiveId) {
+        query = query.eq('org_objective_id', objectiveId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: objectiveId ? !!objectiveId : true,
+  });
+}
+
+export function useAllOrgKeyResults() {
+  return useQuery({
+    queryKey: ['okr-org-key-results-all'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('okr_org_key_results')
         .select('*')
-        .eq('org_objective_id', objectiveId)
         .is('deleted_at', null);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!objectiveId,
   });
 }
 
@@ -83,6 +139,48 @@ export function useTeamObjectives(teamId?: string) {
   });
 }
 
+export function useTeamObjectivesWithKrs(teamId?: string) {
+  return useQuery({
+    queryKey: ['okr-team-objectives-with-krs', teamId],
+    queryFn: async () => {
+      // First get objectives
+      let objQuery = supabase
+        .from('okr_team_objectives')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (teamId) {
+        objQuery = objQuery.eq('team_id', teamId);
+      }
+
+      const { data: objectives, error: objError } = await objQuery;
+      if (objError) throw objError;
+
+      // Then get all team key results
+      let krsQuery = supabase
+        .from('okr_team_key_results')
+        .select('*')
+        .is('deleted_at', null);
+      
+      if (teamId) {
+        krsQuery = krsQuery.eq('team_id', teamId);
+      }
+
+      const { data: allKrs, error: krsError } = await krsQuery;
+      if (krsError) throw krsError;
+
+      // Map KRs to objectives
+      const objectivesWithKrs = objectives?.map(obj => ({
+        ...obj,
+        key_results: allKrs?.filter(kr => kr.team_objective_id === obj.id) || []
+      }));
+
+      return objectivesWithKrs;
+    },
+  });
+}
+
 export function useTeamKeyResults(teamId?: string) {
   return useQuery({
     queryKey: ['okr-team-key-results', teamId],
@@ -104,6 +202,26 @@ export function useTeamKeyResults(teamId?: string) {
   });
 }
 
+export function useMyTeamKeyResults(userId?: string) {
+  return useQuery({
+    queryKey: ['okr-my-team-key-results', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      const { data, error } = await supabase
+        .from('okr_team_key_results')
+        .select('*')
+        .is('deleted_at', null)
+        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+}
+
 // ========================
 // CHECK-INS
 // ========================
@@ -121,6 +239,23 @@ export function useKrCheckins(krId: string) {
       return data;
     },
     enabled: !!krId,
+  });
+}
+
+export function useLatestCheckinDate() {
+  return useQuery({
+    queryKey: ['okr-latest-checkin'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('okr_checkins')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.created_at;
+    },
   });
 }
 
@@ -155,5 +290,24 @@ export function useCycles() {
       if (error) throw error;
       return data;
     },
+  });
+}
+
+export function useUserProfile(userId?: string) {
+  return useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, photo_url, team_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
   });
 }

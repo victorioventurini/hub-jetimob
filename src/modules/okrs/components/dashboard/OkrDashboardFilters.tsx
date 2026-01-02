@@ -1,0 +1,165 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Filter, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { STATUS_CONFIG, OkrCalculatedStatus } from '../../hooks/useOkrStatus';
+
+interface Team {
+  id: string;
+  name: string;
+  parent_team_id?: string | null;
+}
+
+interface OkrFilters {
+  year: number;
+  teamId?: string;
+  parentTeamId?: string;
+  statuses: OkrCalculatedStatus[];
+}
+
+interface OkrDashboardFiltersProps {
+  filters: OkrFilters;
+  onFiltersChange: (filters: OkrFilters) => void;
+  teams: Team[];
+  years: number[];
+}
+
+const STATUS_OPTIONS: OkrCalculatedStatus[] = ['on_track', 'at_risk', 'off_track', 'not_started', 'completed'];
+
+export function OkrDashboardFilters({
+  filters,
+  onFiltersChange,
+  teams,
+  years,
+}: OkrDashboardFiltersProps) {
+  const activeFilterCount = [
+    filters.teamId,
+    filters.parentTeamId,
+    filters.statuses.length < STATUS_OPTIONS.length && filters.statuses.length > 0,
+  ].filter(Boolean).length;
+
+  const handleStatusToggle = (status: OkrCalculatedStatus) => {
+    const newStatuses = filters.statuses.includes(status)
+      ? filters.statuses.filter(s => s !== status)
+      : [...filters.statuses, status];
+    
+    onFiltersChange({ ...filters, statuses: newStatuses });
+  };
+
+  const clearFilters = () => {
+    onFiltersChange({
+      year: filters.year,
+      teamId: undefined,
+      parentTeamId: undefined,
+      statuses: [],
+    });
+  };
+
+  // Get parent teams (teams without parent)
+  const parentTeams = teams.filter(t => !t.parent_team_id);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Year selector */}
+      <Select 
+        value={filters.year.toString()} 
+        onValueChange={(v) => onFiltersChange({ ...filters, year: Number(v) })}
+      >
+        <SelectTrigger className="w-[100px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>
+              {year}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Team filter */}
+      <Select 
+        value={filters.teamId || 'all'} 
+        onValueChange={(v) => onFiltersChange({ ...filters, teamId: v === 'all' ? undefined : v })}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="All Teams" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Teams</SelectItem>
+          {teams.map((team) => (
+            <SelectItem key={team.id} value={team.id}>
+              {team.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Status filter popover */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={cn(
+              "gap-2",
+              filters.statuses.length > 0 && "border-primary"
+            )}
+          >
+            <Filter className="w-4 h-4" />
+            Status
+            {filters.statuses.length > 0 && (
+              <span className="text-xs bg-primary text-primary-foreground rounded-full px-1.5">
+                {filters.statuses.length}
+              </span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-56">
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Filter by Status</p>
+            <div className="space-y-2">
+              {STATUS_OPTIONS.map((status) => {
+                const config = STATUS_CONFIG[status];
+                const isChecked = filters.statuses.length === 0 || filters.statuses.includes(status);
+                
+                return (
+                  <div key={status} className="flex items-center gap-2">
+                    <Checkbox
+                      id={status}
+                      checked={isChecked}
+                      onCheckedChange={() => handleStatusToggle(status)}
+                    />
+                    <Label 
+                      htmlFor={status} 
+                      className="flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <div className={cn("w-2.5 h-2.5 rounded-full", config.bgColor)} />
+                      {config.label}
+                    </Label>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Clear filters */}
+      {activeFilterCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="gap-1 text-muted-foreground hover:text-foreground"
+        >
+          <X className="w-3 h-3" />
+          Clear
+        </Button>
+      )}
+    </div>
+  );
+}
