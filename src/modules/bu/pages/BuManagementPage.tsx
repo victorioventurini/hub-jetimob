@@ -1,18 +1,36 @@
 import { useState } from "react";
-import { Building2, Plus, Globe, Users, ChevronRight } from "lucide-react";
+import { Building2, Plus, Globe, ChevronRight, Edit2, Eye } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAllBus } from "../hooks/useBuData";
 import { CreateBuDialog } from "../components/CreateBuDialog";
+import { EditBuDialog } from "../components/EditBuDialog";
+import { BuDetailDialog } from "../components/BuDetailDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { BuUnit } from "../types";
+import { formatCNPJ } from "../utils/cnpjMask";
 
 export default function BuManagementPage() {
   const { isAdmin } = useAuth();
   const { data: bus = [], isLoading } = useAllBus();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedBu, setSelectedBu] = useState<BuUnit | null>(null);
+
+  const handleEdit = (bu: BuUnit) => {
+    setSelectedBu(bu);
+    setEditDialogOpen(true);
+  };
+
+  const handleViewDetails = (bu: BuUnit) => {
+    setSelectedBu(bu);
+    setDetailDialogOpen(true);
+  };
 
   if (!isAdmin) {
     return (
@@ -58,13 +76,24 @@ export default function BuManagementPage() {
         {!isLoading && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {bus.map((bu) => (
-              <Card key={bu.id} className="hover:shadow-md transition-shadow">
+              <Card key={bu.id} className="hover:shadow-md transition-shadow group">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-primary" />
-                      </div>
+                      {/* BU Symbol/Avatar */}
+                      <Avatar className="h-12 w-12 rounded-lg">
+                        <AvatarImage
+                          src={bu.symbol_url || undefined}
+                          alt={bu.name}
+                          className="object-contain"
+                        />
+                        <AvatarFallback
+                          className="rounded-lg text-white font-bold"
+                          style={{ backgroundColor: bu.primary_color || "#0A3D62" }}
+                        >
+                          {bu.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                       <div>
                         <CardTitle className="text-lg">{bu.name}</CardTitle>
                         {bu.legal_entity && (
@@ -82,11 +111,32 @@ export default function BuManagementPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* CNPJ */}
+                  {bu.cnpj && (
+                    <p className="text-xs text-muted-foreground font-mono">
+                      CNPJ: {formatCNPJ(bu.cnpj)}
+                    </p>
+                  )}
+
                   {bu.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {bu.description}
                     </p>
                   )}
+
+                  {/* Color Preview */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-4 w-4 rounded border"
+                      style={{ backgroundColor: bu.primary_color || "#0A3D62" }}
+                      title="Cor primária"
+                    />
+                    <div
+                      className="h-4 w-4 rounded border"
+                      style={{ backgroundColor: bu.secondary_color || "#EAF2FF" }}
+                      title="Cor secundária"
+                    />
+                  </div>
 
                   {/* Domains */}
                   <div className="space-y-2">
@@ -95,19 +145,40 @@ export default function BuManagementPage() {
                       <span>Domínios autorizados</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {(bu.allowed_email_domains || []).map((domain) => (
+                      {(bu.allowed_email_domains || []).slice(0, 3).map((domain) => (
                         <Badge key={domain} variant="outline" className="text-xs">
                           @{domain}
                         </Badge>
                       ))}
+                      {(bu.allowed_email_domains || []).length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{bu.allowed_email_domains.length - 3}
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <Button variant="ghost" className="w-full justify-between" size="sm">
-                    Ver detalhes
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-2"
+                      onClick={() => handleViewDetails(bu)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      Detalhes
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-1 gap-2"
+                      onClick={() => handleEdit(bu)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Editar
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -137,6 +208,22 @@ export default function BuManagementPage() {
       <CreateBuDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
+      />
+
+      <EditBuDialog
+        bu={selectedBu}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+
+      <BuDetailDialog
+        bu={selectedBu}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        onEdit={() => {
+          setDetailDialogOpen(false);
+          setEditDialogOpen(true);
+        }}
       />
     </HubLayout>
   );

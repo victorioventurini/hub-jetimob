@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,14 +23,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCreateBu } from "../hooks/useBuData";
+import { useUpdateBu } from "../hooks/useBuData";
 import { BuLogoUpload } from "./BuLogoUpload";
 import { ColorPicker } from "./ColorPicker";
 import { formatCNPJ, validateCNPJ, unformatCNPJ } from "../utils/cnpjMask";
 import { toast } from "sonner";
+import { BuUnit } from "../types";
+import { useAuth } from "@/hooks/useAuth";
 
-const createBuSchema = z.object({
+const editBuSchema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
   description: z.string().optional(),
   legal_entity: z.string().optional(),
@@ -41,23 +44,26 @@ const createBuSchema = z.object({
   allowed_email_domains: z.array(z.string()).min(1, "Adicione ao menos um domínio"),
   logo_url: z.string().nullable().optional(),
   symbol_url: z.string().nullable().optional(),
-  primary_color: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Cor inválida").default("#0A3D62"),
-  secondary_color: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Cor inválida").default("#EAF2FF"),
+  primary_color: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Cor inválida"),
+  secondary_color: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Cor inválida"),
+  status: z.enum(["active", "inactive"]),
 });
 
-type CreateBuFormData = z.infer<typeof createBuSchema>;
+type EditBuFormData = z.infer<typeof editBuSchema>;
 
-interface CreateBuDialogProps {
+interface EditBuDialogProps {
+  bu: BuUnit | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
+export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
   const [domainInput, setDomainInput] = useState("");
-  const createBu = useCreateBu();
+  const { isAdmin } = useAuth();
+  const updateBu = useUpdateBu();
 
-  const form = useForm<CreateBuFormData>({
-    resolver: zodResolver(createBuSchema),
+  const form = useForm<EditBuFormData>({
+    resolver: zodResolver(editBuSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -68,8 +74,27 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
       symbol_url: null,
       primary_color: "#0A3D62",
       secondary_color: "#EAF2FF",
+      status: "active",
     },
   });
+
+  // Reset form when BU changes
+  useEffect(() => {
+    if (bu) {
+      form.reset({
+        name: bu.name,
+        description: bu.description || "",
+        legal_entity: bu.legal_entity || "",
+        cnpj: bu.cnpj ? formatCNPJ(bu.cnpj) : "",
+        allowed_email_domains: bu.allowed_email_domains || [],
+        logo_url: bu.logo_url || null,
+        symbol_url: bu.symbol_url || null,
+        primary_color: bu.primary_color || "#0A3D62",
+        secondary_color: bu.secondary_color || "#EAF2FF",
+        status: bu.status,
+      });
+    }
+  }, [bu, form]);
 
   const domains = form.watch("allowed_email_domains");
 
@@ -77,7 +102,6 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
     const domain = domainInput.trim().toLowerCase().replace(/^@/, "");
     if (!domain) return;
 
-    // Validate domain format
     const domainRegex = /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
     if (!domainRegex.test(domain)) {
       toast.error("Formato de domínio inválido");
@@ -105,26 +129,32 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
     form.setValue("cnpj", formatted);
   };
 
-  const onSubmit = async (data: CreateBuFormData) => {
+  const onSubmit = async (data: EditBuFormData) => {
+    if (!bu) return;
+
     try {
-      await createBu.mutateAsync({
+      await updateBu.mutateAsync({
+        id: bu.id,
         name: data.name,
-        description: data.description || undefined,
-        legal_entity: data.legal_entity || undefined,
+        description: data.description || null,
+        legal_entity: data.legal_entity || null,
+        cnpj: data.cnpj ? unformatCNPJ(data.cnpj) : null,
         allowed_email_domains: data.allowed_email_domains,
-        cnpj: data.cnpj ? unformatCNPJ(data.cnpj) : undefined,
-        logo_url: data.logo_url || undefined,
-        symbol_url: data.symbol_url || undefined,
+        logo_url: data.logo_url,
+        symbol_url: data.symbol_url,
         primary_color: data.primary_color,
         secondary_color: data.secondary_color,
-      } as any);
-      toast.success("Business Unit criada com sucesso!");
-      form.reset();
+        status: data.status,
+      });
+      toast.success("Business Unit atualizada com sucesso!");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar Business Unit");
+      toast.error(error.message || "Erro ao atualizar Business Unit");
     }
   };
+
+  // Check if user is BU admin (not global admin) - can only edit visual fields
+  const canEditAllFields = isAdmin;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -132,10 +162,12 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Nova Business Unit
+            Editar Business Unit
           </DialogTitle>
           <DialogDescription>
-            Crie uma nova unidade de negócio com domínios de e-mail autorizados.
+            {canEditAllFields
+              ? "Edite as informações da unidade de negócio."
+              : "Você pode editar apenas campos visuais (logo, símbolo, cores)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -155,7 +187,11 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                     <FormItem>
                       <FormLabel>Nome da BU</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Jet Experience" {...field} />
+                        <Input
+                          placeholder="Ex: Jet Experience"
+                          {...field}
+                          disabled={!canEditAllFields}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -172,6 +208,7 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                         <Textarea
                           placeholder="Descrição da unidade de negócio"
                           {...field}
+                          disabled={!canEditAllFields}
                         />
                       </FormControl>
                       <FormMessage />
@@ -187,7 +224,11 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                       <FormItem>
                         <FormLabel>Razão Social</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: Jet Experience LTDA" {...field} />
+                          <Input
+                            placeholder="Ex: Jet Experience LTDA"
+                            {...field}
+                            disabled={!canEditAllFields}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -205,6 +246,7 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                             placeholder="00.000.000/0000-00"
                             {...field}
                             onChange={handleCnpjChange}
+                            disabled={!canEditAllFields}
                           />
                         </FormControl>
                         <FormMessage />
@@ -233,6 +275,7 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                               }
                             }}
                             className="pl-10"
+                            disabled={!canEditAllFields}
                           />
                         </div>
                         <Button
@@ -240,6 +283,7 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                           variant="outline"
                           size="icon"
                           onClick={handleAddDomain}
+                          disabled={!canEditAllFields}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -253,21 +297,47 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
                               className="gap-1 pr-1"
                             >
                               @{domain}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDomain(domain)}
-                                className="ml-1 hover:bg-muted rounded-full p-0.5"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
+                              {canEditAllFields && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDomain(domain)}
+                                  className="ml-1 hover:bg-muted rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
                             </Badge>
                           ))}
                         </div>
                       )}
                       <FormDescription>
-                        Apenas usuários com esses domínios poderão fazer login nesta BU.
+                        Apenas usuários com esses domínios poderão fazer login.
                       </FormDescription>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Status</FormLabel>
+                        <FormDescription>
+                          BUs inativas não aceitam novos logins.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value === "active"}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked ? "active" : "inactive")
+                          }
+                          disabled={!canEditAllFields}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
@@ -401,14 +471,14 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createBu.isPending}>
-                {createBu.isPending ? (
+              <Button type="submit" disabled={updateBu.isPending}>
+                {updateBu.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Criando...
+                    Salvando...
                   </>
                 ) : (
-                  "Criar BU"
+                  "Salvar Alterações"
                 )}
               </Button>
             </div>

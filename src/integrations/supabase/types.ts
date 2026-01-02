@@ -56,32 +56,47 @@ export type Database = {
       bu_units: {
         Row: {
           allowed_email_domains: string[]
+          cnpj: string | null
           created_at: string
           description: string | null
           id: string
           legal_entity: string | null
+          logo_url: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
           status: Database["public"]["Enums"]["bu_status"]
+          symbol_url: string | null
           updated_at: string
         }
         Insert: {
           allowed_email_domains?: string[]
+          cnpj?: string | null
           created_at?: string
           description?: string | null
           id?: string
           legal_entity?: string | null
+          logo_url?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
           status?: Database["public"]["Enums"]["bu_status"]
+          symbol_url?: string | null
           updated_at?: string
         }
         Update: {
           allowed_email_domains?: string[]
+          cnpj?: string | null
           created_at?: string
           description?: string | null
           id?: string
           legal_entity?: string | null
+          logo_url?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           status?: Database["public"]["Enums"]["bu_status"]
+          symbol_url?: string | null
           updated_at?: string
         }
         Relationships: []
