@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
+import { useBu } from "@/contexts/BuContext";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ const statusColors: Record<string, string> = {
 
 export default function UsersPage() {
   const { isAdmin } = useAuth();
+  const { currentBu } = useBu();
   const [searchQuery, setSearchQuery] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
@@ -84,8 +86,10 @@ export default function UsersPage() {
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
 
   const { data: profiles, isLoading } = useQuery({
-    queryKey: ["profiles", statusFilter],
+    queryKey: ["profiles", statusFilter, currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return [];
+      
       let query = supabase
         .from("profiles")
         .select(`
@@ -105,6 +109,7 @@ export default function UsersPage() {
           teams(id, name),
           manager_user_id
         `)
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .order("display_name");
 
@@ -117,7 +122,6 @@ export default function UsersPage() {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Transform data to match expected shape
       return (data || []).map(p => ({
         id: p.id,
         user_id: p.user_id,
@@ -135,20 +139,24 @@ export default function UsersPage() {
         manager: null as { id: string; display_name: string } | null,
       })) as ProfileWithTeam[];
     },
+    enabled: !!currentBu?.id,
   });
 
   const { data: teams } = useQuery({
-    queryKey: ["teams-filter"],
+    queryKey: ["teams-filter", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return [];
       const { data, error } = await supabase
         .from("teams")
         .select("id, name")
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .eq("status", "active")
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBu?.id,
   });
 
   const getInitials = (name: string) =>
