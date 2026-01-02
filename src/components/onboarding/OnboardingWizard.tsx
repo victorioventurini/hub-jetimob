@@ -14,17 +14,21 @@ import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { User, Briefcase, MapPin, Building2, ChevronRight, ChevronLeft, Loader2, Check, Sparkles } from "lucide-react";
 import logoJetimob from "@/assets/logo-jetimob-branco.svg";
 
-const onboardingSchema = z.object({
+const baseOnboardingSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
   job_title: z.string().trim().min(1, "Cargo é obrigatório").max(100),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
   work_mode: z.enum(["onsite", "hybrid", "remote"]),
-  team_id: z.string().uuid("Selecione um time").optional().or(z.literal("")),
+  team_id: z.string().optional().or(z.literal("")),
 });
 
-type OnboardingFormData = z.infer<typeof onboardingSchema>;
+const onboardingSchemaWithTeam = baseOnboardingSchema.extend({
+  team_id: z.string().uuid("Selecione um time"),
+});
+
+type OnboardingFormData = z.infer<typeof baseOnboardingSchema>;
 
 interface OnboardingWizardProps {
   profileId: string;
@@ -67,6 +71,21 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
       return data;
     },
   });
+
+  const { data: userRole } = useQuery({
+    queryKey: ["user-role", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.role;
+    },
+  });
+
+  const isCeo = userRole === "ceo";
 
   const completeMutation = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
@@ -132,8 +151,8 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
         if (!formData.city.trim()) newErrors.city = "Cidade é obrigatória";
         if (!formData.state.trim()) newErrors.state = "Estado é obrigatório";
         break;
-      case 3: // Team - optional
-        // Team is optional for executives/CEOs
+      case 3: // Team - required unless CEO
+        if (!isCeo && !formData.team_id) newErrors.team_id = "Selecione um time";
         break;
     }
 
@@ -158,7 +177,8 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
   };
 
   const handleSubmit = () => {
-    const result = onboardingSchema.safeParse(formData);
+    const schema = isCeo ? baseOnboardingSchema : onboardingSchemaWithTeam;
+    const result = schema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof OnboardingFormData, string>> = {};
       result.error.errors.forEach((err) => {
@@ -170,7 +190,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
       return;
     }
 
-    completeMutation.mutate(result.data);
+    completeMutation.mutate(result.data as OnboardingFormData);
   };
 
   const handleChange = (field: keyof OnboardingFormData, value: string) => {
@@ -335,13 +355,15 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Time Principal <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+                    <Label>
+                      Time Principal {isCeo ? <span className="text-muted-foreground text-xs">(opcional)</span> : "*"}
+                    </Label>
                     <Select
                       value={formData.team_id}
                       onValueChange={(v) => handleChange("team_id", v)}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione seu time (opcional)" />
+                      <SelectTrigger className={errors.team_id ? "border-destructive" : ""}>
+                        <SelectValue placeholder={isCeo ? "Selecione seu time (opcional)" : "Selecione seu time"} />
                       </SelectTrigger>
                       <SelectContent>
                         {teams?.map((team) => (
@@ -351,9 +373,14 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Executivos e líderes transversais podem deixar em branco
-                    </p>
+                    {errors.team_id && (
+                      <p className="text-xs text-destructive">{errors.team_id}</p>
+                    )}
+                    {isCeo && (
+                      <p className="text-xs text-muted-foreground">
+                        Como CEO, você pode deixar este campo em branco
+                      </p>
+                    )}
                   </div>
                   <div className="p-4 rounded-lg bg-muted/50 border border-border">
                     <div className="flex gap-3">
