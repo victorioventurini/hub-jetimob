@@ -1,14 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { BuUnit, UserBuMembership } from "../types";
 
 // Fetch all BUs the current user has access to
 export function useUserBus() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["user-bus"],
+    queryKey: ["user-bus", user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user?.id) return [];
 
       const { data, error } = await supabase
         .from("bu_user_memberships")
