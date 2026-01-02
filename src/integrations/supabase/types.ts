@@ -53,6 +53,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bu_module_configs: {
+        Row: {
+          bu_id: string
+          created_at: string
+          disabled_at: string | null
+          disabled_by: string | null
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          is_enabled: boolean
+          module_id: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_id: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_module_configs_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_module_configs_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bu_units: {
         Row: {
           allowed_email_domains: string[]
@@ -495,7 +549,9 @@ export type Database = {
       modules: {
         Row: {
           created_at: string
+          dependencies: string[]
           description: string | null
+          display_order: number
           health_status: Database["public"]["Enums"]["module_health"]
           icon: string | null
           id: string
@@ -504,12 +560,15 @@ export type Database = {
           route: string | null
           slug: string
           status: Database["public"]["Enums"]["module_status"]
+          type: Database["public"]["Enums"]["module_type"]
           updated_at: string
           version: string
         }
         Insert: {
           created_at?: string
+          dependencies?: string[]
           description?: string | null
+          display_order?: number
           health_status?: Database["public"]["Enums"]["module_health"]
           icon?: string | null
           id?: string
@@ -518,12 +577,15 @@ export type Database = {
           route?: string | null
           slug: string
           status?: Database["public"]["Enums"]["module_status"]
+          type?: Database["public"]["Enums"]["module_type"]
           updated_at?: string
           version?: string
         }
         Update: {
           created_at?: string
+          dependencies?: string[]
           description?: string | null
+          display_order?: number
           health_status?: Database["public"]["Enums"]["module_health"]
           icon?: string | null
           id?: string
@@ -532,6 +594,7 @@ export type Database = {
           route?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["module_status"]
+          type?: Database["public"]["Enums"]["module_type"]
           updated_at?: string
           version?: string
         }
@@ -1312,6 +1375,20 @@ export type Database = {
         Returns: number
       }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
+      get_enabled_modules_for_bu: {
+        Args: { p_bu_id: string }
+        Returns: {
+          description: string
+          display_order: number
+          icon: string
+          id: string
+          is_enabled: boolean
+          name: string
+          route: string
+          slug: string
+          type: Database["public"]["Enums"]["module_type"]
+        }[]
+      }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
@@ -1328,6 +1405,10 @@ export type Database = {
         Returns: boolean
       }
       is_email_domain_allowed: { Args: { p_email: string }; Returns: boolean }
+      is_module_enabled_for_bu: {
+        Args: { p_bu_id: string; p_module_slug: string }
+        Returns: boolean
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -1360,6 +1441,7 @@ export type Database = {
       kpi_value_source: "manual" | "integration" | "calculation"
       module_health: "healthy" | "degraded" | "down"
       module_status: "active" | "inactive" | "coming_soon"
+      module_type: "global" | "operational"
       okr_channel: "email" | "slack" | "both"
       okr_confidence: "high" | "medium" | "low"
       okr_dependency_status: "ok" | "blocked" | "at_risk"
@@ -1514,6 +1596,7 @@ export const Constants = {
       kpi_value_source: ["manual", "integration", "calculation"],
       module_health: ["healthy", "degraded", "down"],
       module_status: ["active", "inactive", "coming_soon"],
+      module_type: ["global", "operational"],
       okr_channel: ["email", "slack", "both"],
       okr_confidence: ["high", "medium", "low"],
       okr_dependency_status: ["ok", "blocked", "at_risk"],
