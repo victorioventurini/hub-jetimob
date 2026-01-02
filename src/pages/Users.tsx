@@ -115,7 +115,7 @@ export default function UsersPage() {
           work_mode,
           employment_status,
           team_id,
-          teams(id, name),
+          team:teams!fk_profiles_team(id, name),
           manager_user_id
         `)
         .eq("bu_id", currentBu.id)
@@ -136,7 +136,7 @@ export default function UsersPage() {
         count: data?.length ?? 0,
       });
 
-      return (data || []).map(p => ({
+      return (data || []).map((p) => ({
         id: p.id,
         user_id: p.user_id,
         first_name: p.first_name,
@@ -149,7 +149,7 @@ export default function UsersPage() {
         state: p.state,
         work_mode: p.work_mode,
         employment_status: p.employment_status,
-        team: p.teams as { id: string; name: string } | null,
+        team: p.team as { id: string; name: string } | null,
         manager: null as { id: string; display_name: string } | null,
       })) as ProfileWithTeam[];
     },
