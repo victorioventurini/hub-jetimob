@@ -28,7 +28,7 @@ export default function OkrsPage() {
   const { data: teamKeyResults } = useTeamKeyResults();
   const { data: teams } = useTeams();
 
-  const years = [currentYear - 1, currentYear, currentYear + 1];
+  const years = [currentYear, currentYear + 1];
 
   // Calculate summary stats
   const totalOrgObjectives = orgObjectives?.length || 0;
