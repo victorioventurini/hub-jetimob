@@ -127,7 +127,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
     },
   });
 
-  const isCeo = userRole === "ceo";
+  const isExemptFromTeam = userRole === "ceo" || userRole === "admin";
 
   const completeMutation = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
@@ -209,8 +209,8 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
         if (!formData.city.trim()) newErrors.city = "Cidade é obrigatória";
         if (!formData.state.trim()) newErrors.state = "Estado é obrigatório";
         break;
-      case 3: // Team - required unless CEO
-        if (!isCeo && !formData.team_id) newErrors.team_id = "Selecione um time";
+      case 3: // Team - required unless CEO or admin
+        if (!isExemptFromTeam && !formData.team_id) newErrors.team_id = "Selecione um time";
         break;
     }
 
@@ -235,7 +235,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
   };
 
   const handleSubmit = () => {
-    const schema = isCeo ? baseOnboardingSchema : onboardingSchemaWithTeam;
+    const schema = isExemptFromTeam ? baseOnboardingSchema : onboardingSchemaWithTeam;
     const result = schema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof OnboardingFormData, string>> = {};
@@ -514,14 +514,14 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>
-                      Time Principal {isCeo ? <span className="text-muted-foreground text-xs">(opcional)</span> : "*"}
+                      Time Principal {isExemptFromTeam ? <span className="text-muted-foreground text-xs">(opcional)</span> : "*"}
                     </Label>
                     <Select
                       value={formData.team_id}
                       onValueChange={(v) => handleChange("team_id", v)}
                     >
                       <SelectTrigger className={errors.team_id ? "border-destructive" : ""}>
-                        <SelectValue placeholder={isCeo ? "Selecione seu time (opcional)" : "Selecione seu time"} />
+                        <SelectValue placeholder={isExemptFromTeam ? "Selecione seu time (opcional)" : "Selecione seu time"} />
                       </SelectTrigger>
                       <SelectContent>
                         {teams?.map((team) => (
@@ -534,9 +534,9 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                     {errors.team_id && (
                       <p className="text-xs text-destructive">{errors.team_id}</p>
                     )}
-                    {isCeo && (
+                    {isExemptFromTeam && (
                       <p className="text-xs text-muted-foreground">
-                        Como CEO, você pode deixar este campo em branco
+                        Como {userRole === "ceo" ? "CEO" : "Admin"}, você pode deixar este campo em branco
                       </p>
                     )}
                   </div>
