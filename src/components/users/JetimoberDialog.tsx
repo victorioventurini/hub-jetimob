@@ -433,7 +433,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
 
           {/* Data de Início */}
           <div className="space-y-2">
-            <Label htmlFor="start_date">Data de início *</Label>
+            <Label htmlFor="start_date">Data de início na Jet *</Label>
             <Input
               id="start_date"
               type="date"
