@@ -37,6 +37,7 @@ interface Profile {
   work_email: string;
   job_title: string;
   photo_url: string | null;
+  onboarding_completed: boolean;
 }
 
 interface UserRole {
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, display_name, work_email, job_title, photo_url')
+        .select('id, first_name, last_name, display_name, work_email, job_title, photo_url, onboarding_completed')
         .eq('user_id', userId)
         .maybeSingle();
       
