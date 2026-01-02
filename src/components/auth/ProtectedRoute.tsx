@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -25,5 +26,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  // Wrap with OnboardingGuard to enforce onboarding completion
+  return <OnboardingGuard>{children}</OnboardingGuard>;
 }

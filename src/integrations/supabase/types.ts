@@ -1065,6 +1065,7 @@ export type Database = {
           job_title: string
           last_name: string
           manager_user_id: string | null
+          onboarding_completed: boolean
           photo_url: string | null
           slack_id: string | null
           start_date: string
@@ -1091,6 +1092,7 @@ export type Database = {
           job_title: string
           last_name: string
           manager_user_id?: string | null
+          onboarding_completed?: boolean
           photo_url?: string | null
           slack_id?: string | null
           start_date: string
@@ -1117,6 +1119,7 @@ export type Database = {
           job_title?: string
           last_name?: string
           manager_user_id?: string | null
+          onboarding_completed?: boolean
           photo_url?: string | null
           slack_id?: string | null
           start_date?: string
@@ -1236,6 +1239,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_team_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_team_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
