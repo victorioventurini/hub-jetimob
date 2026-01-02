@@ -1,3 +1,4 @@
+// Users page with BU filtering
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
