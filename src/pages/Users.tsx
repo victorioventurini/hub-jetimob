@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -37,6 +38,7 @@ import {
   Building2,
   MapPin,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,14 +81,20 @@ const statusColors: Record<string, string> = {
 
 export default function UsersPage() {
   const { isAdmin } = useAuth();
-  const { currentBu } = useBu();
+  const { currentBu, isLoading: isBuLoading } = useBu();
   const [searchQuery, setSearchQuery] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
 
-  const { data: profiles, isLoading } = useQuery({
+  console.log("[UsersPage] currentBu", {
+    id: currentBu?.id,
+    name: currentBu?.name,
+    isBuLoading,
+  });
+
+  const { data: profiles, isLoading, error: profilesError } = useQuery({
     queryKey: ["profiles", statusFilter, currentBu?.id],
     queryFn: async () => {
       if (!currentBu?.id) return [];
@@ -122,7 +130,12 @@ export default function UsersPage() {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
+      console.log("[UsersPage] fetched profiles", {
+        buId: currentBu.id,
+        count: data?.length ?? 0,
+      });
+
       return (data || []).map(p => ({
         id: p.id,
         user_id: p.user_id,
@@ -143,7 +156,7 @@ export default function UsersPage() {
     enabled: !!currentBu?.id,
   });
 
-  const { data: teams } = useQuery({
+  const { data: teams, error: teamsError } = useQuery({
     queryKey: ["teams-filter", currentBu?.id],
     queryFn: async () => {
       if (!currentBu?.id) return [];
@@ -155,6 +168,12 @@ export default function UsersPage() {
         .eq("status", "active")
         .order("name");
       if (error) throw error;
+
+      console.log("[UsersPage] fetched teams", {
+        buId: currentBu.id,
+        count: data?.length ?? 0,
+      });
+
       return data;
     },
     enabled: !!currentBu?.id,
@@ -215,6 +234,34 @@ export default function UsersPage() {
             </div>
           )}
         </div>
+
+        {!isBuLoading && !currentBu && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Nenhuma BU selecionada</AlertTitle>
+            <AlertDescription>
+              Selecione uma BU no topo (ao lado do seu avatar) e tente novamente.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {profilesError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro ao carregar usuários</AlertTitle>
+            <AlertDescription>
+              {(profilesError as Error).message}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {teamsError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro ao carregar times</AlertTitle>
+            <AlertDescription>{(teamsError as Error).message}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
