@@ -88,6 +88,11 @@ export function CreateOrgObjectiveDialog({
       toast.error('O título é obrigatório');
       return;
     }
+    const currentYear = new Date().getFullYear();
+    if (year < currentYear) {
+      toast.error('Não é permitido criar OKRs para anos anteriores.');
+      return;
+    }
     createMutation.mutate();
   };
 
