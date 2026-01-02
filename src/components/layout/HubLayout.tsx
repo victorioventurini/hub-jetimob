@@ -23,7 +23,7 @@ export function HubLayout({ children }: HubLayoutProps) {
         )}
       >
         <Header sidebarCollapsed={sidebarCollapsed} />
-        <main className="p-4 lg:p-8 pt-20 lg:pt-8">
+        <main className="p-4 lg:p-8 pt-20 lg:pt-24">
           {children}
         </main>
       </div>
