@@ -16,6 +16,7 @@ import IntegrationDetails from "./pages/IntegrationDetails";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import OkrDashboardPage from "./modules/okrs/pages/OkrDashboardPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
+import KpiDashboardPage from "./modules/kpis/pages/KpiDashboardPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -115,6 +116,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CeoDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/metrics"
+              element={
+                <ProtectedRoute>
+                  <KpiDashboardPage />
                 </ProtectedRoute>
               }
             />

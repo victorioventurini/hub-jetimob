@@ -232,6 +232,120 @@ export type Database = {
           },
         ]
       }
+      kpi_metrics: {
+        Row: {
+          category: Database["public"]["Enums"]["kpi_category"]
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          direction: Database["public"]["Enums"]["kpi_direction"]
+          frequency: Database["public"]["Enums"]["kpi_frequency"]
+          id: string
+          name: string
+          owner_user_id: string | null
+          status: Database["public"]["Enums"]["kpi_status"]
+          target_value: number | null
+          team_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["kpi_category"]
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          direction?: Database["public"]["Enums"]["kpi_direction"]
+          frequency?: Database["public"]["Enums"]["kpi_frequency"]
+          id?: string
+          name: string
+          owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["kpi_status"]
+          target_value?: number | null
+          team_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["kpi_category"]
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          direction?: Database["public"]["Enums"]["kpi_direction"]
+          frequency?: Database["public"]["Enums"]["kpi_frequency"]
+          id?: string
+          name?: string
+          owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["kpi_status"]
+          target_value?: number | null
+          team_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_metrics_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_metrics_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_values: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kpi_id: string
+          notes: string | null
+          reference_date: string
+          source: Database["public"]["Enums"]["kpi_value_source"]
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kpi_id: string
+          notes?: string | null
+          reference_date: string
+          source?: Database["public"]["Enums"]["kpi_value_source"]
+          value: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kpi_id?: string
+          notes?: string | null
+          reference_date?: string
+          source?: Database["public"]["Enums"]["kpi_value_source"]
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_values_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_values_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metrics: {
         Row: {
           created_at: string
@@ -1015,6 +1129,17 @@ export type Database = {
     Enums: {
       app_role: "ceo" | "admin" | "team_leader" | "collaborator"
       employment_status: "active" | "vacation" | "terminated"
+      kpi_category:
+        | "financeiro"
+        | "growth"
+        | "cs"
+        | "produto"
+        | "operacoes"
+        | "pessoas"
+      kpi_direction: "up" | "down"
+      kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
+      kpi_status: "active" | "inactive"
+      kpi_value_source: "manual" | "integration" | "calculation"
       module_health: "healthy" | "degraded" | "down"
       module_status: "active" | "inactive" | "coming_soon"
       okr_channel: "email" | "slack" | "both"
@@ -1156,6 +1281,18 @@ export const Constants = {
     Enums: {
       app_role: ["ceo", "admin", "team_leader", "collaborator"],
       employment_status: ["active", "vacation", "terminated"],
+      kpi_category: [
+        "financeiro",
+        "growth",
+        "cs",
+        "produto",
+        "operacoes",
+        "pessoas",
+      ],
+      kpi_direction: ["up", "down"],
+      kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
+      kpi_status: ["active", "inactive"],
+      kpi_value_source: ["manual", "integration", "calculation"],
       module_health: ["healthy", "degraded", "down"],
       module_status: ["active", "inactive", "coming_soon"],
       okr_channel: ["email", "slack", "both"],
