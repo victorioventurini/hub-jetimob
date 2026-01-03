@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Settings as SettingsIcon, 
@@ -14,7 +14,14 @@ import {
   Key,
   Mail,
   Smartphone,
-  Loader2
+  Loader2,
+  ArrowLeft,
+  Building2,
+  Users,
+  Puzzle,
+  Blocks,
+  ExternalLink,
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -124,11 +131,22 @@ export default function Settings() {
     return <Navigate to="/" replace />;
   }
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-4xl py-8">
         {/* Header */}
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-4 gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/select-bu")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-primary/10">
               <SettingsIcon className="h-6 w-6 text-primary" />
@@ -138,26 +156,227 @@ export default function Settings() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Gerencie as configurações globais do Hub Jet
+            Gerencie as configurações globais do Hub Jetimob
           </p>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="appearance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="general" className="space-y-6">
+          <TabsList className="flex flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="general" className="flex items-center gap-2">
+              <SettingsIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Geral</span>
+            </TabsTrigger>
+            <TabsTrigger value="bus" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">BUs</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Usuários</span>
+            </TabsTrigger>
+            <TabsTrigger value="modules" className="flex items-center gap-2">
+              <Blocks className="h-4 w-4" />
+              <span className="hidden sm:inline">Módulos</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Puzzle className="h-4 w-4" />
+              <span className="hidden sm:inline">Integrações</span>
+            </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
-              Aparência
+              <span className="hidden sm:inline">Aparência</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Notificações
+              <span className="hidden sm:inline">Notificações</span>
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Segurança
+              <span className="hidden sm:inline">Segurança</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* General Tab */}
+          <TabsContent value="general">
+            <Card>
+              <CardHeader>
+                <CardTitle>Visão Geral</CardTitle>
+                <CardDescription>
+                  Acesso rápido às principais configurações do Hub
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <Link to="/users" className="block">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-500/10">
+                          <Users className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Gerenciar Usuários</p>
+                          <p className="text-sm text-muted-foreground">Adicionar, editar e remover usuários</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/bu-management" className="block">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-500/10">
+                          <Building2 className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Business Units</p>
+                          <p className="text-sm text-muted-foreground">Gerenciar BUs e configurações</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/modules" className="block">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-500/10">
+                          <Blocks className="h-5 w-5 text-purple-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Módulos</p>
+                          <p className="text-sm text-muted-foreground">Ativar e desativar módulos</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/integrations" className="block">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-orange-500/10">
+                          <Puzzle className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Integrações</p>
+                          <p className="text-sm text-muted-foreground">APIs e conexões externas</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Business Units Tab */}
+          <TabsContent value="bus">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Business Units</CardTitle>
+                  <CardDescription>
+                    Gerencie as Business Units do Hub
+                  </CardDescription>
+                </div>
+                <Link to="/bu-management">
+                  <Button variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Abrir Gestão de BUs
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Acesse a página de gestão de Business Units para criar, editar e configurar as BUs do Hub.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Usuários</CardTitle>
+                  <CardDescription>
+                    Gerencie os usuários do Hub
+                  </CardDescription>
+                </div>
+                <Link to="/users">
+                  <Button variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Abrir Gestão de Usuários
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Acesse a página de gestão de usuários para adicionar, editar permissões e gerenciar o acesso dos colaboradores.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Modules Tab */}
+          <TabsContent value="modules">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Módulos</CardTitle>
+                  <CardDescription>
+                    Gerencie os módulos disponíveis no Hub
+                  </CardDescription>
+                </div>
+                <Link to="/modules">
+                  <Button variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Abrir Gestão de Módulos
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Acesse a página de módulos para ativar, desativar e configurar os módulos disponíveis para cada BU.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Integrations Tab */}
+          <TabsContent value="integrations">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Integrações</CardTitle>
+                  <CardDescription>
+                    Gerencie as integrações e APIs externas
+                  </CardDescription>
+                </div>
+                <Link to="/integrations">
+                  <Button variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Abrir Integrações
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Acesse a página de integrações para configurar conexões com APIs externas, webhooks e outras ferramentas.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Appearance Tab */}
           <TabsContent value="appearance">
