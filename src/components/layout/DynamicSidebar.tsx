@@ -20,6 +20,8 @@ import {
   Briefcase,
   FileText,
   User,
+  BookOpen,
+  ExternalLink,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,15 @@ const buMenuItems = [
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
 ];
 
+// Links externos
+const externalLinks = [
+  { 
+    name: "Conhecimento", 
+    href: "https://www.notion.so/jetimobers/Jetimob-048e92e141744cc9b78435b8987f3566", 
+    icon: BookOpen 
+  },
+];
+
 // Itens admin - só aparecem na área GLOBAL (sem BU selecionada)
 const globalAdminItems = [
   { name: "Configurações", href: "/settings", icon: Settings },
@@ -78,16 +89,37 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
   const NavItem = ({ 
     name, 
     href, 
-    icon: Icon 
+    icon: Icon,
+    external = false,
   }: { 
     name: string; 
     href: string; 
     icon: LucideIcon;
+    external?: boolean;
   }) => {
-    const isActive = location.pathname === href || 
-      (href !== "/" && location.pathname.startsWith(href));
+    const isActive = !external && (location.pathname === href || 
+      (href !== "/" && location.pathname.startsWith(href)));
 
-    const linkContent = (
+    const linkContent = external ? (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+          "hover:bg-sidebar-accent",
+          "text-sidebar-foreground/70 hover:text-sidebar-foreground"
+        )}
+      >
+        <Icon className="h-5 w-5 shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="text-sm font-medium truncate flex-1">{name}</span>
+            <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+          </>
+        )}
+      </a>
+    ) : (
       <Link
         to={href}
         className={cn(
@@ -221,6 +253,18 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                   ))}
                 </div>
               )}
+
+              {/* Links Externos */}
+              <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
+                {!collapsed && (
+                  <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                    Recursos
+                  </p>
+                )}
+                {externalLinks.map((item) => (
+                  <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} external />
+                ))}
+              </div>
             </>
           )}
         </nav>
