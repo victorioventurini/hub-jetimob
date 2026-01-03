@@ -10,20 +10,25 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { checkEmailDomainAllowed } from "@/modules/bu/hooks/useBuData";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
-
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingDomain, setIsCheckingDomain] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [domainError, setDomainError] = useState<string | null>(null);
-  const { user, isLoading: authLoading, signInWithMagicLink } = useAuth();
+  const {
+    user,
+    isLoading: authLoading,
+    signInWithMagicLink
+  } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/", { replace: true });
+      navigate("/", {
+        replace: true
+      });
     }
   }, [user, authLoading, navigate]);
 
@@ -31,7 +36,6 @@ export default function Auth() {
   useEffect(() => {
     setDomainError(null);
   }, [email]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setDomainError(null);
@@ -45,43 +49,37 @@ export default function Auth() {
 
     // Check if email domain is allowed
     setIsCheckingDomain(true);
-    const { allowed } = await checkEmailDomainAllowed(email);
+    const {
+      allowed
+    } = await checkEmailDomainAllowed(email);
     setIsCheckingDomain(false);
-
     if (!allowed) {
       const domain = email.split("@")[1];
       setDomainError(`O domínio @${domain} não está autorizado para acesso ao Hub.`);
       toast.error("Domínio não autorizado");
       return;
     }
-
     setIsLoading(true);
-
-    const { error } = await signInWithMagicLink(email);
-
+    const {
+      error
+    } = await signInWithMagicLink(email);
     setIsLoading(false);
-
     if (error) {
       toast.error(error.message || "Erro ao enviar magic link");
       return;
     }
-
     setEmailSent(true);
     toast.success("Magic link enviado!");
   };
 
   // Show loading while checking auth state
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (emailSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    return <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
@@ -99,48 +97,53 @@ export default function Auth() {
                 O link expira em 1 hora. Verifique também sua caixa de spam.
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setEmailSent(false)}
-            >
+            <Button variant="outline" className="w-full" onClick={() => setEmailSent(false)}>
               Usar outro e-mail
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+  return <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:flex-1 gradient-hero items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          scale: 0.8
+        }} animate={{
+          opacity: 1,
+          scale: 1
+        }} transition={{
+          duration: 0.5,
+          ease: "easeOut"
+        }} className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8">
             <img src={JetimobIcon} alt="Hub" className="w-12 h-12" />
           </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-            className="text-4xl font-bold text-primary-foreground mb-4"
-          >
+          <motion.h1 initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5,
+          delay: 0.2,
+          ease: "easeOut"
+        }} className="text-4xl font-bold text-primary-foreground mb-4">
             Hub
           </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
-            className="text-lg text-primary-foreground/80"
-          >
-            O ponto de encontro para evoluir, executar e simplificar.
-          </motion.p>
+          <motion.p initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5,
+          delay: 0.4,
+          ease: "easeOut"
+        }} className="text-lg text-primary-foreground/80">O ponto de encontro dos Jetimobers para evoluir, executar e... simplificar o morar!</motion.p>
         </div>
       </div>
 
@@ -149,7 +152,9 @@ export default function Auth() {
         <Card className="w-full max-w-md border-0 shadow-none lg:border lg:shadow-lg">
           <CardHeader className="space-y-1">
             <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
-              <img src={JetimobIcon} alt="Hub" className="w-8 h-8 text-white" style={{ filter: 'brightness(0) invert(1)' }} />
+              <img src={JetimobIcon} alt="Hub" className="w-8 h-8 text-white" style={{
+              filter: 'brightness(0) invert(1)'
+            }} />
             </div>
             <CardTitle className="text-2xl">Entrar no Hub</CardTitle>
             <CardDescription>
@@ -162,67 +167,35 @@ export default function Auth() {
                 <Label htmlFor="email">E-mail corporativo</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu.nome@empresa.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`pl-10 ${domainError ? "border-destructive" : ""}`}
-                    required
-                    disabled={isLoading || isCheckingDomain}
-                  />
+                  <Input id="email" type="email" placeholder="seu.nome@empresa.com" value={email} onChange={e => setEmail(e.target.value)} className={`pl-10 ${domainError ? "border-destructive" : ""}`} required disabled={isLoading || isCheckingDomain} />
                 </div>
-                {domainError && (
-                  <div className="flex items-center gap-2 text-destructive text-sm">
+                {domainError && <div className="flex items-center gap-2 text-destructive text-sm">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     <span>{domainError}</span>
-                  </div>
-                )}
+                  </div>}
               </div>
 
-              <Button
-                type="submit"
-                variant="accent"
-                className="w-full gap-2"
-                disabled={isLoading || isCheckingDomain}
-              >
-                {isCheckingDomain ? (
-                  <>
+              <Button type="submit" variant="accent" className="w-full gap-2" disabled={isLoading || isCheckingDomain}>
+                {isCheckingDomain ? <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Verificando domínio...
-                  </>
-                ) : isLoading ? (
-                  <>
+                  </> : isLoading ? <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Enviando...
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     Continuar com Magic Link
                     <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                  </>}
               </Button>
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-6">
               Ao continuar, você concorda com os{" "}
-              <a
-                href="https://www.jetimob.com/termos"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-foreground transition-colors"
-              >
+              <a href="https://www.jetimob.com/termos" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
                 termos de uso
               </a>{" "}
               e{" "}
-              <a
-                href="https://www.jetimob.com/politica"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-foreground transition-colors"
-              >
+              <a href="https://www.jetimob.com/politica" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
                 política de privacidade
               </a>{" "}
               da Jetimob.
@@ -230,6 +203,5 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
