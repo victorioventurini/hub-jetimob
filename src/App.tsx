@@ -9,6 +9,7 @@ import { ModuleProvider } from "@/contexts/ModuleContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
+import { AdminRoute } from "@/components/auth/AdminRoute";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
 import TeamsPage from "./modules/teams/pages/TeamsPage";
@@ -117,7 +118,9 @@ const App = () => (
                   path="/settings"
                   element={
                     <ProtectedRoute skipBuCheck>
-                      <Settings />
+                      <AdminRoute>
+                        <Settings />
+                      </AdminRoute>
                     </ProtectedRoute>
                   }
                 />
