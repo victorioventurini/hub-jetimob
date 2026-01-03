@@ -156,7 +156,7 @@ export default function Settings() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Gerencie as configurações globais do Hub Jetimob
+            Gerencie as configurações globais do Hub
           </p>
         </div>
 

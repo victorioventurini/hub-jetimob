@@ -123,7 +123,7 @@ export default function Auth() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8"
           >
-            <img src={JetimobIcon} alt="Jetimob" className="w-12 h-12" />
+            <img src={JetimobIcon} alt="Hub" className="w-12 h-12" />
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -131,7 +131,7 @@ export default function Auth() {
             transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
             className="text-4xl font-bold text-primary-foreground mb-4"
           >
-            Hub Jetimob
+            Hub
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -139,7 +139,7 @@ export default function Auth() {
             transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
             className="text-lg text-primary-foreground/80"
           >
-            O ponto de encontro dos Jetimobers para evoluir, executar e simplificar o morar.
+            O ponto de encontro para evoluir, executar e simplificar.
           </motion.p>
         </div>
       </div>
@@ -149,11 +149,11 @@ export default function Auth() {
         <Card className="w-full max-w-md border-0 shadow-none lg:border lg:shadow-lg">
           <CardHeader className="space-y-1">
             <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
-              <img src={JetimobIcon} alt="Jetimob" className="w-8 h-8 text-white" style={{ filter: 'brightness(0) invert(1)' }} />
+              <img src={JetimobIcon} alt="Hub" className="w-8 h-8 text-white" style={{ filter: 'brightness(0) invert(1)' }} />
             </div>
             <CardTitle className="text-2xl">Entrar no Hub</CardTitle>
             <CardDescription>
-              Use seu e-mail @jetimob.com para acessar
+              Use seu e-mail corporativo para acessar
             </CardDescription>
           </CardHeader>
           <CardContent>

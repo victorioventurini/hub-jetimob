@@ -37,9 +37,9 @@ export default function SelectBu() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <img src={JetimobIcon} alt="Jetimob" className="w-6 h-6" style={{ filter: 'brightness(0) invert(1)' }} />
+              <img src={JetimobIcon} alt="Hub" className="w-6 h-6" style={{ filter: 'brightness(0) invert(1)' }} />
             </div>
-            <span className="text-lg font-semibold">Hub Jetimob</span>
+            <span className="text-lg font-semibold">Hub</span>
           </div>
           
           {/* Actions and User info */}
