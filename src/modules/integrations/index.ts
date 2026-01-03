@@ -3,6 +3,9 @@ export { default as GlobalIntegrationsPage } from './pages/GlobalIntegrationsPag
 export { default as GlobalIntegrationDetailPage } from './pages/GlobalIntegrationDetailPage';
 export { default as BuIntegrationsPage } from './pages/BuIntegrationsPage';
 export { default as BuIntegrationDetailPage } from './pages/BuIntegrationDetailPage';
+export { default as AgentsListPage } from './pages/AgentsListPage';
+export { default as AgentFormPage } from './pages/AgentFormPage';
+export { default as AgentLogsPage } from './pages/AgentLogsPage';
 
 // Components
 export { IntegrationIcon } from './components/IntegrationIcon';

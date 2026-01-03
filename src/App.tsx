@@ -20,7 +20,10 @@ import {
   GlobalIntegrationsPage, 
   GlobalIntegrationDetailPage,
   BuIntegrationsPage,
-  BuIntegrationDetailPage 
+  BuIntegrationDetailPage,
+  AgentsListPage,
+  AgentFormPage,
+  AgentLogsPage,
 } from "./modules/integrations";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import OkrDashboardPage from "./modules/okrs/pages/OkrDashboardPage";
@@ -112,6 +115,46 @@ const App = () => (
                     <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="integrations" requiresBu={false}>
                         <GlobalIntegrationDetailPage />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integrations/:integrationKey/agents"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <AgentsListPage />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integrations/:integrationKey/agents/new"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <AgentFormPage />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integrations/:integrationKey/agents/:agentId"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <AgentFormPage />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integrations/:integrationKey/logs"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <AgentLogsPage />
                       </ModuleRoute>
                     </ProtectedRoute>
                   }

@@ -287,17 +287,22 @@ export default function GlobalIntegrationDetailPage() {
                         Templates de agentes disponíveis para todas as BUs
                       </CardDescription>
                     </div>
-                    {isAdmin && (
-                      <Button onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}>
-                        Criar Agente
+                    <div className="flex gap-2">
+                      {isAdmin && (
+                        <Button onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}>
+                          Criar Agente
+                        </Button>
+                      )}
+                      <Button variant="outline" onClick={() => navigate(`/integrations/${integrationKey}/agents`)}>
+                        Ver Todos
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   {globalAgents && globalAgents.length > 0 ? (
                     <div className="space-y-3">
-                      {globalAgents.map((agent) => (
+                      {globalAgents.slice(0, 5).map((agent) => (
                         <div 
                           key={agent.id}
                           className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
@@ -315,11 +320,29 @@ export default function GlobalIntegrationDetailPage() {
                           <Switch checked={agent.is_active} disabled />
                         </div>
                       ))}
+                      {globalAgents.length > 5 && (
+                        <Button 
+                          variant="ghost" 
+                          className="w-full"
+                          onClick={() => navigate(`/integrations/${integrationKey}/agents`)}
+                        >
+                          Ver mais {globalAgents.length - 5} agentes...
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Bot className="w-10 h-10 mx-auto mb-3 opacity-50" />
                       <p>Nenhum agente global configurado</p>
+                      {isAdmin && (
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}
+                        >
+                          Criar primeiro agente
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -331,15 +354,22 @@ export default function GlobalIntegrationDetailPage() {
           <TabsContent value="logs" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Logs de Execução</CardTitle>
-                <CardDescription>
-                  Histórico de execuções de agentes desta integração
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Logs de Execução</CardTitle>
+                    <CardDescription>
+                      Histórico de execuções de agentes desta integração
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" onClick={() => navigate(`/integrations/${integrationKey}/logs`)}>
+                    Ver Todos
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {logs && logs.length > 0 ? (
                   <div className="space-y-2">
-                    {logs.slice(0, 20).map((log) => (
+                    {logs.slice(0, 10).map((log) => (
                       <div 
                         key={log.id}
                         className="flex items-center justify-between p-3 border rounded-lg text-sm"
@@ -359,6 +389,15 @@ export default function GlobalIntegrationDetailPage() {
                         </span>
                       </div>
                     ))}
+                    {logs.length > 10 && (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full"
+                        onClick={() => navigate(`/integrations/${integrationKey}/logs`)}
+                      >
+                        Ver mais {logs.length - 10} logs...
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
