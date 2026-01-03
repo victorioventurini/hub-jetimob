@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -48,11 +49,17 @@ const createBuSchema = z.object({
 type CreateBuFormData = z.infer<typeof createBuSchema>;
 
 interface CreateBuDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: ReactNode;
 }
 
-export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
+export function CreateBuDialog({ open: controlledOpen, onOpenChange: controlledOnOpenChange, trigger }: CreateBuDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const onOpenChange = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const [domainInput, setDomainInput] = useState("");
   const createBu = useCreateBu();
 
@@ -128,6 +135,7 @@ export function CreateBuDialog({ open, onOpenChange }: CreateBuDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
