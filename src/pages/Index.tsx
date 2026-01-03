@@ -4,8 +4,11 @@ import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { QuickStats } from "@/components/home/QuickStats";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
+  const { profile } = useAuth();
+
   // Get current greeting based on time
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -14,13 +17,15 @@ const Index = () => {
     return "Boa noite";
   };
 
+  const firstName = profile?.first_name?.trim();
+
   return (
     <HubLayout>
       <div className="space-y-8">
         {/* Hero Section */}
         <section className="animate-fade-in">
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
-            {getGreeting()}, João! 👋
+            {getGreeting()}{firstName ? `, ${firstName}` : ""}! 👋
           </h1>
           <p className="text-lg text-muted-foreground">
             Bem-vindo ao Hub da Jetimob. Aqui você encontra tudo sobre a nossa empresa.
