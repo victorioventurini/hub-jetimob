@@ -24,6 +24,7 @@ import KpiDashboardPage from "./modules/kpis/pages/KpiDashboardPage";
 import BuManagementPage from "./modules/bu/pages/BuManagementPage";
 import SelectBu from "./pages/SelectBu";
 import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -106,6 +107,18 @@ const App = () => (
                     <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="integrations" requiresBu={false}>
                         <IntegrationDetails />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Configurações do Hub (Admin Global) */}
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="settings" requiresBu={false}>
+                        <Settings />
                       </ModuleRoute>
                     </ProtectedRoute>
                   }

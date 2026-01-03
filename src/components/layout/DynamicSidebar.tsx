@@ -55,7 +55,8 @@ const fixedItems = [
   { name: "Módulos", href: "/modules", icon: LayoutGrid, adminOnly: false },
 ];
 
-const adminOnlyItems = [
+// Itens admin - só aparecem na área GLOBAL (sem BU selecionada)
+const globalAdminItems = [
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
@@ -199,15 +200,15 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                 </div>
               )}
 
-              {/* Admin Only */}
-              {isAdmin && (
+              {/* Admin Only - Apenas na área GLOBAL (sem BU selecionada) */}
+              {isAdmin && !currentBu && globalAdminItems.length > 0 && (
                 <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
                   {!collapsed && (
                     <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
                       Admin
                     </p>
                   )}
-                  {adminOnlyItems.map((item) => (
+                  {globalAdminItems.map((item) => (
                     <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                   ))}
                 </div>
