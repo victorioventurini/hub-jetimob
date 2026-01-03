@@ -119,16 +119,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/integrations/:integrationKey/agents"
-                  element={
-                    <ProtectedRoute skipBuCheck>
-                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
-                        <AgentsListPage />
-                      </ModuleRoute>
-                    </ProtectedRoute>
-                  }
-                />
+                {/* IMPORTANTE: /agents/new DEVE vir ANTES de /agents/:agentId */}
                 <Route
                   path="/integrations/:integrationKey/agents/new"
                   element={
@@ -145,6 +136,16 @@ const App = () => (
                     <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="integrations" requiresBu={false}>
                         <AgentFormPage />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integrations/:integrationKey/agents"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <AgentsListPage />
                       </ModuleRoute>
                     </ProtectedRoute>
                   }
