@@ -1867,6 +1867,7 @@ export type Database = {
         Args: { p_bu_id: string; p_module_slug: string }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           p_action: string
@@ -1885,7 +1886,7 @@ export type Database = {
     Enums: {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
-      app_role: "ceo" | "admin" | "team_leader" | "collaborator"
+      app_role: "super_admin" | "admin" | "team_leader" | "collaborator"
       bu_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
       integration_config_mode: "use_global" | "override"
@@ -2043,7 +2044,7 @@ export const Constants = {
     Enums: {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
-      app_role: ["ceo", "admin", "team_leader", "collaborator"],
+      app_role: ["super_admin", "admin", "team_leader", "collaborator"],
       bu_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
       integration_config_mode: ["use_global", "override"],

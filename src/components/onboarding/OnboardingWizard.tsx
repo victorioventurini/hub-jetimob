@@ -127,7 +127,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
     },
   });
 
-  const isExemptFromTeam = userRole === "ceo" || userRole === "admin";
+  const isExemptFromTeam = userRole === "super_admin" || userRole === "admin";
 
   const completeMutation = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
@@ -536,7 +536,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                     )}
                     {isExemptFromTeam && (
                       <p className="text-xs text-muted-foreground">
-                        Como {userRole === "ceo" ? "CEO" : "Admin"}, você pode deixar este campo em branco
+                        Como {userRole === "super_admin" ? "Super Admin" : "Admin"}, você pode deixar este campo em branco
                       </p>
                     )}
                   </div>

@@ -21,7 +21,7 @@ interface HeaderProps {
 }
 
 const roleLabels: Record<string, string> = {
-  ceo: "CEO",
+  super_admin: "Super Admin",
   admin: "Administrador",
   team_leader: "Líder de Time",
   collaborator: "Colaborador",
