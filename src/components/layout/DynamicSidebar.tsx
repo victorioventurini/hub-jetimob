@@ -50,9 +50,17 @@ const iconMap: Record<string, LucideIcon> = {
   settings: Settings,
 };
 
-// Itens fixos que não vêm do banco
+// Itens fixos (sempre aparecem)
 const fixedItems = [
-  { name: "Home", href: "/", icon: Home, alwaysShow: true },
+  { name: "Home", href: "/", icon: Home },
+];
+
+// Menu dentro da BU - ordem específica
+const buMenuItems = [
+  { name: "OKRs", href: "/okrs", icon: Target, slug: "okrs" },
+  { name: "KPIs", href: "/kpis", icon: BarChart3, slug: "kpis" },
+  { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
+  { name: "Times", href: "/teams", icon: Building2, slug: "teams" },
 ];
 
 // Itens admin - só aparecem na área GLOBAL (sem BU selecionada)
@@ -186,15 +194,17 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                 </div>
               )}
 
-              {/* Módulos Operacionais (apenas se BU ativa) */}
-              {currentBu && enabledOperationalModules.length > 0 && (
+              {/* Menu da BU (ordem fixa) */}
+              {currentBu && (
                 <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
                   {!collapsed && (
                     <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
                       {currentBu.name}
                     </p>
                   )}
-                  {enabledOperationalModules.map(renderModuleItem)}
+                  {buMenuItems.map((item) => (
+                    <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                  ))}
                 </div>
               )}
 
