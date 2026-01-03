@@ -33,8 +33,8 @@ export function BuProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (userBus.length === 0) return;
 
-    const storedBuId = sessionStorage.getItem(BU_STORAGE_KEY);
-    const storedSelected = sessionStorage.getItem(BU_SELECTED_KEY) === "true";
+    const storedBuId = localStorage.getItem(BU_STORAGE_KEY);
+    const storedSelected = localStorage.getItem(BU_SELECTED_KEY) === "true";
     
     // Check if stored BU is still valid for this user
     const validBu = userBus.find(m => m.bu_id === storedBuId);
@@ -48,8 +48,8 @@ export function BuProvider({ children }: { children: ReactNode }) {
       const singleBu = userBus[0];
       setCurrentBuId(singleBu.bu_id);
       setBuSelected(true);
-      sessionStorage.setItem(BU_STORAGE_KEY, singleBu.bu_id);
-      sessionStorage.setItem(BU_SELECTED_KEY, "true");
+      localStorage.setItem(BU_STORAGE_KEY, singleBu.bu_id);
+      localStorage.setItem(BU_SELECTED_KEY, "true");
     } else {
       // Multiple BUs and no valid selection - user needs to choose
       setBuSelected(false);
@@ -62,8 +62,8 @@ export function BuProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setCurrentBuId(null);
       setBuSelected(false);
-      sessionStorage.removeItem(BU_STORAGE_KEY);
-      sessionStorage.removeItem(BU_SELECTED_KEY);
+      localStorage.removeItem(BU_STORAGE_KEY);
+      localStorage.removeItem(BU_SELECTED_KEY);
     }
   }, [user]);
 
@@ -72,8 +72,8 @@ export function BuProvider({ children }: { children: ReactNode }) {
     if (hasAccess) {
       setCurrentBuId(buId);
       setBuSelected(true);
-      sessionStorage.setItem(BU_STORAGE_KEY, buId);
-      sessionStorage.setItem(BU_SELECTED_KEY, "true");
+      localStorage.setItem(BU_STORAGE_KEY, buId);
+      localStorage.setItem(BU_SELECTED_KEY, "true");
     }
   };
 
@@ -85,8 +85,8 @@ export function BuProvider({ children }: { children: ReactNode }) {
   const clearBuSelection = () => {
     setCurrentBuId(null);
     setBuSelected(false);
-    sessionStorage.removeItem(BU_STORAGE_KEY);
-    sessionStorage.removeItem(BU_SELECTED_KEY);
+    localStorage.removeItem(BU_STORAGE_KEY);
+    localStorage.removeItem(BU_SELECTED_KEY);
   };
 
   const currentMembership = userBus.find(m => m.bu_id === currentBuId);
