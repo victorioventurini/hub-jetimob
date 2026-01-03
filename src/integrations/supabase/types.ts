@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_agent_documents: {
+        Row: {
+          agent_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          extracted_content: string | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          name: string
+          processing_error: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          extracted_content?: string | null
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          name: string
+          processing_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          extracted_content?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          name?: string
+          processing_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_documents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_logs: {
         Row: {
           agent_id: string | null

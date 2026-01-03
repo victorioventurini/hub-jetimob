@@ -36,6 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';
+import { AgentDocumentUpload } from '../components/AgentDocumentUpload';
 
 const AVAILABLE_TOOLS = [
   { key: 'query_okrs', label: 'Consultar OKRs', description: 'Acesso aos objetivos e key results' },
@@ -459,6 +460,12 @@ export default function AgentFormPage() {
               </div>
             </CardContent>
           </Card>
+          
+          
+          {/* Knowledge Base - Only show when editing */}
+          {isEditing && agentId && (
+            <AgentDocumentUpload agentId={agentId} />
+          )}
           
           <Separator />
           
