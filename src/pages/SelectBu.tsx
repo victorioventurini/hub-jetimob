@@ -11,7 +11,7 @@ import { CreateBuDialog } from "@/modules/bu/components/CreateBuDialog";
 
 export default function SelectBu() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const { userBus, isLoading, selectBu } = useBu();
 
   const handleSelectBu = (buId: string) => {
@@ -44,14 +44,16 @@ export default function SelectBu() {
           
           {/* Actions and User info */}
           <div className="flex items-center gap-2">
-            <CreateBuDialog 
-              trigger={
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nova BU</span>
-                </Button>
-              }
-            />
+            {isAdmin && (
+              <CreateBuDialog 
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Nova BU</span>
+                  </Button>
+                }
+              />
+            )}
             <Button 
               variant="ghost" 
               size="icon" 
