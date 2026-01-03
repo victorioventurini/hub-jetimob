@@ -213,13 +213,13 @@ const App = () => (
                   }
                 />
 
-                {/* Métricas/KPIs */}
+                {/* KPIs */}
                 <Route
-                  path="/metrics"
+                  path="/kpis"
                   element={
                     <ProtectedRoute>
                       <BuRequiredRoute>
-                        <ModuleRoute moduleSlug="metrics">
+                        <ModuleRoute moduleSlug="kpis">
                           <KpiDashboardPage />
                         </ModuleRoute>
                       </BuRequiredRoute>
