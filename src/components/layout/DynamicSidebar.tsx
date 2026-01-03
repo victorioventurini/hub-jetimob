@@ -42,6 +42,7 @@ const iconMap: Record<string, LucideIcon> = {
   teams: Building2,
   okrs: Target,
   metrics: BarChart3,
+  kpis: BarChart3,
   cycles: Calendar,
   projects: Briefcase,
   docs: FileText,
@@ -52,7 +53,6 @@ const iconMap: Record<string, LucideIcon> = {
 // Itens fixos que não vêm do banco
 const fixedItems = [
   { name: "Home", href: "/", icon: Home, alwaysShow: true },
-  { name: "Módulos", href: "/modules", icon: LayoutGrid, adminOnly: false },
 ];
 
 // Itens admin - só aparecem na área GLOBAL (sem BU selecionada)
@@ -167,11 +167,9 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
             <>
               {/* Itens fixos */}
               <div className="space-y-1">
-                {fixedItems
-                  .filter((item) => item.alwaysShow || (item.adminOnly ? isAdmin : true))
-                  .map((item) => (
-                    <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
-                  ))}
+                {fixedItems.map((item) => (
+                  <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                ))}
               </div>
 
               {/* Módulos Globais - apenas quando NÃO há BU selecionada */}
