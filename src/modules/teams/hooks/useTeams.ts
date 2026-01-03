@@ -2,10 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamWithRelations, TeamFormData, TeamTreeNode } from "../types";
 import { toast } from "sonner";
+import { useBu } from "@/contexts/BuContext";
 
 export function useTeams(includeInactive = false) {
+  const { currentBu } = useBu();
+
   return useQuery({
-    queryKey: ["teams", { includeInactive }],
+    queryKey: ["teams", { includeInactive, buId: currentBu?.id }],
     queryFn: async () => {
       let query = supabase
         .from("teams")
@@ -14,6 +17,11 @@ export function useTeams(includeInactive = false) {
           leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
         `)
         .order("name");
+
+      // Filter by BU if selected
+      if (currentBu?.id) {
+        query = query.eq("bu_id", currentBu.id);
+      }
 
       if (!includeInactive) {
         query = query.eq("status", "active");
@@ -56,6 +64,7 @@ export function useTeams(includeInactive = false) {
         parent_team: team.parent_team_id ? parentTeamMap.get(team.parent_team_id) : null,
       })) as TeamWithRelations[];
     },
+    enabled: !!currentBu?.id,
   });
 }
 
@@ -164,9 +173,14 @@ export function useTeamTree() {
 
 export function useCreateTeam() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
 
   return useMutation({
     mutationFn: async (data: TeamFormData) => {
+      if (!currentBu?.id) {
+        throw new Error("Nenhuma BU selecionada");
+      }
+
       // Validate no circular reference
       if (data.parent_team_id) {
         const wouldCreateLoop = await checkCircularReference(
@@ -186,6 +200,7 @@ export function useCreateTeam() {
           leader_user_id: data.leader_user_id || null,
           parent_team_id: data.parent_team_id || null,
           status: data.status,
+          bu_id: currentBu.id,
         })
         .select()
         .single();
@@ -300,19 +315,28 @@ async function checkCircularReference(
 }
 
 export function useAvailableLeaders() {
+  const { currentBu } = useBu();
+
   return useQuery({
-    queryKey: ["available-leaders"],
+    queryKey: ["available-leaders", currentBu?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("profiles")
         .select("id, display_name, photo_url, job_title")
         .is("deleted_at", null)
         .eq("employment_status", "active")
         .order("display_name");
 
+      if (currentBu?.id) {
+        query = query.eq("bu_id", currentBu.id);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBu?.id,
   });
 }
 
