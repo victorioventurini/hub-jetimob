@@ -117,9 +117,7 @@ const App = () => (
                   path="/settings"
                   element={
                     <ProtectedRoute skipBuCheck>
-                      <ModuleRoute moduleSlug="settings" requiresBu={false}>
-                        <Settings />
-                      </ModuleRoute>
+                      <Settings />
                     </ProtectedRoute>
                   }
                 />
