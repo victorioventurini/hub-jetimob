@@ -45,23 +45,26 @@ export default function SelectBu() {
           {/* Actions and User info */}
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <CreateBuDialog 
-                trigger={
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Nova BU</span>
-                  </Button>
-                }
-              />
+              <>
+                <CreateBuDialog
+                  trigger={
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Nova BU</span>
+                    </Button>
+                  }
+                />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/settings")}
+                  title="Configurações do Hub"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </>
             )}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate("/settings")}
-              title="Configurações do Hub"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
             <div className="w-px h-6 bg-border mx-1" />
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.photo_url || undefined} />
