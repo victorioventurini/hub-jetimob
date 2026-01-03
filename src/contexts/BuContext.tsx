@@ -24,7 +24,7 @@ const BU_STORAGE_KEY = "hub_current_bu_id";
 const BU_SELECTED_KEY = "hub_bu_selected";
 
 export function BuProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { data: userBus = [], isLoading } = useUserBus();
   const [currentBuId, setCurrentBuId] = useState<string | null>(() => {
     return localStorage.getItem(BU_STORAGE_KEY);
@@ -61,15 +61,17 @@ export function BuProvider({ children }: { children: ReactNode }) {
     }
   }, [userBus]);
 
-  // Clear BU when user logs out
+  // Clear BU when user logs out (avoid clearing during initial auth loading)
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       setCurrentBuId(null);
       setBuSelected(false);
       localStorage.removeItem(BU_STORAGE_KEY);
       localStorage.removeItem(BU_SELECTED_KEY);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const selectBu = (buId: string) => {
     const hasAccess = userBus.some(m => m.bu_id === buId);
