@@ -8,6 +8,7 @@ import { BuProvider } from "@/contexts/BuContext";
 import { ModuleProvider } from "@/contexts/ModuleContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
+import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
 import TeamsPage from "./modules/teams/pages/TeamsPage";
@@ -21,6 +22,7 @@ import OkrDashboardPage from "./modules/okrs/pages/OkrDashboardPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
 import KpiDashboardPage from "./modules/kpis/pages/KpiDashboardPage";
 import BuManagementPage from "./modules/bu/pages/BuManagementPage";
+import SelectBu from "./pages/SelectBu";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -36,61 +38,28 @@ const App = () => (
           <BuProvider>
             <ModuleProvider>
               <Routes>
-                {/* Auth - sem proteção */}
+                {/* ===== ROTAS PÚBLICAS ===== */}
                 <Route path="/auth" element={<Auth />} />
 
-                {/* Home - sempre acessível (após login) */}
+                {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
+                
+                {/* Seleção de Business Unit */}
                 <Route
-                  path="/"
+                  path="/select-bu"
                   element={
-                    <ProtectedRoute>
-                      <Index />
+                    <ProtectedRoute skipBuCheck>
+                      <SelectBu />
                     </ProtectedRoute>
                   }
                 />
 
-                {/* ===== MÓDULOS GLOBAIS ===== */}
-                {/* Usuários */}
-                <Route
-                  path="/users"
-                  element={
-                    <ProtectedRoute>
-                      <ModuleRoute moduleSlug="users" requiresBu={false}>
-                        <Users />
-                      </ModuleRoute>
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Perfil */}
+                {/* Perfil do usuário */}
                 <Route
                   path="/profile"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="profile" requiresBu={false}>
                         <Profile />
-                      </ModuleRoute>
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Integrações */}
-                <Route
-                  path="/integrations"
-                  element={
-                    <ProtectedRoute>
-                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
-                        <Integrations />
-                      </ModuleRoute>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/integrations/:id"
-                  element={
-                    <ProtectedRoute>
-                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
-                        <IntegrationDetails />
                       </ModuleRoute>
                     </ProtectedRoute>
                   }
@@ -100,7 +69,7 @@ const App = () => (
                 <Route
                   path="/business-units"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="business-units" requiresBu={false}>
                         <BuManagementPage />
                       </ModuleRoute>
@@ -108,25 +77,74 @@ const App = () => (
                   }
                 />
 
-                {/* Módulos (catálogo) */}
+                {/* Usuários (Admin Global) */}
+                <Route
+                  path="/users"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="users" requiresBu={false}>
+                        <Users />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Integrações (Admin Global) */}
+                <Route
+                  path="/integrations"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <Integrations />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/integrations/:id"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <ModuleRoute moduleSlug="integrations" requiresBu={false}>
+                        <IntegrationDetails />
+                      </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Catálogo de Módulos (Admin Global) */}
                 <Route
                   path="/modules"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute skipBuCheck>
                       <Modules />
                     </ProtectedRoute>
                   }
                 />
 
-                {/* ===== MÓDULOS OPERACIONAIS (requerem BU) ===== */}
+                {/* ===== ÁREA OPERACIONAL (requer BU selecionada) ===== */}
+                
+                {/* Home/Dashboard da BU */}
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <BuRequiredRoute>
+                        <Index />
+                      </BuRequiredRoute>
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Times */}
                 <Route
                   path="/teams"
                   element={
                     <ProtectedRoute>
-                      <ModuleRoute moduleSlug="teams">
-                        <TeamsPage />
-                      </ModuleRoute>
+                      <BuRequiredRoute>
+                        <ModuleRoute moduleSlug="teams">
+                          <TeamsPage />
+                        </ModuleRoute>
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
@@ -134,9 +152,11 @@ const App = () => (
                   path="/teams/:id"
                   element={
                     <ProtectedRoute>
-                      <ModuleRoute moduleSlug="teams">
-                        <TeamDetailPage />
-                      </ModuleRoute>
+                      <BuRequiredRoute>
+                        <ModuleRoute moduleSlug="teams">
+                          <TeamDetailPage />
+                        </ModuleRoute>
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
@@ -146,9 +166,11 @@ const App = () => (
                   path="/okrs"
                   element={
                     <ProtectedRoute>
-                      <ModuleRoute moduleSlug="okrs">
-                        <OkrDashboardPage />
-                      </ModuleRoute>
+                      <BuRequiredRoute>
+                        <ModuleRoute moduleSlug="okrs">
+                          <OkrDashboardPage />
+                        </ModuleRoute>
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
@@ -156,9 +178,11 @@ const App = () => (
                   path="/okrs/manage"
                   element={
                     <ProtectedRoute>
-                      <ModuleRoute moduleSlug="okrs">
-                        <OkrsPage />
-                      </ModuleRoute>
+                      <BuRequiredRoute>
+                        <ModuleRoute moduleSlug="okrs">
+                          <OkrsPage />
+                        </ModuleRoute>
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
@@ -166,9 +190,11 @@ const App = () => (
                   path="/okrs/ceo"
                   element={
                     <ProtectedRoute>
-                      <ModuleRoute moduleSlug="okrs">
-                        <CeoDashboardPage />
-                      </ModuleRoute>
+                      <BuRequiredRoute>
+                        <ModuleRoute moduleSlug="okrs">
+                          <CeoDashboardPage />
+                        </ModuleRoute>
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
@@ -178,9 +204,11 @@ const App = () => (
                   path="/metrics"
                   element={
                     <ProtectedRoute>
-                      <ModuleRoute moduleSlug="metrics">
-                        <KpiDashboardPage />
-                      </ModuleRoute>
+                      <BuRequiredRoute>
+                        <ModuleRoute moduleSlug="metrics">
+                          <KpiDashboardPage />
+                        </ModuleRoute>
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
