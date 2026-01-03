@@ -14,6 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_agent_logs: {
+        Row: {
+          agent_id: string | null
+          agent_name: string
+          bu_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          input_tokens: number | null
+          integration_key: string
+          latency_ms: number | null
+          model_used: string | null
+          output_tokens: number | null
+          scope: Database["public"]["Enums"]["agent_scope"]
+          status: string
+          total_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name: string
+          bu_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_tokens?: number | null
+          integration_key: string
+          latency_ms?: number | null
+          model_used?: string | null
+          output_tokens?: number | null
+          scope: Database["public"]["Enums"]["agent_scope"]
+          status: string
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string
+          bu_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_tokens?: number | null
+          integration_key?: string
+          latency_ms?: number | null
+          model_used?: string | null
+          output_tokens?: number | null
+          scope?: Database["public"]["Enums"]["agent_scope"]
+          status?: string
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_logs_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          allowed_tools: Json | null
+          bu_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          integration_key: string
+          is_active: boolean
+          max_tokens: number | null
+          model_name: string | null
+          name: string
+          output_format: Database["public"]["Enums"]["agent_output_format"]
+          output_schema: Json | null
+          scope: Database["public"]["Enums"]["agent_scope"]
+          system_prompt: string
+          temperature: number | null
+          updated_at: string
+        }
+        Insert: {
+          allowed_tools?: Json | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          integration_key: string
+          is_active?: boolean
+          max_tokens?: number | null
+          model_name?: string | null
+          name: string
+          output_format?: Database["public"]["Enums"]["agent_output_format"]
+          output_schema?: Json | null
+          scope?: Database["public"]["Enums"]["agent_scope"]
+          system_prompt: string
+          temperature?: number | null
+          updated_at?: string
+        }
+        Update: {
+          allowed_tools?: Json | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          integration_key?: string
+          is_active?: boolean
+          max_tokens?: number | null
+          model_name?: string | null
+          name?: string
+          output_format?: Database["public"]["Enums"]["agent_output_format"]
+          output_schema?: Json | null
+          scope?: Database["public"]["Enums"]["agent_scope"]
+          system_prompt?: string
+          temperature?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agents_integration_key_fkey"
+            columns: ["integration_key"]
+            isOneToOne: false
+            referencedRelation: "hub_integrations_catalog"
+            referencedColumns: ["integration_key"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -52,6 +196,120 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      bu_agent_activations: {
+        Row: {
+          agent_id: string
+          bu_id: string
+          created_at: string
+          custom_system_prompt: string | null
+          enabled_by: string | null
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          bu_id: string
+          created_at?: string
+          custom_system_prompt?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          bu_id?: string
+          created_at?: string
+          custom_system_prompt?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_agent_activations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_agent_activations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bu_integrations_config: {
+        Row: {
+          bu_id: string
+          config_mode: Database["public"]["Enums"]["integration_config_mode"]
+          config_override_encrypted: Json | null
+          created_at: string
+          id: string
+          integration_key: string
+          is_enabled_in_bu: boolean
+          last_test_at: string | null
+          last_test_message: string | null
+          last_test_status:
+            | Database["public"]["Enums"]["integration_test_status"]
+            | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bu_id: string
+          config_mode?: Database["public"]["Enums"]["integration_config_mode"]
+          config_override_encrypted?: Json | null
+          created_at?: string
+          id?: string
+          integration_key: string
+          is_enabled_in_bu?: boolean
+          last_test_at?: string | null
+          last_test_message?: string | null
+          last_test_status?:
+            | Database["public"]["Enums"]["integration_test_status"]
+            | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bu_id?: string
+          config_mode?: Database["public"]["Enums"]["integration_config_mode"]
+          config_override_encrypted?: Json | null
+          created_at?: string
+          id?: string
+          integration_key?: string
+          is_enabled_in_bu?: boolean
+          last_test_at?: string | null
+          last_test_message?: string | null
+          last_test_status?:
+            | Database["public"]["Enums"]["integration_test_status"]
+            | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_integrations_config_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_integrations_config_integration_key_fkey"
+            columns: ["integration_key"]
+            isOneToOne: false
+            referencedRelation: "hub_integrations_catalog"
+            referencedColumns: ["integration_key"]
+          },
+        ]
       }
       bu_module_configs: {
         Row: {
@@ -240,6 +498,110 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cycles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      hub_integrations_catalog: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          documentation_url: string | null
+          icon: string | null
+          id: string
+          integration_key: string
+          name: string
+          status: string
+          supports_agents: boolean
+          supports_bu_override: boolean
+          supports_global_config: boolean
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          documentation_url?: string | null
+          icon?: string | null
+          id?: string
+          integration_key: string
+          name: string
+          status?: string
+          supports_agents?: boolean
+          supports_bu_override?: boolean
+          supports_global_config?: boolean
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          documentation_url?: string | null
+          icon?: string | null
+          id?: string
+          integration_key?: string
+          name?: string
+          status?: string
+          supports_agents?: boolean
+          supports_bu_override?: boolean
+          supports_global_config?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hub_integrations_global_config: {
+        Row: {
+          config_encrypted: Json | null
+          created_at: string
+          id: string
+          integration_key: string
+          is_enabled_global: boolean
+          last_test_at: string | null
+          last_test_message: string | null
+          last_test_status:
+            | Database["public"]["Enums"]["integration_test_status"]
+            | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config_encrypted?: Json | null
+          created_at?: string
+          id?: string
+          integration_key: string
+          is_enabled_global?: boolean
+          last_test_at?: string | null
+          last_test_message?: string | null
+          last_test_status?:
+            | Database["public"]["Enums"]["integration_test_status"]
+            | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config_encrypted?: Json | null
+          created_at?: string
+          id?: string
+          integration_key?: string
+          is_enabled_global?: boolean
+          last_test_at?: string | null
+          last_test_message?: string | null
+          last_test_status?:
+            | Database["public"]["Enums"]["integration_test_status"]
+            | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_integrations_global_config_integration_key_fkey"
+            columns: ["integration_key"]
+            isOneToOne: true
+            referencedRelation: "hub_integrations_catalog"
+            referencedColumns: ["integration_key"]
           },
         ]
       }
@@ -1425,6 +1787,10 @@ export type Database = {
           type: Database["public"]["Enums"]["module_type"]
         }[]
       }
+      get_integration_config_for_bu: {
+        Args: { p_bu_id: string; p_integration_key: string }
+        Returns: Json
+      }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
@@ -1461,9 +1827,13 @@ export type Database = {
       }
     }
     Enums: {
+      agent_output_format: "text" | "json"
+      agent_scope: "global" | "bu"
       app_role: "ceo" | "admin" | "team_leader" | "collaborator"
       bu_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
+      integration_config_mode: "use_global" | "override"
+      integration_test_status: "ok" | "error" | "pending"
       kpi_category:
         | "financeiro"
         | "growth"
@@ -1615,9 +1985,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_output_format: ["text", "json"],
+      agent_scope: ["global", "bu"],
       app_role: ["ceo", "admin", "team_leader", "collaborator"],
       bu_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
+      integration_config_mode: ["use_global", "override"],
+      integration_test_status: ["ok", "error", "pending"],
       kpi_category: [
         "financeiro",
         "growth",
