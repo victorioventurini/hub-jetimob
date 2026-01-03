@@ -60,7 +60,7 @@ const buMenuItems = [
   { name: "OKRs", href: "/okrs", icon: Target, slug: "okrs" },
   { name: "KPIs", href: "/kpis", icon: BarChart3, slug: "kpis" },
   { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
-  { name: "Times", href: "/teams", icon: Building2, slug: "teams" },
+  { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
 ];
 
 // Itens admin - só aparecem na área GLOBAL (sem BU selecionada)
