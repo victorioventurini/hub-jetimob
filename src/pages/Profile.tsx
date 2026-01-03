@@ -375,7 +375,7 @@ export default function Profile() {
 
   const getRoleLabel = (r: string | null) => {
     switch (r) {
-      case 'ceo': return 'CEO';
+      case 'super_admin': return 'Super Admin';
       case 'admin': return 'Administrador';
       case 'team_leader': return 'Líder de Time';
       case 'collaborator': return 'Colaborador';

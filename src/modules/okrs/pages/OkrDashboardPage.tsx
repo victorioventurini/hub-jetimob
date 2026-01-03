@@ -100,8 +100,8 @@ export default function OkrDashboardPage() {
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
 
   // Can create based on role
-  const canCreateOrg = role === 'ceo' || role === 'admin';
-  const canCreateTeam = role === 'ceo' || role === 'admin' || role === 'team_leader';
+  const canCreateOrg = role === 'super_admin' || role === 'admin';
+  const canCreateTeam = role === 'super_admin' || role === 'admin' || role === 'team_leader';
 
   const handleCreateClick = () => {
     if (activeView === 'company' && canCreateOrg) {
@@ -130,7 +130,7 @@ export default function OkrDashboardPage() {
                 <OkrViewSelector 
                   activeView={activeView} 
                   onViewChange={setActiveView}
-                  showMyOkrs={role !== 'ceo' && role !== 'admin'}
+                  showMyOkrs={role !== 'super_admin' && role !== 'admin'}
                 />
                 
                 {((activeView === 'company' && canCreateOrg) || 

@@ -41,7 +41,7 @@ interface Profile {
 }
 
 interface UserRole {
-  role: 'ceo' | 'admin' | 'team_leader' | 'collaborator';
+  role: 'super_admin' | 'admin' | 'team_leader' | 'collaborator';
 }
 
 interface AuthContextType {
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Actual authorization is enforced via RLS policies using is_admin_or_ceo() function.
    * See security note at the top of this file.
    */
-  const isAdmin = role === 'admin' || role === 'ceo';
+  const isAdmin = role === 'super_admin' || role === 'admin';
 
   return (
     <AuthContext.Provider value={{
