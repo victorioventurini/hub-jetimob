@@ -16,8 +16,12 @@ import TeamsPage from "./modules/teams/pages/TeamsPage";
 import TeamDetailPage from "./modules/teams/pages/TeamDetailPage";
 import Modules from "./pages/Modules";
 import Profile from "./pages/Profile";
-import Integrations from "./pages/Integrations";
-import IntegrationDetails from "./pages/IntegrationDetails";
+import { 
+  GlobalIntegrationsPage, 
+  GlobalIntegrationDetailPage,
+  BuIntegrationsPage,
+  BuIntegrationDetailPage 
+} from "./modules/integrations";
 import OkrsPage from "./modules/okrs/pages/OkrsPage";
 import OkrDashboardPage from "./modules/okrs/pages/OkrDashboardPage";
 import CeoDashboardPage from "./modules/okrs/pages/CeoDashboardPage";
@@ -91,24 +95,46 @@ const App = () => (
                   }
                 />
 
-                {/* Integrações (Admin Global) */}
+                {/* Integrações Globais (Admin Global) */}
                 <Route
                   path="/integrations"
                   element={
                     <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="integrations" requiresBu={false}>
-                        <Integrations />
+                        <GlobalIntegrationsPage />
                       </ModuleRoute>
                     </ProtectedRoute>
                   }
                 />
                 <Route
-                  path="/integrations/:id"
+                  path="/integrations/:integrationKey"
                   element={
                     <ProtectedRoute skipBuCheck>
                       <ModuleRoute moduleSlug="integrations" requiresBu={false}>
-                        <IntegrationDetails />
+                        <GlobalIntegrationDetailPage />
                       </ModuleRoute>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Integrações da BU (Settings) */}
+                <Route
+                  path="/settings/integrations"
+                  element={
+                    <ProtectedRoute>
+                      <BuRequiredRoute>
+                        <BuIntegrationsPage />
+                      </BuRequiredRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/integrations/:integrationKey"
+                  element={
+                    <ProtectedRoute>
+                      <BuRequiredRoute>
+                        <BuIntegrationDetailPage />
+                      </BuRequiredRoute>
                     </ProtectedRoute>
                   }
                 />
