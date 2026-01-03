@@ -113,9 +113,9 @@ export default function OkrDashboardPage() {
 
   return (
     <HubLayout>
-      <div className="flex gap-6">
+      <div className="flex gap-6 min-w-0">
         {/* Main Content */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 min-w-0 space-y-6">
           {/* Header */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
