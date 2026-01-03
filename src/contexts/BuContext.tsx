@@ -26,8 +26,12 @@ const BU_SELECTED_KEY = "hub_bu_selected";
 export function BuProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { data: userBus = [], isLoading } = useUserBus();
-  const [currentBuId, setCurrentBuId] = useState<string | null>(null);
-  const [buSelected, setBuSelected] = useState<boolean>(false);
+  const [currentBuId, setCurrentBuId] = useState<string | null>(() => {
+    return localStorage.getItem(BU_STORAGE_KEY);
+  });
+  const [buSelected, setBuSelected] = useState<boolean>(() => {
+    return localStorage.getItem(BU_SELECTED_KEY) === "true";
+  });
 
   // Initialize BU state from storage on mount
   useEffect(() => {
