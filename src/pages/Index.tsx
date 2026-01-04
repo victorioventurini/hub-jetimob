@@ -4,6 +4,7 @@ import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { QuickStats } from "@/components/home/QuickStats";
+import { CultureCard } from "@/components/home/CultureCard";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
@@ -31,6 +32,9 @@ const Index = () => {
             Bem-vindo ao Hub da Jetimob. Aqui você encontra tudo sobre a nossa empresa.
           </p>
         </section>
+
+        {/* Culture Card */}
+        <CultureCard />
 
         {/* Quick Stats */}
         <QuickStats />
