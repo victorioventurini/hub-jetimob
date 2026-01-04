@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCultureMessage } from "@/hooks/useCultureMessage";
@@ -14,10 +15,20 @@ const FALLBACK_MESSAGES = [
 export function CultureCard() {
   const { message, isLoading, error, refresh } = useCultureMessage();
 
-  // Get a fallback message based on the day
-  const fallbackMessage = FALLBACK_MESSAGES[new Date().getDay() % FALLBACK_MESSAGES.length];
-  
-  const displayMessage = message || fallbackMessage;
+  // Always have a locally-rotating fallback so the UI can change even if the backend call is blocked (e.g. not logged in yet).
+  const initialFallbackIndex = useMemo(
+    () => Math.floor(Math.random() * FALLBACK_MESSAGES.length),
+    []
+  );
+  const [fallbackIndex, setFallbackIndex] = useState(initialFallbackIndex);
+
+  const displayMessage = message || FALLBACK_MESSAGES[fallbackIndex];
+
+  const handleRefresh = async () => {
+    // Guarantees a visible change even when we can only use local fallback/cache.
+    setFallbackIndex((prev) => (prev + 1) % FALLBACK_MESSAGES.length);
+    await refresh();
+  };
 
   return (
     <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-sidebar-accent">
@@ -38,11 +49,11 @@ export function CultureCard() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={refresh}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="h-6 w-6 p-0 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 disabled:opacity-40"
             aria-label="Atualizar mensagem de cultura"
-            title="Atualizar"
+            title={error ? "Atualizar (offline)" : "Atualizar"}
           >
             <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
           </Button>
