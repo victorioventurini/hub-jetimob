@@ -5,6 +5,7 @@ import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { QuickStats } from "@/components/home/QuickStats";
 import { CultureCard } from "@/components/home/CultureCard";
+import { VicCard } from "@/components/home/VicCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
@@ -44,8 +45,11 @@ const Index = () => {
           )}
         </section>
 
-        {/* Culture Card */}
-        <CultureCard />
+        {/* Cards Row: Culture + Vic */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CultureCard />
+          <VicCard />
+        </div>
 
         {/* Quick Stats */}
         <QuickStats />
