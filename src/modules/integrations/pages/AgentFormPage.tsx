@@ -25,6 +25,7 @@ import {
   Loader2,
   Wand2,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 import { 
   useIntegrationByKey, 
@@ -64,6 +65,14 @@ export default function AgentFormPage() {
   const isEditing = !!agentId;
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
+  
+  usePageTitle(
+    isEditing 
+      ? `Editar Agent - ${integration?.name || 'Integrações'}` 
+      : `Novo Agent - ${integration?.name || 'Integrações'}`, 
+    { skipBu: true }
+  );
+  
   const { data: existingAgents } = useGlobalAgents(integrationKey);
   
   const createAgent = useCreateAgent();

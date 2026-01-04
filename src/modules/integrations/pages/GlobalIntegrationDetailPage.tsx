@@ -20,6 +20,7 @@ import {
   Bot,
   Activity,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 import { TestStatusBadge } from '../components/TestStatusBadge';
 import { 
@@ -38,6 +39,9 @@ export default function GlobalIntegrationDetailPage() {
   const { isAdmin } = useAuth();
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
+  
+  usePageTitle(integration?.name ? `${integration.name} - Integrações` : "Integrações", { skipBu: true });
+  
   const { data: globalConfig, isLoading: loadingConfig } = useGlobalConfig(integrationKey || '');
   const { data: globalAgents } = useGlobalAgents(integrationKey);
   const { data: logs } = useAgentLogs({ integration_key: integrationKey, limit: 50 });

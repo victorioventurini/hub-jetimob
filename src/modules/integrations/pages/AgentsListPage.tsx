@@ -44,6 +44,7 @@ import {
   Building2,
   Sparkles,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 import { 
   useIntegrationByKey, 
@@ -136,6 +137,9 @@ export default function AgentsListPage() {
   const { isAdmin } = useAuth();
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
+  
+  usePageTitle(integration?.name ? `Agents - ${integration.name}` : "Agents", { skipBu: true });
+  
   const { data: agents, isLoading: loadingAgents } = useGlobalAgents(integrationKey);
   
   const updateAgent = useUpdateAgent();

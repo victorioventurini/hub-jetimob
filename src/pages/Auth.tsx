@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { checkEmailDomainAllowed } from "@/modules/bu/hooks/useBuData";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 export default function Auth() {
+  usePageTitle("Login", { skipBu: true });
+  
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingDomain, setIsCheckingDomain] = useState(false);

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams, useOrgKeyResults } from '../hooks/useOkrData';
 import { calculateProgress, getRagStatusColor } from '../types';
 import { RiskKrsList } from '../components/RiskKrsList';
@@ -13,6 +14,7 @@ import { AlignmentMap } from '../components/AlignmentMap';
 import { ProgressSummary } from '../components/ProgressSummary';
 
 export default function CeoDashboardPage() {
+  usePageTitle("Dashboard CEO - OKRs");
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 

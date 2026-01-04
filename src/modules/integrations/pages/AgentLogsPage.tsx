@@ -33,6 +33,7 @@ import {
   RefreshCw,
   Filter,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 import { 
   useIntegrationByKey, 
@@ -47,6 +48,9 @@ export default function AgentLogsPage() {
   const { isAdmin } = useAuth();
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
+  
+  usePageTitle(integration?.name ? `Logs - ${integration.name}` : "Logs", { skipBu: true });
+  
   const { data: agents } = useGlobalAgents(integrationKey);
   
   const [selectedAgent, setSelectedAgent] = useState<string>('all');

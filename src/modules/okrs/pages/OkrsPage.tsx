@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Building2, Users, AlertTriangle } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { OkrEmptyState } from '../components/OkrEmptyState';
 import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams } from '../hooks/useOkrData';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +15,7 @@ import { CreateOrgObjectiveDialog } from '../components/CreateOrgObjectiveDialog
 import { CreateTeamObjectiveDialog } from '../components/CreateTeamObjectiveDialog';
 
 export default function OkrsPage() {
+  usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedTeam, setSelectedTeam] = useState<string>('all');

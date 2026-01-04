@@ -16,6 +16,7 @@ import {
   UserCircle,
   Mail,
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeam } from "../hooks/useTeams";
 import { EditTeamDialog } from "../components/EditTeamDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +25,9 @@ export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeam(id);
+  
+  usePageTitle(team?.name ? `${team.name} - Times` : "Times");
+  
   const [editOpen, setEditOpen] = useState(false);
   const { isAdmin } = useAuth();
 

@@ -6,10 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 import { CreateBuDialog } from "@/modules/bu/components/CreateBuDialog";
 
 export default function SelectBu() {
+  usePageTitle("", { hubOnly: true });
+  
   const navigate = useNavigate();
   const { profile, isAdmin } = useAuth();
   const { userBus, isLoading, selectBu } = useBu();

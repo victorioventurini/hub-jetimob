@@ -2,11 +2,13 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plug } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationCard } from '../components/IntegrationCard';
 import { useIntegrationsCatalog, useGlobalConfigs, useUpsertGlobalConfig } from '../hooks/useIntegrations';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function GlobalIntegrationsPage() {
+  usePageTitle("Integrações", { skipBu: true });
   const { isAdmin } = useAuth();
   const { data: catalog, isLoading: loadingCatalog } = useIntegrationsCatalog();
   const { data: globalConfigs, isLoading: loadingConfigs } = useGlobalConfigs();
