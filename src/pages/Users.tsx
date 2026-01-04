@@ -311,8 +311,8 @@ export default function UsersPage() {
             <>
               {filteredProfiles?.length || 0}{" "}
               {filteredProfiles?.length === 1
-                ? "pessoa encontrada"
-                : "pessoas encontradas"}
+                ? "jetimober encontrado"
+                : "jetimobers encontrados"}
             </>
           )}
         </p>
@@ -322,7 +322,7 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Pessoa</TableHead>
+                <TableHead className="font-semibold">Nome</TableHead>
                 <TableHead className="font-semibold">Cargo</TableHead>
                 <TableHead className="font-semibold">Time</TableHead>
                 <TableHead className="font-semibold">Gestor</TableHead>
