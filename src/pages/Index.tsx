@@ -11,17 +11,15 @@ import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
+import { useGreeting } from "@/hooks/useGreeting";
 
 const Index = () => {
   usePageTitle("Home");
   const { profile } = useAuth();
   const dashboardData = useHomeDashboard();
+  const { greeting, subtext } = useGreeting({ userName: profile?.first_name });
 
   const isExecutive = dashboardData.role === "ceo" || dashboardData.role === "director";
-  
-  const greeting = profile?.first_name 
-    ? `Olá, ${profile.first_name}!` 
-    : "Olá!";
 
   return (
     <HubLayout>
@@ -31,6 +29,9 @@ const Index = () => {
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
             {greeting}
           </h1>
+          <p className="text-lg text-muted-foreground">
+            {subtext}
+          </p>
         </section>
 
         {/* Culture Card - Full Width with Typewriter */}
