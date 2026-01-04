@@ -44,6 +44,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
+import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 
 interface ProfileWithTeam {
   id: string;
@@ -159,28 +160,7 @@ export default function UsersPage() {
     enabled: !!currentBu?.id,
   });
 
-  const { data: teams, error: teamsError } = useQuery({
-    queryKey: ["teams-filter", currentBu?.id],
-    queryFn: async () => {
-      if (!currentBu?.id) return [];
-      const { data, error } = await supabase
-        .from("teams")
-        .select("id, name")
-        .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .eq("status", "active")
-        .order("name");
-      if (error) throw error;
-
-      console.log("[UsersPage] fetched teams", {
-        buId: currentBu.id,
-        count: data?.length ?? 0,
-      });
-
-      return data;
-    },
-    enabled: !!currentBu?.id,
-  });
+  const { teams: hierarchicalTeams, isLoading: teamsLoading, error: teamsError } = useHierarchicalTeamList();
 
   const getInitials = (name: string) =>
     name
@@ -278,14 +258,20 @@ export default function UsersPage() {
             />
           </div>
           <Select value={teamFilter} onValueChange={setTeamFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Time" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os times</SelectItem>
-              {teams?.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
+              {hierarchicalTeams?.map((team) => (
+                <SelectItem 
+                  key={team.id} 
+                  value={team.id}
+                  className={team.level > 0 ? "text-[13px]" : ""}
+                >
+                  <span style={{ paddingLeft: `${team.level * 12}px` }}>
+                    {team.name}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
