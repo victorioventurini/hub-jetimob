@@ -1,11 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, RefreshCw, Target } from "lucide-react";
+import { AlertTriangle, Info, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FocusItem {
-  type: "kr" | "update" | "alert";
+  type: "warning" | "info" | "action";
   label: string;
-  count?: number;
 }
 
 interface FocusCardProps {
@@ -16,25 +15,25 @@ interface FocusCardProps {
 export function FocusCard({ items, title = "Seu Foco" }: FocusCardProps) {
   const getIcon = (type: string) => {
     switch (type) {
-      case "kr":
-        return <Target className="h-4 w-4" />;
-      case "update":
-        return <RefreshCw className="h-4 w-4" />;
-      case "alert":
-        return <AlertCircle className="h-4 w-4" />;
+      case "warning":
+        return <AlertTriangle className="h-4 w-4" />;
+      case "info":
+        return <Info className="h-4 w-4" />;
+      case "action":
+        return <Zap className="h-4 w-4" />;
       default:
-        return <Target className="h-4 w-4" />;
+        return <Info className="h-4 w-4" />;
     }
   };
 
   const getItemColor = (type: string) => {
     switch (type) {
-      case "kr":
-        return "bg-primary/10 text-primary";
-      case "update":
+      case "warning":
         return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
-      case "alert":
-        return "bg-red-500/10 text-red-600 dark:text-red-400";
+      case "info":
+        return "bg-sky-500/10 text-sky-600 dark:text-sky-400";
+      case "action":
+        return "bg-primary/10 text-primary";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -48,7 +47,7 @@ export function FocusCard({ items, title = "Seu Foco" }: FocusCardProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            ✨ Tudo em dia! Nenhuma pendência no momento.
+            ✨ Tudo em dia! Nenhuma pendência.
           </p>
         </CardContent>
       </Card>
@@ -61,21 +60,16 @@ export function FocusCard({ items, title = "Seu Foco" }: FocusCardProps) {
         <CardTitle className="text-base font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {items.map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 p-3"
+              className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 p-2.5"
             >
-              <div className={cn("rounded-full p-2", getItemColor(item.type))}>
+              <div className={cn("rounded-full p-1.5", getItemColor(item.type))}>
                 {getIcon(item.type)}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  {item.count && <span className="mr-1">{item.count}</span>}
-                  {item.label}
-                </p>
-              </div>
+              <p className="text-sm text-foreground">{item.label}</p>
             </div>
           ))}
         </div>

@@ -15,9 +15,8 @@ interface OkrSummary {
 }
 
 interface FocusItem {
-  type: "kr" | "update" | "alert";
+  type: "warning" | "info" | "action";
   label: string;
-  count?: number;
 }
 
 interface TeamStatus {
@@ -40,77 +39,79 @@ const mockDataByRole: Record<string, HomeDashboardData> = {
   ceo: {
     role: "ceo",
     kpis: [
-      { label: "MRR", value: "R$ 1.120.000", change: "+3%", changeType: "positive" },
-      { label: "NRR", value: "98%", change: "+1%", changeType: "positive" },
-      { label: "NPS", value: "54", change: "-2", changeType: "negative" },
-      { label: "Churn", value: "2.1%", change: "-0.3%", changeType: "positive" },
+      { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
+      { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
+      { label: "EBITDA", value: "R$ 320.000", changeType: "neutral" },
+      { label: "NPS", value: "56", change: "+3", changeType: "positive" },
     ],
-    okrSummary: { onTrack: 4, atRisk: 2, offTrack: 1 },
+    okrSummary: { onTrack: 5, atRisk: 2, offTrack: 1 },
     focusItems: [
-      { type: "alert", label: "OKRs precisando de atenção", count: 3 },
-      { type: "update", label: "Atualizações pendentes do time", count: 5 },
+      { type: "warning", label: "2 OKRs organizacionais em risco" },
+      { type: "info", label: "Review trimestral em 5 dias" },
+      { type: "action", label: "3 times aguardando alinhamento" },
     ],
     teamStatus: {
-      teamName: "Organização",
-      onTrackPercent: 57,
-      atRiskPercent: 29,
-      offTrackPercent: 14,
+      teamName: "Toda a BU",
+      onTrackPercent: 65,
+      atRiskPercent: 20,
+      offTrackPercent: 15,
     },
   },
   director: {
     role: "director",
     kpis: [
-      { label: "MRR", value: "R$ 1.120.000", change: "+3%", changeType: "positive" },
-      { label: "NRR", value: "98%", change: "+1%", changeType: "positive" },
-      { label: "NPS", value: "54", change: "-2", changeType: "negative" },
+      { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
+      { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
+      { label: "NPS", value: "56", change: "+3", changeType: "positive" },
     ],
-    okrSummary: { onTrack: 3, atRisk: 2, offTrack: 1 },
+    okrSummary: { onTrack: 4, atRisk: 2, offTrack: 1 },
     focusItems: [
-      { type: "kr", label: "KRs pedindo atenção", count: 2 },
-      { type: "update", label: "Check-ins pendentes", count: 3 },
+      { type: "warning", label: "1 KR precisa de atualização" },
+      { type: "warning", label: "2 indicadores abaixo da meta" },
+      { type: "info", label: "Reunião de área amanhã" },
     ],
     teamStatus: {
-      teamName: "Diretoria",
-      onTrackPercent: 50,
-      atRiskPercent: 33,
-      offTrackPercent: 17,
+      teamName: "Diretoria de Produto",
+      onTrackPercent: 70,
+      atRiskPercent: 20,
+      offTrackPercent: 10,
     },
   },
   leader: {
     role: "leader",
     kpis: [
-      { label: "CSAT", value: "4.2", change: "+0.3", changeType: "positive" },
-      { label: "Tickets Resolvidos", value: "156", change: "+12%", changeType: "positive" },
-      { label: "Tempo Médio", value: "2.4h", change: "-15min", changeType: "positive" },
+      { label: "Tickets Resolvidos", value: "142", change: "+12%", changeType: "positive" },
+      { label: "CSAT", value: "4.6", changeType: "neutral" },
+      { label: "Tempo Médio", value: "2.4h", change: "-18%", changeType: "positive" },
     ],
-    okrSummary: { onTrack: 2, atRisk: 1, offTrack: 0 },
+    okrSummary: { onTrack: 3, atRisk: 1, offTrack: 0 },
     focusItems: [
-      { type: "kr", label: "KRs pedindo atenção", count: 1 },
-      { type: "update", label: "Updates do time pendentes", count: 2 },
+      { type: "action", label: "2 KRs precisam de check-in" },
+      { type: "warning", label: "1 membro do time sem update há 7 dias" },
     ],
     teamStatus: {
       teamName: "Customer Success",
-      onTrackPercent: 60,
-      atRiskPercent: 25,
-      offTrackPercent: 15,
+      onTrackPercent: 75,
+      atRiskPercent: 15,
+      offTrackPercent: 10,
     },
   },
   collaborator: {
     role: "collaborator",
     kpis: [
-      { label: "Meus Tickets", value: "23", change: "+5", changeType: "neutral" },
-      { label: "CSAT Pessoal", value: "4.5", change: "+0.2", changeType: "positive" },
+      { label: "Tarefas Concluídas", value: "23", change: "+8%", changeType: "positive" },
+      { label: "Em Andamento", value: "5", changeType: "neutral" },
     ],
-    okrSummary: { onTrack: 1, atRisk: 1, offTrack: 0 },
+    okrSummary: { onTrack: 2, atRisk: 1, offTrack: 0 },
     focusItems: [
-      { type: "kr", label: "KRs para atualizar", count: 2 },
-      { type: "update", label: "Check-in pendente", count: 1 },
+      { type: "action", label: "1 KR precisa de atualização" },
+      { type: "info", label: "Check-in semanal pendente" },
     ],
     teamStatus: {
       teamName: "Customer Success",
-      onTrackPercent: 60,
-      atRiskPercent: 25,
-      offTrackPercent: 15,
+      onTrackPercent: 75,
+      atRiskPercent: 15,
+      offTrackPercent: 10,
     },
   },
 };
@@ -135,7 +136,6 @@ function mapRoleToCategory(role?: string): "ceo" | "director" | "leader" | "coll
 export function useHomeDashboard(): HomeDashboardData {
   const { role } = useAuth();
   
-  // role is the app_role enum value directly (string), not an object
   const roleCategory = mapRoleToCategory(role as string | undefined);
   
   return mockDataByRole[roleCategory] || mockDataByRole.collaborator;
