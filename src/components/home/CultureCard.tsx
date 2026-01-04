@@ -31,18 +31,20 @@ export function CultureCard() {
   };
 
   return (
-    <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-sidebar-accent">
+    <Card className="relative overflow-hidden border bg-card">
       {/* Subtle decorative element */}
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-        <div className="absolute inset-0 bg-accent rounded-full blur-3xl transform translate-x-8 -translate-y-8" />
+      <div className="absolute top-0 right-0 w-24 h-24 opacity-10">
+        <div className="absolute inset-0 bg-primary rounded-full blur-2xl transform translate-x-6 -translate-y-6" />
       </div>
       
-      <CardContent className="relative p-6">
+      <CardContent className="relative p-5">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-accent" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">
+            <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-primary/10">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Cultura Jet
             </span>
           </div>
@@ -51,29 +53,29 @@ export function CultureCard() {
             size="sm" 
             onClick={handleRefresh}
             disabled={isLoading}
-            className="h-6 w-6 p-0 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 disabled:opacity-40"
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-40"
             aria-label="Atualizar mensagem de cultura"
             title={error ? "Atualizar (offline)" : "Atualizar"}
           >
-            <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
           </Button>
         </div>
 
         {/* Message */}
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-5 w-full bg-primary-foreground/10" />
-            <Skeleton className="h-5 w-3/4 bg-primary-foreground/10" />
+            <Skeleton className="h-5 w-full bg-muted" />
+            <Skeleton className="h-5 w-3/4 bg-muted" />
           </div>
         ) : (
-          <p className="text-lg font-medium leading-relaxed text-primary-foreground">
+          <p className="text-base font-medium leading-relaxed text-foreground">
             {displayMessage}
           </p>
         )}
 
         {/* Signature */}
-        <div className="mt-4 text-right">
-          <span className="text-sm italic text-primary-foreground/60">
+        <div className="mt-3 text-right">
+          <span className="text-xs italic text-muted-foreground">
             — Vic
           </span>
         </div>
