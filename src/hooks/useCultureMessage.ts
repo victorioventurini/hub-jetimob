@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const CACHE_KEY = "culture_messages_cache";
 const MAX_CACHED_MESSAGES = 20;
+const MIN_POOL_SIZE = 8;
 
 interface CachedMessage {
   message: string;
@@ -77,53 +78,84 @@ export function useCultureMessage(): UseCultureMessageReturn {
     return cache.messages[index].message;
   }, [getCache]);
 
-  const fetchMessage = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke("culture-message");
-
-      if (fnError) {
-        throw new Error(fnError.message);
+  const fetchMessage = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) {
+        setIsLoading(true);
       }
+      setError(null);
 
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+      try {
+        const recentMessages = getCache().messages.map((m) => m.message).slice(0, 20);
 
-      if (data?.message) {
-        setMessage(data.message);
-        saveToCache(data.message, data.generatedAt);
-        return;
+        const { data, error: fnError } = await supabase.functions.invoke("culture-message", {
+          body: { recentMessages },
+        });
+
+        if (fnError) {
+          throw new Error(fnError.message);
+        }
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        if (data?.message) {
+          setMessage(data.message);
+          saveToCache(data.message, data.generatedAt);
+          return;
+        }
+
+        throw new Error("Empty response");
+      } catch (err) {
+        console.error("Failed to fetch culture message:", err);
+        setError(err instanceof Error ? err.message : "Erro ao carregar mensagem");
+
+        // Fallback: rotate cached message (no cost)
+        const cached = getRandomCachedMessage();
+        if (cached) {
+          setMessage(cached);
+        }
+      } finally {
+        setIsLoading(false);
       }
-      
-      throw new Error("Empty response");
-    } catch (err) {
-      console.error("Failed to fetch culture message:", err);
-      setError(err instanceof Error ? err.message : "Erro ao carregar mensagem");
-      
-      // Try to use a cached message as fallback
-      const cached = getRandomCachedMessage();
-      if (cached) {
-        setMessage(cached);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [saveToCache, getRandomCachedMessage]);
+    },
+    [getCache, saveToCache, getRandomCachedMessage]
+  );
 
   const refresh = useCallback(async () => {
-    await fetchMessage();
-  }, [fetchMessage]);
+    // Always rotate locally first (instant + no cost)
+    const rotated = getRandomCachedMessage();
+    if (rotated) setMessage(rotated);
+
+    // If our pool is still small, fetch a new one to keep reducing future consumption
+    const poolSize = getCache().messages.length;
+    if (poolSize < MIN_POOL_SIZE) {
+      await fetchMessage({ silent: true });
+    }
+  }, [getRandomCachedMessage, getCache, fetchMessage]);
 
   useEffect(() => {
     // Prevent double fetch in StrictMode
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-    
+
+    // Prefer showing an existing cached message (instant, no cost)
+    const cached = getRandomCachedMessage();
+    if (cached) {
+      setMessage(cached);
+      setIsLoading(false);
+
+      // Refill pool only when it's getting small
+      if (getCache().messages.length < MIN_POOL_SIZE) {
+        fetchMessage({ silent: true });
+      }
+      return;
+    }
+
+    // First ever visit (no cache yet): generate one
     fetchMessage();
-  }, [fetchMessage]);
+  }, [fetchMessage, getRandomCachedMessage, getCache]);
 
   return { message, isLoading, error, refresh };
 }
