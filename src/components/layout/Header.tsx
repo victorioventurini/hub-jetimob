@@ -1,4 +1,4 @@
-import { Bell, Search, Menu, LogOut, User } from "lucide-react";
+import { Bell, Search, Menu, LogOut, User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,6 +115,14 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                   Meu Perfil
                 </Link>
               </DropdownMenuItem>
+              {role === "super_admin" && (
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="cursor-pointer">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurações
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive cursor-pointer"
