@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function UsersPage() {
+  usePageTitle("Jetimobers");
+  
   const { isAdmin } = useAuth();
   const { currentBu, isLoading: isBuLoading } = useBu();
   const [searchQuery, setSearchQuery] = useState("");

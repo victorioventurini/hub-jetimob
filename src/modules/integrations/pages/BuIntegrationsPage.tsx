@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Plug, Settings, Globe, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBu } from '@/contexts/BuContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 import { TestStatusBadge } from '../components/TestStatusBadge';
 import { 
@@ -18,6 +19,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 
 export default function BuIntegrationsPage() {
+  usePageTitle("Integrações");
+  
   const navigate = useNavigate();
   const { currentBu } = useBu();
 const { isAdmin } = useAuth();

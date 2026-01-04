@@ -6,8 +6,10 @@ import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock
 import { QuickStats } from "@/components/home/QuickStats";
 import { CultureCard } from "@/components/home/CultureCard";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const Index = () => {
+  usePageTitle("Home");
   const { profile } = useAuth();
 
   // Get current greeting based on time

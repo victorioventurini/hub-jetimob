@@ -33,6 +33,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
 
 // Mapeamento de ícones
@@ -101,6 +102,8 @@ const healthConfig = {
 };
 
 export default function Modules() {
+  usePageTitle("Módulos");
+  
   const { currentBu } = useBu();
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();

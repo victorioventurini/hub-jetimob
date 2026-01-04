@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Navigate, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -52,6 +53,8 @@ const defaultPreferences: UserPreferences = {
 };
 
 export default function Settings() {
+  usePageTitle("Configurações", { skipBu: true });
+  
   const { isAdmin, isLoading: authLoading, user } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);

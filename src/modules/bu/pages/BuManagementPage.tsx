@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAllBus } from "../hooks/useBuData";
 import { CreateBuDialog } from "../components/CreateBuDialog";
 import { EditBuDialog } from "../components/EditBuDialog";
@@ -15,6 +16,7 @@ import { BuUnit } from "../types";
 import { formatCNPJ } from "../utils/cnpjMask";
 
 export default function BuManagementPage() {
+  usePageTitle("Business Units", { skipBu: true });
   const { isAdmin } = useAuth();
   const { data: bus = [], isLoading } = useAllBus();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

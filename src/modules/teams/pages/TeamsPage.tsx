@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LayoutGrid, GitBranch, Users, Building2 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeams, useTeamTree, useTeamStats } from "../hooks/useTeams";
 import { CreateTeamDialog } from "../components/CreateTeamDialog";
 import { EditTeamDialog } from "../components/EditTeamDialog";
@@ -17,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function TeamsPage() {
+  usePageTitle("Times");
   const [showInactive, setShowInactive] = useState(false);
   const [editingTeam, setEditingTeam] = useState<TeamWithRelations | null>(null);
   const { data: teams, isLoading } = useTeams(showInactive);

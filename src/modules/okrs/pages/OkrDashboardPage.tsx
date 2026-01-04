@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, AlertTriangle, Target, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { 
   useOrgObjectivesWithKrs, 
   useTeamObjectivesWithKrs, 
@@ -35,6 +36,7 @@ interface OkrFiltersState {
 }
 
 export default function OkrDashboardPage() {
+  usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
   const { user, role } = useAuth();
   

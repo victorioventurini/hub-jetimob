@@ -24,6 +24,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { useBu } from '@/contexts/BuContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 import { TestStatusBadge } from '../components/TestStatusBadge';
 import { 
@@ -40,10 +41,13 @@ export default function BuIntegrationDetailPage() {
   const { integrationKey } = useParams<{ integrationKey: string }>();
   const navigate = useNavigate();
   const { currentBu } = useBu();
-const { isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const canManage = isAdmin; // BU admin check would require additional hook
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
+  
+  usePageTitle(integration?.name ? `${integration.name} - Integrações` : "Integrações");
+  
   const { data: globalConfig, isLoading: loadingGlobal } = useGlobalConfig(integrationKey || '');
   const { data: buConfig, isLoading: loadingBu } = useBuIntegrationConfig(currentBu?.id, integrationKey || '');
   const { data: buAgents } = useBuAgents(currentBu?.id, integrationKey);

@@ -3,6 +3,7 @@ import { Plus, BarChart3, AlertCircle } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKpiData } from "../hooks/useKpiData";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 import { KpiCategorySection } from "../components/KpiCategorySection";
@@ -13,6 +14,7 @@ import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function KpiDashboardPage() {
+  usePageTitle("KPIs");
   const { isAdmin } = useAuth();
   const [categoryFilter, setCategoryFilter] = useState<KpiCategory | "all">("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");

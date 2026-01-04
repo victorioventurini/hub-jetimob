@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
 
@@ -86,6 +87,8 @@ const months = [
 ];
 
 export default function Profile() {
+  usePageTitle("Meu Perfil", { skipBu: true });
+  
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
