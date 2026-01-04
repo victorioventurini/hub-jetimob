@@ -1,9 +1,7 @@
 import { HubLayout } from "@/components/layout/HubLayout";
-import { ModulesBlock } from "@/components/home/ModulesBlock";
 import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
-import { QuickStats } from "@/components/home/QuickStats";
 import { CultureCard } from "@/components/home/CultureCard";
 import { VicCard } from "@/components/home/VicCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +17,7 @@ const Index = () => {
 
   const { greeting, subtext, isLoading: greetingLoading } = useHubGreeting({
     userName: profile?.first_name,
-    userGender: null, // Profile doesn't have gender field yet
+    userGender: null,
     buName: currentBu?.name,
   });
 
@@ -45,17 +43,8 @@ const Index = () => {
           )}
         </section>
 
-        {/* Cards Row: Culture + Vic */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          <CultureCard />
-          <VicCard />
-        </div>
-
-        {/* Quick Stats */}
-        <QuickStats />
-
-        {/* Modules Section */}
-        <ModulesBlock />
+        {/* Culture Card - Full Width with Typewriter */}
+        <CultureCard />
 
         {/* People Blocks */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -63,6 +52,9 @@ const Index = () => {
           <BirthdaysBlock />
           <WorkAnniversariesBlock />
         </div>
+
+        {/* Vic Card - Bottom */}
+        <VicCard />
       </div>
     </HubLayout>
   );
