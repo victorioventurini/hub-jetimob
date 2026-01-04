@@ -229,8 +229,7 @@ export default function Auth() {
               <h1 className="text-2xl font-semibold tracking-tight">
                 Buenas! 👋
               </h1>
-              <p className="text-muted-foreground">Digite seu e-mail @jet
-para receber o código de acesso.</p>
+              <p className="text-muted-foreground text-sm">Digite seu e-mail @jet para receber o código de acesso.</p>
             </div>}
 
           {/* STATE 2: Returning User */}
