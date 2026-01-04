@@ -1,5 +1,5 @@
-import { Bell, Search, Menu, LogOut, User, Settings } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Bell, Search, Menu, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +29,9 @@ const roleLabels: Record<string, string> = {
 
 export function Header({ sidebarCollapsed }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSettingsPage = location.pathname.startsWith("/settings");
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -74,8 +77,20 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
         {/* Right section */}
         <div className="flex items-center gap-2">
-          {/* BU Selector */}
-          <BuSelector />
+          {/* BU Selector - Show button on settings, dropdown elsewhere */}
+          {isSettingsPage ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => navigate("/select-bu")}
+            >
+              <Building2 className="h-4 w-4" />
+              Selecionar BU
+            </Button>
+          ) : (
+            <BuSelector />
+          )}
 
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
