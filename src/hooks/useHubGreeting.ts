@@ -93,7 +93,8 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
   const [subtext, setSubtext] = useState<string>(initialRef.current.subtext);
   const [isLoading, setIsLoading] = useState(!initialRef.current.hasCached);
   const [error, setError] = useState<string | null>(null);
-  const hasFetchedRef = useRef(false);
+  const lastFetchKeyRef = useRef<string | null>(null);
+  const inFlightRef = useRef(false);
 
   const getCache = useCallback((): CacheData => {
     try {
@@ -150,8 +151,23 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
   }, [getCache]);
 
   useEffect(() => {
-    // Prevent double fetch in StrictMode
-    if (hasFetchedRef.current) return;
+    // A saudação estava travando no fallback porque o primeiro fetch pode rodar
+    // antes do profile/BU carregar e, depois disso, o "guard" antigo bloqueava refetch.
+
+    const fetchKey = JSON.stringify({
+      userName: context.userName ?? null,
+      userGender: context.userGender ?? null,
+      buName: context.buName ?? null,
+      okrSummary: context.okrSummary ?? null,
+      kpiSummary: context.kpiSummary ?? null,
+    });
+
+    // Dedup simples: não roda de novo para o mesmo contexto (mas permite refetch se o contexto mudar)
+    if (inFlightRef.current) return;
+    if (lastFetchKeyRef.current === fetchKey) return;
+
+    lastFetchKeyRef.current = fetchKey;
+    inFlightRef.current = true;
 
     const fetchGreeting = async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) {
@@ -203,7 +219,6 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
           setGreeting(data.greeting);
           setSubtext(data.subtext);
           saveToCache(data.greeting, data.subtext, data.generatedAt);
-          hasFetchedRef.current = true;
           return;
         }
 
@@ -223,19 +238,28 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
         }
       } finally {
         setIsLoading(false);
-        hasFetchedRef.current = true;
+        inFlightRef.current = false;
       }
     };
 
     // Se já temos cache, mostramos instantaneamente e atualizamos em background.
     if (initialRef.current.hasCached) {
-      fetchGreeting({ silent: true });
+      void fetchGreeting({ silent: true });
       return;
     }
 
     // Sem cache: gera e mostra loading
-    fetchGreeting();
-  }, [context.userName, context.userGender, context.buName, context.okrSummary, context.kpiSummary, getCache, saveToCache, getRandomCachedGreeting]);
+    void fetchGreeting();
+  }, [
+    context.userName,
+    context.userGender,
+    context.buName,
+    context.okrSummary,
+    context.kpiSummary,
+    getCache,
+    saveToCache,
+    getRandomCachedGreeting,
+  ]);
 
   return { greeting, subtext, isLoading, error };
 }
