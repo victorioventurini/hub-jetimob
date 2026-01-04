@@ -9,14 +9,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useBu } from "@/contexts/BuContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export function BuSelector() {
   const navigate = useNavigate();
   const { currentBu, userBus, hasMultipleBus, switchBu, clearBuSelection } = useBu();
+  const { role } = useAuth();
 
-  // Don't render if user only has access to one BU
-  if (!hasMultipleBus || !currentBu) {
+  const isSuperAdmin = role === "super_admin";
+
+  // Always show for super_admin, otherwise only if user has multiple BUs
+  if (!isSuperAdmin && (!hasMultipleBus || !currentBu)) {
     return null;
+  }
+
+  // If no currentBu selected yet (super_admin case), show a placeholder
+  if (!currentBu) {
+    return (
+      <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/select-bu")}>
+        <Building2 className="h-4 w-4" />
+        <span>Selecionar BU</span>
+      </Button>
+    );
   }
 
   const handleSwitchBu = (buId: string) => {
