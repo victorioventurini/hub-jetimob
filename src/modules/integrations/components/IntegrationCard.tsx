@@ -36,7 +36,7 @@ export function IntegrationCard({
     if (navigateToPath) {
       navigate(navigateToPath);
     } else {
-      navigate(`/integrations/${integration.integration_key}`);
+      navigate(`/settings/integrations/${integration.integration_key}`);
     }
   };
   

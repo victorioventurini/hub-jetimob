@@ -98,12 +98,6 @@ export default function UsersPage() {
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  console.log("[UsersPage] currentBu", {
-    id: currentBu?.id,
-    name: currentBu?.name,
-    isBuLoading,
-  });
-
   const { data: profiles, isLoading, error: profilesError } = useQuery({
     queryKey: ["profiles", statusFilter, currentBu?.id],
     queryFn: async () => {
@@ -140,11 +134,6 @@ export default function UsersPage() {
 
       const { data, error } = await query;
       if (error) throw error;
-
-      console.log("[UsersPage] fetched profiles", {
-        buId: currentBu.id,
-        count: data?.length ?? 0,
-      });
 
       return (data || []).map((p) => ({
         id: p.id,
