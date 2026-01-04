@@ -175,6 +175,9 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
         const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
 
         const { data, error: fnError } = await supabase.functions.invoke("hub-greeting", {
+          headers: {
+            Authorization: `Bearer ${sessionData.session.access_token}`,
+          },
           body: {
             userName: context.userName,
             userGender: context.userGender,
