@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { LayoutGrid, GitBranch, Users, Building2 } from "lucide-react";
+import { LayoutGrid, GitBranch, Building2 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeams, useTeamTree, useTeamStats } from "../hooks/useTeams";
 import { CreateTeamDialog } from "../components/CreateTeamDialog";
@@ -16,6 +16,7 @@ import { TeamTreeView } from "../components/TeamTreeView";
 import { TeamWithRelations } from "../types";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function TeamsPage() {
   usePageTitle("Times");
@@ -158,15 +159,23 @@ export default function TeamsPage() {
                 </div>
               ) : (
                 <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Nenhum time encontrado</h3>
-                    <p className="text-muted-foreground text-center mb-4">
-                      {showInactive
-                        ? "Não há times cadastrados."
-                        : "Não há times ativos. Ative a opção para ver times inativos."}
-                    </p>
-                    {isAdmin && <CreateTeamDialog />}
+                  <CardContent className="py-4">
+                    <EmptyState
+                      icon={Building2}
+                      title="Nenhum time encontrado"
+                      description={
+                        showInactive
+                          ? "Não há times cadastrados."
+                          : "Não há times ativos. Ative a opção para ver times inativos."
+                      }
+                      actionLabel={isAdmin ? "Criar Time" : undefined}
+                      onAction={undefined}
+                    />
+                    {isAdmin && (
+                      <div className="flex justify-center mt-2">
+                        <CreateTeamDialog />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}

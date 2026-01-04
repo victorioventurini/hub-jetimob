@@ -1,38 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Award } from "lucide-react";
-
-interface WorkAnniversary {
-  id: string;
-  name: string;
-  jobTitle: string;
-  team: string;
-  photoUrl?: string;
-  startDate: string;
-  yearsAtCompany: number;
-  anniversaryDay: number;
-}
-
-const workAnniversaries: WorkAnniversary[] = [
-  {
-    id: "1",
-    name: "Fernanda Lima",
-    jobTitle: "Senior Developer",
-    team: "Engenharia",
-    startDate: "2020-01-18",
-    yearsAtCompany: 4,
-    anniversaryDay: 18,
-  },
-  {
-    id: "2",
-    name: "Carlos Mendes",
-    jobTitle: "Account Executive",
-    team: "Vendas",
-    startDate: "2022-01-25",
-    yearsAtCompany: 2,
-    anniversaryDay: 25,
-  },
-];
+import { useWorkAnniversaries } from "@/hooks/useHomeData";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const monthNames = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -40,6 +11,7 @@ const monthNames = [
 ];
 
 export function WorkAnniversariesBlock() {
+  const { data: workAnniversaries, isLoading } = useWorkAnniversaries();
   const currentMonth = new Date().getMonth() + 1;
   const currentMonthName = monthNames[currentMonth - 1];
 
@@ -51,8 +23,30 @@ export function WorkAnniversariesBlock() {
       .toUpperCase()
       .slice(0, 2);
 
-  if (workAnniversaries.length === 0) {
-    return null;
+  if (isLoading) {
+    return (
+      <Card className="animate-slide-up" style={{ animationDelay: "0.4s" }}>
+        <CardHeader className="flex flex-row items-center gap-3 pb-4">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <Skeleton className="h-5 w-44" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-24 mb-1" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+              <div className="text-right">
+                <Skeleton className="h-4 w-20 mb-1" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -65,33 +59,45 @@ export function WorkAnniversariesBlock() {
           Jet Aniversários de {currentMonthName}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {workAnniversaries.map((person) => (
-          <div key={person.id} className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-amber-200">
-              <AvatarImage src={person.photoUrl} />
-              <AvatarFallback className="bg-amber-50 text-amber-600 text-sm font-semibold">
-                {getInitials(person.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {person.name}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {person.jobTitle} • {person.team}
-              </p>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-sm font-semibold text-amber-600">
-                {person.yearsAtCompany} {person.yearsAtCompany === 1 ? "ano" : "anos"} de Jet
-              </p>
-              <p className="text-xs text-muted-foreground">
-                dia {person.anniversaryDay}
-              </p>
-            </div>
+      <CardContent>
+        {!workAnniversaries || workAnniversaries.length === 0 ? (
+          <EmptyState
+            icon={Award}
+            title="Nenhum aniversário de empresa"
+            description={`Não há aniversários de Jet em ${currentMonthName}.`}
+            iconClassName="text-amber-500"
+            compact
+          />
+        ) : (
+          <div className="space-y-4">
+            {workAnniversaries.map((person) => (
+              <div key={person.id} className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 border-2 border-amber-200">
+                  <AvatarImage src={person.photoUrl} />
+                  <AvatarFallback className="bg-amber-50 text-amber-600 text-sm font-semibold">
+                    {getInitials(person.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {person.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {person.jobTitle} • {person.team}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-semibold text-amber-600">
+                    {person.yearsAtCompany} {person.yearsAtCompany === 1 ? "ano" : "anos"} de Jet
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    dia {person.anniversaryDay}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </CardContent>
     </Card>
   );
