@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, BarChart3, AlertCircle } from "lucide-react";
+import { Plus, BarChart3 } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
 import { useAuth } from "@/hooks/useAuth";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function KpiDashboardPage() {
   usePageTitle("KPIs");
@@ -122,22 +123,18 @@ export default function KpiDashboardPage() {
           </div>
         ) : kpis.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                Nenhum KPI encontrado
-              </h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                {isAdmin
-                  ? "Comece criando seu primeiro KPI para acompanhar a saúde do negócio."
-                  : "Nenhum KPI foi cadastrado ainda."}
-              </p>
-              {isAdmin && (
-                <Button className="mt-4" onClick={() => setCreateOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar KPI
-                </Button>
-              )}
+            <CardContent className="py-4">
+              <EmptyState
+                icon={BarChart3}
+                title="Nenhum KPI encontrado"
+                description={
+                  isAdmin
+                    ? "Comece criando seu primeiro KPI para acompanhar a saúde do negócio."
+                    : "Nenhum KPI foi cadastrado ainda."
+                }
+                actionLabel={isAdmin ? "Criar KPI" : undefined}
+                onAction={isAdmin ? () => setCreateOpen(true) : undefined}
+              />
             </CardContent>
           </Card>
         ) : (

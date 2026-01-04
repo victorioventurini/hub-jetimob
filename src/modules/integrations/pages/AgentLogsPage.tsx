@@ -298,10 +298,12 @@ export default function AgentLogsPage() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <h3 className="font-semibold mb-2">Nenhum log encontrado</h3>
-              <p className="text-sm">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Activity className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Nenhum log encontrado</h3>
+              <p className="text-sm text-muted-foreground max-w-md">
                 Os logs aparecerão aqui quando agentes forem executados
               </p>
             </div>

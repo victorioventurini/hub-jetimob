@@ -1,5 +1,7 @@
 import { Users, Building2, Target, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuickStats } from "@/hooks/useHomeData";
 
 interface Stat {
   label: string;
@@ -9,34 +11,56 @@ interface Stat {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const stats: Stat[] = [
-  {
-    label: "Jetimobers",
-    value: 127,
-    change: "+5 este mês",
-    changeType: "positive",
-    icon: Users,
-  },
-  {
-    label: "Times",
-    value: 12,
-    icon: Building2,
-  },
-  {
-    label: "OKRs Ativos",
-    value: 34,
-    icon: Target,
-  },
-  {
-    label: "KRs Concluídos",
-    value: "68%",
-    change: "+12% vs Q3",
-    changeType: "positive",
-    icon: CheckCircle2,
-  },
-];
-
 export function QuickStats() {
+  const { data, isLoading } = useQuickStats();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 rounded-lg" />
+                <div>
+                  <Skeleton className="h-7 w-16 mb-1" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  const stats: Stat[] = [
+    {
+      label: "Jetimobers",
+      value: data?.totalProfiles || 0,
+      change: data?.newProfilesThisMonth
+        ? `+${data.newProfilesThisMonth} este mês`
+        : undefined,
+      changeType: data?.newProfilesThisMonth ? "positive" : undefined,
+      icon: Users,
+    },
+    {
+      label: "Times",
+      value: data?.totalTeams || 0,
+      icon: Building2,
+    },
+    {
+      label: "OKRs Ativos",
+      value: data?.activeOkrs || 0,
+      icon: Target,
+    },
+    {
+      label: "KRs Concluídos",
+      value: data?.completedKrsPercentage ? `${data.completedKrsPercentage}%` : "—",
+      icon: CheckCircle2,
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
       {stats.map((stat) => {
