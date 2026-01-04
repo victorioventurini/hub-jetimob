@@ -51,26 +51,35 @@ function getInitialGreeting(): { greeting: string; subtext: string; hasCached: b
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       const cache: CacheData = JSON.parse(cached);
-      if (cache.greetings.length > 0) {
-        // Pick a random different index than last used
-        let index: number;
-        if (cache.greetings.length === 1) {
-          index = 0;
-        } else {
-          do {
-            index = Math.floor(Math.random() * cache.greetings.length);
-          } while (index === cache.lastUsedIndex);
-        }
-        // Update last used index
-        cache.lastUsedIndex = index;
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-        
-        return {
-          greeting: cache.greetings[index].greeting,
-          subtext: cache.greetings[index].subtext,
-          hasCached: true,
-        };
+
+      // If the cache only contains the fallback, treat as empty (forces a real fetch)
+      cache.greetings = cache.greetings.filter(
+        (g) => !(g.greeting === FALLBACK_GREETING && g.subtext === FALLBACK_SUBTEXT)
+      );
+      if (cache.greetings.length === 0) {
+        localStorage.removeItem(CACHE_KEY);
+        return { greeting: FALLBACK_GREETING, subtext: FALLBACK_SUBTEXT, hasCached: false };
       }
+
+      // Pick a random different index than last used
+      let index: number;
+      if (cache.greetings.length === 1) {
+        index = 0;
+      } else {
+        do {
+          index = Math.floor(Math.random() * cache.greetings.length);
+        } while (index === cache.lastUsedIndex);
+      }
+
+      // Update last used index
+      cache.lastUsedIndex = index;
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+
+      return {
+        greeting: cache.greetings[index].greeting,
+        subtext: cache.greetings[index].subtext,
+        hasCached: true,
+      };
     }
   } catch {}
   return { greeting: FALLBACK_GREETING, subtext: FALLBACK_SUBTEXT, hasCached: false };
@@ -150,7 +159,14 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
       try {
         const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
 
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         const { data, error: fnError } = await supabase.functions.invoke("hub-greeting", {
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : undefined,
           body: {
             userName: context.userName,
             userGender: context.userGender,
