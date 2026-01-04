@@ -224,38 +224,38 @@ export default function AgentsListPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}`)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Agentes - {integration.name}</h1>
-            <p className="text-muted-foreground">Gerencie os agentes de IA disponíveis</p>
-          </div>
-          {isAdmin && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setTemplateDialogOpen(true)}>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Criar de Template
-              </Button>
-              <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Agente
-              </Button>
-            </div>
-          )}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}`)}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Agentes - {integration.name}</h1>
+          <p className="text-muted-foreground">Gerencie os agentes de IA disponíveis</p>
         </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setTemplateDialogOpen(true)}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Criar de Template
+            </Button>
+            <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Criar Agente
+            </Button>
+          </div>
+        )}
+      </div>
         
-        {/* Agents Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Agentes Globais</CardTitle>
-            <CardDescription>
-              Templates de agentes disponíveis para todas as BUs que habilitarem esta integração
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Agents Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Agentes Globais</CardTitle>
+          <CardDescription>
+            Templates de agentes disponíveis para todas as BUs que habilitarem esta integração
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
             {agents && agents.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -363,11 +363,11 @@ export default function AgentsListPage() {
                   </div>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
         
-        {/* Template Dialog */}
+      {/* Template Dialog */}
         <AlertDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
           <AlertDialogContent className="max-w-2xl">
             <AlertDialogHeader>
@@ -407,9 +407,9 @@ export default function AgentsListPage() {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog>
+      </AlertDialog>
         
-        {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

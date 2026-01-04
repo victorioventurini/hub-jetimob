@@ -14,8 +14,10 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
       <Header sidebarCollapsed={sidebarCollapsed} />
       <div className="flex flex-1 pt-16">
         <SettingsSidebar />
-        <main className="flex-1 p-8 overflow-auto">
-          {children}
+        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="w-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

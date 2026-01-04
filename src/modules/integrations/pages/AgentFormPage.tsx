@@ -218,286 +218,285 @@ export default function AgentFormPage() {
   const isSaving = createAgent.isPending || updateAgent.isPending;
   
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
           <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
-          <div>
-            <h1 className="text-2xl font-bold">
-              {isEditing ? 'Editar Agente' : 'Criar Agente'}
-            </h1>
-            <p className="text-muted-foreground">{integration.name}</p>
-          </div>
+        </Button>
+        <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">
+            {isEditing ? 'Editar Agente' : 'Criar Agente'}
+          </h1>
+          <p className="text-muted-foreground">{integration.name}</p>
         </div>
+      </div>
         
-        <div className="grid gap-6">
-          {/* Basic Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="w-5 h-5" />
-                Informações Básicas
-              </CardTitle>
-              <CardDescription>
-                Defina o nome e a descrição do agente
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Agente *</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ex: Coach de OKRs"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="scope">Escopo</Label>
-                  <Select value={scope} onValueChange={(v) => setScope(v as 'global' | 'bu')}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="global">Global (todas as BUs)</SelectItem>
-                      <SelectItem value="bu">Por BU (selecionar BUs)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
+      <div className="grid gap-6">
+        {/* Basic Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="w-5 h-5" />
+              Informações Básicas
+            </CardTitle>
+            <CardDescription>
+              Defina o nome e a descrição do agente
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descreva brevemente o que este agente faz..."
-                  rows={2}
+                <Label htmlFor="name">Nome do Agente *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: Coach de OKRs"
                 />
               </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Status</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Agentes inativos não podem ser usados
-                  </p>
-                </div>
-                <Switch checked={isActive} onCheckedChange={setIsActive} />
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* System Prompt */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wand2 className="w-5 h-5" />
-                Prompt do Sistema
-              </CardTitle>
-              <CardDescription>
-                Instruções que definem o comportamento do agente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="systemPrompt">Prompt do Sistema *</Label>
-                <Textarea
-                  id="systemPrompt"
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                  placeholder="Você é um assistente especializado em..."
-                  rows={10}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Seja específico sobre o papel, regras e formato de resposta esperado.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Output Format */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Formato de Saída</CardTitle>
-              <CardDescription>
-                Defina como o agente deve estruturar as respostas
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Formato</Label>
-                <Select value={outputFormat} onValueChange={(v) => setOutputFormat(v as 'text' | 'json')}>
+                <Label htmlFor="scope">Escopo</Label>
+                <Select value={scope} onValueChange={(v) => setScope(v as 'global' | 'bu')}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {OUTPUT_FORMATS.map((format) => (
-                      <SelectItem key={format.value} value={format.value}>
-                        <div>
-                          <span className="font-medium">{format.label}</span>
-                          <span className="text-muted-foreground ml-2 text-xs">
-                            - {format.description}
-                          </span>
-                        </div>
+                    <SelectItem value="global">Global (todas as BUs)</SelectItem>
+                    <SelectItem value="bu">Por BU (selecionar BUs)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descreva brevemente o que este agente faz..."
+                rows={2}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Status</Label>
+                <p className="text-sm text-muted-foreground">
+                  Agentes inativos não podem ser usados
+                </p>
+              </div>
+              <Switch checked={isActive} onCheckedChange={setIsActive} />
+            </div>
+          </CardContent>
+        </Card>
+          
+        {/* System Prompt */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wand2 className="w-5 h-5" />
+              Prompt do Sistema
+            </CardTitle>
+            <CardDescription>
+              Instruções que definem o comportamento do agente
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="systemPrompt">Prompt do Sistema *</Label>
+              <Textarea
+                id="systemPrompt"
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                placeholder="Você é um assistente especializado em..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Seja específico sobre o papel, regras e formato de resposta esperado.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+          
+        {/* Output Format */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Formato de Saída</CardTitle>
+            <CardDescription>
+              Defina como o agente deve estruturar as respostas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Formato</Label>
+              <Select value={outputFormat} onValueChange={(v) => setOutputFormat(v as 'text' | 'json')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OUTPUT_FORMATS.map((format) => (
+                    <SelectItem key={format.value} value={format.value}>
+                      <div>
+                        <span className="font-medium">{format.label}</span>
+                        <span className="text-muted-foreground ml-2 text-xs">
+                          - {format.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {outputFormat === 'json' && (
+              <div className="space-y-2">
+                <Label htmlFor="outputSchema">Schema JSON</Label>
+                <Textarea
+                  id="outputSchema"
+                  value={outputSchema}
+                  onChange={(e) => setOutputSchema(e.target.value)}
+                  placeholder='{"type": "object", "properties": {...}}'
+                  rows={6}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Defina a estrutura esperada do JSON de resposta.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+          
+        {/* Tools / Permissions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ferramentas Permitidas</CardTitle>
+            <CardDescription>
+              Selecione quais dados o agente pode consultar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {AVAILABLE_TOOLS.map((tool) => (
+                <div 
+                  key={tool.key}
+                  className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <Checkbox
+                    id={tool.key}
+                    checked={selectedTools.includes(tool.key)}
+                    onCheckedChange={() => handleToolToggle(tool.key)}
+                  />
+                  <div>
+                    <Label 
+                      htmlFor={tool.key} 
+                      className="cursor-pointer font-medium"
+                    >
+                      {tool.label}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {tool.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+          
+        {/* Model Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Configurações do Modelo</CardTitle>
+            <CardDescription>
+              Ajuste parâmetros avançados (opcional)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Modelo</Label>
+                <Select value={modelName} onValueChange={setModelName}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODELS.map((model) => (
+                      <SelectItem key={model.value} value={model.value}>
+                        {model.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               
-              {outputFormat === 'json' && (
-                <div className="space-y-2">
-                  <Label htmlFor="outputSchema">Schema JSON</Label>
-                  <Textarea
-                    id="outputSchema"
-                    value={outputSchema}
-                    onChange={(e) => setOutputSchema(e.target.value)}
-                    placeholder='{"type": "object", "properties": {...}}'
-                    rows={6}
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Defina a estrutura esperada do JSON de resposta.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Tools / Permissions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Ferramentas Permitidas</CardTitle>
-              <CardDescription>
-                Selecione quais dados o agente pode consultar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                {AVAILABLE_TOOLS.map((tool) => (
-                  <div 
-                    key={tool.key}
-                    className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <Checkbox
-                      id={tool.key}
-                      checked={selectedTools.includes(tool.key)}
-                      onCheckedChange={() => handleToolToggle(tool.key)}
-                    />
-                    <div>
-                      <Label 
-                        htmlFor={tool.key} 
-                        className="cursor-pointer font-medium"
-                      >
-                        {tool.label}
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        {tool.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                <Label htmlFor="maxTokens">Max Tokens</Label>
+                <Input
+                  id="maxTokens"
+                  type="number"
+                  value={maxTokens}
+                  onChange={(e) => setMaxTokens(e.target.value)}
+                  placeholder="Auto"
+                  min={1}
+                  max={128000}
+                />
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Model Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações do Modelo</CardTitle>
-              <CardDescription>
-                Ajuste parâmetros avançados (opcional)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Modelo</Label>
-                  <Select value={modelName} onValueChange={setModelName}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MODELS.map((model) => (
-                        <SelectItem key={model.value} value={model.value}>
-                          {model.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="maxTokens">Max Tokens</Label>
-                  <Input
-                    id="maxTokens"
-                    type="number"
-                    value={maxTokens}
-                    onChange={(e) => setMaxTokens(e.target.value)}
-                    placeholder="Auto"
-                    min={1}
-                    max={128000}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="temperature">Temperature</Label>
-                  <Input
-                    id="temperature"
-                    type="number"
-                    value={temperature}
-                    onChange={(e) => setTemperature(e.target.value)}
-                    placeholder="0.7"
-                    min={0}
-                    max={2}
-                    step={0.1}
-                  />
-                </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="temperature">Temperature</Label>
+                <Input
+                  id="temperature"
+                  type="number"
+                  value={temperature}
+                  onChange={(e) => setTemperature(e.target.value)}
+                  placeholder="0.7"
+                  min={0}
+                  max={2}
+                  step={0.1}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
           
+        {/* Knowledge Base - Only show when editing */}
+        {isEditing && agentId && (
+          <AgentDocumentUpload agentId={agentId} />
+        )}
           
-          {/* Knowledge Base - Only show when editing */}
-          {isEditing && agentId && (
-            <AgentDocumentUpload agentId={agentId} />
-          )}
+        <Separator />
           
-          <Separator />
-          
-          {/* Actions */}
-          <div className="flex gap-3 justify-end pb-6">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => handleSave(false)}
-              disabled={isSaving}
-            >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Rascunho
-            </Button>
-            <Button
-              onClick={() => handleSave(true)}
-              disabled={isSaving}
-            >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Salvar e Ativar
-            </Button>
-          </div>
+        {/* Actions */}
+        <div className="flex flex-wrap gap-3 justify-end pb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => handleSave(false)}
+            disabled={isSaving}
+          >
+            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Rascunho
+          </Button>
+          <Button
+            onClick={() => handleSave(true)}
+            disabled={isSaving}
+          >
+            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Salvar e Ativar
+          </Button>
         </div>
+      </div>
     </div>
   );
 }
