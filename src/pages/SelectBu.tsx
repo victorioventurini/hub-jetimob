@@ -1,20 +1,52 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Building2, ArrowRight, Loader2 } from "lucide-react";
+import { Building2, ArrowRight, Loader2, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { toast } from "sonner";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 export default function SelectBu() {
   usePageTitle("", { hubOnly: true });
   
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const { userBus, isLoading, selectBu } = useBu();
+
+  const roleLabels: Record<string, string> = {
+    super_admin: "Super Admin",
+    admin: "Administrador",
+    team_leader: "Líder de Time",
+    collaborator: "Colaborador",
+  };
+
+  const displayName = profile?.display_name || "Jetimober";
+  const email = profile?.work_email || "";
+  const roleLabel = role ? roleLabels[role] : "Colaborador";
+
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Você saiu do Hub");
+  };
 
   const handleSelectBu = (buId: string) => {
     selectBu(buId);
@@ -44,19 +76,51 @@ export default function SelectBu() {
             <span className="text-lg font-semibold">Hub</span>
           </div>
           
-          {/* User info */}
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.photo_url || undefined} />
-              <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
-                {profile?.display_name?.charAt(0) || "J"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium">{profile?.display_name}</p>
-              <p className="text-xs text-muted-foreground">{profile?.work_email}</p>
-            </div>
-          </div>
+          {/* User menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-3 px-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.photo_url || undefined} />
+                  <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-sm font-medium">{displayName}</span>
+                  <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span>{displayName}</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {email}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {role === "super_admin" && (
+                <DropdownMenuItem 
+                  onClick={() => navigate("/settings")}
+                  className="cursor-pointer"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações
+                </DropdownMenuItem>
+              )}
+              {role === "super_admin" && <DropdownMenuSeparator />}
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive cursor-pointer"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
