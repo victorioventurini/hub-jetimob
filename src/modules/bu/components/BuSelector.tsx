@@ -82,15 +82,7 @@ export function BuSelector() {
               <Check className="h-4 w-4 text-primary shrink-0" />
             )}
           </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          onClick={handleViewAllBus}
-          className="cursor-pointer text-muted-foreground"
-        >
-          <ArrowLeftRight className="h-4 w-4 mr-2" />
-          Trocar de Business Unit
-        </DropdownMenuItem>
+          ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
