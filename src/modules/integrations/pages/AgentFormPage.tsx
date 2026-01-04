@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,7 +105,7 @@ export default function AgentFormPage() {
         .then(({ data, error }) => {
           if (error) {
             toast.error('Erro ao carregar agente');
-            navigate(`/integrations/${integrationKey}/agents`);
+            navigate(`/settings/integrations/${integrationKey}/agents`);
             return;
           }
           
@@ -181,13 +180,13 @@ export default function AgentFormPage() {
         ...agentData,
       }, {
         onSuccess: () => {
-          navigate(`/integrations/${integrationKey}/agents`);
+          navigate(`/settings/integrations/${integrationKey}/agents`);
         },
       });
     } else {
       createAgent.mutate(agentData, {
         onSuccess: () => {
-          navigate(`/integrations/${integrationKey}/agents`);
+          navigate(`/settings/integrations/${integrationKey}/agents`);
         },
       });
     }
@@ -195,40 +194,35 @@ export default function AgentFormPage() {
   
   if (loadingIntegration || loadingAgent) {
     return (
-      <HubLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-[600px]" />
-        </div>
-      </HubLayout>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-[600px]" />
+      </div>
     );
   }
   
   if (!integration) {
     return (
-      <HubLayout>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-            <Button variant="outline" onClick={() => navigate('/integrations')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </CardContent>
-        </Card>
-      </HubLayout>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
+          <Button variant="outline" onClick={() => navigate('/settings/integrations')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
   
   const isSaving = createAgent.isPending || updateAgent.isPending;
   
   return (
-    <HubLayout>
-      <div className="space-y-6 max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/integrations/${integrationKey}/agents`)}>
-            <ArrowLeft className="w-5 h-5" />
+    <div className="space-y-6 max-w-4xl">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
+          <ArrowLeft className="w-5 h-5" />
           </Button>
           <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
           <div>
@@ -482,7 +476,7 @@ export default function AgentFormPage() {
           <div className="flex gap-3 justify-end pb-6">
             <Button 
               variant="outline" 
-              onClick={() => navigate(`/integrations/${integrationKey}/agents`)}
+              onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}
             >
               Cancelar
             </Button>
@@ -504,7 +498,6 @@ export default function AgentFormPage() {
             </Button>
           </div>
         </div>
-      </div>
-    </HubLayout>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,39 +112,34 @@ export default function GlobalIntegrationDetailPage() {
   
   if (loadingIntegration || loadingConfig) {
     return (
-      <HubLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-96" />
-        </div>
-      </HubLayout>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-96" />
+      </div>
     );
   }
   
   if (!integration) {
     return (
-      <HubLayout>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-            <Button variant="outline" onClick={() => navigate('/integrations')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </CardContent>
-        </Card>
-      </HubLayout>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
+          <Button variant="outline" onClick={() => navigate('/settings/integrations')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
   
   const hasExistingApiKey = !!(globalConfig?.config_encrypted as any)?.api_key;
   
   return (
-    <HubLayout>
-      <div className="space-y-6">
-        {/* Header */}
+    <div className="space-y-6">
+      {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/integrations')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/settings/integrations')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
@@ -293,11 +287,11 @@ export default function GlobalIntegrationDetailPage() {
                     </div>
                     <div className="flex gap-2">
                       {isAdmin && (
-                        <Button onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}>
+                        <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
                           Criar Agente
                         </Button>
                       )}
-                      <Button variant="outline" onClick={() => navigate(`/integrations/${integrationKey}/agents`)}>
+                      <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
                         Ver Todos
                       </Button>
                     </div>
@@ -310,7 +304,7 @@ export default function GlobalIntegrationDetailPage() {
                         <div 
                           key={agent.id}
                           className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/integrations/${integrationKey}/agents/${agent.id}`)}
+                          onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/${agent.id}`)}
                         >
                           <div className="flex items-center gap-3">
                             <Bot className="w-5 h-5 text-primary" />
@@ -328,7 +322,7 @@ export default function GlobalIntegrationDetailPage() {
                         <Button 
                           variant="ghost" 
                           className="w-full"
-                          onClick={() => navigate(`/integrations/${integrationKey}/agents`)}
+                          onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}
                         >
                           Ver mais {globalAgents.length - 5} agentes...
                         </Button>
@@ -342,7 +336,7 @@ export default function GlobalIntegrationDetailPage() {
                         <Button 
                           variant="outline" 
                           className="mt-4"
-                          onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}
+                          onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}
                         >
                           Criar primeiro agente
                         </Button>
@@ -365,7 +359,7 @@ export default function GlobalIntegrationDetailPage() {
                       Histórico de execuções de agentes desta integração
                     </CardDescription>
                   </div>
-                  <Button variant="outline" onClick={() => navigate(`/integrations/${integrationKey}/logs`)}>
+                  <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/logs`)}>
                     Ver Todos
                   </Button>
                 </div>
@@ -397,7 +391,7 @@ export default function GlobalIntegrationDetailPage() {
                       <Button 
                         variant="ghost" 
                         className="w-full"
-                        onClick={() => navigate(`/integrations/${integrationKey}/logs`)}
+                        onClick={() => navigate(`/settings/integrations/${integrationKey}/logs`)}
                       >
                         Ver mais {logs.length - 10} logs...
                       </Button>
@@ -412,8 +406,7 @@ export default function GlobalIntegrationDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
-      </div>
-    </HubLayout>
+      </Tabs>
+    </div>
   );
 }

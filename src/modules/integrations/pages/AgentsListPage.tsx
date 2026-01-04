@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -202,37 +201,31 @@ export default function AgentsListPage() {
   
   if (loadingIntegration || loadingAgents) {
     return (
-      <HubLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-96" />
-        </div>
-      </HubLayout>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-96" />
+      </div>
     );
   }
   
   if (!integration) {
     return (
-      <HubLayout>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-            <Button variant="outline" onClick={() => navigate('/integrations')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </CardContent>
-        </Card>
-      </HubLayout>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
+          <Button variant="outline" onClick={() => navigate('/settings/integrations')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
-  
   return (
-    <HubLayout>
-      <div className="space-y-6">
-        {/* Header */}
+    <div className="space-y-6">
+      {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/integrations/${integrationKey}`)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}`)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
@@ -246,7 +239,7 @@ export default function AgentsListPage() {
                 <Sparkles className="w-4 h-4 mr-2" />
                 Criar de Template
               </Button>
-              <Button onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}>
+              <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Agente
               </Button>
@@ -323,7 +316,7 @@ export default function AgentsListPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem 
-                              onClick={() => navigate(`/integrations/${integrationKey}/agents/${agent.id}`)}
+                              onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/${agent.id}`)}
                             >
                               <Pencil className="w-4 h-4 mr-2" />
                               Editar
@@ -363,7 +356,7 @@ export default function AgentsListPage() {
                       <Sparkles className="w-4 h-4 mr-2" />
                       Usar Template
                     </Button>
-                    <Button onClick={() => navigate(`/integrations/${integrationKey}/agents/new`)}>
+                    <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Criar Manualmente
                     </Button>
@@ -437,7 +430,6 @@ export default function AgentsListPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </HubLayout>
+    </div>
   );
 }
