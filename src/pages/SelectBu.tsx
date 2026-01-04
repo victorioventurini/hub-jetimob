@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Building2, ArrowRight, Loader2, Plus, Settings } from "lucide-react";
+import { Building2, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,13 +8,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
-import { CreateBuDialog } from "@/modules/bu/components/CreateBuDialog";
 
 export default function SelectBu() {
   usePageTitle("", { hubOnly: true });
   
   const navigate = useNavigate();
-  const { profile, isAdmin } = useAuth();
+  const { profile } = useAuth();
   const { userBus, isLoading, selectBu } = useBu();
 
   const handleSelectBu = (buId: string) => {
@@ -45,30 +44,8 @@ export default function SelectBu() {
             <span className="text-lg font-semibold">Hub</span>
           </div>
           
-          {/* Actions and User info */}
+          {/* User info */}
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <>
-                <CreateBuDialog
-                  trigger={
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Nova BU</span>
-                    </Button>
-                  }
-                />
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate("/settings")}
-                  title="Configurações do Hub"
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </>
-            )}
-            <div className="w-px h-6 bg-border mx-1" />
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.photo_url || undefined} />
               <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
