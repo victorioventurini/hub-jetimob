@@ -131,6 +131,13 @@ export function useTeam(teamId: string | undefined) {
   });
 }
 
+export interface FlatTeamItem {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string | null;
+}
+
 export function useTeamTree() {
   const { data: teams, ...rest } = useTeams(true);
 
@@ -161,13 +168,56 @@ export function useTeamTree() {
       }
     });
 
-    return rootTeams;
+    // Sort children alphabetically
+    const sortChildren = (nodes: TeamTreeNode[]): TeamTreeNode[] => {
+      return nodes
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((node) => ({
+          ...node,
+          children: sortChildren(node.children),
+        }));
+    };
+
+    return sortChildren(rootTeams);
   };
 
   return {
     ...rest,
     data: teams,
     tree: teams ? buildTree(teams) : [],
+  };
+}
+
+/**
+ * Returns a flat list of teams with hierarchy level for use in dropdowns.
+ * Parent teams come first, followed by their children with indentation level.
+ */
+export function useHierarchicalTeamList() {
+  const { tree, isLoading, error } = useTeamTree();
+
+  const flattenTree = (nodes: TeamTreeNode[], level = 0): FlatTeamItem[] => {
+    const result: FlatTeamItem[] = [];
+    
+    for (const node of nodes) {
+      result.push({
+        id: node.id,
+        name: node.name,
+        level,
+        parentId: null, // Not needed for display
+      });
+      
+      if (node.children.length > 0) {
+        result.push(...flattenTree(node.children, level + 1));
+      }
+    }
+    
+    return result;
+  };
+
+  return {
+    teams: flattenTree(tree),
+    isLoading,
+    error,
   };
 }
 
