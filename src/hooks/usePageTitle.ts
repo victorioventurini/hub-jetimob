@@ -104,7 +104,7 @@ function getGlobalDescription(title: string, pageType?: PageType, customDescript
     "Integrações": "Gerencie as integrações globais do Hub.",
     "Usuários": "Gerencie os usuários e permissões do Hub.",
     "Unidades de Negócio": "Gerencie as unidades de negócio cadastradas no Hub.",
-    "Página não encontrada": "A página solicitada não foi encontrada no Hub.",
+    "Página não encontrada": "Esta página não existe ou mudou de lugar. Volte para a Home do Hub e acesse seus módulos e atalhos.",
   };
 
   return globalDescriptions[title] || `Gerencie ${title.toLowerCase()} no Hub.`;
