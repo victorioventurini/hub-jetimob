@@ -158,10 +158,20 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
     authRetryRef.current = false;
 
     const fetchGreeting = async (opts?: { silent?: boolean }) => {
-      if (!opts?.silent) setIsLoading(true);
+      const isSilent = !!opts?.silent;
+      if (!isSilent) setIsLoading(true);
       setError(null);
 
+      let keepLoadingForRetry = false;
+
       try {
+        // Garante que existe session antes de chamar a function (evita 401 logo após login)
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData.session?.access_token) {
+          throw new Error("Unauthorized: session not ready");
+        }
+
         const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
 
         const { data, error: fnError } = await supabase.functions.invoke("hub-greeting", {
@@ -192,10 +202,11 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Erro ao carregar saudação";
 
-        // Se o session ainda não estiver pronto, a função pode responder 401.
-        // Fazemos UMA re-tentativa silenciosa curta.
+        // Se o session ainda não estiver pronto, a function pode responder 401.
+        // Fazemos UMA re-tentativa silenciosa curta (mantendo loading na 1ª tentativa).
         if (!authRetryRef.current && /unauthorized|jwt|permission/i.test(message)) {
           authRetryRef.current = true;
+          keepLoadingForRetry = !isSilent;
           setTimeout(() => {
             if (!cancelled) void fetchGreeting({ silent: true });
           }, 800);
@@ -216,7 +227,7 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
           setSubtext(FALLBACK_SUBTEXT);
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !keepLoadingForRetry) setIsLoading(false);
       }
     };
 
