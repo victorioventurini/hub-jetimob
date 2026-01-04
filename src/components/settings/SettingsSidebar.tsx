@@ -101,8 +101,8 @@ export function SettingsSidebar() {
 
         {/* Plataforma Section */}
         <NavGroup title="Plataforma">
-          <NavItem to="/business-units" icon={Building2} label="Business Units" />
-          <NavItem to="/modules" icon={Blocks} label="Módulos" />
+          <NavItem to="/settings/business-units" icon={Building2} label="Business Units" />
+          <NavItem to="/settings/modules" icon={Blocks} label="Módulos" />
           <NavItem to="/settings/integrations" icon={Puzzle} label="Integrações" />
         </NavGroup>
 
