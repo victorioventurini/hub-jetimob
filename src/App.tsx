@@ -34,6 +34,9 @@ import BuManagementPage from "./modules/bu/pages/BuManagementPage";
 import SelectBu from "./pages/SelectBu";
 import Auth from "./pages/Auth";
 import SettingsHome from "./pages/settings/SettingsHome";
+import SettingsBusinessUnits from "./pages/settings/SettingsBusinessUnits";
+import SettingsModules from "./pages/settings/SettingsModules";
+import SettingsIntegrations from "./pages/settings/SettingsIntegrations";
 import { SettingsLayout } from "./components/settings/SettingsLayout";
 import NotFound from "./pages/NotFound";
 
@@ -165,27 +168,6 @@ const App = () => (
                   }
                 />
 
-                {/* Integrações da BU (Settings) */}
-                <Route
-                  path="/settings/integrations"
-                  element={
-                    <ProtectedRoute>
-                      <BuRequiredRoute>
-                        <BuIntegrationsPage />
-                      </BuRequiredRoute>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings/integrations/:integrationKey"
-                  element={
-                    <ProtectedRoute>
-                      <BuRequiredRoute>
-                        <BuIntegrationDetailPage />
-                      </BuRequiredRoute>
-                    </ProtectedRoute>
-                  }
-                />
 
                 {/* Configurações do Hub (Admin Global) */}
                 <Route
@@ -195,6 +177,42 @@ const App = () => (
                       <AdminRoute>
                         <SettingsLayout>
                           <SettingsHome />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/business-units"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <SettingsBusinessUnits />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/modules"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <SettingsModules />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/integrations"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <SettingsIntegrations />
                         </SettingsLayout>
                       </AdminRoute>
                     </ProtectedRoute>
