@@ -262,52 +262,5 @@ export function useLatestCheckinDate() {
 // ========================
 // HELPER QUERIES
 // ========================
-export function useTeams() {
-  return useQuery({
-    queryKey: ['teams'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id, name, parent_team_id, leader_user_id')
-        .is('deleted_at', null)
-        .order('name');
-
-      if (error) throw error;
-      return data;
-    },
-  });
-}
-
-export function useCycles() {
-  return useQuery({
-    queryKey: ['cycles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cycles')
-        .select('*')
-        .order('start_date', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-}
-
-export function useUserProfile(userId?: string) {
-  return useQuery({
-    queryKey: ['profile', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, display_name, photo_url, team_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId,
-  });
-}
+// Re-export from shared hooks for backward compatibility
+export { useTeamsList as useTeams, useCyclesList as useCycles, useUserProfile } from '@/hooks/useSharedData';
