@@ -29,6 +29,8 @@ const roleLabels: Record<string, string> = {
 
 export function Header({ sidebarCollapsed }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
+  
+  console.log("Header role check:", { role, isSuperAdmin: role === "super_admin" });
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
