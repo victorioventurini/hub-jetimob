@@ -1,0 +1,191 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { Loader2, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
+
+interface BulkEditDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedIds: string[];
+  onComplete: () => void;
+}
+
+export function BulkEditDialog({
+  open,
+  onOpenChange,
+  selectedIds,
+  onComplete,
+}: BulkEditDialogProps) {
+  const queryClient = useQueryClient();
+  const [teamId, setTeamId] = useState<string>("no-change");
+  const [managerId, setManagerId] = useState<string>("no-change");
+
+  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
+
+  const { data: managers } = useQuery({
+    queryKey: ["managers-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .is("deleted_at", null)
+        .neq("employment_status", "terminated")
+        .order("display_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async () => {
+      const updates: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (teamId !== "no-change") {
+        updates.team_id = teamId === "none" ? null : teamId;
+      }
+
+      if (managerId !== "no-change") {
+        updates.manager_user_id = managerId === "none" ? null : managerId;
+      }
+
+      // Only proceed if there's something to update
+      if (Object.keys(updates).length === 1) {
+        throw new Error("Selecione pelo menos um campo para atualizar");
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .in("id", selectedIds);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      toast.success(`${selectedIds.length} jetimobers atualizados com sucesso!`);
+      handleClose();
+      onComplete();
+    },
+    onError: (error: Error) => {
+      console.error("Bulk update error:", error);
+      toast.error(error.message || "Erro ao atualizar. Tente novamente.");
+    },
+  });
+
+  const handleClose = () => {
+    setTeamId("no-change");
+    setManagerId("no-change");
+    onOpenChange(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    bulkUpdateMutation.mutate();
+  };
+
+  const hasChanges = teamId !== "no-change" || managerId !== "no-change";
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Edição em Massa
+          </DialogTitle>
+          <DialogDescription>
+            Atualize {selectedIds.length}{" "}
+            {selectedIds.length === 1 ? "jetimober selecionado" : "jetimobers selecionados"}.
+            Apenas os campos alterados serão atualizados.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+          <div className="space-y-2">
+            <Label>Time</Label>
+            <Select value={teamId} onValueChange={setTeamId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Não alterar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="no-change" className="text-muted-foreground">
+                  — Não alterar —
+                </SelectItem>
+                <SelectItem value="none">Nenhum (remover do time)</SelectItem>
+                {hierarchicalTeams?.map((team) => (
+                  <SelectItem
+                    key={team.id}
+                    value={team.id}
+                    className={team.level > 0 ? "text-[13px]" : ""}
+                  >
+                    <span style={{ paddingLeft: `${team.level * 12}px` }}>
+                      {team.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Gestor</Label>
+            <Select value={managerId} onValueChange={setManagerId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Não alterar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="no-change" className="text-muted-foreground">
+                  — Não alterar —
+                </SelectItem>
+                <SelectItem value="none">Nenhum (remover gestor)</SelectItem>
+                {managers?.map((manager) => (
+                  <SelectItem key={manager.id} value={manager.id}>
+                    {manager.display_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={bulkUpdateMutation.isPending || !hasChanges}
+            >
+              {bulkUpdateMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Atualizar {selectedIds.length}{" "}
+              {selectedIds.length === 1 ? "jetimober" : "jetimobers"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
