@@ -1,12 +1,14 @@
-import { TrendingUp, TrendingDown, Minus, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, AlertCircle, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import { KpiWithValues, CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useVic, useVicEnabled } from "@/modules/vic";
 
 interface KpiCardProps {
   kpi: KpiWithValues;
@@ -14,6 +16,9 @@ interface KpiCardProps {
 }
 
 export function KpiCard({ kpi, onClick }: KpiCardProps) {
+  const { openPanel } = useVic();
+  const { isEnabled: vicEnabled } = useVicEnabled();
+  
   const TrendIcon =
     kpi.trend === "up" ? TrendingUp : kpi.trend === "down" ? TrendingDown : Minus;
 
@@ -29,6 +34,9 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
       : kpi.trend === "up"
       ? "text-red-500"
       : "text-muted-foreground";
+
+  // Determine if KPI needs attention (off-track or significant variation)
+  const needsAttention = kpi.variation !== null && Math.abs(kpi.variation) > 15;
 
   const formatValue = (value: number | null) => {
     if (value === null) return "—";
@@ -109,6 +117,39 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
           <div className="text-xs text-muted-foreground">
             Meta: {formatValue(kpi.target_value)}
           </div>
+        )}
+
+        {/* Vic suggestion for off-track KPIs */}
+        {vicEnabled && needsAttention && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-1.5 text-xs text-primary h-7"
+            onClick={(e) => {
+              e.stopPropagation();
+              openPanel({
+                agentSlug: "analista-kpis",
+                actionContext: "kpi-analyze-variation",
+                context: {
+                  type: "KPI",
+                  title: kpi.name,
+                  description: kpi.description || undefined,
+                  currentValue: kpi.current_value || undefined,
+                  targetValue: kpi.target_value || undefined,
+                  unit: kpi.unit,
+                  additionalData: {
+                    variation: kpi.variation,
+                    trend: kpi.trend,
+                    direction: kpi.direction,
+                    category: kpi.category,
+                  },
+                },
+              });
+            }}
+          >
+            <Sparkles className="h-3 w-3" />
+            Vic detectou variação. Analisar?
+          </Button>
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-border">

@@ -38,6 +38,7 @@ import {
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
 } from "../types";
+import { VicActionButton } from "@/modules/vic";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
@@ -138,7 +139,29 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do KPI</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Nome do KPI</FormLabel>
+                    {field.value && (
+                      <VicActionButton
+                        agentSlug="analista-kpis"
+                        actionContext="kpi-create"
+                        context={{
+                          type: "KPI",
+                          title: field.value,
+                          description: form.watch("description") || undefined,
+                          targetValue: form.watch("target_value") || undefined,
+                          unit: form.watch("unit"),
+                          additionalData: {
+                            category: form.watch("category"),
+                            direction: form.watch("direction"),
+                            frequency: form.watch("frequency"),
+                          },
+                        }}
+                        label="Validar KPI"
+                        compact
+                      />
+                    )}
+                  </div>
                   <FormControl>
                     <Input placeholder="Ex: NPS, CAC, Churn Rate..." {...field} />
                   </FormControl>

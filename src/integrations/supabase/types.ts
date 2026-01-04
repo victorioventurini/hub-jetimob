@@ -72,6 +72,7 @@ export type Database = {
       }
       ai_agent_logs: {
         Row: {
+          action_context: string | null
           agent_id: string | null
           agent_name: string
           bu_id: string | null
@@ -89,6 +90,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          action_context?: string | null
           agent_id?: string | null
           agent_name: string
           bu_id?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          action_context?: string | null
           agent_id?: string | null
           agent_name?: string
           bu_id?: string | null
@@ -155,6 +158,7 @@ export type Database = {
           output_format: Database["public"]["Enums"]["agent_output_format"]
           output_schema: Json | null
           scope: Database["public"]["Enums"]["agent_scope"]
+          slug: string | null
           system_prompt: string
           temperature: number | null
           updated_at: string
@@ -174,6 +178,7 @@ export type Database = {
           output_format?: Database["public"]["Enums"]["agent_output_format"]
           output_schema?: Json | null
           scope?: Database["public"]["Enums"]["agent_scope"]
+          slug?: string | null
           system_prompt: string
           temperature?: number | null
           updated_at?: string
@@ -193,6 +198,7 @@ export type Database = {
           output_format?: Database["public"]["Enums"]["agent_output_format"]
           output_schema?: Json | null
           scope?: Database["public"]["Enums"]["agent_scope"]
+          slug?: string | null
           system_prompt?: string
           temperature?: number | null
           updated_at?: string
@@ -296,6 +302,47 @@ export type Database = {
             foreignKeyName: "bu_agent_activations_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bu_ia_config: {
+        Row: {
+          bu_id: string
+          created_at: string
+          ia_enabled: boolean
+          ia_mode: string
+          id: string
+          max_calls_per_bu_day: number | null
+          max_calls_per_user_day: number | null
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          ia_enabled?: boolean
+          ia_mode?: string
+          id?: string
+          max_calls_per_bu_day?: number | null
+          max_calls_per_user_day?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          ia_enabled?: boolean
+          ia_mode?: string
+          id?: string
+          max_calls_per_bu_day?: number | null
+          max_calls_per_user_day?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_ia_config_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: true
             referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
@@ -1828,6 +1875,11 @@ export type Database = {
         }
         Returns: number
       }
+      count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
+      count_user_calls_today: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: number
+      }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
       get_enabled_modules_for_bu: {
         Args: { p_bu_id: string }
@@ -1858,11 +1910,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_ceo: { Args: { _user_id: string }; Returns: boolean }
+      is_agent_enabled_for_bu: {
+        Args: { p_agent_id: string; p_bu_id: string }
+        Returns: boolean
+      }
       is_bu_admin: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
       is_email_domain_allowed: { Args: { p_email: string }; Returns: boolean }
+      is_ia_enabled_for_bu: { Args: { p_bu_id: string }; Returns: boolean }
       is_module_enabled_for_bu: {
         Args: { p_bu_id: string; p_module_slug: string }
         Returns: boolean

@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.hub-greeting]
 verify_jwt = true
+
+[functions.invoke-vic]
+verify_jwt = true

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { VicActionButton } from '@/modules/vic';
 
 interface CreateTeamObjectiveDialogProps {
   open: boolean;
@@ -151,7 +152,29 @@ export function CreateTeamObjectiveDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="title">Título *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="title">Título *</Label>
+                {title.trim() && (
+                  <VicActionButton
+                    agentSlug="coach-okrs"
+                    actionContext="okr-create-objective"
+                    context={{
+                      type: "Objetivo de Time",
+                      title,
+                      description: description || undefined,
+                    }}
+                    label="Melhorar objetivo"
+                    compact
+                    onApply={(response) => {
+                      // Try to extract improved title from response
+                      const lines = response.split('\n').filter(l => l.trim());
+                      if (lines[0]) {
+                        setTitle(lines[0].replace(/^[-*•]\s*/, '').trim());
+                      }
+                    }}
+                  />
+                )}
+              </div>
               <Input
                 id="title"
                 placeholder="Ex: Melhorar o NPS do time de suporte"

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { BuProvider } from "@/contexts/BuContext";
 import { ModuleProvider } from "@/contexts/ModuleContext";
+import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
@@ -46,7 +47,9 @@ const App = () => (
         <AuthProvider>
           <BuProvider>
             <ModuleProvider>
-              <Routes>
+              <VicProvider>
+                <VicSidepanel />
+                <Routes>
                 {/* ===== ROTAS PÚBLICAS ===== */}
                 <Route path="/auth" element={<Auth />} />
 
@@ -300,6 +303,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </VicProvider>
             </ModuleProvider>
           </BuProvider>
         </AuthProvider>

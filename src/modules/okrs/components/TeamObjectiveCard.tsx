@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
@@ -16,8 +16,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useVic, useVicEnabled } from '@/modules/vic';
 
 interface TeamObjectiveCardProps {
   objective: {
@@ -60,6 +62,8 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
     status: OkrRagStatus;
   } | null>(null);
   const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.team_id);
+  const { openPanel } = useVic();
+  const { isEnabled: vicEnabled } = useVicEnabled();
 
   const teamName = teams.find(t => t.id === objective.team_id)?.name || 'Time';
   
@@ -125,6 +129,39 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
+                  {vicEnabled && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          openPanel({
+                            agentSlug: "coach-okrs",
+                            actionContext: "okr-review-quality",
+                            context: {
+                              type: "Objetivo de Time",
+                              title: objective.title,
+                              description: objective.description || undefined,
+                              status: objective.status,
+                              additionalData: {
+                                teamName,
+                                krsCount: objectiveKrs.length,
+                                krs: objectiveKrs.map(kr => ({
+                                  title: kr.title,
+                                  baseline: kr.baseline,
+                                  current: kr.current_value,
+                                  target: kr.target,
+                                  status: kr.status,
+                                })),
+                              },
+                            },
+                          });
+                        }}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Vic: Revisar qualidade
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button
