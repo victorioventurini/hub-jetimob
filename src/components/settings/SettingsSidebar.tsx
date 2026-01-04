@@ -83,11 +83,11 @@ export function SettingsSidebar() {
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-            J
+            H
           </div>
           <div>
             <p className="font-semibold text-foreground">Hub</p>
-            <p className="text-sm text-muted-foreground">Jetimob</p>
+            <p className="text-sm text-muted-foreground">Configurações Globais</p>
           </div>
         </div>
       </div>
@@ -98,14 +98,6 @@ export function SettingsSidebar() {
         <div>
           <NavItem to="/settings" icon={Home} label="Home" />
         </div>
-
-        {/* Jetimob Section */}
-        <NavGroup title="Jetimob">
-          <NavItem to="/settings/okrs" icon={Target} label="OKRs" />
-          <NavItem to="/settings/kpis" icon={BarChart3} label="KPIs" />
-          <NavItem to="/settings/jetimobers" icon={Users} label="Jetimobers" />
-          <NavItem to="/settings/teams" icon={UsersRound} label="Teams" />
-        </NavGroup>
 
         {/* Plataforma Section */}
         <NavGroup title="Plataforma">
