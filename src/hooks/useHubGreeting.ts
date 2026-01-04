@@ -164,47 +164,41 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
 
       let keepLoadingForRetry = false;
 
-      try {
-        // Garante que existe session antes de chamar a function (evita 401 logo após login)
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!sessionData.session?.access_token) {
-          throw new Error("Unauthorized: session not ready");
-        }
+       try {
+         const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
 
-        const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
+         const { data, error: invokeError } = await supabase.functions.invoke("hub-greeting", {
+           body: {
+             userName: context.userName,
+             userGender: context.userGender,
+             periodOfDay: getPeriodOfDay(),
+             dayOfWeek: getDayOfWeek(),
+             buName: context.buName,
+             okrSummary: context.okrSummary,
+             kpiSummary: context.kpiSummary,
+             recentGreetings,
+           },
+         });
 
-        const { data, error: invokeError } = await supabase.functions.invoke("hub-greeting", {
-          body: {
-            userName: context.userName,
-            userGender: context.userGender,
-            periodOfDay: getPeriodOfDay(),
-            dayOfWeek: getDayOfWeek(),
-            buName: context.buName,
-            okrSummary: context.okrSummary,
-            kpiSummary: context.kpiSummary,
-            recentGreetings,
-          },
-        });
+         if (invokeError) {
+           throw new Error(invokeError.message || "hub-greeting failed");
+         }
 
-        if (invokeError) {
-          throw new Error(invokeError.message || "hub-greeting failed");
-        }
+         if (data?.error) {
+           throw new Error(data.error);
+         }
 
-        if (data?.error) {
-          throw new Error(data.error);
-        }
+         if (!data?.greeting || !data?.subtext) {
+           throw new Error("Empty response");
+         }
 
-        if (!data?.greeting || !data?.subtext) {
-          throw new Error("Empty response");
-        }
+         if (cancelled) return;
 
-        if (cancelled) return;
-
-        setGreeting(data.greeting);
-        setSubtext(data.subtext);
-        saveToCache(data.greeting, data.subtext, data.generatedAt);
-      } catch (err) {
+         setGreeting(data.greeting);
+         setSubtext(data.subtext);
+         saveToCache(data.greeting, data.subtext, data.generatedAt);
+       }
+      catch (err) {
         const message = err instanceof Error ? err.message : "Erro ao carregar saudação";
 
         // Se o session ainda não estiver pronto, a function pode responder 401.
