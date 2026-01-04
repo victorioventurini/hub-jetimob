@@ -62,7 +62,7 @@ export function WorkAnniversariesBlock() {
           <Award className="h-5 w-5 text-amber-500" />
         </div>
         <CardTitle className="text-base">
-          Aniversários de Empresa - {currentMonthName}
+          Jet Aniversários de {currentMonthName}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -84,7 +84,7 @@ export function WorkAnniversariesBlock() {
             </div>
             <div className="text-right shrink-0">
               <p className="text-sm font-semibold text-amber-600">
-                {person.yearsAtCompany} {person.yearsAtCompany === 1 ? "ano" : "anos"}
+                {person.yearsAtCompany} {person.yearsAtCompany === 1 ? "ano" : "anos"} de Jet
               </p>
               <p className="text-xs text-muted-foreground">
                 dia {person.anniversaryDay}
