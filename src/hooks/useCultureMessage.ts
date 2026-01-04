@@ -1,19 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { CULTURE_MESSAGES, getRandomCultureMessage } from "@/data/cultureMessages";
 
-const CACHE_KEY = "culture_messages_cache";
-const MAX_CACHED_MESSAGES = 20;
-const MIN_POOL_SIZE = 8;
-
-interface CachedMessage {
-  message: string;
-  generatedAt: string;
-}
-
-interface CacheData {
-  messages: CachedMessage[];
-  lastUsedIndex: number;
-}
+const CACHE_KEY = "culture_messages_used";
+const MAX_RECENTLY_USED = 20;
 
 interface UseCultureMessageReturn {
   message: string | null;
@@ -22,140 +11,59 @@ interface UseCultureMessageReturn {
   refresh: () => Promise<void>;
 }
 
+/**
+ * Hook que retorna mensagens de cultura pré-geradas (100+).
+ * Não faz chamadas de IA - usa pool local para eliminar consumo.
+ */
 export function useCultureMessage(): UseCultureMessageReturn {
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const hasFetchedRef = useRef(false);
+  const initializedRef = useRef(false);
 
-  const getCache = useCallback((): CacheData => {
+  const getRecentlyUsed = useCallback((): string[] => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) return { messages: [], lastUsedIndex: -1 };
+      if (!cached) return [];
       return JSON.parse(cached);
     } catch {
       localStorage.removeItem(CACHE_KEY);
-      return { messages: [], lastUsedIndex: -1 };
+      return [];
     }
   }, []);
 
-  const saveToCache = useCallback((newMessage: string, generatedAt: string) => {
-    const cache = getCache();
-    
-    // Check if message already exists (avoid duplicates)
-    const exists = cache.messages.some(m => m.message === newMessage);
-    if (exists) return;
-    
-    // Add new message at the beginning
-    cache.messages.unshift({ message: newMessage, generatedAt });
-    
-    // Keep only the last N messages
-    if (cache.messages.length > MAX_CACHED_MESSAGES) {
-      cache.messages = cache.messages.slice(0, MAX_CACHED_MESSAGES);
-    }
-    
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  }, [getCache]);
+  const markAsUsed = useCallback((msg: string) => {
+    const recent = getRecentlyUsed();
+    // Adiciona no início, evita duplicatas
+    const updated = [msg, ...recent.filter((m) => m !== msg)].slice(0, MAX_RECENTLY_USED);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+  }, [getRecentlyUsed]);
 
-  const getRandomCachedMessage = useCallback((): string | null => {
-    const cache = getCache();
-    if (cache.messages.length === 0) return null;
-    
-    // Get a random message different from the last used one
-    let index: number;
-    if (cache.messages.length === 1) {
-      index = 0;
-    } else {
-      do {
-        index = Math.floor(Math.random() * cache.messages.length);
-      } while (index === cache.lastUsedIndex && cache.messages.length > 1);
-    }
-    
-    // Update last used index
-    cache.lastUsedIndex = index;
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-    
-    return cache.messages[index].message;
-  }, [getCache]);
-
-  const fetchMessage = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      if (!opts?.silent) {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      try {
-        const recentMessages = getCache().messages.map((m) => m.message).slice(0, 20);
-
-        const { data, error: fnError } = await supabase.functions.invoke("culture-message", {
-          body: { recentMessages },
-        });
-
-        if (fnError) {
-          throw new Error(fnError.message);
-        }
-
-        if (data?.error) {
-          throw new Error(data.error);
-        }
-
-        if (data?.message) {
-          setMessage(data.message);
-          saveToCache(data.message, data.generatedAt);
-          return;
-        }
-
-        throw new Error("Empty response");
-      } catch (err) {
-        console.error("Failed to fetch culture message:", err);
-        setError(err instanceof Error ? err.message : "Erro ao carregar mensagem");
-
-        // Fallback: rotate cached message (no cost)
-        const cached = getRandomCachedMessage();
-        if (cached) {
-          setMessage(cached);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [getCache, saveToCache, getRandomCachedMessage]
-  );
+  const pickMessage = useCallback(() => {
+    const recent = getRecentlyUsed();
+    const selected = getRandomCultureMessage(recent, 15);
+    markAsUsed(selected);
+    return selected;
+  }, [getRecentlyUsed, markAsUsed]);
 
   const refresh = useCallback(async () => {
-    // Always rotate locally first (instant + no cost)
-    const rotated = getRandomCachedMessage();
-    if (rotated) setMessage(rotated);
-
-    // If our pool is still small, fetch a new one to keep reducing future consumption
-    const poolSize = getCache().messages.length;
-    if (poolSize < MIN_POOL_SIZE) {
-      await fetchMessage({ silent: true });
-    }
-  }, [getRandomCachedMessage, getCache, fetchMessage]);
+    const newMsg = pickMessage();
+    setMessage(newMsg);
+  }, [pickMessage]);
 
   useEffect(() => {
-    // Prevent double fetch in StrictMode
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
+    if (initializedRef.current) return;
+    initializedRef.current = true;
 
-    // Prefer showing an existing cached message (instant, no cost)
-    const cached = getRandomCachedMessage();
-    if (cached) {
-      setMessage(cached);
-      setIsLoading(false);
+    // Seleciona uma mensagem do pool de 100+
+    const selected = pickMessage();
+    setMessage(selected);
+    setIsLoading(false);
+  }, [pickMessage]);
 
-      // Refill pool only when it's getting small
-      if (getCache().messages.length < MIN_POOL_SIZE) {
-        fetchMessage({ silent: true });
-      }
-      return;
-    }
-
-    // First ever visit (no cache yet): generate one
-    fetchMessage();
-  }, [fetchMessage, getRandomCachedMessage, getCache]);
-
-  return { message, isLoading, error, refresh };
+  return { 
+    message, 
+    isLoading, 
+    error: null, // Sem erros possíveis - tudo local
+    refresh 
+  };
 }
