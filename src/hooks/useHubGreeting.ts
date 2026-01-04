@@ -174,17 +174,8 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
 
         const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
 
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-        const res = await fetch(`${supabaseUrl}/functions/v1/hub-greeting`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: supabaseKey,
-            Authorization: `Bearer ${sessionData.session.access_token}`,
-          },
-          body: JSON.stringify({
+        const { data, error: invokeError } = await supabase.functions.invoke("hub-greeting", {
+          body: {
             userName: context.userName,
             userGender: context.userGender,
             periodOfDay: getPeriodOfDay(),
@@ -193,15 +184,16 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
             okrSummary: context.okrSummary,
             kpiSummary: context.kpiSummary,
             recentGreetings,
-          }),
+          },
         });
 
-        const data = await res.json().catch(() => ({} as any));
-
-        if (!res.ok) {
-          throw new Error(data?.error || `hub-greeting failed (${res.status})`);
+        if (invokeError) {
+          throw new Error(invokeError.message || "hub-greeting failed");
         }
-        if (data?.error) throw new Error(data.error);
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
 
         if (!data?.greeting || !data?.subtext) {
           throw new Error("Empty response");
