@@ -52,6 +52,8 @@ const formSchema = z.object({
   target_value: z.coerce.number().optional(),
 });
 
+type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
+
 type FormValues = z.infer<typeof formSchema>;
 
 interface CreateKpiDialogProps {
@@ -112,7 +114,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         category: values.category as KpiCategory,
         unit: values.unit,
         direction: values.direction as KpiDirection,
-        frequency: values.frequency as KpiFrequency,
+        frequency: values.frequency as DbKpiFrequency,
         team_id: values.team_id || null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
