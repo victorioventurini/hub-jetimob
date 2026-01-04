@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
+import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 import {
   Dialog,
   DialogContent,
@@ -82,20 +83,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const [formData, setFormData] = useState<JetimoberFormData>(defaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof JetimoberFormData, string>>>({});
 
-  const { data: teams } = useQuery({
-    queryKey: ["teams-select"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("teams")
-        .select("id, name")
-        .is("deleted_at", null)
-        .eq("status", "active")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: open,
-  });
+  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
 
   const { data: managers } = useQuery({
     queryKey: ["managers-select"],
@@ -347,9 +335,15 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhum</SelectItem>
-                  {teams?.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
+                  {hierarchicalTeams?.map((team) => (
+                    <SelectItem 
+                      key={team.id} 
+                      value={team.id}
+                      className={team.level > 0 ? "text-[13px]" : ""}
+                    >
+                      <span style={{ paddingLeft: `${team.level * 12}px` }}>
+                        {team.name}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
