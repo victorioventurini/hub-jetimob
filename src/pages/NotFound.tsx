@@ -1,5 +1,4 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import { Home, RefreshCcw, BookOpen, MessageCircle } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
@@ -15,10 +14,6 @@ const NotFound = () => {
   const navigate = useNavigate();
   const { currentBu, buSelected, hasMultipleBus } = useBu();
   const { user, profile } = useAuth();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
 
   // Determinar copy baseado no contexto
   const userName = profile?.first_name || null;
@@ -44,11 +39,6 @@ const NotFound = () => {
 
   const handleOpenKnowledge = () => {
     window.open(knowledgeUrl, "_blank", "noopener,noreferrer");
-  };
-
-  const handleTalkToVic = () => {
-    // TODO: Abrir painel de IA/Vic quando implementado
-    console.log("Open Vic chat panel");
   };
 
   return (
@@ -128,11 +118,11 @@ const NotFound = () => {
               </Button>
 
               <Button
-                onClick={handleTalkToVic}
+                onClick={handleGoHome}
                 variant="secondary"
                 className="h-12 gap-2"
                 size="lg"
-                aria-label="Falar com o assistente Vic"
+                aria-label="Ir para página inicial"
               >
                 <MessageCircle className="h-5 w-5" />
                 Me ajuda a achar o caminho
