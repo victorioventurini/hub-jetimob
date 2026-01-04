@@ -93,8 +93,8 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
   const [subtext, setSubtext] = useState<string>(initialRef.current.subtext);
   const [isLoading, setIsLoading] = useState(!initialRef.current.hasCached);
   const [error, setError] = useState<string | null>(null);
-  const lastFetchKeyRef = useRef<string | null>(null);
-  const inFlightRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const authRetryRef = useRef(false);
 
   const getCache = useCallback((): CacheData => {
     try {
@@ -151,47 +151,20 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
   }, [getCache]);
 
   useEffect(() => {
-    // A saudação estava travando no fallback porque o primeiro fetch pode rodar
-    // antes do profile/BU carregar e, depois disso, o "guard" antigo bloqueava refetch.
+    // Importante: não travar no fallback.
+    // O fetch pode acontecer antes do session estar 100% pronto; então permitimos re-tentativa leve.
 
-    const fetchKey = JSON.stringify({
-      userName: context.userName ?? null,
-      userGender: context.userGender ?? null,
-      buName: context.buName ?? null,
-      okrSummary: context.okrSummary ?? null,
-      kpiSummary: context.kpiSummary ?? null,
-    });
-
-    // Dedup simples: não roda de novo para o mesmo contexto (mas permite refetch se o contexto mudar)
-    if (inFlightRef.current) return;
-    if (lastFetchKeyRef.current === fetchKey) return;
-
-    lastFetchKeyRef.current = fetchKey;
-    inFlightRef.current = true;
+    let cancelled = false;
+    authRetryRef.current = false;
 
     const fetchGreeting = async (opts?: { silent?: boolean }) => {
-      if (!opts?.silent) {
-        setIsLoading(true);
-      }
+      if (!opts?.silent) setIsLoading(true);
       setError(null);
 
       try {
         const recentGreetings = getCache().greetings.map((g) => g.greeting).slice(0, 10);
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        console.log("[useHubGreeting] Calling hub-greeting function...", {
-          userName: context.userName,
-          buName: context.buName,
-          hasSession: !!session,
-        });
-
         const { data, error: fnError } = await supabase.functions.invoke("hub-greeting", {
-          headers: session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}` }
-            : undefined,
           body: {
             userName: context.userName,
             userGender: context.userGender,
@@ -204,30 +177,36 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
           },
         });
 
-        if (fnError) {
-          console.error("[useHubGreeting] Function error:", fnError);
-          throw new Error(fnError.message);
+        if (fnError) throw new Error(fnError.message);
+        if (data?.error) throw new Error(data.error);
+
+        if (!data?.greeting || !data?.subtext) {
+          throw new Error("Empty response");
         }
 
-        if (data?.error) {
-          console.error("[useHubGreeting] Response error:", data.error);
-          throw new Error(data.error);
-        }
+        if (cancelled) return;
 
-        if (data?.greeting && data?.subtext) {
-          console.log("[useHubGreeting] Greeting received:", data.greeting);
-          setGreeting(data.greeting);
-          setSubtext(data.subtext);
-          saveToCache(data.greeting, data.subtext, data.generatedAt);
+        setGreeting(data.greeting);
+        setSubtext(data.subtext);
+        saveToCache(data.greeting, data.subtext, data.generatedAt);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao carregar saudação";
+
+        // Se o session ainda não estiver pronto, a função pode responder 401.
+        // Fazemos UMA re-tentativa silenciosa curta.
+        if (!authRetryRef.current && /unauthorized|jwt|permission/i.test(message)) {
+          authRetryRef.current = true;
+          setTimeout(() => {
+            if (!cancelled) void fetchGreeting({ silent: true });
+          }, 800);
           return;
         }
 
-        throw new Error("Empty response");
-      } catch (err) {
-        console.error("[useHubGreeting] Failed to fetch:", err);
-        setError(err instanceof Error ? err.message : "Erro ao carregar saudação");
+        if (cancelled) return;
 
-        // Fallback: use cached greeting or default
+        console.error("[useHubGreeting] Failed to fetch hub greeting:", err);
+        setError(message);
+
         const cached = getRandomCachedGreeting();
         if (cached) {
           setGreeting(cached.greeting);
@@ -237,19 +216,19 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
           setSubtext(FALLBACK_SUBTEXT);
         }
       } finally {
-        setIsLoading(false);
-        inFlightRef.current = false;
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    // Se já temos cache, mostramos instantaneamente e atualizamos em background.
     if (initialRef.current.hasCached) {
       void fetchGreeting({ silent: true });
-      return;
+    } else {
+      void fetchGreeting();
     }
 
-    // Sem cache: gera e mostra loading
-    void fetchGreeting();
+    return () => {
+      cancelled = true;
+    };
   }, [
     context.userName,
     context.userGender,
