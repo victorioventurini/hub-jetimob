@@ -1,49 +1,38 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Building2, Users, AlertTriangle } from 'lucide-react';
+import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { OkrEmptyState } from '../components/OkrEmptyState';
-import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams } from '../hooks/useOkrData';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { OrgObjectiveCard } from '../components/OrgObjectiveCard';
-import { TeamObjectiveCard } from '../components/TeamObjectiveCard';
-import { CreateOrgObjectiveDialog } from '../components/CreateOrgObjectiveDialog';
-import { CreateTeamObjectiveDialog } from '../components/CreateTeamObjectiveDialog';
+import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
+import { mockOrgObjectives, mockTeamObjectives, getMockStats } from '../hooks/useMockOkrData';
 
 export default function OkrsPage() {
   usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
-  const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(false);
-  const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('org');
 
-  const { data: orgObjectives, isLoading: loadingOrg } = useOrgObjectives(selectedYear);
-  const { data: teamObjectives, isLoading: loadingTeam } = useTeamObjectives(
-    selectedTeam !== 'all' ? selectedTeam : undefined
-  );
-  const { data: teamKeyResults } = useTeamKeyResults();
-  const { data: teams } = useTeams();
-
   const years = [currentYear, currentYear + 1];
+  const stats = useMemo(() => getMockStats(), []);
 
-  // Calculate summary stats
-  const totalOrgObjectives = orgObjectives?.length || 0;
-  const totalTeamObjectives = teamObjectives?.length || 0;
-  const atRiskKrs = teamKeyResults?.filter(kr => kr.status === 'red').length || 0;
+  // Get unique teams from mock data
+  const teams = useMemo(() => {
+    const uniqueTeams = new Map<string, string>();
+    mockTeamObjectives.forEach(obj => {
+      uniqueTeams.set(obj.team_id, obj.team_name);
+    });
+    return Array.from(uniqueTeams, ([id, name]) => ({ id, name }));
+  }, []);
 
-  const handleCreateClick = () => {
-    if (activeTab === 'org') {
-      setShowCreateOrgDialog(true);
-    } else {
-      setShowCreateTeamDialog(true);
-    }
-  };
+  // Filter team objectives by selected team
+  const filteredTeamObjectives = useMemo(() => {
+    if (selectedTeam === 'all') return mockTeamObjectives;
+    return mockTeamObjectives.filter(obj => obj.team_id === selectedTeam);
+  }, [selectedTeam]);
 
   return (
     <HubLayout>
@@ -53,12 +42,12 @@ export default function OkrsPage() {
           <div>
             <h1 className="text-3xl font-bold">OKRs</h1>
             <p className="text-muted-foreground">
-              Objetivos e Resultados-Chave da Jetimob
+              Objetivos e Resultados-Chave
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[100px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -69,49 +58,57 @@ export default function OkrsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleCreateClick}>
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Novo Objetivo
+              Novo
             </Button>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Objetivos Organizacionais
+                Organizacionais
               </CardTitle>
               <Building2 className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalOrgObjectives}</div>
-              <p className="text-xs text-muted-foreground">para {selectedYear}</p>
+              <div className="text-2xl font-bold">{stats.totalOrgObjectives}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Objetivos de Times
+                Times
               </CardTitle>
               <Users className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalTeamObjectives}</div>
-              <p className="text-xs text-muted-foreground">ativos</p>
+              <div className="text-2xl font-bold">{stats.totalTeamObjectives}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                KRs em Risco
+                On Track
+              </CardTitle>
+              <TrendingUp className="w-4 h-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.greenKrs}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Em Risco
               </CardTitle>
               <AlertTriangle className="w-4 h-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{atRiskKrs}</div>
-              <p className="text-xs text-muted-foreground">precisam de atenção</p>
+              <div className="text-2xl font-bold text-red-600">{stats.atRiskKrs}</div>
             </CardContent>
           </Card>
         </div>
@@ -131,50 +128,31 @@ export default function OkrsPage() {
 
           {/* Org Objectives */}
           <TabsContent value="org" className="space-y-4">
-            {loadingOrg ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className="h-4 w-24 mb-2" />
-                      <Skeleton className="h-6 w-full" />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-2 w-full mb-4" />
-                      <Skeleton className="h-8 w-full" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : orgObjectives && orgObjectives.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {orgObjectives.map((objective) => (
-                  <OrgObjectiveCard
-                    key={objective.id}
-                    objective={objective}
-                  />
-                ))}
-              </div>
-            ) : (
-              <OkrEmptyState
-                title="Nenhum objetivo organizacional"
-                description="Comece definindo os objetivos estratégicos da Jetimob para o ano."
-                actionLabel="Criar Objetivo Organizacional"
-                onAction={() => setShowCreateOrgDialog(true)}
-              />
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {mockOrgObjectives.map((objective) => (
+                <OkrObjectiveCard
+                  key={objective.id}
+                  id={objective.id}
+                  title={objective.title}
+                  description={objective.description}
+                  status={objective.status}
+                  type="org"
+                  keyResults={objective.key_results}
+                />
+              ))}
+            </div>
           </TabsContent>
 
           {/* Team Objectives */}
           <TabsContent value="team" className="space-y-4">
             <div className="flex items-center gap-3 mb-4">
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Todos os times" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os times</SelectItem>
-                  {teams?.map((team) => (
+                  {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
                     </SelectItem>
@@ -183,55 +161,23 @@ export default function OkrsPage() {
               </Select>
             </div>
 
-            {loadingTeam ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className="h-4 w-24 mb-2" />
-                      <Skeleton className="h-6 w-full" />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-2 w-full mb-4" />
-                      <Skeleton className="h-8 w-full" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : teamObjectives && teamObjectives.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {teamObjectives.map((objective) => (
-                  <TeamObjectiveCard
-                    key={objective.id}
-                    objective={objective}
-                    teams={teams || []}
-                  />
-                ))}
-              </div>
-            ) : (
-              <OkrEmptyState
-                title="Nenhum objetivo de time"
-                description="Os times ainda não criaram objetivos vinculados aos OKRs organizacionais."
-                actionLabel="Criar Objetivo de Time"
-                onAction={() => setShowCreateTeamDialog(true)}
-              />
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredTeamObjectives.map((objective) => (
+                <OkrObjectiveCard
+                  key={objective.id}
+                  id={objective.id}
+                  title={objective.title}
+                  description={objective.description}
+                  status={objective.status}
+                  type="team"
+                  teamName={objective.team_name}
+                  keyResults={objective.key_results}
+                />
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Dialogs */}
-      <CreateOrgObjectiveDialog
-        open={showCreateOrgDialog}
-        onOpenChange={setShowCreateOrgDialog}
-        year={selectedYear}
-      />
-      <CreateTeamObjectiveDialog
-        open={showCreateTeamDialog}
-        onOpenChange={setShowCreateTeamDialog}
-        teams={teams || []}
-        orgObjectives={orgObjectives || []}
-      />
     </HubLayout>
   );
 }
