@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const CACHE_KEY = "culture_message_cache";
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_KEY = "culture_messages_cache";
+const MAX_CACHED_MESSAGES = 20;
 
-interface CacheData {
+interface CachedMessage {
   message: string;
   generatedAt: string;
-  cachedAt: number;
+}
+
+interface CacheData {
+  messages: CachedMessage[];
+  lastUsedIndex: number;
 }
 
 interface UseCultureMessageReturn {
@@ -21,49 +25,59 @@ export function useCultureMessage(): UseCultureMessageReturn {
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
 
-  const getCachedMessage = useCallback((): CacheData | null => {
+  const getCache = useCallback((): CacheData => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) return null;
-      
-      const data: CacheData = JSON.parse(cached);
-      const now = Date.now();
-      
-      // Check if cache is still valid (24h)
-      if (now - data.cachedAt < CACHE_DURATION_MS) {
-        return data;
-      }
-      
-      // Cache expired
-      localStorage.removeItem(CACHE_KEY);
-      return null;
+      if (!cached) return { messages: [], lastUsedIndex: -1 };
+      return JSON.parse(cached);
     } catch {
       localStorage.removeItem(CACHE_KEY);
-      return null;
+      return { messages: [], lastUsedIndex: -1 };
     }
   }, []);
 
-  const setCachedMessage = useCallback((msg: string, generatedAt: string) => {
-    const cacheData: CacheData = {
-      message: msg,
-      generatedAt,
-      cachedAt: Date.now(),
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-  }, []);
-
-  const fetchMessage = useCallback(async (forceRefresh = false) => {
-    // Check cache first (unless forcing refresh)
-    if (!forceRefresh) {
-      const cached = getCachedMessage();
-      if (cached) {
-        setMessage(cached.message);
-        setIsLoading(false);
-        return;
-      }
+  const saveToCache = useCallback((newMessage: string, generatedAt: string) => {
+    const cache = getCache();
+    
+    // Check if message already exists (avoid duplicates)
+    const exists = cache.messages.some(m => m.message === newMessage);
+    if (exists) return;
+    
+    // Add new message at the beginning
+    cache.messages.unshift({ message: newMessage, generatedAt });
+    
+    // Keep only the last N messages
+    if (cache.messages.length > MAX_CACHED_MESSAGES) {
+      cache.messages = cache.messages.slice(0, MAX_CACHED_MESSAGES);
     }
+    
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  }, [getCache]);
 
+  const getRandomCachedMessage = useCallback((): string | null => {
+    const cache = getCache();
+    if (cache.messages.length === 0) return null;
+    
+    // Get a random message different from the last used one
+    let index: number;
+    if (cache.messages.length === 1) {
+      index = 0;
+    } else {
+      do {
+        index = Math.floor(Math.random() * cache.messages.length);
+      } while (index === cache.lastUsedIndex && cache.messages.length > 1);
+    }
+    
+    // Update last used index
+    cache.lastUsedIndex = index;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    
+    return cache.messages[index].message;
+  }, [getCache]);
+
+  const fetchMessage = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -80,28 +94,34 @@ export function useCultureMessage(): UseCultureMessageReturn {
 
       if (data?.message) {
         setMessage(data.message);
-        setCachedMessage(data.message, data.generatedAt);
+        saveToCache(data.message, data.generatedAt);
+        return;
       }
+      
+      throw new Error("Empty response");
     } catch (err) {
       console.error("Failed to fetch culture message:", err);
       setError(err instanceof Error ? err.message : "Erro ao carregar mensagem");
       
-      // Try to use cached message as fallback
-      const cached = getCachedMessage();
+      // Try to use a cached message as fallback
+      const cached = getRandomCachedMessage();
       if (cached) {
-        setMessage(cached.message);
+        setMessage(cached);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [getCachedMessage, setCachedMessage]);
+  }, [saveToCache, getRandomCachedMessage]);
 
   const refresh = useCallback(async () => {
-    localStorage.removeItem(CACHE_KEY);
-    await fetchMessage(true);
+    await fetchMessage();
   }, [fetchMessage]);
 
   useEffect(() => {
+    // Prevent double fetch in StrictMode
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    
     fetchMessage();
   }, [fetchMessage]);
 
