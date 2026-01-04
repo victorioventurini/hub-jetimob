@@ -1569,6 +1569,128 @@ export type Database = {
           },
         ]
       }
+      squad_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["squad_role"]
+          squad_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["squad_role"]
+          squad_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["squad_role"]
+          squad_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_memberships_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_teams: {
+        Row: {
+          created_at: string
+          id: string
+          squad_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          squad_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          squad_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_teams_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squads: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          products: Database["public"]["Enums"]["squad_product"][]
+          status: Database["public"]["Enums"]["team_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          products?: Database["public"]["Enums"]["squad_product"][]
+          status?: Database["public"]["Enums"]["team_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          products?: Database["public"]["Enums"]["squad_product"][]
+          status?: Database["public"]["Enums"]["team_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squads_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           bu_id: string | null
@@ -1841,6 +1963,8 @@ export type Database = {
       okr_rag_status: "green" | "yellow" | "red" | "not_started"
       okr_report_frequency: "weekly" | "monthly" | "quarterly" | "event"
       okr_status: "draft" | "active" | "completed" | "cancelled"
+      squad_product: "crm" | "cms" | "erp"
+      squad_role: "product_owner" | "tech_lead" | "ux_ui_lead" | "member"
       team_status: "active" | "inactive"
       work_mode: "onsite" | "hybrid" | "remote"
     }
@@ -2000,6 +2124,8 @@ export const Constants = {
       okr_rag_status: ["green", "yellow", "red", "not_started"],
       okr_report_frequency: ["weekly", "monthly", "quarterly", "event"],
       okr_status: ["draft", "active", "completed", "cancelled"],
+      squad_product: ["crm", "cms", "erp"],
+      squad_role: ["product_owner", "tech_lead", "ux_ui_lead", "member"],
       team_status: ["active", "inactive"],
       work_mode: ["onsite", "hybrid", "remote"],
     },
