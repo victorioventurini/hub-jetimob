@@ -35,16 +35,17 @@ export function CultureCard() {
               Cultura Jet
             </span>
           </div>
-          {error && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={refresh}
-              className="h-6 w-6 p-0 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              <RefreshCw className="h-3 w-3" />
-            </Button>
-          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={refresh}
+            disabled={isLoading}
+            className="h-6 w-6 p-0 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 disabled:opacity-40"
+            aria-label="Atualizar mensagem de cultura"
+            title="Atualizar"
+          >
+            <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
+          </Button>
         </div>
 
         {/* Message */}

@@ -19,6 +19,19 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Optional request body (used to help the model avoid repetition)
+    let recentMessages: string[] = [];
+    try {
+      const body = await req.json();
+      if (Array.isArray(body?.recentMessages)) {
+        recentMessages = body.recentMessages
+          .filter((m: unknown): m is string => typeof m === "string" && m.trim().length > 0)
+          .slice(0, 20);
+      }
+    } catch {
+      // no body
+    }
+
     // Get the Guardião da Cultura agent
     const { data: agent, error: agentError } = await supabase
       .from("ai_agents")
@@ -49,39 +62,34 @@ serve(async (req) => {
     let knowledgeBase = "";
     if (documents && documents.length > 0) {
       knowledgeBase = documents
-        .filter(doc => doc.extracted_content)
-        .map(doc => `=== ${doc.name} ===\n${doc.extracted_content}`)
+        .filter((doc) => doc.extracted_content)
+        .map((doc) => `=== ${doc.name} ===\n${doc.extracted_content}`)
         .join("\n\n");
     }
 
     // Get current date for context
     const now = new Date();
-    const dateStr = now.toLocaleDateString("pt-BR", { 
-      weekday: "long", 
-      day: "numeric", 
-      month: "long", 
-      year: "numeric" 
+    const dateStr = now.toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
+
+    const repetitionBlock = recentMessages.length
+      ? `\n\nEVITE REPETIR qualquer uma destas mensagens recentes (use outra ideia/ângulo):\n- ${recentMessages.join("\n- ")}`
+      : "";
+
+    const requestId = crypto.randomUUID();
 
     // Build the prompt for generating a culture message
     const userPrompt = `
-Hoje é ${dateStr}.
-
-Gere UMA mensagem de cultura para exibir na Home do Hub da Jetimob.
-
-REGRAS:
-- Máximo 180 caracteres
-- Linguagem humana e direta
-- Ligada a um valor ou ao propósito
-- Incentive ação ou reflexão prática
-- Não use emojis em excesso (máximo 1 se necessário)
-- Não soe como mensagem automática de sistema
-- Não repita textos literais do manual
-- Pode usar expressões como "buenas" em contextos leves
-
-FORMATO DE RESPOSTA:
-Retorne APENAS a mensagem, sem aspas, sem explicações adicionais.
-`;
+Hoje é ${dateStr}.\n
+Gere UMA mensagem de cultura para exibir na Home do Hub da Jetimob.\n
+REGRAS:\n- Máximo 180 caracteres\n- Linguagem humana e direta\n- Ligada a um valor ou ao propósito\n- Incentive ação ou reflexão prática\n- Não use emojis em excesso (máximo 1 se necessário)\n- Não soe como mensagem automática de sistema\n- Não repita textos literais do manual\n- Pode usar expressões como "buenas" em contextos leves\n
+${repetitionBlock}\n
+ID DE VARIAÇÃO: ${requestId}\n
+FORMATO DE RESPOSTA:\nRetorne APENAS a mensagem, sem aspas, sem explicações adicionais.\n`;
 
     const systemPrompt = `${agent.system_prompt}
 
