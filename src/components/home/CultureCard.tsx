@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCultureMessage } from "@/hooks/useCultureMessage";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FALLBACK_MESSAGES = [
   "Cultura não é o que dizemos, é o que fazemos no dia a dia.",
@@ -62,16 +63,31 @@ export function CultureCard() {
         </div>
 
         {/* Message */}
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-full bg-muted" />
-            <Skeleton className="h-5 w-3/4 bg-muted" />
-          </div>
-        ) : (
-          <p className="text-base font-medium leading-relaxed text-foreground">
-            {displayMessage}
-          </p>
-        )}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-2"
+            >
+              <Skeleton className="h-5 w-full bg-muted" />
+              <Skeleton className="h-5 w-3/4 bg-muted" />
+            </motion.div>
+          ) : (
+            <motion.p
+              key={displayMessage}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="text-base font-medium leading-relaxed text-foreground"
+            >
+              {displayMessage}
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         {/* Signature */}
         <div className="mt-3 text-right">
