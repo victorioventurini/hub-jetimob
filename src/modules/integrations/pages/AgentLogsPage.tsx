@@ -105,145 +105,146 @@ export default function AgentLogsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}`)}>
           <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Logs - {integration.name}</h1>
-            <p className="text-muted-foreground">Histórico de execuções de agentes</p>
-          </div>
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
+        </Button>
+        <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Logs - {integration.name}</h1>
+          <p className="text-muted-foreground">Histórico de execuções de agentes</p>
         </div>
+        <Button variant="outline" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Atualizar
+        </Button>
+      </div>
         
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Execuções</p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
-                  </div>
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Execuções</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Sucesso</p>
-                    <p className="text-2xl font-bold">{stats.success}</p>
-                  </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Sucesso</p>
+                  <p className="text-2xl font-bold">{stats.success}</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-red-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Erros</p>
-                    <p className="text-2xl font-bold">{stats.error}</p>
-                  </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-red-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Erros</p>
+                  <p className="text-2xl font-bold">{stats.error}</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-yellow-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Latência Média</p>
-                    <p className="text-2xl font-bold">{stats.avgLatency}ms</p>
-                  </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-yellow-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Latência Média</p>
+                  <p className="text-2xl font-bold">{stats.avgLatency}ms</p>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tokens Total</p>
-                    <p className="text-2xl font-bold">{stats.totalTokens.toLocaleString()}</p>
-                  </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Tokens Total</p>
+                  <p className="text-2xl font-bold">{stats.totalTokens.toLocaleString()}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+        
+      {/* Filters */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            <CardTitle className="text-base">Filtros</CardTitle>
           </div>
-        )}
-        
-        {/* Filters */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              <CardTitle className="text-base">Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por agente..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por agente..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os agentes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os agentes</SelectItem>
-                  {agents?.map(agent => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="success">Sucesso</SelectItem>
-                  <SelectItem value="error">Erro</SelectItem>
-                  <SelectItem value="timeout">Timeout</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Logs Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Execuções</CardTitle>
-            <CardDescription>
-              Últimas {filteredLogs?.length || 0} execuções registradas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingLogs ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
+            <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os agentes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os agentes</SelectItem>
+                {agents?.map(agent => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </SelectItem>
                 ))}
-              </div>
-            ) : filteredLogs && filteredLogs.length > 0 ? (
+              </SelectContent>
+            </Select>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="success">Sucesso</SelectItem>
+                <SelectItem value="error">Erro</SelectItem>
+                <SelectItem value="timeout">Timeout</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+        
+      {/* Logs Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Execuções</CardTitle>
+          <CardDescription>
+            Últimas {filteredLogs?.length || 0} execuções registradas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingLogs ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : filteredLogs && filteredLogs.length > 0 ? (
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -295,17 +296,18 @@ export default function AgentLogsPage() {
                   ))}
                 </TableBody>
               </Table>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <h3 className="font-semibold mb-2">Nenhum log encontrado</h3>
-                <p className="text-sm">
-                  Os logs aparecerão aqui quando agentes forem executados
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <h3 className="font-semibold mb-2">Nenhum log encontrado</h3>
+              <p className="text-sm">
+                Os logs aparecerão aqui quando agentes forem executados
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

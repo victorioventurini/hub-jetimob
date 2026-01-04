@@ -138,18 +138,18 @@ export default function GlobalIntegrationDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/settings/integrations')}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
-          <div>
-            <h1 className="text-2xl font-bold">{integration.name}</h1>
-            <p className="text-muted-foreground">{integration.description}</p>
-          </div>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/settings/integrations')}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">{integration.name}</h1>
+          <p className="text-muted-foreground">{integration.description}</p>
         </div>
+      </div>
         
-        <Tabs defaultValue="config" className="space-y-6">
+      <Tabs defaultValue="config" className="space-y-6">
           <TabsList>
             <TabsTrigger value="config">
               <Key className="w-4 h-4 mr-2" />
@@ -167,16 +167,16 @@ export default function GlobalIntegrationDetailPage() {
             </TabsTrigger>
           </TabsList>
           
-          {/* Config Tab */}
-          <TabsContent value="config" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuração Global</CardTitle>
-                <CardDescription>
-                  Credenciais e configurações compartilhadas com todas as BUs que optarem por usar a configuração global.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+        {/* Config Tab */}
+        <TabsContent value="config" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuração Global</CardTitle>
+              <CardDescription>
+                Credenciais e configurações compartilhadas com todas as BUs que optarem por usar a configuração global.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
                 {/* Enable Toggle */}
                 <div className="flex items-center justify-between">
                   <div>
@@ -268,35 +268,35 @@ export default function GlobalIntegrationDetailPage() {
                       Salvar Configuração
                     </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
           
-          {/* Agents Tab */}
-          {integration.supports_agents && (
-            <TabsContent value="agents" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Agentes Globais</CardTitle>
-                      <CardDescription>
-                        Templates de agentes disponíveis para todas as BUs
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      {isAdmin && (
-                        <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
-                          Criar Agente
-                        </Button>
-                      )}
-                      <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
-                        Ver Todos
-                      </Button>
-                    </div>
+        {/* Agents Tab */}
+        {integration.supports_agents && (
+          <TabsContent value="agents" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Agentes Globais</CardTitle>
+                    <CardDescription>
+                      Templates de agentes disponíveis para todas as BUs
+                    </CardDescription>
                   </div>
-                </CardHeader>
+                  <div className="flex gap-2">
+                    {isAdmin && (
+                      <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
+                        Criar Agente
+                      </Button>
+                    )}
+                    <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
+                      Ver Todos
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
                 <CardContent>
                   {globalAgents && globalAgents.length > 0 ? (
                     <div className="space-y-3">
@@ -343,27 +343,27 @@ export default function GlobalIntegrationDetailPage() {
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        )}
           
-          {/* Logs Tab */}
-          <TabsContent value="logs" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Logs de Execução</CardTitle>
-                    <CardDescription>
-                      Histórico de execuções de agentes desta integração
-                    </CardDescription>
-                  </div>
-                  <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/logs`)}>
-                    Ver Todos
-                  </Button>
+        {/* Logs Tab */}
+        <TabsContent value="logs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Logs de Execução</CardTitle>
+                  <CardDescription>
+                    Histórico de execuções de agentes desta integração
+                  </CardDescription>
                 </div>
-              </CardHeader>
+                <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/logs`)}>
+                  Ver Todos
+                </Button>
+              </div>
+            </CardHeader>
               <CardContent>
                 {logs && logs.length > 0 ? (
                   <div className="space-y-2">
@@ -402,10 +402,10 @@ export default function GlobalIntegrationDetailPage() {
                     <Activity className="w-10 h-10 mx-auto mb-3 opacity-50" />
                     <p>Nenhum log encontrado</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
