@@ -13,9 +13,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CreateBuDialog } from "@/modules/bu/components/CreateBuDialog";
+import { EditBuDialog } from "@/modules/bu/components/EditBuDialog";
+import { BuDetailDialog } from "@/modules/bu/components/BuDetailDialog";
+import { BuUnit } from "@/modules/bu/types";
 
 export default function SettingsBusinessUnits() {
   const [search, setSearch] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedBu, setSelectedBu] = useState<BuUnit | null>(null);
 
   const { data: businessUnits, isLoading } = useQuery({
     queryKey: ["settings-business-units"],
@@ -25,7 +33,7 @@ export default function SettingsBusinessUnits() {
         .select("*")
         .order("name");
       if (error) throw error;
-      return data;
+      return data as BuUnit[];
     },
   });
 
@@ -50,6 +58,21 @@ export default function SettingsBusinessUnits() {
     bu.description?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleEdit = (bu: BuUnit) => {
+    setSelectedBu(bu);
+    setEditDialogOpen(true);
+  };
+
+  const handleViewDetails = (bu: BuUnit) => {
+    setSelectedBu(bu);
+    setDetailDialogOpen(true);
+  };
+
+  const handleEditFromDetail = () => {
+    setDetailDialogOpen(false);
+    setEditDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -60,7 +83,7 @@ export default function SettingsBusinessUnits() {
             Gerencie as unidades de negócio do Hub
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nova BU
         </Button>
@@ -107,13 +130,22 @@ export default function SettingsBusinessUnits() {
               <p className="text-muted-foreground">
                 {search ? "Nenhuma BU encontrada" : "Nenhuma business unit cadastrada"}
               </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar primeira BU
+              </Button>
             </div>
           ) : (
             <div className="space-y-3">
               {filteredBUs?.map((bu) => (
                 <div
                   key={bu.id}
-                  className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => handleViewDetails(bu)}
                 >
                   {/* Logo/Icon */}
                   <div
@@ -154,16 +186,17 @@ export default function SettingsBusinessUnits() {
 
                   {/* Actions */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-popover">
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        {bu.status === "active" ? "Desativar" : "Ativar"}
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(bu); }}>
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewDetails(bu); }}>
+                        Ver detalhes
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -173,6 +206,25 @@ export default function SettingsBusinessUnits() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      <CreateBuDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+
+      <EditBuDialog
+        bu={selectedBu}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+
+      <BuDetailDialog
+        bu={selectedBu}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        onEdit={handleEditFromDetail}
+      />
     </div>
   );
 }

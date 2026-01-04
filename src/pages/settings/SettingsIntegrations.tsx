@@ -1,23 +1,21 @@
-import { Puzzle, Search, Zap, CheckCircle2, XCircle, Settings2, MoreVertical } from "lucide-react";
+import { Puzzle, Search, Zap, CheckCircle2, XCircle, Settings2, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { IntegrationIcon } from "@/modules/integrations/components/IntegrationIcon";
+import { toast } from "sonner";
 
 export default function SettingsIntegrations() {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: integrations, isLoading } = useQuery({
     queryKey: ["settings-integrations-catalog"],
@@ -44,8 +42,39 @@ export default function SettingsIntegrations() {
           is_enabled_global: config?.is_enabled_global || false,
           last_test_status: config?.last_test_status,
           last_test_at: config?.last_test_at,
+          config_id: config?.id,
         };
       });
+    },
+  });
+
+  const toggleIntegration = useMutation({
+    mutationFn: async ({ integrationKey, enabled }: { integrationKey: string; enabled: boolean }) => {
+      const { data: existing } = await supabase
+        .from("hub_integrations_global_config")
+        .select("id")
+        .eq("integration_key", integrationKey)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("hub_integrations_global_config")
+          .update({ is_enabled_global: enabled })
+          .eq("integration_key", integrationKey);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("hub_integrations_global_config")
+          .insert({ integration_key: integrationKey, is_enabled_global: enabled });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings-integrations-catalog"] });
+      toast.success("Configuração atualizada!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao atualizar configuração");
     },
   });
 
@@ -56,6 +85,14 @@ export default function SettingsIntegrations() {
   );
 
   const enabledCount = integrations?.filter((i) => i.is_enabled_global).length || 0;
+
+  const handleToggle = (integrationKey: string, currentEnabled: boolean) => {
+    toggleIntegration.mutate({ integrationKey, enabled: !currentEnabled });
+  };
+
+  const handleConfigure = (integrationKey: string) => {
+    navigate(`/settings/integrations/${integrationKey}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -214,25 +251,20 @@ export default function SettingsIntegrations() {
                   {/* Toggle */}
                   <Switch
                     checked={integration.is_enabled_global}
-                    disabled
+                    onCheckedChange={() => handleToggle(integration.integration_key, integration.is_enabled_global)}
+                    disabled={toggleIntegration.isPending}
                     aria-label={`Toggle ${integration.name}`}
                   />
 
-                  {/* Actions */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover">
-                      <DropdownMenuItem>Configurar</DropdownMenuItem>
-                      <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                      {integration.supports_agents && (
-                        <DropdownMenuItem>Gerenciar Agentes</DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Configure Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleConfigure(integration.integration_key)}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Configurar
+                  </Button>
                 </div>
               ))}
             </div>
