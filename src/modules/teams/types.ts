@@ -41,3 +41,6 @@ export interface TeamFormData {
   parent_team_id: string | null;
   status: "active" | "inactive";
 }
+
+// Re-export squad types
+export * from "./types/squad";

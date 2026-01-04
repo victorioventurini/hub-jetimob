@@ -15,16 +15,20 @@ import {
   ChevronRight,
   UserCircle,
   Mail,
+  Layers,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeam } from "../hooks/useTeams";
+import { useSquads } from "../hooks/useSquads";
 import { EditTeamDialog } from "../components/EditTeamDialog";
+import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeam(id);
+  const { data: squads } = useSquads(id);
   
   usePageTitle(team?.name ? `${team.name} - Times` : "Times");
   
@@ -139,9 +143,11 @@ export default function TeamDetailPage() {
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <UserCircle className="h-6 w-6 mx-auto mb-2 text-accent" />
-                  <p className="text-2xl font-bold">{team.leader ? 1 : 0}</p>
-                  <p className="text-xs text-muted-foreground">Líder</p>
+                  <Layers className="h-6 w-6 mx-auto mb-2 text-accent" />
+                  <p className="text-2xl font-bold">
+                    {squads?.length || 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Squads</p>
                 </CardContent>
               </Card>
             </div>
@@ -150,6 +156,7 @@ export default function TeamDetailPage() {
             <Tabs defaultValue="members">
               <TabsList>
                 <TabsTrigger value="members">Membros</TabsTrigger>
+                <TabsTrigger value="squads">Squads</TabsTrigger>
                 <TabsTrigger value="subteams">Sub-times</TabsTrigger>
               </TabsList>
 
@@ -205,6 +212,10 @@ export default function TeamDetailPage() {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="squads" className="mt-4">
+                <SquadSection teamId={team.id} teamName={team.name} />
               </TabsContent>
 
               <TabsContent value="subteams" className="mt-4">
