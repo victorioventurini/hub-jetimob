@@ -46,7 +46,7 @@ const Index = () => {
         </section>
 
         {/* Cards Row: Culture + Vic */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <CultureCard />
           <VicCard />
         </div>
