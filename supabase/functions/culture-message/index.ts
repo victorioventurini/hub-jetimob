@@ -16,15 +16,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!lovableApiKey) {
-      console.error("LOVABLE_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "AI service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -35,6 +26,9 @@ serve(async (req) => {
       .eq("name", AGENT_NAME)
       .eq("is_active", true)
       .single();
+
+    console.log("Looking for agent:", AGENT_NAME);
+    console.log("Agent found:", agent ? "yes" : "no", agentError?.message);
 
     if (agentError || !agent) {
       console.error("Agent not found:", agentError);
@@ -94,6 +88,17 @@ Retorne APENAS a mensagem, sem aspas, sem explicações adicionais.
 ${knowledgeBase ? `\n\n=== BASE DE CONHECIMENTO ===\n${knowledgeBase}` : ""}`;
 
     console.log("Calling Lovable AI for culture message...");
+
+    // Get LOVABLE_API_KEY for the AI Gateway
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!lovableApiKey) {
+      console.error("LOVABLE_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "AI service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Call Lovable AI Gateway
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

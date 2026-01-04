@@ -1,15 +1,23 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCultureMessage } from "@/hooks/useCultureMessage";
-import { Sparkles } from "lucide-react";
+import { Sparkles, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const FALLBACK_MESSAGES = [
+  "Cultura não é o que dizemos, é o que fazemos no dia a dia.",
+  "Cada decisão reflete nossos valores. Faça escolhas que nos orgulhem.",
+  "Simplicidade é a sofisticação máxima. Menos ruído, mais resultado.",
+  "Compromisso não é cumprir tarefas, é entregar impacto.",
+];
 
 export function CultureCard() {
-  const { message, isLoading, error } = useCultureMessage();
+  const { message, isLoading, error, refresh } = useCultureMessage();
 
-  // Don't render if there's an error and no message
-  if (error && !message) {
-    return null;
-  }
+  // Get a fallback message based on the day
+  const fallbackMessage = FALLBACK_MESSAGES[new Date().getDay() % FALLBACK_MESSAGES.length];
+  
+  const displayMessage = message || fallbackMessage;
 
   return (
     <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-sidebar-accent">
@@ -20,11 +28,23 @@ export function CultureCard() {
       
       <CardContent className="relative p-6">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-4 w-4 text-accent" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">
-            Cultura Jet
-          </span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-accent" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">
+              Cultura Jet
+            </span>
+          </div>
+          {error && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={refresh}
+              className="h-6 w-6 p-0 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </Button>
+          )}
         </div>
 
         {/* Message */}
@@ -35,7 +55,7 @@ export function CultureCard() {
           </div>
         ) : (
           <p className="text-lg font-medium leading-relaxed text-primary-foreground">
-            {message}
+            {displayMessage}
           </p>
         )}
 
