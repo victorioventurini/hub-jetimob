@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useMemo, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCultureMessage } from "@/hooks/useCultureMessage";
 import { Sparkles, RefreshCw } from "lucide-react";
@@ -13,89 +12,123 @@ const FALLBACK_MESSAGES = [
   "Compromisso não é cumprir tarefas, é entregar impacto.",
 ];
 
+function TypewriterText({ text }: { text: string }) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    setDisplayedText("");
+    setIsTyping(true);
+    let currentIndex = 0;
+
+    const typingInterval = setInterval(() => {
+      if (currentIndex < text.length) {
+        setDisplayedText(text.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setIsTyping(false);
+        clearInterval(typingInterval);
+      }
+    }, 35); // Velocidade de digitação
+
+    return () => clearInterval(typingInterval);
+  }, [text]);
+
+  return (
+    <span>
+      {displayedText}
+      {isTyping && (
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 0.8, repeat: Infinity }}
+          className="inline-block ml-0.5 w-0.5 h-8 bg-primary align-middle"
+        />
+      )}
+    </span>
+  );
+}
+
 export function CultureCard() {
   const { message, isLoading, error, refresh } = useCultureMessage();
 
-  // Always have a locally-rotating fallback so the UI can change even if the backend call is blocked (e.g. not logged in yet).
   const initialFallbackIndex = useMemo(
     () => Math.floor(Math.random() * FALLBACK_MESSAGES.length),
     []
   );
   const [fallbackIndex, setFallbackIndex] = useState(initialFallbackIndex);
+  const [messageKey, setMessageKey] = useState(0);
 
   const displayMessage = message || FALLBACK_MESSAGES[fallbackIndex];
 
   const handleRefresh = async () => {
-    // Guarantees a visible change even when we can only use local fallback/cache.
     setFallbackIndex((prev) => (prev + 1) % FALLBACK_MESSAGES.length);
+    setMessageKey((prev) => prev + 1);
     await refresh();
   };
 
+  // Reset typewriter when message changes
+  useEffect(() => {
+    setMessageKey((prev) => prev + 1);
+  }, [displayMessage]);
+
   return (
-    <Card className="relative overflow-hidden border bg-card">
-      {/* Subtle decorative element */}
-      <div className="absolute top-0 right-0 w-24 h-24 opacity-10">
-        <div className="absolute inset-0 bg-primary rounded-full blur-2xl transform translate-x-6 -translate-y-6" />
-      </div>
-      
-      <CardContent className="relative p-5">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Cultura Jet
-            </span>
+    <section className="w-full py-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="h-7 w-7 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-40"
-            aria-label="Atualizar mensagem de cultura"
-            title={error ? "Atualizar (offline)" : "Atualizar"}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-          </Button>
-        </div>
-
-        {/* Message */}
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-2"
-            >
-              <Skeleton className="h-5 w-full bg-muted" />
-              <Skeleton className="h-5 w-3/4 bg-muted" />
-            </motion.div>
-          ) : (
-            <motion.p
-              key={displayMessage}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="text-base font-medium leading-relaxed text-foreground"
-            >
-              {displayMessage}
-            </motion.p>
-          )}
-        </AnimatePresence>
-
-        {/* Signature */}
-        <div className="mt-3 text-right">
-          <span className="text-xs italic text-muted-foreground">
-            — Vic
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Cultura Jet
           </span>
         </div>
-      </CardContent>
-    </Card>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-40"
+          aria-label="Atualizar mensagem de cultura"
+          title={error ? "Atualizar (offline)" : "Atualizar"}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        </Button>
+      </div>
+
+      {/* Message with Typewriter Effect */}
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-3"
+          >
+            <Skeleton className="h-10 w-full bg-muted" />
+            <Skeleton className="h-10 w-3/4 bg-muted" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key={`message-${messageKey}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <p className="font-handwriting text-3xl md:text-4xl lg:text-5xl leading-snug text-foreground">
+              <TypewriterText text={displayMessage} />
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Signature */}
+      <div className="mt-4 text-right">
+        <span className="text-sm italic text-muted-foreground">— Vic</span>
+      </div>
+    </section>
   );
 }
