@@ -230,6 +230,54 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/settings/integrations/:integrationKey/agents/new"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <AgentFormPage />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/integrations/:integrationKey/agents/:agentId"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <AgentFormPage />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/integrations/:integrationKey/agents"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <AgentsListPage />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/integrations/:integrationKey/logs"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <AgentLogsPage />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Catálogo de Módulos (Admin Global) */}
                 <Route
