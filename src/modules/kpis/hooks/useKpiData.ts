@@ -1,12 +1,52 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { KpiMetric, KpiValue, KpiWithValues, KpiCategory } from "../types";
+import { KpiCategory, KpiWithValues, KpiValue, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
 interface UseKpiDataOptions {
   category?: KpiCategory;
   teamId?: string;
   ownerId?: string;
+}
+
+// Types that match the database schema (without the new fields we added to the local types)
+interface DbKpiMetric {
+  id: string;
+  name: string;
+  description: string | null;
+  category: KpiCategory;
+  bu_id: string | null;
+  owner_user_id: string | null;
+  team_id: string | null;
+  unit: string;
+  direction: 'up' | 'down';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  target_value: number | null;
+  status: 'active' | 'inactive';
+  is_global: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  owner?: {
+    id: string;
+    display_name: string;
+    photo_url: string | null;
+  };
+  team?: {
+    id: string;
+    name: string;
+  };
+}
+
+interface DbKpiValue {
+  id: string;
+  kpi_id: string;
+  value: number;
+  reference_date: string;
+  source: 'manual' | 'integration' | 'calculation';
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
 }
 
 export function useKpiData(options: UseKpiDataOptions = {}) {
@@ -42,7 +82,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as KpiMetric[];
+      return data as DbKpiMetric[];
     },
   });
 
@@ -62,7 +102,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         .order("reference_date", { ascending: false });
 
       if (error) throw error;
-      return data as KpiValue[];
+      return data as DbKpiValue[];
     },
     enabled: !!kpis && kpis.length > 0,
   });
@@ -89,21 +129,57 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       else if (variation < -0.5) trend = "down";
     }
 
+    // Map DB values to our extended type with defaults
+    const mappedValues: KpiValue[] = values.map(v => ({
+      ...v,
+      source: v.source === 'integration' ? 'api' : v.source === 'calculation' ? 'database' : 'manual',
+    }));
+
     return {
-      ...kpi,
-      values,
+      id: kpi.id,
+      name: kpi.name,
+      description: kpi.description,
+      category: kpi.category,
+      bu_id: kpi.bu_id || '',
+      owner_user_id: kpi.owner_user_id,
+      team_id: kpi.team_id,
+      unit: kpi.unit,
+      direction: kpi.direction,
+      frequency: kpi.frequency === 'quarterly' ? 'quarterly' : kpi.frequency,
+      target_value: kpi.target_value,
+      status: kpi.status,
+      source_type: 'manual' as const,
+      source_config: null,
+      visibility: 'bu' as const,
+      linked_okrs: [],
+      created_at: kpi.created_at,
+      updated_at: kpi.updated_at,
+      deleted_at: kpi.deleted_at,
+      owner: kpi.owner,
+      team: kpi.team,
+      values: mappedValues,
       current_value: currentValue,
       previous_value: previousValue,
       variation,
       trend,
+      rag_status: calculateRagStatus(currentValue, kpi.target_value, kpi.direction),
     };
   });
 
-  // Create KPI
+  // Create KPI (uses database schema)
   const createKpi = useMutation({
-    mutationFn: async (
-      data: Omit<KpiMetric, "id" | "created_at" | "updated_at" | "deleted_at" | "owner" | "team">
-    ) => {
+    mutationFn: async (data: {
+      name: string;
+      description: string | null;
+      category: KpiCategory;
+      unit: string;
+      direction: 'up' | 'down';
+      frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+      team_id: string | null;
+      owner_user_id: string | null;
+      target_value: number | null;
+      status: 'active' | 'inactive';
+    }) => {
       const { data: result, error } = await supabase
         .from("kpi_metrics")
         .insert(data)
@@ -135,15 +211,19 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       kpi_id: string;
       value: number;
       reference_date: string;
-      source?: KpiValue["source"];
+      source?: 'manual' | 'integration' | 'calculation';
       notes?: string;
       created_by?: string;
     }) => {
       const { data: result, error } = await supabase
         .from("kpi_values")
         .insert({
-          ...data,
+          kpi_id: data.kpi_id,
+          value: data.value,
+          reference_date: data.reference_date,
           source: data.source || "manual",
+          notes: data.notes || null,
+          created_by: data.created_by || null,
         })
         .select()
         .single();
@@ -192,7 +272,7 @@ export function useKpiDetail(kpiId: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as KpiMetric | null;
+      return data as DbKpiMetric | null;
     },
     enabled: !!kpiId,
   });
@@ -207,14 +287,28 @@ export function useKpiDetail(kpiId: string) {
         .order("reference_date", { ascending: false });
 
       if (error) throw error;
-      return data as KpiValue[];
+      return data as DbKpiValue[];
     },
     enabled: !!kpiId,
   });
 
+  // Map to extended type
+  const mappedValues: KpiValue[] = (values || []).map(v => ({
+    ...v,
+    source: v.source === 'integration' ? 'api' : v.source === 'calculation' ? 'database' : 'manual',
+  }));
+
   return {
-    kpi,
-    values: values || [],
+    kpi: kpi ? {
+      ...kpi,
+      bu_id: kpi.bu_id || '',
+      frequency: kpi.frequency === 'quarterly' ? 'quarterly' as const : kpi.frequency,
+      source_type: 'manual' as const,
+      source_config: null,
+      visibility: 'bu' as const,
+      linked_okrs: [],
+    } : null,
+    values: mappedValues,
     isLoading,
   };
 }

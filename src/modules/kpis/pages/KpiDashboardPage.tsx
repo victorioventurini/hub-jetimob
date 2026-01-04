@@ -4,12 +4,13 @@ import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useKpiData } from "../hooks/useKpiData";
+import { useMockKpiData } from "../hooks/useMockKpiData";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 import { KpiCategorySection } from "../components/KpiCategorySection";
 import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
+import { KpiStatusSummary } from "../components/KpiStatusSummary";
 import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,9 +26,14 @@ export default function KpiDashboardPage() {
   const [addValueOpen, setAddValueOpen] = useState(false);
   const [addValueKpi, setAddValueKpi] = useState<KpiWithValues | null>(null);
 
-  const { kpis, isLoading } = useKpiData({
-    category: categoryFilter === "all" ? undefined : categoryFilter,
-    teamId: teamFilter === "all" ? undefined : teamFilter,
+  // Use mock data for now
+  const { kpis: allKpis, summary, isLoading } = useMockKpiData();
+
+  // Apply filters
+  const filteredKpis = allKpis.filter((kpi) => {
+    if (categoryFilter !== "all" && kpi.category !== categoryFilter) return false;
+    if (teamFilter !== "all" && kpi.team_id !== teamFilter) return false;
+    return true;
   });
 
   const handleKpiClick = (kpi: KpiWithValues) => {
@@ -38,25 +44,14 @@ export default function KpiDashboardPage() {
   // Group KPIs by category
   const kpisByCategory = (Object.keys(CATEGORY_LABELS) as KpiCategory[]).reduce(
     (acc, category) => {
-      acc[category] = kpis.filter((kpi) => kpi.category === category);
+      acc[category] = filteredKpis.filter((kpi) => kpi.category === category);
       return acc;
     },
     {} as Record<KpiCategory, KpiWithValues[]>
   );
 
-  // Summary stats
-  const totalKpis = kpis.length;
-  const kpisWithData = kpis.filter((k) => k.current_value !== null).length;
-  const kpisImproving = kpis.filter(
-    (k) =>
-      (k.direction === "up" && k.trend === "up") ||
-      (k.direction === "down" && k.trend === "down")
-  ).length;
-  const kpisWorsening = kpis.filter(
-    (k) =>
-      (k.direction === "up" && k.trend === "down") ||
-      (k.direction === "down" && k.trend === "up")
-  ).length;
+  // Get unique teams for filter
+  const teams = Array.from(new Set(allKpis.map(k => k.team).filter(Boolean)));
 
   return (
     <HubLayout>
@@ -80,33 +75,14 @@ export default function KpiDashboardPage() {
           )}
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-foreground">{totalKpis}</div>
-              <p className="text-xs text-muted-foreground">KPIs ativos</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-foreground">{kpisWithData}</div>
-              <p className="text-xs text-muted-foreground">Com dados</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-emerald-500">{kpisImproving}</div>
-              <p className="text-xs text-muted-foreground">Melhorando</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-red-500">{kpisWorsening}</div>
-              <p className="text-xs text-muted-foreground">Piorando</p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Status Summary */}
+        <KpiStatusSummary
+          total={summary.total}
+          onTrack={summary.onTrack}
+          atRisk={summary.atRisk}
+          offTrack={summary.offTrack}
+          improving={summary.improving}
+        />
 
         {/* Filters */}
         <KpiDashboardFilters
@@ -121,7 +97,7 @@ export default function KpiDashboardPage() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
           </div>
-        ) : kpis.length === 0 ? (
+        ) : filteredKpis.length === 0 ? (
           <Card>
             <CardContent className="py-4">
               <EmptyState
@@ -140,12 +116,14 @@ export default function KpiDashboardPage() {
         ) : (
           <div className="space-y-8">
             {(Object.keys(CATEGORY_LABELS) as KpiCategory[]).map((category) => (
-              <KpiCategorySection
-                key={category}
-                category={category}
-                kpis={kpisByCategory[category]}
-                onKpiClick={handleKpiClick}
-              />
+              kpisByCategory[category].length > 0 && (
+                <KpiCategorySection
+                  key={category}
+                  category={category}
+                  kpis={kpisByCategory[category]}
+                  onKpiClick={handleKpiClick}
+                />
+              )
             ))}
           </div>
         )}
