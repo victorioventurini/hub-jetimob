@@ -10,45 +10,27 @@ import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useBu } from "@/contexts/BuContext";
-import { useHubGreeting } from "@/hooks/useHubGreeting";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
   usePageTitle("Home");
   const { profile } = useAuth();
-  const { currentBu } = useBu();
   const dashboardData = useHomeDashboard();
 
-  const { greeting, subtext, isLoading: greetingLoading } = useHubGreeting({
-    userName: profile?.first_name,
-    userGender: null,
-    buName: currentBu?.name,
-  });
-
   const isExecutive = dashboardData.role === "ceo" || dashboardData.role === "director";
+  
+  const greeting = profile?.first_name 
+    ? `Olá, ${profile.first_name}!` 
+    : "Olá!";
 
   return (
     <HubLayout>
       <div className="space-y-8">
         {/* Hero Section */}
         <section className="animate-fade-in">
-          {greetingLoading ? (
-            <>
-              <Skeleton className="h-10 w-64 mb-2" />
-              <Skeleton className="h-6 w-96" />
-            </>
-          ) : (
-            <>
-              <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
-                {greeting}
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                {subtext}
-              </p>
-            </>
-          )}
+          <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
+            {greeting}
+          </h1>
         </section>
 
         {/* Culture Card - Full Width with Typewriter */}
