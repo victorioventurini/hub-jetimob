@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.culture-message]
 verify_jwt = true
+
+[functions.hub-greeting]
+verify_jwt = true

@@ -204,18 +204,16 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
 
-    // If we already have cached greeting from init, just refill pool if needed
+    // Regra: sempre invocar o agente quando a Home carregar.
+    // Se já temos cache, mostramos instantaneamente e atualizamos em background.
     if (initialRef.current.hasCached) {
-      const cache = getCache();
-      if (cache.greetings.length < MIN_POOL_SIZE) {
-        fetchGreeting({ silent: true });
-      }
+      fetchGreeting({ silent: true });
       return;
     }
 
-    // First ever visit (no cache yet): generate one
+    // Sem cache: gera e mostra loading
     fetchGreeting();
-  }, [fetchGreeting, getCache]);
+  }, [fetchGreeting]);
 
   return { greeting, subtext, isLoading, error };
 }
