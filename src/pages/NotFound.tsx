@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Home, RefreshCcw, BookOpen, MessageCircle, Bug } from "lucide-react";
+import { Home, RefreshCcw, BookOpen, MessageCircle } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ReportProblemDialog } from "@/components/ReportProblemDialog";
 import rocketIllustration from "@/assets/404-rocket.svg";
 
 const NotFound = () => {
@@ -138,16 +139,9 @@ const NotFound = () => {
               </Button>
             </div>
 
-            {/* Link para reportar problema (opcional, mais discreto) */}
+            {/* Link para reportar problema */}
             {user && (
-              <button
-                onClick={() => console.log("Open report modal")}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                aria-label="Reportar um problema"
-              >
-                <Bug className="h-3.5 w-3.5" />
-                Reportar problema
-              </button>
+              <ReportProblemDialog attemptedRoute={location.pathname} />
             )}
           </CardContent>
         </Card>
