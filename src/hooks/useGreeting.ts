@@ -7,7 +7,6 @@ type Weather = "sunny" | "cloudy" | "rainy" | "unknown";
 interface GreetingContext {
   userName?: string | null;
   userGender?: "male" | "female" | null;
-  city?: string | null;
 }
 
 interface GreetingResult {
@@ -32,12 +31,6 @@ const isWeekend = (): boolean => {
   return day === 0 || day === 6;
 };
 
-// Mock weather - in production this would come from an API
-const getWeather = (): Weather => {
-  const weathers: Weather[] = ["sunny", "cloudy", "rainy", "sunny", "cloudy"];
-  return weathers[Math.floor(Math.random() * weathers.length)];
-};
-
 const periodGreetings: Record<PeriodOfDay, string> = {
   morning: "Bom dia",
   afternoon: "Boa tarde",
@@ -46,34 +39,40 @@ const periodGreetings: Record<PeriodOfDay, string> = {
 
 const weatherEmojis: Record<Weather, string> = {
   sunny: "☀️",
-  cloudy: "⛅",
+  cloudy: "🌥️",
   rainy: "🌧️",
   unknown: "",
 };
 
-const getRandomItem = <T>(arr: T[]): T => {
-  return arr[Math.floor(Math.random() * arr.length)];
-};
+const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 const buildGreeting = (
   period: PeriodOfDay,
   dayOfWeek: DayOfWeek,
-  weekend: boolean,
   weather: Weather,
   userName?: string | null
 ): string => {
-  const useBuenas = Math.random() > 0.6;
-  const showWeatherEmoji = weather !== "unknown" && Math.random() > 0.5;
-  const emoji = showWeatherEmoji ? ` ${weatherEmojis[weather]}` : "";
+  const useBuenas = Math.random() > 0.5;
+  const showEmoji = weather !== "unknown" && Math.random() > 0.6;
+  const emoji = showEmoji ? ` ${weatherEmojis[weather]}` : "";
   
+  // Variações com "Buenas"
   if (useBuenas) {
-    const bases = ["Buenas", "E aí", "Olá"];
-    const base = getRandomItem(bases);
-    return userName ? `${base}, ${userName}!${emoji}` : `${base}!${emoji}`;
+    if (userName) {
+      return `Buenas, ${userName}!${emoji}`;
+    }
+    // Buenas com contexto de dia
+    if (dayOfWeek === "fri") return `Buenas! Sextou.${emoji}`;
+    if (dayOfWeek === "thu") return `Buenas! Quinta-feira já tá aí.${emoji}`;
+    return `Buenas!${emoji}`;
   }
   
+  // Saudação por período
   const base = periodGreetings[period];
-  return userName ? `${base}, ${userName}.${emoji}` : `${base}.${emoji}`;
+  if (userName) {
+    return `${base}, ${userName}.${emoji}`;
+  }
+  return `${base}.${emoji}`;
 };
 
 const buildSubtext = (
@@ -82,97 +81,64 @@ const buildSubtext = (
   weekend: boolean,
   weather: Weather
 ): string => {
-  // Context-aware subtexts
-  const contextSubtexts: string[] = [];
+  // Pool contextual
+  const options: string[] = [];
   
-  // Weather-based
+  // Clima
   if (weather === "rainy") {
-    contextSubtexts.push(
-      "Dia bom pra focar.",
-      "Chuva lá fora, foco aqui dentro.",
-      "Clima perfeito pra produzir."
-    );
+    options.push("Chuva lá fora, clareza aqui.", "Dia bom pra focar.");
+  }
+  if (weather === "sunny") {
+    options.push("Dia claro, mente clara.");
   }
   
-  // Day-based
+  // Dia da semana
   if (dayOfWeek === "mon") {
-    contextSubtexts.push(
-      "Semana nova, foco renovado.",
-      "Segunda pede clareza.",
-      "Começa bem, termina melhor."
-    );
-  } else if (dayOfWeek === "fri") {
-    contextSubtexts.push(
-      "Fecha bem a semana.",
-      "Sexta pede fechamento.",
-      "Arremata os pendentes."
-    );
-  } else if (dayOfWeek === "thu") {
-    contextSubtexts.push(
-      "Quinta pede ajuste fino.",
-      "Reta final da semana.",
-      "Hora de revisar prioridades."
-    );
-  } else if (dayOfWeek === "wed") {
-    contextSubtexts.push(
-      "Quarta: meio de campo.",
-      "Metade do caminho. Segue firme.",
-      "Ajusta o passo e segue."
-    );
+    options.push("Semana nova, foco renovado.", "Começa pelo que importa.");
+  }
+  if (dayOfWeek === "tue" || dayOfWeek === "wed") {
+    options.push("Semana andando, ritmo certo.", "Foco no que move.");
+  }
+  if (dayOfWeek === "thu") {
+    options.push("Reta final chegando.", "Ajusta o passo.");
+  }
+  if (dayOfWeek === "fri") {
+    options.push("Fecha bem a semana.", "Arremata os pendentes.");
   }
   
-  // Weekend
+  // Fim de semana
   if (weekend) {
-    contextSubtexts.push(
-      "Fim de semana, foco leve.",
-      "Só o essencial.",
-      "Descansa a mente também."
-    );
+    options.push("Só o essencial.", "Ritmo leve.");
   }
   
-  // Period-based
-  if (period === "morning") {
-    contextSubtexts.push(
-      "Manhã é pra clareza.",
-      "Começa pelo que importa."
-    );
-  } else if (period === "night") {
-    contextSubtexts.push(
-      "Noite pede revisão leve.",
-      "Fecha o dia com calma."
-    );
+  // Período
+  if (period === "night") {
+    options.push("Fecha o dia com calma.");
   }
   
-  // Generic fallbacks
-  const genericSubtexts = [
-    "Menos ruído. Mais clareza.",
+  // Fallbacks genéricos (sempre disponíveis)
+  const fallbacks = [
     "Vamos ao que importa.",
+    "Pouco ruído hoje.",
+    "Clareza antes de tudo.",
     "Foco no que move a agulha.",
-    "Clareza antes da execução.",
-    "O essencial primeiro.",
-    "Prioridade é tudo.",
   ];
   
-  // Prefer contextual if available, otherwise use generic
-  const pool = contextSubtexts.length > 0 
-    ? [...contextSubtexts, ...genericSubtexts.slice(0, 2)] 
-    : genericSubtexts;
-  
-  return getRandomItem(pool);
+  const pool = options.length > 0 ? [...options, ...fallbacks.slice(0, 2)] : fallbacks;
+  return pick(pool);
 };
 
-export const useGreeting = ({ userName, userGender, city }: GreetingContext): GreetingResult => {
-  const result = useMemo(() => {
+export const useGreeting = ({ userName }: GreetingContext): GreetingResult => {
+  return useMemo(() => {
     const period = getPeriodOfDay();
     const dayOfWeek = getDayOfWeek();
     const weekend = isWeekend();
-    const weather = getWeather();
+    // Weather seria integrado via API - por agora, assume unknown
+    const weather: Weather = "unknown";
     
-    const greeting = buildGreeting(period, dayOfWeek, weekend, weather, userName);
-    const subtext = buildSubtext(period, dayOfWeek, weekend, weather);
-    
-    return { greeting, subtext };
+    return {
+      greeting: buildGreeting(period, dayOfWeek, weather, userName),
+      subtext: buildSubtext(period, dayOfWeek, weekend, weather),
+    };
   }, [userName]);
-
-  return result;
 };
