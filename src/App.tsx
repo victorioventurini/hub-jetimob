@@ -33,7 +33,8 @@ import KpiDashboardPage from "./modules/kpis/pages/KpiDashboardPage";
 import BuManagementPage from "./modules/bu/pages/BuManagementPage";
 import SelectBu from "./pages/SelectBu";
 import Auth from "./pages/Auth";
-import Settings from "./pages/Settings";
+import SettingsHome from "./pages/settings/SettingsHome";
+import { SettingsLayout } from "./components/settings/SettingsLayout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -192,7 +193,9 @@ const App = () => (
                   element={
                     <ProtectedRoute skipBuCheck>
                       <AdminRoute>
-                        <Settings />
+                        <SettingsLayout>
+                          <SettingsHome />
+                        </SettingsLayout>
                       </AdminRoute>
                     </ProtectedRoute>
                   }
