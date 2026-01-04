@@ -149,8 +149,11 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
     return cache.greetings[index];
   }, [getCache]);
 
-  const fetchGreeting = useCallback(
-    async (opts?: { silent?: boolean }) => {
+  useEffect(() => {
+    // Prevent double fetch in StrictMode
+    if (hasFetchedRef.current) return;
+
+    const fetchGreeting = async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) {
         setIsLoading(true);
       }
@@ -162,6 +165,12 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
         const {
           data: { session },
         } = await supabase.auth.getSession();
+
+        console.log("[useHubGreeting] Calling hub-greeting function...", {
+          userName: context.userName,
+          buName: context.buName,
+          hasSession: !!session,
+        });
 
         const { data, error: fnError } = await supabase.functions.invoke("hub-greeting", {
           headers: session?.access_token
@@ -180,23 +189,27 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
         });
 
         if (fnError) {
+          console.error("[useHubGreeting] Function error:", fnError);
           throw new Error(fnError.message);
         }
 
         if (data?.error) {
+          console.error("[useHubGreeting] Response error:", data.error);
           throw new Error(data.error);
         }
 
         if (data?.greeting && data?.subtext) {
+          console.log("[useHubGreeting] Greeting received:", data.greeting);
           setGreeting(data.greeting);
           setSubtext(data.subtext);
           saveToCache(data.greeting, data.subtext, data.generatedAt);
+          hasFetchedRef.current = true;
           return;
         }
 
         throw new Error("Empty response");
       } catch (err) {
-        console.error("Failed to fetch hub greeting:", err);
+        console.error("[useHubGreeting] Failed to fetch:", err);
         setError(err instanceof Error ? err.message : "Erro ao carregar saudação");
 
         // Fallback: use cached greeting or default
@@ -210,17 +223,10 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
         }
       } finally {
         setIsLoading(false);
+        hasFetchedRef.current = true;
       }
-    },
-    [context, getCache, saveToCache, getRandomCachedGreeting]
-  );
+    };
 
-  useEffect(() => {
-    // Prevent double fetch in StrictMode
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
-
-    // Regra: sempre invocar o agente quando a Home carregar.
     // Se já temos cache, mostramos instantaneamente e atualizamos em background.
     if (initialRef.current.hasCached) {
       fetchGreeting({ silent: true });
@@ -229,7 +235,7 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
 
     // Sem cache: gera e mostra loading
     fetchGreeting();
-  }, [fetchGreeting]);
+  }, [context.userName, context.userGender, context.buName, context.okrSummary, context.kpiSummary, getCache, saveToCache, getRandomCachedGreeting]);
 
   return { greeting, subtext, isLoading, error };
 }
