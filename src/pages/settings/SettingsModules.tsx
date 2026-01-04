@@ -1,4 +1,5 @@
 import { Blocks, Search, CheckCircle2, XCircle, Clock, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -153,10 +154,21 @@ export default function SettingsModules() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover">
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            {module.status === "active" ? "Desativar" : "Ativar"}
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // TODO: Implementar edição de módulos
+                              toast.info("Edição de módulos em desenvolvimento");
+                            }}
+                          >
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // TODO: Implementar visualização de detalhes
+                              toast.info("Detalhes do módulo em desenvolvimento");
+                            }}
+                          >
+                            Ver detalhes
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

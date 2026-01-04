@@ -218,6 +218,18 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/settings/integrations/:integrationKey"
+                  element={
+                    <ProtectedRoute skipBuCheck>
+                      <AdminRoute>
+                        <SettingsLayout>
+                          <GlobalIntegrationDetailPage />
+                        </SettingsLayout>
+                      </AdminRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Catálogo de Módulos (Admin Global) */}
                 <Route
