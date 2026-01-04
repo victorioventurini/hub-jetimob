@@ -46,10 +46,43 @@ function getDayOfWeek(): string {
   return days[new Date().getDay()];
 }
 
+function getInitialGreeting(): { greeting: string; subtext: string; hasCached: boolean } {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const cache: CacheData = JSON.parse(cached);
+      if (cache.greetings.length > 0) {
+        // Pick a random different index than last used
+        let index: number;
+        if (cache.greetings.length === 1) {
+          index = 0;
+        } else {
+          do {
+            index = Math.floor(Math.random() * cache.greetings.length);
+          } while (index === cache.lastUsedIndex);
+        }
+        // Update last used index
+        cache.lastUsedIndex = index;
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+        
+        return {
+          greeting: cache.greetings[index].greeting,
+          subtext: cache.greetings[index].subtext,
+          hasCached: true,
+        };
+      }
+    }
+  } catch {}
+  return { greeting: FALLBACK_GREETING, subtext: FALLBACK_SUBTEXT, hasCached: false };
+}
+
 export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
-  const [greeting, setGreeting] = useState<string>(FALLBACK_GREETING);
-  const [subtext, setSubtext] = useState<string>(FALLBACK_SUBTEXT);
-  const [isLoading, setIsLoading] = useState(true);
+  // Get initial greeting once at mount (with random selection from cache)
+  const initialRef = useRef(getInitialGreeting());
+  
+  const [greeting, setGreeting] = useState<string>(initialRef.current.greeting);
+  const [subtext, setSubtext] = useState<string>(initialRef.current.subtext);
+  const [isLoading, setIsLoading] = useState(!initialRef.current.hasCached);
   const [error, setError] = useState<string | null>(null);
   const hasFetchedRef = useRef(false);
 
@@ -171,15 +204,10 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
 
-    // Prefer showing an existing cached greeting (instant, no cost)
-    const cached = getRandomCachedGreeting();
-    if (cached) {
-      setGreeting(cached.greeting);
-      setSubtext(cached.subtext);
-      setIsLoading(false);
-
-      // Refill pool only when it's getting small
-      if (getCache().greetings.length < MIN_POOL_SIZE) {
+    // If we already have cached greeting from init, just refill pool if needed
+    if (initialRef.current.hasCached) {
+      const cache = getCache();
+      if (cache.greetings.length < MIN_POOL_SIZE) {
         fetchGreeting({ silent: true });
       }
       return;
@@ -187,7 +215,7 @@ export function useHubGreeting(context: GreetingContext): UseHubGreetingReturn {
 
     // First ever visit (no cache yet): generate one
     fetchGreeting();
-  }, [fetchGreeting, getRandomCachedGreeting, getCache]);
+  }, [fetchGreeting, getCache]);
 
   return { greeting, subtext, isLoading, error };
 }
