@@ -49,6 +49,7 @@ const iconMap: Record<string, LucideIcon> = {
   projects: Briefcase,
   docs: FileText,
   modules: LayoutGrid,
+  "modules-admin": LayoutGrid,
   settings: Settings,
 };
 
@@ -75,8 +76,8 @@ const externalLinks = [
 ];
 
 // Itens admin - só aparecem na área GLOBAL (sem BU selecionada)
-const globalAdminItems = [
-  { name: "Configurações", href: "/settings", icon: Settings },
+const globalAdminItems: { name: string; href: string; icon: LucideIcon }[] = [
+  // Menu de admin foi movido para módulos globais no banco
 ];
 
 export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
