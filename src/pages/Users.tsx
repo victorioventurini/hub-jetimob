@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -40,10 +41,13 @@ import {
   MapPin,
   Users,
   AlertTriangle,
+  Pencil,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
+import { BulkEditDialog } from "@/components/users/BulkEditDialog";
 import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 
 interface ProfileWithTeam {
@@ -90,7 +94,9 @@ export default function UsersPage() {
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   console.log("[UsersPage] currentBu", {
     id: currentBu?.id,
@@ -197,6 +203,37 @@ export default function UsersPage() {
     setEditingProfile(null);
   };
 
+  // Selection handlers
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!filteredProfiles) return;
+    
+    if (selectedIds.size === filteredProfiles.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProfiles.map((p) => p.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const allSelected =
+    filteredProfiles && filteredProfiles.length > 0 && selectedIds.size === filteredProfiles.length;
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
   return (
     <HubLayout>
       <div className="space-y-6">
@@ -289,6 +326,33 @@ export default function UsersPage() {
           </Select>
         </div>
 
+        {/* Bulk action bar */}
+        {isAdmin && selectedIds.size > 0 && (
+          <div className="flex items-center gap-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
+            <span className="text-sm font-medium">
+              {selectedIds.size} {selectedIds.size === 1 ? "selecionado" : "selecionados"}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="default"
+                className="gap-1.5"
+                onClick={() => setBulkEditOpen(true)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Editar em massa
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={clearSelection}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Results count */}
         <p className="text-sm text-muted-foreground">
           {isLoading ? (
@@ -308,6 +372,20 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
+                {isAdmin && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) {
+                          (el as HTMLButtonElement & { indeterminate: boolean }).indeterminate = someSelected;
+                        }
+                      }}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="font-semibold">Nome</TableHead>
                 <TableHead className="font-semibold">Cargo</TableHead>
                 <TableHead className="font-semibold">Time</TableHead>
@@ -322,6 +400,7 @@ export default function UsersPage() {
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
+                    {isAdmin && <TableCell><Skeleton className="h-4 w-4" /></TableCell>}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Skeleton className="h-9 w-9 rounded-full" />
@@ -342,7 +421,19 @@ export default function UsersPage() {
                 ))
               ) : filteredProfiles && filteredProfiles.length > 0 ? (
                 filteredProfiles.map((profile) => (
-                  <TableRow key={profile.id} className="hover:bg-muted/30">
+                  <TableRow 
+                    key={profile.id} 
+                    className={`hover:bg-muted/30 ${selectedIds.has(profile.id) ? "bg-accent/5" : ""}`}
+                  >
+                    {isAdmin && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(profile.id)}
+                          onCheckedChange={() => toggleSelection(profile.id)}
+                          aria-label={`Selecionar ${profile.display_name}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
@@ -413,7 +504,7 @@ export default function UsersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 8 : 7} className="h-32">
+                  <TableCell colSpan={isAdmin ? 9 : 7} className="h-32">
                     <div className="flex flex-col items-center justify-center text-center">
                       <Users className="h-10 w-10 text-muted-foreground mb-2" />
                       <p className="font-medium">Nenhum Jetimober encontrado</p>
@@ -435,6 +526,13 @@ export default function UsersPage() {
         open={dialogOpen}
         onOpenChange={handleCloseDialog}
         profile={editingProfile}
+      />
+
+      <BulkEditDialog
+        open={bulkEditOpen}
+        onOpenChange={setBulkEditOpen}
+        selectedIds={Array.from(selectedIds)}
+        onComplete={clearSelection}
       />
     </HubLayout>
   );
