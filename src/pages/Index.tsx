@@ -7,32 +7,41 @@ import { QuickStats } from "@/components/home/QuickStats";
 import { CultureCard } from "@/components/home/CultureCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useBu } from "@/contexts/BuContext";
+import { useHubGreeting } from "@/hooks/useHubGreeting";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
   usePageTitle("Home");
   const { profile } = useAuth();
+  const { currentBu } = useBu();
 
-  // Get current greeting based on time
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
-
-  const firstName = profile?.first_name?.trim();
+  const { greeting, subtext, isLoading: greetingLoading } = useHubGreeting({
+    userName: profile?.first_name,
+    userGender: null, // Profile doesn't have gender field yet
+    buName: currentBu?.name,
+  });
 
   return (
     <HubLayout>
       <div className="space-y-8">
         {/* Hero Section */}
         <section className="animate-fade-in">
-          <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
-            {getGreeting()}{firstName ? `, ${firstName}` : ""}! 👋
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Bem-vindo ao Hub da Jetimob. Aqui você encontra tudo sobre a nossa empresa.
-          </p>
+          {greetingLoading ? (
+            <>
+              <Skeleton className="h-10 w-64 mb-2" />
+              <Skeleton className="h-6 w-96" />
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
+                {greeting}
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                {subtext}
+              </p>
+            </>
+          )}
         </section>
 
         {/* Culture Card */}
