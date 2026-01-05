@@ -119,6 +119,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
     const currentValue = values[0]?.value ?? null;
     const previousValue = values[1]?.value ?? null;
+    const lastValue = values[0];
 
     let variation: number | null = null;
     let trend: "up" | "down" | "stable" = "stable";
@@ -151,6 +152,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       source_type: 'manual' as const,
       source_config: null,
       visibility: 'bu' as const,
+      comparison_rule: kpi.direction === 'up' ? 'higher_is_better' as const : 'lower_is_better' as const,
       linked_okrs: [],
       created_at: kpi.created_at,
       updated_at: kpi.updated_at,
@@ -163,6 +165,13 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       variation,
       trend,
       rag_status: calculateRagStatus(currentValue, kpi.target_value, kpi.direction),
+      // Campos de auditoria
+      last_updated_at: lastValue?.created_at ?? null,
+      last_update_source: lastValue 
+        ? (lastValue.source === 'integration' ? 'api' : lastValue.source === 'calculation' ? 'database' : 'manual') 
+        : null,
+      last_updated_by: lastValue?.created_by ?? null,
+      last_updated_by_user: null,
     };
   });
 

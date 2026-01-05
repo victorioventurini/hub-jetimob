@@ -2,9 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle } from "lucide-react";
 import { useKpiDetail } from "../hooks/useKpiData";
-import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS } from "../types";
+import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, KpiValueSource } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,6 +15,38 @@ interface KpiDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const SourceIcon = ({ type }: { type: string }) => {
+  switch (type) {
+    case 'api':
+      return <Plug className="h-4 w-4" />;
+    case 'webhook':
+      return <Webhook className="h-4 w-4" />;
+    case 'spreadsheet':
+      return <FileSpreadsheet className="h-4 w-4" />;
+    case 'database':
+      return <Database className="h-4 w-4" />;
+    default:
+      return <Edit3 className="h-4 w-4" />;
+  }
+};
+
+const getSourceColor = (type: string) => {
+  switch (type) {
+    case 'manual':
+      return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
+    case 'api':
+      return 'text-green-500 bg-green-50 dark:bg-green-900/20';
+    case 'webhook':
+      return 'text-purple-500 bg-purple-50 dark:bg-purple-900/20';
+    case 'spreadsheet':
+      return 'text-orange-500 bg-orange-50 dark:bg-orange-900/20';
+    case 'database':
+      return 'text-cyan-500 bg-cyan-50 dark:bg-cyan-900/20';
+    default:
+      return 'text-muted-foreground bg-muted';
+  }
+};
 
 export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogProps) {
   const { kpi, values, isLoading } = useKpiDetail(kpiId || "");
@@ -41,6 +73,7 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
 
   const currentValue = values[0]?.value ?? null;
   const previousValue = values[1]?.value ?? null;
+  const lastValue = values[0];
   let variation: number | null = null;
   let trend: "up" | "down" | "stable" = "stable";
 
@@ -75,7 +108,17 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
         minimumFractionDigits: 0,
       }).format(value);
     }
+    if (kpi.unit === "horas") return `${value.toFixed(1)}h`;
+    if (kpi.unit === "score") return value.toFixed(0);
     return value.toLocaleString("pt-BR");
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    try {
+      return format(parseISO(dateStr), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    } catch {
+      return dateStr;
+    }
   };
 
   return (
@@ -85,12 +128,18 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <DialogTitle className="text-xl">{kpi.name}</DialogTitle>
-              <Badge
-                variant="secondary"
-                className={cn("text-xs text-white", CATEGORY_COLORS[kpi.category])}
-              >
-                {CATEGORY_LABELS[kpi.category]}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className={cn("text-xs text-white", CATEGORY_COLORS[kpi.category])}
+                >
+                  {CATEGORY_LABELS[kpi.category]}
+                </Badge>
+                <Badge variant="outline" className={cn("text-xs gap-1", getSourceColor(kpi.source_type))}>
+                  <SourceIcon type={kpi.source_type} />
+                  {SOURCE_TYPE_LABELS[kpi.source_type]}
+                </Badge>
+              </div>
             </div>
           </div>
         </DialogHeader>
@@ -111,6 +160,44 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
 
           {kpi.description && (
             <p className="text-muted-foreground">{kpi.description}</p>
+          )}
+
+          {/* Last Update Info Box */}
+          {lastValue && (
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Última Atualização
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Data:</span>
+                  <p className="font-medium">{formatDateTime(lastValue.created_at)}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Origem:</span>
+                  <p className="font-medium flex items-center gap-1.5">
+                    <SourceIcon type={lastValue.source} />
+                    {SOURCE_TYPE_LABELS[lastValue.source as KpiValueSource] || lastValue.source}
+                  </p>
+                </div>
+                {lastValue.source === 'manual' && lastValue.created_by_user && (
+                  <div>
+                    <span className="text-muted-foreground">Por:</span>
+                    <p className="font-medium flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5" />
+                      {lastValue.created_by_user.display_name}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {lastValue.notes && (
+                <div className="pt-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground">Observação:</span>
+                  <p className="text-sm">{lastValue.notes}</p>
+                </div>
+              )}
+            </div>
           )}
 
           <Separator />
@@ -217,19 +304,22 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
           {/* History Table */}
           {values.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-medium text-foreground">Histórico</h3>
+              <h3 className="font-medium text-foreground">Histórico de Atualizações</h3>
               <div className="border border-border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
                       <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">
-                        Data
+                        Data / Hora
                       </th>
                       <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">
                         Valor
                       </th>
                       <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">
-                        Fonte
+                        Origem
+                      </th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">
+                        Usuário
                       </th>
                     </tr>
                   </thead>
@@ -237,13 +327,34 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
                     {values.slice(0, 10).map((v, i) => (
                       <tr key={v.id} className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}>
                         <td className="px-4 py-2 text-sm">
-                          {format(parseISO(v.reference_date), "dd/MM/yyyy")}
+                          <div>{format(parseISO(v.reference_date), "dd/MM/yyyy")}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(parseISO(v.created_at), "HH:mm")}
+                          </div>
                         </td>
                         <td className="px-4 py-2 text-sm text-right font-medium">
                           {formatValue(v.value)}
                         </td>
-                        <td className="px-4 py-2 text-sm text-muted-foreground capitalize">
-                          {v.source}
+                        <td className="px-4 py-2">
+                          <Badge variant="outline" className={cn("text-xs gap-1", getSourceColor(v.source))}>
+                            <SourceIcon type={v.source} />
+                            {SOURCE_TYPE_LABELS[v.source as KpiValueSource] || v.source}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-muted-foreground">
+                          {v.source === 'manual' && v.created_by_user ? (
+                            <div className="flex items-center gap-1.5">
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src={v.created_by_user.photo_url || undefined} />
+                                <AvatarFallback className="text-[8px]">
+                                  {v.created_by_user.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{v.created_by_user.display_name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/60">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}

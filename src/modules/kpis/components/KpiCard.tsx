@@ -1,10 +1,10 @@
-import { TrendingUp, TrendingDown, Minus, AlertCircle, Plug, FileSpreadsheet, Database, Edit3, Webhook, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, AlertCircle, Plug, FileSpreadsheet, Database, Edit3, Webhook, Sparkles, Clock, User } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { KpiWithValues, CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, RAG_STATUS_CONFIG } from "../types";
+import { KpiWithValues, CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,15 +18,15 @@ interface KpiCardProps {
 const SourceIcon = ({ type }: { type: string }) => {
   switch (type) {
     case 'api':
-      return <Plug className="h-3 w-3" />;
+      return <Plug className="h-3.5 w-3.5" />;
     case 'webhook':
-      return <Webhook className="h-3 w-3" />;
+      return <Webhook className="h-3.5 w-3.5" />;
     case 'spreadsheet':
-      return <FileSpreadsheet className="h-3 w-3" />;
+      return <FileSpreadsheet className="h-3.5 w-3.5" />;
     case 'database':
-      return <Database className="h-3 w-3" />;
+      return <Database className="h-3.5 w-3.5" />;
     default:
-      return <Edit3 className="h-3 w-3" />;
+      return <Edit3 className="h-3.5 w-3.5" />;
   }
 };
 
@@ -68,11 +68,24 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
     }
   };
 
-  const lastUpdate = kpi.values[0]?.reference_date ? parseISO(kpi.values[0].reference_date) : null;
+  const lastUpdate = kpi.last_updated_at ? parseISO(kpi.last_updated_at) : null;
   const isStale = lastUpdate
     ? differenceInDays(new Date(), lastUpdate) >
       (kpi.frequency === "daily" ? 2 : kpi.frequency === "weekly" ? 10 : kpi.frequency === "monthly" ? 35 : 100)
     : true;
+
+  // Format last update info for display
+  const formatUpdateInfo = () => {
+    if (!lastUpdate) return null;
+    
+    const dateStr = format(lastUpdate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    const sourceLabel = kpi.last_update_source ? SOURCE_TYPE_LABELS[kpi.last_update_source] : 'Desconhecida';
+    const userName = kpi.last_updated_by_user?.display_name;
+    
+    return { dateStr, sourceLabel, userName };
+  };
+
+  const updateInfo = formatUpdateInfo();
 
   return (
     <Card
@@ -95,12 +108,19 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
               </Badge>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="text-muted-foreground">
+                  <div className={cn(
+                    "flex items-center gap-1 text-muted-foreground",
+                    kpi.source_type === 'manual' && "text-blue-500",
+                    kpi.source_type === 'api' && "text-green-500",
+                    kpi.source_type === 'webhook' && "text-purple-500",
+                    kpi.source_type === 'spreadsheet' && "text-orange-500",
+                    kpi.source_type === 'database' && "text-cyan-500",
+                  )}>
                     <SourceIcon type={kpi.source_type} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Fonte: {kpi.source_type === 'manual' ? 'Manual' : kpi.source_type.toUpperCase()}</p>
+                  <p>Fonte: {SOURCE_TYPE_LABELS[kpi.source_type]}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -173,6 +193,30 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
           </div>
         )}
 
+        {/* Last Update Info - ALWAYS VISIBLE */}
+        {updateInfo && (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-xs">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Atualizado em {updateInfo.dateStr}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <SourceIcon type={kpi.source_type} />
+                <span className="text-muted-foreground">
+                  Origem: <span className="font-medium text-foreground">{updateInfo.sourceLabel}</span>
+                </span>
+              </div>
+              {updateInfo.userName && (
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <User className="h-3.5 w-3.5" />
+                  <span>Por: <span className="font-medium text-foreground">{updateInfo.userName}</span></span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Spacer to push footer to bottom */}
         <div className="flex-1" />
 
@@ -224,7 +268,7 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{kpi.owner.display_name}</p>
+                  <p>Owner: {kpi.owner.display_name}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -233,9 +277,9 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
             </span>
           </div>
 
-          {lastUpdate && (
-            <span className="text-sm text-muted-foreground">
-              {format(lastUpdate, "dd MMM", { locale: ptBR })}
+          {kpi.team && (
+            <span className="text-xs text-muted-foreground">
+              {kpi.team.name}
             </span>
           )}
         </div>
