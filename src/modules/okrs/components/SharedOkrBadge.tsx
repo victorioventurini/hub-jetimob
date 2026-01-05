@@ -15,6 +15,8 @@ interface SharedOkrBadgeProps {
   responsibilityModel?: 'collaborative' | 'primary_led';
   isPrimaryTeam?: boolean;
   compact?: boolean;
+  expanded?: boolean; // Show all details in expanded mode
+  showTeamList?: boolean; // Show list of teams below badge
   className?: string;
 }
 
@@ -29,6 +31,8 @@ export function SharedOkrBadge({
   responsibilityModel = 'collaborative',
   isPrimaryTeam,
   compact = false,
+  expanded = false,
+  showTeamList = true,
   className,
 }: SharedOkrBadgeProps) {
   if (!isShared) return null;
@@ -60,6 +64,7 @@ export function SharedOkrBadge({
     </div>
   );
 
+  // Compact mode - just the badge with tooltip
   if (compact) {
     return (
       <TooltipProvider>
@@ -81,6 +86,42 @@ export function SharedOkrBadge({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+    );
+  }
+
+  // Expanded mode - show all details inline
+  if (expanded) {
+    return (
+      <div className={cn("space-y-3 p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg", className)}>
+        <div className="flex items-center gap-2">
+          <Badge 
+            variant="outline" 
+            className="bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700"
+          >
+            <Users className="w-3 h-3 mr-1" />
+            OKR Compartilhada
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            {responsibilityModel === 'collaborative' ? 'Colaborativo' : 'Líder + Contribuidores'}
+          </Badge>
+        </div>
+        
+        <div className="grid gap-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4 text-amber-500" />
+            <span className="text-muted-foreground">Time primário:</span>
+            <span className="font-medium">{primaryTeamName || "Não definido"}</span>
+          </div>
+          
+          {contributingTeams.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Users className="w-4 h-4 text-purple-500 mt-0.5" />
+              <span className="text-muted-foreground">Contribuidores:</span>
+              <span className="font-medium">{contributingTeams.map(t => t.name).join(", ")}</span>
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
 
@@ -116,7 +157,7 @@ export function SharedOkrBadge({
         </div>
       )}
       
-      {allTeams.length > 0 && (
+      {showTeamList && allTeams.length > 0 && (
         <p className="text-xs text-muted-foreground">
           Times: {allTeams.join(", ")}
         </p>

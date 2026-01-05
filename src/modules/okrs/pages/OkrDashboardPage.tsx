@@ -20,6 +20,7 @@ import {
 } from '../hooks/useOkrData';
 import { useKrStatusDistribution, OkrCalculatedStatus } from '../hooks/useOkrStatus';
 import { usePendingCheckins } from '../hooks/usePendingCheckins';
+import { useSharedOkrsInsights } from '../hooks/useTeamContributedOkrs';
 import { calculateProgress } from '../types';
 
 import { OkrViewSelector, OkrView } from '../components/dashboard/OkrViewSelector';
@@ -31,6 +32,7 @@ import { CreateOrgObjectiveDialog } from '../components/CreateOrgObjectiveDialog
 import { CreateTeamObjectiveDialog } from '../components/CreateTeamObjectiveDialog';
 import { OkrEmptyState } from '../components/OkrEmptyState';
 import { OkrAlertsCard } from '../components/OkrAlertsCard';
+import { SharedOkrInsights } from '../components/SharedOkrInsights';
 
 interface OkrFiltersState {
   year: number;
@@ -79,6 +81,9 @@ export default function OkrDashboardPage() {
   );
   const { data: allOrgKrs } = useAllOrgKeyResults();
   const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(filters.teamId);
+  
+  // Shared OKRs insights
+  const sharedInsights = useSharedOkrsInsights();
   
   // Calculate pending checkins count
   const pendingCheckinsCount = pendingCheckins?.filter(c => c.is_overdue).length || 0;
@@ -254,6 +259,17 @@ export default function OkrDashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+
+        {/* Shared OKRs Insights */}
+        {sharedInsights.sharedOkrsCount > 0 && (
+          <SharedOkrInsights
+            sharedOkrsCount={sharedInsights.sharedOkrsCount}
+            totalOkrsCount={displayObjectives.length}
+            overdueSharedOkrsCount={sharedInsights.overdueSharedOkrsCount}
+            teamsWithMostDependencies={sharedInsights.teamsWithMostDependencies}
+          />
+        )}
 
         {/* Alerts and Status */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

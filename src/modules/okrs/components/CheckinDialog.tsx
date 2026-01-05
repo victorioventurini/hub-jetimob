@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -29,12 +29,14 @@ import {
   Zap,
   ArrowRight,
   Lock,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { OkrRagStatus, calculateProgress } from '../types';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CheckinDialogProps {
   open: boolean;
@@ -59,6 +61,8 @@ interface CheckinDialogProps {
     };
     last_checkin_at?: string | null;
     metric_id?: string | null; // If linked to KPI, it's automatic
+    is_shared?: boolean; // If part of a shared OKR
+    team_name?: string; // Team name for shared OKR context
   };
 }
 
@@ -95,6 +99,7 @@ const statusConfig: Record<Status, {
 };
 
 export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
+  const { user } = useAuth();
   const [currentValue, setCurrentValue] = useState(kr.current_value.toString());
   const [status, setStatus] = useState<Status>(kr.status === 'not_started' ? 'green' : kr.status as Status);
   const [reflection, setReflection] = useState('');
@@ -104,6 +109,22 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const queryClient = useQueryClient();
 
   const isAutomatic = !!kr.metric_id;
+
+  // Fetch user's team for check-in context
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile-for-checkin', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, team_id, display_name, team:teams(id, name)')
+        .eq('user_id', user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && open,
+  });
 
   // Só reseta o form quando o dialog abre, não quando os dados mudam
   useDialogFormReset(open, useCallback(() => {
@@ -115,8 +136,8 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   const createCheckin = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Usuário não autenticado');
 
       // Map status to confidence for database compatibility
       const confidenceMap: Record<Status, 'high' | 'medium' | 'low'> = {
@@ -130,6 +151,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
         ? `${reflection.trim()}\n\n📌 Próximo passo: ${nextStep.trim()}`
         : reflection.trim();
 
+      // Include team_id for shared OKR context
       const { error } = await supabase
         .from('okr_checkins')
         .insert({
@@ -139,7 +161,8 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
           confidence: confidenceMap[status],
           blockers: null, // Not using blockers separately anymore
           comments,
-          user_id: user.id,
+          user_id: authUser.id,
+          team_id: userProfile?.team_id || null, // NEW: capture user's team for context
         });
 
       if (error) throw error;
@@ -262,6 +285,24 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
                   <p className="text-sm font-medium">{kr.title}</p>
                 </div>
               </div>
+
+              {/* Shared OKR context */}
+              {kr.is_shared && (
+                <div className="flex items-center gap-2 p-2 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 rounded-md">
+                  <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-xs text-purple-700 dark:text-purple-300">
+                    OKR Compartilhada {kr.team_name && `• ${kr.team_name}`}
+                  </span>
+                </div>
+              )}
+
+              {/* User's team context for check-in */}
+              {userProfile?.team && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Users className="w-3 h-3" />
+                  <span>Check-in será registrado como: <span className="font-medium">{(userProfile.team as any).name}</span></span>
+                </div>
+              )}
 
               {/* Meta info row */}
               <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-1">
