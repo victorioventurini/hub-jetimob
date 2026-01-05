@@ -1,9 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Get integration API key from hub_integrations_global_config
+async function getIntegrationApiKey(integrationKey: string): Promise<string | null> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const { data, error } = await supabase
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", integrationKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error fetching ${integrationKey} config:`, error);
+    return null;
+  }
+
+  if (!data || !data.is_enabled_global) {
+    console.warn(`${integrationKey} integration is not enabled`);
+    return null;
+  }
+
+  const config = data.config_encrypted as { api_key?: string } | null;
+  return config?.api_key || null;
+}
 
 // Mapeamento de nomes de estados para siglas
 const stateNameToAbbr: Record<string, string> = {
@@ -142,9 +170,10 @@ serve(async (req) => {
       });
     }
 
-    // 3. Chamar Google API apenas se necessário
-    const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    // 3. Get Google Maps API key from database
+    const apiKey = await getIntegrationApiKey('google-maps');
     if (!apiKey) {
+      console.log('Google Maps API key not configured, returning local results only');
       // Fallback: retornar resultados locais mesmo que poucos
       return new Response(JSON.stringify({ predictions: localResults }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
