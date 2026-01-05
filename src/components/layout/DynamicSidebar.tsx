@@ -231,7 +231,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                 </div>
               )}
 
-              {/* Menu da BU (ordem fixa) */}
+              {/* Menu da BU (ordem fixa, filtrado por módulos habilitados) */}
               {currentBu && (
                 <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
                   {!collapsed && (
@@ -239,9 +239,11 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                       {currentBu.name}
                     </p>
                   )}
-                  {buMenuItems.map((item) => (
-                    <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
-                  ))}
+                  {buMenuItems
+                    .filter((item) => enabledOperationalModules.some((m) => m.slug === item.slug))
+                    .map((item) => (
+                      <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                    ))}
                 </div>
               )}
 
