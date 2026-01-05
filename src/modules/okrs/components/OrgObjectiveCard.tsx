@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { useOrgKeyResults } from '../hooks/useOkrData';
+import { useBu } from '@/contexts/BuContext';
 import { CreateOrgKrDialog } from './CreateOrgKrDialog';
 import { EditOrgObjectiveDialog } from './EditOrgObjectiveDialog';
 import { EditOrgKrDialog } from './EditOrgKrDialog';
@@ -26,10 +27,12 @@ interface OrgObjectiveCardProps {
     year: number;
     status: OkrStatus;
     owner_user_id?: string | null;
+    bu_id?: string | null;
   };
 }
 
 export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
+  const { currentBu } = useBu();
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -44,7 +47,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
     unit: string;
     status: OkrRagStatus;
   } | null>(null);
-  const { data: keyResults, isLoading } = useOrgKeyResults(objective.id);
+  const { data: keyResults, isLoading } = useOrgKeyResults(objective.bu_id || currentBu?.id, objective.id);
 
   const activeKrs = keyResults?.filter(kr => !kr.deleted_at) || [];
   

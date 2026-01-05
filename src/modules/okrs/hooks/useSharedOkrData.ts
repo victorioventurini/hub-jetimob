@@ -133,16 +133,19 @@ export function useManageContributors() {
 /**
  * Hook to fetch team objectives including shared info
  */
-export function useTeamObjectivesWithSharedInfo(teamId?: string) {
+export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: string) {
   return useQuery({
-    queryKey: ['okr-team-objectives-with-shared', teamId],
+    queryKey: ['okr-team-objectives-with-shared', buId, teamId],
     queryFn: async () => {
+      if (!buId) return [];
+      
       let query = supabase
         .from('okr_team_objectives')
         .select(`
           *,
           team:teams!okr_team_objectives_team_id_fkey(id, name)
         `)
+        .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
@@ -187,5 +190,6 @@ export function useTeamObjectivesWithSharedInfo(teamId?: string) {
         contributors: contributorsMap.get(obj.id) || [],
       }));
     },
+    enabled: !!buId,
   });
 }

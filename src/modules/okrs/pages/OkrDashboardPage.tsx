@@ -75,12 +75,13 @@ export default function OkrDashboardPage() {
   const { data: latestCheckinDate } = useLatestCheckinDate();
   const { data: pendingCheckins } = usePendingCheckins();
   
-  const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectivesWithKrs(filters.year);
+  const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectivesWithKrs(currentBu?.id, filters.year);
   const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectivesWithKrs(
+    currentBu?.id,
     activeView === 'team' ? filters.teamId : undefined
   );
-  const { data: allOrgKrs } = useAllOrgKeyResults();
-  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(filters.teamId);
+  const { data: allOrgKrs } = useAllOrgKeyResults(currentBu?.id);
+  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBu?.id, filters.teamId);
   
   // Shared OKRs insights
   const sharedInsights = useSharedOkrsInsights();
