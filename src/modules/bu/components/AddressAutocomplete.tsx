@@ -42,6 +42,7 @@ export function AddressAutocomplete({
   const [predictions, setPredictions] = useState<AddressPrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -52,26 +53,35 @@ export function AddressAutocomplete({
   }, [value]);
 
   const searchAddresses = useCallback(async (query: string) => {
-    if (query.length < 3) {
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length < 3) {
       setPredictions([]);
+      setErrorMessage(null);
       setIsOpen(false);
       return;
     }
 
+    setIsOpen(true);
     setIsLoading(true);
+    setErrorMessage(null);
+
     try {
       const { data, error } = await supabase.functions.invoke("search-address", {
-        body: { query },
+        body: { query: trimmedQuery },
       });
 
       if (error) throw error;
 
       setPredictions(data?.predictions || []);
-      setIsOpen(true);
       setSelectedIndex(-1);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error searching addresses:", error);
       setPredictions([]);
+      setSelectedIndex(-1);
+      setErrorMessage(
+        "Não foi possível buscar endereços. Verifique a configuração do Google Maps ou tente novamente."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -214,16 +224,20 @@ export function AddressAutocomplete({
               <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div className="flex flex-col">
                 <span className="font-medium">{prediction.mainText}</span>
-                <span className="text-xs text-muted-foreground">
-                  {prediction.secondaryText}
-                </span>
+                <span className="text-xs text-muted-foreground">{prediction.secondaryText}</span>
               </div>
             </li>
           ))}
         </ul>
       )}
 
-      {isOpen && predictions.length === 0 && inputValue.length >= 3 && !isLoading && (
+      {isOpen && !!errorMessage && !isLoading && (
+        <div className="absolute z-[9999] mt-1 w-full rounded-md border bg-popover shadow-lg p-3 text-sm text-muted-foreground">
+          {errorMessage}
+        </div>
+      )}
+
+      {isOpen && !errorMessage && predictions.length === 0 && inputValue.trim().length >= 3 && !isLoading && (
         <div className="absolute z-[9999] mt-1 w-full rounded-md border bg-popover shadow-lg p-3 text-sm text-muted-foreground">
           Nenhum endereço encontrado
         </div>
