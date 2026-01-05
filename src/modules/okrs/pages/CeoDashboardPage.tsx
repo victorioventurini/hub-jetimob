@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useBu } from '@/contexts/BuContext';
 import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams, useOrgKeyResults } from '../hooks/useOkrData';
 import { calculateProgress, getRagStatusColor } from '../types';
 import { RiskKrsList } from '../components/RiskKrsList';
@@ -17,10 +18,11 @@ export default function CeoDashboardPage() {
   usePageTitle("Dashboard CEO - OKRs");
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const { currentBu } = useBu();
 
-  const { data: orgObjectives, isLoading: loadingOrg } = useOrgObjectives(selectedYear);
-  const { data: teamObjectives, isLoading: loadingTeam } = useTeamObjectives();
-  const { data: teamKeyResults, isLoading: loadingKrs } = useTeamKeyResults();
+  const { data: orgObjectives, isLoading: loadingOrg } = useOrgObjectives(currentBu?.id, selectedYear);
+  const { data: teamObjectives, isLoading: loadingTeam } = useTeamObjectives(currentBu?.id);
+  const { data: teamKeyResults, isLoading: loadingKrs } = useTeamKeyResults(currentBu?.id);
   const { data: teams } = useTeams();
 
   const years = [currentYear - 1, currentYear, currentYear + 1];

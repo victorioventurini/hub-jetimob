@@ -9,6 +9,7 @@ import { OkrProgressBar } from './OkrProgressBar';
 import { SharedOkrBadge } from './SharedOkrBadge';
 import { useTeamKeyResults } from '../hooks/useOkrData';
 import { useObjectiveContributors } from '../hooks/useSharedOkrData';
+import { useBu } from '@/contexts/BuContext';
 import { CreateTeamKrDialog } from './CreateTeamKrDialog';
 import { CheckinDialog } from './CheckinDialog';
 import { EditTeamObjectiveDialog } from './EditTeamObjectiveDialog';
@@ -33,12 +34,14 @@ interface TeamObjectiveCardProps {
     status: OkrStatus;
     is_shared?: boolean;
     responsibility_model?: string | null;
+    bu_id?: string | null;
   };
   teams: Array<{ id: string; name: string }>;
   currentTeamId?: string; // To determine if viewing team is primary or contributor
 }
 
 export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjectiveCardProps) {
+  const { currentBu } = useBu();
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -66,7 +69,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
     unit: string;
     status: OkrRagStatus;
   } | null>(null);
-  const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.team_id);
+  const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.bu_id || currentBu?.id, objective.team_id);
   const { data: contributors } = useObjectiveContributors(objective.is_shared ? objective.id : undefined);
   const { openPanel } = useVic();
   const { isEnabled: vicEnabled } = useVicEnabled();

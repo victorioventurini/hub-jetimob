@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -96,8 +96,10 @@ export function LocationDialog({ open, onOpenChange, buId, location }: LocationD
     },
   });
 
-  // Reset form when location changes
-  useState(() => {
+  // Reset form when dialog opens or location changes
+  React.useEffect(() => {
+    if (!open) return;
+    
     if (location) {
       form.reset({
         name: location.name,
@@ -137,7 +139,7 @@ export function LocationDialog({ open, onOpenChange, buId, location }: LocationD
         notes: "",
       });
     }
-  });
+  }, [open, location, form]);
 
   const onSubmit = async (data: LocationFormData) => {
     try {
@@ -208,8 +210,12 @@ export function LocationDialog({ open, onOpenChange, buId, location }: LocationD
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
+      <DialogContent 
+        className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Sede" : "Nova Sede"}</DialogTitle>
           <DialogDescription>
