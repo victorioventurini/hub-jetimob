@@ -1,12 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MapPin, User, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MapPin, User, Package, MoreVertical, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AssetInventory } from "../../types";
 import { INVENTORY_STATUS_LABELS } from "../../types";
 
 interface InventoryCardProps {
   item: AssetInventory;
+  onClone?: (item: AssetInventory) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -16,9 +24,9 @@ const statusColors: Record<string, string> = {
   written_off: "bg-gray-500/10 text-gray-700 border-gray-200",
 };
 
-export function InventoryCard({ item }: InventoryCardProps) {
+export function InventoryCard({ item, onClone }: InventoryCardProps) {
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer group">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -30,9 +38,30 @@ export function InventoryCard({ item }: InventoryCardProps) {
               <p className="text-sm text-muted-foreground">{item.internal_code}</p>
             </div>
           </div>
-          <Badge variant="outline" className={cn("shrink-0", statusColors[item.status])}>
-            {INVENTORY_STATUS_LABELS[item.status]}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <Badge variant="outline" className={cn("shrink-0", statusColors[item.status])}>
+              {INVENTORY_STATUS_LABELS[item.status]}
+            </Badge>
+            {onClone && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem onClick={() => onClone(item)}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Clonar item
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
