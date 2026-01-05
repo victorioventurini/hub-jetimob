@@ -12,11 +12,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { OkrProgressBar } from './OkrProgressBar';
+import { MentionInput, getMentionDisplayText } from '@/components/notifications/MentionInput';
+import { useNotifications } from '@/hooks/useNotifications';
 import { 
   Target, 
   User, 
@@ -30,7 +31,8 @@ import {
   ArrowRight,
   Lock,
   Sparkles,
-  Users
+  Users,
+  AtSign
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -103,10 +105,12 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const [currentValue, setCurrentValue] = useState(kr.current_value.toString());
   const [status, setStatus] = useState<Status>(kr.status === 'not_started' ? 'green' : kr.status as Status);
   const [reflection, setReflection] = useState('');
+  const [reflectionMentions, setReflectionMentions] = useState<string[]>([]);
   const [nextStep, setNextStep] = useState('');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { processMentions } = useNotifications();
 
   const isAutomatic = !!kr.metric_id;
 
@@ -131,6 +135,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
     setCurrentValue(kr.current_value.toString());
     setStatus(kr.status === 'not_started' ? 'green' : kr.status as Status);
     setReflection('');
+    setReflectionMentions([]);
     setNextStep('');
   }, [kr.current_value, kr.status]));
 
@@ -146,13 +151,13 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
         red: 'low',
       };
 
-      // Combine reflection and next step for comments
+      // Combine reflection and next step for comments (store raw with mentions)
       const comments = nextStep.trim() 
         ? `${reflection.trim()}\n\n📌 Próximo passo: ${nextStep.trim()}`
         : reflection.trim();
 
       // Include team_id for shared OKR context
-      const { error } = await supabase
+      const { data: checkinData, error } = await supabase
         .from('okr_checkins')
         .insert({
           kr_id: kr.id,
@@ -163,9 +168,23 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
           comments,
           user_id: authUser.id,
           team_id: userProfile?.team_id || null, // NEW: capture user's team for context
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Process mentions and create notifications
+      if (reflectionMentions.length > 0 && checkinData) {
+        await processMentions(
+          reflection,
+          'checkin',
+          checkinData.id,
+          'kr',
+          kr.id,
+          `/okrs?kr=${kr.id}`
+        );
+      }
 
       // Update KR status
       const { error: updateError } = await supabase
@@ -215,8 +234,9 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       }
     }
 
-    // Validate reflection (required)
-    if (!reflection.trim()) {
+    // Validate reflection (required) - use display text for validation
+    const displayReflection = getMentionDisplayText(reflection).trim();
+    if (!displayReflection) {
       toast({
         title: 'Reflexão obrigatória',
         description: 'Por favor, descreva o que avançou ou merece atenção.',
@@ -225,7 +245,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       return;
     }
 
-    if (reflection.trim().length < 10) {
+    if (displayReflection.length < 10) {
       toast({
         title: 'Reflexão muito curta',
         description: 'Por favor, adicione mais contexto sobre o progresso.',
@@ -452,17 +472,23 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
             {/* BLOCO 4 — REFLEXÃO (OBRIGATÓRIO) */}
             <div className="space-y-2">
-              <Label htmlFor="reflection" className="text-sm font-semibold">
+              <Label htmlFor="reflection" className="text-sm font-semibold flex items-center gap-2">
                 O que avançou e o que merece atenção? *
+                <span className="text-xs font-normal text-muted-foreground flex items-center gap-1">
+                  <AtSign className="w-3 h-3" />
+                  Use @ para mencionar pessoas
+                </span>
               </Label>
-              <Textarea
+              <MentionInput
                 id="reflection"
-                placeholder="Avançamos em X, mas estamos travados em Y. O próximo passo é Z."
+                placeholder="Avançamos em X, mas estamos travados em Y. Use @nome para mencionar colegas."
                 value={reflection}
-                onChange={(e) => setReflection(e.target.value)}
+                onChange={(value, mentions) => {
+                  setReflection(value);
+                  setReflectionMentions(mentions);
+                }}
                 rows={3}
                 required
-                className="resize-none"
               />
               <p className="text-xs text-muted-foreground">
                 Foco em fatos, não justificativas longas. 1 a 3 frases.
@@ -494,7 +520,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
             </Button>
             <Button 
               type="submit" 
-              disabled={createCheckin.isPending || !reflection.trim()}
+              disabled={createCheckin.isPending || !getMentionDisplayText(reflection).trim()}
             >
               {createCheckin.isPending ? 'Salvando...' : 'Salvar check-in'}
             </Button>
