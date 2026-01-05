@@ -41,6 +41,7 @@ const colorMap: Record<string, string> = {
   projects: "from-rose-500 to-rose-600",
   users: "from-cyan-500 to-cyan-600",
   teams: "from-indigo-500 to-indigo-600",
+  assets: "from-orange-500 to-orange-600",
 };
 
 function getIconComponent(iconName: string): LucideIcon {

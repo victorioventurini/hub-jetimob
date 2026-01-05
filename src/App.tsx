@@ -41,6 +41,14 @@ const TeamContributionPage = lazy(() => import("./modules/okrs/pages/TeamContrib
 // Módulo KPIs
 const KpiDashboardPage = lazy(() => import("./modules/kpis/pages/KpiDashboardPage"));
 
+// Módulo Assets
+const AssetsPage = lazy(() => import("./modules/assets/pages/AssetsPage"));
+const InventoryPage = lazy(() => import("./modules/assets/pages/InventoryPage"));
+const KeysPage = lazy(() => import("./modules/assets/pages/KeysPage"));
+const GiftsPage = lazy(() => import("./modules/assets/pages/GiftsPage"));
+const AssetsReportsPage = lazy(() => import("./modules/assets/pages/AssetsReportsPage"));
+const AssetsSettingsPage = lazy(() => import("./modules/assets/pages/AssetsSettingsPage"));
+
 // Módulo BU
 const BuManagementPage = lazy(() => import("./modules/bu/pages/BuManagementPage"));
 
@@ -420,6 +428,80 @@ const App = () => (
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="kpis">
                               <KpiDashboardPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Assets */}
+                    <Route
+                      path="/assets"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <AssetsPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/assets/inventory"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <InventoryPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/assets/keys"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <KeysPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/assets/gifts"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <GiftsPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/assets/reports"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <AssetsReportsPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/assets/settings"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <AssetsSettingsPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>
