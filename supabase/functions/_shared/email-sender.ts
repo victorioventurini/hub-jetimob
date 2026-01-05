@@ -13,8 +13,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Fallback Resend API key from Lovable Cloud secrets
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// Note: Resend API key is now fetched from hub_integrations_global_config
 
 export interface EmailOptions {
   to: string;
@@ -32,23 +31,23 @@ export interface EmailResult {
   error?: string;
 }
 
-// Get SendGrid API key from hub_integrations_global_config
-async function getSendGridApiKey(): Promise<string | null> {
+// Get integration API key from hub_integrations_global_config
+async function getIntegrationApiKey(integrationKey: string): Promise<string | null> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   
   const { data, error } = await supabase
     .from("hub_integrations_global_config")
     .select("config_encrypted, is_enabled_global")
-    .eq("integration_key", "sendgrid")
+    .eq("integration_key", integrationKey)
     .maybeSingle();
 
   if (error) {
-    console.error("[EmailSender] Error fetching SendGrid config:", error);
+    console.error(`[EmailSender] Error fetching ${integrationKey} config:`, error);
     return null;
   }
 
   if (!data || !data.is_enabled_global) {
-    console.warn("[EmailSender] SendGrid integration is not enabled");
+    console.warn(`[EmailSender] ${integrationKey} integration is not enabled`);
     return null;
   }
 
@@ -133,7 +132,7 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
 export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   // Try SendGrid first
   try {
-    const sendgridApiKey = await getSendGridApiKey();
+    const sendgridApiKey = await getIntegrationApiKey("sendgrid");
     
     if (sendgridApiKey) {
       await sendViaSendGrid(options, sendgridApiKey);
@@ -146,27 +145,31 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     console.log("[EmailSender] Attempting fallback to Resend...");
   }
 
-  // Fallback to Resend
-  if (RESEND_API_KEY) {
-    try {
-      await sendViaResend(options, RESEND_API_KEY);
+  // Fallback to Resend (from hub_integrations_global_config)
+  try {
+    const resendApiKey = await getIntegrationApiKey("resend");
+    
+    if (resendApiKey) {
+      await sendViaResend(options, resendApiKey);
       return { success: true, provider: "resend" };
-    } catch (error: any) {
-      console.error("[EmailSender] Resend fallback also failed:", error.message);
-      return { 
-        success: false, 
-        provider: "resend",
-        error: `Both SendGrid and Resend failed. Last error: ${error.message}`
-      };
+    } else {
+      console.warn("[EmailSender] Resend fallback not configured");
     }
+  } catch (error: any) {
+    console.error("[EmailSender] Resend fallback also failed:", error.message);
+    return { 
+      success: false, 
+      provider: "resend",
+      error: `Both SendGrid and Resend failed. Last error: ${error.message}`
+    };
   }
 
   // No providers available
-  console.error("[EmailSender] No email providers available (SendGrid not configured, RESEND_API_KEY not set)");
+  console.error("[EmailSender] No email providers available (SendGrid and Resend not configured)");
   return {
     success: false,
     provider: "sendgrid",
-    error: "Nenhum provedor de email configurado. Configure SendGrid ou adicione RESEND_API_KEY como fallback."
+    error: "Nenhum provedor de email configurado. Configure SendGrid ou Resend nas integrações."
   };
 }
 
