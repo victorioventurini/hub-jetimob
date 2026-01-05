@@ -153,7 +153,7 @@ export function LocationsList({ buId, canManage = false }: LocationsListProps) {
               </CardDescription>
             </div>
             {canManage && (
-              <Button onClick={handleCreate} size="sm" className="gap-2">
+              <Button type="button" onClick={handleCreate} size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
                 Nova Sede
               </Button>
@@ -168,7 +168,12 @@ export function LocationsList({ buId, canManage = false }: LocationsListProps) {
                 Nenhuma sede cadastrada.
               </p>
               {canManage && (
-                <Button onClick={handleCreate} variant="outline" className="mt-4 gap-2">
+                <Button
+                  type="button"
+                  onClick={handleCreate}
+                  variant="outline"
+                  className="mt-4 gap-2"
+                >
                   <Plus className="h-4 w-4" />
                   Adicionar Sede
                 </Button>
@@ -221,7 +226,7 @@ export function LocationsList({ buId, canManage = false }: LocationsListProps) {
                   {canManage && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
