@@ -10,7 +10,7 @@ import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { InventoryCard } from "../components/inventory/InventoryCard";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
-import type { AssetInventoryStatus } from "../types";
+import type { AssetInventory, AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function InventoryPage() {
   const canAddItem = true;
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [cloneItem, setCloneItem] = useState<AssetInventory | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | AssetInventoryStatus>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -39,6 +40,18 @@ export default function InventoryPage() {
 
     return matchesSearch && matchesStatus && matchesCategory;
   });
+
+  const handleClone = (item: AssetInventory) => {
+    setCloneItem(item);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setCloneItem(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -110,14 +123,19 @@ export default function InventoryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredItems.map((item) => (
             <div key={item.id} onClick={() => navigate(`/assets/inventory/${item.id}`)}>
-              <InventoryCard item={item} />
+              <InventoryCard item={item} onClone={handleClone} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Create dialog */}
-      <InventoryFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      {/* Create/Clone dialog */}
+      <InventoryFormDialog 
+        open={dialogOpen} 
+        onOpenChange={handleDialogClose} 
+        item={cloneItem}
+        cloneMode={!!cloneItem}
+      />
     </div>
   );
 }

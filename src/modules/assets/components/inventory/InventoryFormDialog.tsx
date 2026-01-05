@@ -44,7 +44,6 @@ const schema = z.object({
   category_id: z.string().optional(),
   home_location_id: z.string().min(1, "Localização obrigatória"),
   description: z.string().max(1000, "Descrição muito longa").optional(),
-  quantity_total: z.coerce.number().min(1, "Mínimo 1").default(1),
   brand: z.string().max(100, "Marca muito longa").optional(),
   model: z.string().max(100, "Modelo muito longo").optional(),
   acquired_at: z.string().optional(),
@@ -59,13 +58,16 @@ interface InventoryFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item?: AssetInventory | null;
+  /** When true, clones the item instead of editing (leaves code blank) */
+  cloneMode?: boolean;
 }
 
-export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormDialogProps) {
-  const { categories, items, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
+export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false }: InventoryFormDialogProps) {
+  const { items, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
   const { locations, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
-  const isEditing = !!item;
+  const isEditing = !!item && !cloneMode;
+  const isCloning = !!item && cloneMode;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const form = useForm<FormData>({
@@ -76,7 +78,6 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
       category_id: undefined,
       home_location_id: "",
       description: "",
-      quantity_total: 1,
       brand: "",
       model: "",
       acquired_at: "",
@@ -92,14 +93,14 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
       return;
     }
 
-    if (item) {
+    if (item && !cloneMode) {
+      // Editing mode - load all data
       form.reset({
         internal_code: item.internal_code,
         name: item.name,
         category_id: item.category_id || undefined,
         home_location_id: item.home_location_id || "",
         description: item.description || "",
-        quantity_total: item.quantity_total,
         brand: item.brand || "",
         model: item.model || "",
         acquired_at: item.acquired_at || "",
@@ -107,14 +108,29 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
         acquisition_value: item.acquisition_value || undefined,
         notes: item.notes || "",
       });
+    } else if (item && cloneMode) {
+      // Clone mode - copy data but leave code blank
+      form.reset({
+        internal_code: "", // Empty for new code
+        name: item.name,
+        category_id: item.category_id || undefined,
+        home_location_id: item.home_location_id || "",
+        description: item.description || "",
+        brand: item.brand || "",
+        model: item.model || "",
+        acquired_at: item.acquired_at || "",
+        serial_number: "", // Empty for unique serial
+        acquisition_value: item.acquisition_value || undefined,
+        notes: item.notes || "",
+      });
     } else {
+      // New item
       form.reset({
         internal_code: "",
         name: "",
         category_id: undefined,
         home_location_id: defaultLocation?.id || "",
         description: "",
-        quantity_total: 1,
         brand: "",
         model: "",
         acquired_at: "",
@@ -124,7 +140,7 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
       });
     }
     setDuplicateError(null);
-  }, [open, item, form, defaultLocation]);
+  }, [open, item, cloneMode, form, defaultLocation]);
 
   // Check for duplicate code
   const checkDuplicateCode = (code: string): boolean => {
@@ -152,7 +168,6 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
       category_id: data.category_id || undefined,
       home_location_id: data.home_location_id || undefined,
       description: data.description?.trim() || undefined,
-      quantity_total: data.quantity_total,
       brand: data.brand?.trim() || undefined,
       model: data.model?.trim() || undefined,
       acquired_at: data.acquired_at || undefined,
@@ -164,6 +179,7 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
     if (isEditing && item) {
       updateItem({ id: item.id, ...payload });
     } else {
+      // Both new items and cloned items use createItem
       createItem(payload as any);
     }
     onOpenChange(false);
@@ -184,9 +200,15 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Item" : "Novo Item de Inventário"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Editar Item" : isCloning ? "Clonar Item" : "Novo Item de Inventário"}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? "Atualize as informações do item" : "Preencha os dados do novo item"}
+            {isEditing 
+              ? "Atualize as informações do item" 
+              : isCloning 
+                ? "Preencha o código interno do novo item (baseado no original)"
+                : "Preencha os dados do novo item"}
           </DialogDescription>
         </DialogHeader>
 
@@ -252,47 +274,31 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
               )}
             />
 
-            {/* Row 3: Location, Quantity */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="home_location_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Localização Base *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a sede..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {locations.map((loc) => (
-                          <SelectItem key={loc.id} value={loc.id}>
-                            {loc.name} {loc.is_default && "(Padrão)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="quantity_total"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quantidade Total</FormLabel>
+            {/* Row 3: Location */}
+            <FormField
+              control={form.control}
+              name="home_location_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Localização Base *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <Input type="number" min={1} {...field} />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a sede..." />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name} {loc.is_default && "(Padrão)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Row 4: Description */}
             <FormField
