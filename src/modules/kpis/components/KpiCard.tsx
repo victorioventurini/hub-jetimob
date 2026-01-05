@@ -77,19 +77,19 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md hover:border-accent/30 group",
+        "cursor-pointer transition-all hover:shadow-md hover:border-accent/30 group h-full flex flex-col",
         onClick && "hover:-translate-y-0.5",
         kpi.last_update_failed && "border-red-300 dark:border-red-800"
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex items-start justify-between gap-2">
+      <CardHeader className="pb-3 pt-5 px-5">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-2">
               <Badge
                 variant="secondary"
-                className={cn("text-[10px] px-1.5 py-0 text-white shrink-0", CATEGORY_COLORS[kpi.category])}
+                className={cn("text-xs px-2 py-0.5 text-white shrink-0", CATEGORY_COLORS[kpi.category])}
               >
                 {CATEGORY_LABELS[kpi.category]}
               </Badge>
@@ -104,23 +104,23 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
                 </TooltipContent>
               </Tooltip>
             </div>
-            <h3 className="text-sm font-semibold text-foreground leading-tight truncate">
+            <h3 className="text-base font-semibold text-foreground leading-tight line-clamp-2">
               {kpi.name}
             </h3>
             {kpi.description && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                 {kpi.description}
               </p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", ragConfig.bgColor, ragConfig.color)}>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <Badge variant="outline" className={cn("text-xs px-2 py-0.5 whitespace-nowrap", ragConfig.bgColor, ragConfig.color)}>
               {ragConfig.label}
             </Badge>
             {(isStale || kpi.last_update_failed) && (
               <Tooltip>
                 <TooltipTrigger>
-                  <AlertCircle className={cn("h-3.5 w-3.5", kpi.last_update_failed ? "text-red-500" : "text-amber-500")} />
+                  <AlertCircle className={cn("h-4 w-4", kpi.last_update_failed ? "text-red-500" : "text-amber-500")} />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{kpi.last_update_failed ? 'Falha na última atualização' : 'KPI sem dados recentes'}</p>
@@ -131,24 +131,24 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="px-4 pb-4 space-y-3">
+      <CardContent className="px-5 pb-5 space-y-4 flex-1 flex flex-col">
         {/* Value and Trend */}
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-foreground">
+        <div className="flex items-end justify-between gap-3">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-3xl font-bold text-foreground">
               {formatValue(kpi.current_value)}
             </span>
             {kpi.variation !== null && (
-              <div className={cn("flex items-center gap-0.5 text-xs", trendColor)}>
-                <TrendIcon className="h-3.5 w-3.5" />
+              <div className={cn("flex items-center gap-1 text-sm", trendColor)}>
+                <TrendIcon className="h-4 w-4" />
                 <span>{Math.abs(kpi.variation).toFixed(1)}%</span>
               </div>
             )}
           </div>
           {kpi.target_value !== null && (
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <span className="text-xs text-muted-foreground">Meta</span>
-              <p className="text-sm font-medium text-foreground">{formatValue(kpi.target_value)}</p>
+              <p className="text-base font-medium text-foreground">{formatValue(kpi.target_value)}</p>
             </div>
           )}
         </div>
@@ -156,7 +156,7 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
         {/* Progress bar for target */}
         {kpi.target_value !== null && kpi.current_value !== null && (
           <div className="space-y-1">
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div 
                 className={cn(
                   "h-full rounded-full transition-all",
@@ -173,12 +173,15 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
           </div>
         )}
 
+        {/* Spacer to push footer to bottom */}
+        <div className="flex-1" />
+
         {/* Vic suggestion for off-track KPIs */}
         {vicEnabled && needsAttention && (
           <Button
             variant="ghost"
             size="sm"
-            className="w-full gap-1.5 text-xs text-primary h-7 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="w-full gap-2 text-sm text-primary h-8 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.stopPropagation();
               openPanel({
@@ -202,20 +205,20 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
               });
             }}
           >
-            <Sparkles className="h-3 w-3" />
+            <Sparkles className="h-4 w-4" />
             Analisar com Vic
           </Button>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-border">
+        <div className="flex items-center justify-between pt-3 border-t border-border">
           <div className="flex items-center gap-2">
             {kpi.owner && (
               <Tooltip>
                 <TooltipTrigger>
-                  <Avatar className="h-5 w-5">
+                  <Avatar className="h-6 w-6">
                     <AvatarImage src={kpi.owner.photo_url || undefined} />
-                    <AvatarFallback className="text-[10px] bg-accent text-accent-foreground">
+                    <AvatarFallback className="text-xs bg-accent text-accent-foreground">
                       {kpi.owner.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
@@ -225,13 +228,13 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
                 </TooltipContent>
               </Tooltip>
             )}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {FREQUENCY_LABELS[kpi.frequency]}
             </span>
           </div>
 
           {lastUpdate && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {format(lastUpdate, "dd MMM", { locale: ptBR })}
             </span>
           )}
