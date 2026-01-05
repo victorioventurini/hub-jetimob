@@ -3138,6 +3138,116 @@ export type Database = {
           },
         ]
       }
+      partner_companies: {
+        Row: {
+          allowed_domains: string[] | null
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          legal_name: string | null
+          name: string
+          notes: string | null
+          status: Database["public"]["Enums"]["partner_company_status"]
+          updated_at: string
+        }
+        Insert: {
+          allowed_domains?: string[] | null
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          legal_name?: string | null
+          name: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["partner_company_status"]
+          updated_at?: string
+        }
+        Update: {
+          allowed_domains?: string[] | null
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          legal_name?: string | null
+          name?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["partner_company_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_companies_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_contacts: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          email: string
+          id: string
+          name: string
+          partner_company_id: string
+          phone: string | null
+          profile_user_id: string | null
+          status: Database["public"]["Enums"]["partner_contact_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          email: string
+          id?: string
+          name: string
+          partner_company_id: string
+          phone?: string | null
+          profile_user_id?: string | null
+          status?: Database["public"]["Enums"]["partner_contact_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          partner_company_id?: string
+          phone?: string | null
+          profile_user_id?: string | null
+          status?: Database["public"]["Enums"]["partner_contact_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_contacts_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contacts_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           birth_day: number | null
@@ -3432,6 +3542,505 @@ export type Database = {
             columns: ["parent_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_attachments: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          message_id: string | null
+          mime_type: string | null
+          ticket_id: string
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          message_id?: string | null
+          mime_type?: string | null
+          ticket_id: string
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          message_id?: string | null
+          mime_type?: string | null
+          ticket_id?: string
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_attachments_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_categories: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          scope: Database["public"]["Enums"]["ticket_category_scope"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          scope?: Database["public"]["Enums"]["ticket_category_scope"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          scope?: Database["public"]["Enums"]["ticket_category_scope"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_categories_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_mentions: {
+        Row: {
+          bu_id: string
+          created_at: string
+          id: string
+          mentioned_contact_id: string | null
+          mentioned_user_id: string | null
+          message_id: string
+          ticket_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          id?: string
+          mentioned_contact_id?: string | null
+          mentioned_user_id?: string | null
+          message_id: string
+          ticket_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          id?: string
+          mentioned_contact_id?: string | null
+          mentioned_user_id?: string | null
+          message_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_mentions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_mentions_mentioned_contact_id_fkey"
+            columns: ["mentioned_contact_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_mentions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          author_contact_id: string | null
+          author_type: Database["public"]["Enums"]["ticket_author_type"]
+          author_user_id: string | null
+          body_richtext: Json
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          author_contact_id?: string | null
+          author_type: Database["public"]["Enums"]["ticket_author_type"]
+          author_user_id?: string | null
+          body_richtext?: Json
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          author_contact_id?: string | null
+          author_type?: Database["public"]["Enums"]["ticket_author_type"]
+          author_user_id?: string | null
+          body_richtext?: Json
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_author_contact_id_fkey"
+            columns: ["author_contact_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_participants: {
+        Row: {
+          bu_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          participant_type: Database["public"]["Enums"]["ticket_participant_type"]
+          partner_contact_id: string | null
+          role: Database["public"]["Enums"]["ticket_participant_role"]
+          ticket_id: string
+          user_id: string | null
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          participant_type: Database["public"]["Enums"]["ticket_participant_type"]
+          partner_contact_id?: string | null
+          role: Database["public"]["Enums"]["ticket_participant_role"]
+          ticket_id: string
+          user_id?: string | null
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          participant_type?: Database["public"]["Enums"]["ticket_participant_type"]
+          partner_contact_id?: string | null
+          role?: Database["public"]["Enums"]["ticket_participant_role"]
+          ticket_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_participants_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_partner_contact_id_fkey"
+            columns: ["partner_contact_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_routing_rules: {
+        Row: {
+          assignee_contact_ids: string[] | null
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          partner_company_id: string | null
+          subcategory_id: string | null
+          updated_at: string
+          watcher_contact_ids: string[] | null
+        }
+        Insert: {
+          assignee_contact_ids?: string[] | null
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          partner_company_id?: string | null
+          subcategory_id?: string | null
+          updated_at?: string
+          watcher_contact_ids?: string[] | null
+        }
+        Update: {
+          assignee_contact_ids?: string[] | null
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          partner_company_id?: string | null
+          subcategory_id?: string | null
+          updated_at?: string
+          watcher_contact_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_routing_rules_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_routing_rules_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_routing_rules_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_subcategories: {
+        Row: {
+          bu_id: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_subcategories_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          bu_id: string
+          category_id: string | null
+          created_at: string
+          created_by_user_id: string
+          deleted_at: string | null
+          expected_due_at: string | null
+          external_assignee_contact_ids: string[] | null
+          id: string
+          owner_user_id: string | null
+          partner_company_id: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          subcategory_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["ticket_type"]
+          updated_at: string
+          visibility: Database["public"]["Enums"]["ticket_visibility"]
+          visibility_squad_ids: string[] | null
+          visibility_team_ids: string[] | null
+          visibility_user_ids: string[] | null
+        }
+        Insert: {
+          bu_id: string
+          category_id?: string | null
+          created_at?: string
+          created_by_user_id: string
+          deleted_at?: string | null
+          expected_due_at?: string | null
+          external_assignee_contact_ids?: string[] | null
+          id?: string
+          owner_user_id?: string | null
+          partner_company_id?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subcategory_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["ticket_type"]
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["ticket_visibility"]
+          visibility_squad_ids?: string[] | null
+          visibility_team_ids?: string[] | null
+          visibility_user_ids?: string[] | null
+        }
+        Update: {
+          bu_id?: string
+          category_id?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          deleted_at?: string | null
+          expected_due_at?: string | null
+          external_assignee_contact_ids?: string[] | null
+          id?: string
+          owner_user_id?: string | null
+          partner_company_id?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subcategory_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["ticket_type"]
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["ticket_visibility"]
+          visibility_squad_ids?: string[] | null
+          visibility_team_ids?: string[] | null
+          visibility_user_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
             referencedColumns: ["id"]
           },
         ]
@@ -3744,6 +4353,10 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_view_ticket: {
+        Args: { p_ticket_id: string; p_user_id: string }
+        Returns: boolean
+      }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
@@ -3785,6 +4398,10 @@ export type Database = {
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
+      get_user_partner_contact_id: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       has_asset_permission: {
         Args: {
           p_bu_id: string
@@ -3804,6 +4421,7 @@ export type Database = {
         Args: { p_agent_id: string; p_bu_id: string }
         Returns: boolean
       }
+      is_allowed_partner_email: { Args: { p_email: string }; Returns: boolean }
       is_bu_admin: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
@@ -3816,6 +4434,14 @@ export type Database = {
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_ticket_contact_participant: {
+        Args: { p_contact_id: string; p_ticket_id: string }
+        Returns: boolean
+      }
+      is_ticket_participant: {
+        Args: { p_ticket_id: string; p_user_id: string }
+        Returns: boolean
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -3914,9 +4540,18 @@ export type Database = {
       okr_rag_status: "green" | "yellow" | "red" | "not_started"
       okr_report_frequency: "weekly" | "monthly" | "quarterly" | "event"
       okr_status: "draft" | "active" | "completed" | "cancelled"
+      partner_company_status: "active" | "inactive"
+      partner_contact_status: "active" | "inactive"
       squad_product: "crm" | "cms" | "erp"
       squad_role: "product_owner" | "tech_lead" | "ux_ui_lead" | "member"
       team_status: "active" | "inactive"
+      ticket_author_type: "internal_user" | "partner_contact"
+      ticket_category_scope: "internal" | "external" | "both"
+      ticket_participant_role: "requester" | "assignee" | "watcher"
+      ticket_participant_type: "internal_user" | "partner_contact"
+      ticket_status: "waiting" | "paused" | "in_progress" | "done" | "discarded"
+      ticket_type: "internal" | "external"
+      ticket_visibility: "bu_all" | "teams" | "users" | "private"
       work_mode: "onsite" | "hybrid" | "remote"
     }
     CompositeTypes: {
@@ -4128,9 +4763,18 @@ export const Constants = {
       okr_rag_status: ["green", "yellow", "red", "not_started"],
       okr_report_frequency: ["weekly", "monthly", "quarterly", "event"],
       okr_status: ["draft", "active", "completed", "cancelled"],
+      partner_company_status: ["active", "inactive"],
+      partner_contact_status: ["active", "inactive"],
       squad_product: ["crm", "cms", "erp"],
       squad_role: ["product_owner", "tech_lead", "ux_ui_lead", "member"],
       team_status: ["active", "inactive"],
+      ticket_author_type: ["internal_user", "partner_contact"],
+      ticket_category_scope: ["internal", "external", "both"],
+      ticket_participant_role: ["requester", "assignee", "watcher"],
+      ticket_participant_type: ["internal_user", "partner_contact"],
+      ticket_status: ["waiting", "paused", "in_progress", "done", "discarded"],
+      ticket_type: ["internal", "external"],
+      ticket_visibility: ["bu_all", "teams", "users", "private"],
       work_mode: ["onsite", "hybrid", "remote"],
     },
   },

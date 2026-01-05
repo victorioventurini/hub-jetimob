@@ -16,14 +16,45 @@ interface MagicLinkRequest {
 }
 
 // Check if email domain is allowed in any active BU
-async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null }> {
+async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   
+  const emailLower = email.toLowerCase();
   const domain = email.split("@")[1]?.toLowerCase();
   if (!domain) {
-    return { allowed: false, buName: null };
+    return { allowed: false, buName: null, isPartnerContact: false };
   }
 
+  // First, check if email is in partner_contacts allowlist (Modo B - external users)
+  const { data: partnerContact, error: partnerError } = await supabase
+    .from("partner_contacts")
+    .select(`
+      id,
+      bu_id,
+      partner_company:partner_companies!inner(id, name, status),
+      bu:bu_units!inner(id, name, status)
+    `)
+    .eq("email", emailLower)
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (partnerError) {
+    console.error("Error checking partner contact:", partnerError);
+  }
+
+  if (partnerContact) {
+    // Handle the join result - it returns the first matching record due to !inner
+    const company = partnerContact.partner_company as unknown as { id: string; name: string; status: string } | null;
+    const bu = partnerContact.bu as unknown as { id: string; name: string; status: string } | null;
+    
+    if (company?.status === 'active' && bu?.status === 'active') {
+      console.log(`Partner contact found: ${emailLower} from ${company.name}`);
+      return { allowed: true, buName: bu.name, isPartnerContact: true };
+    }
+  }
+
+  // Second, check if domain is allowed in any BU (internal users)
   const { data, error } = await supabase
     .from("bu_units")
     .select("id, name, allowed_email_domains")
@@ -31,18 +62,18 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
 
   if (error) {
     console.error("Error checking email domain:", error);
-    return { allowed: false, buName: null };
+    return { allowed: false, buName: null, isPartnerContact: false };
   }
 
   // Check if domain exists in any BU's allowed_email_domains
   for (const bu of (data as { id: string; name: string; allowed_email_domains: string[] }[]) || []) {
     const allowedDomains = bu.allowed_email_domains || [];
     if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
-      return { allowed: true, buName: bu.name };
+      return { allowed: true, buName: bu.name, isPartnerContact: false };
     }
   }
 
-  return { allowed: false, buName: null };
+  return { allowed: false, buName: null, isPartnerContact: false };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -86,14 +117,14 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    // Check if email domain is allowed
-    const { allowed, buName } = await getEmailBu(email);
+    // Check if email domain is allowed or is a partner contact
+    const { allowed, buName, isPartnerContact } = await getEmailBu(email);
     
     if (!allowed) {
       const domain = email.split('@')[1] || 'unknown';
-      console.warn("Unauthorized email domain attempted:", domain);
+      console.warn("Unauthorized email attempted:", email, "domain:", domain);
       return new Response(
-        JSON.stringify({ error: `O domínio @${domain} não está autorizado para acesso ao Hub.` }),
+        JSON.stringify({ error: `O email ${email} não está autorizado para acesso ao Hub.` }),
         {
           status: 403,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -101,7 +132,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Generating magic link for ${email} (BU: ${buName})`);
+    const userType = isPartnerContact ? "partner contact" : "internal user";
+    console.log(`Generating magic link for ${email} (BU: ${buName}, type: ${userType})`);
 
     // Generate magic link using admin API (this doesn't send email)
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
