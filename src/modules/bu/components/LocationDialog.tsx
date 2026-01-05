@@ -210,11 +210,13 @@ export function LocationDialog({ open, onOpenChange, buId, location }: LocationD
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal>
       <DialogContent 
         className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.stopPropagation()}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Sede" : "Nova Sede"}</DialogTitle>

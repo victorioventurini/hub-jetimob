@@ -447,7 +447,7 @@ const App = () => (
                       }
                     />
 
-                    {/* Assets */}
+                    {/* Assets - Nested Routes */}
                     <Route
                       path="/assets"
                       element={
@@ -459,67 +459,13 @@ const App = () => (
                           </BuRequiredRoute>
                         </ProtectedRoute>
                       }
-                    />
-                    <Route
-                      path="/assets/inventory"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="assets">
-                              <InventoryPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/assets/keys"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="assets">
-                              <KeysPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/assets/gifts"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="assets">
-                              <GiftsPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/assets/reports"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="assets">
-                              <AssetsReportsPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/assets/settings"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="assets">
-                              <AssetsSettingsPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
+                    >
+                      <Route path="inventory" element={<InventoryPage />} />
+                      <Route path="keys" element={<KeysPage />} />
+                      <Route path="gifts" element={<GiftsPage />} />
+                      <Route path="reports" element={<AssetsReportsPage />} />
+                      <Route path="settings" element={<AssetsSettingsPage />} />
+                    </Route>
 
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
