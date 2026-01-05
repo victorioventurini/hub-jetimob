@@ -1,0 +1,104 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { useBu } from '@/contexts/BuContext';
+
+interface CreateMentionNotificationParams {
+  mentionedUserId: string;
+  contextType: 'checkin' | 'comment';
+  contextId: string;
+  parentType: 'kr' | 'okr';
+  parentId: string;
+  contextUrl: string;
+}
+
+export function useNotifications() {
+  const { user } = useAuth();
+  const { currentBu } = useBu();
+  const queryClient = useQueryClient();
+
+  // Get current user's profile for author name
+  const getAuthorName = async (): Promise<string> => {
+    if (!user?.id) return 'Alguém';
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('user_id', user.id)
+      .single();
+    
+    return data?.display_name || 'Alguém';
+  };
+
+  // Create mention notification
+  const createMentionNotification = useMutation({
+    mutationFn: async (params: CreateMentionNotificationParams) => {
+      if (!user?.id || !currentBu?.id) {
+        throw new Error('User or BU not available');
+      }
+
+      const authorName = await getAuthorName();
+
+      const { data, error } = await supabase.rpc('create_mention_notification', {
+        p_mentioned_user_id: params.mentionedUserId,
+        p_author_id: user.id,
+        p_bu_id: currentBu.id,
+        p_context_type: params.contextType,
+        p_context_id: params.contextId,
+        p_parent_type: params.parentType,
+        p_parent_id: params.parentId,
+        p_context_url: params.contextUrl,
+        p_author_name: authorName,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  // Process mentions from text and create notifications
+  const processMentions = async (
+    text: string,
+    contextType: 'checkin' | 'comment',
+    contextId: string,
+    parentType: 'kr' | 'okr',
+    parentId: string,
+    contextUrl: string
+  ) => {
+    // Extract user IDs from mention format: @[Name](user_id)
+    const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+    const mentions: string[] = [];
+    let match;
+    
+    while ((match = mentionRegex.exec(text)) !== null) {
+      mentions.push(match[2]); // user_id
+    }
+
+    // Create notifications for each unique mention
+    const uniqueMentions = [...new Set(mentions)];
+    
+    for (const mentionedUserId of uniqueMentions) {
+      try {
+        await createMentionNotification.mutateAsync({
+          mentionedUserId,
+          contextType,
+          contextId,
+          parentType,
+          parentId,
+          contextUrl,
+        });
+      } catch (error) {
+        // Don't block the main flow if notification fails
+        console.error('Failed to create mention notification:', error);
+      }
+    }
+  };
+
+  return {
+    createMentionNotification,
+    processMentions,
+  };
+}

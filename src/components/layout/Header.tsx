@@ -1,4 +1,4 @@
-import { Bell, Search, Menu, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Search, Menu, LogOut, User, Settings, Building2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
+import { NotificationCenter } from "@/components/notifications";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -94,10 +95,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
           )}
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent" />
-          </Button>
+          <NotificationCenter />
 
           {/* User menu */}
           <DropdownMenu>

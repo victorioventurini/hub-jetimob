@@ -1167,6 +1167,60 @@ export type Database = {
           },
         ]
       }
+      mentions: {
+        Row: {
+          author_id: string
+          bu_id: string | null
+          context_id: string
+          context_type: string
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          notification_id: string | null
+          parent_id: string | null
+          parent_type: string | null
+        }
+        Insert: {
+          author_id: string
+          bu_id?: string | null
+          context_id: string
+          context_type: string
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          notification_id?: string | null
+          parent_id?: string | null
+          parent_type?: string | null
+        }
+        Update: {
+          author_id?: string
+          bu_id?: string | null
+          context_id?: string
+          context_type?: string
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          notification_id?: string | null
+          parent_id?: string | null
+          parent_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metrics: {
         Row: {
           created_at: string
@@ -1272,6 +1326,103 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_deliveries: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at: string
+          error_message: string | null
+          id: string
+          notification_id: string
+          retry_count: number
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_delivery_status"]
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_id: string
+          retry_count?: number
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_delivery_status"]
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_id?: string
+          retry_count?: number
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_delivery_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          bu_id: string | null
+          context_id: string | null
+          context_type: string | null
+          context_url: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          read_at: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          bu_id?: string | null
+          context_id?: string | null
+          context_type?: string | null
+          context_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          read_at?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          bu_id?: string | null
+          context_id?: string | null
+          context_type?: string | null
+          context_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          read_at?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
         ]
@@ -2218,6 +2369,48 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          checkin_email: boolean
+          checkin_internal: boolean
+          created_at: string
+          id: string
+          mention_email: boolean
+          mention_internal: boolean
+          mention_slack: boolean
+          status_change_email: boolean
+          status_change_internal: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checkin_email?: boolean
+          checkin_internal?: boolean
+          created_at?: string
+          id?: string
+          mention_email?: boolean
+          mention_internal?: boolean
+          mention_slack?: boolean
+          status_change_email?: boolean
+          status_change_internal?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checkin_email?: boolean
+          checkin_internal?: boolean
+          created_at?: string
+          id?: string
+          mention_email?: boolean
+          mention_internal?: boolean
+          mention_slack?: boolean
+          status_change_email?: boolean
+          status_change_internal?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           created_at: string
@@ -2477,6 +2670,20 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: number
       }
+      create_mention_notification: {
+        Args: {
+          p_author_id: string
+          p_author_name: string
+          p_bu_id: string
+          p_context_id: string
+          p_context_type: string
+          p_context_url: string
+          p_mentioned_user_id: string
+          p_parent_id: string
+          p_parent_type: string
+        }
+        Returns: string
+      }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
       get_enabled_modules_for_bu: {
         Args: { p_bu_id: string }
@@ -2532,6 +2739,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_all_notifications_read: { Args: never; Returns: number }
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: boolean
+      }
       user_has_bu_access: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
@@ -2559,6 +2771,14 @@ export type Database = {
       module_health: "healthy" | "degraded" | "down"
       module_status: "active" | "inactive" | "coming_soon"
       module_type: "global" | "operational"
+      notification_channel: "internal" | "email" | "slack" | "whatsapp"
+      notification_delivery_status: "pending" | "sent" | "failed" | "skipped"
+      notification_type:
+        | "mention"
+        | "checkin_created"
+        | "checkin_overdue"
+        | "kr_status_changed"
+        | "shared_okr_update"
       okr_channel: "email" | "slack" | "both"
       okr_confidence: "high" | "medium" | "low"
       okr_dependency_status: "ok" | "blocked" | "at_risk"
@@ -2720,6 +2940,15 @@ export const Constants = {
       module_health: ["healthy", "degraded", "down"],
       module_status: ["active", "inactive", "coming_soon"],
       module_type: ["global", "operational"],
+      notification_channel: ["internal", "email", "slack", "whatsapp"],
+      notification_delivery_status: ["pending", "sent", "failed", "skipped"],
+      notification_type: [
+        "mention",
+        "checkin_created",
+        "checkin_overdue",
+        "kr_status_changed",
+        "shared_okr_update",
+      ],
       okr_channel: ["email", "slack", "both"],
       okr_confidence: ["high", "medium", "low"],
       okr_dependency_status: ["ok", "blocked", "at_risk"],
