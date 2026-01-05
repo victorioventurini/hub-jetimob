@@ -336,6 +336,33 @@ export function useDeactivateTeam() {
   });
 }
 
+export function useDeleteTeam() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      // Soft delete - set deleted_at
+      const { error } = await supabase
+        .from("teams")
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString() 
+        })
+        .eq("id", teamId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      toast.success("Time excluído com sucesso");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir time");
+    },
+  });
+}
+
 async function checkCircularReference(
   teamId: string | null,
   parentTeamId: string | null

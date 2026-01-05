@@ -23,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -43,12 +44,15 @@ import {
   AlertTriangle,
   Pencil,
   X,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
 import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
+import { useDeleteProfile } from "@/hooks/useProfiles";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
 interface ProfileWithTeam {
   id: string;
@@ -97,6 +101,10 @@ export default function UsersPage() {
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState<ProfileWithTeam | null>(null);
+
+  const deleteProfile = useDeleteProfile();
 
   const { data: profiles, isLoading, error: profilesError } = useQuery({
     queryKey: ["profiles", statusFilter, currentBu?.id],
@@ -483,7 +491,19 @@ export default function UsersPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleEdit(profile)}>
+                              <Pencil className="h-4 w-4 mr-2" />
                               Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setDeletingProfile(profile);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -522,6 +542,21 @@ export default function UsersPage() {
         onOpenChange={setBulkEditOpen}
         selectedIds={Array.from(selectedIds)}
         onComplete={clearSelection}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={async () => {
+          if (deletingProfile) {
+            await deleteProfile.mutateAsync(deletingProfile.id);
+            setDeleteDialogOpen(false);
+            setDeletingProfile(null);
+          }
+        }}
+        title="Excluir Jetimober"
+        description={`Tem certeza que deseja excluir "${deletingProfile?.display_name}"? O registro será marcado como desligado.`}
+        isLoading={deleteProfile.isPending}
       />
     </HubLayout>
   );

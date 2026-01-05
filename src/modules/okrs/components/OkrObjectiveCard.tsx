@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Target, Users, Plus, MoreHorizontal, Pencil } from 'lucide-react';
+import { Target, Users, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
@@ -10,8 +11,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 
 interface KeyResult {
   id: string;
@@ -34,7 +37,9 @@ interface OkrObjectiveCardProps {
   teamName?: string;
   keyResults: KeyResult[];
   onEdit?: () => void;
+  onDelete?: () => void;
   onAddKr?: () => void;
+  isDeleting?: boolean;
 }
 
 const calculateProgress = (krs: KeyResult[]): number => {
@@ -52,6 +57,7 @@ const calculateProgress = (krs: KeyResult[]): number => {
 };
 
 export function OkrObjectiveCard({
+  id,
   title,
   description,
   status,
@@ -59,9 +65,12 @@ export function OkrObjectiveCard({
   teamName,
   keyResults,
   onEdit,
+  onDelete,
   onAddKr,
+  isDeleting = false,
 }: OkrObjectiveCardProps) {
   const avgProgress = calculateProgress(keyResults);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const greenCount = keyResults.filter(kr => kr.status === 'green').length;
   const yellowCount = keyResults.filter(kr => kr.status === 'yellow').length;
@@ -110,7 +119,7 @@ export function OkrObjectiveCard({
               </p>
             )}
           </div>
-          {onEdit && (
+          {(onEdit || onDelete) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -118,10 +127,24 @@ export function OkrObjectiveCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onEdit}>
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Editar
-                </DropdownMenuItem>
+                {onEdit && (
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -206,6 +229,20 @@ export function OkrObjectiveCard({
           </div>
         )}
       </CardContent>
+
+      {onDelete && (
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={() => {
+            onDelete();
+            setDeleteDialogOpen(false);
+          }}
+          title="Excluir Objetivo"
+          description={`Tem certeza que deseja excluir o objetivo "${title}"? Esta ação não pode ser desfeita.`}
+          isLoading={isDeleting}
+        />
+      )}
     </Card>
   );
 }

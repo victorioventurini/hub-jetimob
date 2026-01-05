@@ -19,13 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUpdateSquad } from "../hooks/useSquads";
+import { Trash2 } from "lucide-react";
+import { useUpdateSquad, useDeleteSquad } from "../hooks/useSquads";
 import { useTeams } from "../hooks/useTeams";
 import { 
   SquadWithRelations, 
   SquadProduct, 
   SQUAD_PRODUCT_LABELS 
 } from "../types/squad";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
 interface EditSquadDialogProps {
   squad: SquadWithRelations;
@@ -35,6 +37,7 @@ interface EditSquadDialogProps {
 
 export function EditSquadDialog({ squad, open, onOpenChange }: EditSquadDialogProps) {
   const updateSquad = useUpdateSquad();
+  const deleteSquad = useDeleteSquad();
   const { data: teams } = useTeams();
 
   const [name, setName] = useState(squad.name);
@@ -42,6 +45,7 @@ export function EditSquadDialog({ squad, open, onOpenChange }: EditSquadDialogPr
   const [products, setProducts] = useState<SquadProduct[]>(squad.products);
   const [teamIds, setTeamIds] = useState<string[]>(squad.teams?.map((t) => t.id) || []);
   const [status, setStatus] = useState<"active" | "inactive">(squad.status);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     setName(squad.name);
@@ -177,23 +181,47 @@ export function EditSquadDialog({ squad, open, onOpenChange }: EditSquadDialogPr
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex justify-between sm:justify-between">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+              variant="ghost"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setDeleteDialogOpen(true)}
             >
-              Cancelar
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
             </Button>
-            <Button 
-              type="submit" 
-              disabled={!name.trim() || updateSquad.isPending}
-            >
-              {updateSquad.isPending ? "Salvando..." : "Salvar"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!name.trim() || updateSquad.isPending}
+              >
+                {updateSquad.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={async () => {
+          await deleteSquad.mutateAsync(squad.id);
+          setDeleteDialogOpen(false);
+          onOpenChange(false);
+        }}
+        title="Excluir Squad"
+        description={`Tem certeza que deseja excluir o squad "${squad.name}"? Esta ação não pode ser desfeita.`}
+        isLoading={deleteSquad.isPending}
+      />
     </Dialog>
   );
 }

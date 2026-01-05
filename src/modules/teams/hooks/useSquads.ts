@@ -381,3 +381,30 @@ export function useDeactivateSquad() {
     },
   });
 }
+
+export function useDeleteSquad() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (squadId: string) => {
+      // Soft delete - set deleted_at
+      const { error } = await supabase
+        .from("squads")
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString() 
+        })
+        .eq("id", squadId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["squads"] });
+      queryClient.invalidateQueries({ queryKey: ["squad"] });
+      toast.success("Squad excluído com sucesso");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir squad");
+    },
+  });
+}
