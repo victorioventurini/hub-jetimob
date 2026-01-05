@@ -1,4 +1,5 @@
 // KR Validation utilities
+import type { OkrKrType } from '../types';
 
 export interface KrValidationResult {
   isValid: boolean;
@@ -109,12 +110,39 @@ export function validateKrValues(
   return result;
 }
 
+/**
+ * Validates if a KR type can contribute to an organizational KR
+ * Rules:
+ * - contribution: can contribute to org KRs
+ * - enabler: cannot directly contribute to org KRs
+ * - foundational: never contributes directly to org KRs
+ */
+export function canKrTypeContributeToOrg(krType: OkrKrType): boolean {
+  return krType === 'contribution';
+}
+
+/**
+ * Get explanation for KR type contribution rules
+ */
+export function getKrTypeContributionExplanation(krType: OkrKrType): string {
+  switch (krType) {
+    case 'contribution':
+      return 'KRs de contribuição podem ser vinculados a KRs organizacionais.';
+    case 'enabler':
+      return 'KRs habilitadores não contribuem diretamente para KRs organizacionais, mas apoiam outros KRs do time.';
+    case 'foundational':
+      return 'KRs fundacionais são métricas de saúde que não contribuem para KRs organizacionais.';
+  }
+}
+
 export function validateTeamKr(
   title: string,
   baseline: number,
   target: number,
   direction: 'up' | 'down',
-  hasOrgObjective: boolean
+  hasOrgObjective: boolean,
+  krType?: OkrKrType,
+  linkedOrgKrId?: string | null
 ): KrValidationResult {
   const titleValidation = validateKrTitle(title);
   const valueValidation = validateKrValues(baseline, target, direction);
@@ -131,6 +159,16 @@ export function validateTeamKr(
     result.errors.push(
       'KRs de time devem estar vinculados a um objetivo organizacional.'
     );
+  }
+
+  // Validate KR type and org KR linkage
+  if (krType && linkedOrgKrId) {
+    if (!canKrTypeContributeToOrg(krType)) {
+      result.isValid = false;
+      result.errors.push(
+        `KRs do tipo "${krType}" não podem contribuir diretamente para KRs organizacionais.`
+      );
+    }
   }
 
   return result;
@@ -150,6 +188,43 @@ export function validateOrgKr(
     errors: [...titleValidation.errors, ...valueValidation.errors],
     warnings: [...titleValidation.warnings, ...valueValidation.warnings],
   };
+}
+
+/**
+ * Validate KR metric configuration
+ * Rules:
+ * - KR must have exactly 1 primary KPI
+ * - KR can have 0..N guardrail KPIs
+ */
+export function validateKrMetrics(
+  primaryKpiId: string | null,
+  guardrailKpiIds: string[]
+): KrValidationResult {
+  const result: KrValidationResult = {
+    isValid: true,
+    errors: [],
+    warnings: [],
+  };
+
+  if (!primaryKpiId) {
+    result.warnings.push(
+      'Recomendado: Vincule um KPI primário para cálculo automático de progresso.'
+    );
+  }
+
+  // Check for duplicates
+  if (primaryKpiId && guardrailKpiIds.includes(primaryKpiId)) {
+    result.isValid = false;
+    result.errors.push('O KPI primário não pode ser também um guardrail.');
+  }
+
+  const uniqueGuardrails = new Set(guardrailKpiIds);
+  if (uniqueGuardrails.size !== guardrailKpiIds.length) {
+    result.isValid = false;
+    result.errors.push('Não é possível adicionar o mesmo KPI guardrail mais de uma vez.');
+  }
+
+  return result;
 }
 
 // Placeholders for different KR types

@@ -6,8 +6,11 @@ export * from './hooks/usePendingCheckins';
 export * from './hooks/useSharedOkrData';
 export * from './hooks/useTeamContributedOkrs';
 export * from './hooks/useInitiatives';
+export * from './hooks/useOkrContributions';
+export * from './hooks/useOkrKrMetrics';
 export * from './types';
 export * from './types/initiative';
+export * from './utils/krValidation';
 
 // Components
 export { CheckinDialog } from './components/CheckinDialog';
