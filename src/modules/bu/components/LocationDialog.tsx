@@ -179,7 +179,8 @@ export function LocationDialog({ open, onOpenChange, buId, location }: LocationD
       onOpenChange(false);
       form.reset();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar sede");
+      console.error("Erro ao salvar sede:", error);
+      toast.error(error?.message || "Erro ao salvar sede");
     }
   };
 
