@@ -28,9 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserPlus } from "lucide-react";
 import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetProfiles } from "../../hooks/useProfiles";
+import { useAuth } from "@/hooks/useAuth";
 import { AssetCategorySelect } from "../selects/AssetCategorySelect";
 import type { AssetInventory } from "../../types";
 
@@ -50,6 +54,9 @@ const schema = z.object({
   serial_number: z.string().max(100, "Número de série muito longo").optional(),
   acquisition_value: z.coerce.number().optional(),
   notes: z.string().max(2000, "Observações muito longas").optional(),
+  // Assignment fields
+  assigned_to_user_id: z.string().optional(),
+  due_at: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -66,6 +73,8 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   const { items, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
   const { locations, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
+  const { profiles } = useAssetProfiles();
+  const { user } = useAuth();
   const isEditing = !!item && !cloneMode;
   const isCloning = !!item && cloneMode;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
@@ -84,8 +93,12 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       serial_number: "",
       acquisition_value: undefined,
       notes: "",
+      assigned_to_user_id: undefined,
+      due_at: "",
     },
   });
+
+  const watchAssignedTo = form.watch("assigned_to_user_id");
 
   useEffect(() => {
     if (!open) {
@@ -94,7 +107,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
     }
 
     if (item && !cloneMode) {
-      // Editing mode - load all data
+      // Editing mode - load all data (no assignment in edit mode)
       form.reset({
         internal_code: item.internal_code,
         name: item.name,
@@ -107,11 +120,13 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         serial_number: item.serial_number || "",
         acquisition_value: item.acquisition_value || undefined,
         notes: item.notes || "",
+        assigned_to_user_id: undefined,
+        due_at: "",
       });
     } else if (item && cloneMode) {
       // Clone mode - copy data but leave code blank
       form.reset({
-        internal_code: "", // Empty for new code
+        internal_code: "",
         name: item.name,
         category_id: item.category_id || undefined,
         home_location_id: item.home_location_id || "",
@@ -119,9 +134,11 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         brand: item.brand || "",
         model: item.model || "",
         acquired_at: item.acquired_at || "",
-        serial_number: "", // Empty for unique serial
+        serial_number: "",
         acquisition_value: item.acquisition_value || undefined,
         notes: item.notes || "",
+        assigned_to_user_id: undefined,
+        due_at: "",
       });
     } else {
       // New item
@@ -137,6 +154,8 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         serial_number: "",
         acquisition_value: undefined,
         notes: "",
+        assigned_to_user_id: undefined,
+        due_at: "",
       });
     }
     setDuplicateError(null);
@@ -174,12 +193,15 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       serial_number: isInventoryAdmin ? data.serial_number?.trim() || undefined : undefined,
       acquisition_value: isInventoryAdmin ? data.acquisition_value || undefined : undefined,
       notes: data.notes?.trim() || undefined,
+      // Assignment data (only for new items)
+      assigned_to_user_id: !isEditing ? data.assigned_to_user_id || undefined : undefined,
+      authorized_by_user_id: !isEditing && data.assigned_to_user_id ? user?.id : undefined,
+      due_at: !isEditing && data.assigned_to_user_id ? data.due_at || undefined : undefined,
     };
 
     if (isEditing && item) {
       updateItem({ id: item.id, ...payload });
     } else {
-      // Both new items and cloned items use createItem
       createItem(payload as any);
     }
     onOpenChange(false);
@@ -407,6 +429,70 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                 </FormItem>
               )}
             />
+
+            {/* Assignment section - only for new items */}
+            {!isEditing && (
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <UserPlus className="h-4 w-4" />
+                  <span>Atribuição Inicial (opcional)</span>
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="assigned_to_user_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Atribuir a</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um colaborador..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Nenhum (disponível)</SelectItem>
+                          {profiles.map((profile) => (
+                            <SelectItem key={profile.user_id} value={profile.user_id}>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={profile.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {profile.full_name.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{profile.full_name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Se selecionado, o item será criado como emprestado
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {watchAssignedTo && (
+                  <FormField
+                    control={form.control}
+                    name="due_at"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prazo de Devolução</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormDescription>Opcional</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

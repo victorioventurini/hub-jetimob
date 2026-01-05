@@ -168,23 +168,68 @@ export function useInventory() {
       brand?: string;
       model?: string;
       notes?: string;
+      // Assignment fields
+      assigned_to_user_id?: string;
+      authorized_by_user_id?: string;
+      due_at?: string;
     }) => {
+      const { assigned_to_user_id, authorized_by_user_id, due_at, ...itemData } = data;
+      
+      // Create the item
+      const insertData: any = {
+        bu_id: buId!,
+        created_by: user?.id,
+        ...itemData,
+      };
+
+      // If assigning to user, set initial status as loaned
+      if (assigned_to_user_id) {
+        insertData.status = 'loaned';
+        insertData.current_holder_type = 'user';
+        insertData.current_user_id = assigned_to_user_id;
+        insertData.current_location_id = null;
+        insertData.assigned_at = new Date().toISOString();
+      } else {
+        // Default: available at home location
+        insertData.status = 'available';
+        insertData.current_holder_type = 'location';
+        insertData.current_location_id = itemData.home_location_id;
+      }
+
       const { data: item, error } = await supabase
         .from("asset_inventory")
-        .insert({
-          bu_id: buId!,
-          created_by: user?.id,
-          ...data,
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) throw error;
-      return item;
+
+      // If assigned to user, create checkout movement
+      if (assigned_to_user_id && item) {
+        await supabase.from("asset_movements").insert({
+          bu_id: buId!,
+          asset_id: item.id,
+          movement_type: 'checkout',
+          from_holder_type: 'location',
+          from_location_id: itemData.home_location_id,
+          to_holder_type: 'user',
+          to_user_id: assigned_to_user_id,
+          authorized_by_user_id: authorized_by_user_id,
+          performed_by_user_id: user?.id,
+          due_at: due_at || null,
+          notes: 'Atribuição inicial no cadastro',
+        });
+      }
+
+      return { item, assigned_to_user_id };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["asset-inventory", buId] });
-      toast.success("Item criado");
+      if (result.assigned_to_user_id) {
+        toast.success("Item criado e atribuído ao colaborador");
+      } else {
+        toast.success("Item criado");
+      }
     },
     onError: (error: any) => {
       if (error.code === "23505") {
