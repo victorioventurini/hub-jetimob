@@ -1,4 +1,5 @@
 export { TeamSelect } from "./TeamSelect";
+export { MultiTeamSelect } from "./MultiTeamSelect";
 export { StatusSelect, OKR_STATUS_OPTIONS, RAG_STATUS_OPTIONS } from "./StatusSelect";
 export type { StatusOption, OkrStatusValue } from "./StatusSelect";
 export { YearSelect } from "./YearSelect";

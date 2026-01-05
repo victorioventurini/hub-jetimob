@@ -13,11 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { VicActionButton } from '@/modules/vic';
-import { TeamSelect, SimpleSelect } from '@/components/selects';
+import { TeamSelect, SimpleSelect, MultiTeamSelect } from '@/components/selects';
 import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CreateTeamObjectiveDialogProps {
   open: boolean;
@@ -29,6 +31,11 @@ interface CreateTeamObjectiveDialogProps {
 const STATUS_OPTIONS = [
   { value: 'draft', label: 'Rascunho' },
   { value: 'active', label: 'Ativo' },
+];
+
+const RESPONSIBILITY_MODEL_OPTIONS = [
+  { value: 'collaborative', label: 'Colaborativo (todos co-responsáveis)' },
+  { value: 'primary_led', label: 'Líder primário + contribuidores' },
 ];
 
 export function CreateTeamObjectiveDialog({
@@ -43,6 +50,11 @@ export function CreateTeamObjectiveDialog({
   const [teamId, setTeamId] = useState<string | undefined>(undefined);
   const [orgObjectiveId, setOrgObjectiveId] = useState('');
   const [status, setStatus] = useState<'draft' | 'active'>('draft');
+  
+  // Shared OKR fields
+  const [isShared, setIsShared] = useState(false);
+  const [contributingTeamIds, setContributingTeamIds] = useState<string[]>([]);
+  const [responsibilityModel, setResponsibilityModel] = useState<'collaborative' | 'primary_led'>('collaborative');
 
   // Convert teams to hierarchical format
   const buildHierarchicalTeams = (): FlatTeamItem[] => {
@@ -81,7 +93,8 @@ export function CreateTeamObjectiveDialog({
     mutationFn: async () => {
       if (!teamId) throw new Error("Time não selecionado");
       
-      const { data, error } = await supabase
+      // Create the objective
+      const { data: objective, error } = await supabase
         .from('okr_team_objectives')
         .insert({
           title,
@@ -89,16 +102,37 @@ export function CreateTeamObjectiveDialog({
           team_id: teamId,
           org_objective_id: orgObjectiveId,
           status,
+          is_shared: isShared,
+          responsibility_model: isShared ? responsibilityModel : null,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+
+      // If shared, create contributor records
+      if (isShared && contributingTeamIds.length > 0) {
+        const contributors = contributingTeamIds.map(contribTeamId => ({
+          objective_id: objective.id,
+          team_id: contribTeamId,
+        }));
+
+        const { error: contribError } = await supabase
+          .from('okr_team_objective_contributors')
+          .insert(contributors);
+
+        if (contribError) {
+          console.error('Error creating contributors:', contribError);
+          // Don't fail the whole operation, just log it
+        }
+      }
+
+      return objective;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
       queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-krs'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-shared'] });
       toast.success('Objetivo de time criado com sucesso!');
       handleClose();
     },
@@ -118,6 +152,9 @@ export function CreateTeamObjectiveDialog({
     setTeamId(undefined);
     setOrgObjectiveId('');
     setStatus('draft');
+    setIsShared(false);
+    setContributingTeamIds([]);
+    setResponsibilityModel('collaborative');
     onOpenChange(false);
   };
 
@@ -128,19 +165,25 @@ export function CreateTeamObjectiveDialog({
       return;
     }
     if (!teamId) {
-      toast.error('Selecione um time');
+      toast.error('Selecione um time primário');
       return;
     }
     if (!orgObjectiveId) {
       toast.error('Selecione um objetivo organizacional');
       return;
     }
+    if (isShared && contributingTeamIds.length === 0) {
+      toast.error('Selecione pelo menos um time contribuidor');
+      return;
+    }
     createMutation.mutate();
   };
 
+  const selectedPrimaryTeamName = teams.find(t => t.id === teamId)?.name;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Objetivo de Time</DialogTitle>
           <DialogDescription>
@@ -150,16 +193,23 @@ export function CreateTeamObjectiveDialog({
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="team">Time *</Label>
+              <Label htmlFor="team">Time Primário *</Label>
               <TeamSelect
                 value={teamId}
-                onValueChange={setTeamId}
+                onValueChange={(value) => {
+                  setTeamId(value);
+                  // Remove primary team from contributors if it was selected
+                  if (value) {
+                    setContributingTeamIds(prev => prev.filter(id => id !== value));
+                  }
+                }}
                 teams={hierarchicalTeams}
-                placeholder="Selecione um time"
+                placeholder="Selecione o time responsável"
                 disabled={createMutation.isPending}
                 triggerClassName="w-full"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="org-objective">Objetivo Organizacional *</Label>
               <SimpleSelect
@@ -171,6 +221,71 @@ export function CreateTeamObjectiveDialog({
                 triggerClassName="w-full"
               />
             </div>
+
+            {/* Shared OKR Toggle */}
+            <div className="flex items-center justify-between py-3 px-4 rounded-lg border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-purple-600" />
+                <div>
+                  <Label htmlFor="is-shared" className="text-sm font-medium cursor-pointer">
+                    OKR Compartilhada
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Envolve múltiplos times trabalhando juntos
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="is-shared"
+                checked={isShared}
+                onCheckedChange={setIsShared}
+                disabled={createMutation.isPending}
+              />
+            </div>
+
+            {/* Shared OKR Fields */}
+            {isShared && (
+              <div className="space-y-4 p-4 rounded-lg border border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/30">
+                <Alert className="border-purple-200 bg-purple-100/50 dark:border-purple-800 dark:bg-purple-900/30">
+                  <Users className="h-4 w-4 text-purple-600" />
+                  <AlertDescription className="text-purple-800 dark:text-purple-200">
+                    {selectedPrimaryTeamName 
+                      ? `${selectedPrimaryTeamName} será o time primário responsável.`
+                      : 'Selecione o time primário acima.'}
+                    {' '}Adicione os times que irão contribuir para esta OKR.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-2">
+                  <Label>Times Contribuidores *</Label>
+                  <MultiTeamSelect
+                    value={contributingTeamIds}
+                    onValueChange={setContributingTeamIds}
+                    excludeTeamIds={teamId ? [teamId] : []}
+                    teams={hierarchicalTeams}
+                    placeholder="Selecione os times contribuidores"
+                    disabled={createMutation.isPending}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Modelo de Responsabilidade</Label>
+                  <SimpleSelect
+                    value={responsibilityModel}
+                    onValueChange={(v) => setResponsibilityModel(v as 'collaborative' | 'primary_led')}
+                    options={RESPONSIBILITY_MODEL_OPTIONS}
+                    disabled={createMutation.isPending}
+                    triggerClassName="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {responsibilityModel === 'collaborative' 
+                      ? 'Todos os times são igualmente responsáveis pelo sucesso da OKR.'
+                      : 'O time primário lidera, os outros contribuem com suas entregas.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="title">Título *</Label>
@@ -186,7 +301,6 @@ export function CreateTeamObjectiveDialog({
                     label="Melhorar objetivo"
                     compact
                     onApply={(response) => {
-                      // Try to extract improved title from response
                       const lines = response.split('\n').filter(l => l.trim());
                       if (lines[0]) {
                         setTitle(lines[0].replace(/^[-*•]\s*/, '').trim());
@@ -203,6 +317,7 @@ export function CreateTeamObjectiveDialog({
                 disabled={createMutation.isPending}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="description">Descrição</Label>
               <Textarea
@@ -214,6 +329,7 @@ export function CreateTeamObjectiveDialog({
                 rows={3}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="status">Status inicial</Label>
               <SimpleSelect

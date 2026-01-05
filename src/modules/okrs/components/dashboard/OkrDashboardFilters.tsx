@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CONFIG, OkrCalculatedStatus } from '../../hooks/useOkrStatus';
 import { YearSelect, TeamSelect } from '@/components/selects';
@@ -19,6 +19,7 @@ interface OkrFilters {
   teamId?: string;
   parentTeamId?: string;
   statuses: OkrCalculatedStatus[];
+  sharedFilter?: 'all' | 'shared' | 'exclusive';
 }
 
 interface OkrDashboardFiltersProps {
@@ -26,20 +27,29 @@ interface OkrDashboardFiltersProps {
   onFiltersChange: (filters: OkrFilters) => void;
   teams: Team[];
   years: number[];
+  showSharedFilter?: boolean;
 }
 
 const STATUS_OPTIONS: OkrCalculatedStatus[] = ['on_track', 'at_risk', 'off_track', 'not_started', 'completed'];
+
+const SHARED_FILTER_OPTIONS = [
+  { value: 'all', label: 'Todas' },
+  { value: 'shared', label: 'Compartilhadas' },
+  { value: 'exclusive', label: 'Exclusivas' },
+];
 
 export function OkrDashboardFilters({
   filters,
   onFiltersChange,
   teams,
   years,
+  showSharedFilter = true,
 }: OkrDashboardFiltersProps) {
   const activeFilterCount = [
     filters.teamId,
     filters.parentTeamId,
     filters.statuses.length < STATUS_OPTIONS.length && filters.statuses.length > 0,
+    filters.sharedFilter && filters.sharedFilter !== 'all',
   ].filter(Boolean).length;
 
   const handleStatusToggle = (status: OkrCalculatedStatus) => {
@@ -56,6 +66,7 @@ export function OkrDashboardFilters({
       teamId: undefined,
       parentTeamId: undefined,
       statuses: [],
+      sharedFilter: 'all',
     });
   };
 
@@ -106,6 +117,52 @@ export function OkrDashboardFilters({
         allLabel="Todos os times"
         triggerClassName="w-[180px]"
       />
+
+      {/* Shared/Exclusive filter */}
+      {showSharedFilter && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn(
+                "gap-2",
+                filters.sharedFilter && filters.sharedFilter !== 'all' && "border-purple-500 text-purple-700"
+              )}
+            >
+              <Users className="w-4 h-4" />
+              {filters.sharedFilter === 'shared' ? 'Compartilhadas' : 
+               filters.sharedFilter === 'exclusive' ? 'Exclusivas' : 'Tipo'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-48">
+            <div className="space-y-2">
+              <p className="text-sm font-medium mb-2">Tipo de OKR</p>
+              {SHARED_FILTER_OPTIONS.map((option) => (
+                <div
+                  key={option.value}
+                  className={cn(
+                    "flex items-center gap-2 p-2 rounded-md cursor-pointer hover:bg-muted transition-colors",
+                    filters.sharedFilter === option.value && "bg-muted"
+                  )}
+                  onClick={() => onFiltersChange({ 
+                    ...filters, 
+                    sharedFilter: option.value as 'all' | 'shared' | 'exclusive' 
+                  })}
+                >
+                  <div className={cn(
+                    "w-3 h-3 rounded-full border",
+                    filters.sharedFilter === option.value 
+                      ? "bg-primary border-primary" 
+                      : "border-muted-foreground"
+                  )} />
+                  <span className="text-sm">{option.label}</span>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
 
       {/* Status filter popover */}
       <Popover>
