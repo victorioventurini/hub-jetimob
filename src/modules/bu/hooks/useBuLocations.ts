@@ -48,6 +48,11 @@ export function useCreateBuLocation() {
 
   return useMutation({
     mutationFn: async (data: BuLocationFormData & { bu_id: string }) => {
+      const { data: authData } = await supabase.auth.getSession();
+      if (!authData.session) {
+        throw new Error("Sessão expirada. Faça login novamente para salvar a sede.");
+      }
+
       const { data: result, error } = await supabase
         .from("bu_locations")
         .insert({
