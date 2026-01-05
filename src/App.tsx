@@ -63,6 +63,12 @@ const AgentLogsPage = lazy(() => import("./modules/integrations/pages/AgentLogsP
 // Módulo Automações
 const AutomationsPage = lazy(() => import("./modules/automations/pages/AutomationsPage"));
 
+// Módulo Tickets
+const TicketsPage = lazy(() => import("./modules/tickets/pages/TicketsPage"));
+const TicketsListPage = lazy(() => import("./modules/tickets/pages/TicketsListPage"));
+const CreateTicketPage = lazy(() => import("./modules/tickets/pages/CreateTicketPage"));
+const TicketDetailPage = lazy(() => import("./modules/tickets/pages/TicketDetailPage"));
+
 // Settings
 const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const SettingsHome = lazy(() => import("./pages/settings/SettingsHome"));
@@ -465,6 +471,24 @@ const App = () => (
                       <Route path="gifts" element={<GiftsPage />} />
                       <Route path="reports" element={<AssetsReportsPage />} />
                       <Route path="settings" element={<AssetsSettingsPage />} />
+                    </Route>
+
+                    {/* Tickets - Nested Routes */}
+                    <Route
+                      path="/tickets"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="tickets">
+                              <TicketsPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    >
+                      <Route index element={<TicketsListPage />} />
+                      <Route path="new" element={<CreateTicketPage />} />
+                      <Route path=":id" element={<TicketDetailPage />} />
                     </Route>
 
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

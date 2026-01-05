@@ -174,11 +174,17 @@ export interface TicketMessage {
   mentions?: TicketMention[];
 }
 
-// Tipo para conteúdo rich text (JSON)
-export interface RichTextContent {
-  type?: string;
-  content?: RichTextNode[];
-  text?: string;
+// Tipo para conteúdo rich text (JSON) - suporta texto simples ou estrutura rica
+export type RichTextContent = SimpleTextContent | TiptapContent | Record<string, unknown>;
+
+export interface SimpleTextContent {
+  type: 'text';
+  content: string;
+}
+
+export interface TiptapContent {
+  type: 'doc';
+  content: RichTextNode[];
 }
 
 export interface RichTextNode {
