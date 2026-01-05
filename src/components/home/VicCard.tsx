@@ -63,10 +63,10 @@ export function VicCard() {
   };
 
   return (
-    <Card className="relative overflow-hidden border-sidebar-border bg-sidebar">
+    <Card className="relative overflow-hidden">
       {/* Decorative gradient */}
-      <div className="absolute top-0 right-0 w-40 h-40 opacity-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-full blur-3xl transform translate-x-10 -translate-y-10" />
+      <div className="absolute top-0 right-0 w-32 h-32 opacity-10 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/50 rounded-full blur-3xl transform translate-x-8 -translate-y-8" />
       </div>
 
       <CardContent className="relative p-6">
@@ -91,9 +91,9 @@ export function VicCard() {
             <button
               key={suggestion.id}
               onClick={() => handleSuggestionClick(suggestion)}
-              className="w-full group flex items-center gap-3 p-3 rounded-lg bg-background/50 hover:bg-background border border-transparent hover:border-border transition-all text-left"
+              className="w-full group flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted border border-transparent hover:border-border transition-all text-left"
             >
-              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-background text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 {suggestion.icon}
               </div>
               <div className="flex-1 min-w-0">
