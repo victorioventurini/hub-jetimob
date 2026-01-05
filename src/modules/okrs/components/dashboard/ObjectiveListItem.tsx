@@ -5,10 +5,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronRight, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronRight, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { calculateProgress, OkrDirection, OkrRagStatus } from '../../types';
+import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
+import { CreateOrgKrDialog } from '../CreateOrgKrDialog';
+import { CreateTeamKrDialog } from '../CreateTeamKrDialog';
+import { EditOrgKrDialog } from '../EditOrgKrDialog';
+import { EditTeamKrDialog } from '../EditTeamKrDialog';
+import { EditOrgObjectiveDialog } from '../EditOrgObjectiveDialog';
+import { EditTeamObjectiveDialog } from '../EditTeamObjectiveDialog';
+import { CheckinDialog } from '../CheckinDialog';
 
 interface KeyResult {
   id: string;
@@ -20,6 +34,10 @@ interface KeyResult {
   direction: OkrDirection;
   status: OkrRagStatus;
   updated_at: string;
+  type?: OkrKrType;
+  team_id?: string;
+  team_objective_id?: string | null;
+  org_objective_id?: string;
   owner?: {
     display_name: string;
     photo_url?: string | null;
@@ -30,8 +48,10 @@ interface Objective {
   id: string;
   title: string;
   description?: string | null;
-  year: number;
+  year?: number;
   status: string;
+  team_id?: string;
+  org_objective_id?: string;
   owner?: {
     display_name: string;
     photo_url?: string | null;
@@ -43,10 +63,22 @@ interface ObjectiveListItemProps {
   objective: Objective;
   keyResults?: KeyResult[];
   isLoading?: boolean;
+  type: 'org' | 'team';
+  teamName?: string;
 }
 
-export function ObjectiveListItem({ objective, keyResults = [], isLoading }: ObjectiveListItemProps) {
+export function ObjectiveListItem({ 
+  objective, 
+  keyResults = [], 
+  isLoading, 
+  type,
+  teamName 
+}: ObjectiveListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showAddKrDialog, setShowAddKrDialog] = useState(false);
+  const [showEditObjectiveDialog, setShowEditObjectiveDialog] = useState(false);
+  const [editingKr, setEditingKr] = useState<KeyResult | null>(null);
+  const [checkinKr, setCheckinKr] = useState<KeyResult | null>(null);
 
   const { progress, status, krCount } = useMemo(() => {
     if (!keyResults || keyResults.length === 0) {
@@ -108,83 +140,247 @@ export function ObjectiveListItem({ objective, keyResults = [], isLoading }: Obj
   }
 
   return (
-    <Card className={cn(
-      "transition-all duration-200",
-      isExpanded && "ring-1 ring-border shadow-md"
-    )}>
-      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <CollapsibleTrigger asChild>
-          <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-            <div className="flex items-start gap-3">
-              <ChevronRight className={cn(
-                "w-4 h-4 mt-1 text-muted-foreground transition-transform duration-200",
-                isExpanded && "rotate-90"
-              )} />
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <h3 className="font-medium leading-snug truncate">
-                      {objective.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                      <span>{objective.year}</span>
-                      <span>•</span>
-                      <span>{krCount} KRs</span>
+    <>
+      <Card className={cn(
+        "transition-all duration-200",
+        isExpanded && "ring-1 ring-border shadow-md"
+      )}>
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          <CollapsibleTrigger asChild>
+            <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+              <div className="flex items-start gap-3">
+                <ChevronRight className={cn(
+                  "w-4 h-4 mt-1 text-muted-foreground transition-transform duration-200",
+                  isExpanded && "rotate-90"
+                )} />
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {type === 'org' ? (
+                          <Badge variant="outline" className="text-xs">
+                            <Target className="w-3 h-3 mr-1" />
+                            Organizacional
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            <Users className="w-3 h-3 mr-1" />
+                            {teamName || 'Time'}
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="font-medium leading-snug line-clamp-2">
+                        {objective.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                        {objective.year && <span>{objective.year}</span>}
+                        {objective.year && <span>•</span>}
+                        <span>{krCount} KRs</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge 
+                        variant="outline" 
+                        className={cn("text-xs font-medium", statusConfig.color, statusConfig.borderColor)}
+                      >
+                        {statusConfig.label}
+                      </Badge>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            setShowEditObjectiveDialog(true);
+                          }}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Editar Objetivo
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            setShowAddKrDialog(true);
+                          }}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Adicionar KR
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
+                      {objective.owner && (
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={objective.owner.photo_url || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {objective.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Badge 
-                      variant="outline" 
-                      className={cn("text-xs font-medium", statusConfig.color, statusConfig.borderColor)}
-                    >
-                      {statusConfig.label}
-                    </Badge>
-                    
-                    {objective.owner && (
-                      <Avatar className="w-6 h-6">
-                        <AvatarImage src={objective.owner.photo_url || undefined} />
-                        <AvatarFallback className="text-[10px]">
-                          {objective.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+                  <div className="mt-3 flex items-center gap-3">
+                    <Progress value={progress} className="h-2 flex-1" />
+                    <span className="text-sm font-medium w-12 text-right">
+                      {progress.toFixed(0)}%
+                    </span>
                   </div>
                 </div>
-                
-                <div className="mt-3 flex items-center gap-3">
-                  <Progress value={progress} className="h-2 flex-1" />
-                  <span className="text-sm font-medium w-12 text-right">
-                    {progress.toFixed(0)}%
-                  </span>
+              </div>
+            </CardContent>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <div className="border-t bg-muted/20">
+              <div className="px-4 py-2 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setShowAddKrDialog(true)}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Adicionar KR
+                </Button>
+              </div>
+              {keyResults.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Nenhum Key Result definido ainda
                 </div>
-              </div>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {keyResults.map((kr) => (
+                    <KeyResultRow 
+                      key={kr.id} 
+                      kr={kr} 
+                      type={type}
+                      onEdit={() => setEditingKr(kr)}
+                      onCheckin={() => setCheckinKr(kr)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </CardContent>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
-          <div className="border-t bg-muted/20">
-            {keyResults.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                No Key Results yet
-              </div>
-            ) : (
-              <div className="divide-y divide-border/50">
-                {keyResults.map((kr) => (
-                  <KeyResultRow key={kr.id} kr={kr} />
-                ))}
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+
+      {/* Create KR Dialogs */}
+      {type === 'org' ? (
+        <CreateOrgKrDialog
+          open={showAddKrDialog}
+          onOpenChange={setShowAddKrDialog}
+          objectiveId={objective.id}
+        />
+      ) : objective.team_id ? (
+        <CreateTeamKrDialog
+          open={showAddKrDialog}
+          onOpenChange={setShowAddKrDialog}
+          objectiveId={objective.id}
+          teamId={objective.team_id}
+        />
+      ) : null}
+
+      {/* Edit Objective Dialogs */}
+      {type === 'org' && objective.year ? (
+        <EditOrgObjectiveDialog
+          open={showEditObjectiveDialog}
+          onOpenChange={setShowEditObjectiveDialog}
+          objective={{
+            id: objective.id,
+            title: objective.title,
+            description: objective.description,
+            year: objective.year,
+            status: objective.status as OkrStatus,
+          }}
+        />
+      ) : type === 'team' && objective.team_id ? (
+        <EditTeamObjectiveDialog
+          open={showEditObjectiveDialog}
+          onOpenChange={setShowEditObjectiveDialog}
+          objective={{
+            id: objective.id,
+            title: objective.title,
+            description: objective.description,
+            team_id: objective.team_id,
+            status: objective.status as OkrStatus,
+          }}
+        />
+      ) : null}
+
+      {/* Edit KR Dialogs */}
+      {editingKr && type === 'org' && (
+        <EditOrgKrDialog
+          open={!!editingKr}
+          onOpenChange={(open) => !open && setEditingKr(null)}
+          kr={{
+            id: editingKr.id,
+            org_objective_id: editingKr.org_objective_id || objective.id,
+            title: editingKr.title,
+            baseline: editingKr.baseline,
+            current_value: editingKr.current_value,
+            target: editingKr.target,
+            direction: editingKr.direction,
+            unit: editingKr.unit,
+            status: editingKr.status,
+          }}
+        />
+      )}
+      
+      {editingKr && type === 'team' && editingKr.team_id && (
+        <EditTeamKrDialog
+          open={!!editingKr}
+          onOpenChange={(open) => !open && setEditingKr(null)}
+          kr={{
+            id: editingKr.id,
+            team_id: editingKr.team_id,
+            team_objective_id: editingKr.team_objective_id,
+            title: editingKr.title,
+            type: editingKr.type || 'contribution',
+            baseline: editingKr.baseline,
+            current_value: editingKr.current_value,
+            target: editingKr.target,
+            direction: editingKr.direction,
+            unit: editingKr.unit,
+            status: editingKr.status,
+          }}
+        />
+      )}
+
+      {/* Checkin Dialog (only for team KRs) */}
+      {checkinKr && type === 'team' && checkinKr.team_id && (
+        <CheckinDialog
+          open={!!checkinKr}
+          onOpenChange={(open) => !open && setCheckinKr(null)}
+          kr={{
+            id: checkinKr.id,
+            title: checkinKr.title,
+            baseline: checkinKr.baseline,
+            current_value: checkinKr.current_value,
+            target: checkinKr.target,
+            direction: checkinKr.direction,
+            unit: checkinKr.unit,
+            status: checkinKr.status,
+            team_id: checkinKr.team_id,
+          }}
+        />
+      )}
+    </>
   );
 }
 
-function KeyResultRow({ kr }: { kr: KeyResult }) {
+interface KeyResultRowProps {
+  kr: KeyResult;
+  type: 'org' | 'team';
+  onEdit: () => void;
+  onCheckin: () => void;
+}
+
+function KeyResultRow({ kr, type, onEdit, onCheckin }: KeyResultRowProps) {
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
     Number(kr.current_value) || 0,
@@ -203,7 +399,7 @@ function KeyResultRow({ kr }: { kr: KeyResult }) {
   };
 
   return (
-    <div className="px-4 py-3 pl-11">
+    <div className="px-4 py-3 pl-11 hover:bg-muted/30 transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{kr.title}</p>
@@ -218,7 +414,7 @@ function KeyResultRow({ kr }: { kr: KeyResult }) {
           </div>
         </div>
         
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-2 w-24">
             <Progress 
               value={progress} 
@@ -228,6 +424,34 @@ function KeyResultRow({ kr }: { kr: KeyResult }) {
               {progress.toFixed(0)}%
             </span>
           </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            title="Editar KR"
+          >
+            <Pencil className="w-3 h-3" />
+          </Button>
+          
+          {type === 'team' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCheckin();
+              }}
+              title="Check-in"
+            >
+              <RefreshCw className="w-3 h-3" />
+            </Button>
+          )}
           
           {kr.owner ? (
             <Avatar className="w-5 h-5">
