@@ -5,6 +5,7 @@ export type KpiStatus = 'active' | 'inactive';
 export type KpiValueSource = 'manual' | 'api' | 'webhook' | 'spreadsheet' | 'database';
 export type KpiVisibility = 'restricted' | 'team' | 'bu';
 export type KpiRagStatus = 'on_track' | 'at_risk' | 'off_track' | 'no_data';
+export type KpiComparisonRule = 'higher_is_better' | 'lower_is_better' | 'equal_to_target';
 
 export interface KpiMetric {
   id: string;
@@ -22,6 +23,7 @@ export interface KpiMetric {
   source_type: KpiValueSource;
   source_config: Record<string, unknown> | null;
   visibility: KpiVisibility;
+  comparison_rule: KpiComparisonRule;
   linked_okrs: string[];
   created_at: string;
   updated_at: string;
@@ -46,6 +48,11 @@ export interface KpiValue {
   notes: string | null;
   created_by: string | null;
   created_at: string;
+  created_by_user?: {
+    id: string;
+    display_name: string;
+    photo_url: string | null;
+  };
 }
 
 export interface KpiWithValues extends KpiMetric {
@@ -55,6 +62,15 @@ export interface KpiWithValues extends KpiMetric {
   variation: number | null;
   trend: 'up' | 'down' | 'stable';
   rag_status: KpiRagStatus;
+  // Campos de auditoria
+  last_updated_at: string | null;
+  last_update_source: KpiValueSource | null;
+  last_updated_by: string | null;
+  last_updated_by_user?: {
+    id: string;
+    display_name: string;
+    photo_url: string | null;
+  } | null;
   last_update_failed?: boolean;
 }
 
@@ -94,8 +110,8 @@ export const FREQUENCY_LABELS: Record<KpiFrequency, string> = {
 };
 
 export const DIRECTION_LABELS: Record<KpiDirection, string> = {
-  up: 'Crescente',
-  down: 'Decrescente',
+  up: 'Maior é melhor',
+  down: 'Menor é melhor',
 };
 
 export const SOURCE_TYPE_LABELS: Record<KpiValueSource, string> = {
@@ -118,6 +134,12 @@ export const VISIBILITY_LABELS: Record<KpiVisibility, string> = {
   restricted: 'Restrita',
   team: 'Time',
   bu: 'Unidade de Negócio',
+};
+
+export const COMPARISON_RULE_LABELS: Record<KpiComparisonRule, string> = {
+  higher_is_better: 'Maior é melhor',
+  lower_is_better: 'Menor é melhor',
+  equal_to_target: 'Igual ao alvo',
 };
 
 export const RAG_STATUS_CONFIG: Record<KpiRagStatus, { label: string; color: string; bgColor: string }> = {
