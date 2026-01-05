@@ -279,20 +279,21 @@ export function ObjectiveListItem({
       </Card>
 
       {/* Create KR Dialogs */}
-      {type === 'org' ? (
+      {type === 'org' && (
         <CreateOrgKrDialog
           open={showAddKrDialog}
           onOpenChange={setShowAddKrDialog}
           objectiveId={objective.id}
         />
-      ) : objective.team_id ? (
+      )}
+      {type === 'team' && (
         <CreateTeamKrDialog
           open={showAddKrDialog}
           onOpenChange={setShowAddKrDialog}
           objectiveId={objective.id}
-          teamId={objective.team_id}
+          teamId={objective.team_id || ''}
         />
-      ) : null}
+      )}
 
       {/* Edit Objective Dialogs */}
       {type === 'org' && objective.year ? (
