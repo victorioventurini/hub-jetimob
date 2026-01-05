@@ -31,6 +31,7 @@ import {
 import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { AssetCategorySelect } from "../selects/AssetCategorySelect";
 import type { AssetInventory } from "../../types";
 
 const schema = z.object({
@@ -223,20 +224,13 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <AssetCategorySelect
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Selecione..."
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
