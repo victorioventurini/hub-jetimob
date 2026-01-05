@@ -23,6 +23,9 @@ export function useTeams(includeInactive = false) {
         query = query.eq("bu_id", currentBu.id);
       }
 
+      // Always exclude soft-deleted teams
+      query = query.is("deleted_at", null);
+
       if (!includeInactive) {
         query = query.eq("status", "active");
       }
