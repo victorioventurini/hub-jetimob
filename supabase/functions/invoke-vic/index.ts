@@ -6,6 +6,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Get integration API key from hub_integrations_global_config
+async function getIntegrationApiKey(supabase: any, integrationKey: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", integrationKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error fetching ${integrationKey} config:`, error);
+    return null;
+  }
+
+  if (!data || !data.is_enabled_global) {
+    return null;
+  }
+
+  const config = data.config_encrypted as { api_key?: string } | null;
+  return config?.api_key || null;
+}
+
 // Mapeamento de slugs para nomes de agentes
 const AGENT_SLUGS: Record<string, string> = {
   "cultura": "Guardião da Cultura",
@@ -65,17 +86,31 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // First, try to get Lovable API key (preferred)
+    let lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    
+    // If not available, try to get ChatGPT/OpenAI key from integrations config
+    let useOpenAI = false;
+    let openAIApiKey: string | null = null;
+    
     if (!lovableApiKey) {
-      console.error("LOVABLE_API_KEY is not configured");
+      openAIApiKey = await getIntegrationApiKey(supabase, "chatgpt");
+      if (openAIApiKey) {
+        useOpenAI = true;
+        console.log("Using OpenAI API from integrations config");
+      }
+    }
+
+    if (!lovableApiKey && !openAIApiKey) {
+      console.error("No AI API key configured (LOVABLE_API_KEY or ChatGPT integration)");
       return new Response(
         JSON.stringify({ error: "AI service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
@@ -150,14 +185,17 @@ serve(async (req) => {
     }
 
     // Get the agent by slug
-    const { data: agent, error: agentError } = await supabase
+    let agent: any = null;
+    const { data: agentData, error: agentError } = await supabase
       .from("ai_agents")
       .select("*")
       .eq("slug", agentSlug)
       .eq("is_active", true)
       .single();
 
-    if (agentError || !agent) {
+    if (!agentError && agentData) {
+      agent = agentData;
+    } else {
       // Try by name as fallback
       const agentNameFromSlug = AGENT_SLUGS[agentSlug];
       if (agentNameFromSlug) {
@@ -169,17 +207,17 @@ serve(async (req) => {
           .single();
         
         if (agentByName) {
-          Object.assign(agent || {}, agentByName);
+          agent = agentByName;
         }
       }
+    }
       
-      if (!agent) {
-        console.error("Agent not found:", agentSlug, agentError);
-        return new Response(
-          JSON.stringify({ error: "Agent not found" }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    if (!agent) {
+      console.error("Agent not found:", agentSlug, agentError);
+      return new Response(
+        JSON.stringify({ error: "Agent not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     agentId = agent.id;
@@ -217,8 +255,8 @@ serve(async (req) => {
     let knowledgeBase = "";
     if (documents && documents.length > 0) {
       knowledgeBase = documents
-        .filter((doc) => doc.extracted_content)
-        .map((doc) => `=== ${doc.name} ===\n${doc.extracted_content}`)
+        .filter((doc: any) => doc.extracted_content)
+        .map((doc: any) => `=== ${doc.name} ===\n${doc.extracted_content}`)
         .join("\n\n");
     }
 
@@ -250,14 +288,24 @@ serve(async (req) => {
 
     console.log(`Invoking agent: ${agentName} (${agentSlug}) for context: ${actionContext}`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Choose API endpoint and format based on available key
+    const apiUrl = useOpenAI 
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    
+    const apiKey = useOpenAI ? openAIApiKey : lovableApiKey;
+    const modelName = useOpenAI 
+      ? (agent.model_name?.startsWith("gpt") ? agent.model_name : "gpt-4o-mini")
+      : (agent.model_name || "google/gemini-2.5-flash");
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${lovableApiKey}`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: agent.model_name || "google/gemini-2.5-flash",
+        model: modelName,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -269,7 +317,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
+      console.error("AI API error:", response.status, errorText);
 
       // Log the error
       await supabase.from("ai_agent_logs").insert({
@@ -281,7 +329,7 @@ serve(async (req) => {
         integration_key: agent.integration_key,
         action_context: actionContext,
         status: "error",
-        error_message: `AI Gateway error: ${response.status}`,
+        error_message: `AI API error: ${response.status}`,
         latency_ms: Date.now() - startTime,
       });
 
@@ -298,7 +346,7 @@ serve(async (req) => {
         );
       }
 
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw new Error(`AI API error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -320,7 +368,7 @@ serve(async (req) => {
       integration_key: agent.integration_key,
       action_context: actionContext,
       status: "success",
-      model_used: agent.model_name || "google/gemini-2.5-flash",
+      model_used: modelName,
       input_tokens: data.usage?.prompt_tokens,
       output_tokens: data.usage?.completion_tokens,
       total_tokens: data.usage?.total_tokens,

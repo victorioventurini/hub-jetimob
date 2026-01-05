@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,13 +26,32 @@ interface AuthEmailPayload {
   };
 }
 
-// Check if email domain is allowed in any active BU
-async function isEmailDomainAllowed(email: string): Promise<{ allowed: boolean; buName: string | null }> {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("Missing Supabase credentials for domain validation");
-    return { allowed: false, buName: null };
+// Get integration API key from hub_integrations_global_config
+async function getIntegrationApiKey(integrationKey: string): Promise<string | null> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const { data, error } = await supabase
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", integrationKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error fetching ${integrationKey} config:`, error);
+    return null;
   }
 
+  if (!data || !data.is_enabled_global) {
+    console.warn(`${integrationKey} integration is not enabled`);
+    return null;
+  }
+
+  const config = data.config_encrypted as { api_key?: string } | null;
+  return config?.api_key || null;
+}
+
+// Check if email domain is allowed in any active BU
+async function isEmailDomainAllowed(email: string): Promise<{ allowed: boolean; buName: string | null }> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   
   const domain = email.split("@")[1]?.toLowerCase();
@@ -62,14 +80,22 @@ async function isEmailDomainAllowed(email: string): Promise<{ allowed: boolean; 
   return { allowed: false, buName: null };
 }
 
-async function sendMagicLinkEmail(email: string, magicLink: string, userName?: string, buName?: string): Promise<void> {
+async function sendMagicLinkEmail(
+  email: string, 
+  magicLink: string, 
+  sendgridApiKey: string,
+  userName?: string, 
+  buName?: string
+): Promise<void> {
   const displayName = userName || email.split('@')[0];
   const orgName = buName || "Jetimob";
+  
+  console.log(`Sending magic link email to ${email} via SendGrid from no-reply@hub.jetimob.com`);
   
   const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${SENDGRID_API_KEY}`,
+      "Authorization": `Bearer ${sendgridApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -157,6 +183,24 @@ const handler = async (req: Request): Promise<Response> => {
     const { user, email_data } = payload;
     const { token_hash, redirect_to, email_action_type } = email_data;
 
+    // Get SendGrid API key from database
+    const sendgridApiKey = await getIntegrationApiKey("sendgrid");
+    if (!sendgridApiKey) {
+      console.error("SendGrid API key not configured or integration disabled");
+      return new Response(
+        JSON.stringify({ 
+          error: {
+            http_code: 500,
+            message: "Integração SendGrid não configurada." 
+          }
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     // Validate email domain against BU allowed domains
     const { allowed, buName } = await isEmailDomainAllowed(user.email);
     
@@ -186,6 +230,7 @@ const handler = async (req: Request): Promise<Response> => {
     await sendMagicLinkEmail(
       user.email,
       magicLink,
+      sendgridApiKey,
       user.user_metadata?.first_name || user.user_metadata?.display_name,
       buName || undefined
     );
