@@ -2,6 +2,7 @@ import React, { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface HubModule {
   id: string;
@@ -28,11 +29,17 @@ interface ModuleContextType {
 const ModuleContext = createContext<ModuleContextType | undefined>(undefined);
 
 export function ModuleProvider({ children }: { children: ReactNode }) {
+  const { user, isLoading: authLoading } = useAuth();
   const { currentBu } = useBu();
 
   const { data: modules = [], isLoading } = useQuery({
-    queryKey: ["bu-modules", currentBu?.id],
+    // IMPORTANTE: incluir user?.id no cache key para evitar "cache" com resposta anônima
+    // (sem sessão) que acontece no primeiro load e só resolve após refresh.
+    queryKey: ["bu-modules", user?.id ?? null, currentBu?.id ?? null],
+    enabled: !authLoading && !!user?.id,
     queryFn: async () => {
+      if (!user?.id) return [];
+
       if (!currentBu?.id) {
         // Se não há BU ativa, retornar apenas módulos globais
         const { data, error } = await supabase
@@ -70,7 +77,6 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
         is_enabled: m.is_enabled,
       })) as HubModule[];
     },
-    enabled: true, // Sempre habilitado - carrega globais mesmo sem BU
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
