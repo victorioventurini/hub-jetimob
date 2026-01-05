@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,13 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, CalendarIcon, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Loader2, Paperclip, X, FileIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useCreateTicket } from "../hooks/useTickets";
 import { useTicketCategories, useTicketSubcategories } from "../hooks/useTicketCategories";
 import { usePartnerCompanies } from "../hooks/usePartners";
+import { supabase } from "@/integrations/supabase/client";
+import { useBu } from "@/contexts/BuContext";
+import { toast } from "sonner";
 import type { TicketType, TicketVisibility } from "../types";
 
 const createTicketSchema = z.object({
@@ -35,11 +38,24 @@ const createTicketSchema = z.object({
 
 type FormData = z.infer<typeof createTicketSchema>;
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILES = 5;
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
 export default function CreateTicketPage() {
   const navigate = useNavigate();
   const createTicket = useCreateTicket();
+  const { currentBu } = useBu();
   const { data: categories = [] } = useTicketCategories();
   const { data: partners = [] } = usePartnerCompanies();
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<FormData>({
     resolver: zodResolver(createTicketSchema),
@@ -62,9 +78,76 @@ export default function CreateTicketPage() {
     return true;
   });
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate files
+    const validFiles = files.filter(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`Arquivo "${file.name}" excede o limite de 20MB`);
+        return false;
+      }
+      return true;
+    });
+    
+    // Check total count
+    const newTotal = attachments.length + validFiles.length;
+    if (newTotal > MAX_FILES) {
+      toast.error(`Máximo de ${MAX_FILES} arquivos permitidos`);
+      const allowed = validFiles.slice(0, MAX_FILES - attachments.length);
+      setAttachments(prev => [...prev, ...allowed]);
+    } else {
+      setAttachments(prev => [...prev, ...validFiles]);
+    }
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadAttachments = async (ticketId: string, messageId: string): Promise<void> => {
+    if (attachments.length === 0 || !currentBu) return;
+    
+    for (const file of attachments) {
+      const filePath = `${currentBu.id}/${ticketId}/${Date.now()}-${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("ticket-attachments")
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        continue;
+      }
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("ticket-attachments")
+        .getPublicUrl(filePath);
+      
+      // Insert attachment record
+      await supabase.from("ticket_attachments").insert({
+        bu_id: currentBu.id,
+        ticket_id: ticketId,
+        message_id: messageId,
+        file_url: urlData.publicUrl,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+      });
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
-      await createTicket.mutateAsync({
+      setIsUploading(true);
+      
+      const ticket = await createTicket.mutateAsync({
         type: data.type,
         title: data.title,
         category_id: data.category_id || null,
@@ -74,9 +157,27 @@ export default function CreateTicketPage() {
         expected_due_at: data.expected_due_at?.toISOString() || null,
         initial_message: data.initial_message ? { type: "text", content: data.initial_message } : undefined,
       });
+      
+      // Upload attachments if any
+      if (attachments.length > 0 && ticket?.id) {
+        // Get the first message ID (initial message)
+        const { data: messages } = await supabase
+          .from("ticket_messages")
+          .select("id")
+          .eq("ticket_id", ticket.id)
+          .order("created_at", { ascending: true })
+          .limit(1);
+        
+        if (messages && messages.length > 0) {
+          await uploadAttachments(ticket.id, messages[0].id);
+        }
+      }
+      
       navigate("/tickets");
     } catch (error) {
       // Error handled by mutation
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -331,7 +432,7 @@ export default function CreateTicketPage() {
             <CardHeader>
               <CardTitle className="text-base">Mensagem Inicial</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
                 name="initial_message"
@@ -348,6 +449,68 @@ export default function CreateTicketPage() {
                   </FormItem>
                 )}
               />
+              
+              {/* Attachments */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Anexos</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {attachments.length}/{MAX_FILES} arquivos (máx. 20MB cada)
+                  </span>
+                </div>
+                
+                {/* File list */}
+                {attachments.length > 0 && (
+                  <div className="space-y-2">
+                    {attachments.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 rounded-md border bg-muted/50"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm truncate">{file.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            ({formatFileSize(file.size)})
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeAttachment(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Upload button */}
+                {attachments.length < MAX_FILES && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileSelect}
+                      accept="*/*"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Adicionar anexo
+                    </Button>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -356,8 +519,8 @@ export default function CreateTicketPage() {
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createTicket.isPending}>
-              {createTicket.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Button type="submit" disabled={createTicket.isPending || isUploading}>
+              {(createTicket.isPending || isUploading) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Criar Ticket
             </Button>
           </div>
