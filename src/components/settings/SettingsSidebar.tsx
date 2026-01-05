@@ -29,7 +29,7 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
         rel="noopener noreferrer"
         className={cn(
           "flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-          "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          "text-muted-foreground hover:text-foreground hover:bg-muted"
         )}
       >
         <div className="flex items-center gap-3">
@@ -47,8 +47,8 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
         isActive
-          ? "bg-sidebar-primary text-sidebar-primary-foreground"
-          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted"
       )}
     >
       <Icon className="h-5 w-5" />
@@ -66,8 +66,8 @@ export function SettingsSidebar() {
       </div>
 
       {/* Plataforma Section */}
-      <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
-        <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+      <div className="pt-4 mt-4 border-t border-border space-y-1">
+        <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Plataforma
         </p>
         <NavItem to="/settings/business-units" icon={Building2} label="Business Units" />
@@ -77,8 +77,8 @@ export function SettingsSidebar() {
       </div>
 
       {/* Recursos Section */}
-      <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
-        <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+      <div className="pt-4 mt-4 border-t border-border space-y-1">
+        <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Recursos
         </p>
         <NavItem
