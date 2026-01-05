@@ -746,6 +746,95 @@ export type Database = {
           },
         ]
       }
+      bu_locations: {
+        Row: {
+          address_line_1: string | null
+          address_line_2: string | null
+          bu_id: string
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          district: string | null
+          formatted_address: string | null
+          google_place_id: string | null
+          id: string
+          is_default: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          postal_code: string | null
+          state: string | null
+          status: Database["public"]["Enums"]["bu_location_status"]
+          timezone: string | null
+          type: Database["public"]["Enums"]["bu_location_type"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          bu_id: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          district?: string | null
+          formatted_address?: string | null
+          google_place_id?: string | null
+          id?: string
+          is_default?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["bu_location_status"]
+          timezone?: string | null
+          type?: Database["public"]["Enums"]["bu_location_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          bu_id?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          district?: string | null
+          formatted_address?: string | null
+          google_place_id?: string | null
+          id?: string
+          is_default?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["bu_location_status"]
+          timezone?: string | null
+          type?: Database["public"]["Enums"]["bu_location_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_locations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bu_module_configs: {
         Row: {
           bu_id: string
@@ -2923,6 +3012,13 @@ export type Database = {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
       app_role: "super_admin" | "admin" | "team_leader" | "collaborator"
+      bu_location_status: "active" | "inactive"
+      bu_location_type:
+        | "headquarters"
+        | "office"
+        | "warehouse"
+        | "remote_hub"
+        | "other"
       bu_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
       initiative_priority: "low" | "medium" | "high"
@@ -3095,6 +3191,14 @@ export const Constants = {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
       app_role: ["super_admin", "admin", "team_leader", "collaborator"],
+      bu_location_status: ["active", "inactive"],
+      bu_location_type: [
+        "headquarters",
+        "office",
+        "warehouse",
+        "remote_hub",
+        "other",
+      ],
       bu_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
       initiative_priority: ["low", "medium", "high"],

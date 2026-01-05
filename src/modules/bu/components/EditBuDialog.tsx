@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
-import { Building2, Plus, X, Globe, Loader2 } from "lucide-react";
+import { Building2, Plus, X, Globe, Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,6 +33,7 @@ import { formatCNPJ, validateCNPJ, unformatCNPJ } from "../utils/cnpjMask";
 import { toast } from "sonner";
 import { BuUnit } from "../types";
 import { useAuth } from "@/hooks/useAuth";
+import { LocationsList } from "./LocationsList";
 
 const editBuSchema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
@@ -175,8 +176,9 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="general">Informações</TabsTrigger>
+                <TabsTrigger value="locations">Sedes</TabsTrigger>
                 <TabsTrigger value="branding">Identidade Visual</TabsTrigger>
               </TabsList>
 
@@ -342,6 +344,12 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
                     </FormItem>
                   )}
                 />
+              </TabsContent>
+
+              <TabsContent value="locations" className="mt-4">
+                {bu && (
+                  <LocationsList buId={bu.id} canManage={canEditAllFields} />
+                )}
               </TabsContent>
 
               <TabsContent value="branding" className="space-y-6 mt-4">
