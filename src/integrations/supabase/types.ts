@@ -1524,6 +1524,53 @@ export type Database = {
           },
         ]
       }
+      okr_contributions: {
+        Row: {
+          bu_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          from_id: string
+          from_type: Database["public"]["Enums"]["okr_contribution_entity_type"]
+          id: string
+          to_id: string
+          to_type: Database["public"]["Enums"]["okr_contribution_entity_type"]
+        }
+        Insert: {
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          from_id: string
+          from_type: Database["public"]["Enums"]["okr_contribution_entity_type"]
+          id?: string
+          to_id: string
+          to_type: Database["public"]["Enums"]["okr_contribution_entity_type"]
+        }
+        Update: {
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          from_id?: string
+          from_type?: Database["public"]["Enums"]["okr_contribution_entity_type"]
+          id?: string
+          to_id?: string
+          to_type?: Database["public"]["Enums"]["okr_contribution_entity_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_contributions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       okr_dependencies: {
         Row: {
           created_at: string
@@ -1669,6 +1716,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pending_checkins"
             referencedColumns: ["kr_id"]
+          },
+        ]
+      }
+      okr_kr_metrics: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          kpi_id: string
+          kr_id: string
+          kr_type: string
+          role: Database["public"]["Enums"]["okr_metric_role"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kpi_id: string
+          kr_id: string
+          kr_type: string
+          role?: Database["public"]["Enums"]["okr_metric_role"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kpi_id?: string
+          kr_id?: string
+          kr_type?: string
+          role?: Database["public"]["Enums"]["okr_metric_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_kr_metrics_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_metrics"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2086,6 +2174,7 @@ export type Database = {
           team_id: string
           title: string
           updated_at: string
+          year: number | null
         }
         Insert: {
           bu_id?: string | null
@@ -2102,6 +2191,7 @@ export type Database = {
           team_id: string
           title: string
           updated_at?: string
+          year?: number | null
         }
         Update: {
           bu_id?: string | null
@@ -2118,6 +2208,7 @@ export type Database = {
           team_id?: string
           title?: string
           updated_at?: string
+          year?: number | null
         }
         Relationships: [
           {
@@ -2862,9 +2953,11 @@ export type Database = {
         | "shared_okr_update"
       okr_channel: "email" | "slack" | "both"
       okr_confidence: "high" | "medium" | "low"
+      okr_contribution_entity_type: "objective" | "kr"
       okr_dependency_status: "ok" | "blocked" | "at_risk"
       okr_direction: "up" | "down"
       okr_kr_type: "contribution" | "enabler" | "foundational"
+      okr_metric_role: "primary" | "guardrail"
       okr_rag_status: "green" | "yellow" | "red" | "not_started"
       okr_report_frequency: "weekly" | "monthly" | "quarterly" | "event"
       okr_status: "draft" | "active" | "completed" | "cancelled"
@@ -3034,9 +3127,11 @@ export const Constants = {
       ],
       okr_channel: ["email", "slack", "both"],
       okr_confidence: ["high", "medium", "low"],
+      okr_contribution_entity_type: ["objective", "kr"],
       okr_dependency_status: ["ok", "blocked", "at_risk"],
       okr_direction: ["up", "down"],
       okr_kr_type: ["contribution", "enabler", "foundational"],
+      okr_metric_role: ["primary", "guardrail"],
       okr_rag_status: ["green", "yellow", "red", "not_started"],
       okr_report_frequency: ["weekly", "monthly", "quarterly", "event"],
       okr_status: ["draft", "active", "completed", "cancelled"],

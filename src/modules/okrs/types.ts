@@ -8,6 +8,8 @@ export type OkrConfidence = 'high' | 'medium' | 'low';
 export type OkrDependencyStatus = 'ok' | 'blocked' | 'at_risk';
 export type OkrReportFrequency = 'weekly' | 'monthly' | 'quarterly' | 'event';
 export type OkrChannel = 'email' | 'slack' | 'both';
+export type OkrContributionEntityType = 'objective' | 'kr';
+export type OkrMetricRole = 'primary' | 'guardrail';
 
 // Org Objectives
 export interface OkrOrgObjective {
@@ -61,6 +63,8 @@ export interface OkrTeamObjective {
   description?: string | null;
   owner_user_id?: string | null;
   status: OkrStatus;
+  year?: number | null;
+  bu_id?: string | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -186,6 +190,40 @@ export interface OkrAuditLog {
   new_value?: unknown;
   user_id?: string | null;
   created_at: string;
+}
+
+// Contributions (informational relationships)
+export interface OkrContribution {
+  id: string;
+  from_type: OkrContributionEntityType;
+  from_id: string;
+  to_type: OkrContributionEntityType;
+  to_id: string;
+  bu_id?: string | null;
+  description?: string | null;
+  created_at: string;
+  created_by?: string | null;
+  deleted_at?: string | null;
+}
+
+// KR Metrics (KPI linkage)
+export interface OkrKrMetric {
+  id: string;
+  kr_id: string;
+  kr_type: 'org' | 'team';
+  kpi_id: string;
+  role: OkrMetricRole;
+  created_at: string;
+  created_by?: string | null;
+  deleted_at?: string | null;
+  // Joined data
+  kpi?: {
+    id: string;
+    name: string;
+    unit: string;
+    target_value?: number | null;
+    direction: string;
+  };
 }
 
 // Utility functions
