@@ -46,6 +46,7 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   category?: AssetCategory | null;
   categories: AssetCategory[];
+  defaultParentId?: string;
   onSubmit: (data: CategoryFormData) => Promise<void>;
   isLoading: boolean;
 }
@@ -55,6 +56,7 @@ export function CategoryFormDialog({
   onOpenChange,
   category,
   categories,
+  defaultParentId,
   onSubmit,
   isLoading,
 }: CategoryFormDialogProps) {
@@ -80,12 +82,12 @@ export function CategoryFormDialog({
       } else {
         form.reset({
           name: "",
-          parent_id: undefined,
+          parent_id: defaultParentId || undefined,
           description: "",
         });
       }
     }
-  }, [open, category, form]);
+  }, [open, category, defaultParentId, form]);
 
   const handleSubmit = async (data: CategoryFormData) => {
     await onSubmit(data);
