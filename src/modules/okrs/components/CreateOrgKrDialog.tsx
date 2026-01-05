@@ -90,8 +90,10 @@ export function CreateOrgKrDialog({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-org-key-results', objectiveId] });
+      queryClient.invalidateQueries({ queryKey: ['okr-org-key-results'] });
       queryClient.invalidateQueries({ queryKey: ['okr-org-objectives'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives-with-krs'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-all-org-key-results'] });
       toast.success('Key Result criado com sucesso!');
       handleClose();
     },

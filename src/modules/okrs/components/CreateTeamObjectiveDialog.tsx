@@ -63,6 +63,7 @@ export function CreateTeamObjectiveDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-krs'] });
       toast.success('Objetivo de time criado com sucesso!');
       handleClose();
     },

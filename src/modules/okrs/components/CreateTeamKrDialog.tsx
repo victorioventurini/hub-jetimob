@@ -142,6 +142,8 @@ export function CreateTeamKrDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['okr-team-key-results'] });
       queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-krs'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-checkins'] });
       toast.success('Key Result criado com sucesso!');
       handleClose();
     },
