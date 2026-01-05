@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
-import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 import {
   Dialog,
   DialogContent,
@@ -12,18 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TeamSelect } from "@/components/selects";
+import { SimpleSelect } from "@/components/selects";
 
 interface ExistingProfile {
   id: string;
@@ -41,13 +35,18 @@ interface AddToBuDialogProps {
   existingProfile: ExistingProfile | null;
 }
 
+const ROLE_OPTIONS = [
+  { value: "collaborator", label: "Colaborador" },
+  { value: "team_leader", label: "Líder de Time" },
+  { value: "admin", label: "Administrador" },
+];
+
 export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDialogProps) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
-  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
   
   const [roleInBu, setRoleInBu] = useState<string>("collaborator");
-  const [teamId, setTeamId] = useState<string>("none");
+  const [teamId, setTeamId] = useState<string | undefined>(undefined);
   const [isDefault, setIsDefault] = useState(false);
 
   const addMembershipMutation = useMutation({
@@ -69,7 +68,7 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
       if (membershipError) throw membershipError;
 
       // Se selecionou um time, criar user_team_membership
-      if (teamId !== "none") {
+      if (teamId) {
         const { error: teamError } = await supabase
           .from("user_team_memberships")
           .insert({
@@ -152,40 +151,25 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
           {/* Role na nova BU */}
           <div className="space-y-2">
             <Label>Papel nesta BU *</Label>
-            <Select value={roleInBu} onValueChange={setRoleInBu}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="collaborator">Colaborador</SelectItem>
-                <SelectItem value="team_leader">Líder de Time</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
-              </SelectContent>
-            </Select>
+            <SimpleSelect
+              value={roleInBu}
+              onValueChange={setRoleInBu}
+              options={ROLE_OPTIONS}
+              triggerClassName="w-full"
+            />
           </div>
 
           {/* Time na nova BU */}
           <div className="space-y-2">
             <Label>Time nesta BU</Label>
-            <Select value={teamId} onValueChange={setTeamId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um time" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {hierarchicalTeams?.map((team) => (
-                  <SelectItem 
-                    key={team.id} 
-                    value={team.id}
-                    className={team.level > 0 ? "text-[13px]" : ""}
-                  >
-                    <span style={{ paddingLeft: `${team.level * 12}px` }}>
-                      {team.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TeamSelect
+              value={teamId}
+              onValueChange={setTeamId}
+              includeNone
+              noneLabel="Nenhum"
+              placeholder="Selecione um time"
+              triggerClassName="w-full"
+            />
           </div>
 
           <DialogFooter className="pt-4">

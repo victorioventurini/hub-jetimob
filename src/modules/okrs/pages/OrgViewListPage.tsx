@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, ChevronRight, Target, TrendingUp, AlertTriangle, XCircle } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -9,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
+import { YearSelect } from '@/components/selects';
 
 const statusConfig = {
   on_track: {
@@ -63,18 +63,12 @@ export default function OrgViewListPage() {
               Acompanhe como os OKRs dos times contribuem para os objetivos estratégicos
             </p>
           </div>
-          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <YearSelect
+            value={selectedYear}
+            onValueChange={setSelectedYear}
+            years={years}
+            triggerClassName="w-[120px]"
+          />
         </div>
 
         {/* Stats */}

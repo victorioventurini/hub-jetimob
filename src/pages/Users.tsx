@@ -26,13 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { TeamSelect, SimpleSelect } from "@/components/selects";
 import {
   Search,
   Plus,
@@ -50,7 +44,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
-import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
+
 import { useDeleteProfile } from "@/hooks/useProfiles";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
@@ -163,7 +157,7 @@ export default function UsersPage() {
     enabled: !!currentBu?.id,
   });
 
-  const { teams: hierarchicalTeams, isLoading: teamsLoading, error: teamsError } = useHierarchicalTeamList();
+  
 
   const getInitials = (name: string) =>
     name
@@ -272,13 +266,6 @@ export default function UsersPage() {
           </Alert>
         )}
 
-        {teamsError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Erro ao carregar times</AlertTitle>
-            <AlertDescription>{(teamsError as Error).message}</AlertDescription>
-          </Alert>
-        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -291,36 +278,26 @@ export default function UsersPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Select value={teamFilter} onValueChange={setTeamFilter}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Time" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os times</SelectItem>
-              {hierarchicalTeams?.map((team) => (
-                <SelectItem 
-                  key={team.id} 
-                  value={team.id}
-                  className={team.level > 0 ? "text-[13px]" : ""}
-                >
-                  <span style={{ paddingLeft: `${team.level * 12}px` }}>
-                    {team.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="active">Ativos</SelectItem>
-              <SelectItem value="vacation">Férias</SelectItem>
-              <SelectItem value="terminated">Desligados</SelectItem>
-            </SelectContent>
-          </Select>
+          <TeamSelect
+            value={teamFilter === "all" ? undefined : teamFilter}
+            onValueChange={(v) => setTeamFilter(v ?? "all")}
+            includeAll
+            allLabel="Todos os times"
+            placeholder="Time"
+            triggerClassName="w-[220px]"
+          />
+          <SimpleSelect
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "active", label: "Ativos" },
+              { value: "vacation", label: "Férias" },
+              { value: "terminated", label: "Desligados" },
+            ]}
+            placeholder="Status"
+            triggerClassName="w-[180px]"
+          />
         </div>
 
         {/* Bulk action bar */}

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +11,7 @@ import { calculateProgress, getRagStatusColor } from '../types';
 import { RiskKrsList } from '../components/RiskKrsList';
 import { AlignmentMap } from '../components/AlignmentMap';
 import { ProgressSummary } from '../components/ProgressSummary';
+import { YearSelect } from '@/components/selects';
 
 export default function CeoDashboardPage() {
   usePageTitle("Dashboard CEO - OKRs");
@@ -60,18 +60,12 @@ export default function CeoDashboardPage() {
               Visão executiva dos OKRs organizacionais
             </p>
           </div>
-          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <YearSelect
+            value={selectedYear}
+            onValueChange={setSelectedYear}
+            years={years}
+            triggerClassName="w-[120px]"
+          />
         </div>
 
         {/* KPI Cards */}
