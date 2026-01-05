@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.1.0  
+**Versão:** 1.2.0  
 **Última atualização:** 2026-01-05  
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -854,15 +854,44 @@ Sistema de menções em comentários.
 
 ### 3.2 Sub-módulos do Assets
 
-| Sub-módulo | Descrição | Permissões independentes |
-|------------|-----------|--------------------------|
-| **Inventário** | Bens patrimoniais com etiqueta/QR | `inventory_admin`, `inventory_manager` |
-| **Chaves** | Claviculários, chaveiros, chaves | `keys_admin`, `keys_manager` |
-| **Brindes** | Itens de consumo por lotes | `gifts_admin`, `gifts_manager` |
-| **Relatórios** | Visão agregada | Respeita permissões |
-| **Configurações** | Configurações do módulo | Apenas admins |
+| Sub-módulo | Rota | Descrição | Permissões |
+|------------|------|-----------|------------|
+| **Inventário** | `/assets/inventory` | Bens patrimoniais com etiqueta/QR | `inventory_admin`, `inventory_manager`, `viewer` |
+| **Chaves** | `/assets/keys` | Claviculários, chaveiros, chaves | `keys_admin`, `keys_manager`, `viewer` |
+| **Brindes** | `/assets/gifts` | Itens de consumo por lotes | `gifts_admin`, `gifts_manager`, `viewer` |
+| **Relatórios** | `/assets/reports` | Visão agregada | Respeita permissões por sub-módulo |
+| **Configurações** | `/assets/settings` | Gerenciamento de permissões | Apenas `assets_admin` |
 
-### 3.3 Módulos em Desenvolvimento
+**Componentes UI implementados:**
+- `AssetsLayout.tsx` - Layout com sub-navegação por tabs
+- `InventoryPage.tsx`, `KeysPage.tsx`, `GiftsPage.tsx` - Páginas principais
+- `InventoryCard.tsx`, `InventoryFilters.tsx`, `InventoryItemDialog.tsx` - Inventário
+- `ClavicularyBoard.tsx`, `KeyringsList.tsx`, `ClavicularyDialog.tsx`, `KeyringDialog.tsx` - Chaves
+- `GiftItemCard.tsx`, `GiftItemDialog.tsx` - Brindes
+- `AddPermissionDialog.tsx` - Configurações de permissão
+
+### 3.3 Configuração de Módulos por BU
+
+Módulos operacionais podem ser habilitados/desabilitados por BU através de:
+
+- **Interface:** `/settings/modules` (aba "Configuração por BU")
+- **Tabela:** `bu_module_configs`
+- **RPC:** `get_enabled_modules_for_bu(p_bu_id)`
+
+| Campo | Descrição |
+|-------|-----------|
+| `bu_id` | FK para bu_units |
+| `module_id` | FK para modules |
+| `is_enabled` | Se está habilitado na BU |
+| `enabled_at` | Data de ativação |
+| `disabled_at` | Data de desativação |
+
+**Regras:**
+- Módulos `global` estão sempre habilitados
+- Módulos `operational` dependem de config explícita por BU
+- Se não houver registro em `bu_module_configs`, módulo está desabilitado
+
+### 3.4 Módulos em Desenvolvimento
 
 | Módulo | Status | Descrição |
 |--------|--------|-----------|
@@ -1074,6 +1103,75 @@ function calculateProgress(baseline, current, target, direction) {
 | `invoke-vic` | Invoca agentes Vic |
 | `process-agent-document` | Processa documentos para RAG |
 | `get-tcr` | Retorna TCR para Custom GPT |
+| `global-search` | Busca multi-contexto (ver seção 8.1) |
+
+### 8.1 Global Search
+
+A Edge Function `global-search` implementa busca agregada multi-contexto com suporte a:
+
+**Entidades pesquisadas:**
+| Tipo | Tabela | Campos buscados |
+|------|--------|-----------------|
+| `people` | profiles + bu_user_memberships | first_name, last_name, display_name, job_title, work_email |
+| `teams` | teams | name, description |
+| `squads` | squads | name, description |
+| `okrs` | okr_org_objectives, okr_team_objectives | title |
+| `krs` | okr_org_key_results, okr_team_key_results | title |
+| `initiatives` | okr_initiatives | name, description |
+| `kpis` | kpi_metrics | name, description |
+| `locations` | bu_locations | name, formatted_address |
+| `assets_inventory` | asset_inventory | name, internal_code, brand, model |
+| `assets_keyrings` | asset_keyrings | name, tag_number |
+| `assets_keys` | asset_keys | tag_number, description |
+| `assets_gift_items` | asset_gift_items | name, category |
+| `assets_gift_batches` | asset_gift_batches | batch_code, campaign |
+
+**Segurança:**
+- Valida JWT (usuário autenticado)
+- Valida acesso à BU via `user_has_bu_access(user_id, bu_id)`
+- Para Assets, verifica permissões via `has_asset_permission()`:
+  - Inventário: `assets_admin`, `inventory_admin`, `inventory_manager`, `viewer`
+  - Chaves: `assets_admin`, `keys_admin`, `keys_manager`, `viewer`
+  - Brindes: `assets_admin`, `gifts_admin`, `gifts_manager`, `viewer`
+
+**Input:**
+```json
+{
+  "bu_id": "uuid",
+  "q": "termo de busca",
+  "limit_per_type": 5
+}
+```
+
+**Output:**
+```json
+{
+  "query": "termo",
+  "groups": [
+    {
+      "type": "people",
+      "label": "Pessoas",
+      "results": [
+        {
+          "id": "uuid",
+          "type": "people",
+          "title": "Nome Completo",
+          "subtitle": "Cargo",
+          "meta": {},
+          "url": "/profile/uuid",
+          "icon": "user"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Frontend:**
+- Componente: `src/components/layout/GlobalSearch.tsx` (Command Palette)
+- Hook: `src/hooks/useGlobalSearch.ts` (debounce 300ms + TanStack Query)
+- Página expandida: `src/pages/SearchPage.tsx` (rota `/search`)
+- Atalho de teclado: `⌘K` / `Ctrl+K`
 
 ---
 
@@ -1131,7 +1229,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.1.0 |
+| **Versão do TCR** | 1.2.0 |
 | **Data da última atualização** | 2026-01-05 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1139,6 +1237,21 @@ src/
 ---
 
 ## Changelog
+
+### v1.2.0 (2026-01-05)
+- **Busca Global** implementada via Edge Function `global-search`
+  - Busca multi-contexto em 13 entidades diferentes
+  - Suporte a Assets com validação de permissões por sub-módulo
+  - Componente Command Palette com atalho ⌘K
+  - Página expandida `/search` com filtros por tipo
+- **UI do módulo Assets** implementada
+  - Páginas: Inventário, Chaves, Brindes, Relatórios, Configurações
+  - Componentes: Cards, Dialogs, Filtros, Listas
+  - Sub-navegação por tabs
+- **Configuração de módulos por BU** via interface
+  - Nova aba em `/settings/modules` para toggle de módulos por BU
+  - Toggle on/off para módulos operacionais
+  - Visualização de quantas BUs têm cada módulo ativo
 
 ### v1.1.0 (2026-01-05)
 - Adicionado módulo **Assets** completo (Inventário, Chaves, Brindes)
