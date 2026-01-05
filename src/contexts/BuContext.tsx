@@ -25,17 +25,37 @@ const BU_SELECTED_KEY = "hub_bu_selected";
 
 export function BuProvider({ children }: { children: ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
-  const { data: userBus = [], isLoading } = useUserBus();
+  const { data: userBus = [], isLoading: busLoading } = useUserBus();
   const [currentBuId, setCurrentBuId] = useState<string | null>(() => {
     return localStorage.getItem(BU_STORAGE_KEY);
   });
   const [buSelected, setBuSelected] = useState<boolean>(() => {
     return localStorage.getItem(BU_SELECTED_KEY) === "true";
   });
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Combined loading state - wait for both auth AND bus to load
+  const isLoading = authLoading || busLoading || (!hasInitialized && !!user);
 
   // Initialize BU state from storage on mount
   useEffect(() => {
-    if (userBus.length === 0) return;
+    // Wait for auth to complete before initializing
+    if (authLoading) return;
+    
+    // If user is not logged in, mark as initialized
+    if (!user) {
+      setHasInitialized(true);
+      return;
+    }
+    
+    // Wait for bus data to load
+    if (busLoading) return;
+    
+    // If no BUs available yet but user is logged in, wait
+    if (userBus.length === 0) {
+      setHasInitialized(true);
+      return;
+    }
 
     const storedBuId = localStorage.getItem(BU_STORAGE_KEY);
     const storedSelected = localStorage.getItem(BU_SELECTED_KEY) === "true";
@@ -59,7 +79,9 @@ export function BuProvider({ children }: { children: ReactNode }) {
       setBuSelected(false);
       setCurrentBuId(null);
     }
-  }, [userBus]);
+    
+    setHasInitialized(true);
+  }, [userBus, authLoading, busLoading, user]);
 
   // Clear BU when user logs out (avoid clearing during initial auth loading)
   useEffect(() => {
