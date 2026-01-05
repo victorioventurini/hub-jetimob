@@ -35,6 +35,7 @@ const OkrDashboardPage = lazy(() => import("./modules/okrs/pages/OkrDashboardPag
 const CeoDashboardPage = lazy(() => import("./modules/okrs/pages/CeoDashboardPage"));
 const OrgViewListPage = lazy(() => import("./modules/okrs/pages/OrgViewListPage"));
 const OrgObjectiveViewPage = lazy(() => import("./modules/okrs/pages/OrgObjectiveViewPage"));
+const TeamContributionPage = lazy(() => import("./modules/okrs/pages/TeamContributionPage"));
 
 // Módulo KPIs
 const KpiDashboardPage = lazy(() => import("./modules/kpis/pages/KpiDashboardPage"));
@@ -374,8 +375,18 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
-
-                    {/* KPIs */}
+                    <Route
+                      path="/okrs/team-contribution/:teamId"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <TeamContributionPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="/kpis"
                       element={
