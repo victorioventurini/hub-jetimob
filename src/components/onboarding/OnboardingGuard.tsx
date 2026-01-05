@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +10,6 @@ interface OnboardingGuardProps {
 
 export function OnboardingGuard({ children }: OnboardingGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
   const { data: profile, isLoading: profileLoading, refetch } = useQuery({
     queryKey: ["onboarding-check", user?.id],
@@ -28,21 +26,17 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos para evitar refetch desnecessário
   });
 
-  useEffect(() => {
-    if (profile !== undefined) {
-      setOnboardingCompleted(profile?.onboarding_completed ?? false);
-    }
-  }, [profile]);
+  const onboardingCompleted = profile?.onboarding_completed ?? false;
 
   const handleOnboardingComplete = () => {
-    setOnboardingCompleted(true);
     refetch();
   };
 
   // Still loading auth or profile
-  if (authLoading || profileLoading || onboardingCompleted === null) {
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
