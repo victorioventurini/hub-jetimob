@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { sendEmail, buildMagicLinkEmailHtml } from "../_shared/email-sender.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -12,30 +13,6 @@ const corsHeaders = {
 interface MagicLinkRequest {
   email: string;
   redirectTo: string;
-}
-
-// Get SendGrid API key from hub_integrations_global_config
-async function getSendGridApiKey(): Promise<string | null> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  
-  const { data, error } = await supabase
-    .from("hub_integrations_global_config")
-    .select("config_encrypted, is_enabled_global")
-    .eq("integration_key", "sendgrid")
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error fetching SendGrid config:", error);
-    return null;
-  }
-
-  if (!data || !data.is_enabled_global) {
-    console.warn("SendGrid integration is not enabled");
-    return null;
-  }
-
-  const config = data.config_encrypted as { api_key?: string } | null;
-  return config?.api_key || null;
 }
 
 // Check if email domain is allowed in any active BU
@@ -68,94 +45,6 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   return { allowed: false, buName: null };
 }
 
-async function sendMagicLinkEmail(
-  email: string, 
-  magicLink: string, 
-  sendgridApiKey: string,
-  userName?: string, 
-  buName?: string
-): Promise<void> {
-  const displayName = userName || email.split('@')[0].split('.')[0];
-  // Capitalize first letter
-  const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-  
-  console.log(`Sending magic link email to ${email} via SendGrid from no-reply@hub.jetimob.com`);
-  
-  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${sendgridApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      personalizations: [
-        {
-          to: [{ email }],
-          subject: `Seu código de acesso ao Hub da Jet`,
-        },
-      ],
-      from: {
-        email: "no-reply@hub.jetimob.com",
-        name: "Hub",
-      },
-      content: [
-        {
-          type: "text/html",
-          value: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
-              <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-                <div style="text-align: center; margin-bottom: 32px;">
-                  <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub da Jet</h1>
-                </div>
-                
-                <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                  Olá, ${formattedName}!
-                </p>
-                
-                <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-                  Clique no botão abaixo para acessar o Hub.<br>
-                  Este link é válido por 1 hora.
-                </p>
-                
-                <div style="text-align: center; margin-bottom: 32px;">
-                  <a href="${magicLink}" style="display: inline-block; background-color: #F97316; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                    Acessar o Hub
-                  </a>
-                </div>
-                
-                <p style="color: #71717a; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
-                  Se você não solicitou este link, pode ignorar este e-mail com segurança.
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;">
-                
-                <p style="color: #a1a1aa; font-size: 12px; text-align: center; margin: 0;">
-                  O ponto de encontro para evoluir, executar e simplificar o morar.
-                </p>
-              </div>
-            </body>
-            </html>
-          `,
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("SendGrid API error:", response.status, errorText);
-    throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
-  }
-
-  console.log("Magic link email sent successfully to:", email);
-}
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -184,19 +73,6 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Email inválido" }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    // Get SendGrid API key from database
-    const sendgridApiKey = await getSendGridApiKey();
-    if (!sendgridApiKey) {
-      console.error("SendGrid API key not configured or integration disabled");
-      return new Response(
-        JSON.stringify({ error: "Integração SendGrid não configurada. Configure a API key em Configurações > Integrações." }),
-        {
-          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
@@ -261,10 +137,41 @@ const handler = async (req: Request): Promise<Response> => {
     const magicLink = data.properties.action_link;
     console.log("Magic link generated successfully for:", email);
 
-    // Send email via SendGrid
-    await sendMagicLinkEmail(email, magicLink, sendgridApiKey, undefined, buName || undefined);
+    // Get display name from email
+    const displayName = email.split('@')[0].split('.')[0];
 
-    return new Response(JSON.stringify({ success: true }), {
+    // Build email HTML
+    const html = buildMagicLinkEmailHtml({
+      magicLink,
+      displayName,
+      buName: buName || undefined,
+    });
+
+    // Send email via SendGrid (with Resend fallback)
+    const result = await sendEmail({
+      to: email,
+      subject: `Seu código de acesso ao Hub da Jet`,
+      html,
+      from: {
+        email: "no-reply@hub.jetimob.com",
+        name: "Hub",
+      },
+    });
+
+    if (!result.success) {
+      console.error("Failed to send email:", result.error);
+      return new Response(
+        JSON.stringify({ error: result.error || "Erro ao enviar email." }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`Email sent successfully via ${result.provider} to: ${email}`);
+
+    return new Response(JSON.stringify({ success: true, provider: result.provider }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
