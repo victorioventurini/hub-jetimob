@@ -2,15 +2,12 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  Target,
-  BarChart3,
-  Users,
-  UsersRound,
   BookOpen,
   ExternalLink,
   Building2,
   Blocks,
   Puzzle,
+  Workflow,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -104,6 +101,7 @@ export function SettingsSidebar() {
           <NavItem to="/settings/business-units" icon={Building2} label="Business Units" />
           <NavItem to="/settings/modules" icon={Blocks} label="Módulos" />
           <NavItem to="/settings/integrations" icon={Puzzle} label="Integrações" />
+          <NavItem to="/settings/automations" icon={Workflow} label="Automações" />
         </NavGroup>
 
         {/* Recursos Section */}
