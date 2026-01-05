@@ -54,8 +54,9 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
       className={cn(
         "fixed top-0 right-0 z-30 h-16 bg-card/80 backdrop-blur-md border-b border-border",
         "transition-all duration-300 ease-in-out",
-        "left-0 lg:left-64",
-        sidebarCollapsed && "lg:left-20"
+        isSettingsPage 
+          ? "left-0" 
+          : cn("left-0 lg:left-64", sidebarCollapsed && "lg:left-20")
       )}
     >
       <div className="flex items-center justify-between h-full px-4 lg:px-8">
