@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Target, TrendingUp, Crosshair, RefreshCw } from 'lucide-react';
+import { Plus, AlertTriangle, Target, TrendingUp, Crosshair, RefreshCw, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
@@ -136,6 +137,13 @@ export default function OkrDashboardPage() {
           </div>
           
           <div className="flex items-center gap-3">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/okrs/org-view">
+                <Building2 className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Visão Org.</span>
+              </Link>
+            </Button>
+            
             <OkrViewSelector 
               activeView={activeView} 
               onViewChange={setActiveView}
