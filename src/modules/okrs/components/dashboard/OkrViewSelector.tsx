@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Building2, Users, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBu } from '@/contexts/BuContext';
 
 export type OkrView = 'company' | 'team' | 'my';
 
@@ -10,13 +11,15 @@ interface OkrViewSelectorProps {
   showMyOkrs?: boolean;
 }
 
-const views = [
-  { id: 'company' as const, label: 'Company OKRs', icon: Building2 },
-  { id: 'team' as const, label: 'Team OKRs', icon: Users },
-  { id: 'my' as const, label: 'My OKRs', icon: User },
-];
-
 export function OkrViewSelector({ activeView, onViewChange, showMyOkrs = true }: OkrViewSelectorProps) {
+  const { currentBu } = useBu();
+  
+  const views = [
+    { id: 'company' as const, label: `${currentBu?.name || 'Company'} OKRs`, icon: Building2 },
+    { id: 'team' as const, label: 'Team OKRs', icon: Users },
+    { id: 'my' as const, label: 'My OKRs', icon: User },
+  ];
+  
   const filteredViews = showMyOkrs ? views : views.filter(v => v.id !== 'my');
   
   return (
