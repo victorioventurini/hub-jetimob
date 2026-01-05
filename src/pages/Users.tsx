@@ -1,6 +1,7 @@
 // Users page with BU filtering
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
@@ -414,7 +415,10 @@ export default function UsersPage() {
                       </TableCell>
                     )}
                     <TableCell>
-                      <div className="flex items-center gap-3">
+                      <Link 
+                        to={`/users/${profile.id}`}
+                        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                      >
                         <Avatar className="h-9 w-9">
                           <AvatarImage src={profile.photo_url || undefined} />
                           <AvatarFallback className="bg-accent/10 text-accent text-sm font-semibold">
@@ -422,7 +426,7 @@ export default function UsersPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium text-foreground hover:text-accent transition-colors">
                             {profile.display_name}
                           </p>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -430,7 +434,7 @@ export default function UsersPage() {
                             {profile.work_email}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell className="text-sm">{profile.job_title}</TableCell>
                     <TableCell>

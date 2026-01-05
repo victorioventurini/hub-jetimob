@@ -194,9 +194,10 @@ export default function TeamDetailPage() {
                     {team.members && team.members.length > 0 ? (
                       <div className="space-y-3">
                         {team.members.map((member: any) => (
-                          <div
+                          <Link
                             key={member.id}
-                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                            to={`/users/${member.id}`}
+                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                           >
                             <div className="flex items-center gap-3">
                               <Avatar className="h-10 w-10">
@@ -208,7 +209,7 @@ export default function TeamDetailPage() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-medium">
+                                <p className="font-medium group-hover:text-accent transition-colors">
                                   {member.display_name}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
@@ -219,10 +220,11 @@ export default function TeamDetailPage() {
                             <a
                               href={`mailto:${member.work_email}`}
                               className="text-muted-foreground hover:text-accent"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <Mail className="h-4 w-4" />
                             </a>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     ) : (
@@ -352,7 +354,10 @@ export default function TeamDetailPage() {
               </CardHeader>
               <CardContent>
                 {team.leader ? (
-                  <div className="flex items-center gap-3">
+                  <Link
+                    to={`/users/${team.leader.id}`}
+                    className="flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-muted transition-colors"
+                  >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={team.leader.photo_url || undefined} />
                       <AvatarFallback className="bg-accent/10 text-accent text-lg">
@@ -360,14 +365,14 @@ export default function TeamDetailPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{team.leader.display_name}</p>
+                      <p className="font-medium hover:text-accent transition-colors">{team.leader.display_name}</p>
                       {(team.leader as any).job_title && (
                         <p className="text-sm text-muted-foreground">
                           {(team.leader as any).job_title}
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ) : (
                   <div className="text-center py-4">
                     <UserCircle className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
