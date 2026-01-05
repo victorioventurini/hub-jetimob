@@ -1,0 +1,362 @@
+// =============================================
+// MÓDULO TICKETS - TIPOS
+// =============================================
+
+// ===========================================
+// ENUMS
+// ===========================================
+
+export type TicketType = 'internal' | 'external';
+export type TicketStatus = 'waiting' | 'paused' | 'in_progress' | 'done' | 'discarded';
+export type TicketVisibility = 'bu_all' | 'teams' | 'users' | 'private';
+export type TicketCategoryScope = 'internal' | 'external' | 'both';
+export type TicketParticipantType = 'internal_user' | 'partner_contact';
+export type TicketParticipantRole = 'requester' | 'assignee' | 'watcher';
+export type TicketAuthorType = 'internal_user' | 'partner_contact';
+export type PartnerCompanyStatus = 'active' | 'inactive';
+export type PartnerContactStatus = 'active' | 'inactive';
+
+// ===========================================
+// INTERFACES
+// ===========================================
+
+// Empresa Parceira
+export interface PartnerCompany {
+  id: string;
+  bu_id: string;
+  name: string;
+  legal_name: string | null;
+  allowed_domains: string[];
+  status: PartnerCompanyStatus;
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Computed/Joined
+  contacts_count?: number;
+}
+
+// Contato Externo
+export interface PartnerContact {
+  id: string;
+  bu_id: string;
+  partner_company_id: string;
+  profile_user_id: string | null;
+  name: string;
+  email: string;
+  phone: string | null;
+  status: PartnerContactStatus;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  partner_company?: { id: string; name: string } | null;
+}
+
+// Categoria de Ticket
+export interface TicketCategory {
+  id: string;
+  bu_id: string;
+  scope: TicketCategoryScope;
+  name: string;
+  description: string | null;
+  status: string;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  subcategories?: TicketSubcategory[];
+}
+
+// Subcategoria de Ticket
+export interface TicketSubcategory {
+  id: string;
+  bu_id: string;
+  category_id: string;
+  name: string;
+  status: string;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  category?: { id: string; name: string } | null;
+}
+
+// Regra de Roteamento
+export interface TicketRoutingRule {
+  id: string;
+  bu_id: string;
+  partner_company_id: string | null;
+  subcategory_id: string | null;
+  assignee_contact_ids: string[];
+  watcher_contact_ids: string[];
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  partner_company?: { id: string; name: string } | null;
+  subcategory?: { id: string; name: string; category?: { id: string; name: string } } | null;
+  assignee_contacts?: PartnerContact[];
+  watcher_contacts?: PartnerContact[];
+}
+
+// Ticket (Entidade Principal)
+export interface Ticket {
+  id: string;
+  bu_id: string;
+  type: TicketType;
+  title: string;
+  status: TicketStatus;
+  expected_due_at: string | null;
+  created_by_user_id: string;
+  owner_user_id: string | null;
+  visibility: TicketVisibility;
+  visibility_team_ids: string[];
+  visibility_squad_ids: string[];
+  visibility_user_ids: string[];
+  partner_company_id: string | null;
+  category_id: string | null;
+  subcategory_id: string | null;
+  external_assignee_contact_ids: string[];
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  created_by?: { id: string; full_name: string; avatar_url: string | null } | null;
+  owner?: { id: string; full_name: string; avatar_url: string | null } | null;
+  partner_company?: { id: string; name: string } | null;
+  category?: { id: string; name: string } | null;
+  subcategory?: { id: string; name: string } | null;
+  participants?: TicketParticipant[];
+  messages_count?: number;
+  attachments_count?: number;
+  last_message_at?: string | null;
+}
+
+// Participante de Ticket
+export interface TicketParticipant {
+  id: string;
+  bu_id: string;
+  ticket_id: string;
+  participant_type: TicketParticipantType;
+  user_id: string | null;
+  partner_contact_id: string | null;
+  role: TicketParticipantRole;
+  is_active: boolean;
+  created_at: string;
+  // Joined
+  user?: { id: string; full_name: string; avatar_url: string | null } | null;
+  partner_contact?: { id: string; name: string; email: string } | null;
+}
+
+// Mensagem de Ticket
+export interface TicketMessage {
+  id: string;
+  bu_id: string;
+  ticket_id: string;
+  author_type: TicketAuthorType;
+  author_user_id: string | null;
+  author_contact_id: string | null;
+  body_richtext: RichTextContent;
+  created_at: string;
+  edited_at: string | null;
+  deleted_at: string | null;
+  // Joined
+  author_user?: { id: string; full_name: string; avatar_url: string | null } | null;
+  author_contact?: { id: string; name: string; email: string } | null;
+  attachments?: TicketAttachment[];
+  mentions?: TicketMention[];
+}
+
+// Tipo para conteúdo rich text (JSON)
+export interface RichTextContent {
+  type?: string;
+  content?: RichTextNode[];
+  text?: string;
+}
+
+export interface RichTextNode {
+  type: string;
+  text?: string;
+  marks?: { type: string }[];
+  content?: RichTextNode[];
+  attrs?: Record<string, unknown>;
+}
+
+// Anexo de Ticket
+export interface TicketAttachment {
+  id: string;
+  bu_id: string;
+  ticket_id: string;
+  message_id: string | null;
+  file_url: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string | null;
+  uploaded_by_user_id: string | null;
+  created_at: string;
+  deleted_at: string | null;
+  // Joined
+  uploaded_by?: { id: string; full_name: string } | null;
+}
+
+// Menção em Ticket
+export interface TicketMention {
+  id: string;
+  bu_id: string;
+  ticket_id: string;
+  message_id: string;
+  mentioned_user_id: string | null;
+  mentioned_contact_id: string | null;
+  created_at: string;
+  // Joined
+  mentioned_user?: { id: string; full_name: string } | null;
+  mentioned_contact?: { id: string; name: string } | null;
+}
+
+// ===========================================
+// LABELS PARA UI
+// ===========================================
+
+export const TICKET_TYPE_LABELS: Record<TicketType, string> = {
+  internal: 'Interno',
+  external: 'Externo',
+};
+
+export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
+  waiting: 'Aguardando',
+  paused: 'Pausado',
+  in_progress: 'Em Andamento',
+  done: 'Concluído',
+  discarded: 'Descartado',
+};
+
+export const TICKET_STATUS_COLORS: Record<TicketStatus, string> = {
+  waiting: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  paused: 'bg-gray-100 text-gray-800 border-gray-200',
+  in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
+  done: 'bg-green-100 text-green-800 border-green-200',
+  discarded: 'bg-red-100 text-red-800 border-red-200',
+};
+
+export const TICKET_VISIBILITY_LABELS: Record<TicketVisibility, string> = {
+  bu_all: 'Toda a BU',
+  teams: 'Times Selecionados',
+  users: 'Usuários Selecionados',
+  private: 'Privado',
+};
+
+export const TICKET_CATEGORY_SCOPE_LABELS: Record<TicketCategoryScope, string> = {
+  internal: 'Apenas Interno',
+  external: 'Apenas Externo',
+  both: 'Ambos',
+};
+
+export const TICKET_PARTICIPANT_ROLE_LABELS: Record<TicketParticipantRole, string> = {
+  requester: 'Solicitante',
+  assignee: 'Responsável',
+  watcher: 'Observador',
+};
+
+export const PARTNER_STATUS_LABELS: Record<PartnerCompanyStatus, string> = {
+  active: 'Ativo',
+  inactive: 'Inativo',
+};
+
+// ===========================================
+// TIPOS AUXILIARES
+// ===========================================
+
+// Filtros para listagem de tickets
+export interface TicketFilters {
+  type?: TicketType;
+  status?: TicketStatus | TicketStatus[];
+  category_id?: string;
+  subcategory_id?: string;
+  partner_company_id?: string;
+  owner_user_id?: string;
+  created_by_user_id?: string;
+  overdue?: boolean;
+  search?: string;
+}
+
+// Dados para criar ticket
+export interface CreateTicketData {
+  type: TicketType;
+  title: string;
+  category_id?: string;
+  subcategory_id?: string;
+  partner_company_id?: string;
+  visibility: TicketVisibility;
+  visibility_team_ids?: string[];
+  visibility_squad_ids?: string[];
+  visibility_user_ids?: string[];
+  expected_due_at?: string;
+  initial_message?: RichTextContent;
+  attachments?: File[];
+  participants?: {
+    type: TicketParticipantType;
+    id: string;
+    role: TicketParticipantRole;
+  }[];
+}
+
+// Dados para atualizar ticket
+export interface UpdateTicketData {
+  title?: string;
+  status?: TicketStatus;
+  owner_user_id?: string;
+  category_id?: string;
+  subcategory_id?: string;
+  visibility?: TicketVisibility;
+  visibility_team_ids?: string[];
+  visibility_squad_ids?: string[];
+  visibility_user_ids?: string[];
+  expected_due_at?: string | null;
+}
+
+// Dados para criar mensagem
+export interface CreateMessageData {
+  body_richtext: RichTextContent;
+  attachments?: File[];
+  mentions?: {
+    user_id?: string;
+    contact_id?: string;
+  }[];
+}
+
+// ===========================================
+// HELPERS
+// ===========================================
+
+export function getStatusLabel(status: TicketStatus): string {
+  return TICKET_STATUS_LABELS[status];
+}
+
+export function getTypeLabel(type: TicketType): string {
+  return TICKET_TYPE_LABELS[type];
+}
+
+export function isTicketOverdue(ticket: Ticket): boolean {
+  if (!ticket.expected_due_at) return false;
+  if (ticket.status === 'done' || ticket.status === 'discarded') return false;
+  return new Date(ticket.expected_due_at) < new Date();
+}
+
+export function getTicketPriorityFromDue(dueAt: string | null): 'high' | 'medium' | 'low' | null {
+  if (!dueAt) return null;
+  const now = new Date();
+  const due = new Date(dueAt);
+  const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return 'high'; // Atrasado
+  if (diffDays <= 2) return 'high'; // Vence em 2 dias
+  if (diffDays <= 7) return 'medium'; // Vence em 1 semana
+  return 'low';
+}
