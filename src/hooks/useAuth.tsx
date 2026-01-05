@@ -126,24 +126,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
-    // Email domain validation is now done by the BU system
-    // The Auth page checks against bu_units.allowed_email_domains
-    // The edge function also validates domains against the database
+    // Email domain validation is done by the edge function
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectUrl,
-        shouldCreateUser: true,
-      },
-    });
+    try {
+      // Call our custom edge function that uses SendGrid
+      const response = await supabase.functions.invoke('request-magic-link', {
+        body: { email, redirectTo: redirectUrl },
+      });
 
-    if (error) {
+      if (response.error) {
+        console.error('Error from request-magic-link:', response.error);
+        return { error: new Error(response.error.message || 'Erro ao enviar magic link') };
+      }
+
+      if (response.data?.error) {
+        return { error: new Error(response.data.error) };
+      }
+
+      console.log('Magic link sent successfully via SendGrid to:', email);
+      return { error: null };
+    } catch (error: any) {
+      console.error('Error calling request-magic-link:', error);
       return { error: error as Error };
     }
-
-    return { error: null };
   }
 
   async function signOut() {
