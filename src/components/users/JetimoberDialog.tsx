@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
+import { useBu } from "@/contexts/BuContext";
 import { z } from "zod";
 import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 import {
@@ -22,15 +23,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
+import { AddToBuDialog } from "./AddToBuDialog";
 
 const jetimoberSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
-  work_email: z.string().trim().email("E-mail inválido").endsWith("@jetimob.com", "Apenas e-mails @jetimob.com"),
+  work_email: z.string().trim().email("E-mail inválido"),
   job_title: z.string().trim().min(1, "Cargo é obrigatório").max(100),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
@@ -57,6 +60,16 @@ interface Profile {
   manager?: { id: string; display_name: string } | null;
 }
 
+interface ExistingProfile {
+  id: string;
+  user_id: string | null;
+  display_name: string;
+  work_email: string;
+  photo_url: string | null;
+  job_title: string;
+  bu_name?: string;
+}
+
 interface JetimoberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,10 +92,14 @@ const defaultFormData: JetimoberFormData = {
 
 export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialogProps) {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
   const isEditing = !!profile;
   
   const [formData, setFormData] = useState<JetimoberFormData>(defaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof JetimoberFormData, string>>>({});
+  const [existingProfile, setExistingProfile] = useState<ExistingProfile | null>(null);
+  const [showAddToBuDialog, setShowAddToBuDialog] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const { teams: hierarchicalTeams } = useHierarchicalTeamList();
 
@@ -100,6 +117,56 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     enabled: open,
   });
+
+  // Verificar se email já existe quando campo perde o foco
+  const checkExistingProfile = async (email: string) => {
+    if (!email || isEditing) return;
+    
+    setIsCheckingEmail(true);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select(`
+          id, 
+          user_id,
+          display_name, 
+          work_email, 
+          photo_url, 
+          job_title,
+          bu_id,
+          bu:bu_units!profiles_bu_id_fkey(name)
+        `)
+        .eq("work_email", email.toLowerCase().trim())
+        .is("deleted_at", null)
+        .maybeSingle();
+      
+      if (data) {
+        // Verificar se já está na BU atual
+        const { data: membershipExists } = await supabase
+          .from("bu_user_memberships")
+          .select("id")
+          .eq("user_id", data.user_id)
+          .eq("bu_id", currentBu?.id)
+          .maybeSingle();
+        
+        if (membershipExists) {
+          toast.error("Este Jetimober já faz parte desta BU.");
+          setExistingProfile(null);
+        } else {
+          setExistingProfile({
+            ...data,
+            bu_name: (data.bu as any)?.name || undefined,
+          });
+        }
+      } else {
+        setExistingProfile(null);
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
   // Só reseta o form quando o dialog abre, não quando os dados mudam
   useDialogFormReset(open, useCallback(() => {
@@ -131,17 +198,20 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       setFormData(defaultFormData);
     }
     setErrors({});
+    setExistingProfile(null);
   }, [profile]));
 
   const createMutation = useMutation({
     mutationFn: async (data: JetimoberFormData) => {
+      if (!currentBu?.id) throw new Error("BU não selecionada");
+      
       const display_name = `${data.first_name} ${data.last_name}`.trim();
       
-      const { error } = await supabase.from("profiles").insert({
+      const { data: newProfile, error } = await supabase.from("profiles").insert({
         first_name: data.first_name,
         last_name: data.last_name,
         display_name,
-        work_email: data.work_email,
+        work_email: data.work_email.toLowerCase().trim(),
         job_title: data.job_title,
         city: data.city,
         state: data.state,
@@ -150,9 +220,13 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         team_id: data.team_id,
         manager_user_id: data.manager_user_id,
         start_date: data.start_date,
-      });
+        bu_id: currentBu.id,
+      }).select("id").single();
       
       if (error) throw error;
+      
+      // Nota: O user_id será preenchido quando a pessoa fizer login pela primeira vez
+      // A membership será criada pelo trigger handle_new_user
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
@@ -162,7 +236,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     onError: (error: any) => {
       console.error("Error creating profile:", error);
       if (error.message?.includes("profiles_work_email_unique")) {
-        toast.error("Este e-mail já está cadastrado.");
+        toast.error("Este e-mail já está cadastrado. Verifique se deseja adicionar a esta BU.");
       } else {
         toast.error("Erro ao cadastrar. Tente novamente.");
       }
@@ -297,9 +371,10 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
                 type="email"
                 value={formData.work_email}
                 onChange={(e) => handleChange("work_email", e.target.value)}
+                onBlur={(e) => checkExistingProfile(e.target.value)}
                 placeholder="nome@jetimob.com"
                 className={errors.work_email ? "border-destructive" : ""}
-                disabled={isEditing}
+                disabled={isEditing || isCheckingEmail}
               />
               {errors.work_email && (
                 <p className="text-xs text-destructive">{errors.work_email}</p>
@@ -319,6 +394,27 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
               )}
             </div>
           </div>
+
+          {/* Alerta de perfil existente */}
+          {existingProfile && !isEditing && (
+            <Alert className="border-accent/50 bg-accent/5">
+              <UserCheck className="h-4 w-4 text-accent" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>
+                  <strong>{existingProfile.display_name}</strong> já está cadastrado
+                  {existingProfile.bu_name && ` na BU ${existingProfile.bu_name}`}.
+                </span>
+                <Button 
+                  type="button"
+                  size="sm" 
+                  variant="accent"
+                  onClick={() => setShowAddToBuDialog(true)}
+                >
+                  Adicionar a esta BU
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Separator />
 
@@ -451,6 +547,17 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <AddToBuDialog
+        open={showAddToBuDialog}
+        onOpenChange={(open) => {
+          setShowAddToBuDialog(open);
+          if (!open) {
+            onOpenChange(false);
+          }
+        }}
+        existingProfile={existingProfile}
+      />
     </Dialog>
   );
 }
