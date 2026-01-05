@@ -12,7 +12,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users } from 'lucide-react';
+import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb } from 'lucide-react';
+import { InitiativesList } from '../initiatives';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
@@ -391,6 +392,8 @@ interface KeyResultRowProps {
 }
 
 function KeyResultRow({ kr, type, onEdit, onCheckin }: KeyResultRowProps) {
+  const [showInitiatives, setShowInitiatives] = useState(false);
+  
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
     Number(kr.current_value) || 0,
@@ -409,74 +412,98 @@ function KeyResultRow({ kr, type, onEdit, onCheckin }: KeyResultRowProps) {
   };
 
   return (
-    <div className="px-4 py-3 pl-11 hover:bg-muted/30 transition-colors">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{kr.title}</p>
-          <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className={cn("font-medium", statusConfig.color)}>
-              {statusConfig.label}
-            </span>
-            <span>•</span>
-            <span>
-              {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-2 w-24">
-            <Progress 
-              value={progress} 
-              className="h-1.5 flex-1" 
-            />
-            <span className="text-xs font-medium w-8 text-right">
-              {progress.toFixed(0)}%
-            </span>
+    <div className="border-b border-border/50 last:border-b-0">
+      <div className="px-4 py-3 pl-11 hover:bg-muted/30 transition-colors">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{kr.title}</p>
+            <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className={cn("font-medium", statusConfig.color)}>
+                {statusConfig.label}
+              </span>
+              <span>•</span>
+              <span>
+                {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
+              </span>
+            </div>
           </div>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            title="Editar KR"
-          >
-            <Pencil className="w-3 h-3" />
-          </Button>
-          
-          {type === 'team' && (
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 w-24">
+              <Progress 
+                value={progress} 
+                className="h-1.5 flex-1" 
+              />
+              <span className="text-xs font-medium w-8 text-right">
+                {progress.toFixed(0)}%
+              </span>
+            </div>
+            
+            {type === 'team' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-6 w-6", showInitiatives && "bg-muted")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowInitiatives(!showInitiatives);
+                }}
+                title="Ver iniciativas"
+              >
+                <Lightbulb className="w-3 h-3" />
+              </Button>
+            )}
+            
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
               onClick={(e) => {
                 e.stopPropagation();
-                onCheckin();
+                onEdit();
               }}
-              title="Check-in"
+              title="Editar KR"
             >
-              <RefreshCw className="w-3 h-3" />
+              <Pencil className="w-3 h-3" />
             </Button>
-          )}
-          
-          {kr.owner ? (
-            <Avatar className="w-5 h-5">
-              <AvatarImage src={kr.owner.photo_url || undefined} />
-              <AvatarFallback className="text-[8px]">
-                {kr.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
-              <User className="w-3 h-3 text-muted-foreground" />
-            </div>
-          )}
+            
+            {type === 'team' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCheckin();
+                }}
+                title="Check-in"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </Button>
+            )}
+            
+            {kr.owner ? (
+              <Avatar className="w-5 h-5">
+                <AvatarImage src={kr.owner.photo_url || undefined} />
+                <AvatarFallback className="text-[8px]">
+                  {kr.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                <User className="w-3 h-3 text-muted-foreground" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      
+      {/* Initiatives section */}
+      {type === 'team' && showInitiatives && (
+        <div className="pl-11 pr-4 pb-4 bg-muted/20">
+          <InitiativesList krId={kr.id} krTitle={kr.title} canEdit />
+        </div>
+      )}
     </div>
   );
 }
