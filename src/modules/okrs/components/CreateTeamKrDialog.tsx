@@ -43,7 +43,6 @@ import {
 } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { VicActionButton } from '@/modules/vic';
 
 const NONE_LINKED_ORG_KR = '__none__';
 
@@ -234,31 +233,7 @@ export function CreateTeamKrDialog({
           <div className="space-y-4 py-4">
             {/* Title */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="title">Título *</Label>
-                {title.trim() && (
-                  <VicActionButton
-                    agentSlug="coach-okrs"
-                    actionContext="okr-create-kr"
-                    context={{
-                      type: "Key Result",
-                      title,
-                      baselineValue: parseFloat(baseline) || 0,
-                      targetValue: parseFloat(target) || undefined,
-                      unit,
-                      additionalData: { direction, type },
-                    }}
-                    label="Transformar em KR mensurável"
-                    compact
-                    onApply={(response) => {
-                      const lines = response.split('\n').filter(l => l.trim());
-                      if (lines[0]) {
-                        setTitle(lines[0].replace(/^[-*•]\s*/, '').trim());
-                      }
-                    }}
-                  />
-                )}
-              </div>
+              <Label htmlFor="title">Título *</Label>
               <Input
                 id="title"
                 placeholder={placeholder}
