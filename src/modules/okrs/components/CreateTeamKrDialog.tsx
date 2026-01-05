@@ -45,6 +45,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { VicActionButton } from '@/modules/vic';
 
+const NONE_LINKED_ORG_KR = '__none__';
+
 interface CreateTeamKrDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -68,7 +70,7 @@ export function CreateTeamKrDialog({
   const [target, setTarget] = useState('');
   const [unit, setUnit] = useState('%');
   const [direction, setDirection] = useState<'up' | 'down'>('up');
-  const [linkedOrgKrId, setLinkedOrgKrId] = useState<string>('');
+  const [linkedOrgKrId, setLinkedOrgKrId] = useState<string>(NONE_LINKED_ORG_KR);
   const [placeholder] = useState(() => getRandomPlaceholder(false));
 
   // Fetch org KRs for linking
@@ -129,7 +131,7 @@ export function CreateTeamKrDialog({
           target: parseFloat(target) || 0,
           unit,
           direction,
-          linked_org_kr_id: linkedOrgKrId || null,
+          linked_org_kr_id: linkedOrgKrId === NONE_LINKED_ORG_KR ? null : linkedOrgKrId,
           status: 'not_started',
           co_responsibles: [],
         })
@@ -165,7 +167,7 @@ export function CreateTeamKrDialog({
     setTarget('');
     setUnit('%');
     setDirection('up');
-    setLinkedOrgKrId('');
+    setLinkedOrgKrId(NONE_LINKED_ORG_KR);
     onOpenChange(false);
   };
 
@@ -424,7 +426,7 @@ export function CreateTeamKrDialog({
                     <SelectValue placeholder="Selecione um KR organizacional" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value={NONE_LINKED_ORG_KR}>Nenhum</SelectItem>
                     {orgKrs.map((kr) => (
                       <SelectItem key={kr.id} value={kr.id}>
                         {kr.title}
