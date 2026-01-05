@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, FolderTree, Folder } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderTree, Folder, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,14 +12,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,10 +22,177 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { useCategories } from "../../hooks/useCategories";
 import { CategoryFormDialog } from "./CategoryFormDialog";
 import type { AssetCategory } from "../../types";
+
+interface CategoryNode extends AssetCategory {
+  children: CategoryNode[];
+}
+
+function buildCategoryTree(categories: AssetCategory[]): CategoryNode[] {
+  const map = new Map<string, CategoryNode>();
+  const roots: CategoryNode[] = [];
+
+  // First pass: create nodes
+  categories.forEach((cat) => {
+    map.set(cat.id, { ...cat, children: [] });
+  });
+
+  // Second pass: build tree
+  categories.forEach((cat) => {
+    const node = map.get(cat.id)!;
+    if (cat.parent_id && map.has(cat.parent_id)) {
+      map.get(cat.parent_id)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
+}
+
+interface CategoryRowProps {
+  category: CategoryNode;
+  level: number;
+  onEdit: (category: AssetCategory) => void;
+  onDelete: (id: string) => void;
+  onAddSubcategory: (parentId: string) => void;
+  isDeleting: boolean;
+  expandedIds: Set<string>;
+  toggleExpand: (id: string) => void;
+}
+
+function CategoryRow({
+  category,
+  level,
+  onEdit,
+  onDelete,
+  onAddSubcategory,
+  isDeleting,
+  expandedIds,
+  toggleExpand,
+}: CategoryRowProps) {
+  const hasChildren = category.children.length > 0;
+  const isExpanded = expandedIds.has(category.id);
+
+  return (
+    <>
+      <div
+        className={cn(
+          "flex items-center gap-2 py-2 px-3 hover:bg-muted/50 rounded-md group",
+          level > 0 && "border-l border-border"
+        )}
+        style={{ marginLeft: level > 0 ? `${level * 24}px` : undefined }}
+      >
+        {/* Expand/Collapse or spacer */}
+        <button
+          type="button"
+          onClick={() => hasChildren && toggleExpand(category.id)}
+          className={cn(
+            "w-5 h-5 flex items-center justify-center rounded",
+            hasChildren && "hover:bg-muted cursor-pointer"
+          )}
+          disabled={!hasChildren}
+        >
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )
+          ) : (
+            <span className="w-4" />
+          )}
+        </button>
+
+        {/* Icon */}
+        {hasChildren && isExpanded ? (
+          <FolderOpen className="h-4 w-4 text-primary" />
+        ) : (
+          <Folder className="h-4 w-4 text-muted-foreground" />
+        )}
+
+        {/* Name and description */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{category.name}</span>
+            {level === 0 && (
+              <Badge variant="outline" className="text-xs">
+                Categoria
+              </Badge>
+            )}
+            {level > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                Subcategoria
+              </Badge>
+            )}
+          </div>
+          {category.description && (
+            <p className="text-sm text-muted-foreground truncate">
+              {category.description}
+            </p>
+          )}
+        </div>
+
+        {/* Child count */}
+        {hasChildren && (
+          <Badge variant="outline" className="text-xs">
+            {category.children.length} sub
+          </Badge>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onAddSubcategory(category.id)}
+            title="Adicionar subcategoria"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onEdit(category)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onDelete(category.id)}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Render children if expanded */}
+      {isExpanded &&
+        category.children.map((child) => (
+          <CategoryRow
+            key={child.id}
+            category={child}
+            level={level + 1}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onAddSubcategory={onAddSubcategory}
+            isDeleting={isDeleting}
+            expandedIds={expandedIds}
+            toggleExpand={toggleExpand}
+          />
+        ))}
+    </>
+  );
+}
 
 export function CategoriesTab() {
   const {
@@ -49,15 +208,39 @@ export function CategoriesTab() {
 
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
+  const [parentIdForNew, setParentIdForNew] = useState<string | undefined>(undefined);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const handleCreate = () => {
     setEditingCategory(null);
+    setParentIdForNew(undefined);
     setFormDialogOpen(true);
+  };
+
+  const handleAddSubcategory = (parentId: string) => {
+    setEditingCategory(null);
+    setParentIdForNew(parentId);
+    setFormDialogOpen(true);
+    // Expand the parent to show the new subcategory
+    setExpandedIds((prev) => new Set(prev).add(parentId));
   };
 
   const handleEdit = (category: AssetCategory) => {
     setEditingCategory(category);
+    setParentIdForNew(undefined);
     setFormDialogOpen(true);
   };
 
@@ -72,7 +255,7 @@ export function CategoriesTab() {
         toast.success("Categoria atualizada!");
       } else {
         await createCategory(data);
-        toast.success("Categoria criada!");
+        toast.success(data.parent_id ? "Subcategoria criada!" : "Categoria criada!");
       }
     } catch (error) {
       toast.error("Erro ao salvar categoria");
@@ -92,12 +275,7 @@ export function CategoriesTab() {
     }
   };
 
-  // Build a map of parent names
-  const parentMap = new Map(categories.map((c) => [c.id, c.name]));
-
-  // Count items per category (would need actual data from inventory)
-  const getChildCount = (categoryId: string) =>
-    categories.filter((c) => c.parent_id === categoryId).length;
+  const categoryTree = buildCategoryTree(categories);
 
   if (isLoading) {
     return (
@@ -114,7 +292,7 @@ export function CategoriesTab() {
         <div>
           <CardTitle>Categorias do Inventário</CardTitle>
           <CardDescription>
-            Organize os itens do inventário em categorias hierárquicas
+            Organize os itens em categorias e subcategorias hierárquicas
           </CardDescription>
         </div>
         <Button onClick={handleCreate}>
@@ -131,72 +309,21 @@ export function CategoriesTab() {
             compact
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria Pai</TableHead>
-                <TableHead>Subcategorias</TableHead>
-                <TableHead className="w-[100px]">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Folder className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{category.name}</p>
-                        {category.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {category.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {category.parent_id ? (
-                      <Badge variant="secondary">
-                        {parentMap.get(category.parent_id) || "—"}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Raiz</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {getChildCount(category.id) > 0 ? (
-                      <Badge variant="outline">
-                        {getChildCount(category.id)} subcategoria(s)
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(category)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(category.id)}
-                        disabled={isDeleting}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="space-y-1">
+            {categoryTree.map((category) => (
+              <CategoryRow
+                key={category.id}
+                category={category}
+                level={0}
+                onEdit={handleEdit}
+                onDelete={setDeleteId}
+                onAddSubcategory={handleAddSubcategory}
+                isDeleting={isDeleting}
+                expandedIds={expandedIds}
+                toggleExpand={toggleExpand}
+              />
+            ))}
+          </div>
         )}
       </CardContent>
 
@@ -206,6 +333,7 @@ export function CategoriesTab() {
         onOpenChange={setFormDialogOpen}
         category={editingCategory}
         categories={categories}
+        defaultParentId={parentIdForNew}
         onSubmit={handleSubmit}
         isLoading={isCreating || isUpdating}
       />
@@ -217,7 +345,7 @@ export function CategoriesTab() {
             <AlertDialogTitle>Remover categoria?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação irá remover a categoria. Itens associados a ela ficarão
-              sem categoria. Subcategorias também serão afetadas.
+              sem categoria. Subcategorias também serão removidas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
