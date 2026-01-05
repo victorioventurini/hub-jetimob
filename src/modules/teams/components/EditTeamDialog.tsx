@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +62,8 @@ export function EditTeamDialog({ team, open, onOpenChange }: EditTeamDialogProps
 
   const selectedParentTeam = teams?.find((t) => t.id === formData.parent_team_id);
 
-  useEffect(() => {
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
     if (team) {
       setFormData({
         name: team.name,
@@ -71,7 +73,7 @@ export function EditTeamDialog({ team, open, onOpenChange }: EditTeamDialogProps
         status: team.status as "active" | "inactive",
       });
     }
-  }, [team]);
+  }, [team]));
 
   const validate = () => {
     const newErrors: Record<string, string> = {};

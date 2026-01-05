@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { z } from "zod";
 import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 import {
@@ -100,38 +101,37 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     enabled: open,
   });
 
-  useEffect(() => {
-    if (open) {
-      if (profile) {
-        // Load existing profile data for editing
-        supabase
-          .from("profiles")
-          .select("*, team_id, manager_user_id, start_date")
-          .eq("id", profile.id)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              setFormData({
-                first_name: data.first_name,
-                last_name: data.last_name,
-                work_email: data.work_email,
-                job_title: data.job_title,
-                city: data.city,
-                state: data.state,
-                work_mode: data.work_mode,
-                employment_status: data.employment_status,
-                team_id: data.team_id,
-                manager_user_id: data.manager_user_id,
-                start_date: data.start_date,
-              });
-            }
-          });
-      } else {
-        setFormData(defaultFormData);
-      }
-      setErrors({});
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
+    if (profile) {
+      // Load existing profile data for editing
+      supabase
+        .from("profiles")
+        .select("*, team_id, manager_user_id, start_date")
+        .eq("id", profile.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setFormData({
+              first_name: data.first_name,
+              last_name: data.last_name,
+              work_email: data.work_email,
+              job_title: data.job_title,
+              city: data.city,
+              state: data.state,
+              work_mode: data.work_mode,
+              employment_status: data.employment_status,
+              team_id: data.team_id,
+              manager_user_id: data.manager_user_id,
+              start_date: data.start_date,
+            });
+          }
+        });
+    } else {
+      setFormData(defaultFormData);
     }
-  }, [open, profile]);
+    setErrors({});
+  }, [profile]));
 
   const createMutation = useMutation({
     mutationFn: async (data: JetimoberFormData) => {

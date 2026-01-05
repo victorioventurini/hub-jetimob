@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import type { OkrStatus } from '../types';
 
 interface EditOrgObjectiveDialogProps {
@@ -46,13 +47,12 @@ export function EditOrgObjectiveDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (open) {
-      setTitle(objective.title);
-      setDescription(objective.description || '');
-      setStatus(objective.status);
-    }
-  }, [open, objective]);
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
+    setTitle(objective.title);
+    setDescription(objective.description || '');
+    setStatus(objective.status);
+  }, [objective.title, objective.description, objective.status]));
 
   const updateMutation = useMutation({
     mutationFn: async () => {

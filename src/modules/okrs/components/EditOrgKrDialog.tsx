@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import type { OkrRagStatus, OkrDirection } from '../types';
 
 interface EditOrgKrDialogProps {
@@ -52,16 +53,15 @@ export function EditOrgKrDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (open) {
-      setTitle(kr.title);
-      setBaseline(kr.baseline.toString());
-      setTarget(kr.target.toString());
-      setDirection(kr.direction);
-      setUnit(kr.unit);
-      setStatus(kr.status);
-    }
-  }, [open, kr]);
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
+    setTitle(kr.title);
+    setBaseline(kr.baseline.toString());
+    setTarget(kr.target.toString());
+    setDirection(kr.direction);
+    setUnit(kr.unit);
+    setStatus(kr.status);
+  }, [kr.title, kr.baseline, kr.target, kr.direction, kr.unit, kr.status]));
 
   const updateMutation = useMutation({
     mutationFn: async () => {
