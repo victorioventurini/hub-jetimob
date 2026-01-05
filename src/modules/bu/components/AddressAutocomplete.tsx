@@ -79,8 +79,17 @@ export function AddressAutocomplete({
       console.error("Error searching addresses:", error);
       setPredictions([]);
       setSelectedIndex(-1);
+
+      const rawMessage = String(error?.message || "");
+      const isAuthError =
+        rawMessage.includes("Missing authorization header") ||
+        rawMessage.includes("JWT") ||
+        rawMessage.includes("401");
+
       setErrorMessage(
-        "Não foi possível buscar endereços. Verifique a configuração do Google Maps ou tente novamente."
+        isAuthError
+          ? "Você precisa estar logado para buscar endereços. Faça login e tente novamente."
+          : "Não foi possível buscar endereços agora. Tente novamente em alguns instantes."
       );
     } finally {
       setIsLoading(false);
@@ -95,8 +104,23 @@ export function AddressAutocomplete({
 
       if (error) throw error;
       return data as AddressDetails;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting place details:", error);
+
+      const rawMessage = String(error?.message || "");
+      const isAuthError =
+        rawMessage.includes("Missing authorization header") ||
+        rawMessage.includes("JWT") ||
+        rawMessage.includes("401");
+
+      setPredictions([]);
+      setSelectedIndex(-1);
+      setIsOpen(true);
+      setErrorMessage(
+        isAuthError
+          ? "Você precisa estar logado para selecionar um endereço. Faça login e tente novamente."
+          : "Não foi possível obter os detalhes do endereço. Tente novamente."
+      );
       return null;
     }
   }, []);
