@@ -19,17 +19,17 @@ export function useKrInitiatives(krId: string | undefined) {
 
       if (error) throw error;
       
-      // Fetch owners separately
+      // Fetch owners separately - owner_user_id is profile.id
       const ownerIds = [...new Set((data || []).map(i => i.owner_user_id))];
       let ownerMap = new Map<string, { id: string; display_name: string | null; first_name: string | null; last_name: string | null; photo_url: string | null; }>();
       
       if (ownerIds.length > 0) {
         const { data: owners } = await supabase
           .from("profiles")
-          .select("user_id, display_name, first_name, last_name, photo_url")
-          .in("user_id", ownerIds);
+          .select("id, display_name, first_name, last_name, photo_url")
+          .in("id", ownerIds);
         
-        ownerMap = new Map((owners || []).map(o => [o.user_id, { id: o.user_id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
+        ownerMap = new Map((owners || []).map(o => [o.id, { id: o.id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
       }
       
       return (data || []).map(initiative => ({
@@ -41,33 +41,33 @@ export function useKrInitiatives(krId: string | undefined) {
   });
 }
 
-// Fetch all initiatives for a user (as owner)
-export function useUserInitiatives(userId: string | undefined) {
+// Fetch all initiatives for a user (as owner) - expects profile.id
+export function useUserInitiatives(profileId: string | undefined) {
   return useQuery({
-    queryKey: ["initiatives", "user", userId],
+    queryKey: ["initiatives", "user", profileId],
     queryFn: async () => {
-      if (!userId) return [];
+      if (!profileId) return [];
       
       const { data, error } = await supabase
         .from("okr_initiatives")
         .select("*")
-        .eq("owner_user_id", userId)
+        .eq("owner_user_id", profileId)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
       
-      // Fetch owners separately
+      // Fetch owners separately - owner_user_id is profile.id
       const ownerIds = [...new Set((data || []).map(i => i.owner_user_id))];
       let ownerMap = new Map<string, { id: string; display_name: string | null; first_name: string | null; last_name: string | null; photo_url: string | null; }>();
       
       if (ownerIds.length > 0) {
         const { data: owners } = await supabase
           .from("profiles")
-          .select("user_id, display_name, first_name, last_name, photo_url")
-          .in("user_id", ownerIds);
+          .select("id, display_name, first_name, last_name, photo_url")
+          .in("id", ownerIds);
         
-        ownerMap = new Map((owners || []).map(o => [o.user_id, { id: o.user_id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
+        ownerMap = new Map((owners || []).map(o => [o.id, { id: o.id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
       }
       
       return (data || []).map(initiative => ({
@@ -75,7 +75,7 @@ export function useUserInitiatives(userId: string | undefined) {
         owner: ownerMap.get(initiative.owner_user_id),
       })) as Initiative[];
     },
-    enabled: !!userId,
+    enabled: !!profileId,
   });
 }
 
@@ -101,17 +101,17 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
 
       if (error) throw error;
       
-      // Fetch owners separately
+      // Fetch owners separately - owner_user_id is profile.id
       const ownerIds = [...new Set((data || []).map(i => i.owner_user_id))];
       let ownerMap = new Map<string, { id: string; display_name: string | null; first_name: string | null; last_name: string | null; photo_url: string | null; }>();
       
       if (ownerIds.length > 0) {
         const { data: owners } = await supabase
           .from("profiles")
-          .select("user_id, display_name, first_name, last_name, photo_url")
-          .in("user_id", ownerIds);
+          .select("id, display_name, first_name, last_name, photo_url")
+          .in("id", ownerIds);
         
-        ownerMap = new Map((owners || []).map(o => [o.user_id, { id: o.user_id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
+        ownerMap = new Map((owners || []).map(o => [o.id, { id: o.id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
       }
       
       return (data || []).map(initiative => ({

@@ -8,13 +8,21 @@ import { InitiativeDialog } from "./InitiativeDialog";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import type { Initiative } from "../../types/initiative";
 
+interface KrContext {
+  id: string;
+  title: string;
+  objectiveTitle?: string;
+  teamName?: string;
+}
+
 interface InitiativesListProps {
   krId: string;
   krTitle?: string;
+  krContext?: KrContext;
   canEdit?: boolean;
 }
 
-export function InitiativesList({ krId, krTitle, canEdit = true }: InitiativesListProps) {
+export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: InitiativesListProps) {
   const { data: initiatives, isLoading } = useKrInitiatives(krId);
   const deleteMutation = useDeleteInitiative();
   
@@ -127,6 +135,7 @@ export function InitiativesList({ krId, krTitle, canEdit = true }: InitiativesLi
         open={dialogOpen}
         onOpenChange={handleCloseDialog}
         krId={krId}
+        krContext={krContext || (krTitle ? { id: krId, title: krTitle } : undefined)}
         initiative={editingInitiative}
       />
 
