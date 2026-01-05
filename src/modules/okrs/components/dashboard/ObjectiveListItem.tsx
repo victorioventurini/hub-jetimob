@@ -268,6 +268,8 @@ export function ObjectiveListItem({
                       key={kr.id} 
                       kr={kr} 
                       type={type}
+                      objectiveTitle={objective.title}
+                      teamName={teamName}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
                     />
@@ -387,11 +389,13 @@ export function ObjectiveListItem({
 interface KeyResultRowProps {
   kr: KeyResult;
   type: 'org' | 'team';
+  objectiveTitle?: string;
+  teamName?: string;
   onEdit: () => void;
   onCheckin: () => void;
 }
 
-function KeyResultRow({ kr, type, onEdit, onCheckin }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(false);
   
   const progress = calculateProgress(
@@ -501,7 +505,17 @@ function KeyResultRow({ kr, type, onEdit, onCheckin }: KeyResultRowProps) {
       {/* Initiatives section */}
       {type === 'team' && showInitiatives && (
         <div className="pl-11 pr-4 pb-4 bg-muted/20">
-          <InitiativesList krId={kr.id} krTitle={kr.title} canEdit />
+          <InitiativesList 
+            krId={kr.id} 
+            krTitle={kr.title} 
+            krContext={{
+              id: kr.id,
+              title: kr.title,
+              objectiveTitle,
+              teamName,
+            }}
+            canEdit 
+          />
         </div>
       )}
     </div>

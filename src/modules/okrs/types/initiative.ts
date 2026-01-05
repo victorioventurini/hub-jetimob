@@ -53,10 +53,10 @@ export interface UpdateInitiativeInput {
   status?: InitiativeStatus;
   priority?: InitiativePriority;
   start_date?: string;
-  expected_end_date?: string;
+  expected_end_date?: string | null;
   progress?: number;
   contributors?: string[];
-  notes?: string;
+  notes?: string | null;
 }
 
 // Helper functions
