@@ -96,7 +96,7 @@ async function sendMagicLinkEmail(
       ],
       from: {
         email: "no-reply@hub.jetimob.com",
-        name: "Hub da Jet",
+        name: "Hub",
       },
       content: [
         {
