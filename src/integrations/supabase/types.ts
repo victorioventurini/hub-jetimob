@@ -1022,6 +1022,13 @@ export type Database = {
             referencedRelation: "okr_team_key_results"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_checkins_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
         ]
       }
       okr_dependencies: {
@@ -1064,6 +1071,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_dependencies_depends_on_kr_id_fkey"
+            columns: ["depends_on_kr_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
+          {
             foreignKeyName: "okr_dependencies_depends_on_team_id_fkey"
             columns: ["depends_on_team_id"]
             isOneToOne: false
@@ -1076,6 +1090,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "okr_team_key_results"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_dependencies_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
           },
         ]
       }
@@ -1285,6 +1306,7 @@ export type Database = {
           direction: Database["public"]["Enums"]["okr_direction"]
           evidence_url: string | null
           id: string
+          last_checkin_at: string | null
           linked_org_kr_id: string | null
           metric_id: string | null
           owner_user_id: string | null
@@ -1308,6 +1330,7 @@ export type Database = {
           direction?: Database["public"]["Enums"]["okr_direction"]
           evidence_url?: string | null
           id?: string
+          last_checkin_at?: string | null
           linked_org_kr_id?: string | null
           metric_id?: string | null
           owner_user_id?: string | null
@@ -1331,6 +1354,7 @@ export type Database = {
           direction?: Database["public"]["Enums"]["okr_direction"]
           evidence_url?: string | null
           id?: string
+          last_checkin_at?: string | null
           linked_org_kr_id?: string | null
           metric_id?: string | null
           owner_user_id?: string | null
@@ -1374,6 +1398,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_team_key_results_parent_kr_id_fkey"
+            columns: ["parent_kr_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
+          {
             foreignKeyName: "okr_team_key_results_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -1386,6 +1417,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "okr_team_objectives"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_team_objective_id_fkey"
+            columns: ["team_objective_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["objective_id"]
           },
         ]
       }
@@ -1694,6 +1732,9 @@ export type Database = {
       teams: {
         Row: {
           bu_id: string | null
+          checkin_day: number
+          checkin_deadline_hour: number
+          checkin_frequency: string
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -1706,6 +1747,9 @@ export type Database = {
         }
         Insert: {
           bu_id?: string | null
+          checkin_day?: number
+          checkin_deadline_hour?: number
+          checkin_frequency?: string
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -1718,6 +1762,9 @@ export type Database = {
         }
         Update: {
           bu_id?: string | null
+          checkin_day?: number
+          checkin_deadline_hour?: number
+          checkin_frequency?: string
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -1856,7 +1903,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_pending_checkins: {
+        Row: {
+          baseline: number | null
+          checkin_day: number | null
+          checkin_deadline_hour: number | null
+          checkin_frequency: string | null
+          co_responsibles: string[] | null
+          current_value: number | null
+          days_since_checkin: number | null
+          direction: Database["public"]["Enums"]["okr_direction"] | null
+          is_overdue: boolean | null
+          kr_id: string | null
+          kr_title: string | null
+          last_checkin_at: string | null
+          objective_id: string | null
+          objective_title: string | null
+          owner_user_id: string | null
+          status: Database["public"]["Enums"]["okr_rag_status"] | null
+          target: number | null
+          team_id: string | null
+          team_name: string | null
+          unit: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_team_key_results_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_kr_progress: {
