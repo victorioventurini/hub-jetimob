@@ -89,23 +89,24 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // First, try to get Lovable API key (preferred)
-    let lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    
-    // If not available, try to get ChatGPT/OpenAI key from integrations config
+    // First, try to get ChatGPT/OpenAI key from integrations config (PRIMARY)
     let useOpenAI = false;
-    let openAIApiKey: string | null = null;
+    let openAIApiKey: string | null = await getIntegrationApiKey(supabase, "chatgpt");
     
-    if (!lovableApiKey) {
-      openAIApiKey = await getIntegrationApiKey(supabase, "chatgpt");
-      if (openAIApiKey) {
-        useOpenAI = true;
-        console.log("Using OpenAI API from integrations config");
-      }
+    if (openAIApiKey) {
+      useOpenAI = true;
+      console.log("Using OpenAI API from integrations config (primary)");
+    }
+    
+    // Fallback to Lovable API key if ChatGPT is not configured
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!openAIApiKey && lovableApiKey) {
+      console.log("ChatGPT not configured, using Lovable AI as fallback");
     }
 
-    if (!lovableApiKey && !openAIApiKey) {
-      console.error("No AI API key configured (LOVABLE_API_KEY or ChatGPT integration)");
+    if (!openAIApiKey && !lovableApiKey) {
+      console.error("No AI API key configured (ChatGPT integration or LOVABLE_API_KEY fallback)");
       return new Response(
         JSON.stringify({ error: "AI service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
