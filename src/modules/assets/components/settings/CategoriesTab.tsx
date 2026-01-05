@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, FolderTree, Folder, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderTree, Folder, FolderOpen, ChevronRight, ChevronDown, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 import { useCategories } from "../../hooks/useCategories";
 import { CategoryFormDialog } from "./CategoryFormDialog";
+import { CategoryImportDialog } from "./CategoryImportDialog";
 import type { AssetCategory } from "../../types";
 
 interface CategoryNode extends AssetCategory {
@@ -207,6 +208,7 @@ export function CategoriesTab() {
   } = useCategories();
 
   const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
   const [parentIdForNew, setParentIdForNew] = useState<string | undefined>(undefined);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -295,10 +297,16 @@ export function CategoriesTab() {
             Organize os itens em categorias e subcategorias hierárquicas
           </CardDescription>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Categoria
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Importar CSV
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Categoria
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {categories.length === 0 ? (
@@ -336,6 +344,12 @@ export function CategoriesTab() {
         defaultParentId={parentIdForNew}
         onSubmit={handleSubmit}
         isLoading={isCreating || isUpdating}
+      />
+
+      {/* Import Dialog */}
+      <CategoryImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
       />
 
       {/* Delete Confirmation */}

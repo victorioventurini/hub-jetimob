@@ -229,6 +229,8 @@ export type Database = {
           id: string
           name: string
           parent_id: string | null
+          status: string
+          updated_at: string
         }
         Insert: {
           bu_id: string
@@ -238,6 +240,8 @@ export type Database = {
           id?: string
           name: string
           parent_id?: string | null
+          status?: string
+          updated_at?: string
         }
         Update: {
           bu_id?: string
@@ -247,6 +251,8 @@ export type Database = {
           id?: string
           name?: string
           parent_id?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
