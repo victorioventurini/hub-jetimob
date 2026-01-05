@@ -2792,7 +2792,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin_or_ceo: { Args: { _user_id: string }; Returns: boolean }
       is_agent_enabled_for_bu: {
         Args: { p_agent_id: string; p_bu_id: string }
         Returns: boolean
@@ -2807,6 +2806,7 @@ export type Database = {
         Args: { p_bu_id: string; p_module_slug: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_audit_event: {
         Args: {

@@ -10,7 +10,7 @@
  * All actual authorization is enforced server-side via:
  * 
  * 1. RLS Policies - All database tables have Row-Level Security policies
- *    that use the `is_admin_or_ceo(auth.uid())` SECURITY DEFINER function
+ *    that use the `is_platform_admin(auth.uid())` SECURITY DEFINER function
  *    to validate admin access at the database level.
  * 
  * 2. Database Functions - The `is_admin_or_ceo()` function queries the
@@ -162,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * isAdmin flag for UI purposes only.
-   * Actual authorization is enforced via RLS policies using is_admin_or_ceo() function.
+   * Actual authorization is enforced via RLS policies using is_platform_admin() function.
    * See security note at the top of this file.
    */
   const isAdmin = role === 'super_admin' || role === 'admin';
