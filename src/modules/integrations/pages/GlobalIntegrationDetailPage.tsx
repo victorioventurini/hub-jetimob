@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ import {
   useAgentLogs,
 } from '../hooks/useIntegrations';
 import { useAuth } from '@/hooks/useAuth';
+import { useUrlState } from '@/hooks/useUrlState';
 
 export default function GlobalIntegrationDetailPage() {
   const { integrationKey } = useParams<{ integrationKey: string }>();
@@ -47,6 +48,9 @@ export default function GlobalIntegrationDetailPage() {
   
   const upsertConfig = useUpsertGlobalConfig();
   const updateTestStatus = useUpdateGlobalTestStatus();
+  
+  // URL State for tab
+  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'config' });
   
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
@@ -149,7 +153,7 @@ export default function GlobalIntegrationDetailPage() {
         </div>
       </div>
         
-      <Tabs defaultValue="config" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="config">
               <Key className="w-4 h-4 mr-2" />

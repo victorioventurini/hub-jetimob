@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, ChevronRight, Target, TrendingUp, AlertTriangle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
 import { YearSelect } from '@/components/selects';
+import { useUrlState, parsers } from '@/hooks/useUrlState';
 
 const statusConfig = {
   on_track: {
@@ -32,7 +33,9 @@ export default function OrgViewListPage() {
   usePageTitle('Visão Organizacional');
   
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  
+  // URL State
+  const [selectedYear, setSelectedYear] = useUrlState({ key: 'year', defaultValue: currentYear, parse: parsers.number });
   
   const { data: objectives, isLoading } = useAllOrgObjectivesView(selectedYear);
 

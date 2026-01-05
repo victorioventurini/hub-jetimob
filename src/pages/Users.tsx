@@ -44,6 +44,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
+import { useUrlState } from "@/hooks/useUrlState";
 
 import { useDeleteProfile } from "@/hooks/useProfiles";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
@@ -88,9 +89,13 @@ export default function UsersPage() {
   
   const { isAdmin } = useAuth();
   const { currentBu, isLoading: isBuLoading } = useBu();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [teamFilter, setTeamFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("active");
+  
+  // URL State
+  const [searchQuery, setSearchQuery] = useUrlState<string>({ key: 'q', defaultValue: '' });
+  const [teamFilter, setTeamFilter] = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
+  const [statusFilter, setStatusFilter] = useUrlState<string>({ key: 'status', defaultValue: 'active' });
+  
+  // Local state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);

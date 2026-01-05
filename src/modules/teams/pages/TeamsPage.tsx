@@ -22,15 +22,33 @@ import { SquadWithRelations } from "../types/squad";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useUrlState, parsers } from "@/hooks/useUrlState";
 
 export default function TeamsPage() {
   usePageTitle("Times");
-  const [showInactive, setShowInactive] = useState(false);
+  
+  // URL State
+  const [search, setSearch] = useUrlState<string>({ key: 'q', defaultValue: '' });
+  const [parentTeamFilter, setParentTeamFilter] = useUrlState<string | null>({ 
+    key: 'parent_team_id', 
+    defaultValue: null,
+    parse: (v) => v || null,
+  });
+  const [leaderFilter, setLeaderFilter] = useUrlState<string | null>({ 
+    key: 'leader_id', 
+    defaultValue: null,
+    parse: (v) => v || null,
+  });
+  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'sections' });
+  const [showInactive, setShowInactive] = useUrlState<boolean>({ 
+    key: 'show_inactive', 
+    defaultValue: false,
+    parse: parsers.boolean,
+  });
+  
+  // Local state
   const [editingTeam, setEditingTeam] = useState<TeamWithRelations | null>(null);
   const [selectedSquad, setSelectedSquad] = useState<SquadWithRelations | null>(null);
-  const [search, setSearch] = useState("");
-  const [parentTeamFilter, setParentTeamFilter] = useState<string | null>(null);
-  const [leaderFilter, setLeaderFilter] = useState<string | null>(null);
 
   const { data: teams, isLoading } = useTeams(showInactive);
   const { data: squads, isLoading: isLoadingSquads } = useSquads();
@@ -257,7 +275,7 @@ export default function TeamsPage() {
 
         {/* View Toggle */}
         <div className="flex items-center justify-between">
-          <Tabs defaultValue="sections" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex items-center justify-between mb-4">
               <TabsList>
                 <TabsTrigger value="sections" className="gap-2">

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { BarChart3, Bot, Clock, User, Building2, AlertCircle, CheckCircle2, XCir
 import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
+import { useUrlState } from "@/hooks/useUrlState";
 
 interface AgentLog {
   id: string;
@@ -31,8 +31,15 @@ interface AgentLog {
 
 export function VicAuditPage() {
   const { isAdmin } = useAuth();
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("7d");
-  const [selectedBu, setSelectedBu] = useState<string>("all");
+  
+  // URL State
+  const [timeRange, setTimeRange] = useUrlState<"7d" | "30d" | "90d">({ 
+    key: 'range', 
+    defaultValue: '7d',
+    parse: (v) => v as "7d" | "30d" | "90d",
+  });
+  const [selectedBu, setSelectedBu] = useUrlState<string>({ key: 'bu_id', defaultValue: 'all' });
+  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'by-agent' });
 
   // Fetch BUs for filter
   const { data: bus } = useQuery({
@@ -178,7 +185,7 @@ export function VicAuditPage() {
       ) : null}
 
       {/* Tabs */}
-      <Tabs defaultValue="by-agent" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="by-agent" className="gap-1.5">
             <Bot className="h-4 w-4" />

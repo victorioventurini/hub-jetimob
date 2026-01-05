@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target } from 'lucide-react';
@@ -9,13 +9,16 @@ import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
 import { mockOrgObjectives, mockTeamObjectives, getMockStats } from '../hooks/useMockOkrData';
 import { YearSelect, TeamSelect } from '@/components/selects';
 import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
+import { useUrlState, parsers } from '@/hooks/useUrlState';
 
 export default function OkrsPage() {
   usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedTeam, setSelectedTeam] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState('org');
+  
+  // URL State
+  const [selectedYear, setSelectedYear] = useUrlState<number>({ key: 'year', defaultValue: currentYear, parse: parsers.number });
+  const [selectedTeam, setSelectedTeam] = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
+  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'org' });
 
   const years = [currentYear, currentYear + 1];
   const stats = useMemo(() => getMockStats(), []);

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
+import { useUrlState } from "@/hooks/useUrlState";
 
 // Mapeamento de ícones
 const iconMap: Record<string, LucideIcon> = {
@@ -107,7 +107,13 @@ export default function Modules() {
   const { currentBu } = useBu();
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"all" | "global" | "operational">("all");
+  
+  // URL State
+  const [activeTab, setActiveTab] = useUrlState<"all" | "global" | "operational">({ 
+    key: 'tab', 
+    defaultValue: 'all',
+    parse: (v) => v as "all" | "global" | "operational",
+  });
 
   // Buscar todos os módulos
   const { data: modules = [], isLoading } = useQuery({
