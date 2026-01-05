@@ -1,0 +1,109 @@
+import { useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Loader2, AlertTriangle, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useBu } from "@/contexts/BuContext";
+import { useTeamContributionView } from "../hooks/useTeamContributionView";
+import { TeamContributionHeader } from "../components/team-contribution/TeamContributionHeader";
+import { OrgObjectiveContributionCard } from "../components/team-contribution/OrgObjectiveContributionCard";
+import { TeamContributionInsights } from "../components/team-contribution/TeamContributionInsights";
+import { TeamContributionFilters } from "../components/team-contribution/TeamContributionFilters";
+import { EmptyState } from "@/components/ui/empty-state";
+
+export default function TeamContributionPage() {
+  const { teamId } = useParams<{ teamId: string }>();
+  const navigate = useNavigate();
+  const { currentBu } = useBu();
+  const { data, isLoading, error } = useTeamContributionView(teamId);
+  
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const filteredContributions = useMemo(() => {
+    if (!data?.contributions) return [];
+    
+    if (statusFilter === "all") return data.contributions;
+    
+    return data.contributions.filter(c => c.status === statusFilter);
+  }, [data?.contributions, statusFilter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="p-6">
+        <EmptyState
+          icon={AlertTriangle}
+          title="Erro ao carregar dados"
+          description="Não foi possível carregar a visão de contribuição do time."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Back Button */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => navigate(-1)}
+        className="gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
+      </Button>
+
+      {/* Header */}
+      <TeamContributionHeader data={data} buName={currentBu?.name} />
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Contributions List */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">
+              Objetivos Organizacionais Impactados
+            </h2>
+            <TeamContributionFilters 
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+          </div>
+
+          {filteredContributions.length === 0 ? (
+            <EmptyState
+              icon={Target}
+              title="Nenhuma contribuição encontrada"
+              description={
+                statusFilter !== "all"
+                  ? "Nenhum objetivo encontrado com o filtro selecionado."
+                  : "Este time ainda não possui OKRs vinculados a Objetivos Organizacionais."
+              }
+            />
+          ) : (
+            <div className="space-y-4">
+              {filteredContributions.map((contribution) => (
+                <OrgObjectiveContributionCard
+                  key={contribution.id}
+                  contribution={contribution}
+                  onNavigateToObjective={(id) => navigate(`/okrs/org-view/${id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Insights Sidebar */}
+        <div className="lg:col-span-1">
+          <TeamContributionInsights data={data} />
+        </div>
+      </div>
+    </div>
+  );
+}

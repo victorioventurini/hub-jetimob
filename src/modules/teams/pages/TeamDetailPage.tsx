@@ -25,6 +25,7 @@ import {
   Layers,
   MoreHorizontal,
   Trash2,
+  Target,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeam, useDeleteTeam } from "../hooks/useTeams";
@@ -171,6 +172,7 @@ export default function TeamDetailPage() {
             <Tabs defaultValue="members">
               <TabsList>
                 <TabsTrigger value="members">Membros</TabsTrigger>
+                <TabsTrigger value="contribution">Contribuição</TabsTrigger>
                 <TabsTrigger value="squads">Squads</TabsTrigger>
                 <TabsTrigger value="subteams">Sub-times</TabsTrigger>
                 <TabsTrigger value="rituals">Rituais</TabsTrigger>
@@ -226,6 +228,21 @@ export default function TeamDetailPage() {
                         </p>
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="contribution" className="mt-4">
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Target className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                    <h3 className="font-medium mb-2">Visualizar Contribuição Organizacional</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Veja como este time contribui para os Objetivos Organizacionais através de seus OKRs.
+                    </p>
+                    <Button onClick={() => navigate(`/okrs/team-contribution/${team.id}`)}>
+                      Ver Contribuição Completa
+                    </Button>
                   </CardContent>
                 </Card>
               </TabsContent>
