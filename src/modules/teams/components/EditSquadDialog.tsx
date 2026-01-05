@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import {
   Dialog,
   DialogContent,
@@ -47,13 +48,14 @@ export function EditSquadDialog({ squad, open, onOpenChange }: EditSquadDialogPr
   const [status, setStatus] = useState<"active" | "inactive">(squad.status);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  useEffect(() => {
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
     setName(squad.name);
     setDescription(squad.description || "");
     setProducts(squad.products);
     setTeamIds(squad.teams?.map((t) => t.id) || []);
     setStatus(squad.status);
-  }, [squad]);
+  }, [squad.name, squad.description, squad.products, squad.teams, squad.status]));
 
   const handleProductToggle = (product: SquadProduct) => {
     setProducts((prev) =>

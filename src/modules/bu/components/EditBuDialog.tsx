@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { Building2, Plus, X, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,8 +79,8 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
     },
   });
 
-  // Reset form when BU changes
-  useEffect(() => {
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
     if (bu) {
       form.reset({
         name: bu.name,
@@ -94,7 +95,7 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
         status: bu.status,
       });
     }
-  }, [bu, form]);
+  }, [bu, form]));
 
   const domains = form.watch("allowed_email_domains");
 

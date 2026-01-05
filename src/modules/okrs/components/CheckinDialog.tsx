@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -104,15 +105,13 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   const isAutomatic = !!kr.metric_id;
 
-  // Reset form when dialog opens
-  useEffect(() => {
-    if (open) {
-      setCurrentValue(kr.current_value.toString());
-      setStatus(kr.status === 'not_started' ? 'green' : kr.status as Status);
-      setReflection('');
-      setNextStep('');
-    }
-  }, [open, kr]);
+  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  useDialogFormReset(open, useCallback(() => {
+    setCurrentValue(kr.current_value.toString());
+    setStatus(kr.status === 'not_started' ? 'green' : kr.status as Status);
+    setReflection('');
+    setNextStep('');
+  }, [kr.current_value, kr.status]));
 
   const createCheckin = useMutation({
     mutationFn: async () => {
