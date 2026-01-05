@@ -444,14 +444,17 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Atribuir a</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <Select 
+                        onValueChange={(val) => field.onChange(val === "__none__" ? undefined : val)} 
+                        value={field.value || "__none__"}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um colaborador..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Nenhum (disponível)</SelectItem>
+                          <SelectItem value="__none__">Nenhum (disponível)</SelectItem>
                           {profiles.map((profile) => (
                             <SelectItem key={profile.user_id} value={profile.user_id}>
                               <div className="flex items-center gap-2">
