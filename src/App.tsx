@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 // Lazy loading para módulos (carregados sob demanda)
 const Index = lazy(() => import("./pages/Index"));
 const Users = lazy(() => import("./pages/Users"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Modules = lazy(() => import("./pages/Modules"));
 const SelectBu = lazy(() => import("./pages/SelectBu"));
@@ -152,6 +153,16 @@ const App = () => (
                           <ModuleRoute moduleSlug="users" requiresBu={false}>
                             <Users />
                           </ModuleRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/users/:id"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <UserProfile />
+                          </BuRequiredRoute>
                         </ProtectedRoute>
                       }
                     />
