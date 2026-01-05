@@ -2079,6 +2079,7 @@ export type Database = {
           city: string
           created_at: string
           deleted_at: string | null
+          discord_id: string | null
           display_name: string
           employment_status: Database["public"]["Enums"]["employment_status"]
           first_name: string
@@ -2089,7 +2090,6 @@ export type Database = {
           manager_user_id: string | null
           onboarding_completed: boolean
           photo_url: string | null
-          slack_id: string | null
           start_date: string
           state: string
           team_id: string | null
@@ -2106,6 +2106,7 @@ export type Database = {
           city: string
           created_at?: string
           deleted_at?: string | null
+          discord_id?: string | null
           display_name: string
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name: string
@@ -2116,7 +2117,6 @@ export type Database = {
           manager_user_id?: string | null
           onboarding_completed?: boolean
           photo_url?: string | null
-          slack_id?: string | null
           start_date: string
           state: string
           team_id?: string | null
@@ -2133,6 +2133,7 @@ export type Database = {
           city?: string
           created_at?: string
           deleted_at?: string | null
+          discord_id?: string | null
           display_name?: string
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name?: string
@@ -2143,7 +2144,6 @@ export type Database = {
           manager_user_id?: string | null
           onboarding_completed?: boolean
           photo_url?: string | null
-          slack_id?: string | null
           start_date?: string
           state?: string
           team_id?: string | null

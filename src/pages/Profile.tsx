@@ -37,7 +37,7 @@ const profileSchema = z.object({
   state: z.string().trim().min(1, 'Estado é obrigatório').max(2),
   birth_day: z.number().min(1).max(31).nullable().optional(),
   birth_month: z.number().min(1).max(12).nullable().optional(),
-  slack_id: z.string().max(50).nullable().optional(),
+  discord_id: z.string().max(50).nullable().optional(),
   instagram_id: z.string().max(50).nullable().optional(),
 });
 
@@ -60,7 +60,7 @@ interface FullProfile {
   start_date: string;
   birth_day: number | null;
   birth_month: number | null;
-  slack_id: string | null;
+  discord_id: string | null;
   instagram_id: string | null;
   team_id: string | null;
 }
@@ -144,7 +144,7 @@ export default function Profile() {
         state: profile.state,
         birth_day: profile.birth_day,
         birth_month: profile.birth_month,
-        slack_id: profile.slack_id,
+        discord_id: profile.discord_id,
         instagram_id: profile.instagram_id,
       };
       setFormData(initialData);
@@ -590,12 +590,12 @@ export default function Profile() {
                     <p className="text-xs text-muted-foreground">Formato: +55 (DDD) XXXXX-XXXX</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="slack_id">Slack ID</Label>
+                    <Label htmlFor="discord_id">Discord ID</Label>
                     <Input
-                      id="slack_id"
-                      value={formData.slack_id || ''}
-                      onChange={(e) => handleChange('slack_id', e.target.value || null)}
-                      placeholder="@usuario"
+                      id="discord_id"
+                      value={formData.discord_id || ''}
+                      onChange={(e) => handleChange('discord_id', e.target.value || null)}
+                      placeholder="usuario#1234"
                     />
                   </div>
                   <div className="space-y-2">
@@ -691,14 +691,14 @@ export default function Profile() {
 
               {/* Read-only Info */}
               <div className="bg-muted/50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold mb-3">Informações gerenciadas pelo RH</h3>
+                <h3 className="text-sm font-semibold mb-3">Informações gerenciadas por Gente e Gestão</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Cargo</p>
                     <p className="font-medium">{profile.job_title}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Data de início</p>
+                    <p className="text-muted-foreground">Data de início na Jet</p>
                     <p className="font-medium">
                       {new Date(profile.start_date).toLocaleDateString('pt-BR')}
                     </p>

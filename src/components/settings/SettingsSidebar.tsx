@@ -29,7 +29,7 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
         rel="noopener noreferrer"
         className={cn(
           "flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-          "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
         )}
       >
         <div className="flex items-center gap-3">
@@ -47,8 +47,8 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
         isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
       )}
     >
       <Icon className="h-5 w-5" />
@@ -57,63 +57,37 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
   );
 }
 
-interface NavGroupProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-function NavGroup({ title, children }: NavGroupProps) {
-  return (
-    <div className="space-y-1">
-      <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        {title}
-      </p>
-      {children}
-    </div>
-  );
-}
-
 export function SettingsSidebar() {
   return (
-    <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
-      {/* Logo / Header */}
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-            H
-          </div>
-          <div>
-            <p className="font-semibold text-foreground">Hub</p>
-            <p className="text-sm text-muted-foreground">Configurações Globais</p>
-          </div>
-        </div>
+    <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      {/* Home */}
+      <div>
+        <NavItem to="/settings" icon={Home} label="Home" />
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-6">
-        {/* Home */}
-        <div>
-          <NavItem to="/settings" icon={Home} label="Home" />
-        </div>
+      {/* Plataforma Section */}
+      <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
+        <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+          Plataforma
+        </p>
+        <NavItem to="/settings/business-units" icon={Building2} label="Business Units" />
+        <NavItem to="/settings/modules" icon={Blocks} label="Módulos" />
+        <NavItem to="/settings/integrations" icon={Puzzle} label="Integrações" />
+        <NavItem to="/settings/automations" icon={Workflow} label="Automações" />
+      </div>
 
-        {/* Plataforma Section */}
-        <NavGroup title="Plataforma">
-          <NavItem to="/settings/business-units" icon={Building2} label="Business Units" />
-          <NavItem to="/settings/modules" icon={Blocks} label="Módulos" />
-          <NavItem to="/settings/integrations" icon={Puzzle} label="Integrações" />
-          <NavItem to="/settings/automations" icon={Workflow} label="Automações" />
-        </NavGroup>
-
-        {/* Recursos Section */}
-        <NavGroup title="Recursos">
-          <NavItem
-            to="https://docs.jetimob.com"
-            icon={BookOpen}
-            label="Conhecimento"
-            external
-          />
-        </NavGroup>
-      </nav>
-    </aside>
+      {/* Recursos Section */}
+      <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
+        <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+          Recursos
+        </p>
+        <NavItem
+          to="https://docs.jetimob.com"
+          icon={BookOpen}
+          label="Conhecimento"
+          external
+        />
+      </div>
+    </nav>
   );
 }
