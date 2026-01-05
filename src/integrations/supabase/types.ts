@@ -220,6 +220,814 @@ export type Database = {
           },
         ]
       }
+      asset_categories: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_categories_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_clavicularies: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          location_id: string | null
+          name: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          location_id?: string | null
+          name: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          location_id?: string | null
+          name?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_clavicularies_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_clavicularies_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_gift_batches: {
+        Row: {
+          acquired_at: string | null
+          batch_code: string | null
+          bu_id: string
+          campaign: string | null
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          gift_item_id: string
+          id: string
+          notes: string | null
+          quantity_available: number
+          quantity_in: number
+          updated_at: string
+        }
+        Insert: {
+          acquired_at?: string | null
+          batch_code?: string | null
+          bu_id: string
+          campaign?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          gift_item_id: string
+          id?: string
+          notes?: string | null
+          quantity_available?: number
+          quantity_in?: number
+          updated_at?: string
+        }
+        Update: {
+          acquired_at?: string | null
+          batch_code?: string | null
+          bu_id?: string
+          campaign?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          gift_item_id?: string
+          id?: string
+          notes?: string | null
+          quantity_available?: number
+          quantity_in?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_gift_batches_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_gift_batches_gift_item_id_fkey"
+            columns: ["gift_item_id"]
+            isOneToOne: false
+            referencedRelation: "asset_gift_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_gift_items: {
+        Row: {
+          bu_id: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          status: Database["public"]["Enums"]["gift_item_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["gift_item_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["gift_item_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_gift_items_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_gift_movements: {
+        Row: {
+          batch_id: string | null
+          bu_id: string
+          created_at: string
+          destination_description: string | null
+          destination_type:
+            | Database["public"]["Enums"]["gift_destination_type"]
+            | null
+          gift_item_id: string
+          id: string
+          movement_type: Database["public"]["Enums"]["gift_movement_type"]
+          notes: string | null
+          occurred_at: string
+          performed_by_user_id: string
+          quantity: number
+        }
+        Insert: {
+          batch_id?: string | null
+          bu_id: string
+          created_at?: string
+          destination_description?: string | null
+          destination_type?:
+            | Database["public"]["Enums"]["gift_destination_type"]
+            | null
+          gift_item_id: string
+          id?: string
+          movement_type: Database["public"]["Enums"]["gift_movement_type"]
+          notes?: string | null
+          occurred_at?: string
+          performed_by_user_id: string
+          quantity: number
+        }
+        Update: {
+          batch_id?: string | null
+          bu_id?: string
+          created_at?: string
+          destination_description?: string | null
+          destination_type?:
+            | Database["public"]["Enums"]["gift_destination_type"]
+            | null
+          gift_item_id?: string
+          id?: string
+          movement_type?: Database["public"]["Enums"]["gift_movement_type"]
+          notes?: string | null
+          occurred_at?: string
+          performed_by_user_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_gift_movements_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "asset_gift_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_gift_movements_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_gift_movements_gift_item_id_fkey"
+            columns: ["gift_item_id"]
+            isOneToOne: false
+            referencedRelation: "asset_gift_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_hooks: {
+        Row: {
+          claviculary_id: string
+          created_at: string
+          hook_number: number
+          id: string
+          notes: string | null
+          occupied: boolean
+        }
+        Insert: {
+          claviculary_id: string
+          created_at?: string
+          hook_number: number
+          id?: string
+          notes?: string | null
+          occupied?: boolean
+        }
+        Update: {
+          claviculary_id?: string
+          created_at?: string
+          hook_number?: number
+          id?: string
+          notes?: string | null
+          occupied?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_hooks_claviculary_id_fkey"
+            columns: ["claviculary_id"]
+            isOneToOne: false
+            referencedRelation: "asset_clavicularies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_inventory: {
+        Row: {
+          acquired_at: string | null
+          acquisition_value: number | null
+          assigned_at: string | null
+          brand: string | null
+          bu_id: string
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          current_holder_type: Database["public"]["Enums"]["asset_holder_type"]
+          current_location_id: string | null
+          current_user_id: string | null
+          deleted_at: string | null
+          description: string | null
+          documents: Json | null
+          home_location_id: string | null
+          id: string
+          internal_code: string
+          last_moved_at: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          photos: Json | null
+          quantity_available: number
+          quantity_total: number
+          serial_number: string | null
+          status: Database["public"]["Enums"]["asset_inventory_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          acquired_at?: string | null
+          acquisition_value?: number | null
+          assigned_at?: string | null
+          brand?: string | null
+          bu_id: string
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_holder_type?: Database["public"]["Enums"]["asset_holder_type"]
+          current_location_id?: string | null
+          current_user_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          documents?: Json | null
+          home_location_id?: string | null
+          id?: string
+          internal_code: string
+          last_moved_at?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          photos?: Json | null
+          quantity_available?: number
+          quantity_total?: number
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["asset_inventory_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          acquired_at?: string | null
+          acquisition_value?: number | null
+          assigned_at?: string | null
+          brand?: string | null
+          bu_id?: string
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_holder_type?: Database["public"]["Enums"]["asset_holder_type"]
+          current_location_id?: string | null
+          current_user_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          documents?: Json | null
+          home_location_id?: string | null
+          id?: string
+          internal_code?: string
+          last_moved_at?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          photos?: Json | null
+          quantity_available?: number
+          quantity_total?: number
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["asset_inventory_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_inventory_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_inventory_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_inventory_current_location_id_fkey"
+            columns: ["current_location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_inventory_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_key_movements: {
+        Row: {
+          authorized_by_user_id: string | null
+          bu_id: string
+          created_at: string
+          due_at: string | null
+          from_claviculary_id: string | null
+          from_hook_id: string | null
+          id: string
+          keyring_id: string
+          movement_type: Database["public"]["Enums"]["key_movement_type"]
+          notes: string | null
+          occurred_at: string
+          performed_by_user_id: string
+          to_claviculary_id: string | null
+          to_hook_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          authorized_by_user_id?: string | null
+          bu_id: string
+          created_at?: string
+          due_at?: string | null
+          from_claviculary_id?: string | null
+          from_hook_id?: string | null
+          id?: string
+          keyring_id: string
+          movement_type: Database["public"]["Enums"]["key_movement_type"]
+          notes?: string | null
+          occurred_at?: string
+          performed_by_user_id: string
+          to_claviculary_id?: string | null
+          to_hook_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          authorized_by_user_id?: string | null
+          bu_id?: string
+          created_at?: string
+          due_at?: string | null
+          from_claviculary_id?: string | null
+          from_hook_id?: string | null
+          id?: string
+          keyring_id?: string
+          movement_type?: Database["public"]["Enums"]["key_movement_type"]
+          notes?: string | null
+          occurred_at?: string
+          performed_by_user_id?: string
+          to_claviculary_id?: string | null
+          to_hook_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_key_movements_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_key_movements_from_claviculary_id_fkey"
+            columns: ["from_claviculary_id"]
+            isOneToOne: false
+            referencedRelation: "asset_clavicularies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_key_movements_from_hook_id_fkey"
+            columns: ["from_hook_id"]
+            isOneToOne: false
+            referencedRelation: "asset_hooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_key_movements_keyring_id_fkey"
+            columns: ["keyring_id"]
+            isOneToOne: false
+            referencedRelation: "asset_keyrings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_key_movements_to_claviculary_id_fkey"
+            columns: ["to_claviculary_id"]
+            isOneToOne: false
+            referencedRelation: "asset_clavicularies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_key_movements_to_hook_id_fkey"
+            columns: ["to_hook_id"]
+            isOneToOne: false
+            referencedRelation: "asset_hooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_keyrings: {
+        Row: {
+          bu_id: string
+          claviculary_id: string | null
+          created_at: string
+          created_by: string | null
+          current_user_id: string | null
+          deleted_at: string | null
+          hook_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          status: Database["public"]["Enums"]["keyring_status"]
+          tag_number: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          claviculary_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_user_id?: string | null
+          deleted_at?: string | null
+          hook_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["keyring_status"]
+          tag_number: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          claviculary_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_user_id?: string | null
+          deleted_at?: string | null
+          hook_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["keyring_status"]
+          tag_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_keyrings_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_keyrings_claviculary_id_fkey"
+            columns: ["claviculary_id"]
+            isOneToOne: false
+            referencedRelation: "asset_clavicularies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_keyrings_hook_id_fkey"
+            columns: ["hook_id"]
+            isOneToOne: false
+            referencedRelation: "asset_hooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_keys: {
+        Row: {
+          access_type: Database["public"]["Enums"]["key_access_type"]
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          keyring_id: string | null
+          notes: string | null
+          status: Database["public"]["Enums"]["key_status"]
+          tag_number: string
+          updated_at: string
+        }
+        Insert: {
+          access_type?: Database["public"]["Enums"]["key_access_type"]
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          keyring_id?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["key_status"]
+          tag_number: string
+          updated_at?: string
+        }
+        Update: {
+          access_type?: Database["public"]["Enums"]["key_access_type"]
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          keyring_id?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["key_status"]
+          tag_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_keys_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_keys_keyring_id_fkey"
+            columns: ["keyring_id"]
+            isOneToOne: false
+            referencedRelation: "asset_keyrings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_movements: {
+        Row: {
+          asset_id: string
+          authorized_by_user_id: string | null
+          bu_id: string
+          created_at: string
+          due_at: string | null
+          from_holder_type:
+            | Database["public"]["Enums"]["asset_holder_type"]
+            | null
+          from_location_id: string | null
+          from_user_id: string | null
+          id: string
+          movement_type: Database["public"]["Enums"]["asset_movement_type"]
+          notes: string | null
+          occurred_at: string
+          performed_by_user_id: string
+          returned_at: string | null
+          to_holder_type:
+            | Database["public"]["Enums"]["asset_holder_type"]
+            | null
+          to_location_id: string | null
+          to_user_id: string | null
+        }
+        Insert: {
+          asset_id: string
+          authorized_by_user_id?: string | null
+          bu_id: string
+          created_at?: string
+          due_at?: string | null
+          from_holder_type?:
+            | Database["public"]["Enums"]["asset_holder_type"]
+            | null
+          from_location_id?: string | null
+          from_user_id?: string | null
+          id?: string
+          movement_type: Database["public"]["Enums"]["asset_movement_type"]
+          notes?: string | null
+          occurred_at?: string
+          performed_by_user_id: string
+          returned_at?: string | null
+          to_holder_type?:
+            | Database["public"]["Enums"]["asset_holder_type"]
+            | null
+          to_location_id?: string | null
+          to_user_id?: string | null
+        }
+        Update: {
+          asset_id?: string
+          authorized_by_user_id?: string | null
+          bu_id?: string
+          created_at?: string
+          due_at?: string | null
+          from_holder_type?:
+            | Database["public"]["Enums"]["asset_holder_type"]
+            | null
+          from_location_id?: string | null
+          from_user_id?: string | null
+          id?: string
+          movement_type?: Database["public"]["Enums"]["asset_movement_type"]
+          notes?: string | null
+          occurred_at?: string
+          performed_by_user_id?: string
+          returned_at?: string | null
+          to_holder_type?:
+            | Database["public"]["Enums"]["asset_holder_type"]
+            | null
+          to_location_id?: string | null
+          to_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_movements_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_permissions: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["asset_permission_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["asset_permission_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["asset_permission_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_permissions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -2924,6 +3732,18 @@ export type Database = {
         }
         Returns: number
       }
+      can_manage_gifts: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_manage_inventory: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_manage_keys: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
@@ -2965,6 +3785,14 @@ export type Database = {
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
+      has_asset_permission: {
+        Args: {
+          p_bu_id: string
+          p_roles: Database["public"]["Enums"]["asset_permission_role"][]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3012,6 +3840,28 @@ export type Database = {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
       app_role: "super_admin" | "admin" | "team_leader" | "collaborator"
+      asset_holder_type: "location" | "user"
+      asset_inventory_status:
+        | "available"
+        | "loaned"
+        | "maintenance"
+        | "written_off"
+      asset_movement_type:
+        | "checkout"
+        | "return"
+        | "transfer"
+        | "maintenance_start"
+        | "maintenance_end"
+        | "write_off"
+      asset_permission_role:
+        | "assets_admin"
+        | "inventory_admin"
+        | "inventory_manager"
+        | "keys_admin"
+        | "keys_manager"
+        | "gifts_admin"
+        | "gifts_manager"
+        | "viewer"
       bu_location_status: "active" | "inactive"
       bu_location_type:
         | "headquarters"
@@ -3021,10 +3871,17 @@ export type Database = {
         | "other"
       bu_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
+      gift_destination_type: "event" | "campaign" | "person" | "other"
+      gift_item_status: "active" | "inactive"
+      gift_movement_type: "in" | "out" | "adjustment"
       initiative_priority: "low" | "medium" | "high"
       initiative_status: "planned" | "in_progress" | "blocked" | "completed"
       integration_config_mode: "use_global" | "override"
       integration_test_status: "ok" | "error" | "pending"
+      key_access_type: "door" | "padlock" | "gate" | "other"
+      key_movement_type: "checkout" | "return" | "transfer" | "lost" | "retired"
+      key_status: "in_claviculary" | "loaned" | "lost" | "retired"
+      keyring_status: "available" | "loaned" | "lost" | "retired"
       kpi_category:
         | "financeiro"
         | "growth"
@@ -3191,6 +4048,31 @@ export const Constants = {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
       app_role: ["super_admin", "admin", "team_leader", "collaborator"],
+      asset_holder_type: ["location", "user"],
+      asset_inventory_status: [
+        "available",
+        "loaned",
+        "maintenance",
+        "written_off",
+      ],
+      asset_movement_type: [
+        "checkout",
+        "return",
+        "transfer",
+        "maintenance_start",
+        "maintenance_end",
+        "write_off",
+      ],
+      asset_permission_role: [
+        "assets_admin",
+        "inventory_admin",
+        "inventory_manager",
+        "keys_admin",
+        "keys_manager",
+        "gifts_admin",
+        "gifts_manager",
+        "viewer",
+      ],
       bu_location_status: ["active", "inactive"],
       bu_location_type: [
         "headquarters",
@@ -3201,10 +4083,17 @@ export const Constants = {
       ],
       bu_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
+      gift_destination_type: ["event", "campaign", "person", "other"],
+      gift_item_status: ["active", "inactive"],
+      gift_movement_type: ["in", "out", "adjustment"],
       initiative_priority: ["low", "medium", "high"],
       initiative_status: ["planned", "in_progress", "blocked", "completed"],
       integration_config_mode: ["use_global", "override"],
       integration_test_status: ["ok", "error", "pending"],
+      key_access_type: ["door", "padlock", "gate", "other"],
+      key_movement_type: ["checkout", "return", "transfer", "lost", "retired"],
+      key_status: ["in_claviculary", "loaned", "lost", "retired"],
+      keyring_status: ["available", "loaned", "lost", "retired"],
       kpi_category: [
         "financeiro",
         "growth",
