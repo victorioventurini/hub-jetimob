@@ -8,6 +8,8 @@ interface BuContextType {
   userBus: UserBuMembership[];
   isLoading: boolean;
   hasMultipleBus: boolean;
+  /** The user's role in the current BU */
+  userRole: UserBuMembership["role_in_bu"] | null;
   /** Indicates if the user has explicitly selected a BU (or was auto-selected for single-BU users) */
   buSelected: boolean;
   /** Explicitly select a BU - sets buSelected to true */
@@ -119,6 +121,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
 
   const currentMembership = userBus.find(m => m.bu_id === currentBuId);
   const currentBu = currentMembership?.bu_unit || null;
+  const userRole = currentMembership?.role_in_bu || null;
 
   return (
     <BuContext.Provider
@@ -127,6 +130,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
         userBus,
         isLoading,
         hasMultipleBus: userBus.length > 1,
+        userRole,
         buSelected,
         selectBu,
         switchBu,
