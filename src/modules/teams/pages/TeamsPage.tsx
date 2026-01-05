@@ -1,19 +1,24 @@
 import { useState, useMemo } from "react";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { LayoutGrid, GitBranch, Building2, Users, Network } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LayoutGrid, GitBranch, Building2, Users, Network, Layers3, Box } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useTeams, useTeamTree, useTeamStats, useAvailableLeaders } from "../hooks/useTeams";
+import { useTeams, useTeamTree, useTeamStats } from "../hooks/useTeams";
+import { useSquads } from "../hooks/useSquads";
 import { CreateTeamDialog } from "../components/CreateTeamDialog";
 import { EditTeamDialog } from "../components/EditTeamDialog";
 import { TeamCard } from "../components/TeamCard";
 import { TeamTreeView } from "../components/TeamTreeView";
 import { TeamFilters } from "../components/TeamFilters";
+import { SquadCard } from "../components/SquadCard";
+import { SquadDetailDialog } from "../components/SquadDetailDialog";
 import { TeamWithRelations } from "../types";
+import { SquadWithRelations } from "../types/squad";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -22,18 +27,29 @@ export default function TeamsPage() {
   usePageTitle("Times");
   const [showInactive, setShowInactive] = useState(false);
   const [editingTeam, setEditingTeam] = useState<TeamWithRelations | null>(null);
+  const [selectedSquad, setSelectedSquad] = useState<SquadWithRelations | null>(null);
   const [search, setSearch] = useState("");
   const [parentTeamFilter, setParentTeamFilter] = useState<string | null>(null);
   const [leaderFilter, setLeaderFilter] = useState<string | null>(null);
 
   const { data: teams, isLoading } = useTeams(showInactive);
+  const { data: squads, isLoading: isLoadingSquads } = useSquads();
   const { tree } = useTeamTree();
   const stats = useTeamStats();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
 
-  // Get parent teams for filter
-  const parentTeams = useMemo(() => {
+  // Separate parent teams and sub-teams
+  const { parentTeams: mainTeams, subTeams } = useMemo(() => {
+    if (!teams) return { parentTeams: [], subTeams: [] };
+    return {
+      parentTeams: teams.filter((t) => !t.parent_team_id),
+      subTeams: teams.filter((t) => t.parent_team_id),
+    };
+  }, [teams]);
+
+  // Get parent teams for filter dropdown
+  const parentTeamsForFilter = useMemo(() => {
     if (!teams) return [];
     return teams
       .filter((t) => !t.parent_team_id && t.child_teams && t.child_teams.length > 0)
@@ -59,9 +75,8 @@ export default function TeamsPage() {
   }, [teams]);
 
   // Filter teams
-  const filteredTeams = useMemo(() => {
-    if (!teams) return [];
-    return teams.filter((team) => {
+  const filterTeams = (teamList: TeamWithRelations[]) => {
+    return teamList.filter((team) => {
       // Search filter
       if (search) {
         const searchLower = search.toLowerCase();
@@ -90,11 +105,24 @@ export default function TeamsPage() {
 
       return true;
     });
-  }, [teams, search, parentTeamFilter, leaderFilter]);
+  };
+
+  const filteredMainTeams = filterTeams(mainTeams);
+  const filteredSubTeams = filterTeams(subTeams);
+  const filteredSquads = useMemo(() => {
+    if (!squads) return [];
+    if (!search) return squads;
+    const searchLower = search.toLowerCase();
+    return squads.filter((squad) =>
+      squad.name.toLowerCase().includes(searchLower)
+    );
+  }, [squads, search]);
 
   const filteredTree = showInactive
     ? tree
     : tree.filter((node) => node.status === "active");
+
+  const totalSquads = squads?.length || 0;
 
   return (
     <HubLayout>
@@ -102,9 +130,9 @@ export default function TeamsPage() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Times</h1>
+            <h1 className="text-2xl font-bold text-foreground">Estrutura Organizacional</h1>
             <p className="text-muted-foreground">
-              Estrutura organizacional
+              Times, Sub-times e Squads
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -113,7 +141,7 @@ export default function TeamsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="border-l-4 border-l-primary">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -125,10 +153,50 @@ export default function TeamsPage() {
                     <Skeleton className="h-7 w-12" />
                   ) : (
                     <p className="text-2xl font-bold text-foreground">
-                      {stats.totalActive}
+                      {mainTeams.filter(t => t.status === 'active').length}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">Times ativos</p>
+                  <p className="text-xs text-muted-foreground">Times</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-blue-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Layers3 className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-7 w-12" />
+                  ) : (
+                    <p className="text-2xl font-bold text-foreground">
+                      {subTeams.filter(t => t.status === 'active').length}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Sub-times</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <Box className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  {isLoadingSquads ? (
+                    <Skeleton className="h-7 w-12" />
+                  ) : (
+                    <p className="text-2xl font-bold text-foreground">
+                      {totalSquads}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Squads</p>
                 </div>
               </div>
             </CardContent>
@@ -149,26 +217,6 @@ export default function TeamsPage() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">Pessoas</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-secondary">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <Network className="h-5 w-5 text-secondary-foreground" />
-                </div>
-                <div>
-                  {isLoading ? (
-                    <Skeleton className="h-7 w-12" />
-                  ) : (
-                    <p className="text-2xl font-bold text-foreground">
-                      {stats.parentTeams}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">Times pai</p>
                 </div>
               </div>
             </CardContent>
@@ -203,18 +251,18 @@ export default function TeamsPage() {
           onParentTeamChange={setParentTeamFilter}
           leaderId={leaderFilter}
           onLeaderChange={setLeaderFilter}
-          parentTeams={parentTeams}
+          parentTeams={parentTeamsForFilter}
           leaders={leaders}
         />
 
         {/* View Toggle */}
         <div className="flex items-center justify-between">
-          <Tabs defaultValue="grid" className="w-full">
+          <Tabs defaultValue="sections" className="w-full">
             <div className="flex items-center justify-between mb-4">
               <TabsList>
-                <TabsTrigger value="grid" className="gap-2">
+                <TabsTrigger value="sections" className="gap-2">
                   <LayoutGrid className="h-4 w-4" />
-                  Grade
+                  Seções
                 </TabsTrigger>
                 <TabsTrigger value="tree" className="gap-2">
                   <GitBranch className="h-4 w-4" />
@@ -234,8 +282,8 @@ export default function TeamsPage() {
               </div>
             </div>
 
-            {/* Grid View */}
-            <TabsContent value="grid">
+            {/* Sections View */}
+            <TabsContent value="sections" className="space-y-8">
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[...Array(6)].map((_, i) => (
@@ -254,44 +302,128 @@ export default function TeamsPage() {
                     </Card>
                   ))}
                 </div>
-              ) : filteredTeams && filteredTeams.length > 0 ? (
-                <>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {filteredTeams.length} time{filteredTeams.length !== 1 ? "s" : ""} encontrado{filteredTeams.length !== 1 ? "s" : ""}
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredTeams.map((team) => (
-                      <TeamCard
-                        key={team.id}
-                        team={team}
-                        onEdit={isAdmin ? setEditingTeam : undefined}
-                      />
-                    ))}
-                  </div>
-                </>
               ) : (
-                <Card>
-                  <CardContent className="py-4">
-                    <EmptyState
-                      icon={Building2}
-                      title="Nenhum time encontrado"
-                      description={
-                        search || parentTeamFilter || leaderFilter
-                          ? "Nenhum time corresponde aos filtros aplicados."
-                          : showInactive
-                          ? "Não há times cadastrados."
-                          : "Não há times ativos. Ative a opção para ver times inativos."
-                      }
-                      actionLabel={isAdmin && !search ? "Criar Time" : undefined}
-                      onAction={undefined}
-                    />
-                    {isAdmin && !search && (
-                      <div className="flex justify-center mt-2">
-                        <CreateTeamDialog />
+                <>
+                  {/* TIMES SECTION */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-4 w-4 text-primary" />
                       </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-foreground">Times</h2>
+                        <p className="text-sm text-muted-foreground">
+                          Estrutura organizacional principal • {filteredMainTeams.length} time{filteredMainTeams.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    {filteredMainTeams.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredMainTeams.map((team) => (
+                          <TeamCard
+                            key={team.id}
+                            team={team}
+                            onEdit={isAdmin ? setEditingTeam : undefined}
+                            variant="team"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="bg-muted/30">
+                        <CardContent className="py-8">
+                          <EmptyState
+                            icon={Building2}
+                            title="Nenhum time encontrado"
+                            description={search ? "Nenhum time corresponde à busca." : "Não há times cadastrados."}
+                          />
+                        </CardContent>
+                      </Card>
                     )}
-                  </CardContent>
-                </Card>
+                  </section>
+
+                  {/* SUB-TIMES SECTION */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                        <Layers3 className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-foreground">Sub-times</h2>
+                        <p className="text-sm text-muted-foreground">
+                          Times subordinados a outros times • {filteredSubTeams.length} sub-time{filteredSubTeams.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    {filteredSubTeams.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredSubTeams.map((team) => (
+                          <TeamCard
+                            key={team.id}
+                            team={team}
+                            onEdit={isAdmin ? setEditingTeam : undefined}
+                            variant="subteam"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="bg-muted/30">
+                        <CardContent className="py-6 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            {search ? "Nenhum sub-time corresponde à busca." : "Não há sub-times cadastrados."}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </section>
+
+                  {/* SQUADS SECTION */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                        <Box className="h-4 w-4 text-purple-500" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-foreground">Squads</h2>
+                        <p className="text-sm text-muted-foreground">
+                          Estruturas operacionais de entrega • {filteredSquads.length} squad{filteredSquads.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    {isLoadingSquads ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {[...Array(3)].map((_, i) => (
+                          <Card key={i}>
+                            <CardContent className="p-6 space-y-4">
+                              <Skeleton className="h-6 w-32" />
+                              <Skeleton className="h-4 w-full" />
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : filteredSquads.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredSquads.map((squad) => (
+                          <SquadCard
+                            key={squad.id}
+                            squad={squad}
+                            onClick={() => setSelectedSquad(squad)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="bg-muted/30">
+                        <CardContent className="py-6 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            {search ? "Nenhum squad corresponde à busca." : "Não há squads cadastrados."}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </section>
+                </>
               )}
             </TabsContent>
 
@@ -326,11 +458,18 @@ export default function TeamsPage() {
         </div>
       </div>
 
-      {/* Edit Dialog */}
+      {/* Edit Team Dialog */}
       <EditTeamDialog
         team={editingTeam}
         open={!!editingTeam}
         onOpenChange={(open) => !open && setEditingTeam(null)}
+      />
+
+      {/* Squad Detail Dialog */}
+      <SquadDetailDialog
+        squad={selectedSquad}
+        open={!!selectedSquad}
+        onOpenChange={(open) => !open && setSelectedSquad(null)}
       />
     </HubLayout>
   );
