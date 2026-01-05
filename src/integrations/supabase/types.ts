@@ -1427,6 +1427,49 @@ export type Database = {
           },
         ]
       }
+      okr_team_objective_contributors: {
+        Row: {
+          created_at: string
+          id: string
+          objective_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          objective_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          objective_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_team_objective_contributors_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "okr_team_objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objective_contributors_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["objective_id"]
+          },
+          {
+            foreignKeyName: "okr_team_objective_contributors_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       okr_team_objectives: {
         Row: {
           bu_id: string | null
@@ -1435,8 +1478,10 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: string
+          is_shared: boolean
           org_objective_id: string
           owner_user_id: string | null
+          responsibility_model: string | null
           status: Database["public"]["Enums"]["okr_status"]
           team_id: string
           title: string
@@ -1449,8 +1494,10 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          is_shared?: boolean
           org_objective_id: string
           owner_user_id?: string | null
+          responsibility_model?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
           team_id: string
           title: string
@@ -1463,8 +1510,10 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          is_shared?: boolean
           org_objective_id?: string
           owner_user_id?: string | null
+          responsibility_model?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
           team_id?: string
           title?: string

@@ -6,7 +6,9 @@ import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil, Refresh
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
+import { SharedOkrBadge } from './SharedOkrBadge';
 import { useTeamKeyResults } from '../hooks/useOkrData';
+import { useObjectiveContributors } from '../hooks/useSharedOkrData';
 import { CreateTeamKrDialog } from './CreateTeamKrDialog';
 import { CheckinDialog } from './CheckinDialog';
 import { EditTeamObjectiveDialog } from './EditTeamObjectiveDialog';
@@ -29,11 +31,14 @@ interface TeamObjectiveCardProps {
     team_id: string;
     org_objective_id: string;
     status: OkrStatus;
+    is_shared?: boolean;
+    responsibility_model?: string | null;
   };
   teams: Array<{ id: string; name: string }>;
+  currentTeamId?: string; // To determine if viewing team is primary or contributor
 }
 
-export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) {
+export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjectiveCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -62,10 +67,18 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
     status: OkrRagStatus;
   } | null>(null);
   const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.team_id);
+  const { data: contributors } = useObjectiveContributors(objective.is_shared ? objective.id : undefined);
   const { openPanel } = useVic();
   const { isEnabled: vicEnabled } = useVicEnabled();
 
   const teamName = teams.find(t => t.id === objective.team_id)?.name || 'Time';
+  const isPrimaryTeam = !currentTeamId || currentTeamId === objective.team_id;
+  
+  // Get contributing team names
+  const contributingTeams = contributors?.map(c => ({
+    id: c.team_id,
+    name: c.team?.name || 'Time desconhecido',
+  })) || [];
   
   // Filter KRs for this objective
   const objectiveKrs = allKeyResults?.filter(kr => kr.team_objective_id === objective.id && !kr.deleted_at) || [];
@@ -96,17 +109,28 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
         redCount > 0 && 'border-l-red-500',
         redCount === 0 && yellowCount > 0 && 'border-l-yellow-500',
         redCount === 0 && yellowCount === 0 && greenCount > 0 && 'border-l-green-500',
-        objectiveKrs.length === 0 && 'border-l-muted'
+        objectiveKrs.length === 0 && 'border-l-muted',
+        objective.is_shared && 'ring-1 ring-purple-200 dark:ring-purple-800'
       )}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <Badge variant="outline" className="text-xs">
                   <Users className="w-3 h-3 mr-1" />
                   {teamName}
                 </Badge>
                 <OkrStatusBadge status={objective.status} type="objective" />
+                {objective.is_shared && (
+                  <SharedOkrBadge
+                    isShared
+                    primaryTeamName={teamName}
+                    contributingTeams={contributingTeams}
+                    responsibilityModel={objective.responsibility_model as 'collaborative' | 'primary_led'}
+                    isPrimaryTeam={isPrimaryTeam}
+                    compact
+                  />
+                )}
               </div>
               <CardTitle className="text-lg font-semibold line-clamp-2">
                 {objective.title}
@@ -114,6 +138,12 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
               {objective.description && (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                   {objective.description}
+                </p>
+              )}
+              {/* Show contributing teams for shared OKRs */}
+              {objective.is_shared && contributingTeams.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Times: {teamName}, {contributingTeams.map(t => t.name).join(', ')}
                 </p>
               )}
             </div>
@@ -144,6 +174,8 @@ export function TeamObjectiveCard({ objective, teams }: TeamObjectiveCardProps) 
                               status: objective.status,
                               additionalData: {
                                 teamName,
+                                isShared: objective.is_shared,
+                                contributingTeams: contributingTeams.map(t => t.name),
                                 krsCount: objectiveKrs.length,
                                 krs: objectiveKrs.map(kr => ({
                                   title: kr.title,

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -20,8 +22,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
+import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
+import { MultiTeamSelect, SimpleSelect } from '@/components/selects';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
 import type { OkrStatus } from '../types';
 
 interface EditTeamObjectiveDialogProps {
@@ -33,8 +38,15 @@ interface EditTeamObjectiveDialogProps {
     description?: string | null;
     team_id: string;
     status: OkrStatus;
+    is_shared?: boolean;
+    responsibility_model?: string | null;
   };
 }
+
+const RESPONSIBILITY_MODEL_OPTIONS = [
+  { value: 'collaborative', label: 'Colaborativo (todos co-responsáveis)' },
+  { value: 'primary_led', label: 'Líder primário + contribuidores' },
+];
 
 export function EditTeamObjectiveDialog({
   open,
@@ -44,15 +56,35 @@ export function EditTeamObjectiveDialog({
   const [title, setTitle] = useState(objective.title);
   const [description, setDescription] = useState(objective.description || '');
   const [status, setStatus] = useState<OkrStatus>(objective.status);
+  const [isShared, setIsShared] = useState(objective.is_shared || false);
+  const [responsibilityModel, setResponsibilityModel] = useState<'collaborative' | 'primary_led'>(
+    (objective.responsibility_model as 'collaborative' | 'primary_led') || 'collaborative'
+  );
+  const [contributingTeamIds, setContributingTeamIds] = useState<string[]>([]);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { teams } = useHierarchicalTeamList();
+  const { data: existingContributors } = useObjectiveContributors(objective.id);
+  const manageContributors = useManageContributors();
 
-  // Só reseta o form quando o dialog abre, não quando os dados mudam
+  // Initialize contributing team ids from existing contributors
+  useEffect(() => {
+    if (existingContributors) {
+      setContributingTeamIds(existingContributors.map(c => c.team_id));
+    }
+  }, [existingContributors]);
+
+  // Reset form when dialog opens
   useDialogFormReset(open, useCallback(() => {
     setTitle(objective.title);
     setDescription(objective.description || '');
     setStatus(objective.status);
-  }, [objective.title, objective.description, objective.status]));
+    setIsShared(objective.is_shared || false);
+    setResponsibilityModel(
+      (objective.responsibility_model as 'collaborative' | 'primary_led') || 'collaborative'
+    );
+  }, [objective.title, objective.description, objective.status, objective.is_shared, objective.responsibility_model]));
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -62,14 +94,31 @@ export function EditTeamObjectiveDialog({
           title,
           description: description || null,
           status,
+          is_shared: isShared,
+          responsibility_model: isShared ? responsibilityModel : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', objective.id);
 
       if (error) throw error;
+
+      // Manage contributors if shared
+      if (isShared) {
+        await manageContributors.mutateAsync({
+          objectiveId: objective.id,
+          teamIds: contributingTeamIds,
+        });
+      } else {
+        // Clear contributors if not shared
+        await manageContributors.mutateAsync({
+          objectiveId: objective.id,
+          teamIds: [],
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-shared'] });
       toast({
         title: 'Objetivo atualizado',
         description: 'O objetivo do time foi atualizado com sucesso.',
@@ -89,12 +138,22 @@ export function EditTeamObjectiveDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    if (isShared && contributingTeamIds.length === 0) {
+      toast({
+        title: 'Times contribuidores obrigatórios',
+        description: 'Selecione pelo menos um time contribuidor para OKRs compartilhadas.',
+        variant: 'destructive',
+      });
+      return;
+    }
     updateMutation.mutate();
   };
 
+  const primaryTeamName = teams.find(t => t.id === objective.team_id)?.name;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Objetivo do Time</DialogTitle>
         </DialogHeader>
@@ -135,6 +194,62 @@ export function EditTeamObjectiveDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Shared OKR Toggle */}
+          <div className="flex items-center justify-between py-3 px-4 rounded-lg border bg-muted/30">
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-purple-600" />
+              <div>
+                <Label htmlFor="is-shared" className="text-sm font-medium cursor-pointer">
+                  OKR Compartilhada
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Envolve múltiplos times trabalhando juntos
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="is-shared"
+              checked={isShared}
+              onCheckedChange={setIsShared}
+              disabled={updateMutation.isPending}
+            />
+          </div>
+
+          {/* Shared OKR Fields */}
+          {isShared && (
+            <div className="space-y-4 p-4 rounded-lg border border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/30">
+              <Alert className="border-purple-200 bg-purple-100/50 dark:border-purple-800 dark:bg-purple-900/30">
+                <Users className="h-4 w-4 text-purple-600" />
+                <AlertDescription className="text-purple-800 dark:text-purple-200">
+                  Time primário: <strong>{primaryTeamName || 'Não definido'}</strong>
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <Label>Times Contribuidores *</Label>
+                <MultiTeamSelect
+                  value={contributingTeamIds}
+                  onValueChange={setContributingTeamIds}
+                  excludeTeamIds={[objective.team_id]}
+                  teams={teams}
+                  placeholder="Selecione os times contribuidores"
+                  disabled={updateMutation.isPending}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Modelo de Responsabilidade</Label>
+                <SimpleSelect
+                  value={responsibilityModel}
+                  onValueChange={(v) => setResponsibilityModel(v as 'collaborative' | 'primary_led')}
+                  options={RESPONSIBILITY_MODEL_OPTIONS}
+                  disabled={updateMutation.isPending}
+                  triggerClassName="w-full"
+                />
+              </div>
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

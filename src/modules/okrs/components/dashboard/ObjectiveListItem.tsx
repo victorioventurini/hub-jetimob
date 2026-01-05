@@ -23,6 +23,7 @@ import { EditTeamKrDialog } from '../EditTeamKrDialog';
 import { EditOrgObjectiveDialog } from '../EditOrgObjectiveDialog';
 import { EditTeamObjectiveDialog } from '../EditTeamObjectiveDialog';
 import { CheckinDialog } from '../CheckinDialog';
+import { SharedOkrBadge } from '../SharedOkrBadge';
 
 interface KeyResult {
   id: string;
@@ -52,11 +53,18 @@ interface Objective {
   status: string;
   team_id?: string;
   org_objective_id?: string;
+  is_shared?: boolean;
+  responsibility_model?: string | null;
   owner?: {
     display_name: string;
     photo_url?: string | null;
   } | null;
   key_results?: KeyResult[];
+  contributors?: Array<{
+    id: string;
+    team_id: string;
+    team?: { id: string; name: string };
+  }>;
 }
 
 interface ObjectiveListItemProps {
@@ -157,7 +165,7 @@ export function ObjectiveListItem({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {type === 'org' ? (
                           <Badge variant="outline" className="text-xs">
                             <Target className="w-3 h-3 mr-1" />
@@ -168,6 +176,18 @@ export function ObjectiveListItem({
                             <Users className="w-3 h-3 mr-1" />
                             {teamName || 'Time'}
                           </Badge>
+                        )}
+                        {type === 'team' && objective.is_shared && (
+                          <SharedOkrBadge
+                            isShared
+                            primaryTeamName={teamName}
+                            contributingTeams={objective.contributors?.map(c => ({
+                              id: c.team_id,
+                              name: c.team?.name || 'Time',
+                            })) || []}
+                            responsibilityModel={objective.responsibility_model as 'collaborative' | 'primary_led'}
+                            compact
+                          />
                         )}
                       </div>
                       <h3 className="font-medium leading-snug line-clamp-2">
