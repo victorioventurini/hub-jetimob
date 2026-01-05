@@ -1,12 +1,10 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { List, Plus, Settings, Building2, Tag } from "lucide-react";
+import { List, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const tabs = [
   { name: "Tickets", href: "/tickets", icon: List, exact: true },
-  { name: "Empresas Parceiras", href: "/tickets/partners", icon: Building2, adminOnly: true },
-  { name: "Categorias", href: "/tickets/categories", icon: Tag, adminOnly: true },
   { name: "Configurações", href: "/tickets/settings", icon: Settings, adminOnly: true },
 ];
 
