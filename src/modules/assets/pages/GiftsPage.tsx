@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Gift, Plus, Search, AlertTriangle } from "lucide-react";
+import { Gift, Plus, Search, AlertTriangle, ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,12 +9,14 @@ import { useGifts } from "../hooks/useGifts";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { GiftItemCard } from "../components/gifts/GiftItemCard";
 import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
+import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
 
 export default function GiftsPage() {
   const { items, batches, getItemTotals, isLoading } = useGifts();
-  const { canManageGifts } = useAssetPermissions();
+  const { canManageGifts, isGiftsAdmin } = useAssetPermissions();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 
   const filteredItems = items.filter(
     (item) =>
@@ -69,10 +71,18 @@ export default function GiftsPage() {
           />
         </div>
         {canManageGifts && (
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Brinde
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>
+              <ArrowUp className="h-4 w-4 mr-2" />
+              Registrar Saída
+            </Button>
+            {isGiftsAdmin && (
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Brinde
+              </Button>
+            )}
+          </>
         )}
       </div>
 
@@ -102,8 +112,9 @@ export default function GiftsPage() {
         </div>
       )}
 
-      {/* Dialog de criação */}
+      {/* Dialogs */}
       <GiftItemDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <GiftMovementDialog open={movementDialogOpen} onOpenChange={setMovementDialogOpen} />
     </div>
   );
 }
