@@ -62,6 +62,7 @@ export function CreateOrgObjectiveDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['okr-org-objectives'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives-with-krs'] });
       toast.success('Objetivo organizacional criado com sucesso!');
       handleClose();
     },
