@@ -21,6 +21,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
+import { KrUnitSelect } from './KrUnitSelect';
 import type { OkrRagStatus, OkrDirection } from '../types';
 
 interface EditOrgKrDialogProps {
@@ -147,15 +148,7 @@ export function EditOrgKrDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unidade</Label>
-              <Input
-                id="unit"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="%, R$, unidades..."
-              />
-            </div>
+            <KrUnitSelect value={unit} onChange={setUnit} />
             <div className="space-y-2">
               <Label htmlFor="direction">Direção</Label>
               <Select value={direction} onValueChange={(v) => setDirection(v as OkrDirection)}>
