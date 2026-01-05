@@ -1,7 +1,6 @@
-import { Search, Menu, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Menu, LogOut, User, Settings, Building2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -68,13 +68,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
         {/* Search */}
         <div className="hidden md:flex flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar no Hub..."
-              className="pl-10 bg-muted/50 border-0 focus-visible:ring-1"
-            />
-          </div>
+          <GlobalSearch />
         </div>
 
         {/* Right section */}

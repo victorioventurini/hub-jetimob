@@ -25,6 +25,7 @@ const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Modules = lazy(() => import("./pages/Modules"));
 const SelectBu = lazy(() => import("./pages/SelectBu"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 // Módulo Teams
 const TeamsPage = lazy(() => import("./modules/teams/pages/TeamsPage"));
@@ -310,6 +311,18 @@ const App = () => (
 
                     {/* ===== ÁREA OPERACIONAL (requer BU selecionada) ===== */}
                     
+                    {/* Busca Global */}
+                    <Route
+                      path="/search"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <SearchPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Home/Dashboard da BU */}
                     <Route
                       path="/"
