@@ -267,12 +267,14 @@ export function LocationsList({ buId, canManage = false }: LocationsListProps) {
         </CardContent>
       </Card>
 
-      <LocationDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        buId={buId}
-        location={editingLocation}
-      />
+      {dialogOpen && (
+        <LocationDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          buId={buId}
+          location={editingLocation}
+        />
+      )}
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
