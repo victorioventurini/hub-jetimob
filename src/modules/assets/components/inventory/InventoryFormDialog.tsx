@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,18 +34,22 @@ import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import type { AssetInventory } from "../../types";
 
 const schema = z.object({
-  internal_code: z.string().min(1, "Código interno obrigatório"),
-  name: z.string().min(1, "Nome obrigatório"),
+  internal_code: z
+    .string()
+    .min(1, "Código interno obrigatório")
+    .max(20, "Código deve ter no máximo 20 caracteres")
+    .regex(/^\d+$/, "Código deve conter apenas números"),
+  name: z.string().min(1, "Nome obrigatório").max(200, "Nome muito longo"),
   category_id: z.string().optional(),
   home_location_id: z.string().min(1, "Localização obrigatória"),
-  description: z.string().optional(),
+  description: z.string().max(1000, "Descrição muito longa").optional(),
   quantity_total: z.coerce.number().min(1, "Mínimo 1").default(1),
-  brand: z.string().optional(),
-  model: z.string().optional(),
+  brand: z.string().max(100, "Marca muito longa").optional(),
+  model: z.string().max(100, "Modelo muito longo").optional(),
   acquired_at: z.string().optional(),
-  serial_number: z.string().optional(),
+  serial_number: z.string().max(100, "Número de série muito longo").optional(),
   acquisition_value: z.coerce.number().optional(),
-  notes: z.string().optional(),
+  notes: z.string().max(2000, "Observações muito longas").optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -56,16 +61,11 @@ interface InventoryFormDialogProps {
 }
 
 export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormDialogProps) {
-  const { categories, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
+  const { categories, items, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
   const { locations, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
   const isEditing = !!item;
-
-  // Generate unique code suggestion
-  const codeSuggestion = useMemo(() => {
-    const timestamp = Date.now().toString(36).toUpperCase();
-    return `INV-${timestamp}`;
-  }, []);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -86,7 +86,10 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setDuplicateError(null);
+      return;
+    }
 
     if (item) {
       form.reset({
@@ -105,7 +108,7 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
       });
     } else {
       form.reset({
-        internal_code: codeSuggestion,
+        internal_code: "",
         name: "",
         category_id: undefined,
         home_location_id: defaultLocation?.id || "",
@@ -119,22 +122,42 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
         notes: "",
       });
     }
-  }, [open, item, form, codeSuggestion, defaultLocation]);
+    setDuplicateError(null);
+  }, [open, item, form, defaultLocation]);
+
+  // Check for duplicate code
+  const checkDuplicateCode = (code: string): boolean => {
+    const trimmedCode = code.trim();
+    if (!trimmedCode) return false;
+    
+    // Check if any existing item has the same code (excluding current item if editing)
+    return items.some(
+      (i) => i.internal_code === trimmedCode && (!isEditing || i.id !== item?.id)
+    );
+  };
 
   const onSubmit = (data: FormData) => {
+    // Check for duplicate code before submitting
+    if (checkDuplicateCode(data.internal_code)) {
+      setDuplicateError("Este código já está em uso por outro item");
+      return;
+    }
+
+    setDuplicateError(null);
+
     const payload = {
-      internal_code: data.internal_code,
-      name: data.name,
+      internal_code: data.internal_code.trim(),
+      name: data.name.trim(),
       category_id: data.category_id || undefined,
       home_location_id: data.home_location_id || undefined,
-      description: data.description || undefined,
+      description: data.description?.trim() || undefined,
       quantity_total: data.quantity_total,
-      brand: data.brand || undefined,
-      model: data.model || undefined,
+      brand: data.brand?.trim() || undefined,
+      model: data.model?.trim() || undefined,
       acquired_at: data.acquired_at || undefined,
-      serial_number: isInventoryAdmin ? data.serial_number || undefined : undefined,
+      serial_number: isInventoryAdmin ? data.serial_number?.trim() || undefined : undefined,
       acquisition_value: isInventoryAdmin ? data.acquisition_value || undefined : undefined,
-      notes: data.notes || undefined,
+      notes: data.notes?.trim() || undefined,
     };
 
     if (isEditing && item) {
@@ -143,6 +166,17 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
       createItem(payload as any);
     }
     onOpenChange(false);
+  };
+
+  // Clear duplicate error when code changes
+  const handleCodeChange = (value: string, onChange: (value: string) => void) => {
+    // Only allow digits
+    const numericValue = value.replace(/\D/g, "");
+    onChange(numericValue);
+    
+    if (duplicateError && !checkDuplicateCode(numericValue)) {
+      setDuplicateError(null);
+    }
   };
 
   return (
@@ -166,8 +200,18 @@ export function InventoryFormDialog({ open, onOpenChange, item }: InventoryFormD
                   <FormItem>
                     <FormLabel>Código Interno *</FormLabel>
                     <FormControl>
-                      <Input placeholder="INV-001" {...field} />
+                      <Input
+                        placeholder="001"
+                        inputMode="numeric"
+                        maxLength={20}
+                        {...field}
+                        onChange={(e) => handleCodeChange(e.target.value, field.onChange)}
+                      />
                     </FormControl>
+                    <FormDescription>Somente números</FormDescription>
+                    {duplicateError && (
+                      <p className="text-sm font-medium text-destructive">{duplicateError}</p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
