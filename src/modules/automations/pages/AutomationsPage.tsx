@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +17,7 @@ import {
   ScrollText,
   Search,
   RefreshCw,
+  Zap,
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
@@ -93,131 +95,185 @@ export default function AutomationsPage() {
     );
   }, [actions, searchTerm]);
 
+  const totalEvents = events?.length || 0;
+  const totalActions = actions?.length || 0;
+  const successLogs = logs?.filter((l) => l.status === 'success').length || 0;
+
   return (
-    <div className="container max-w-6xl py-6 space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Automações</h1>
+        <h1 className="text-2xl font-bold text-foreground">Automações</h1>
         <p className="text-muted-foreground">
-          Catálogo de eventos e ações disponíveis para automações do Hub.
+          Catálogo de eventos e ações disponíveis para automações do Hub
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="events" className="gap-2">
-            <ArrowUpRight className="h-4 w-4" />
-            Eventos
-          </TabsTrigger>
-          <TabsTrigger value="actions" className="gap-2">
-            <ArrowDownLeft className="h-4 w-4" />
-            Ações
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="gap-2">
-            <ScrollText className="h-4 w-4" />
-            Logs
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Events Tab */}
-        <TabsContent value="events" className="space-y-4 mt-6">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar eventos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <ArrowUpRight className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalEvents}</p>
+                <p className="text-sm text-muted-foreground">Eventos</p>
+              </div>
             </div>
-          </div>
-
-          {eventsLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24" />
-              ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <ArrowDownLeft className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalActions}</p>
+                <p className="text-sm text-muted-foreground">Ações</p>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-8">
-              {Object.entries(eventsByCategory).map(([category, categoryEvents]) => (
-                <EventCategorySection
-                  key={category}
-                  category={category}
-                  events={categoryEvents}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <Zap className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{successLogs}</p>
+                <p className="text-sm text-muted-foreground">Execuções OK</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs Content */}
+      <Card>
+        <CardHeader className="pb-3">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="events" className="gap-2">
+                <ArrowUpRight className="h-4 w-4" />
+                Eventos
+              </TabsTrigger>
+              <TabsTrigger value="actions" className="gap-2">
+                <ArrowDownLeft className="h-4 w-4" />
+                Ações
+              </TabsTrigger>
+              <TabsTrigger value="logs" className="gap-2">
+                <ScrollText className="h-4 w-4" />
+                Logs
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            {/* Events Tab */}
+            <TabsContent value="events" className="space-y-4 mt-0">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar eventos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
-              ))}
-              {Object.keys(eventsByCategory).length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum evento encontrado.
-                </p>
+              </div>
+
+              {eventsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-24" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {Object.entries(eventsByCategory).map(([category, categoryEvents]) => (
+                    <EventCategorySection
+                      key={category}
+                      category={category}
+                      events={categoryEvents}
+                    />
+                  ))}
+                  {Object.keys(eventsByCategory).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <ArrowUpRight className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                      <p className="text-muted-foreground">Nenhum evento encontrado.</p>
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-          )}
-        </TabsContent>
+            </TabsContent>
 
-        {/* Actions Tab */}
-        <TabsContent value="actions" className="space-y-4 mt-6">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar ações..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          {actionsLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {Object.entries(actionsByCategory).map(([category, categoryActions]) => (
-                <ActionCategorySection
-                  key={category}
-                  category={category}
-                  actions={categoryActions}
+            {/* Actions Tab */}
+            <TabsContent value="actions" className="space-y-4 mt-0">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar ações..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
-              ))}
-              {Object.keys(actionsByCategory).length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma ação encontrada.
-                </p>
+              </div>
+
+              {actionsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-24" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {Object.entries(actionsByCategory).map(([category, categoryActions]) => (
+                    <ActionCategorySection
+                      key={category}
+                      category={category}
+                      actions={categoryActions}
+                    />
+                  ))}
+                  {Object.keys(actionsByCategory).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <ArrowDownLeft className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                      <p className="text-muted-foreground">Nenhuma ação encontrada.</p>
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-          )}
-        </TabsContent>
+            </TabsContent>
 
-        {/* Logs Tab */}
-        <TabsContent value="logs" className="space-y-4 mt-6">
-          <div className="flex items-center justify-between gap-4">
-            <Select value={logFilter} onValueChange={setLogFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="success">Sucesso</SelectItem>
-                <SelectItem value="error">Erro</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="retrying">Tentando novamente</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Logs Tab */}
+            <TabsContent value="logs" className="space-y-4 mt-0">
+              <div className="flex items-center justify-between gap-4">
+                <Select value={logFilter} onValueChange={setLogFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="success">Sucesso</SelectItem>
+                    <SelectItem value="error">Erro</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="retrying">Tentando novamente</SelectItem>
+                  </SelectContent>
+                </Select>
 
-            <Button variant="outline" size="icon" onClick={() => refetchLogs()}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
+                <Button variant="outline" size="icon" onClick={() => refetchLogs()}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
 
-          <AutomationLogsTable logs={logs || []} isLoading={logsLoading} />
-        </TabsContent>
-      </Tabs>
+              <AutomationLogsTable logs={logs || []} isLoading={logsLoading} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
