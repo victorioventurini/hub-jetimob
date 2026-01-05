@@ -51,6 +51,7 @@ const iconMap: Record<string, LucideIcon> = {
   modules: LayoutGrid,
   "modules-admin": LayoutGrid,
   settings: Settings,
+  assets: Briefcase,
 };
 
 // Itens fixos (sempre aparecem)
@@ -62,6 +63,7 @@ const fixedItems = [
 const buMenuItems = [
   { name: "OKRs", href: "/okrs", icon: Target, slug: "okrs" },
   { name: "KPIs", href: "/kpis", icon: BarChart3, slug: "kpis" },
+  { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
   { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
 ];
