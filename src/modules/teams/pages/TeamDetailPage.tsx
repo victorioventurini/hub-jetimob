@@ -35,6 +35,7 @@ import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
+import { useUrlState } from "@/hooks/useUrlState";
 
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +46,10 @@ export default function TeamDetailPage() {
   
   usePageTitle(team?.name ? `${team.name} - Times` : "Times");
   
+  // URL State
+  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'members' });
+  
+  // Local state
   const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingSubteamId, setDeletingSubteamId] = useState<string | null>(null);
@@ -169,7 +174,7 @@ export default function TeamDetailPage() {
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="members">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList>
                 <TabsTrigger value="members">Membros</TabsTrigger>
                 <TabsTrigger value="contribution">Contribuição</TabsTrigger>

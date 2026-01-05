@@ -14,12 +14,21 @@ import { KpiStatusSummary } from "../components/KpiStatusSummary";
 import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useUrlState } from "@/hooks/useUrlState";
 
 export default function KpiDashboardPage() {
   usePageTitle("KPIs");
   const { isAdmin } = useAuth();
-  const [categoryFilter, setCategoryFilter] = useState<KpiCategory | "all">("all");
-  const [teamFilter, setTeamFilter] = useState<string>("all");
+  
+  // URL State
+  const [categoryFilter, setCategoryFilter] = useUrlState<KpiCategory | "all">({ 
+    key: 'category', 
+    defaultValue: 'all',
+    parse: (v) => v as KpiCategory | "all",
+  });
+  const [teamFilter, setTeamFilter] = useUrlState({ key: 'team_id', defaultValue: 'all' });
+  
+  // Local state for dialogs
   const [selectedKpiId, setSelectedKpiId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
