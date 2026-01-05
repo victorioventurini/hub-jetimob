@@ -20,6 +20,8 @@ interface OkrFilters {
   parentTeamId?: string;
   statuses: OkrCalculatedStatus[];
   sharedFilter?: 'all' | 'shared' | 'exclusive';
+  primaryTeamId?: string;      // Filter by primary team (for shared OKRs)
+  contributorTeamId?: string;  // Filter by contributing team
 }
 
 interface OkrDashboardFiltersProps {
@@ -50,6 +52,8 @@ export function OkrDashboardFilters({
     filters.parentTeamId,
     filters.statuses.length < STATUS_OPTIONS.length && filters.statuses.length > 0,
     filters.sharedFilter && filters.sharedFilter !== 'all',
+    filters.primaryTeamId,
+    filters.contributorTeamId,
   ].filter(Boolean).length;
 
   const handleStatusToggle = (status: OkrCalculatedStatus) => {
@@ -67,6 +71,8 @@ export function OkrDashboardFilters({
       parentTeamId: undefined,
       statuses: [],
       sharedFilter: 'all',
+      primaryTeamId: undefined,
+      contributorTeamId: undefined,
     });
   };
 

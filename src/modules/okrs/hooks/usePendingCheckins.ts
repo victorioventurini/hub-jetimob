@@ -23,6 +23,10 @@ export interface PendingCheckin {
   objective_id: string | null;
   is_overdue: boolean;
   days_since_checkin: number | null;
+  // Shared OKR fields
+  is_shared?: boolean;
+  primary_team_id?: string;
+  primary_team_name?: string;
 }
 
 // Get day name in Portuguese

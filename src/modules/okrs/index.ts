@@ -4,6 +4,7 @@ export * from './hooks/useOkrStatus';
 export * from './hooks/useOkrMutations';
 export * from './hooks/usePendingCheckins';
 export * from './hooks/useSharedOkrData';
+export * from './hooks/useTeamContributedOkrs';
 export * from './types';
 
 // Components
@@ -16,6 +17,8 @@ export { OkrAlertsCard } from './components/OkrAlertsCard';
 export { TeamCheckinSettings } from './components/TeamCheckinSettings';
 export { CycleRetrospectiveDialog } from './components/CycleRetrospectiveDialog';
 export { SharedOkrBadge } from './components/SharedOkrBadge';
+export { SharedOkrInsights } from './components/SharedOkrInsights';
+export * from './components/team-view';
 
 // Pages
 export { default as OkrDashboardPage } from './pages/OkrsPage';

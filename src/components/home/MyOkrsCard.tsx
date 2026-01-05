@@ -40,6 +40,8 @@ export function MyOkrsCard() {
       unit: kr.unit,
       status: kr.status,
       team_id: kr.team_id,
+      is_shared: kr.is_shared,
+      team_name: kr.team_name,
     });
     setCheckinOpen(true);
   };
