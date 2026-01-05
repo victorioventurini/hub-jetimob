@@ -18,9 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle } from "lucide-react";
-import { useUpdateTeam, useTeams, useAvailableLeaders } from "../hooks/useTeams";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useUpdateTeam, useTeams, useAvailableLeaders, useDeleteTeam } from "../hooks/useTeams";
 import { TeamWithRelations, TeamFormData } from "../types";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
 interface EditTeamDialogProps {
   team: TeamWithRelations | null;
@@ -37,8 +38,10 @@ export function EditTeamDialog({ team, open, onOpenChange }: EditTeamDialogProps
     status: "active",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const updateTeam = useUpdateTeam();
+  const deleteTeam = useDeleteTeam();
   const { data: teams } = useTeams(true);
   const { data: leaders } = useAvailableLeaders();
 
@@ -238,24 +241,50 @@ export function EditTeamDialog({ team, open, onOpenChange }: EditTeamDialogProps
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-between pt-4">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+              variant="ghost"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setDeleteDialogOpen(true)}
             >
-              Cancelar
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
             </Button>
-            <Button
-              type="submit"
-              variant="accent"
-              disabled={updateTeam.isPending}
-            >
-              {updateTeam.isPending ? "Salvando..." : "Salvar Alterações"}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="accent"
+                disabled={updateTeam.isPending}
+              >
+                {updateTeam.isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={async () => {
+          if (team) {
+            await deleteTeam.mutateAsync(team.id);
+            setDeleteDialogOpen(false);
+            onOpenChange(false);
+          }
+        }}
+        title="Excluir Time"
+        description={`Tem certeza que deseja excluir o time "${team?.name}"? Esta ação não pode ser desfeita.`}
+        isLoading={deleteTeam.isPending}
+      />
     </Dialog>
   );
 }

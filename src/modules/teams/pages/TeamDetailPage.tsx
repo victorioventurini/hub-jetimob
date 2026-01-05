@@ -8,6 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ArrowLeft,
   Edit,
   Users,
@@ -16,23 +23,30 @@ import {
   UserCircle,
   Mail,
   Layers,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useTeam } from "../hooks/useTeams";
+import { useTeam, useDeleteTeam } from "../hooks/useTeams";
 import { useSquads } from "../hooks/useSquads";
 import { EditTeamDialog } from "../components/EditTeamDialog";
 import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeam(id);
   const { data: squads } = useSquads(id);
+  const deleteTeam = useDeleteTeam();
   
   usePageTitle(team?.name ? `${team.name} - Times` : "Times");
   
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingSubteamId, setDeletingSubteamId] = useState<string | null>(null);
+  const [deletingSubteamName, setDeletingSubteamName] = useState<string>("");
   const { isAdmin } = useAuth();
 
   const getInitials = (name: string) =>
@@ -229,12 +243,14 @@ export default function TeamDetailPage() {
                     {team.child_teams && team.child_teams.length > 0 ? (
                       <div className="space-y-2">
                         {team.child_teams.map((subteam) => (
-                          <Link
+                          <div
                             key={subteam.id}
-                            to={`/teams/${subteam.id}`}
                             className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                           >
-                            <div className="flex items-center gap-3">
+                            <Link
+                              to={`/teams/${subteam.id}`}
+                              className="flex items-center gap-3 flex-1"
+                            >
                               <Building2 className="h-5 w-5 text-muted-foreground" />
                               <span className="font-medium">{subteam.name}</span>
                               {subteam.status === "inactive" && (
@@ -242,9 +258,40 @@ export default function TeamDetailPage() {
                                   Inativo
                                 </Badge>
                               )}
+                            </Link>
+                            <div className="flex items-center gap-2">
+                              {isAdmin && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                      <Link to={`/teams/${subteam.id}`}>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Ver detalhes
+                                      </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setDeletingSubteamId(subteam.id);
+                                        setDeletingSubteamName(subteam.name);
+                                        setDeleteDialogOpen(true);
+                                      }}
+                                      className="text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Excluir
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors" />
                             </div>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors" />
-                          </Link>
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -355,6 +402,29 @@ export default function TeamDetailPage() {
         team={team}
         open={editOpen}
         onOpenChange={setEditOpen}
+      />
+
+      {/* Delete Subteam Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeletingSubteamId(null);
+            setDeletingSubteamName("");
+          }
+        }}
+        onConfirm={async () => {
+          if (deletingSubteamId) {
+            await deleteTeam.mutateAsync(deletingSubteamId);
+            setDeleteDialogOpen(false);
+            setDeletingSubteamId(null);
+            setDeletingSubteamName("");
+          }
+        }}
+        title="Excluir Sub-time"
+        description={`Tem certeza que deseja excluir o sub-time "${deletingSubteamName}"? Esta ação não pode ser desfeita.`}
+        isLoading={deleteTeam.isPending}
       />
     </HubLayout>
   );
