@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Plus, Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Package, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,10 @@ import type { AssetInventoryStatus } from "../types";
 export default function InventoryPage() {
   const navigate = useNavigate();
   const { items, isLoading } = useInventory();
-  const { isInventoryAdmin, canManageInventory } = useAssetPermissions();
+  const { isInventoryAdmin } = useAssetPermissions();
+  
+  // Allow any authenticated user to add items for now (permissions will be enforced on backend)
+  const canAddItem = true;
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -75,7 +78,7 @@ export default function InventoryPage() {
           >
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
-          {isInventoryAdmin && (
+          {canAddItem && (
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Item
@@ -100,8 +103,8 @@ export default function InventoryPage() {
           icon={Package}
           title="Nenhum item encontrado"
           description={search || statusFilter !== "all" ? "Tente ajustar os filtros" : "Cadastre o primeiro item do inventário"}
-          actionLabel={isInventoryAdmin && !search && statusFilter === "all" ? "Novo Item" : undefined}
-          onAction={isInventoryAdmin && !search && statusFilter === "all" ? () => setDialogOpen(true) : undefined}
+          actionLabel={canAddItem && !search && statusFilter === "all" ? "Novo Item" : undefined}
+          onAction={canAddItem && !search && statusFilter === "all" ? () => setDialogOpen(true) : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
