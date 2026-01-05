@@ -181,6 +181,23 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     
     try {
       const normalizedEmail = emailInput.toLowerCase().trim();
+      const emailDomain = normalizedEmail.split("@")[1];
+      
+      // Verificar se o domínio está autorizado na BU atual
+      if (currentBu?.id) {
+        const { data: buData } = await supabase
+          .from("bu_units")
+          .select("allowed_email_domains")
+          .eq("id", currentBu.id)
+          .single();
+        
+        const allowedDomains = buData?.allowed_email_domains || [];
+        if (allowedDomains.length > 0 && !allowedDomains.includes(emailDomain)) {
+          setEmailError(`Domínio "${emailDomain}" não autorizado para esta BU. Domínios permitidos: ${allowedDomains.join(", ")}`);
+          setIsCheckingEmail(false);
+          return;
+        }
+      }
       
       const { data } = await supabase
         .from("profiles")
