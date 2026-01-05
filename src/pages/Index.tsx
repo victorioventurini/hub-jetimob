@@ -13,10 +13,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
+import { useBu } from "@/contexts/BuContext";
 
 const Index = () => {
   usePageTitle("Home");
   const { profile } = useAuth();
+  const { currentBu } = useBu();
   const dashboardData = useHomeDashboard();
   const { greeting, subtext } = useGreeting({ userName: profile?.first_name });
 
@@ -51,7 +53,7 @@ const Index = () => {
             onTrack={dashboardData.okrSummary.onTrack}
             atRisk={dashboardData.okrSummary.atRisk}
             offTrack={dashboardData.okrSummary.offTrack}
-            title={isExecutive ? "OKRs Organizacionais" : "Meus OKRs"}
+            title={isExecutive ? `OKRs ${currentBu?.name || 'da Empresa'}` : "Meus OKRs"}
           />
           <FocusCard 
             items={dashboardData.focusItems}
