@@ -50,6 +50,9 @@ const AgentsListPage = lazy(() => import("./modules/integrations/pages/AgentsLis
 const AgentFormPage = lazy(() => import("./modules/integrations/pages/AgentFormPage"));
 const AgentLogsPage = lazy(() => import("./modules/integrations/pages/AgentLogsPage"));
 
+// Módulo Automações
+const AutomationsPage = lazy(() => import("./modules/automations/pages/AutomationsPage"));
+
 // Settings
 const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const SettingsHome = lazy(() => import("./pages/settings/SettingsHome"));
@@ -258,6 +261,18 @@ const App = () => (
                           <AdminRoute>
                             <SettingsLayout>
                               <AgentLogsPage />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings/automations"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <AutomationsPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>

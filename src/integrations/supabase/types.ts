@@ -259,6 +259,338 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_action_catalog: {
+        Row: {
+          action_key: string
+          action_version: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          name: string
+          payload_example: Json | null
+          payload_schema: Json | null
+          required_fields: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          action_version?: string
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          name: string
+          payload_example?: Json | null
+          payload_schema?: Json | null
+          required_fields?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          action_version?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          payload_example?: Json | null
+          payload_schema?: Json | null
+          required_fields?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      automation_connection_events: {
+        Row: {
+          connection_id: string
+          created_at: string
+          event_key: string
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          event_key: string
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          event_key?: string
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_connection_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "automation_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_connection_events_event_key_fkey"
+            columns: ["event_key"]
+            isOneToOne: false
+            referencedRelation: "automation_event_catalog"
+            referencedColumns: ["event_key"]
+          },
+        ]
+      }
+      automation_connections: {
+        Row: {
+          auth_config_encrypted: Json | null
+          auth_type: string | null
+          bu_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          headers_encrypted: Json | null
+          http_method: string
+          id: string
+          is_active: boolean
+          name: string
+          retry_count: number
+          scope: string
+          timeout_ms: number
+          updated_at: string
+          webhook_url: string
+        }
+        Insert: {
+          auth_config_encrypted?: Json | null
+          auth_type?: string | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          headers_encrypted?: Json | null
+          http_method?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          retry_count?: number
+          scope?: string
+          timeout_ms?: number
+          updated_at?: string
+          webhook_url: string
+        }
+        Update: {
+          auth_config_encrypted?: Json | null
+          auth_type?: string | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          headers_encrypted?: Json | null
+          http_method?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          retry_count?: number
+          scope?: string
+          timeout_ms?: number
+          updated_at?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_connections_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_event_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          event_key: string
+          event_version: string
+          id: string
+          is_active: boolean
+          name: string
+          payload_example: Json | null
+          payload_schema: Json | null
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          event_key: string
+          event_version?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          payload_example?: Json | null
+          payload_schema?: Json | null
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          event_key?: string
+          event_version?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          payload_example?: Json | null
+          payload_schema?: Json | null
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      automation_incoming_tokens: {
+        Row: {
+          allowed_actions: string[] | null
+          bu_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          name: string
+          rate_limit_per_minute: number
+          scope: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_actions?: string[] | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name: string
+          rate_limit_per_minute?: number
+          scope?: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_actions?: string[] | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name?: string
+          rate_limit_per_minute?: number
+          scope?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_incoming_tokens_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_logs: {
+        Row: {
+          action_key: string | null
+          bu_id: string | null
+          connection_id: string | null
+          created_at: string
+          error_message: string | null
+          event_key: string | null
+          id: string
+          latency_ms: number | null
+          request_payload: Json | null
+          response_payload: Json | null
+          retry_attempt: number | null
+          status: string
+          status_code: number | null
+          token_id: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          action_key?: string | null
+          bu_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_key?: string | null
+          id?: string
+          latency_ms?: number | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_attempt?: number | null
+          status: string
+          status_code?: number | null
+          token_id?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          action_key?: string | null
+          bu_id?: string | null
+          connection_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_key?: string | null
+          id?: string
+          latency_ms?: number | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_attempt?: number | null
+          status?: string
+          status_code?: number | null
+          token_id?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "automation_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "automation_incoming_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bu_agent_activations: {
         Row: {
           agent_id: string
