@@ -1,27 +1,30 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StatusSelect } from '@/components/selects';
 
 interface TeamContributionFiltersProps {
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
 }
 
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos os status' },
+  { value: 'on_track', label: 'On Track', color: 'bg-emerald-500' },
+  { value: 'at_risk', label: 'Em Risco', color: 'bg-amber-500' },
+  { value: 'off_track', label: 'Off Track', color: 'bg-red-500' },
+];
+
 export function TeamContributionFilters({
   statusFilter,
   onStatusFilterChange,
 }: TeamContributionFiltersProps) {
   return (
-    <div className="flex items-center gap-3">
-      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os status</SelectItem>
-          <SelectItem value="on_track">On Track</SelectItem>
-          <SelectItem value="at_risk">Em Risco</SelectItem>
-          <SelectItem value="off_track">Off Track</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap items-center gap-3">
+      <StatusSelect
+        value={statusFilter}
+        onValueChange={onStatusFilterChange}
+        variant="custom"
+        options={STATUS_OPTIONS}
+        triggerClassName="w-[160px]"
+      />
     </div>
   );
 }

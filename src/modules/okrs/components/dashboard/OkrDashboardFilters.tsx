@@ -1,4 +1,3 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CONFIG, OkrCalculatedStatus } from '../../hooks/useOkrStatus';
+import { YearSelect, TeamSelect } from '@/components/selects';
+import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 
 interface Team {
   id: string;
@@ -58,45 +59,53 @@ export function OkrDashboardFilters({
     });
   };
 
-  // Get parent teams (teams without parent)
-  const parentTeams = teams.filter(t => !t.parent_team_id);
+  // Convert teams to FlatTeamItem format with hierarchy
+  const buildHierarchicalList = (teams: Team[]): FlatTeamItem[] => {
+    const parentTeams = teams.filter(t => !t.parent_team_id);
+    const childTeamsMap = new Map<string, Team[]>();
+    
+    teams.forEach(team => {
+      if (team.parent_team_id) {
+        const children = childTeamsMap.get(team.parent_team_id) || [];
+        children.push(team);
+        childTeamsMap.set(team.parent_team_id, children);
+      }
+    });
+
+    const result: FlatTeamItem[] = [];
+    
+    parentTeams.forEach(parent => {
+      result.push({ id: parent.id, name: parent.name, level: 0, parentId: null });
+      const children = childTeamsMap.get(parent.id) || [];
+      children.forEach(child => {
+        result.push({ id: child.id, name: child.name, level: 1, parentId: parent.id });
+      });
+    });
+
+    return result;
+  };
+
+  const hierarchicalTeams = buildHierarchicalList(teams);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       {/* Year selector */}
-      <Select 
-        value={filters.year.toString()} 
-        onValueChange={(v) => onFiltersChange({ ...filters, year: Number(v) })}
-      >
-        <SelectTrigger className="w-[100px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {years.map((year) => (
-            <SelectItem key={year} value={year.toString()}>
-              {year}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <YearSelect
+        value={filters.year}
+        onValueChange={(year) => onFiltersChange({ ...filters, year })}
+        years={years}
+        triggerClassName="w-[100px]"
+      />
 
       {/* Team filter */}
-      <Select 
-        value={filters.teamId || 'all'} 
-        onValueChange={(v) => onFiltersChange({ ...filters, teamId: v === 'all' ? undefined : v })}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="All Teams" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Teams</SelectItem>
-          {teams.map((team) => (
-            <SelectItem key={team.id} value={team.id}>
-              {team.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <TeamSelect
+        value={filters.teamId}
+        onValueChange={(value) => onFiltersChange({ ...filters, teamId: value })}
+        teams={hierarchicalTeams}
+        includeAll
+        allLabel="Todos os times"
+        triggerClassName="w-[180px]"
+      />
 
       {/* Status filter popover */}
       <Popover>
@@ -120,7 +129,7 @@ export function OkrDashboardFilters({
         </PopoverTrigger>
         <PopoverContent align="start" className="w-56">
           <div className="space-y-3">
-            <p className="text-sm font-medium">Filter by Status</p>
+            <p className="text-sm font-medium">Filtrar por Status</p>
             <div className="space-y-2">
               {STATUS_OPTIONS.map((status) => {
                 const config = STATUS_CONFIG[status];
@@ -157,7 +166,7 @@ export function OkrDashboardFilters({
           className="gap-1 text-muted-foreground hover:text-foreground"
         >
           <X className="w-3 h-3" />
-          Clear
+          Limpar
         </Button>
       )}
     </div>

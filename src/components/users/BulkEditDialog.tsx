@@ -10,17 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
+import { TeamSelect, SimpleSelect } from "@/components/selects";
 
 interface BulkEditDialogProps {
   open: boolean;
@@ -38,8 +31,6 @@ export function BulkEditDialog({
   const queryClient = useQueryClient();
   const [teamId, setTeamId] = useState<string>("no-change");
   const [managerId, setManagerId] = useState<string>("no-change");
-
-  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
 
   const { data: managers } = useQuery({
     queryKey: ["managers-select"],
@@ -107,6 +98,17 @@ export function BulkEditDialog({
 
   const hasChanges = teamId !== "no-change" || managerId !== "no-change";
 
+  // Build options for team select with special "no-change" and "none" options
+  const handleTeamChange = (value: string | undefined) => {
+    setTeamId(value ?? "no-change");
+  };
+
+  const managerOptions = [
+    { value: "no-change", label: "— Não alterar —" },
+    { value: "none", label: "Nenhum (remover gestor)" },
+    ...(managers?.map((m) => ({ value: m.id, label: m.display_name })) || []),
+  ];
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[480px]">
@@ -125,48 +127,59 @@ export function BulkEditDialog({
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
           <div className="space-y-2">
             <Label>Time</Label>
-            <Select value={teamId} onValueChange={setTeamId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Não alterar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no-change" className="text-muted-foreground">
-                  — Não alterar —
-                </SelectItem>
-                <SelectItem value="none">Nenhum (remover do time)</SelectItem>
-                {hierarchicalTeams?.map((team) => (
-                  <SelectItem
-                    key={team.id}
-                    value={team.id}
-                    className={team.level > 0 ? "text-[13px]" : ""}
-                  >
-                    <span style={{ paddingLeft: `${team.level * 12}px` }}>
-                      {team.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {teamId === "no-change" ? (
+              <SimpleSelect
+                value="no-change"
+                onValueChange={(v) => {
+                  if (v === "no-change") return;
+                  if (v === "none") {
+                    setTeamId("none");
+                  } else if (v === "select-team") {
+                    setTeamId(""); // This will trigger the TeamSelect
+                  }
+                }}
+                options={[
+                  { value: "no-change", label: "— Não alterar —" },
+                  { value: "none", label: "Nenhum (remover do time)" },
+                  { value: "select-team", label: "Selecionar time..." },
+                ]}
+                triggerClassName="w-full"
+              />
+            ) : teamId === "none" ? (
+              <SimpleSelect
+                value="none"
+                onValueChange={(v) => {
+                  if (v === "no-change") setTeamId("no-change");
+                  else if (v === "select-team") setTeamId("");
+                }}
+                options={[
+                  { value: "no-change", label: "— Não alterar —" },
+                  { value: "none", label: "Nenhum (remover do time)" },
+                  { value: "select-team", label: "Selecionar time..." },
+                ]}
+                triggerClassName="w-full"
+              />
+            ) : (
+              <TeamSelect
+                value={teamId || undefined}
+                onValueChange={(v) => setTeamId(v ?? "no-change")}
+                includeNone
+                noneLabel="Nenhum (remover do time)"
+                placeholder="Selecione um time"
+                triggerClassName="w-full"
+              />
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Gestor</Label>
-            <Select value={managerId} onValueChange={setManagerId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Não alterar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no-change" className="text-muted-foreground">
-                  — Não alterar —
-                </SelectItem>
-                <SelectItem value="none">Nenhum (remover gestor)</SelectItem>
-                {managers?.map((manager) => (
-                  <SelectItem key={manager.id} value={manager.id}>
-                    {manager.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SimpleSelect
+              value={managerId}
+              onValueChange={setManagerId}
+              options={managerOptions}
+              placeholder="Não alterar"
+              triggerClassName="w-full"
+            />
           </div>
 
           <DialogFooter className="pt-4">

@@ -1,7 +1,8 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { StatusSelect, RAG_STATUS_OPTIONS } from '@/components/selects';
+import { TeamSelect } from '@/components/selects';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 
 export type StatusFilter = 'all' | 'green' | 'yellow' | 'red' | 'not_started';
 export type TeamFilter = string;
@@ -13,14 +14,6 @@ interface OrgViewFiltersProps {
   onTeamFilterChange: (value: TeamFilter) => void;
   availableTeams: { id: string; name: string }[];
 }
-
-const statusOptions: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'Todos os status' },
-  { value: 'green', label: 'On Track' },
-  { value: 'yellow', label: 'Atenção' },
-  { value: 'red', label: 'Em Risco' },
-  { value: 'not_started', label: 'Não Iniciado' },
-];
 
 export function OrgViewFilters({
   statusFilter,
@@ -36,34 +29,32 @@ export function OrgViewFilters({
     onTeamFilterChange('all');
   };
 
+  // Convert availableTeams to FlatTeamItem format for TeamSelect
+  const teamsAsFlatItems: FlatTeamItem[] = availableTeams.map((team) => ({
+    id: team.id,
+    name: team.name,
+    level: 0,
+    parentId: null,
+  }));
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          {statusOptions.map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <StatusSelect
+        value={statusFilter}
+        onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
+        variant="rag"
+        triggerClassName="w-[160px]"
+      />
 
-      <Select value={teamFilter} onValueChange={onTeamFilterChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Filtrar por time" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os times</SelectItem>
-          {availableTeams.map(team => (
-            <SelectItem key={team.id} value={team.id}>
-              {team.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <TeamSelect
+        value={teamFilter === 'all' ? undefined : teamFilter}
+        onValueChange={(value) => onTeamFilterChange(value ?? 'all')}
+        teams={teamsAsFlatItems}
+        includeAll
+        allLabel="Todos os times"
+        placeholder="Filtrar por time"
+        triggerClassName="w-[180px]"
+      />
 
       {hasActiveFilters && (
         <Button 

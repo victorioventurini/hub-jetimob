@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
 import { mockOrgObjectives, mockTeamObjectives, getMockStats } from '../hooks/useMockOkrData';
+import { YearSelect, TeamSelect } from '@/components/selects';
+import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 
 export default function OkrsPage() {
   usePageTitle("OKRs");
@@ -46,18 +47,12 @@ export default function OkrsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <YearSelect
+              value={selectedYear}
+              onValueChange={setSelectedYear}
+              years={years}
+              triggerClassName="w-[100px]"
+            />
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               Novo
@@ -146,19 +141,14 @@ export default function OkrsPage() {
           {/* Team Objectives */}
           <TabsContent value="team" className="space-y-4">
             <div className="flex items-center gap-3 mb-4">
-              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Todos os times" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os times</SelectItem>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TeamSelect
+                value={selectedTeam === "all" ? undefined : selectedTeam}
+                onValueChange={(v) => setSelectedTeam(v ?? "all")}
+                teams={teams.map(t => ({ id: t.id, name: t.name, level: 0, parentId: null }))}
+                includeAll
+                allLabel="Todos os times"
+                triggerClassName="w-[180px]"
+              />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

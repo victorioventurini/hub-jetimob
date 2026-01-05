@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { useBu } from "@/contexts/BuContext";
 import { z } from "zod";
-import { useHierarchicalTeamList } from "@/modules/teams/hooks/useTeams";
 import {
   Dialog,
   DialogContent,
@@ -15,13 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
@@ -29,6 +21,7 @@ import { Loader2, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { AddToBuDialog } from "./AddToBuDialog";
+import { TeamSelect, SimpleSelect } from "@/components/selects";
 
 const jetimoberSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
@@ -101,7 +94,6 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const [showAddToBuDialog, setShowAddToBuDialog] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
-  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
 
   const { data: managers } = useQuery({
     queryKey: ["managers-select"],
@@ -422,47 +414,27 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Time</Label>
-              <Select
-                value={formData.team_id || "none"}
-                onValueChange={(v) => handleChange("team_id", v === "none" ? null : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {hierarchicalTeams?.map((team) => (
-                    <SelectItem 
-                      key={team.id} 
-                      value={team.id}
-                      className={team.level > 0 ? "text-[13px]" : ""}
-                    >
-                      <span style={{ paddingLeft: `${team.level * 12}px` }}>
-                        {team.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TeamSelect
+                value={formData.team_id || undefined}
+                onValueChange={(v) => handleChange("team_id", v || null)}
+                includeNone
+                noneLabel="Nenhum"
+                placeholder="Selecione"
+                triggerClassName="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label>Gestor</Label>
-              <Select
+              <SimpleSelect
                 value={formData.manager_user_id || "none"}
                 onValueChange={(v) => handleChange("manager_user_id", v === "none" ? null : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {managers?.map((manager) => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {manager.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "none", label: "Nenhum" },
+                  ...(managers?.map((m) => ({ value: m.id, label: m.display_name })) || []),
+                ]}
+                placeholder="Selecione"
+                triggerClassName="w-full"
+              />
             </div>
           </div>
 
@@ -489,35 +461,29 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Modalidade *</Label>
-              <Select
+              <SimpleSelect
                 value={formData.work_mode}
                 onValueChange={(v) => handleChange("work_mode", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="onsite">Presencial</SelectItem>
-                  <SelectItem value="hybrid">Híbrido</SelectItem>
-                  <SelectItem value="remote">Remoto</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "onsite", label: "Presencial" },
+                  { value: "hybrid", label: "Híbrido" },
+                  { value: "remote", label: "Remoto" },
+                ]}
+                triggerClassName="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label>Status *</Label>
-              <Select
+              <SimpleSelect
                 value={formData.employment_status}
                 onValueChange={(v) => handleChange("employment_status", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="vacation">Férias</SelectItem>
-                  <SelectItem value="terminated">Desligado</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "active", label: "Ativo" },
+                  { value: "vacation", label: "Férias" },
+                  { value: "terminated", label: "Desligado" },
+                ]}
+                triggerClassName="w-full"
+              />
             </div>
           </div>
 
