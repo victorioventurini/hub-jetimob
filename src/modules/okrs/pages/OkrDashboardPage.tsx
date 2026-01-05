@@ -287,7 +287,8 @@ export default function OkrDashboardPage() {
                 <ObjectiveListItem 
                   key={i} 
                   objective={{ id: '', title: '', year: currentYear, status: 'draft' }} 
-                  isLoading 
+                  isLoading
+                  type={activeView === 'company' ? 'org' : 'team'}
                 />
               ))}
             </div>
@@ -316,11 +317,13 @@ export default function OkrDashboardPage() {
             />
           ) : (
             <div className="space-y-3">
-              {displayObjectives.map((objective) => (
+              {displayObjectives.map((objective: any) => (
                 <ObjectiveListItem
                   key={objective.id}
                   objective={objective}
                   keyResults={objective.key_results || []}
+                  type={activeView === 'company' ? 'org' : 'team'}
+                  teamName={objective.team?.name}
                 />
               ))}
             </div>
