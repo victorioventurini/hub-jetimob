@@ -52,15 +52,15 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Sidebar */}
-      <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+      <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-card border-r border-border flex flex-col">
         {/* Header com logo */}
-        <div className="flex items-center gap-3 h-16 px-4 border-b border-sidebar-border">
-          <div className="h-10 w-10 rounded-xl bg-foreground flex items-center justify-center text-background font-bold text-lg">
+        <div className="flex items-center gap-3 h-16 px-4 border-b border-border">
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
             H
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-sidebar-foreground">Hub</span>
-            <span className="text-xs text-sidebar-foreground/60">Configurações Globais</span>
+            <span className="text-lg font-bold text-foreground">Hub</span>
+            <span className="text-xs text-muted-foreground">Configurações Globais</span>
           </div>
         </div>
         <SettingsSidebar />
@@ -145,7 +145,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
         </header>
 
         {/* Content */}
-        <main className="pt-16 p-6 lg:p-8 overflow-auto min-h-screen">
+        <main className="pt-20 px-6 pb-6 lg:px-8 lg:pb-8 overflow-auto min-h-screen">
           <div className="w-full">
             {children}
           </div>
