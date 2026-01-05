@@ -51,8 +51,12 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
 
   const addMembershipMutation = useMutation({
     mutationFn: async () => {
-      if (!existingProfile?.user_id || !currentBu?.id) {
-        throw new Error("Dados insuficientes para adicionar à BU");
+      if (!currentBu?.id) {
+        throw new Error("Nenhuma BU selecionada");
+      }
+      
+      if (!existingProfile?.user_id) {
+        throw new Error("Este Jetimober ainda não possui um usuário vinculado. Ele precisa fazer login pelo menos uma vez.");
       }
       
       // Criar membership na nova BU
@@ -92,6 +96,8 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
       console.error("Error adding to BU:", error);
       if (error.message?.includes("bu_user_memberships_bu_user_unique")) {
         toast.error("Este Jetimober já faz parte desta BU.");
+      } else if (error.message?.includes("não possui um usuário vinculado")) {
+        toast.error(error.message);
       } else {
         toast.error("Erro ao adicionar à BU. Tente novamente.");
       }
