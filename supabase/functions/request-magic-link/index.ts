@@ -78,7 +78,6 @@ async function sendMagicLinkEmail(
   const displayName = userName || email.split('@')[0].split('.')[0];
   // Capitalize first letter
   const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-  const orgName = buName || "Jetimob";
   
   console.log(`Sending magic link email to ${email} via SendGrid from no-reply@hub.jetimob.com`);
   
@@ -92,12 +91,12 @@ async function sendMagicLinkEmail(
       personalizations: [
         {
           to: [{ email }],
-          subject: `Seu código de acesso ao Hub ${orgName}`,
+          subject: `Seu código de acesso ao Hub da Jet`,
         },
       ],
       from: {
         email: "no-reply@hub.jetimob.com",
-        name: `Hub ${orgName}`,
+        name: "Hub da Jet",
       },
       content: [
         {
@@ -112,28 +111,26 @@ async function sendMagicLinkEmail(
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
               <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
                 <div style="text-align: center; margin-bottom: 32px;">
-                  <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                    <span style="color: white; font-size: 28px; font-weight: bold;">J</span>
-                  </div>
-                  <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub ${orgName}</h1>
+                  <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub da Jet</h1>
                 </div>
                 
                 <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                  Olá, ${formattedName}! 👋
+                  Olá, ${formattedName}!
                 </p>
                 
                 <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-                  Clique no botão abaixo para acessar o Hub. Este link é válido por 1 hora.
+                  Clique no botão abaixo para acessar o Hub.<br>
+                  Este link é válido por 1 hora.
                 </p>
                 
                 <div style="text-align: center; margin-bottom: 32px;">
-                  <a href="${magicLink}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                    Acessar Hub ${orgName}
+                  <a href="${magicLink}" style="display: inline-block; background-color: #F97316; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    Acessar o Hub
                   </a>
                 </div>
                 
                 <p style="color: #71717a; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
-                  Se você não solicitou este link, pode ignorar este email com segurança.
+                  Se você não solicitou este link, pode ignorar este e-mail com segurança.
                 </p>
                 
                 <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;">
