@@ -199,7 +199,7 @@ export function AddressAutocomplete({
       {isOpen && predictions.length > 0 && (
         <ul
           ref={listRef}
-          className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-60 overflow-auto"
+          className="absolute z-[9999] mt-1 w-full rounded-md border bg-popover shadow-lg max-h-60 overflow-auto"
         >
           {predictions.map((prediction, index) => (
             <li
@@ -224,7 +224,7 @@ export function AddressAutocomplete({
       )}
 
       {isOpen && predictions.length === 0 && inputValue.length >= 3 && !isLoading && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg p-3 text-sm text-muted-foreground">
+        <div className="absolute z-[9999] mt-1 w-full rounded-md border bg-popover shadow-lg p-3 text-sm text-muted-foreground">
           Nenhum endereço encontrado
         </div>
       )}
