@@ -45,6 +45,7 @@ const KpiDashboardPage = lazy(() => import("./modules/kpis/pages/KpiDashboardPag
 // Módulo Assets
 const AssetsPage = lazy(() => import("./modules/assets/pages/AssetsPage"));
 const InventoryPage = lazy(() => import("./modules/assets/pages/InventoryPage"));
+const InventoryDetailPage = lazy(() => import("./modules/assets/pages/InventoryDetailPage"));
 const KeysPage = lazy(() => import("./modules/assets/pages/KeysPage"));
 const GiftsPage = lazy(() => import("./modules/assets/pages/GiftsPage"));
 const AssetsReportsPage = lazy(() => import("./modules/assets/pages/AssetsReportsPage"));
@@ -473,6 +474,20 @@ const App = () => (
                       <Route path="reports" element={<AssetsReportsPage />} />
                       <Route path="settings" element={<AssetsSettingsPage />} />
                     </Route>
+
+                    {/* Asset Inventory Detail - Outside nested route for full page layout */}
+                    <Route
+                      path="/assets/inventory/:id"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <InventoryDetailPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* Tickets - Nested Routes */}
                     <Route
