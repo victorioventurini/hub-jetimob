@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -13,6 +12,30 @@ const corsHeaders = {
 interface MagicLinkRequest {
   email: string;
   redirectTo: string;
+}
+
+// Get SendGrid API key from hub_integrations_global_config
+async function getSendGridApiKey(): Promise<string | null> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  
+  const { data, error } = await supabase
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", "sendgrid")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching SendGrid config:", error);
+    return null;
+  }
+
+  if (!data || !data.is_enabled_global) {
+    console.warn("SendGrid integration is not enabled");
+    return null;
+  }
+
+  const config = data.config_encrypted as { api_key?: string } | null;
+  return config?.api_key || null;
 }
 
 // Check if email domain is allowed in any active BU
@@ -45,7 +68,13 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   return { allowed: false, buName: null };
 }
 
-async function sendMagicLinkEmail(email: string, magicLink: string, userName?: string, buName?: string): Promise<void> {
+async function sendMagicLinkEmail(
+  email: string, 
+  magicLink: string, 
+  sendgridApiKey: string,
+  userName?: string, 
+  buName?: string
+): Promise<void> {
   const displayName = userName || email.split('@')[0].split('.')[0];
   // Capitalize first letter
   const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
@@ -56,7 +85,7 @@ async function sendMagicLinkEmail(email: string, magicLink: string, userName?: s
   const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${SENDGRID_API_KEY}`,
+      "Authorization": `Bearer ${sendgridApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -163,6 +192,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get SendGrid API key from database
+    const sendgridApiKey = await getSendGridApiKey();
+    if (!sendgridApiKey) {
+      console.error("SendGrid API key not configured or integration disabled");
+      return new Response(
+        JSON.stringify({ error: "Integração SendGrid não configurada. Configure a API key em Configurações > Integrações." }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     // Create Supabase admin client
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
@@ -223,7 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Magic link generated successfully for:", email);
 
     // Send email via SendGrid
-    await sendMagicLinkEmail(email, magicLink, undefined, buName || undefined);
+    await sendMagicLinkEmail(email, magicLink, sendgridApiKey, undefined, buName || undefined);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
