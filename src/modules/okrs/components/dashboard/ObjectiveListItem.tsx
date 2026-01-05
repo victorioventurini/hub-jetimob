@@ -236,17 +236,6 @@ export function ObjectiveListItem({
           
           <CollapsibleContent>
             <div className="border-t bg-muted/20">
-              <div className="px-4 py-2 flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setShowAddKrDialog(true)}
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Adicionar KR
-                </Button>
-              </div>
               {keyResults.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Nenhum Key Result definido ainda
