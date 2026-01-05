@@ -3,7 +3,7 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Target, TrendingUp, Crosshair } from 'lucide-react';
+import { Plus, AlertTriangle, Target, TrendingUp, Crosshair, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { 
@@ -16,6 +16,7 @@ import {
   useUserProfile,
 } from '../hooks/useOkrData';
 import { useKrStatusDistribution, OkrCalculatedStatus } from '../hooks/useOkrStatus';
+import { usePendingCheckins } from '../hooks/usePendingCheckins';
 import { calculateProgress } from '../types';
 
 import { OkrViewSelector, OkrView } from '../components/dashboard/OkrViewSelector';
@@ -26,7 +27,7 @@ import { ObjectiveListItem } from '../components/dashboard/ObjectiveListItem';
 import { CreateOrgObjectiveDialog } from '../components/CreateOrgObjectiveDialog';
 import { CreateTeamObjectiveDialog } from '../components/CreateTeamObjectiveDialog';
 import { OkrEmptyState } from '../components/OkrEmptyState';
-import { KpiSidePanel } from '@/modules/kpis/components/KpiSidePanel';
+import { OkrAlertsCard } from '../components/OkrAlertsCard';
 
 interface OkrFiltersState {
   year: number;
@@ -55,6 +56,7 @@ export default function OkrDashboardPage() {
   const { data: teams, isLoading: teamsLoading } = useTeams();
   const { data: userProfile } = useUserProfile(user?.id);
   const { data: latestCheckinDate } = useLatestCheckinDate();
+  const { data: pendingCheckins } = usePendingCheckins();
   
   const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectivesWithKrs(filters.year);
   const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectivesWithKrs(
@@ -62,6 +64,9 @@ export default function OkrDashboardPage() {
   );
   const { data: allOrgKrs } = useAllOrgKeyResults();
   const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(filters.teamId);
+  
+  // Calculate pending checkins count
+  const pendingCheckinsCount = pendingCheckins?.filter(c => c.is_overdue).length || 0;
   
   // Calculate status distribution
   const krsForDistribution = activeView === 'company' 
@@ -228,15 +233,47 @@ export default function OkrDashboardPage() {
           </Card>
         </div>
 
-        {/* Status Distribution */}
-        <Card>
-          <CardContent className="pt-6">
-            <StatusDistributionBar 
-              counts={statusCounts}
-              isLoading={isLoading}
-            />
-          </CardContent>
-        </Card>
+        {/* Alerts and Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            {/* Status Distribution */}
+            <Card>
+              <CardContent className="pt-6">
+                <StatusDistributionBar 
+                  counts={statusCounts}
+                  isLoading={isLoading}
+                />
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Quick Check-in Status */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                <span>Check-ins Pendentes</span>
+                <RefreshCw className="w-4 h-4" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingCheckinsCount > 0 ? (
+                <>
+                  <div className="text-3xl font-bold text-amber-600">{pendingCheckinsCount}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    KRs precisam de atualização
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-emerald-600">✓</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Todos os check-ins em dia
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Objectives List */}
         <div className="space-y-4">

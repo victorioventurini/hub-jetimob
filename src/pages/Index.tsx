@@ -8,6 +8,7 @@ import { KpiSummaryCard } from "@/components/home/KpiSummaryCard";
 import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
+import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
@@ -36,6 +37,9 @@ const Index = () => {
 
         {/* Culture Card - Full Width with Typewriter */}
         <CultureCard />
+
+        {/* My OKRs Card - Shows pending check-ins for the user */}
+        <MyOkrsCard />
 
         {/* Dashboard Cards - Vision rápida */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

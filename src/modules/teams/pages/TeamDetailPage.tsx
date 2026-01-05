@@ -33,6 +33,7 @@ import { EditTeamDialog } from "../components/EditTeamDialog";
 import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
 
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +48,7 @@ export default function TeamDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingSubteamId, setDeletingSubteamId] = useState<string | null>(null);
   const [deletingSubteamName, setDeletingSubteamName] = useState<string>("");
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   const getInitials = (name: string) =>
     name
@@ -172,6 +173,7 @@ export default function TeamDetailPage() {
                 <TabsTrigger value="members">Membros</TabsTrigger>
                 <TabsTrigger value="squads">Squads</TabsTrigger>
                 <TabsTrigger value="subteams">Sub-times</TabsTrigger>
+                <TabsTrigger value="rituals">Rituais</TabsTrigger>
               </TabsList>
 
               <TabsContent value="members" className="mt-4">
@@ -304,6 +306,17 @@ export default function TeamDetailPage() {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="rituals" className="mt-4">
+                <TeamCheckinSettings
+                  teamId={team.id}
+                  teamName={team.name}
+                  currentFrequency={(team as any).checkin_frequency || 'weekly'}
+                  currentDay={(team as any).checkin_day || 1}
+                  currentDeadlineHour={(team as any).checkin_deadline_hour || 18}
+                  isLeader={isAdmin || team.leader?.id === user?.id}
+                />
               </TabsContent>
             </Tabs>
           </div>
