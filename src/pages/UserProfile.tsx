@@ -19,6 +19,7 @@ import {
   Users,
   ChevronRight,
   Clock,
+  Lightbulb,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
@@ -32,6 +33,8 @@ import { TeamLink } from "@/components/links";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateProgress } from "@/modules/okrs/types";
+import { useUserInitiatives } from "@/modules/okrs/hooks/useInitiatives";
+import { InitiativeStatusBadge } from "@/modules/okrs/components/initiatives";
 
 const workModeLabels: Record<string, string> = {
   onsite: "Presencial",
@@ -65,6 +68,7 @@ export default function UserProfile() {
   const { data: kpis } = useUserKpis(profile?.id);
   const { data: squads } = useUserSquads(profile?.id);
   const { data: buMemberships } = useUserBuMemberships(profile?.id);
+  const { data: initiatives } = useUserInitiatives(profile?.id);
 
   usePageTitle(profile?.display_name ? `${profile.display_name}` : "Perfil");
 
@@ -365,6 +369,51 @@ export default function UserProfile() {
                     {kpis.length > 5 && (
                       <p className="text-sm text-muted-foreground text-center">
                         +{kpis.length - 5} KPIs
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Initiatives */}
+            {initiatives && initiatives.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4" />
+                    Iniciativas ({initiatives.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {initiatives.slice(0, 5).map((initiative: any) => (
+                      <div
+                        key={initiative.id}
+                        className="p-3 rounded-lg bg-muted/50"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">{initiative.name}</span>
+                          <InitiativeStatusBadge status={initiative.status} showIcon={false} />
+                        </div>
+                        {initiative.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {initiative.description}
+                          </p>
+                        )}
+                        {initiative.progress !== null && initiative.progress > 0 && (
+                          <div className="flex items-center gap-3 mt-2">
+                            <Progress value={initiative.progress} className="flex-1 h-2" />
+                            <span className="text-sm text-muted-foreground w-12 text-right">
+                              {initiative.progress}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {initiatives.length > 5 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        +{initiatives.length - 5} iniciativas
                       </p>
                     )}
                   </div>

@@ -1593,6 +1593,85 @@ export type Database = {
           },
         ]
       }
+      okr_initiatives: {
+        Row: {
+          bu_id: string | null
+          contributors: string[] | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          expected_end_date: string | null
+          id: string
+          kr_id: string
+          name: string
+          notes: string | null
+          owner_user_id: string
+          priority: Database["public"]["Enums"]["initiative_priority"] | null
+          progress: number | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["initiative_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id?: string | null
+          contributors?: string[] | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          expected_end_date?: string | null
+          id?: string
+          kr_id: string
+          name: string
+          notes?: string | null
+          owner_user_id: string
+          priority?: Database["public"]["Enums"]["initiative_priority"] | null
+          progress?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["initiative_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string | null
+          contributors?: string[] | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          expected_end_date?: string | null
+          id?: string
+          kr_id?: string
+          name?: string
+          notes?: string | null
+          owner_user_id?: string
+          priority?: Database["public"]["Enums"]["initiative_priority"] | null
+          progress?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["initiative_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_initiatives_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_initiatives_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "okr_team_key_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_initiatives_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
+        ]
+      }
       okr_notifications_log: {
         Row: {
           channel: Database["public"]["Enums"]["okr_channel"]
@@ -2755,6 +2834,8 @@ export type Database = {
       app_role: "super_admin" | "admin" | "team_leader" | "collaborator"
       bu_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
+      initiative_priority: "low" | "medium" | "high"
+      initiative_status: "planned" | "in_progress" | "blocked" | "completed"
       integration_config_mode: "use_global" | "override"
       integration_test_status: "ok" | "error" | "pending"
       kpi_category:
@@ -2923,6 +3004,8 @@ export const Constants = {
       app_role: ["super_admin", "admin", "team_leader", "collaborator"],
       bu_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
+      initiative_priority: ["low", "medium", "high"],
+      initiative_status: ["planned", "in_progress", "blocked", "completed"],
       integration_config_mode: ["use_global", "override"],
       integration_test_status: ["ok", "error", "pending"],
       kpi_category: [
