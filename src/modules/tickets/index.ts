@@ -10,6 +10,7 @@ export { useTickets, useTicket, useMyTickets, useCreateTicket, useUpdateTicket, 
 export { useTicketMessages, useCreateMessage, useEditMessage, useDeleteMessage } from './hooks/useTicketMessages';
 export { usePartnerCompanies, usePartnerCompany, useCreatePartnerCompany, useUpdatePartnerCompany, useDeletePartnerCompany, usePartnerContacts, usePartnerContact, useCreatePartnerContact, useUpdatePartnerContact, useDeletePartnerContact } from './hooks/usePartners';
 export { useTicketCategories, useCreateTicketCategory, useUpdateTicketCategory, useDeleteTicketCategory, useTicketSubcategories, useCreateTicketSubcategory, useUpdateTicketSubcategory, useDeleteTicketSubcategory } from './hooks/useTicketCategories';
+export { useRoutingRules, useCreateRoutingRule, useUpdateRoutingRule, useDeleteRoutingRule } from './hooks/useRoutingRules';
 
 // Components
 export { TicketsLayout } from './components/TicketsLayout';
@@ -17,4 +18,4 @@ export { TicketCard } from './components/TicketCard';
 export { TicketFilters } from './components/TicketFilters';
 
 // Pages (lazy loaded in App.tsx)
-// TicketsPage, TicketsListPage, CreateTicketPage, TicketDetailPage
+// TicketsPage, TicketsListPage, CreateTicketPage, TicketDetailPage, TicketsSettingsPage
