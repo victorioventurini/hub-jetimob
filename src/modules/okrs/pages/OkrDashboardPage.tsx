@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, AlertTriangle, Target, TrendingUp, Crosshair, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useBu } from '@/contexts/BuContext';
 import { 
   useOrgObjectivesWithKrs, 
   useTeamObjectivesWithKrs, 
@@ -40,6 +41,7 @@ export default function OkrDashboardPage() {
   usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
   const { user, role } = useAuth();
+  const { currentBu } = useBu();
   
   // State
   const [activeView, setActiveView] = useState<OkrView>('company');
@@ -181,7 +183,7 @@ export default function OkrDashboardPage() {
                 <>
                   <div className="text-3xl font-bold">{displayObjectives.length}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {activeView === 'company' ? 'organizacionais' : 'do time'}
+                    {activeView === 'company' ? (currentBu?.name || 'da empresa') : 'do time'}
                   </p>
                 </>
               )}
@@ -278,7 +280,7 @@ export default function OkrDashboardPage() {
         {/* Objectives List */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">
-            Objetivos {activeView === 'company' ? 'Organizacionais' : activeView === 'team' ? 'do Time' : 'Pessoais'}
+            Objetivos {activeView === 'company' ? (currentBu?.name || 'da Empresa') : activeView === 'team' ? 'do Time' : 'Pessoais'}
           </h2>
           
           {isLoading ? (
@@ -294,7 +296,7 @@ export default function OkrDashboardPage() {
             </div>
           ) : displayObjectives.length === 0 ? (
             <OkrEmptyState
-              title={`Nenhum objetivo ${activeView === 'company' ? 'organizacional' : 'do time'}`}
+              title={`Nenhum objetivo ${activeView === 'company' ? `da ${currentBu?.name || 'empresa'}` : 'do time'}`}
               description={
                 activeView === 'company'
                   ? "Comece definindo objetivos estratégicos para o ano."
