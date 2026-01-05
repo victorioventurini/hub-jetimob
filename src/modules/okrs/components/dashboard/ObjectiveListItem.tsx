@@ -74,7 +74,7 @@ export function ObjectiveListItem({
   type,
   teamName 
 }: ObjectiveListItemProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
   const [showEditObjectiveDialog, setShowEditObjectiveDialog] = useState(false);
   const [editingKr, setEditingKr] = useState<KeyResult | null>(null);
