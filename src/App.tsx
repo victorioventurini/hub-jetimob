@@ -11,14 +11,17 @@ import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
+import { BuScopedRoute } from "@/components/auth/BuScopedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getBuScopedRoutes } from "@/routes/BuScopedOperationalRoutes";
 
 // Páginas carregadas imediatamente (críticas para primeira renderização)
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
 const PublicAssetRedirect = lazy(() => import("./pages/PublicAssetRedirect"));
+const LegacyAssetRedirect = lazy(() => import("./pages/LegacyAssetRedirect"));
 
 // Lazy loading para módulos (carregados sob demanda)
 const Index = lazy(() => import("./pages/Index"));
@@ -320,7 +323,28 @@ const App = () => (
                       }
                     />
 
+                    {/* ===== BU-SCOPED ROUTES (/bu/:buId/*) ===== */}
+                    {/* These routes automatically sync BU context from URL */}
+                    <Route
+                      path="/bu/:buId"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <BuScopedRoute />
+                        </ProtectedRoute>
+                      }
+                    >
+                      {getBuScopedRoutes()}
+                    </Route>
+
+                    {/* ===== LEGACY REDIRECTS (backwards compatibility) ===== */}
+                    {/* Legacy asset detail - redirects to BU-scoped route */}
+                    <Route
+                      path="/assets/inventory/:id"
+                      element={<LegacyAssetRedirect />}
+                    />
+
                     {/* ===== ÁREA OPERACIONAL (requer BU selecionada) ===== */}
+                    {/* These routes use the user's currently selected BU */}
                     
                     {/* Busca Global */}
                     <Route
