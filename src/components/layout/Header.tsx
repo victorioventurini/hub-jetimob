@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
@@ -30,9 +31,13 @@ const roleLabels: Record<string, string> = {
 
 export function Header({ sidebarCollapsed }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
+  const { userRole } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
+  
+  // Admin de BU ou super_admin podem acessar configurações
+  const canAccessSettings = role === "super_admin" || role === "admin" || userRole === "admin";
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -123,7 +128,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                   Meu Perfil
                 </Link>
               </DropdownMenuItem>
-              {role === "super_admin" && (
+              {canAccessSettings && (
                 <DropdownMenuItem asChild>
                   <Link to="/hub" className="cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />

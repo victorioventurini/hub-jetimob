@@ -91,7 +91,10 @@ export default function UsersPage() {
   usePageTitle("Jetimobers");
   
   const { isAdmin } = useAuth();
-  const { currentBu, isLoading: isBuLoading } = useBu();
+  const { currentBu, userRole, isLoading: isBuLoading } = useBu();
+  
+  // Admin de BU ou super_admin podem gerenciar usuários
+  const canManageUsers = userRole === "admin" || userRole === "super_admin" || isAdmin;
   
   // URL State
   const [searchQuery, setSearchQuery] = useUrlState<string>({ key: 'q', defaultValue: '' });
@@ -241,7 +244,7 @@ export default function UsersPage() {
           title="Jetimobers"
           description="Diretório de colaboradores da Jetimob"
           actions={
-            isAdmin && (
+            canManageUsers && (
               <Button variant="accent" className="gap-2" onClick={handleCreate}>
                 <Plus className="h-4 w-4" />
                 Novo Jetimober
@@ -305,7 +308,7 @@ export default function UsersPage() {
         </div>
 
         {/* Bulk action bar */}
-        {isAdmin && selectedIds.size > 0 && (
+        {canManageUsers && selectedIds.size > 0 && (
           <div className="flex items-center gap-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
             <span className="text-sm font-medium">
               {selectedIds.size} {selectedIds.size === 1 ? "selecionado" : "selecionados"}
@@ -350,7 +353,7 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                {isAdmin && (
+                {canManageUsers && (
                   <TableHead className="w-10">
                     <Checkbox
                       checked={allSelected}
@@ -371,14 +374,14 @@ export default function UsersPage() {
                 <TableHead className="font-semibold">Localização</TableHead>
                 <TableHead className="font-semibold">Modalidade</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
-                {isAdmin && <TableHead className="w-10"></TableHead>}
+                {canManageUsers && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    {isAdmin && <TableCell><Skeleton className="h-4 w-4" /></TableCell>}
+                    {canManageUsers && <TableCell><Skeleton className="h-4 w-4" /></TableCell>}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Skeleton className="h-9 w-9 rounded-full" />
@@ -394,7 +397,7 @@ export default function UsersPage() {
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-14" /></TableCell>
-                    {isAdmin && <TableCell></TableCell>}
+                    {canManageUsers && <TableCell></TableCell>}
                   </TableRow>
                 ))
               ) : filteredProfiles && filteredProfiles.length > 0 ? (
@@ -403,7 +406,7 @@ export default function UsersPage() {
                     key={profile.id} 
                     className={`hover:bg-muted/30 ${selectedIds.has(profile.id) ? "bg-accent/5" : ""}`}
                   >
-                    {isAdmin && (
+                    {canManageUsers && (
                       <TableCell>
                         <Checkbox
                           checked={selectedIds.has(profile.id)}
@@ -465,7 +468,7 @@ export default function UsersPage() {
                         {statusLabels[profile.employment_status]}
                       </Badge>
                     </TableCell>
-                    {isAdmin && (
+                    {canManageUsers && (
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -497,7 +500,7 @@ export default function UsersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 9 : 7} className="h-32">
+                  <TableCell colSpan={canManageUsers ? 9 : 7} className="h-32">
                     <div className="flex flex-col items-center justify-center text-center">
                       <Users className="h-10 w-10 text-muted-foreground mb-2" />
                       <p className="font-medium">Nenhum Jetimober encontrado</p>

@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { List, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 
 const tabs = [
   { name: "Tickets", href: "/tickets", icon: List, exact: true },
@@ -11,8 +12,12 @@ const tabs = [
 export function TicketsLayout() {
   const location = useLocation();
   const { isAdmin } = useAuth();
+  const { userRole } = useBu();
 
-  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isAdmin);
+  // Admin de BU ou super_admin podem acessar configurações
+  const isBuAdmin = userRole === "admin" || userRole === "super_admin" || isAdmin;
+
+  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isBuAdmin);
 
   return (
     <div className="space-y-6">
