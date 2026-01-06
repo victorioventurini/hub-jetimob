@@ -80,7 +80,7 @@ function getDescriptionForPage(title: string, buName: string, pageType?: PageTyp
     "Home": `Visão geral da ${buName} no Hub, com acesso rápido a cultura, OKRs, KPIs e informações do time.`,
     "OKRs": `Gerencie os OKRs da ${buName} e acompanhe o progresso das metas no Hub.`,
     "Dashboard OKRs": `Acompanhe o progresso dos OKRs da ${buName} com visão consolidada no Hub.`,
-    "Dashboard CEO": `Visão executiva dos OKRs e resultados da ${buName} no Hub.`,
+    "Dashboard Executivo": `Visão executiva dos OKRs e resultados da ${buName} no Hub.`,
     "KPIs": `Gerencie os KPIs da ${buName} e acompanhe indicadores estratégicos no Hub.`,
     "Times": `Gerencie os times da ${buName} e a estrutura organizacional no Hub.`,
     "Pessoas": `Gerencie as pessoas da ${buName} e informações do time no Hub.`,

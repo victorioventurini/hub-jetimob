@@ -41,7 +41,7 @@ export interface HomeDashboardData {
   isLoading: boolean;
 }
 
-// Map role to category (simplified - no more "ceo" role)
+// Map role to category - super_admin/admin get executive view
 function mapRoleToCategory(role?: string): "executive" | "leader" | "collaborator" {
   if (!role) return "collaborator";
   

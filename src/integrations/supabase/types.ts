@@ -5060,6 +5060,14 @@ export type Database = {
           status: string
         }[]
       }
+      get_manageable_teams: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: {
+          can_manage: boolean
+          team_id: string
+          team_name: string
+        }[]
+      }
       get_my_permissions: { Args: { p_bu_id: string }; Returns: string[] }
       get_partner_categories: {
         Args: { p_partner_company_id: string }
@@ -5120,6 +5128,10 @@ export type Database = {
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_team_leader: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_ticket_contact_participant: {
         Args: { p_contact_id: string; p_ticket_id: string }
         Returns: boolean
@@ -5154,6 +5166,18 @@ export type Database = {
           asset_id: string
           bu_id: string
         }[]
+      }
+      team_is_ancestor: {
+        Args: { p_ancestor_team_id: string; p_team_id: string }
+        Returns: boolean
+      }
+      team_is_descendant: {
+        Args: { p_ancestor_team_id: string; p_team_id: string }
+        Returns: boolean
+      }
+      user_can_manage_team: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
       }
       user_has_bu_access: {
         Args: { p_bu_id: string; p_user_id: string }
