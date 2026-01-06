@@ -63,9 +63,11 @@ export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogP
     queryKey: ["profiles-for-assets", currentBu?.id],
     enabled: !!currentBu?.id,
     queryFn: async () => {
+      if (!currentBu?.id) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, first_name, last_name, display_name, photo_url, work_email")
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .order("first_name");
 

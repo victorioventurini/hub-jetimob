@@ -1,28 +1,38 @@
 /**
  * Hooks compartilhados para dados reutilizados em múltiplos módulos.
  * Estes hooks fazem queries simples e leves para uso em selects, dropdowns, etc.
+ * 
+ * IMPORTANTE: Todos os hooks que retornam dados BU-scoped devem filtrar por bu_id!
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBu } from "@/contexts/BuContext";
 
 /**
  * Lista simples de times para uso em dropdowns/selects.
+ * Filtra automaticamente pela BU atual.
  * Para funcionalidades completas de times, use src/modules/teams/hooks/useTeams.ts
  */
 export function useTeamsList() {
+  const { currentBu } = useBu();
+  
   return useQuery({
-    queryKey: ["teams-list"],
+    queryKey: ["teams-list", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return [];
+      
       const { data, error } = await supabase
         .from("teams")
         .select("id, name, parent_team_id, leader_user_id")
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .order("name");
 
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBu?.id,
   });
 }
 

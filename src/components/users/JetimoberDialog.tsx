@@ -113,18 +113,20 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const [teamIdForExisting, setTeamIdForExisting] = useState<string | undefined>(undefined);
 
   const { data: managers } = useQuery({
-    queryKey: ["managers-select"],
+    queryKey: ["managers-select", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name")
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .neq("employment_status", "terminated")
         .order("display_name");
       if (error) throw error;
       return data;
     },
-    enabled: open,
+    enabled: open && !!currentBu?.id,
   });
 
   // Reset form quando dialog abre
