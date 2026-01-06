@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Cake } from "lucide-react";
 import { useBirthdays } from "@/hooks/useHomeData";
 import { EmptyState } from "@/components/ui/empty-state";
+import { UserLink } from "@/components/links/UserLink";
 
 const monthNames = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -76,9 +77,11 @@ export function BirthdaysBlock() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {person.name}
-                  </p>
+                  <UserLink
+                    userId={person.id}
+                    displayName={person.name}
+                    className="text-sm font-medium truncate block"
+                  />
                   <p className="text-xs text-muted-foreground truncate">
                     {person.jobTitle} • {person.team}
                   </p>
