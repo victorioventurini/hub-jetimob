@@ -1,15 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type { Permission, PermissionScope, PermissionStatus } from "../types";
-
-const QUERY_KEY = ["permission_catalog"];
 
 export function usePermissionCatalog() {
   const queryClient = useQueryClient();
 
   const { data: permissions = [], isLoading, error } = useQuery({
-    queryKey: QUERY_KEY,
+    queryKey: queryKeys.permissions.catalog(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("permission_catalog")
@@ -42,7 +41,7 @@ export function usePermissionCatalog() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.catalog() });
       toast.success("Permissão criada com sucesso");
     },
     onError: (error: Error) => {
@@ -66,7 +65,7 @@ export function usePermissionCatalog() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.catalog() });
       toast.success("Permissão atualizada com sucesso");
     },
     onError: (error: Error) => {
@@ -93,7 +92,7 @@ export function usePermissionCatalog() {
       return data;
     },
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.catalog() });
       toast.success(
         status === "active" ? "Permissão ativada" : "Permissão desativada"
       );

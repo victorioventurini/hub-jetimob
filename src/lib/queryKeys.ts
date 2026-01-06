@@ -165,6 +165,31 @@ export const queryKeys = {
     actions: () => ['automations', 'actions'] as const,
   },
 
+  // ============= Permissions =============
+  permissions: {
+    // Global catalog
+    catalog: () => ['permissions', 'catalog'] as const,
+    groups: () => ['permissions', 'groups'] as const,
+    groupPermissions: (groupId: string | null) => 
+      ['permissions', 'group-permissions', groupId] as const,
+    
+    // BU-scoped
+    buConfigs: (buId: string | null) => 
+      ['permissions', 'bu-configs', buId] as const,
+    buUsers: (buId: string | null) => 
+      ['permissions', 'bu-users', buId] as const,
+    userGroups: (buId: string | null, userId: string | null) => 
+      ['permissions', 'user-groups', buId, userId] as const,
+    userOverrides: (buId: string | null, userId: string | null) => 
+      ['permissions', 'user-overrides', buId, userId] as const,
+    userEffective: (buId: string | null, userId: string | null) => 
+      ['permissions', 'user-effective', buId, userId] as const,
+    
+    // Current user
+    myPermissions: (buId: string | null, userId: string | null) => 
+      ['permissions', 'my', buId, userId] as const,
+  },
+
   // ============= BU =============
   bu: {
     all: () => ['bu'] as const,

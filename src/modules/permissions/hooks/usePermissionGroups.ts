@@ -1,16 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type { PermissionGroup, PermissionGroupPermission, PermissionStatus } from "../types";
-
-const GROUPS_KEY = ["permission_groups"];
-const GROUP_PERMISSIONS_KEY = ["permission_group_permissions"];
 
 export function usePermissionGroups() {
   const queryClient = useQueryClient();
 
   const { data: groups = [], isLoading, error } = useQuery({
-    queryKey: GROUPS_KEY,
+    queryKey: queryKeys.permissions.groups(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("permission_groups")
@@ -34,7 +32,7 @@ export function usePermissionGroups() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.groups() });
       toast.success("Grupo criado com sucesso");
     },
     onError: (error: Error) => {
@@ -58,7 +56,7 @@ export function usePermissionGroups() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.groups() });
       toast.success("Grupo atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -85,7 +83,7 @@ export function usePermissionGroups() {
       return data;
     },
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: GROUPS_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.groups() });
       toast.success(status === "active" ? "Grupo ativado" : "Grupo desativado");
     },
     onError: (error: Error) => {
@@ -107,7 +105,7 @@ export function useGroupPermissions(groupId: string | null) {
   const queryClient = useQueryClient();
 
   const { data: groupPermissions = [], isLoading } = useQuery({
-    queryKey: [...GROUP_PERMISSIONS_KEY, groupId],
+    queryKey: queryKeys.permissions.groupPermissions(groupId),
     queryFn: async () => {
       if (!groupId) return [];
 
@@ -153,7 +151,7 @@ export function useGroupPermissions(groupId: string | null) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: GROUP_PERMISSIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.groupPermissions(null) });
       toast.success("Permissões do grupo atualizadas");
     },
     onError: (error: Error) => {
