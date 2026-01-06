@@ -113,9 +113,9 @@ export function useNewJetimobers(limit = 5) {
   return useQuery({
     queryKey: ["new-jetimobers", currentBu?.id, limit],
     queryFn: async (): Promise<NewJetimober[]> => {
-      // Buscar colaboradores dos últimos 60 dias para garantir visibilidade
-      const sixtyDaysAgo = new Date();
-      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      // Buscar colaboradores dos últimos 30 dias
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       let query = supabase
         .from("profiles")
@@ -131,7 +131,7 @@ export function useNewJetimobers(limit = 5) {
         )
         .is("deleted_at", null)
         .eq("employment_status", "active")
-        .gte("start_date", sixtyDaysAgo.toISOString().split("T")[0])
+        .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
         .order("start_date", { ascending: false })
         .limit(limit);
 
