@@ -302,7 +302,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/hub/okrs"
+                      path="/hub/modules/okrs/settings"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
