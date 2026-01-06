@@ -150,8 +150,9 @@ export function CreateTeamKrDialog({
     },
     onError: (error: Error) => {
       console.error('Error creating KR:', error);
-      if (error.message.includes('more than 3')) {
-        toast.error('Este objetivo já possui 3 Key Results. Remova um antes de criar outro.');
+      // Check for limit error messages (Portuguese or English)
+      if (error.message.includes('Limite atingido') || error.message.includes('more than 3') || error.message.includes('máximo 3')) {
+        toast.error('Limite atingido: um Objetivo de Time pode ter no máximo 3 KRs ativos.');
       } else {
         toast.error('Erro ao criar Key Result. Tente novamente.');
       }
