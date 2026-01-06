@@ -19,9 +19,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { KrUnitSelect } from './KrUnitSelect';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { useDeleteOrgKeyResult } from '../hooks/useOkrMutations';
 import type { OkrRagStatus, OkrDirection } from '../types';
 
 interface EditOrgKrDialogProps {
@@ -51,10 +53,11 @@ export function EditOrgKrDialog({
   const [direction, setDirection] = useState<OkrDirection>(kr.direction);
   const [unit, setUnit] = useState(kr.unit);
   const [status, setStatus] = useState<OkrRagStatus>(kr.status);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const deleteMutation = useDeleteOrgKeyResult();
 
-  // Só reseta o form quando o dialog abre, não quando os dados mudam
   useDialogFormReset(open, useCallback(() => {
     setTitle(kr.title);
     setBaseline(kr.baseline.toString());
@@ -105,90 +108,121 @@ export function EditOrgKrDialog({
     updateMutation.mutate();
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Editar Key Result</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Aumentar NPS para 80"
-              required
-            />
-          </div>
+  const handleDelete = () => {
+    deleteMutation.mutate(kr.id, {
+      onSuccess: () => {
+        setShowDeleteConfirm(false);
+        onOpenChange(false);
+      },
+    });
+  };
 
-          <div className="grid grid-cols-2 gap-4">
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Key Result</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="baseline">Baseline</Label>
+              <Label htmlFor="title">Título *</Label>
               <Input
-                id="baseline"
-                type="number"
-                step="any"
-                value={baseline}
-                onChange={(e) => setBaseline(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="target">Meta *</Label>
-              <Input
-                id="target"
-                type="number"
-                step="any"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Aumentar NPS para 80"
                 required
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <KrUnitSelect value={unit} onChange={setUnit} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="baseline">Baseline</Label>
+                <Input
+                  id="baseline"
+                  type="number"
+                  step="any"
+                  value={baseline}
+                  onChange={(e) => setBaseline(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="target">Meta *</Label>
+                <Input
+                  id="target"
+                  type="number"
+                  step="any"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <KrUnitSelect value={unit} onChange={setUnit} />
+              <div className="space-y-2">
+                <Label htmlFor="direction">Direção</Label>
+                <Select value={direction} onValueChange={(v) => setDirection(v as OkrDirection)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="up">Crescente ↑</SelectItem>
+                    <SelectItem value="down">Decrescente ↓</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="direction">Direção</Label>
-              <Select value={direction} onValueChange={(v) => setDirection(v as OkrDirection)}>
+              <Label htmlFor="status">Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as OkrRagStatus)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="up">Crescente ↑</SelectItem>
-                  <SelectItem value="down">Decrescente ↓</SelectItem>
+                  <SelectItem value="not_started">Não iniciado</SelectItem>
+                  <SelectItem value="green">Verde (no caminho)</SelectItem>
+                  <SelectItem value="yellow">Amarelo (atenção)</SelectItem>
+                  <SelectItem value="red">Vermelho (em risco)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as OkrRagStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="not_started">Não iniciado</SelectItem>
-                <SelectItem value="green">Verde (no caminho)</SelectItem>
-                <SelectItem value="yellow">Amarelo (atenção)</SelectItem>
-                <SelectItem value="red">Vermelho (em risco)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending || !title.trim()}>
+                  {updateMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Salvar
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={updateMutation.isPending || !title.trim()}>
-              {updateMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <DeleteConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Excluir Key Result"
+        description="Tem certeza que deseja excluir este KR? Esta ação não pode ser desfeita."
+        isLoading={deleteMutation.isPending}
+      />
+    </>
   );
 }
