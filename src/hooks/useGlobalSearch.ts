@@ -28,7 +28,7 @@ export interface SearchResponse {
 export function useGlobalSearch(initialQuery = "") {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const { currentBu } = useBu();
+  const { currentBuId } = useBu();
 
   // Debounce query
   useEffect(() => {
@@ -46,20 +46,20 @@ export function useGlobalSearch(initialQuery = "") {
     error,
     refetch,
   } = useQuery<SearchResponse>({
-    queryKey: ["global-search", currentBu?.id, debouncedQuery],
+    queryKey: ["global-search", currentBuId, debouncedQuery],
     queryFn: async () => {
-      if (!currentBu?.id || debouncedQuery.length < 2) {
+      if (!currentBuId || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
       console.log("[useGlobalSearch] Invoking global-search with:", {
-        bu_id: currentBu.id,
+        bu_id: currentBuId,
         q: debouncedQuery,
       });
 
       const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
-          bu_id: currentBu.id,
+          bu_id: currentBuId,
           q: debouncedQuery,
           limit_per_type: 5,
         },
@@ -80,7 +80,7 @@ export function useGlobalSearch(initialQuery = "") {
 
       return data as SearchResponse;
     },
-    enabled: !!currentBu?.id && debouncedQuery.length >= 2,
+    enabled: !!currentBuId && debouncedQuery.length >= 2,
     staleTime: 30000, // 30 seconds
     gcTime: 60000, // 1 minute
     retry: 1,
@@ -92,8 +92,9 @@ export function useGlobalSearch(initialQuery = "") {
   }, [data?.groups]);
 
   const isEmpty = useMemo(() => {
+    if (!currentBuId) return false;
     return debouncedQuery.length >= 2 && !isLoading && totalResults === 0;
-  }, [debouncedQuery, isLoading, totalResults]);
+  }, [currentBuId, debouncedQuery, isLoading, totalResults]);
 
   return {
     query,
