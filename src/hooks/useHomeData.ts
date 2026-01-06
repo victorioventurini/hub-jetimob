@@ -6,6 +6,24 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 
+async function fetchTeamsById(teamIds: Array<string | null | undefined>) {
+  const uniqueIds = Array.from(new Set(teamIds.filter((id): id is string => !!id)));
+  if (uniqueIds.length === 0) return {} as Record<string, string>;
+
+  const { data, error } = await supabase
+    .from("teams")
+    .select("id, name")
+    .is("deleted_at", null)
+    .in("id", uniqueIds);
+
+  if (error) throw error;
+
+  return (data || []).reduce<Record<string, string>>((acc, team) => {
+    acc[team.id] = team.name;
+    return acc;
+  }, {});
+}
+
 interface QuickStatsData {
   totalProfiles: number;
   newProfilesThisMonth: number;
@@ -117,48 +135,50 @@ export function useNewJetimobers(limit = 5) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      let query = supabase
-        .from("profiles")
-        .select(
-          `
+  let query = supabase
+    .from("profiles")
+    .select(
+      `
           id,
           display_name,
           job_title,
           photo_url,
           start_date,
-          team:teams(name)
+          team_id
         `
-        )
-        .is("deleted_at", null)
-        .eq("employment_status", "active")
-        .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
-        .order("start_date", { ascending: false })
-        .limit(limit);
+    )
+    .is("deleted_at", null)
+    .eq("employment_status", "active")
+    .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
+    .order("start_date", { ascending: false })
+    .limit(limit);
 
-      if (currentBu?.id) {
-        query = query.eq("bu_id", currentBu.id);
-      }
+  if (currentBu?.id) {
+    query = query.eq("bu_id", currentBu.id);
+  }
 
-      const { data, error } = await query;
+  const { data, error } = await query;
 
-      if (error) throw error;
+  if (error) throw error;
 
-      const now = new Date();
-      return (data || []).map((profile) => {
-        const startDate = new Date(profile.start_date);
-        const diffTime = Math.abs(now.getTime() - startDate.getTime());
-        const daysAgo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const teamsById = await fetchTeamsById((data || []).map((p) => p.team_id));
 
-        return {
-          id: profile.id,
-          name: profile.display_name || "Sem nome",
-          jobTitle: profile.job_title || "Sem cargo",
-          team: (profile.team as { name: string } | null)?.name || "Sem time",
-          photoUrl: profile.photo_url || undefined,
-          startDate: profile.start_date,
-          daysAgo,
-        };
-      });
+  const now = new Date();
+  return (data || []).map((profile) => {
+    const startDate = new Date(profile.start_date);
+    const diffTime = Math.abs(now.getTime() - startDate.getTime());
+    const daysAgo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return {
+      id: profile.id,
+      name: profile.display_name || "Sem nome",
+      jobTitle: profile.job_title || "Sem cargo",
+      team: teamsById[profile.team_id] || "Sem time",
+      photoUrl: profile.photo_url || undefined,
+      startDate: profile.start_date,
+      daysAgo,
+    };
+  });
     },
   });
 }
@@ -180,8 +200,6 @@ export function useBirthdays() {
   return useQuery({
     queryKey: ["birthdays", currentBu?.id, currentMonth],
     queryFn: async (): Promise<Birthday[]> => {
-      console.log("[useBirthdays] Fetching birthdays for month:", currentMonth, "bu:", currentBu?.id);
-      
       let query = supabase
         .from("profiles")
         .select(
@@ -192,7 +210,7 @@ export function useBirthdays() {
           photo_url,
           birth_day,
           birth_month,
-          team:teams(name)
+          team_id
         `
         )
         .is("deleted_at", null)
@@ -207,18 +225,15 @@ export function useBirthdays() {
 
       const { data, error } = await query;
 
-      console.log("[useBirthdays] Query result:", { data, error, count: data?.length });
+      if (error) throw error;
 
-      if (error) {
-        console.error("[useBirthdays] Error:", error);
-        throw error;
-      }
+      const teamsById = await fetchTeamsById((data || []).map((p) => p.team_id));
 
       return (data || []).map((profile) => ({
         id: profile.id,
         name: profile.display_name || "Sem nome",
         jobTitle: profile.job_title || "Sem cargo",
-        team: (profile.team as { name: string } | null)?.name || "Sem time",
+        team: teamsById[profile.team_id] || "Sem time",
         photoUrl: profile.photo_url || undefined,
         birthDay: profile.birth_day!,
         birthMonth: profile.birth_month!,
@@ -227,7 +242,6 @@ export function useBirthdays() {
     enabled: true,
   });
 }
-
 interface WorkAnniversary {
   id: string;
   name: string;
@@ -257,7 +271,7 @@ export function useWorkAnniversaries() {
           job_title,
           photo_url,
           start_date,
-          team:teams(name)
+          team_id
         `
         )
         .is("deleted_at", null)
@@ -271,6 +285,8 @@ export function useWorkAnniversaries() {
       const { data, error } = await query;
 
       if (error) throw error;
+
+      const teamsById = await fetchTeamsById((data || []).map((p) => p.team_id));
 
       // Filter by current month and exclude current year (no anniversary in first year)
       return (data || [])
@@ -288,7 +304,7 @@ export function useWorkAnniversaries() {
             id: profile.id,
             name: profile.display_name || "Sem nome",
             jobTitle: profile.job_title || "Sem cargo",
-            team: (profile.team as { name: string } | null)?.name || "Sem time",
+            team: teamsById[profile.team_id] || "Sem time",
             photoUrl: profile.photo_url || undefined,
             startDate: profile.start_date,
             yearsAtCompany,
