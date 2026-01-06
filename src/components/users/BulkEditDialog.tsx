@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamSelect, SimpleSelect } from "@/components/selects";
+import { useBu } from "@/contexts/BuContext";
 
 interface BulkEditDialogProps {
   open: boolean;
@@ -29,22 +30,25 @@ export function BulkEditDialog({
   onComplete,
 }: BulkEditDialogProps) {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
   const [teamId, setTeamId] = useState<string>("no-change");
   const [managerId, setManagerId] = useState<string>("no-change");
 
   const { data: managers } = useQuery({
-    queryKey: ["managers-select"],
+    queryKey: ["managers-select", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name")
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .neq("employment_status", "terminated")
         .order("display_name");
       if (error) throw error;
       return data;
     },
-    enabled: open,
+    enabled: open && !!currentBu?.id,
   });
 
   const bulkUpdateMutation = useMutation({

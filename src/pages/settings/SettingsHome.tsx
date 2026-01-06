@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBu } from "@/contexts/BuContext";
 import {
   Users,
   Building2,
@@ -91,6 +92,7 @@ function StatCard({ title, value, subtitle, icon: Icon, subtitleIcon: SubIcon, s
 
 export default function SettingsHome() {
   usePageTitle("Configurações do Hub", { skipBu: true });
+  const { currentBu } = useBu();
 
   // Fetch Business Units count
   const { data: busData, isLoading: busLoading } = useQuery({
@@ -139,32 +141,38 @@ export default function SettingsHome() {
     },
   });
 
-  // Fetch Profiles count
+  // Fetch Profiles count - scoped to current BU
   const { data: profilesData, isLoading: profilesLoading } = useQuery({
-    queryKey: ["settings-profiles-count"],
+    queryKey: ["settings-profiles-count", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return 0;
       const { count, error } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
+        .eq("bu_id", currentBu.id)
         .eq("employment_status", "active")
         .is("deleted_at", null);
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!currentBu?.id,
   });
 
-  // Fetch Teams count
+  // Fetch Teams count - scoped to current BU
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ["settings-teams-count"],
+    queryKey: ["settings-teams-count", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return 0;
       const { count, error } = await supabase
         .from("teams")
         .select("*", { count: "exact", head: true })
+        .eq("bu_id", currentBu.id)
         .eq("status", "active")
         .is("deleted_at", null);
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!currentBu?.id,
   });
 
   return (

@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useBu } from "@/contexts/BuContext";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { cn } from "@/lib/utils";
 import { User, Briefcase, MapPin, Building2, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, CalendarIcon, Phone } from "lucide-react";
@@ -84,6 +85,7 @@ const STEPS = [
 
 export function OnboardingWizard({ profileId, userId, initialData, onComplete }: OnboardingWizardProps) {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<OnboardingFormData>({
     first_name: initialData?.first_name || "",
@@ -101,17 +103,20 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
   const [errors, setErrors] = useState<Partial<Record<keyof OnboardingFormData, string>>>({});
 
   const { data: teams } = useQuery({
-    queryKey: ["onboarding-teams"],
+    queryKey: ["onboarding-teams", currentBu?.id],
     queryFn: async () => {
+      if (!currentBu?.id) return [];
       const { data, error } = await supabase
         .from("teams")
         .select("id, name")
+        .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .eq("status", "active")
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBu?.id,
   });
 
   const { data: userRole } = useQuery({

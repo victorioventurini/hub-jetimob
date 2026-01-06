@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBu } from "@/contexts/BuContext";
 import { useKpiData } from "../hooks/useKpiData";
 import {
   KpiCategory,
@@ -64,6 +65,8 @@ interface CreateKpiDialogProps {
 export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createKpi } = useKpiData();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,31 +81,37 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   });
 
   const { data: teams } = useQuery({
-    queryKey: ["teams-list"],
+    queryKey: ["teams-list", buId],
     queryFn: async () => {
+      if (!buId) return [];
       const { data, error } = await supabase
         .from("teams")
         .select("id, name")
+        .eq("bu_id", buId)
         .is("deleted_at", null)
         .eq("status", "active")
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!buId,
   });
 
   const { data: profiles } = useQuery({
-    queryKey: ["profiles-list"],
+    queryKey: ["profiles-list", buId],
     queryFn: async () => {
+      if (!buId) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name")
+        .eq("bu_id", buId)
         .is("deleted_at", null)
         .eq("employment_status", "active")
         .order("display_name");
       if (error) throw error;
       return data;
     },
+    enabled: !!buId,
   });
 
   const onSubmit = async (values: FormValues) => {

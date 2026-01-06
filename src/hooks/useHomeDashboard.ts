@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { usePendingCheckins, useCheckinSummary } from "@/modules/okrs/hooks/usePendingCheckins";
 import { useTeams } from "@/modules/teams/hooks/useTeams";
+import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -78,14 +79,17 @@ function useUserTeamId(userId?: string) {
   });
 }
 
-// Hook to get real OKR status counts
-function useOkrStatusCounts(teamId?: string | null) {
+// Hook to get real OKR status counts - scoped to BU
+function useOkrStatusCounts(buId?: string | null, teamId?: string | null) {
   return useQuery({
-    queryKey: ['okr-status-counts', teamId],
+    queryKey: ['okr-status-counts', buId, teamId],
     queryFn: async () => {
+      if (!buId) return { onTrack: 0, atRisk: 0, offTrack: 0 };
+      
       let query = supabase
         .from('okr_team_key_results')
         .select('status')
+        .eq('bu_id', buId)
         .is('deleted_at', null);
 
       if (teamId) {
@@ -117,6 +121,7 @@ function useOkrStatusCounts(teamId?: string | null) {
 
       return counts;
     },
+    enabled: !!buId,
   });
 }
 
@@ -146,10 +151,11 @@ const mockKpisByRole: Record<string, KpiSummary[]> = {
 
 export function useHomeDashboard(): HomeDashboardData {
   const { role, user } = useAuth();
+  const { currentBu } = useBu();
   const { data: pendingCheckins, isLoading: checkinsLoading } = usePendingCheckins();
   const { summary: checkinSummary } = useCheckinSummary();
   const { data: userTeamId } = useUserTeamId(user?.id);
-  const { data: okrCounts, isLoading: okrLoading } = useOkrStatusCounts(userTeamId);
+  const { data: okrCounts, isLoading: okrLoading } = useOkrStatusCounts(currentBu?.id, userTeamId);
   const { data: teams } = useTeams();
   
   const roleCategory = mapRoleToCategory(role as string | undefined);
