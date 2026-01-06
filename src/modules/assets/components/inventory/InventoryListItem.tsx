@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MapPin, User, MoreVertical, Copy, ChevronRight } from "lucide-react";
+import { MapPin, User, MoreVertical, Copy, ChevronRight, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AssetInventory } from "../../types";
 import { INVENTORY_STATUS_LABELS } from "../../types";
@@ -24,49 +24,56 @@ const statusColors: Record<string, string> = {
 };
 
 export function InventoryListItem({ item, onClone }: InventoryListItemProps) {
+  const holderInfo = item.current_holder_type === "location" && item.current_location
+    ? { icon: MapPin, label: item.current_location.name }
+    : item.current_holder_type === "user" && item.current_user
+    ? { icon: User, label: item.current_user.full_name }
+    : null;
+
   return (
-    <div className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
-      {/* Code and Name */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+    <div className="flex items-center p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
+      {/* Icon */}
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center mr-3">
+        <Package className="h-5 w-5 text-muted-foreground" />
+      </div>
+
+      {/* Main Info - Name, Code, Category */}
+      <div className="flex-1 min-w-0 mr-4">
+        <div className="flex items-center gap-2 mb-0.5">
           <span className="font-medium text-foreground truncate">{item.name}</span>
-          <span className="text-sm text-muted-foreground shrink-0">#{item.internal_code}</span>
+          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+            #{item.internal_code}
+          </span>
         </div>
-        {item.category && (
-          <p className="text-sm text-muted-foreground truncate">{item.category.name}</p>
-        )}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {item.category && (
+            <span className="truncate">{item.category.name}</span>
+          )}
+          {item.category && item.brand && <span className="text-muted-foreground/50">•</span>}
+          {item.brand && (
+            <span className="truncate">{item.brand} {item.model}</span>
+          )}
+        </div>
       </div>
 
-      {/* Holder info */}
-      <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground min-w-0 max-w-[200px]">
-        {item.current_holder_type === "location" && item.current_location && (
-          <>
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{item.current_location.name}</span>
-          </>
-        )}
-        {item.current_holder_type === "user" && item.current_user && (
-          <>
-            <User className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{item.current_user.full_name}</span>
-          </>
-        )}
-      </div>
-
-      {/* Brand/Model */}
-      {item.brand && (
-        <div className="hidden md:block text-sm text-muted-foreground min-w-0 max-w-[150px]">
-          <span className="truncate">{item.brand} {item.model}</span>
+      {/* Holder - Hidden on mobile */}
+      {holderInfo && (
+        <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground mr-4 max-w-[180px]">
+          <holderInfo.icon className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{holderInfo.label}</span>
         </div>
       )}
 
       {/* Status */}
-      <Badge variant="outline" className={cn("shrink-0", statusColors[item.status])}>
+      <Badge 
+        variant="outline" 
+        className={cn("shrink-0 mr-2", statusColors[item.status])}
+      >
         {INVENTORY_STATUS_LABELS[item.status]}
       </Badge>
 
       {/* Actions */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         {onClone && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
