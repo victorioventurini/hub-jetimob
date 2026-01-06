@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useBu } from '@/contexts/BuContext';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ export function CreateOrgObjectiveDialog({
 }: CreateOrgObjectiveDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { currentBuId } = useBu();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'draft' | 'active'>('draft');
@@ -44,6 +46,7 @@ export function CreateOrgObjectiveDialog({
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Usuário não autenticado');
+      if (!currentBuId) throw new Error('Nenhuma BU selecionada');
       
       const { data, error } = await supabase
         .from('okr_org_objectives')
@@ -53,6 +56,7 @@ export function CreateOrgObjectiveDialog({
           year,
           status,
           owner_user_id: user.id,
+          bu_id: currentBuId,
         })
         .select()
         .single();
