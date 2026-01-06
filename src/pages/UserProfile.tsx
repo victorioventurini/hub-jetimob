@@ -20,6 +20,11 @@ import {
   ChevronRight,
   Clock,
   Lightbulb,
+  Mail,
+  Phone,
+  Cake,
+  Instagram,
+  MessageCircle,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
@@ -58,6 +63,22 @@ const ragStatusColors: Record<string, string> = {
   green: "bg-success",
   yellow: "bg-warning",
   red: "bg-destructive",
+};
+
+const monthNames = [
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+];
+
+const formatPhoneNumber = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
 };
 
 export default function UserProfile() {
@@ -487,19 +508,86 @@ export default function UserProfile() {
                 <CardTitle className="text-base">Contato</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
+                {/* Email */}
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Desde:</span>
+                  <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <a 
+                    href={`mailto:${profile.work_email}`}
+                    className="text-primary hover:underline truncate"
+                  >
+                    {profile.work_email}
+                  </a>
+                </div>
+
+                {/* WhatsApp */}
+                {profile.whatsapp_personal && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <a 
+                      href={`https://wa.me/${profile.whatsapp_personal.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {formatPhoneNumber(profile.whatsapp_personal)}
+                    </a>
+                  </div>
+                )}
+
+                {/* Birthday */}
+                {profile.birth_day && profile.birth_month && (
+                  <div className="flex items-center gap-2">
+                    <Cake className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span>{profile.birth_day} de {monthNames[profile.birth_month - 1]}</span>
+                  </div>
+                )}
+
+                {/* Start date */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Na Jet desde</span>
                   <span className="capitalize">{formatStartDate(profile.start_date)}</span>
                 </div>
-                {(profile.work_mode === "remote" || profile.work_mode === "hybrid") && (
+
+                {/* Location */}
+                {(profile.work_mode === "remote" || profile.work_mode === "hybrid") && profile.city && (
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span>{profile.city}, {profile.state}</span>
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            {/* Social Media */}
+            {(profile.instagram_id || profile.discord_id) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Redes Sociais</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  {profile.instagram_id && (
+                    <div className="flex items-center gap-2">
+                      <Instagram className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <a 
+                        href={`https://instagram.com/${profile.instagram_id.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        @{profile.instagram_id.replace('@', '')}
+                      </a>
+                    </div>
+                  )}
+                  {profile.discord_id && (
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span>{profile.discord_id}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
