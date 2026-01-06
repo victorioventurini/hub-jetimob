@@ -33,7 +33,7 @@ import { useSquads } from "../hooks/useSquads";
 import { EditTeamDialog } from "../components/EditTeamDialog";
 import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";
-import { useBu } from "@/contexts/BuContext";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
 import { useUrlState } from "@/hooks/useUrlState";
@@ -56,10 +56,10 @@ export default function TeamDetailPage() {
   const [deletingSubteamId, setDeletingSubteamId] = useState<string | null>(null);
   const [deletingSubteamName, setDeletingSubteamName] = useState<string>("");
   const { isAdmin, user } = useAuth();
-  const { userRole } = useBu();
+  const { canManageTeam } = useTeamManagement();
   
-  // BU admin or global admin can manage teams
-  const canManageTeams = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  // Verificar se usuário pode gerenciar ESTE time específico
+  const canManageThisTeam = id ? canManageTeam(id) : false;
   const getInitials = (name: string) =>
     name
       .split(" ")
@@ -133,7 +133,7 @@ export default function TeamDetailPage() {
               )}
             </div>
           </div>
-          {canManageTeams && (
+          {canManageThisTeam && (
             <Button
               variant="outline"
               className="gap-2"
@@ -290,7 +290,7 @@ export default function TeamDetailPage() {
                               )}
                             </Link>
                             <div className="flex items-center gap-2">
-                              {canManageTeams && (
+                              {canManageThisTeam && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">

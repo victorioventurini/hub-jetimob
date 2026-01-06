@@ -21,7 +21,7 @@ import { TeamWithRelations } from "../types";
 import { SquadWithRelations } from "../types/squad";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useBu } from "@/contexts/BuContext";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, parsers } from "@/hooks/useUrlState";
 
@@ -57,10 +57,11 @@ export default function TeamsPage() {
   const stats = useTeamStats();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const { userRole } = useBu();
+  const { canManageTeam } = useTeamManagement();
   
-  // BU admin or global admin can manage teams
-  const canManageTeams = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  // BU admin ou super_admin podem criar times (criar é ação global)
+  // Editar é por time específico usando canManageTeam
+  const canCreateTeams = isAdmin;
 
   // Separate parent teams and sub-teams
   const { parentTeams: mainTeams, subTeams } = useMemo(() => {
@@ -159,7 +160,7 @@ export default function TeamsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {canManageTeams && <CreateTeamDialog />}
+            {canCreateTeams && <CreateTeamDialog />}
           </div>
         </div>
 
@@ -347,7 +348,7 @@ export default function TeamsPage() {
                           <TeamCard
                             key={team.id}
                             team={team}
-                            onEdit={isAdmin ? setEditingTeam : undefined}
+                            onEdit={setEditingTeam}
                             variant="team"
                           />
                         ))}
@@ -385,7 +386,7 @@ export default function TeamsPage() {
                           <TeamCard
                             key={team.id}
                             team={team}
-                            onEdit={isAdmin ? setEditingTeam : undefined}
+                            onEdit={setEditingTeam}
                             variant="subteam"
                           />
                         ))}
