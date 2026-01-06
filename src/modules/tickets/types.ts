@@ -37,6 +37,20 @@ export interface PartnerCompany {
   contacts_count?: number;
 }
 
+// Mapeamento de Serviço do Parceiro
+export interface PartnerServiceMapping {
+  id: string;
+  bu_id: string;
+  partner_company_id: string;
+  category_id: string;
+  subcategory_id: string | null;
+  status: 'active' | 'inactive';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 // Contato Externo
 export interface PartnerContact {
   id: string;

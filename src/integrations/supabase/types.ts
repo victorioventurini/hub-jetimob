@@ -3254,6 +3254,77 @@ export type Database = {
           },
         ]
       }
+      partner_service_mappings: {
+        Row: {
+          bu_id: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          partner_company_id: string
+          status: Database["public"]["Enums"]["partner_service_status"]
+          subcategory_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          partner_company_id: string
+          status?: Database["public"]["Enums"]["partner_service_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          partner_company_id?: string
+          status?: Database["public"]["Enums"]["partner_service_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_service_mappings_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           birth_day: number | null
@@ -4197,6 +4268,56 @@ export type Database = {
       }
     }
     Views: {
+      v_partner_services: {
+        Row: {
+          bu_id: string | null
+          category_id: string | null
+          category_name: string | null
+          category_scope:
+            | Database["public"]["Enums"]["ticket_category_scope"]
+            | null
+          created_at: string | null
+          id: string | null
+          is_generalist: boolean | null
+          notes: string | null
+          partner_company_id: string | null
+          partner_company_name: string | null
+          status: Database["public"]["Enums"]["partner_service_status"] | null
+          subcategory_id: string | null
+          subcategory_name: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_service_mappings_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_pending_checkins: {
         Row: {
           baseline: number | null
@@ -4401,6 +4522,22 @@ export type Database = {
         Args: { p_bu_id: string; p_integration_key: string }
         Returns: Json
       }
+      get_partner_categories: {
+        Args: { p_partner_company_id: string }
+        Returns: {
+          category_id: string
+          category_name: string
+          is_generalist: boolean
+          subcategory_count: number
+        }[]
+      }
+      get_partner_subcategories: {
+        Args: { p_category_id: string; p_partner_company_id: string }
+        Returns: {
+          subcategory_id: string
+          subcategory_name: string
+        }[]
+      }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
@@ -4548,6 +4685,7 @@ export type Database = {
       okr_status: "draft" | "active" | "completed" | "cancelled"
       partner_company_status: "active" | "inactive"
       partner_contact_status: "active" | "inactive"
+      partner_service_status: "active" | "inactive"
       squad_product: "crm" | "cms" | "erp"
       squad_role: "product_owner" | "tech_lead" | "ux_ui_lead" | "member"
       team_status: "active" | "inactive"
@@ -4771,6 +4909,7 @@ export const Constants = {
       okr_status: ["draft", "active", "completed", "cancelled"],
       partner_company_status: ["active", "inactive"],
       partner_contact_status: ["active", "inactive"],
+      partner_service_status: ["active", "inactive"],
       squad_product: ["crm", "cms", "erp"],
       squad_role: ["product_owner", "tech_lead", "ux_ui_lead", "member"],
       team_status: ["active", "inactive"],
