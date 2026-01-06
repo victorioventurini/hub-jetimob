@@ -5,16 +5,20 @@ import { toast } from "sonner";
 // ========================
 // ORG OBJECTIVES MUTATIONS
 // ========================
-export function useDeleteOrgObjective() {
+
+/**
+ * Cancela (não exclui) um objetivo organizacional.
+ * Altera o status para 'cancelled' preservando histórico.
+ */
+export function useCancelOrgObjective() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
-      // Soft delete - set deleted_at
       const { error } = await supabase
         .from("okr_org_objectives")
         .update({ 
-          deleted_at: new Date().toISOString(),
+          status: 'cancelled',
           updated_at: new Date().toISOString() 
         })
         .eq("id", objectiveId);
@@ -24,24 +28,35 @@ export function useDeleteOrgObjective() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["okr-org-objectives"] });
       queryClient.invalidateQueries({ queryKey: ["okr-org-objectives-with-krs"] });
-      toast.success("Objetivo organizacional excluído");
+      toast.success("Objetivo organizacional cancelado");
     },
     onError: () => {
-      toast.error("Erro ao excluir objetivo");
+      toast.error("Erro ao cancelar objetivo");
     },
   });
 }
 
-export function useDeleteOrgKeyResult() {
+/**
+ * @deprecated Use useCancelOrgObjective instead.
+ * Mantido para compatibilidade, mas agora usa status em vez de deleted_at.
+ */
+export function useDeleteOrgObjective() {
+  return useCancelOrgObjective();
+}
+
+/**
+ * Cancela (não exclui) um KR organizacional.
+ * Usa cancelled_at em vez de status pois KRs têm RAG status.
+ */
+export function useCancelOrgKeyResult() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (krId: string) => {
-      // Soft delete
       const { error } = await supabase
         .from("okr_org_key_results")
         .update({ 
-          deleted_at: new Date().toISOString(),
+          cancelled_at: new Date().toISOString(),
           updated_at: new Date().toISOString() 
         })
         .eq("id", krId);
@@ -51,27 +66,37 @@ export function useDeleteOrgKeyResult() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["okr-org-key-results"] });
       queryClient.invalidateQueries({ queryKey: ["okr-org-objectives-with-krs"] });
-      toast.success("Key Result excluído");
+      toast.success("Key Result cancelado");
     },
     onError: () => {
-      toast.error("Erro ao excluir KR");
+      toast.error("Erro ao cancelar KR");
     },
   });
+}
+
+/**
+ * @deprecated Use useCancelOrgKeyResult instead.
+ */
+export function useDeleteOrgKeyResult() {
+  return useCancelOrgKeyResult();
 }
 
 // ========================
 // TEAM OBJECTIVES MUTATIONS
 // ========================
-export function useDeleteTeamObjective() {
+
+/**
+ * Cancela (não exclui) um objetivo de time.
+ */
+export function useCancelTeamObjective() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
-      // Soft delete
       const { error } = await supabase
         .from("okr_team_objectives")
         .update({ 
-          deleted_at: new Date().toISOString(),
+          status: 'cancelled',
           updated_at: new Date().toISOString() 
         })
         .eq("id", objectiveId);
@@ -81,24 +106,34 @@ export function useDeleteTeamObjective() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["okr-team-objectives"] });
       queryClient.invalidateQueries({ queryKey: ["okr-team-objectives-with-krs"] });
-      toast.success("Objetivo de time excluído");
+      toast.success("Objetivo de time cancelado");
     },
     onError: () => {
-      toast.error("Erro ao excluir objetivo");
+      toast.error("Erro ao cancelar objetivo");
     },
   });
 }
 
-export function useDeleteTeamKeyResult() {
+/**
+ * @deprecated Use useCancelTeamObjective instead.
+ */
+export function useDeleteTeamObjective() {
+  return useCancelTeamObjective();
+}
+
+/**
+ * Cancela (não exclui) um KR de time.
+ * Usa cancelled_at em vez de status pois KRs têm RAG status.
+ */
+export function useCancelTeamKeyResult() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (krId: string) => {
-      // Soft delete
       const { error } = await supabase
         .from("okr_team_key_results")
         .update({ 
-          deleted_at: new Date().toISOString(),
+          cancelled_at: new Date().toISOString(),
           updated_at: new Date().toISOString() 
         })
         .eq("id", krId);
@@ -108,10 +143,17 @@ export function useDeleteTeamKeyResult() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["okr-team-key-results"] });
       queryClient.invalidateQueries({ queryKey: ["okr-team-objectives-with-krs"] });
-      toast.success("Key Result excluído");
+      toast.success("Key Result cancelado");
     },
     onError: () => {
-      toast.error("Erro ao excluir KR");
+      toast.error("Erro ao cancelar KR");
     },
   });
+}
+
+/**
+ * @deprecated Use useCancelTeamKeyResult instead.
+ */
+export function useDeleteTeamKeyResult() {
+  return useCancelTeamKeyResult();
 }

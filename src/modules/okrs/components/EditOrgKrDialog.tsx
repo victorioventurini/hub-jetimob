@@ -19,11 +19,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { KrUnitSelect } from './KrUnitSelect';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useDeleteOrgKeyResult } from '../hooks/useOkrMutations';
+import { useCancelOrgKeyResult } from '../hooks/useOkrMutations';
 import type { OkrRagStatus, OkrDirection } from '../types';
 
 interface EditOrgKrDialogProps {
@@ -53,10 +53,10 @@ export function EditOrgKrDialog({
   const [direction, setDirection] = useState<OkrDirection>(kr.direction);
   const [unit, setUnit] = useState(kr.unit);
   const [status, setStatus] = useState<OkrRagStatus>(kr.status);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const deleteMutation = useDeleteOrgKeyResult();
+  const cancelMutation = useCancelOrgKeyResult();
 
   useDialogFormReset(open, useCallback(() => {
     setTitle(kr.title);
@@ -108,10 +108,10 @@ export function EditOrgKrDialog({
     updateMutation.mutate();
   };
 
-  const handleDelete = () => {
-    deleteMutation.mutate(kr.id, {
+  const handleCancel = () => {
+    cancelMutation.mutate(kr.id, {
       onSuccess: () => {
-        setShowDeleteConfirm(false);
+        setShowCancelConfirm(false);
         onOpenChange(false);
       },
     });
@@ -196,10 +196,10 @@ export function EditOrgKrDialog({
                 type="button"
                 variant="ghost"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => setShowCancelConfirm(true)}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
+                <Ban className="w-4 h-4 mr-2" />
+                Cancelar KR
               </Button>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -216,12 +216,12 @@ export function EditOrgKrDialog({
       </Dialog>
 
       <DeleteConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        onConfirm={handleDelete}
-        title="Excluir Key Result"
-        description="Tem certeza que deseja excluir este KR? Esta ação não pode ser desfeita."
-        isLoading={deleteMutation.isPending}
+        open={showCancelConfirm}
+        onOpenChange={setShowCancelConfirm}
+        onConfirm={handleCancel}
+        title="Cancelar Key Result"
+        description="Tem certeza que deseja cancelar este KR? O histórico de check-ins será preservado."
+        isLoading={cancelMutation.isPending}
       />
     </>
   );
