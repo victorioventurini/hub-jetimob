@@ -11,13 +11,15 @@ export function useAssetPermissions() {
   const queryClient = useQueryClient();
   const buId = currentBu?.id;
 
-  // Super admin tem acesso total
+  // Super admin ou admin de BU tem acesso total
   const isSuperAdmin = userRole === "super_admin";
+  const isBuAdmin = userRole === "admin";
+  const hasFullAccess = isSuperAdmin || isBuAdmin;
 
   // Buscar permissões do usuário atual
   const { data: userPermissions = [], isLoading: isLoadingUserPermissions } = useQuery({
     queryKey: ["asset-permissions", "user", user?.id, buId],
-    enabled: !!user?.id && !!buId && !isSuperAdmin,
+    enabled: !!user?.id && !!buId && !hasFullAccess,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_permissions")
@@ -65,19 +67,19 @@ export function useAssetPermissions() {
 
   // Verificar se o usuário tem uma role específica
   const hasRole = (roles: AssetPermissionRole[]): boolean => {
-    if (isSuperAdmin) return true;
+    if (hasFullAccess) return true;
     return userPermissions.some((p) => roles.includes(p.role));
   };
 
-  // Verificar permissões específicas - super_admin tem acesso total
-  const canManageInventory = isSuperAdmin || hasRole(['assets_admin', 'inventory_admin', 'inventory_manager']);
-  const canManageKeys = isSuperAdmin || hasRole(['assets_admin', 'keys_admin', 'keys_manager']);
-  const canManageGifts = isSuperAdmin || hasRole(['assets_admin', 'gifts_admin', 'gifts_manager']);
-  const isAssetsAdmin = isSuperAdmin || hasRole(['assets_admin']);
-  const isInventoryAdmin = isSuperAdmin || hasRole(['assets_admin', 'inventory_admin']);
-  const isKeysAdmin = isSuperAdmin || hasRole(['assets_admin', 'keys_admin']);
-  const isGiftsAdmin = isSuperAdmin || hasRole(['assets_admin', 'gifts_admin']);
-  const canView = isSuperAdmin || userPermissions.length > 0;
+  // Verificar permissões específicas - super_admin e admin de BU têm acesso total
+  const canManageInventory = hasFullAccess || hasRole(['assets_admin', 'inventory_admin', 'inventory_manager']);
+  const canManageKeys = hasFullAccess || hasRole(['assets_admin', 'keys_admin', 'keys_manager']);
+  const canManageGifts = hasFullAccess || hasRole(['assets_admin', 'gifts_admin', 'gifts_manager']);
+  const isAssetsAdmin = hasFullAccess || hasRole(['assets_admin']);
+  const isInventoryAdmin = hasFullAccess || hasRole(['assets_admin', 'inventory_admin']);
+  const isKeysAdmin = hasFullAccess || hasRole(['assets_admin', 'keys_admin']);
+  const isGiftsAdmin = hasFullAccess || hasRole(['assets_admin', 'gifts_admin']);
+  const canView = hasFullAccess || userPermissions.length > 0;
 
   // Adicionar permissão
   const addPermissionMutation = useMutation({

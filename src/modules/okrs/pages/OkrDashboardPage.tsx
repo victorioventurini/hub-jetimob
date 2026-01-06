@@ -46,7 +46,7 @@ export default function OkrDashboardPage() {
   usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
   const { user, role } = useAuth();
-  const { currentBu } = useBu();
+  const { currentBu, userRole } = useBu();
   
   // URL State - View
   const [activeView, setActiveView] = useUrlState<OkrView>({
@@ -129,9 +129,10 @@ export default function OkrDashboardPage() {
   // Risk count for alert
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
 
-  // Can create based on role
-  const canCreateOrg = role === 'super_admin' || role === 'admin';
-  const canCreateTeam = role === 'super_admin' || role === 'admin' || role === 'team_leader';
+  // Can create based on role (global role OR BU role)
+  const isBuAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const canCreateOrg = role === 'super_admin' || role === 'admin' || isBuAdmin;
+  const canCreateTeam = role === 'super_admin' || role === 'admin' || role === 'team_leader' || isBuAdmin;
 
   const handleCreateClick = () => {
     if (activeView === 'company' && canCreateOrg) {
