@@ -8,7 +8,6 @@ import {
   Blocks,
   Puzzle,
   Workflow,
-  Target,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -73,7 +72,6 @@ export function SettingsSidebar() {
         </p>
         <NavItem to="/hub/business-units" icon={Building2} label="Business Units" />
         <NavItem to="/hub/modules" icon={Blocks} label="Módulos" />
-        <NavItem to="/hub/okrs" icon={Target} label="OKRs" />
         <NavItem to="/hub/integrations" icon={Puzzle} label="Integrações" />
         <NavItem to="/hub/automations" icon={Workflow} label="Automações" />
       </div>
