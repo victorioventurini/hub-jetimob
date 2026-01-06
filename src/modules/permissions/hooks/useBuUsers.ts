@@ -31,20 +31,22 @@ export function useBuUsers() {
 
       if (error) throw error;
 
-      // Fetch profiles separately to avoid join issues
+      // Fetch profiles separately - use user_id column from profiles to match auth user
       const userIds = data.map((m) => m.user_id);
       if (userIds.length === 0) return [];
 
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, display_name, work_email, photo_url")
-        .in("id", userIds);
+        .select("id, user_id, display_name, work_email, photo_url")
+        .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
 
-      const profilesById = (profiles || []).reduce(
+      const profilesByUserId = (profiles || []).reduce(
         (acc, p) => {
-          acc[p.id] = p;
+          if (p.user_id) {
+            acc[p.user_id] = p;
+          }
           return acc;
         },
         {} as Record<string, typeof profiles[0]>
@@ -54,7 +56,7 @@ export function useBuUsers() {
         .map((m) => ({
           user_id: m.user_id,
           role_in_bu: m.role_in_bu,
-          profiles: profilesById[m.user_id],
+          profiles: profilesByUserId[m.user_id],
         }))
         .filter((m) => m.profiles) as BuUser[];
     },
