@@ -17,9 +17,10 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Loader2, Users } from 'lucide-react';
 import { VicActionButton } from '@/modules/vic';
-import { TeamSelect, SimpleSelect, MultiTeamSelect } from '@/components/selects';
+import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
 import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCycles } from '../hooks/useCycleData';
 
 interface CreateTeamObjectiveDialogProps {
   open: boolean;
@@ -49,12 +50,16 @@ export function CreateTeamObjectiveDialog({
   const [description, setDescription] = useState('');
   const [teamId, setTeamId] = useState<string | undefined>(undefined);
   const [orgObjectiveId, setOrgObjectiveId] = useState('');
+  const [cycleId, setCycleId] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<'draft' | 'active'>('draft');
   
   // Shared OKR fields
   const [isShared, setIsShared] = useState(false);
   const [contributingTeamIds, setContributingTeamIds] = useState<string[]>([]);
   const [responsibilityModel, setResponsibilityModel] = useState<'collaborative' | 'primary_led'>('collaborative');
+
+  // Fetch cycles
+  const { data: cycles = [] } = useCycles();
 
   // Convert teams to hierarchical format
   const buildHierarchicalTeams = (): FlatTeamItem[] => {
@@ -92,6 +97,7 @@ export function CreateTeamObjectiveDialog({
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!teamId) throw new Error("Time não selecionado");
+      if (!cycleId) throw new Error("Ciclo não selecionado");
       
       // Create the objective
       const { data: objective, error } = await supabase
@@ -101,6 +107,7 @@ export function CreateTeamObjectiveDialog({
           description: description || null,
           team_id: teamId,
           org_objective_id: orgObjectiveId,
+          cycle_id: cycleId,
           status,
           is_shared: isShared,
           responsibility_model: isShared ? responsibilityModel : null,
@@ -151,6 +158,7 @@ export function CreateTeamObjectiveDialog({
     setDescription('');
     setTeamId(undefined);
     setOrgObjectiveId('');
+    setCycleId(undefined);
     setStatus('draft');
     setIsShared(false);
     setContributingTeamIds([]);
@@ -172,6 +180,10 @@ export function CreateTeamObjectiveDialog({
       toast.error('Selecione um objetivo organizacional');
       return;
     }
+    if (!cycleId) {
+      toast.error('Selecione um ciclo');
+      return;
+    }
     if (isShared && contributingTeamIds.length === 0) {
       toast.error('Selecione pelo menos um time contribuidor');
       return;
@@ -187,7 +199,7 @@ export function CreateTeamObjectiveDialog({
         <DialogHeader>
           <DialogTitle>Novo Objetivo de Time</DialogTitle>
           <DialogDescription>
-            Crie um objetivo vinculado a um OKR organizacional. Cada time pode ter no máximo 3 objetivos ativos.
+            Crie um objetivo vinculado a um OKR organizacional. O prazo será definido pelo ciclo selecionado.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -219,6 +231,20 @@ export function CreateTeamObjectiveDialog({
                 placeholder="Vincule a um objetivo organizacional"
                 disabled={createMutation.isPending}
                 triggerClassName="w-full"
+              />
+            </div>
+
+            {/* Cycle Selection - Required */}
+            <div className="space-y-2">
+              <Label htmlFor="cycle">Ciclo *</Label>
+              <CycleSelect
+                value={cycleId}
+                onValueChange={setCycleId}
+                cycles={cycles}
+                placeholder="Selecione o ciclo do objetivo"
+                disabled={createMutation.isPending}
+                required
+                showPeriodPreview
               />
             </div>
 
