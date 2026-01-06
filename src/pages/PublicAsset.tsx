@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { MapPin, User, Package, Calendar, Tag, Building2, ArrowLeft } from "lucide-react";
+import { Package, Calendar, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,14 +17,9 @@ interface AssetData {
   description: string | null;
   brand: string | null;
   model: string | null;
-  serial_number: string | null;
   status: string;
   current_holder_type: string;
   acquired_at: string | null;
-  category: { name: string } | null;
-  current_location: { name: string } | null;
-  current_user: { full_name: string } | null;
-  bu: { name: string; logo_url: string | null } | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -39,6 +34,11 @@ const statusColors: Record<string, string> = {
   loaned: "bg-blue-500/10 text-blue-700 border-blue-200",
   maintenance: "bg-amber-500/10 text-amber-700 border-amber-200",
   written_off: "bg-gray-500/10 text-gray-700 border-gray-200",
+};
+
+const holderLabels: Record<string, string> = {
+  location: "Em sede",
+  user: "Com colaborador",
 };
 
 export default function PublicAsset() {
@@ -65,14 +65,9 @@ export default function PublicAsset() {
             description,
             brand,
             model,
-            serial_number,
             status,
             current_holder_type,
-            acquired_at,
-            category:asset_categories(name),
-            current_location:bu_locations!asset_inventory_current_location_id_fkey(name),
-            current_user:profiles!asset_inventory_current_user_id_fkey(full_name),
-            bu:bu_units!asset_inventory_bu_id_fkey(name, logo_url)
+            acquired_at
           `)
           .eq("internal_code", code)
           .is("deleted_at", null)
@@ -84,7 +79,7 @@ export default function PublicAsset() {
         } else if (!data) {
           setError("Item não encontrado");
         } else {
-          setAsset(data as unknown as AssetData);
+          setAsset(data as AssetData);
         }
       } catch (err) {
         console.error("Error:", err);
@@ -136,12 +131,6 @@ export default function PublicAsset() {
     );
   }
 
-  const holderInfo = asset.current_holder_type === "location" && asset.current_location
-    ? { icon: MapPin, label: asset.current_location.name }
-    : asset.current_holder_type === "user" && asset.current_user
-    ? { icon: User, label: asset.current_user.full_name }
-    : null;
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-lg">
@@ -161,13 +150,6 @@ export default function PublicAsset() {
               </div>
               <CardTitle className="text-xl">{asset.name}</CardTitle>
             </div>
-            {asset.bu?.logo_url && (
-              <img 
-                src={asset.bu.logo_url} 
-                alt={asset.bu.name} 
-                className="h-10 w-auto object-contain"
-              />
-            )}
           </div>
         </CardHeader>
 
@@ -177,14 +159,6 @@ export default function PublicAsset() {
           )}
 
           <div className="space-y-3">
-            {asset.category && (
-              <div className="flex items-center gap-3 text-sm">
-                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground">Categoria:</span>
-                <span className="font-medium">{asset.category.name}</span>
-              </div>
-            )}
-
             {(asset.brand || asset.model) && (
               <div className="flex items-center gap-3 text-sm">
                 <Package className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -195,19 +169,13 @@ export default function PublicAsset() {
               </div>
             )}
 
-            {asset.serial_number && (
+            {asset.current_holder_type && (
               <div className="flex items-center gap-3 text-sm">
-                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground">Nº Série:</span>
-                <span className="font-medium font-mono">{asset.serial_number}</span>
-              </div>
-            )}
-
-            {holderInfo && (
-              <div className="flex items-center gap-3 text-sm">
-                <holderInfo.icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground">Localização:</span>
-                <span className="font-medium">{holderInfo.label}</span>
+                <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground">Situação:</span>
+                <span className="font-medium">
+                  {holderLabels[asset.current_holder_type] || asset.current_holder_type}
+                </span>
               </div>
             )}
 
@@ -218,14 +186,6 @@ export default function PublicAsset() {
                 <span className="font-medium">
                   {format(new Date(asset.acquired_at), "dd/MM/yyyy", { locale: ptBR })}
                 </span>
-              </div>
-            )}
-
-            {asset.bu && (
-              <div className="flex items-center gap-3 text-sm">
-                <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground">Empresa:</span>
-                <span className="font-medium">{asset.bu.name}</span>
               </div>
             )}
           </div>
