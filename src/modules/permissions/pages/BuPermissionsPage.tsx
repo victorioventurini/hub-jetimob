@@ -1,0 +1,248 @@
+import { useState } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Shield, Search, Users, Settings, ChevronRight } from "lucide-react";
+import { usePermissionGroups } from "../hooks/usePermissionGroups";
+import { useBuGroupConfigs } from "../hooks/useBuPermissions";
+import { useBuUsers } from "../hooks/useBuUsers";
+import { UserPermissionsSheet } from "../components/UserPermissionsSheet";
+
+type BuUser = {
+  user_id: string;
+  role_in_bu: string;
+  profiles: {
+    id: string;
+    display_name: string;
+    work_email: string;
+    photo_url: string | null;
+  };
+};
+
+export default function BuPermissionsPage() {
+  usePageTitle("Permissões da BU");
+
+  const [activeTab, setActiveTab] = useState("users");
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState<BuUser | null>(null);
+
+  const { groups, isLoading: groupsLoading } = usePermissionGroups();
+  const { configs, isLoading: configsLoading, toggleGroupEnabled } = useBuGroupConfigs();
+  const { users, isLoading: usersLoading } = useBuUsers();
+
+  // Map configs by group_id for quick lookup
+  const configByGroupId = configs.reduce(
+    (acc, c) => {
+      acc[c.group_id] = c;
+      return acc;
+    },
+    {} as Record<string, typeof configs[0]>
+  );
+
+  const activeGroups = groups.filter((g) => g.status === "active");
+
+  const filteredGroups = search
+    ? activeGroups.filter(
+        (g) =>
+          g.name.toLowerCase().includes(search.toLowerCase()) ||
+          g.description?.toLowerCase().includes(search.toLowerCase())
+      )
+    : activeGroups;
+
+  const filteredUsers = search
+    ? users.filter(
+        (u) =>
+          u.profiles.display_name.toLowerCase().includes(search.toLowerCase()) ||
+          u.profiles.work_email.toLowerCase().includes(search.toLowerCase())
+      )
+    : users;
+
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+
+  const getRoleBadge = (role: string) => {
+    if (role === "admin") {
+      return <Badge variant="default">Admin</Badge>;
+    }
+    if (role === "leader") {
+      return <Badge variant="secondary">Líder</Badge>;
+    }
+    return <Badge variant="outline">Membro</Badge>;
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Permissões da BU"
+        description="Gerencie grupos habilitados e permissões de usuários"
+      />
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="flex items-center justify-between gap-4">
+          <TabsList>
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="h-4 w-4" />
+              Usuários
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Grupos Habilitados
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+        </div>
+
+        <TabsContent value="users" className="mt-6">
+          {usersLoading ? (
+            <LoadingState text="Carregando usuários..." />
+          ) : filteredUsers.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Nenhum usuário encontrado"
+              description={search ? "Tente ajustar a busca" : "Nenhum usuário nesta BU"}
+            />
+          ) : (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Papel na BU</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow
+                      key={user.user_id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedUser(user)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.profiles.photo_url || undefined} />
+                            <AvatarFallback>
+                              {getInitials(user.profiles.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">
+                            {user.profiles.display_name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user.profiles.work_email}
+                      </TableCell>
+                      <TableCell>{getRoleBadge(user.role_in_bu)}</TableCell>
+                      <TableCell>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="groups" className="mt-6">
+          {groupsLoading || configsLoading ? (
+            <LoadingState text="Carregando grupos..." />
+          ) : filteredGroups.length === 0 ? (
+            <EmptyState
+              icon={Settings}
+              title="Nenhum grupo encontrado"
+              description={
+                search
+                  ? "Tente ajustar a busca"
+                  : "Nenhum grupo global ativo. Crie grupos em /hub/permissions"
+              }
+            />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Habilite ou desabilite grupos globais para esta BU. Usuários só podem receber grupos habilitados.
+              </p>
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Grupo</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead className="w-32 text-center">Habilitado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredGroups.map((group) => {
+                      const config = configByGroupId[group.id];
+                      const isEnabled = config?.is_enabled ?? true; // Default enabled
+
+                      return (
+                        <TableRow key={group.id}>
+                          <TableCell className="font-medium">{group.name}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {group.description || "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={(checked) =>
+                                toggleGroupEnabled.mutate({
+                                  groupId: group.id,
+                                  isEnabled: checked,
+                                })
+                              }
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* User Permissions Sheet */}
+      <UserPermissionsSheet
+        open={!!selectedUser}
+        onOpenChange={(open) => {
+          if (!open) setSelectedUser(null);
+        }}
+        user={selectedUser}
+      />
+    </div>
+  );
+}
