@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.2.0  
-**Última atualização:** 2026-01-05  
+**Versão:** 1.3.0  
+**Última atualização:** 2026-01-06  
 **Responsável:** Lovable AI / Equipe de Engenharia
 
 ---
@@ -153,12 +153,15 @@ Dados do perfil de cada usuário.
 | city | text | Cidade |
 | state | text | Estado |
 | start_date | date | Data de início |
-| birth_date | date | Data de nascimento |
+| birth_day | int | Dia do aniversário |
+| birth_month | int | Mês do aniversário |
 | employment_status | enum | `active`, `inactive`, `vacation` |
 | onboarding_completed | bool | Onboarding concluído |
-| bu_id | uuid | BU principal (legado) |
+| bu_id | uuid | BU principal |
+| team_id | uuid | Time principal |
+| manager_user_id | uuid | Gestor direto |
 
-**Escopo:** Por usuário (próprio perfil)
+**Escopo:** Por BU (via bu_id)
 
 ---
 
@@ -842,7 +845,7 @@ Sistema de menções em comentários.
 
 | Módulo | Slug | Objetivo | Status |
 |--------|------|----------|--------|
-| **Home** | - | Dashboard pessoal com OKRs, aniversários, cultura | ✅ Ativo |
+| **Home** | - | Dashboard pessoal com OKRs, aniversários, cultura, novos Jetimobers | ✅ Ativo |
 | **OKRs** | `okrs` | Gestão de Objectives e Key Results | ✅ Ativo |
 | **KPIs** | `kpis` | Indicadores de performance | ✅ Ativo |
 | **Times** | `teams` | Estrutura organizacional | ✅ Ativo |
@@ -850,6 +853,7 @@ Sistema de menções em comentários.
 | **Integrações** | `integrations` | Gerenciamento de integrações e agentes IA | ✅ Ativo |
 | **Automações** | `automations` | Webhooks de entrada/saída | ✅ Ativo |
 | **Vic** | `vic` | Assistente de IA contextual | ✅ Ativo |
+| **Tickets** | `tickets` | Sistema de tickets com routing e parceiros | ✅ Ativo |
 | **BU Management** | `bu` | Gerenciamento de Business Units | ✅ Ativo (admin) |
 
 ### 3.2 Sub-módulos do Assets
@@ -1059,7 +1063,6 @@ function calculateProgress(baseline, current, target, direction) {
 
 | Item | Descrição | Prioridade |
 |------|-----------|------------|
-| `profiles.bu_id` | Campo legado, substituído por `bu_user_memberships` | Média |
 | Tipagem parcial | Alguns componentes sem TypeScript completo | Baixa |
 | Testes | Cobertura de testes ainda baixa | Alta |
 
@@ -1112,7 +1115,7 @@ A Edge Function `global-search` implementa busca agregada multi-contexto com sup
 **Entidades pesquisadas:**
 | Tipo | Tabela | Campos buscados |
 |------|--------|-----------------|
-| `people` | profiles + bu_user_memberships | first_name, last_name, display_name, job_title, work_email |
+| `people` | profiles (via bu_id) | first_name, last_name, display_name, work_email |
 | `teams` | teams | name, description |
 | `squads` | squads | name, description |
 | `okrs` | okr_org_objectives, okr_team_objectives | title |
@@ -1229,14 +1232,25 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.2.0 |
-| **Data da última atualização** | 2026-01-05 |
+| **Versão do TCR** | 1.3.0 |
+| **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 
 ---
 
 ## Changelog
+
+### v1.3.0 (2026-01-06)
+- **Home Dashboard** melhorado:
+  - Cards de aniversários, jet-aniversários e novos Jetimobers agora filtram por BU
+  - Novos Jetimobers mostra últimos 30 dias
+  - Nomes clicáveis com link para perfil do usuário (UserLink component)
+- **Busca Global** corrigida:
+  - Busca de pessoas agora usa `profiles.bu_id` diretamente (sem join)
+  - Adicionado `currentBuId` ao contexto BuContext
+- **profiles.bu_id** passa a ser campo principal para escopo de BU (não mais via join)
+- **Módulo Tickets** adicionado à lista de módulos ativos
 
 ### v1.2.0 (2026-01-05)
 - **Busca Global** implementada via Edge Function `global-search`
