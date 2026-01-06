@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useBu } from '@/contexts/BuContext';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,7 @@ export function CreateOrgKrDialog({
   objectiveId,
 }: CreateOrgKrDialogProps) {
   const queryClient = useQueryClient();
+  const { currentBuId } = useBu();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseline, setBaseline] = useState('0');
@@ -71,6 +73,8 @@ export function CreateOrgKrDialog({
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!currentBuId) throw new Error('Nenhuma BU selecionada');
+      
       const { data, error } = await supabase
         .from('okr_org_key_results')
         .insert({
@@ -82,6 +86,7 @@ export function CreateOrgKrDialog({
           unit,
           direction,
           status: 'not_started',
+          bu_id: currentBuId,
         })
         .select()
         .single();

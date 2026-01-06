@@ -220,6 +220,45 @@ export type Database = {
           },
         ]
       }
+      app_error_logs: {
+        Row: {
+          action: string
+          bu_id: string | null
+          created_at: string
+          error_code: string
+          id: string
+          message: string
+          metadata: Json | null
+          module: string
+          stack: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          bu_id?: string | null
+          created_at?: string
+          error_code: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          module: string
+          stack?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          bu_id?: string | null
+          created_at?: string
+          error_code?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          module?: string
+          stack?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       asset_categories: {
         Row: {
           bu_id: string
@@ -2035,6 +2074,7 @@ export type Database = {
       }
       cycles: {
         Row: {
+          bu_id: string | null
           created_at: string
           end_date: string
           id: string
@@ -2048,6 +2088,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bu_id?: string | null
           created_at?: string
           end_date: string
           id?: string
@@ -2061,6 +2102,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bu_id?: string | null
           created_at?: string
           end_date?: string
           id?: string
@@ -2074,6 +2116,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cycles_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cycles_parent_cycle_id_fkey"
             columns: ["parent_cycle_id"]
@@ -2640,6 +2689,7 @@ export type Database = {
       okr_checkins: {
         Row: {
           blockers: string | null
+          bu_id: string | null
           comments: string | null
           confidence: Database["public"]["Enums"]["okr_confidence"]
           created_at: string
@@ -2653,6 +2703,7 @@ export type Database = {
         }
         Insert: {
           blockers?: string | null
+          bu_id?: string | null
           comments?: string | null
           confidence?: Database["public"]["Enums"]["okr_confidence"]
           created_at?: string
@@ -2666,6 +2717,7 @@ export type Database = {
         }
         Update: {
           blockers?: string | null
+          bu_id?: string | null
           comments?: string | null
           confidence?: Database["public"]["Enums"]["okr_confidence"]
           created_at?: string
@@ -2678,6 +2730,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "okr_checkins_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "okr_checkins_kr_id_fkey"
             columns: ["kr_id"]
@@ -5178,6 +5237,7 @@ export type Database = {
       }
     }
     Functions: {
+      assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
       calculate_kr_progress: {
         Args: {
           p_baseline: number
@@ -5230,6 +5290,7 @@ export type Database = {
         }
         Returns: string
       }
+      current_bu_id: { Args: never; Returns: string }
       generate_okr_insights_for_objective: {
         Args: {
           p_bu_id: string
