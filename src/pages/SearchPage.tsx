@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Search,
   User,
@@ -25,7 +29,6 @@ import {
   Key,
   Gift,
   PackageOpen,
-  Loader2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -250,28 +253,28 @@ export default function SearchPage() {
     <HubLayout>
       <div className="container max-w-4xl py-8">
         {/* Search Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-4">Busca</h1>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar pessoas, times, OKRs, assets..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 pr-10 h-12 text-lg"
-              autoFocus
-            />
-            {query && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-                onClick={() => setQuery("")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+        <PageHeader title="Busca" className="mb-4" />
+        
+        {/* Search Input */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar pessoas, times, OKRs, assets..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-10 pr-10 h-12 text-lg"
+            autoFocus
+          />
+          {query && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={() => setQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Type filters */}
@@ -297,27 +300,34 @@ export default function SearchPage() {
         {/* Results */}
         <div className="space-y-6">
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingState text="Buscando..." />
           )}
 
           {!isLoading && debouncedQuery.length < 2 && (
-            <div className="text-center py-12 text-muted-foreground">
-              Digite ao menos 2 caracteres para buscar
-            </div>
+            <EmptyState
+              icon={Search}
+              title="Digite para buscar"
+              description="Digite ao menos 2 caracteres para buscar"
+              compact
+            />
           )}
 
           {!isLoading && debouncedQuery.length >= 2 && totalResults === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              Nenhum resultado encontrado para "{debouncedQuery}"
-            </div>
+            <EmptyState
+              icon={Search}
+              title="Nenhum resultado"
+              description={`Nenhum resultado encontrado para "${debouncedQuery}"`}
+              compact
+            />
           )}
 
           {error && (
-            <div className="text-center py-12 text-destructive">
-              Erro ao buscar: {(error as Error).message}
-            </div>
+            <ErrorState
+              title="Erro na busca"
+              description={(error as Error).message}
+              onRetry={() => window.location.reload()}
+              compact
+            />
           )}
 
           {!isLoading &&

@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Gift, Package2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { AssetGiftItem, AssetGiftBatch } from "../../types";
 
 interface GiftItemCardProps {
@@ -10,9 +9,15 @@ interface GiftItemCardProps {
   totals: { totalQuantity: number; availableQuantity: number };
 }
 
+// Map stock status to StatusBadge status
+const getStockStatus = (available: number): { status: string; label: string } => {
+  if (available === 0) return { status: 'off_track', label: 'Sem estoque' };
+  if (available < 10) return { status: 'at_risk', label: 'Baixo estoque' };
+  return { status: 'on_track', label: 'Em estoque' };
+};
+
 export function GiftItemCard({ item, batches, totals }: GiftItemCardProps) {
-  const isLowStock = totals.availableQuantity > 0 && totals.availableQuantity < 10;
-  const isOutOfStock = totals.availableQuantity === 0;
+  const stockInfo = getStockStatus(totals.availableQuantity);
 
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -29,19 +34,11 @@ export function GiftItemCard({ item, batches, totals }: GiftItemCardProps) {
               )}
             </div>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "shrink-0",
-              isOutOfStock
-                ? "bg-red-500/10 text-red-700 border-red-200"
-                : isLowStock
-                ? "bg-amber-500/10 text-amber-700 border-amber-200"
-                : "bg-green-500/10 text-green-700 border-green-200"
-            )}
-          >
-            {isOutOfStock ? "Sem estoque" : isLowStock ? "Baixo estoque" : "Em estoque"}
-          </Badge>
+          <StatusBadge 
+            status={stockInfo.status}
+            customLabel={stockInfo.label}
+            showDot={true}
+          />
         </div>
 
         <div className="mt-4 pt-3 border-t flex items-center justify-between">

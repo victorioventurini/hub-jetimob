@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useBu } from "@/contexts/BuContext";
-import { Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface BuRequiredRouteProps {
   children: React.ReactNode;
@@ -18,14 +18,7 @@ export function BuRequiredRoute({ children }: BuRequiredRouteProps) {
   const { currentBu, buSelected, isLoading, userBus } = useBu();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState fullPage text="Carregando..." />;
   }
 
   // If user has multiple BUs and hasn't selected one, redirect to selection

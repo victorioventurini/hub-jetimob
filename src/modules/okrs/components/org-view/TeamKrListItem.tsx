@@ -3,6 +3,7 @@ import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { StatusDot } from '@/components/ui/status-badge';
 import { Users, Clock } from 'lucide-react';
 import { formatValueWithUnit } from '../../constants/krUnits';
 import type { TeamKrLinked } from '../../hooks/useOrgObjectiveView';
@@ -11,11 +12,12 @@ interface TeamKrListItemProps {
   teamKr: TeamKrLinked;
 }
 
-const statusColors = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-500',
-  red: 'bg-red-500',
-  not_started: 'bg-gray-400',
+// Map OKR RAG status to shared StatusDot status
+const ragToStatusMap: Record<string, string> = {
+  green: 'on_track',
+  yellow: 'at_risk',
+  red: 'off_track',
+  not_started: 'not_started',
 };
 
 const typeLabels = {
@@ -42,7 +44,7 @@ export function TeamKrListItem({ teamKr }: TeamKrListItemProps) {
   return (
     <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
       {/* Status indicator */}
-      <div className={`w-2 h-2 rounded-full mt-2 ${statusColors[teamKr.status]}`} />
+      <StatusDot status={ragToStatusMap[teamKr.status] || 'not_started'} size="sm" className="mt-2" />
 
       <div className="flex-1 min-w-0 space-y-2">
         {/* Team and Objective info */}

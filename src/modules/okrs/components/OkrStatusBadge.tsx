@@ -1,6 +1,7 @@
+import { StatusBadge, StatusDot } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { OkrRagStatus, OkrStatus, getStatusLabel } from '../types';
+import { OkrRagStatus, OkrStatus } from '../types';
 
 interface OkrStatusBadgeProps {
   status: OkrStatus | OkrRagStatus;
@@ -8,54 +9,45 @@ interface OkrStatusBadgeProps {
   className?: string;
 }
 
+// Map OKR RAG status to shared StatusBadge status
+const ragToStatusMap: Record<OkrRagStatus, string> = {
+  green: 'on_track',
+  yellow: 'at_risk',
+  red: 'off_track',
+  not_started: 'not_started',
+};
+
+// Map OKR Objective status to shared StatusBadge status
+const objectiveToStatusMap: Record<OkrStatus, string> = {
+  draft: 'draft',
+  active: 'active',
+  completed: 'completed',
+  cancelled: 'cancelled',
+};
+
 export function OkrStatusBadge({ status, type = 'objective', className }: OkrStatusBadgeProps) {
   if (type === 'objective') {
     const objectiveStatus = status as OkrStatus;
-    const variants: Record<OkrStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
-      draft: { variant: 'secondary', label: 'Rascunho' },
-      active: { variant: 'default', label: 'Ativo' },
-      completed: { variant: 'outline', label: 'Concluído' },
-      cancelled: { variant: 'destructive', label: 'Cancelado' },
-    };
-
-    const config = variants[objectiveStatus];
-
+    const mappedStatus = objectiveToStatusMap[objectiveStatus] || 'inactive';
+    
     return (
-      <Badge variant={config.variant} className={className}>
-        {config.label}
-      </Badge>
+      <StatusBadge 
+        status={mappedStatus} 
+        showDot={false}
+        className={className} 
+      />
     );
   }
 
   // KR RAG status
   const ragStatus = status as OkrRagStatus;
-  const ragColors: Record<OkrRagStatus, string> = {
-    green: 'bg-green-500/10 text-green-700 border-green-500/20',
-    yellow: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20',
-    red: 'bg-red-500/10 text-red-700 border-red-500/20',
-    not_started: 'bg-muted text-muted-foreground border-muted',
-  };
-
-  const ragLabels: Record<OkrRagStatus, string> = {
-    green: 'No caminho',
-    yellow: 'Atenção',
-    red: 'Em risco',
-    not_started: 'Não iniciado',
-  };
-
+  const mappedStatus = ragToStatusMap[ragStatus] || 'not_started';
+  
   return (
-    <Badge
-      variant="outline"
-      className={cn(ragColors[ragStatus], className)}
-    >
-      <span className={cn(
-        'w-2 h-2 rounded-full mr-1.5',
-        ragStatus === 'green' && 'bg-green-500',
-        ragStatus === 'yellow' && 'bg-yellow-500',
-        ragStatus === 'red' && 'bg-red-500',
-        ragStatus === 'not_started' && 'bg-muted-foreground'
-      )} />
-      {ragLabels[ragStatus]}
-    </Badge>
+    <StatusBadge 
+      status={mappedStatus}
+      showDot={true}
+      className={className}
+    />
   );
 }

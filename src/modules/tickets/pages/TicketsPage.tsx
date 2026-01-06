@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { TicketsLayout } from "../components/TicketsLayout";
 
@@ -19,12 +20,10 @@ export default function TicketsPage() {
   return (
     <HubLayout>
       <div className="container py-6 max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Tickets</h1>
-          <p className="text-muted-foreground">
-            Gerencie demandas internas e externas da sua organização
-          </p>
-        </div>
+        <PageHeader
+          title="Tickets"
+          description="Gerencie demandas internas e externas da sua organização"
+        />
         <TicketsLayout />
       </div>
     </HubLayout>

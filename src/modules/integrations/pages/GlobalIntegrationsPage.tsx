@@ -1,6 +1,7 @@
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { SkeletonList } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Plug } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationCard } from '../components/IntegrationCard';
@@ -32,13 +33,12 @@ export default function GlobalIntegrationsPage() {
       <HubLayout>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <Skeleton className="h-10 w-48" />
+            <div className="space-y-2">
+              <div className="h-10 w-48 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-64 bg-muted rounded animate-pulse" />
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-56" />
-            ))}
-          </div>
+          <SkeletonList count={6} variant="card" className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
         </div>
       </HubLayout>
     );
@@ -82,15 +82,11 @@ export default function GlobalIntegrationsPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Plug className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhuma integração disponível</h3>
-              <p className="text-muted-foreground text-center">
-                O catálogo de integrações está vazio.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Plug}
+            title="Nenhuma integração disponível"
+            description="O catálogo de integrações está vazio."
+          />
         )}
       </div>
     </HubLayout>
