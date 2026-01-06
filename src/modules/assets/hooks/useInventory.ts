@@ -75,7 +75,7 @@ export function useInventory() {
     },
   });
 
-  // Buscar item específico
+  // Buscar item específico por ID
   const getItem = async (itemId: string): Promise<AssetInventory | null> => {
     const { data, error } = await supabase
       .from("asset_inventory")
@@ -88,6 +88,51 @@ export function useInventory() {
 
     if (error) return null;
     return data as AssetInventory;
+  };
+
+  // Buscar item específico por código interno
+  const getItemByCode = async (internalCode: string): Promise<AssetInventory | null> => {
+    if (!buId) return null;
+    
+    const { data, error } = await supabase
+      .from("asset_inventory")
+      .select(`
+        *,
+        category:asset_categories!category_id(id, name)
+      `)
+      .eq("bu_id", buId)
+      .eq("internal_code", internalCode)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    
+    // Fetch location and user data
+    const locationIds = [data.home_location_id, data.current_location_id].filter(Boolean) as string[];
+    const userIds = [data.current_user_id].filter(Boolean) as string[];
+
+    const [{ data: locations }, { data: profiles }] = await Promise.all([
+      locationIds.length > 0 
+        ? supabase.from("bu_locations").select("id, name").in("id", locationIds)
+        : Promise.resolve({ data: [] }),
+      userIds.length > 0
+        ? supabase.from("profiles").select("user_id, first_name, last_name, display_name, photo_url").in("user_id", userIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const locationMap = new Map((locations || []).map(l => [l.id, l]));
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, {
+      id: p.user_id,
+      full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome',
+      avatar_url: p.photo_url,
+    }]));
+
+    return {
+      ...data,
+      home_location: data.home_location_id ? locationMap.get(data.home_location_id) || null : null,
+      current_location: data.current_location_id ? locationMap.get(data.current_location_id) || null : null,
+      current_user: data.current_user_id ? profileMap.get(data.current_user_id) || null : null,
+    } as AssetInventory;
   };
 
   // Buscar movimentações de um item
@@ -329,6 +374,7 @@ export function useInventory() {
     items,
     isLoading: isLoadingCategories || isLoadingItems,
     getItem,
+    getItemByCode,
     getMovements,
     createCategory: createCategoryMutation.mutate,
     createItem: createItemMutation.mutate,

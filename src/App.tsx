@@ -488,6 +488,19 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
+                    {/* Asset by internal code - short URL for sharing */}
+                    <Route
+                      path="/assets/:id"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="assets">
+                              <InventoryDetailPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* Tickets - Nested Routes */}
                     <Route

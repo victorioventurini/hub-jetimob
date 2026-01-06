@@ -15,6 +15,8 @@ import {
   History,
   Edit,
   QrCode,
+  Link2,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +52,7 @@ const movementTypeIcons: Record<AssetMovementType, typeof Package> = {
 export function InventoryDetailView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getItem, getMovements, items, isLoading } = useInventory();
+  const { getItem, getItemByCode, getMovements, items, isLoading } = useInventory();
   const { canManageInventory, isInventoryAdmin } = useAssetPermissions();
 
   const [item, setItem] = useState<AssetInventory | null>(null);
@@ -59,12 +61,16 @@ export function InventoryDetailView() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [movementType, setMovementType] = useState<AssetMovementType | undefined>();
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Try to get from cache first, then fetch if needed
   useEffect(() => {
     if (!id) return;
 
-    const cachedItem = items.find((i) => i.id === id);
+    // Check if id is a UUID or an internal_code
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    const cachedItem = items.find((i) => isUUID ? i.id === id : i.internal_code === id);
     if (cachedItem) {
       setItem(cachedItem);
       setIsLoadingItem(false);
@@ -72,22 +78,42 @@ export function InventoryDetailView() {
 
     // Always fetch fresh data
     const fetchData = async () => {
-      const [fetchedItem, fetchedMovements] = await Promise.all([
-        getItem(id),
-        getMovements(id),
-      ]);
-      if (fetchedItem) setItem(fetchedItem);
-      setMovements(fetchedMovements);
+      let fetchedItem: AssetInventory | null = null;
+      
+      if (isUUID) {
+        fetchedItem = await getItem(id);
+      } else {
+        fetchedItem = await getItemByCode(id);
+      }
+      
+      if (fetchedItem) {
+        setItem(fetchedItem);
+        const fetchedMovements = await getMovements(fetchedItem.id);
+        setMovements(fetchedMovements);
+      }
       setIsLoadingItem(false);
     };
 
     fetchData();
-  }, [id, items, getItem, getMovements]);
+  }, [id, items, getItem, getItemByCode, getMovements]);
 
   const handleOpenMovement = (type?: AssetMovementType) => {
     setMovementType(type);
     setMovementDialogOpen(true);
   };
+
+  const handleCopyLink = async () => {
+    if (!item) return;
+    const publicUrl = `${window.location.origin}/assets/${item.internal_code}`;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
 
   if (isLoading || isLoadingItem) {
     return (
@@ -138,6 +164,24 @@ export function InventoryDetailView() {
             )}
           </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCopyLink}
+          className="gap-2"
+        >
+          {linkCopied ? (
+            <>
+              <Check className="h-4 w-4" />
+              Copiado!
+            </>
+          ) : (
+            <>
+              <Link2 className="h-4 w-4" />
+              Copiar link
+            </>
+          )}
+        </Button>
         <Badge variant="outline" className={cn("text-sm", statusColors[item.status])}>
           {INVENTORY_STATUS_LABELS[item.status]}
         </Badge>
