@@ -22,7 +22,7 @@ const Index = () => {
   const dashboardData = useHomeDashboard();
   const { greeting, subtext } = useGreeting({ userName: profile?.first_name });
 
-  const isExecutive = dashboardData.role === "ceo" || dashboardData.role === "director";
+  const isExecutive = dashboardData.role === "executive";
 
   return (
     <HubLayout>

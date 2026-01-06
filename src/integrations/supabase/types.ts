@@ -5060,6 +5060,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_permissions: { Args: { p_bu_id: string }; Returns: string[] }
       get_partner_categories: {
         Args: { p_partner_company_id: string }
         Returns: {
@@ -5089,6 +5090,10 @@ export type Database = {
           p_roles: Database["public"]["Enums"]["asset_permission_role"][]
           p_user_id: string
         }
+        Returns: boolean
+      }
+      has_permission_key: {
+        Args: { p_bu_id: string; p_permission_key: string; p_user_id: string }
         Returns: boolean
       }
       has_role: {

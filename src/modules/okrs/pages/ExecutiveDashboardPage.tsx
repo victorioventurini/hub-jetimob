@@ -14,8 +14,8 @@ import { AlignmentMap } from '../components/AlignmentMap';
 import { ProgressSummary } from '../components/ProgressSummary';
 import { YearSelect } from '@/components/selects';
 
-export default function CeoDashboardPage() {
-  usePageTitle("Dashboard CEO - OKRs");
+export default function ExecutiveDashboardPage() {
+  usePageTitle("Dashboard Executivo - OKRs");
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const { currentBu } = useBu();
@@ -57,7 +57,7 @@ export default function CeoDashboardPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard CEO</h1>
+            <h1 className="text-3xl font-bold">Dashboard Executivo</h1>
             <p className="text-muted-foreground">
               Visão executiva dos OKRs organizacionais
             </p>
