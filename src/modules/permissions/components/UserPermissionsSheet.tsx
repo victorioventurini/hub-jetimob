@@ -145,6 +145,17 @@ export function UserPermissionsSheet({
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
+              ) : isAdmin ? (
+                <div className="text-center py-8">
+                  <Shield className="h-12 w-12 mx-auto text-primary mb-3" />
+                  <p className="font-medium">Administrador da BU</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Como administrador, este usuário já possui acesso amplo a todos os recursos da BU.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Grupos de permissão não se aplicam a administradores.
+                  </p>
+                </div>
               ) : availableGroups.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   Nenhum grupo habilitado nesta BU.
@@ -175,14 +186,16 @@ export function UserPermissionsSheet({
               )}
             </ScrollArea>
 
-            <div className="flex items-center justify-end gap-2 pt-4 border-t mt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={setUserGroups.isPending}>
-                {setUserGroups.isPending ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
+            {!isAdmin && (
+              <div className="flex items-center justify-end gap-2 pt-4 border-t mt-4">
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSave} disabled={setUserGroups.isPending}>
+                  {setUserGroups.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="effective" className="flex-1 flex flex-col">
