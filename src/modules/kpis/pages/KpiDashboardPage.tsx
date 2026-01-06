@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Plus, BarChart3 } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
+import { LoadingSpinner } from "@/components/ui/loading-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -66,23 +68,18 @@ export default function KpiDashboardPage() {
     <HubLayout>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <BarChart3 className="h-6 w-6" />
-              KPIs
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Indicadores de saúde do negócio
-            </p>
-          </div>
-          {isAdmin && (
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo KPI
-            </Button>
-          )}
-        </div>
+        <PageHeader
+          title="KPIs"
+          description="Indicadores de saúde do negócio"
+          actions={
+            isAdmin && (
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo KPI
+              </Button>
+            )
+          }
+        />
 
         {/* Status Summary */}
         <KpiStatusSummary
@@ -104,7 +101,7 @@ export default function KpiDashboardPage() {
         {/* KPIs by Category */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+            <LoadingSpinner size="lg" text="Carregando KPIs..." />
           </div>
         ) : filteredKpis.length === 0 ? (
           <Card>

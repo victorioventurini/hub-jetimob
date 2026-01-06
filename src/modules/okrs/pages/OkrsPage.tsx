@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
+import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
@@ -42,26 +43,24 @@ export default function OkrsPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">OKRs</h1>
-            <p className="text-muted-foreground">
-              Objetivos e Resultados-Chave
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <YearSelect
-              value={selectedYear}
-              onValueChange={setSelectedYear}
-              years={years}
-              triggerClassName="w-[100px]"
-            />
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="OKRs"
+          description="Objetivos e Resultados-Chave"
+          actions={
+            <div className="flex items-center gap-3">
+              <YearSelect
+                value={selectedYear}
+                onValueChange={setSelectedYear}
+                years={years}
+                triggerClassName="w-[100px]"
+              />
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo
+              </Button>
+            </div>
+          }
+        />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

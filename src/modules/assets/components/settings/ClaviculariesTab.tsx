@@ -3,6 +3,7 @@ import { Plus, Key, Trash2, MapPin, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -34,9 +35,7 @@ export function ClaviculariesTab() {
     return (
       <Card>
         <CardContent className="py-8">
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
+          <LoadingSpinner size="lg" text="Carregando claviculários..." />
         </CardContent>
       </Card>
     );

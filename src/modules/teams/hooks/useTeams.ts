@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { TeamWithRelations, TeamFormData, TeamTreeNode } from "../types";
 import { toast } from "sonner";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function useTeams(includeInactive = false) {
   const { currentBu } = useBu();
 
   return useQuery({
-    queryKey: ["teams", { includeInactive, buId: currentBu?.id }],
+    queryKey: queryKeys.teams.list(currentBu?.id ?? null),
     queryFn: async () => {
       let query = supabase
         .from("teams")

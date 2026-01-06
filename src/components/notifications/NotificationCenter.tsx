@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Popover,
   PopoverContent,
@@ -70,7 +71,7 @@ export function NotificationCenter() {
 
   // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ['notifications', user?.id],
+    queryKey: queryKeys.notifications.all(user?.id ?? ''),
     queryFn: async () => {
       if (!user?.id) return [];
 

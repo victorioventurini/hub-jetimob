@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, AlertTriangle, Target } from "lucide-react";
+import { ArrowLeft, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { useTeamContributionView } from "../hooks/useTeamContributionView";
 import { TeamContributionHeader } from "../components/team-contribution/TeamContributionHeader";
 import { OrgObjectiveContributionCard } from "../components/team-contribution/OrgObjectiveContributionCard";
@@ -27,20 +29,16 @@ export default function TeamContributionPage() {
   }, [data?.contributions, statusFilter]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <LoadingState text="Carregando contribuições..." className="min-h-[400px]" />;
   }
 
   if (error || !data) {
     return (
       <div className="p-6">
-        <EmptyState
-          icon={AlertTriangle}
+        <ErrorState
           title="Erro ao carregar dados"
           description="Não foi possível carregar a visão de contribuição do time."
+          onBack={() => navigate(-1)}
         />
       </div>
     );

@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
-import { Loader2 } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,14 +18,7 @@ export function ProtectedRoute({ children, skipBuCheck = false }: ProtectedRoute
   const isLoading = authLoading || buLoading;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState fullPage text="Carregando..." />;
   }
 
   if (!user) {

@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
+import { queryKeys } from "@/lib/queryKeys";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -107,7 +109,7 @@ export default function UsersPage() {
   const deleteProfile = useDeleteProfile();
 
   const { data: profiles, isLoading, error: profilesError } = useQuery({
-    queryKey: ["profiles", statusFilter, currentBu?.id],
+    queryKey: queryKeys.profiles.list(currentBu?.id ?? null, { status: statusFilter }),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       
@@ -235,22 +237,18 @@ export default function UsersPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Jetimobers</h1>
-            <p className="text-muted-foreground">
-              Diretório de colaboradores da Jetimob
-            </p>
-          </div>
-          {isAdmin && (
-            <div className="flex items-center gap-3">
+        <PageHeader
+          title="Jetimobers"
+          description="Diretório de colaboradores da Jetimob"
+          actions={
+            isAdmin && (
               <Button variant="accent" className="gap-2" onClick={handleCreate}>
                 <Plus className="h-4 w-4" />
                 Novo Jetimober
               </Button>
-            </div>
-          )}
-        </div>
+            )
+          }
+        />
 
         {!isBuLoading && !currentBu && (
           <Alert>

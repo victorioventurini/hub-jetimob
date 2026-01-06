@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type { AssetCategory } from "../types";
 
 export function useCategories() {
@@ -10,7 +11,7 @@ export function useCategories() {
 
   // Fetch categories
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["asset-categories", buId],
+    queryKey: queryKeys.assets.categories(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
       const { data, error } = await supabase

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type {
   Ticket,
   TicketFilters,
@@ -18,7 +19,7 @@ export function useTickets(filters?: TicketFilters) {
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: ["tickets", buId, filters],
+    queryKey: queryKeys.tickets.list(buId ?? null, filters as Record<string, unknown>),
     queryFn: async () => {
       if (!buId) return [];
 

@@ -19,26 +19,18 @@ import {
   
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useInventory } from "../../hooks/useInventory";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { InventoryFormDialog } from "./InventoryFormDialog";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import type { AssetInventory, AssetMovement, AssetMovementType } from "../../types";
 import { INVENTORY_STATUS_LABELS, MOVEMENT_TYPE_LABELS } from "../../types";
-
-const statusColors: Record<string, string> = {
-  available: "bg-green-500/10 text-green-700 border-green-200",
-  loaned: "bg-blue-500/10 text-blue-700 border-blue-200",
-  maintenance: "bg-amber-500/10 text-amber-700 border-amber-200",
-  written_off: "bg-gray-500/10 text-gray-700 border-gray-200",
-};
 
 const movementTypeIcons: Record<AssetMovementType, typeof Package> = {
   checkout: ArrowRightLeft,
@@ -162,14 +154,15 @@ export function InventoryDetailView() {
           variant="outline"
           size="sm"
           onClick={handleOpenPublicLink}
-          className="gap-2"
+          className="gap-2 shrink-0"
         >
           <Link2 className="h-4 w-4" />
           Link público
         </Button>
-        <Badge variant="outline" className={cn("text-sm", statusColors[item.status])}>
-          {INVENTORY_STATUS_LABELS[item.status]}
-        </Badge>
+        <StatusBadge 
+          status={item.status} 
+          customLabel={INVENTORY_STATUS_LABELS[item.status]}
+        />
       </div>
 
       {/* Quick Actions */}
