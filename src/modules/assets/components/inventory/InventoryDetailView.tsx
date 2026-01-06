@@ -104,7 +104,7 @@ export function InventoryDetailView() {
 
   const handleCopyLink = async () => {
     if (!item) return;
-    const publicUrl = `${window.location.origin}/assets/${item.internal_code}`;
+    const publicUrl = `${window.location.origin}/p/assets/${item.internal_code}`;
     try {
       await navigator.clipboard.writeText(publicUrl);
       setLinkCopied(true);
