@@ -29,6 +29,7 @@ import { useInventory } from "../../hooks/useInventory";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { InventoryFormDialog } from "./InventoryFormDialog";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
+import { KitSection } from "./KitSection";
 import type { AssetInventory, AssetMovement, AssetMovementType } from "../../types";
 import { INVENTORY_STATUS_LABELS, MOVEMENT_TYPE_LABELS } from "../../types";
 
@@ -224,6 +225,7 @@ export function InventoryDetailView() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="kit">Kit</TabsTrigger>
           <TabsTrigger value="movements">Movimentações</TabsTrigger>
         </TabsList>
 
@@ -346,6 +348,18 @@ export function InventoryDetailView() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Kit Tab */}
+        <TabsContent value="kit">
+          <KitSection item={item} onRefresh={() => {
+            // Refetch item data after kit changes
+            const fetchData = async () => {
+              const fetchedItem = await getItem(item.id);
+              if (fetchedItem) setItem(fetchedItem);
+            };
+            fetchData();
+          }} />
         </TabsContent>
 
         {/* Movements Tab */}

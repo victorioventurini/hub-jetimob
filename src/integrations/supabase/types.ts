@@ -511,6 +511,127 @@ export type Database = {
           },
         ]
       }
+      asset_group_items: {
+        Row: {
+          asset_id: string
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          group_id: string
+          id: string
+          is_required: boolean
+          notes: string | null
+          quantity: number
+          role: Database["public"]["Enums"]["asset_group_item_role"]
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          group_id: string
+          id?: string
+          is_required?: boolean
+          notes?: string | null
+          quantity?: number
+          role?: Database["public"]["Enums"]["asset_group_item_role"]
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          group_id?: string
+          id?: string
+          is_required?: boolean
+          notes?: string | null
+          quantity?: number
+          role?: Database["public"]["Enums"]["asset_group_item_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_group_items_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_group_items_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_group_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "asset_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_groups: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          primary_asset_id: string | null
+          status: Database["public"]["Enums"]["asset_group_status"]
+          type: Database["public"]["Enums"]["asset_group_type"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          primary_asset_id?: string | null
+          status?: Database["public"]["Enums"]["asset_group_status"]
+          type?: Database["public"]["Enums"]["asset_group_type"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          primary_asset_id?: string | null
+          status?: Database["public"]["Enums"]["asset_group_status"]
+          type?: Database["public"]["Enums"]["asset_group_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_groups_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_groups_primary_asset_id_fkey"
+            columns: ["primary_asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_hooks: {
         Row: {
           claviculary_id: string
@@ -4503,6 +4624,17 @@ export type Database = {
         }
         Returns: string
       }
+      get_asset_kit: {
+        Args: { p_asset_id: string }
+        Returns: {
+          group_id: string
+          group_name: string
+          group_type: string
+          is_primary: boolean
+          primary_asset_id: string
+          primary_asset_name: string
+        }[]
+      }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
       get_enabled_modules_for_bu: {
         Args: { p_bu_id: string }
@@ -4521,6 +4653,19 @@ export type Database = {
       get_integration_config_for_bu: {
         Args: { p_bu_id: string; p_integration_key: string }
         Returns: Json
+      }
+      get_kit_required_accessories: {
+        Args: { p_asset_id: string }
+        Returns: {
+          asset_id: string
+          asset_name: string
+          current_holder_type: string
+          current_location_id: string
+          current_user_id: string
+          internal_code: string
+          is_available: boolean
+          status: string
+        }[]
       }
       get_partner_categories: {
         Args: { p_partner_company_id: string }
@@ -4609,6 +4754,9 @@ export type Database = {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
       app_role: "super_admin" | "admin" | "team_leader" | "collaborator"
+      asset_group_item_role: "primary" | "accessory"
+      asset_group_status: "active" | "inactive"
+      asset_group_type: "kit" | "bundle"
       asset_holder_type: "location" | "user"
       asset_inventory_status:
         | "available"
@@ -4827,6 +4975,9 @@ export const Constants = {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
       app_role: ["super_admin", "admin", "team_leader", "collaborator"],
+      asset_group_item_role: ["primary", "accessory"],
+      asset_group_status: ["active", "inactive"],
+      asset_group_type: ["kit", "bundle"],
       asset_holder_type: ["location", "user"],
       asset_inventory_status: [
         "available",
