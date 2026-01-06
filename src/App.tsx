@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
+const PublicAssetRedirect = lazy(() => import("./pages/PublicAssetRedirect"));
 
 // Lazy loading para módulos (carregados sob demanda)
 const Index = lazy(() => import("./pages/Index"));
@@ -490,18 +491,10 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
-                    {/* Asset by internal code - short URL for sharing */}
+                    {/* Asset by internal code - public redirect for QR codes */}
                     <Route
-                      path="/assets/:id"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="assets">
-                              <InventoryDetailPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
+                      path="/assets/:code"
+                      element={<PublicAssetRedirect />}
                     />
 
                     {/* Tickets - Nested Routes */}
