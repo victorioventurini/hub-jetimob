@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.4.0  
+**Versão:** 1.5.0  
 **Última atualização:** 2026-01-06  
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1232,7 +1232,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.4.0 |
+| **Versão do TCR** | 1.5.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1240,6 +1240,25 @@ src/
 ---
 
 ## Changelog
+
+### v1.5.0 (2026-01-06)
+- **Migração de componentes para padrão centralizado**:
+  - `OkrStatusBadge`: Agora usa `StatusDot` compartilhado
+  - `TeamKrListItem`: Migrado para `StatusBadge` centralizado
+  - `InventoryDetailView`, `GiftItemCard`: Status badge padronizado
+  - `ProtectedRoute`, `BuRequiredRoute`, `AdminRoute`: Migrados para `LoadingState`
+  - `KpiDashboardPage`, `ClaviculariesTab`, `TeamContributionPage`: Loaders centralizados
+  - `SearchPage`, `GlobalIntegrationsPage`: `EmptyState` e `ErrorState` padronizados
+  - `OkrsPage`, `KpiDashboardPage`, `TicketsPage`, `Users`, `SearchPage`: `PageHeader` centralizado
+- **Query Keys normalizadas**:
+  - `useTeams`, `useTickets`, `useCategories`, `useTicketMessages`, `NotificationCenter`, `Users`: Agora usam `queryKeys.ts`
+- **Componentes compartilhados documentados** (`src/components/ui/`):
+  - `StatusBadge`, `StatusDot` - Status visual com variantes semânticas
+  - `LoadingState`, `LoadingSpinner`, `SkeletonCard`, `SkeletonList`, `SkeletonTable` - Estados de carregamento
+  - `ErrorState` - Estado de erro com retry
+  - `EmptyState` - Estado vazio com CTA
+  - `FilterBar`, `FilterSection` - Barra de filtros reutilizável
+  - `PageHeader` - Cabeçalho de página padronizado
 
 ### v1.4.0 (2026-01-06)
 - **Otimização Geral do Hub** (hardening + refactor):
