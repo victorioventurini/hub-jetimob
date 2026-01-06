@@ -365,6 +365,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
         onOpenChange={setShowAddKrDialog}
         objectiveId={objective.id}
         teamId={objective.team_id}
+        buId={objective.bu_id || undefined}
       />
 
       <EditTeamObjectiveDialog

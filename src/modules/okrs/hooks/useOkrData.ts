@@ -4,9 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 // ========================
 // ORG OBJECTIVES
 // ========================
-export function useOrgObjectives(buId?: string | null, year?: number) {
+export function useOrgObjectives(buId?: string | null, year?: number, includeAllStatuses: boolean = false) {
   return useQuery({
-    queryKey: ['okr-org-objectives', buId, year],
+    queryKey: ['okr-org-objectives', buId, year, includeAllStatuses],
     queryFn: async () => {
       if (!buId) return [];
       
@@ -20,6 +20,11 @@ export function useOrgObjectives(buId?: string | null, year?: number) {
       if (year) {
         query = query.eq('year', year);
       }
+      
+      // By default, exclude cancelled objectives
+      if (!includeAllStatuses) {
+        query = query.neq('status', 'cancelled');
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -29,9 +34,9 @@ export function useOrgObjectives(buId?: string | null, year?: number) {
   });
 }
 
-export function useOrgObjectivesWithKrs(buId?: string | null, year?: number) {
+export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, includeAllStatuses: boolean = false) {
   return useQuery({
-    queryKey: ['okr-org-objectives-with-krs', buId, year],
+    queryKey: ['okr-org-objectives-with-krs', buId, year, includeAllStatuses],
     queryFn: async () => {
       if (!buId) return [];
       
@@ -46,16 +51,22 @@ export function useOrgObjectivesWithKrs(buId?: string | null, year?: number) {
       if (year) {
         objQuery = objQuery.eq('year', year);
       }
+      
+      // By default, exclude cancelled objectives
+      if (!includeAllStatuses) {
+        objQuery = objQuery.neq('status', 'cancelled');
+      }
 
       const { data: objectives, error: objError } = await objQuery;
       if (objError) throw objError;
 
-      // Then get org key results for this BU
+      // Then get org key results for this BU (non-cancelled)
       const { data: allKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
         .select('*')
         .eq('bu_id', buId)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
       
       if (krsError) throw krsError;
 
@@ -88,9 +99,9 @@ export function useOrgObjective(id: string) {
   });
 }
 
-export function useOrgKeyResults(buId?: string | null, objectiveId?: string) {
+export function useOrgKeyResults(buId?: string | null, objectiveId?: string, includeCancelled: boolean = false) {
   return useQuery({
-    queryKey: ['okr-org-key-results', buId, objectiveId],
+    queryKey: ['okr-org-key-results', buId, objectiveId, includeCancelled],
     queryFn: async () => {
       if (!buId) return [];
       
@@ -103,6 +114,11 @@ export function useOrgKeyResults(buId?: string | null, objectiveId?: string) {
       if (objectiveId) {
         query = query.eq('org_objective_id', objectiveId);
       }
+      
+      // By default, exclude cancelled KRs
+      if (!includeCancelled) {
+        query = query.is('cancelled_at', null);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -112,18 +128,24 @@ export function useOrgKeyResults(buId?: string | null, objectiveId?: string) {
   });
 }
 
-export function useAllOrgKeyResults(buId?: string | null) {
+export function useAllOrgKeyResults(buId?: string | null, includeCancelled: boolean = false) {
   return useQuery({
-    queryKey: ['okr-org-key-results-all', buId],
+    queryKey: ['okr-org-key-results-all', buId, includeCancelled],
     queryFn: async () => {
       if (!buId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('okr_org_key_results')
         .select('*')
         .eq('bu_id', buId)
         .is('deleted_at', null);
 
+      // By default, exclude cancelled KRs
+      if (!includeCancelled) {
+        query = query.is('cancelled_at', null);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -134,9 +156,9 @@ export function useAllOrgKeyResults(buId?: string | null) {
 // ========================
 // TEAM OBJECTIVES
 // ========================
-export function useTeamObjectives(buId?: string | null, teamId?: string) {
+export function useTeamObjectives(buId?: string | null, teamId?: string, includeAllStatuses: boolean = false) {
   return useQuery({
-    queryKey: ['okr-team-objectives', buId, teamId],
+    queryKey: ['okr-team-objectives', buId, teamId, includeAllStatuses],
     queryFn: async () => {
       if (!buId) return [];
       
@@ -150,6 +172,11 @@ export function useTeamObjectives(buId?: string | null, teamId?: string) {
       if (teamId) {
         query = query.eq('team_id', teamId);
       }
+      
+      // By default, exclude cancelled objectives from lists
+      if (!includeAllStatuses) {
+        query = query.neq('status', 'cancelled');
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -159,9 +186,9 @@ export function useTeamObjectives(buId?: string | null, teamId?: string) {
   });
 }
 
-export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string) {
+export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, includeAllStatuses: boolean = false) {
   return useQuery({
-    queryKey: ['okr-team-objectives-with-krs', buId, teamId],
+    queryKey: ['okr-team-objectives-with-krs', buId, teamId, includeAllStatuses],
     queryFn: async () => {
       if (!buId) return [];
       
@@ -176,16 +203,22 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string) 
       if (teamId) {
         objQuery = objQuery.eq('team_id', teamId);
       }
+      
+      // By default, exclude cancelled objectives
+      if (!includeAllStatuses) {
+        objQuery = objQuery.neq('status', 'cancelled');
+      }
 
       const { data: objectives, error: objError } = await objQuery;
       if (objError) throw objError;
 
-      // Then get team key results for this BU
+      // Then get team key results for this BU (non-cancelled)
       let krsQuery = supabase
         .from('okr_team_key_results')
         .select('*')
         .eq('bu_id', buId)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
       
       if (teamId) {
         krsQuery = krsQuery.eq('team_id', teamId);
@@ -206,9 +239,9 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string) 
   });
 }
 
-export function useTeamKeyResults(buId?: string | null, teamId?: string) {
+export function useTeamKeyResults(buId?: string | null, teamId?: string, includeCancelled: boolean = false) {
   return useQuery({
-    queryKey: ['okr-team-key-results', buId, teamId],
+    queryKey: ['okr-team-key-results', buId, teamId, includeCancelled],
     queryFn: async () => {
       if (!buId) return [];
       
@@ -221,6 +254,11 @@ export function useTeamKeyResults(buId?: string | null, teamId?: string) {
 
       if (teamId) {
         query = query.eq('team_id', teamId);
+      }
+      
+      // By default, exclude cancelled KRs
+      if (!includeCancelled) {
+        query = query.is('cancelled_at', null);
       }
 
       const { data, error } = await query;
@@ -242,6 +280,7 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
         .select('*')
         .eq('bu_id', buId)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`)
         .order('created_at', { ascending: false });
 

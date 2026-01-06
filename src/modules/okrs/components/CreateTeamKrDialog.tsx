@@ -51,6 +51,7 @@ interface CreateTeamKrDialogProps {
   onOpenChange: (open: boolean) => void;
   objectiveId: string;
   teamId: string;
+  buId?: string;
 }
 
 export function CreateTeamKrDialog({
@@ -58,6 +59,7 @@ export function CreateTeamKrDialog({
   onOpenChange,
   objectiveId,
   teamId,
+  buId,
 }: CreateTeamKrDialogProps) {
   const queryClient = useQueryClient();
   
@@ -72,13 +74,13 @@ export function CreateTeamKrDialog({
   const [linkedOrgKrId, setLinkedOrgKrId] = useState<string>(NONE_LINKED_ORG_KR);
   const [placeholder] = useState(() => getRandomPlaceholder(false));
 
-  // Fetch org KRs for linking
-  const { data: orgObjective } = useQuery({
+  // Fetch org KRs for linking and get bu_id
+  const { data: teamObjective } = useQuery({
     queryKey: ['okr-team-objective', objectiveId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('okr_team_objectives')
-        .select('org_objective_id')
+        .select('org_objective_id, bu_id')
         .eq('id', objectiveId)
         .single();
       if (error) throw error;
@@ -87,19 +89,22 @@ export function CreateTeamKrDialog({
     enabled: open,
   });
 
+  // Use passed buId or fetch from objective
+  const effectiveBuId = buId || teamObjective?.bu_id;
+
   const { data: orgKrs } = useQuery({
-    queryKey: ['okr-org-key-results', orgObjective?.org_objective_id],
+    queryKey: ['okr-org-key-results', teamObjective?.org_objective_id],
     queryFn: async () => {
-      if (!orgObjective?.org_objective_id) return [];
+      if (!teamObjective?.org_objective_id) return [];
       const { data, error } = await supabase
         .from('okr_org_key_results')
         .select('id, title')
-        .eq('org_objective_id', orgObjective.org_objective_id)
+        .eq('org_objective_id', teamObjective.org_objective_id)
         .is('deleted_at', null);
       if (error) throw error;
       return data || [];
     },
-    enabled: !!orgObjective?.org_objective_id && open,
+    enabled: !!teamObjective?.org_objective_id && open,
   });
 
   // Real-time validation
@@ -123,6 +128,7 @@ export function CreateTeamKrDialog({
         .insert({
           team_objective_id: objectiveId,
           team_id: teamId,
+          bu_id: effectiveBuId,
           title,
           type,
           baseline: parseFloat(baseline) || 0,

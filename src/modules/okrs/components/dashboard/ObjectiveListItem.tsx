@@ -54,6 +54,7 @@ interface Objective {
   year?: number;
   status: string;
   team_id?: string;
+  bu_id?: string;
   org_objective_id?: string;
   is_shared?: boolean;
   responsibility_model?: string | null;
@@ -308,6 +309,7 @@ export function ObjectiveListItem({
           onOpenChange={setShowAddKrDialog}
           objectiveId={objective.id}
           teamId={objective.team_id || ''}
+          buId={objective.bu_id}
         />
       )}
 
