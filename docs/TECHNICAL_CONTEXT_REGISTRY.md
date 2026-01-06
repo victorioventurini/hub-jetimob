@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.2.0  
+**Versão:** 2.3.0  
 **Última atualização:** 2026-01-06
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1437,6 +1437,21 @@ src/
 ---
 
 ## Changelog
+
+### v2.3.0 (2026-01-06) — Full Hierarchy Enforcement
+- **Hierarquia de Times (Enforcement Total no Frontend)**:
+  - Componentes `TeamCard`, `TeamsPage`, `TeamDetailPage`, `SquadSection` usam `canManageTeam()`
+  - Botões de edição/deleção só aparecem se `canManageTeam(teamId)` retornar true
+  - Regra consistente entre backend (RLS) e frontend (UI guards)
+- **Links Compartilháveis na Busca Global**:
+  - Edge Function `global-search` atualizada para retornar `/go/:entity/:id` em todas as URLs
+  - Entidades: `user`, `team`, `ticket`, `okr_org_objective`, `okr_team_objective`, `okr_org_kr`, `okr_team_kr`, `kpi`, `asset`, `keyring`, `gift`
+  - Nenhum link direto para rotas operacionais em resultados de busca
+- **Remoção total de referências a "CEO"**:
+  - Comentários e referências a "CEO" removidos do frontend
+  - Apenas `super_admin` e `admin` são roles válidos no sistema
+- **Query Keys Centralizadas**:
+  - Hook `useSharedData.ts` migrado para usar `queryKeys` de `src/lib/queryKeys.ts`
 
 ### v2.2.0 (2026-01-06) — Permission & Team Hierarchy Hardening
 - **Remoção definitiva do role "ceo"**:
