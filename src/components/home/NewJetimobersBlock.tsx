@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserPlus } from "lucide-react";
 import { useNewJetimobers } from "@/hooks/useHomeData";
 import { EmptyState } from "@/components/ui/empty-state";
+import { UserLink } from "@/components/links/UserLink";
 
 export function NewJetimobersBlock() {
   const { data: newJetimobers, isLoading } = useNewJetimobers(5);
@@ -67,9 +68,11 @@ export function NewJetimobersBlock() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {person.name}
-                  </p>
+                  <UserLink
+                    userId={person.id}
+                    displayName={person.name}
+                    className="text-sm font-medium truncate block"
+                  />
                   <p className="text-xs text-muted-foreground truncate">
                     {person.jobTitle} • {person.team}
                   </p>
