@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb } from 'lucide-react';
+import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
@@ -25,6 +25,7 @@ import { EditOrgObjectiveDialog } from '../EditOrgObjectiveDialog';
 import { EditTeamObjectiveDialog } from '../EditTeamObjectiveDialog';
 import { CheckinDialog } from '../CheckinDialog';
 import { SharedOkrBadge } from '../SharedOkrBadge';
+import { OkrScopeBadge, OkrOwnerInfo, RagSummary, OkrKrTypeBadge } from '../ui';
 
 interface KeyResult {
   id: string;
@@ -167,15 +168,29 @@ export function ObjectiveListItem({
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        {type === 'org' ? (
-                          <Badge variant="outline" className="text-xs">
-                            <Target className="w-3 h-3 mr-1" />
-                            Organizacional
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            <Users className="w-3 h-3 mr-1" />
-                            {teamName || 'Time'}
+                        <OkrScopeBadge 
+                          scope={type === 'org' ? 'org' : 'team'} 
+                          teamName={teamName}
+                        />
+                        <Badge 
+                          variant="outline" 
+                          className={cn("text-xs font-medium", statusConfig.color, statusConfig.borderColor)}
+                        >
+                          {statusConfig.label}
+                        </Badge>
+                        {/* Health indicator based on KR status */}
+                        {krCount > 0 && (
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              'text-xs',
+                              status === 'on_track' && 'bg-green-500/10 text-green-600 border-green-200',
+                              status === 'at_risk' && 'bg-yellow-500/10 text-yellow-600 border-yellow-200',
+                              status === 'off_track' && 'bg-red-500/10 text-red-600 border-red-200',
+                            )}
+                          >
+                            <Heart className="w-3 h-3 mr-1" />
+                            {Math.round(progress)}%
                           </Badge>
                         )}
                         {type === 'team' && objective.is_shared && (
@@ -194,10 +209,15 @@ export function ObjectiveListItem({
                       <h3 className="font-medium leading-snug line-clamp-2">
                         {objective.title}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        {objective.year && <span>{objective.year}</span>}
-                        {objective.year && <span>•</span>}
-                        <span>{krCount} KRs</span>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        {objective.year && (
+                          <span className="text-xs text-muted-foreground">{objective.year}</span>
+                        )}
+                        <RagSummary
+                          green={keyResults.filter(kr => kr.status === 'green').length}
+                          yellow={keyResults.filter(kr => kr.status === 'yellow').length}
+                          red={keyResults.filter(kr => kr.status === 'red').length}
+                        />
                       </div>
                     </div>
                     
@@ -233,14 +253,7 @@ export function ObjectiveListItem({
                         </DropdownMenuContent>
                       </DropdownMenu>
                       
-                      {objective.owner && (
-                        <Avatar className="w-6 h-6">
-                          <AvatarImage src={objective.owner.photo_url || undefined} />
-                          <AvatarFallback className="text-[10px]">
-                            {objective.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
+                      <OkrOwnerInfo owner={objective.owner} size="md" />
                     </div>
                   </div>
                   
