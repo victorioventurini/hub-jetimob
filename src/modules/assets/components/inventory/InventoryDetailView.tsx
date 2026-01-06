@@ -16,7 +16,7 @@ import {
   Edit,
   QrCode,
   Link2,
-  Check,
+  
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +61,7 @@ export function InventoryDetailView() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [movementType, setMovementType] = useState<AssetMovementType | undefined>();
-  const [linkCopied, setLinkCopied] = useState(false);
+  
 
   // Try to get from cache first, then fetch if needed
   useEffect(() => {
@@ -102,16 +102,10 @@ export function InventoryDetailView() {
     setMovementDialogOpen(true);
   };
 
-  const handleCopyLink = async () => {
+  const handleOpenPublicLink = () => {
     if (!item) return;
     const publicUrl = `${window.location.origin}/p/assets/${item.internal_code}`;
-    try {
-      await navigator.clipboard.writeText(publicUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+    window.open(publicUrl, '_blank');
   };
 
 
@@ -167,20 +161,11 @@ export function InventoryDetailView() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleCopyLink}
+          onClick={handleOpenPublicLink}
           className="gap-2"
         >
-          {linkCopied ? (
-            <>
-              <Check className="h-4 w-4" />
-              Copiado!
-            </>
-          ) : (
-            <>
-              <Link2 className="h-4 w-4" />
-              Copiar link
-            </>
-          )}
+          <Link2 className="h-4 w-4" />
+          Link público
         </Button>
         <Badge variant="outline" className={cn("text-sm", statusColors[item.status])}>
           {INVENTORY_STATUS_LABELS[item.status]}
