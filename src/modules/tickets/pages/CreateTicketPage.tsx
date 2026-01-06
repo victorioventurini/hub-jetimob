@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,17 +12,21 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, CalendarIcon, Loader2, Paperclip, X, FileIcon } from "lucide-react";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, CalendarIcon, Loader2, Paperclip, X, FileIcon, AlertCircle, CheckCircle2, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useCreateTicket } from "../hooks/useTickets";
 import { useTicketCategories, useTicketSubcategories } from "../hooks/useTicketCategories";
 import { usePartnerCompanies } from "../hooks/usePartners";
+import { usePartnerCategories, usePartnerSubcategories, useHasPartnerServices } from "../hooks/usePartnerServices";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import type { TicketType, TicketVisibility } from "../types";
 
 const createTicketSchema = z.object({
@@ -51,7 +55,7 @@ export default function CreateTicketPage() {
   const navigate = useNavigate();
   const createTicket = useCreateTicket();
   const { currentBu } = useBu();
-  const { data: categories = [] } = useTicketCategories();
+  const { data: allCategories = [] } = useTicketCategories();
   const { data: partners = [] } = usePartnerCompanies();
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -68,15 +72,87 @@ export default function CreateTicketPage() {
   });
 
   const selectedType = form.watch("type");
+  const selectedPartnerId = form.watch("partner_company_id");
   const selectedCategoryId = form.watch("category_id");
-  const { data: subcategories = [] } = useTicketSubcategories(selectedCategoryId || "");
 
-  // Filter categories by scope
-  const filteredCategories = categories.filter((cat) => {
-    if (selectedType === "internal") return cat.scope === "internal" || cat.scope === "both";
-    if (selectedType === "external") return cat.scope === "external" || cat.scope === "both";
-    return true;
-  });
+  // Hooks para serviços do parceiro
+  const { hasServices: partnerHasServices, isLoading: loadingPartnerServices } = useHasPartnerServices(
+    selectedType === "external" ? selectedPartnerId : undefined
+  );
+  const { data: partnerCategories = [] } = usePartnerCategories(
+    selectedType === "external" ? selectedPartnerId : undefined
+  );
+  const { data: partnerSubcategories = [] } = usePartnerSubcategories(
+    selectedType === "external" ? selectedPartnerId : undefined,
+    selectedCategoryId
+  );
+
+  // Subcategorias para tickets internos
+  const { data: allSubcategories = [] } = useTicketSubcategories(selectedCategoryId || "");
+
+  // Verificar se a categoria selecionada permite subcategoria vazia (generalista)
+  const selectedPartnerCategory = useMemo(() => {
+    return partnerCategories.find(c => c.category_id === selectedCategoryId);
+  }, [partnerCategories, selectedCategoryId]);
+
+  const isGeneralistCategory = selectedPartnerCategory?.is_generalist ?? false;
+
+  // Resetar categoria e subcategoria quando mudar o tipo ou parceiro
+  useEffect(() => {
+    form.setValue("category_id", undefined);
+    form.setValue("subcategory_id", undefined);
+  }, [selectedType, selectedPartnerId, form]);
+
+  // Resetar subcategoria quando mudar a categoria
+  useEffect(() => {
+    form.setValue("subcategory_id", undefined);
+  }, [selectedCategoryId, form]);
+
+  // Filtrar categorias baseado no tipo e parceiro
+  const filteredCategories = useMemo(() => {
+    if (selectedType === "internal") {
+      return allCategories.filter(cat => cat.scope === "internal" || cat.scope === "both");
+    }
+    
+    if (selectedType === "external" && selectedPartnerId && partnerCategories.length > 0) {
+      // Retornar apenas categorias que o parceiro atende
+      const partnerCategoryIds = new Set(partnerCategories.map(pc => pc.category_id));
+      return allCategories.filter(cat => 
+        (cat.scope === "external" || cat.scope === "both") && 
+        partnerCategoryIds.has(cat.id)
+      );
+    }
+    
+    // Se não tem parceiro selecionado, retorna vazio para tickets externos
+    if (selectedType === "external") {
+      return [];
+    }
+    
+    return allCategories;
+  }, [selectedType, selectedPartnerId, partnerCategories, allCategories]);
+
+  // Determinar subcategorias disponíveis
+  const availableSubcategories = useMemo(() => {
+    if (selectedType === "internal") {
+      return allSubcategories;
+    }
+    
+    if (selectedType === "external" && selectedPartnerId && selectedCategoryId) {
+      // Se generalista, mostrar todas as subcategorias da categoria
+      if (isGeneralistCategory) {
+        const category = allCategories.find(c => c.id === selectedCategoryId);
+        return category?.subcategories || [];
+      }
+      
+      // Caso contrário, apenas as subcategorias mapeadas
+      return partnerSubcategories.map(ps => ({
+        id: ps.subcategory_id,
+        name: ps.subcategory_name,
+      }));
+    }
+    
+    return [];
+  }, [selectedType, selectedPartnerId, selectedCategoryId, isGeneralistCategory, allSubcategories, partnerSubcategories, allCategories]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -268,17 +344,85 @@ export default function CreateTicketPage() {
                 )}
               />
 
+              {/* Partner (only for external) - MUST BE BEFORE categories */}
+              {selectedType === "external" && (
+                <FormField
+                  control={form.control}
+                  name="partner_company_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Empresa Parceira *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o parceiro..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {partners.filter(p => p.status === "active").map((partner) => (
+                            <SelectItem key={partner.id} value={partner.id}>
+                              {partner.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Alerta se parceiro não tem serviços configurados */}
+              {selectedType === "external" && selectedPartnerId && !loadingPartnerServices && !partnerHasServices && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>Este parceiro ainda não possui serviços configurados.</span>
+                    <Link to="/tickets/settings" className="underline flex items-center gap-1">
+                      <Settings className="h-3 w-3" />
+                      Configurar
+                    </Link>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Exibir serviços atendidos */}
+              {selectedType === "external" && selectedPartnerId && partnerHasServices && partnerCategories.length > 0 && (
+                <div className="flex flex-wrap gap-1 items-center text-sm text-muted-foreground">
+                  <span>Serviços atendidos:</span>
+                  {partnerCategories.slice(0, 5).map((pc) => (
+                    <Badge key={pc.category_id} variant="secondary" className="text-xs">
+                      {pc.category_name}
+                    </Badge>
+                  ))}
+                  {partnerCategories.length > 5 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{partnerCategories.length - 5}
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Category and Subcategory - show based on type */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="category_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categoria</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel>Categoria {selectedType === "external" ? "*" : ""}</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={selectedType === "external" && (!selectedPartnerId || !partnerHasServices)}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
+                            <SelectValue placeholder={
+                              selectedType === "external" && !selectedPartnerId 
+                                ? "Selecione o parceiro primeiro" 
+                                : "Selecione..."
+                            } />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -303,54 +447,36 @@ export default function CreateTicketPage() {
                       <Select 
                         onValueChange={field.onChange} 
                         value={field.value}
-                        disabled={!selectedCategoryId || subcategories.length === 0}
+                        disabled={!selectedCategoryId || availableSubcategories.length === 0}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
+                            <SelectValue placeholder={
+                              availableSubcategories.length === 0 && selectedCategoryId && selectedType === "external" && isGeneralistCategory
+                                ? "Opcional (generalista)"
+                                : "Selecione..."
+                            } />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {subcategories.map((sub) => (
+                          {availableSubcategories.map((sub) => (
                             <SelectItem key={sub.id} value={sub.id}>
                               {sub.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      {selectedType === "external" && isGeneralistCategory && (
+                        <FormDescription className="flex items-center gap-1 text-green-600">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Este parceiro atende a categoria de forma geral
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-              {/* Partner (only for external) */}
-              {selectedType === "external" && (
-                <FormField
-                  control={form.control}
-                  name="partner_company_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Empresa Parceira *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o parceiro..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {partners.map((partner) => (
-                            <SelectItem key={partner.id} value={partner.id}>
-                              {partner.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
             </CardContent>
           </Card>
 
