@@ -12,11 +12,13 @@ import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
 import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
 
 export default function GiftsPage() {
-  const { items, batches, getItemTotals, isLoading } = useGifts();
-  const { canManageGifts, isGiftsAdmin } = useAssetPermissions();
+  const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts();
+  const { canManageGifts, isGiftsAdmin, isLoading: isLoadingPermissions } = useAssetPermissions();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
+
+  const isLoading = isLoadingGifts || isLoadingPermissions;
 
   const filteredItems = items.filter(
     (item) =>
