@@ -74,9 +74,9 @@ const globalBuItems = [
   { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
 ];
 
-// Itens de admin da BU (apenas para bu_admin ou superior)
-const buAdminItems = [
-  { name: "Permissões", href: "/settings/permissions", icon: Shield },
+// Itens de admin da BU (apenas para bu_admin ou superior) - href será montado dinamicamente
+const buAdminItemsConfig = [
+  { name: "Permissões", path: "settings/permissions", icon: Shield },
 ];
 
 // Links externos
@@ -264,8 +264,8 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                       <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                     ))}
                   {/* Itens de admin da BU (apenas bu_admin ou superior) */}
-                  {isBuAdmin && buAdminItems.map((item) => (
-                    <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                  {isBuAdmin && currentBu && buAdminItemsConfig.map((item) => (
+                    <NavItem key={item.path} name={item.name} href={`/bu/${currentBu.id}/${item.path}`} icon={item.icon} />
                   ))}
                 </div>
               )}
