@@ -174,11 +174,14 @@ serve(async (req) => {
         last_moved_at: asset.last_moved_at,
       },
       bu: {
+        id: asset.bu_id, // Include BU ID for internal link generation
         name: asset.bu.name,
         legal_entity: asset.bu.legal_entity,
         cnpj: formatCnpj(asset.bu.cnpj),
       },
       related_items: relatedItems,
+      // Internal view path for authenticated users (BU-scoped)
+      internal_view_path: `/bu/${asset.bu_id}/assets/inventory/${asset.id}`,
     };
 
     return new Response(JSON.stringify(publicView), {

@@ -32,6 +32,7 @@ interface PublicAssetData {
     last_moved_at: string | null;
   };
   bu: {
+    id: string;
     name: string;
     legal_entity: string | null;
     cnpj: string | null;
@@ -43,6 +44,8 @@ interface PublicAssetData {
     photo: string | null;
     role: string;
   }>;
+  /** BU-scoped internal path for authenticated view */
+  internal_view_path: string;
 }
 
 const statusLabels: Record<string, string> = {
@@ -103,9 +106,10 @@ export default function PublicAsset() {
   }, [code]);
 
   const handleViewInternal = () => {
-    if (data?.asset.id) {
-      // Navigate to internal detail page - will redirect to login if not authenticated
-      navigate(`/assets/inventory/${data.asset.id}`);
+    if (data?.internal_view_path) {
+      // Navigate to BU-scoped internal detail page
+      // This ensures the correct BU is selected even if user's default BU is different
+      navigate(data.internal_view_path);
     }
   };
 
