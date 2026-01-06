@@ -1,0 +1,214 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, XCircle, ArrowRight, Info } from "lucide-react";
+
+export function RulesInfoTab() {
+  const allowedLinks = [
+    {
+      from: "Objetivo de Time",
+      to: "Objetivo Organizacional",
+      description: "Mostra alinhamento estratégico do time com a organização",
+    },
+    {
+      from: "KR de Time (contribution)",
+      to: "KR Organizacional",
+      description: "Contribui diretamente para a métrica organizacional",
+    },
+  ];
+
+  const forbiddenLinks = [
+    {
+      from: "Objetivo Org",
+      to: "Objetivo Org",
+      reason: "Evita ciclos entre objetivos do mesmo nível",
+    },
+    {
+      from: "KR Org",
+      to: "Objetivo Org",
+      reason: "KRs não vinculam diretamente a objetivos",
+    },
+    {
+      from: "KR Time (enabler)",
+      to: "KR Org",
+      reason: "Enablers são internos ao time",
+    },
+    {
+      from: "KR Time (foundational)",
+      to: "KR Org",
+      reason: "Fundacionais são pré-requisitos internos",
+    },
+    {
+      from: "KR",
+      to: "KR (mesmo nível)",
+      reason: "Evita ciclos e dependências circulares",
+    },
+  ];
+
+  const krTypes = [
+    {
+      type: "contribution",
+      label: "Contribuição",
+      color: "bg-green-500/10 text-green-600 border-green-200",
+      description: "Contribui diretamente para um KR organizacional",
+      canLinkToOrg: true,
+    },
+    {
+      type: "enabler",
+      label: "Habilitador",
+      color: "bg-blue-500/10 text-blue-600 border-blue-200",
+      description: "Habilita outros KRs do time a serem alcançados",
+      canLinkToOrg: false,
+    },
+    {
+      type: "foundational",
+      label: "Fundacional",
+      color: "bg-purple-500/10 text-purple-600 border-purple-200",
+      description: "Representa um pré-requisito fundamental do time",
+      canLinkToOrg: false,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-lg font-semibold">Regras de Vínculo</h2>
+        <p className="text-sm text-muted-foreground">
+          Entenda como objetivos e KRs podem se conectar na hierarquia
+        </p>
+      </div>
+
+      {/* Allowed Links */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base text-green-600">
+            <CheckCircle2 className="h-5 w-5" />
+            Vínculos Permitidos
+          </CardTitle>
+          <CardDescription>
+            Conexões válidas na estrutura de OKRs
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {allowedLinks.map((link, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 rounded-lg border bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
+              >
+                <Badge variant="outline" className="shrink-0">
+                  {link.from}
+                </Badge>
+                <ArrowRight className="h-4 w-4 text-green-600 shrink-0" />
+                <Badge variant="outline" className="shrink-0">
+                  {link.to}
+                </Badge>
+                <span className="text-sm text-muted-foreground ml-2">
+                  {link.description}
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Forbidden Links */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base text-destructive">
+            <XCircle className="h-5 w-5" />
+            Vínculos Proibidos
+          </CardTitle>
+          <CardDescription>
+            Conexões que não são permitidas para manter a hierarquia
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {forbiddenLinks.map((link, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 rounded-lg border bg-destructive/5 border-destructive/20"
+              >
+                <Badge variant="outline" className="shrink-0 text-muted-foreground">
+                  {link.from}
+                </Badge>
+                <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                <Badge variant="outline" className="shrink-0 text-muted-foreground">
+                  {link.to}
+                </Badge>
+                <span className="text-sm text-muted-foreground ml-2">
+                  {link.reason}
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* KR Types */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Info className="h-5 w-5" />
+            Tipos de Key Results
+          </CardTitle>
+          <CardDescription>
+            Cada tipo tem regras específicas de vínculo
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {krTypes.map((kr) => (
+              <div
+                key={kr.type}
+                className="flex items-start gap-4 p-4 rounded-lg border"
+              >
+                <Badge className={kr.color}>{kr.label}</Badge>
+                <div className="flex-1">
+                  <p className="text-sm">{kr.description}</p>
+                  <div className="mt-2 flex items-center gap-2 text-xs">
+                    {kr.canLinkToOrg ? (
+                      <>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        <span className="text-green-600">
+                          Pode vincular a KR organizacional
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3.5 w-3.5 text-destructive" />
+                        <span className="text-destructive">
+                          Não pode vincular a KR organizacional
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Validation Note */}
+      <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium text-amber-900 dark:text-amber-100">
+                Validação em múltiplas camadas
+              </p>
+              <p className="text-amber-700 dark:text-amber-300 mt-1">
+                As regras de vínculo são validadas no frontend (para feedback imediato),
+                no backend (edge function) e no banco de dados (triggers). Isso garante
+                consistência mesmo em caso de uso direto da API.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
