@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,7 +46,7 @@ export function useKeys() {
   });
 
   // Buscar ganchos de um claviculário
-  const getHooks = async (clavicularyId: string): Promise<AssetHook[]> => {
+  const getHooks = useCallback(async (clavicularyId: string): Promise<AssetHook[]> => {
     const { data, error } = await supabase
       .from("asset_hooks")
       .select("*")
@@ -54,7 +55,7 @@ export function useKeys() {
 
     if (error) return [];
     return data as AssetHook[];
-  };
+  }, []);
 
   // Buscar chaveiros
   const { data: keyrings = [], isLoading: isLoadingKeyrings, refetch: refetchKeyrings } = useQuery({
