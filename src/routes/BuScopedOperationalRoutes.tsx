@@ -46,6 +46,9 @@ const CreateTicketPage = lazy(() => import('@/modules/tickets/pages/CreateTicket
 const TicketDetailPage = lazy(() => import('@/modules/tickets/pages/TicketDetailPage'));
 const TicketsSettingsPage = lazy(() => import('@/modules/tickets/pages/TicketsSettingsPage'));
 
+// Permissions (BU-scoped)
+const BuPermissionsPage = lazy(() => import('@/modules/permissions/pages/BuPermissionsPage'));
+
 /**
  * Returns the JSX for BU-scoped operational routes.
  * These should be rendered inside a BuScopedRoute wrapper.
@@ -187,6 +190,9 @@ export function getBuScopedRoutes() {
         <Route path="settings" element={<TicketsSettingsPage />} />
         <Route path=":id" element={<TicketDetailPage />} />
       </Route>
+      
+      {/* Settings - Permissions */}
+      <Route path="settings/permissions" element={<BuPermissionsPage />} />
     </>
   );
 }
