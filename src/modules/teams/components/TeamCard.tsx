@@ -6,6 +6,7 @@ import { Users, ChevronRight, Building2, Edit, Layers3, ArrowUpRight } from "luc
 import { TeamWithRelations } from "../types";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
 
 interface TeamCardProps {
@@ -17,6 +18,10 @@ interface TeamCardProps {
 export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { userRole } = useBu();
+  
+  // BU admin or global admin can manage teams
+  const canManageTeams = userRole === "admin" || userRole === "super_admin" || isAdmin;
 
   const isSubteam = variant === "subteam";
 
@@ -43,7 +48,7 @@ export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
       onClick={handleClick}
     >
       {/* Edit Button */}
-      {isAdmin && onEdit && (
+      {canManageTeams && onEdit && (
         <Button
           variant="ghost"
           size="icon"

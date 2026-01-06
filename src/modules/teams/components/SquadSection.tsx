@@ -9,6 +9,7 @@ import { CreateSquadDialog } from "./CreateSquadDialog";
 import { SquadDetailDialog } from "./SquadDetailDialog";
 import { SquadWithRelations } from "../types/squad";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 
 interface SquadSectionProps {
   teamId: string;
@@ -18,6 +19,10 @@ interface SquadSectionProps {
 export function SquadSection({ teamId, teamName }: SquadSectionProps) {
   const { data: squads, isLoading } = useSquads(teamId);
   const { isAdmin } = useAuth();
+  const { userRole } = useBu();
+  
+  // BU admin or global admin can manage squads
+  const canManageSquads = userRole === "admin" || userRole === "super_admin" || isAdmin;
   
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedSquad, setSelectedSquad] = useState<SquadWithRelations | null>(null);
@@ -44,7 +49,7 @@ export function SquadSection({ teamId, teamName }: SquadSectionProps) {
             <Layers className="h-5 w-5 text-accent" />
             Squads Relacionados ({squads?.length || 0})
           </CardTitle>
-          {isAdmin && (
+          {canManageSquads && (
             <Button 
               size="sm" 
               variant="outline" 
@@ -73,7 +78,7 @@ export function SquadSection({ teamId, teamName }: SquadSectionProps) {
               <p className="text-muted-foreground mb-2">
                 Nenhum squad vinculado a este time
               </p>
-              {isAdmin && (
+              {canManageSquads && (
                 <Button 
                   variant="outline" 
                   size="sm"
