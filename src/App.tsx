@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
 const PublicAssetRedirect = lazy(() => import("./pages/PublicAssetRedirect"));
 const LegacyAssetRedirect = lazy(() => import("./pages/LegacyAssetRedirect"));
+const ResolveContextPage = lazy(() => import("./pages/ResolveContextPage"));
 
 // Lazy loading para módulos (carregados sob demanda)
 const Index = lazy(() => import("./pages/Index"));
@@ -356,6 +357,16 @@ const App = () => (
                     <Route
                       path="/assets/inventory/:id"
                       element={<LegacyAssetRedirect />}
+                    />
+                    
+                    {/* Context Resolver - resolves BU from resource and redirects */}
+                    <Route
+                      path="/go/:entity/:id"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <ResolveContextPage />
+                        </ProtectedRoute>
+                      }
                     />
 
                     {/* ===== ÁREA OPERACIONAL (requer BU selecionada) ===== */}

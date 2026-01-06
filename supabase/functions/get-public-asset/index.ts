@@ -180,8 +180,8 @@ serve(async (req) => {
         cnpj: formatCnpj(asset.bu.cnpj),
       },
       related_items: relatedItems,
-      // Internal view path for authenticated users (BU-scoped)
-      internal_view_path: `/bu/${asset.bu_id}/assets/inventory/${asset.id}`,
+      // Internal view path - uses /go resolver to ensure correct BU is selected
+      internal_view_path: `/go/asset/${asset.id}`,
     };
 
     return new Response(JSON.stringify(publicView), {
