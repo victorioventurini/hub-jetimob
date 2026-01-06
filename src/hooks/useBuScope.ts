@@ -4,7 +4,6 @@
  */
 
 import { useBu } from "@/contexts/BuContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /**
@@ -44,89 +43,9 @@ export function withBuId<T extends object>(
 }
 
 /**
- * Hook providing BU-scoped mutation helpers
- */
-export function useBuScopedMutation() {
-  const { currentBuId } = useBu();
-
-  /**
-   * Insert with automatic bu_id injection
-   */
-  const insertBu = async <T extends object>(
-    table: string,
-    payload: T | T[]
-  ) => {
-    if (!currentBuId) {
-      throw new Error("MISSING_BU_ID: No BU context available");
-    }
-
-    const payloads = Array.isArray(payload) ? payload : [payload];
-    const withBu = payloads.map((p) => ({ ...p, bu_id: currentBuId }));
-
-    const { data, error } = await supabase
-      .from(table)
-      .insert(withBu as any)
-      .select();
-
-    if (error) {
-      handleBuError(error);
-      throw error;
-    }
-
-    return Array.isArray(payload) ? data : data?.[0];
-  };
-
-  /**
-   * Update with bu_id validation in filter
-   */
-  const updateBu = async <T extends object>(
-    table: string,
-    id: string,
-    payload: T
-  ) => {
-    if (!currentBuId) {
-      throw new Error("MISSING_BU_ID: No BU context available");
-    }
-
-    const { data, error } = await supabase
-      .from(table)
-      .update(payload as any)
-      .eq("id", id)
-      .eq("bu_id", currentBuId)
-      .select()
-      .single();
-
-    if (error) {
-      handleBuError(error);
-      throw error;
-    }
-
-    return data;
-  };
-
-  /**
-   * Select with automatic bu_id filter
-   */
-  const selectBu = (table: string) => {
-    if (!currentBuId) {
-      throw new Error("MISSING_BU_ID: No BU context available");
-    }
-
-    return supabase.from(table).select().eq("bu_id", currentBuId);
-  };
-
-  return {
-    buId: currentBuId,
-    insertBu,
-    updateBu,
-    selectBu,
-  };
-}
-
-/**
  * Handle BU scope errors from Supabase
  */
-function handleBuError(error: { message?: string; code?: string }) {
+export function handleBuError(error: { message?: string; code?: string }) {
   const msg = error.message || "";
   
   if (msg.includes("BU_SCOPE_VIOLATION")) {
@@ -137,5 +56,3 @@ function handleBuError(error: { message?: string; code?: string }) {
     toast.error("Erro: Nenhum contexto de BU disponível. Recarregue a página.");
   }
 }
-
-export { handleBuError };
