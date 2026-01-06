@@ -8,8 +8,10 @@ export * from './hooks/useTeamContributedOkrs';
 export * from './hooks/useInitiatives';
 export * from './hooks/useOkrContributions';
 export * from './hooks/useOkrKrMetrics';
+export * from './hooks/useOkrHealth';
 export * from './types';
 export * from './types/initiative';
+export * from './types/health';
 export * from './utils/krValidation';
 
 // Components

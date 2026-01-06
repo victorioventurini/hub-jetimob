@@ -2701,6 +2701,70 @@ export type Database = {
           },
         ]
       }
+      okr_coaching_events: {
+        Row: {
+          agent_slug: string | null
+          bu_id: string
+          context_id: string | null
+          context_type: string
+          created_at: string | null
+          deleted_at: string | null
+          event_type: string
+          id: string
+          insight_id: string | null
+          payload: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_slug?: string | null
+          bu_id: string
+          context_id?: string | null
+          context_type: string
+          created_at?: string | null
+          deleted_at?: string | null
+          event_type: string
+          id?: string
+          insight_id?: string | null
+          payload?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_slug?: string | null
+          bu_id?: string
+          context_id?: string | null
+          context_type?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          event_type?: string
+          id?: string
+          insight_id?: string | null
+          payload?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_coaching_events_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_coaching_events_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "okr_insights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_coaching_events_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "v_okr_insights_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       okr_contributions: {
         Row: {
           bu_id: string | null
@@ -2893,6 +2957,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pending_checkins"
             referencedColumns: ["kr_id"]
+          },
+        ]
+      }
+      okr_insights: {
+        Row: {
+          bu_id: string
+          code: string
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          message: string
+          scope_id: string
+          scope_type: string
+          severity: string
+          source: string
+          suggested_actions: Json | null
+          title: string
+        }
+        Insert: {
+          bu_id: string
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          message: string
+          scope_id: string
+          scope_type: string
+          severity: string
+          source: string
+          suggested_actions?: Json | null
+          title: string
+        }
+        Update: {
+          bu_id?: string
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          message?: string
+          scope_id?: string
+          scope_type?: string
+          severity?: string
+          source?: string
+          suggested_actions?: Json | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_insights_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3117,7 +3237,10 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           end_date: string | null
+          health_score: number | null
+          health_status: string | null
           id: string
+          last_health_calculated_at: string | null
           owner_user_id: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["okr_status"]
@@ -3136,7 +3259,10 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           end_date?: string | null
+          health_score?: number | null
+          health_status?: string | null
           id?: string
+          last_health_calculated_at?: string | null
           owner_user_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
@@ -3155,7 +3281,10 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           end_date?: string | null
+          health_score?: number | null
+          health_status?: string | null
           id?: string
+          last_health_calculated_at?: string | null
           owner_user_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
@@ -3446,8 +3575,11 @@ export type Database = {
           cycle_type: string | null
           deleted_at: string | null
           description: string | null
+          health_score: number | null
+          health_status: string | null
           id: string
           is_shared: boolean
+          last_health_calculated_at: string | null
           last_reviewed_at: string | null
           next_review_due: string | null
           org_objective_id: string
@@ -3471,8 +3603,11 @@ export type Database = {
           cycle_type?: string | null
           deleted_at?: string | null
           description?: string | null
+          health_score?: number | null
+          health_status?: string | null
           id?: string
           is_shared?: boolean
+          last_health_calculated_at?: string | null
           last_reviewed_at?: string | null
           next_review_due?: string | null
           org_objective_id: string
@@ -3496,8 +3631,11 @@ export type Database = {
           cycle_type?: string | null
           deleted_at?: string | null
           description?: string | null
+          health_score?: number | null
+          health_status?: string | null
           id?: string
           is_shared?: boolean
+          last_health_calculated_at?: string | null
           last_reviewed_at?: string | null
           next_review_due?: string | null
           org_objective_id?: string
@@ -4782,6 +4920,73 @@ export type Database = {
         }
         Relationships: []
       }
+      v_objective_health: {
+        Row: {
+          bu_id: string | null
+          health_score: number | null
+          health_status: string | null
+          last_health_calculated_at: string | null
+          objective_id: string | null
+          objective_type: string | null
+        }
+        Relationships: []
+      }
+      v_okr_insights_active: {
+        Row: {
+          bu_id: string | null
+          code: string | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          id: string | null
+          message: string | null
+          scope_id: string | null
+          scope_type: string | null
+          severity: string | null
+          source: string | null
+          suggested_actions: Json | null
+          title: string | null
+        }
+        Insert: {
+          bu_id?: string | null
+          code?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          message?: string | null
+          scope_id?: string | null
+          scope_type?: string | null
+          severity?: string | null
+          source?: string | null
+          suggested_actions?: Json | null
+          title?: string | null
+        }
+        Update: {
+          bu_id?: string | null
+          code?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          message?: string | null
+          scope_id?: string | null
+          scope_type?: string | null
+          severity?: string | null
+          source?: string | null
+          suggested_actions?: Json | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_insights_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_partner_services: {
         Row: {
           bu_id: string | null
@@ -4982,6 +5187,14 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_objective_health: {
+        Args: {
+          p_bu_id: string
+          p_objective_id: string
+          p_objective_type: string
+        }
+        Returns: Json
+      }
       can_manage_gifts: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
@@ -5016,6 +5229,14 @@ export type Database = {
           p_parent_type: string
         }
         Returns: string
+      }
+      generate_okr_insights_for_objective: {
+        Args: {
+          p_bu_id: string
+          p_objective_id: string
+          p_objective_type: string
+        }
+        Returns: number
       }
       get_asset_kit: {
         Args: { p_asset_id: string }
@@ -5160,6 +5381,14 @@ export type Database = {
         Returns: boolean
       }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
+      refresh_objective_health: {
+        Args: {
+          p_bu_id: string
+          p_objective_id: string
+          p_objective_type: string
+        }
+        Returns: undefined
+      }
       resolve_asset_by_code_for_bu: {
         Args: { code_text: string; p_bu_id: string }
         Returns: string
