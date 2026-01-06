@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, AlertTriangle, Target, TrendingUp, Crosshair, RefreshCw, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
 import { useUrlState, useUrlStates, parsers, serializers } from '@/hooks/useUrlState';
@@ -45,8 +46,9 @@ interface OkrFiltersState {
 export default function OkrDashboardPage() {
   usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
-  const { user, role } = useAuth();
-  const { currentBu, userRole } = useBu();
+  const { user } = useAuth();
+  const { has, isWildcard } = usePermissions();
+  const { currentBu } = useBu();
   
   // URL State - View
   const [activeView, setActiveView] = useUrlState<OkrView>({
@@ -129,10 +131,9 @@ export default function OkrDashboardPage() {
   // Risk count for alert
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
 
-  // Can create based on role (global role OR BU role)
-  const isBuAdmin = userRole === 'admin' || userRole === 'super_admin';
-  const canCreateOrg = role === 'super_admin' || role === 'admin' || isBuAdmin;
-  const canCreateTeam = role === 'super_admin' || role === 'admin' || role === 'team_leader' || isBuAdmin;
+  // Can create based on permission keys (centralized)
+  const canCreateOrg = isWildcard || has('okrs.org_objective.create:bu');
+  const canCreateTeam = isWildcard || has('okrs.team_objective.create:team');
 
   const handleCreateClick = () => {
     if (activeView === 'company' && canCreateOrg) {
@@ -168,7 +169,7 @@ export default function OkrDashboardPage() {
             <OkrViewSelector 
               activeView={activeView} 
               onViewChange={setActiveView}
-              showMyOkrs={role !== 'super_admin' && role !== 'admin'}
+              showMyOkrs={!isWildcard}
             />
             
             {((activeView === 'company' && canCreateOrg) || 

@@ -1,23 +1,21 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { List, Settings } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useBu } from "@/contexts/BuContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const tabs = [
   { name: "Tickets", href: "/tickets", icon: List, exact: true },
-  { name: "Configurações", href: "/tickets/settings", icon: Settings, adminOnly: true },
+  { name: "Configurações", href: "/tickets/settings", icon: Settings, permission: "tickets.settings.view" },
 ];
 
 export function TicketsLayout() {
   const location = useLocation();
-  const { isAdmin } = useAuth();
-  const { userRole } = useBu();
+  const { has, isWildcard } = usePermissions();
 
-  // Admin de BU ou super_admin podem acessar configurações
-  const isBuAdmin = userRole === "admin" || userRole === "super_admin" || isAdmin;
-
-  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isBuAdmin);
+  // Filtra tabs baseado em permissões - admin/super_admin tem wildcard
+  const visibleTabs = tabs.filter((tab) => 
+    !tab.permission || isWildcard || has(tab.permission)
+  );
 
   return (
     <div className="space-y-6">

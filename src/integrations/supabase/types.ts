@@ -5100,6 +5100,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_permission: {
+        Args: { p_bu_id: string; p_permission_key: string; p_user_id: string }
+        Returns: boolean
+      }
       has_permission_key: {
         Args: { p_bu_id: string; p_permission_key: string; p_user_id: string }
         Returns: boolean

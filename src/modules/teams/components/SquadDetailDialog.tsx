@@ -34,8 +34,7 @@ import {
 } from "../types/squad";
 import { AddSquadMemberDialog } from "./AddSquadMemberDialog";
 import { EditSquadDialog } from "./EditSquadDialog";
-import { useAuth } from "@/hooks/useAuth";
-import { useBu } from "@/contexts/BuContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SquadDetailDialogProps {
   squad: SquadWithRelations | null;
@@ -45,13 +44,12 @@ interface SquadDetailDialogProps {
 
 export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDialogProps) {
   const { data: fullSquad, isLoading } = useSquad(squad?.id);
-  const { isAdmin } = useAuth();
-  const { userRole } = useBu();
+  const { has, isWildcard } = usePermissions();
   const updateMember = useUpdateSquadMember();
   const removeMember = useRemoveSquadMember();
   
-  // BU admin or global admin can manage squads
-  const canManageSquads = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  // BU admin or global admin can manage squads via permission key
+  const canManageSquads = isWildcard || has("teams.squad.update:bu");
 
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
