@@ -97,9 +97,14 @@ export function CreateOrgKrDialog({
       toast.success('Key Result criado com sucesso!');
       handleClose();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error creating KR:', error);
-      toast.error('Erro ao criar Key Result. Tente novamente.');
+      // Check for limit error messages (Portuguese or English)
+      if (error.message.includes('Limite atingido') || error.message.includes('more than 3') || error.message.includes('máximo 3')) {
+        toast.error('Limite atingido: um Objetivo Organizacional pode ter no máximo 3 KRs ativos.');
+      } else {
+        toast.error('Erro ao criar Key Result. Tente novamente.');
+      }
     },
   });
 
