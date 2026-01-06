@@ -224,8 +224,8 @@ export function CycleFormDialog({
                   <FormItem>
                     <FormLabel>Ciclo Anual (opcional)</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
+                      onValueChange={(val) => field.onChange(val === "none" ? "" : val)}
+                      value={field.value || "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -233,7 +233,7 @@ export function CycleFormDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {yearCycles.map((y) => (
                           <SelectItem key={y.id} value={y.id}>
                             {y.name}
