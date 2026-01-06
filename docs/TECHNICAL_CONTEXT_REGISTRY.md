@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.9.0  
+**Versão:** 2.0.0  
 **Última atualização:** 2026-01-06
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1322,7 +1322,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.8.0 |
+| **Versão do TCR** | 2.0.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1330,6 +1330,32 @@ src/
 ---
 
 ## Changelog
+
+### v2.0.0 (2026-01-06) — Link Standard Refactoring
+- **Padrão Oficial de Links Compartilháveis**:
+  - Formato único: `/go/:entity/:id` para TODOS os links externos, compartilháveis, notificações, busca
+  - Entidades suportadas: `asset`, `team`, `user`, `ticket`, `okr_org_objective`, `okr_team_objective`, `okr_org_kr`, `okr_team_kr`, `keyring`, `gift`, `kpi`
+  - Helper centralizado: `getShareableUrl(entity, id)` em `src/lib/shareableLinks.ts`
+  - Links internos nunca incluem `buId` na URL
+- **Compatibilidade com QR Codes Físicos**:
+  - Rota legada `/assets/:code` mantida permanentemente (etiquetas já impressas)
+  - Se usuário autenticado → resolve BU via `resolve_asset_by_code_global()` → redireciona para `/go/asset/:uuid`
+  - Se não autenticado → renderiza página pública `/p/assets/:code`
+- **SQL Functions para Asset Codes**:
+  - `normalize_asset_code(code)`: remove não-dígitos, aplica LPAD(4)
+  - `resolve_asset_by_code_for_bu(bu_id, code)`: resolve asset UUID dentro de uma BU
+  - `resolve_asset_by_code_global(code)`: resolve asset UUID + bu_id globalmente (SECURITY DEFINER)
+  - Índice único parcial: `(bu_id, internal_code) WHERE deleted_at IS NULL`
+- **PublicAssetRedirect refatorado**:
+  - Detecta autenticação antes de decidir entre público/interno
+  - Usa RPC `resolve_asset_by_code_global` para normalizar código
+  - Troca BU automaticamente antes de navegar
+- **Edge Function `get-public-asset`**:
+  - Usa `resolve_asset_by_code_global()` para normalização consistente
+  - `internal_view_path` retorna `/go/asset/{uuid}` sempre
+- **ResolveContextPage expandido**:
+  - Novas entidades: `okr_org_kr`, `okr_team_kr`, `kpi`
+  - Labels e rotas para todas entidades do Hub
 
 ### v1.9.0 (2026-01-06)
 - **BU Session Core** implementado (remoção de `buId` da URL):

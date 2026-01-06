@@ -5143,6 +5143,18 @@ export type Database = {
         Args: { p_notification_id: string }
         Returns: boolean
       }
+      normalize_asset_code: { Args: { code_text: string }; Returns: string }
+      resolve_asset_by_code_for_bu: {
+        Args: { code_text: string; p_bu_id: string }
+        Returns: string
+      }
+      resolve_asset_by_code_global: {
+        Args: { code_text: string }
+        Returns: {
+          asset_id: string
+          bu_id: string
+        }[]
+      }
       user_has_bu_access: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
