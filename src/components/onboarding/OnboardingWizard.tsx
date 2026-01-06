@@ -214,7 +214,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
         if (!formData.city.trim()) newErrors.city = "Cidade é obrigatória";
         if (!formData.state.trim()) newErrors.state = "Estado é obrigatório";
         break;
-      case 3: // Team - required unless CEO or admin
+      case 3: // Team - required unless super_admin or admin
         if (!isExemptFromTeam && !formData.team_id) newErrors.team_id = "Selecione um time";
         break;
     }

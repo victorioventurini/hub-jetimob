@@ -3,11 +3,13 @@
  * Estes hooks fazem queries simples e leves para uso em selects, dropdowns, etc.
  * 
  * IMPORTANTE: Todos os hooks que retornam dados BU-scoped devem filtrar por bu_id!
+ * IMPORTANTE: Usar queryKeys centralizados de @/lib/queryKeys
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * Lista simples de times para uso em dropdowns/selects.
@@ -18,7 +20,7 @@ export function useTeamsList() {
   const { currentBu } = useBu();
   
   return useQuery({
-    queryKey: ["teams-list", currentBu?.id],
+    queryKey: queryKeys.teams.list(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       
@@ -41,7 +43,7 @@ export function useTeamsList() {
  */
 export function useCyclesList() {
   return useQuery({
-    queryKey: ["cycles-list"],
+    queryKey: ['cycles-list'] as const,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cycles")
@@ -59,7 +61,7 @@ export function useCyclesList() {
  */
 export function useUserProfile(userId?: string) {
   return useQuery({
-    queryKey: ["profile", userId],
+    queryKey: queryKeys.profiles.detail(userId ?? ""),
     queryFn: async () => {
       if (!userId) return null;
 
@@ -81,7 +83,7 @@ export function useUserProfile(userId?: string) {
  */
 export function useProfilesList(buId?: string) {
   return useQuery({
-    queryKey: ["profiles-list", buId],
+    queryKey: queryKeys.profiles.list(buId ?? null),
     queryFn: async () => {
       let query = supabase
         .from("profiles")

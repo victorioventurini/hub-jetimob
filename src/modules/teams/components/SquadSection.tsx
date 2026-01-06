@@ -8,8 +8,7 @@ import { SquadCard } from "./SquadCard";
 import { CreateSquadDialog } from "./CreateSquadDialog";
 import { SquadDetailDialog } from "./SquadDetailDialog";
 import { SquadWithRelations } from "../types/squad";
-import { useAuth } from "@/hooks/useAuth";
-import { useBu } from "@/contexts/BuContext";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 
 interface SquadSectionProps {
   teamId: string;
@@ -18,11 +17,10 @@ interface SquadSectionProps {
 
 export function SquadSection({ teamId, teamName }: SquadSectionProps) {
   const { data: squads, isLoading } = useSquads(teamId);
-  const { isAdmin } = useAuth();
-  const { userRole } = useBu();
+  const { canManageTeam } = useTeamManagement();
   
-  // BU admin or global admin can manage squads
-  const canManageSquads = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  // Verificar se usuário pode gerenciar o time pai (e consequentemente squads)
+  const canManageSquads = canManageTeam(teamId);
   
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedSquad, setSelectedSquad] = useState<SquadWithRelations | null>(null);

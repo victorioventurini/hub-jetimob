@@ -139,7 +139,7 @@ serve(async (req) => {
             "Sem nome",
           subtitle: p.job_title || "Colaborador",
           meta: { email: p.work_email, photo_url: p.photo_url },
-          url: `/users/${p.id}`,
+          url: `/go/user/${p.id}`,
           icon: "user",
         }))
       );
@@ -161,7 +161,7 @@ serve(async (req) => {
         title: t.name,
         subtitle: t.description || "Time",
         meta: { status: t.status },
-        url: `/teams/${t.id}`,
+        url: `/go/team/${t.id}`,
         icon: "users",
       })));
     }
@@ -203,7 +203,7 @@ serve(async (req) => {
         title: o.title,
         subtitle: `Objetivo ${o.year}`,
         meta: { status: o.status, year: o.year },
-        url: `/okrs/org/${o.id}`,
+        url: `/go/okr_org_objective/${o.id}`,
         icon: "target",
       })));
     }
@@ -224,7 +224,7 @@ serve(async (req) => {
         title: o.title,
         subtitle: `${o.teams?.name || "Time"} · ${o.year}`,
         meta: { status: o.status, year: o.year },
-        url: `/okrs/team/${o.id}`,
+        url: `/go/okr_team_objective/${o.id}`,
         icon: "target",
       })));
     }
@@ -244,7 +244,7 @@ serve(async (req) => {
         title: kr.title,
         subtitle: kr.okr_org_objectives?.title || "Objetivo",
         meta: { status: kr.status, progress: kr.target ? Math.round((kr.current_value || 0) / kr.target * 100) : 0 },
-        url: `/okrs/org?kr=${kr.id}`,
+        url: `/go/okr_org_kr/${kr.id}`,
         icon: "trending-up",
       })));
     }
@@ -264,7 +264,7 @@ serve(async (req) => {
         title: kr.title,
         subtitle: kr.okr_team_objectives?.title || "Objetivo",
         meta: { status: kr.status, progress: kr.target ? Math.round((kr.current_value || 0) / kr.target * 100) : 0 },
-        url: `/okrs/team?kr=${kr.id}`,
+        url: `/go/okr_team_kr/${kr.id}`,
         icon: "trending-up",
       })));
     }
@@ -304,7 +304,7 @@ serve(async (req) => {
         title: k.name,
         subtitle: k.category || "KPI",
         meta: { unit: k.unit, target: k.target_value },
-        url: `/kpis?id=${k.id}`,
+        url: `/go/kpi/${k.id}`,
         icon: "bar-chart-3",
       })));
     }
@@ -376,7 +376,7 @@ serve(async (req) => {
             internal_code: i.internal_code,
             holder_type: i.current_holder_type,
           },
-          url: `/assets/inventory/${i.id}`,
+          url: `/go/asset/${i.id}`,
           icon: "package",
         })));
       }
@@ -408,7 +408,7 @@ serve(async (req) => {
             primary_asset_id: g.primary_asset_id,
             primary_internal_code: g.asset_inventory?.internal_code,
           },
-          url: g.primary_asset_id ? `/assets/inventory/${g.primary_asset_id}` : `/assets/inventory`,
+          url: g.primary_asset_id ? `/go/asset/${g.primary_asset_id}` : `/assets/inventory`,
           icon: "package-2",
         })));
       }
@@ -441,7 +441,7 @@ serve(async (req) => {
             statusLabel: statusLabels[k.status] || k.status,
             tag_number: k.tag_number,
           },
-          url: `/assets/keys/keyrings/${k.id}`,
+          url: `/go/keyring/${k.id}`,
           icon: "key-round",
         })));
       }
@@ -507,7 +507,7 @@ serve(async (req) => {
             status: g.status,
             statusLabel: statusLabels[g.status] || g.status,
           },
-          url: `/assets/gifts/items/${g.id}`,
+          url: `/go/gift/${g.id}`,
           icon: "gift",
         })));
       }
