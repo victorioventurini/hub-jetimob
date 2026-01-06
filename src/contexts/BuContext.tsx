@@ -4,6 +4,8 @@ import { useUserBus } from "@/modules/bu/hooks/useBuData";
 import { useAuth } from "@/hooks/useAuth";
 
 interface BuContextType {
+  /** Selected BU id (available even if bu_unit data isn't loaded) */
+  currentBuId: string | null;
   currentBu: BuUnit | null;
   userBus: UserBuMembership[];
   isLoading: boolean;
@@ -126,6 +128,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
   return (
     <BuContext.Provider
       value={{
+        currentBuId,
         currentBu,
         userBus,
         isLoading,

@@ -108,34 +108,41 @@ serve(async (req) => {
       }
     };
 
-    // 1. PESSOAS (profiles with BU membership)
+    // 1. PESSOAS (profiles within BU)
     const { data: people, error: peopleError } = await supabase
       .from("profiles")
-      .select(`
-        id,
-        user_id,
-        first_name,
-        last_name,
-        display_name,
-        job_title,
-        photo_url,
-        work_email,
-        bu_user_memberships!inner(bu_id)
-      `)
-      .eq("bu_user_memberships.bu_id", bu_id)
-      .or(`first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},display_name.ilike.${searchPattern},work_email.ilike.${searchPattern}`)
+      .select(
+        "id, first_name, last_name, display_name, job_title, photo_url, work_email"
+      )
+      .eq("bu_id", bu_id)
+      .eq("employment_status", "active")
+      .is("deleted_at", null)
+      .or(
+        `first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},display_name.ilike.${searchPattern},work_email.ilike.${searchPattern}`
+      )
       .limit(limit);
 
+    if (peopleError) {
+      console.error("[global-search] People search error:", peopleError);
+    }
+
     if (!peopleError && people) {
-      addGroup("people", "Pessoas", people.map(p => ({
-        id: p.user_id,
-        type: "people",
-        title: p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Sem nome",
-        subtitle: p.job_title || "Colaborador",
-        meta: { email: p.work_email, photo_url: p.photo_url },
-        url: `/users/${p.user_id}`,
-        icon: "user",
-      })));
+      addGroup(
+        "people",
+        "Pessoas",
+        people.map((p: any) => ({
+          id: p.id,
+          type: "people",
+          title:
+            p.display_name ||
+            `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
+            "Sem nome",
+          subtitle: p.job_title || "Colaborador",
+          meta: { email: p.work_email, photo_url: p.photo_url },
+          url: `/users/${p.id}`,
+          icon: "user",
+        }))
+      );
     }
 
     // 2. TIMES
