@@ -183,7 +183,6 @@ export function buildMagicLinkEmailHtml(options: {
 }): string {
   const { magicLink, displayName = "usuário", buName } = options;
   const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-  const orgName = buName || "Jet";
   
   return `
     <!DOCTYPE html>
@@ -195,7 +194,7 @@ export function buildMagicLinkEmailHtml(options: {
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
       <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
         <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub da ${orgName}</h1>
+          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub</h1>
         </div>
         
         <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
@@ -208,7 +207,7 @@ export function buildMagicLinkEmailHtml(options: {
         </p>
         
         <div style="text-align: center; margin-bottom: 32px;">
-          <a href="${magicLink}" style="display: inline-block; background-color: #F97316; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          <a href="${magicLink}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
             Acessar o Hub
           </a>
         </div>
@@ -226,4 +225,21 @@ export function buildMagicLinkEmailHtml(options: {
     </body>
     </html>
   `;
+}
+
+/**
+ * Format current date/time for email subject
+ * Returns format: DD/MM às HH:MM
+ */
+export function formatEmailDateTime(): string {
+  const now = new Date();
+  // Brazil timezone (UTC-3)
+  const brazilTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+  
+  const day = String(brazilTime.getUTCDate()).padStart(2, '0');
+  const month = String(brazilTime.getUTCMonth() + 1).padStart(2, '0');
+  const hours = String(brazilTime.getUTCHours()).padStart(2, '0');
+  const minutes = String(brazilTime.getUTCMinutes()).padStart(2, '0');
+  
+  return `${day}/${month} às ${hours}:${minutes}`;
 }
