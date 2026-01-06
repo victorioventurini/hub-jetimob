@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Páginas carregadas imediatamente (críticas para primeira renderização)
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+const PublicAsset = lazy(() => import("./pages/PublicAsset"));
 
 // Lazy loading para módulos (carregados sob demanda)
 const Index = lazy(() => import("./pages/Index"));
@@ -125,6 +126,7 @@ const App = () => (
                   <Routes>
                     {/* ===== ROTAS PÚBLICAS ===== */}
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/p/assets/:code" element={<PublicAsset />} />
 
                     {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
                     
