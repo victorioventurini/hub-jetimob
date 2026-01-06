@@ -70,7 +70,7 @@ const AgentLogsPage = lazy(() => import("./modules/integrations/pages/AgentLogsP
 const AutomationsPage = lazy(() => import("./modules/automations/pages/AutomationsPage"));
 
 // Módulo Permissões (Global)
-const HubPermissionsPage = lazy(() => import("./modules/permissions/pages/HubPermissionsPage"));
+const GlobalPermissionsPage = lazy(() => import("./modules/permissions/pages/GlobalPermissionsPage"));
 const BuPermissionsPage = lazy(() => import("./modules/permissions/pages/BuPermissionsPage"));
 
 // Módulo Tickets
@@ -334,7 +334,7 @@ const App = () => (
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
                             <SettingsLayout>
-                              <HubPermissionsPage />
+                              <GlobalPermissionsPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>

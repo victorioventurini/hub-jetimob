@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
-interface BuUser {
+export interface BuUser {
   user_id: string;
   role_in_bu: string;
   profiles: {
@@ -10,34 +11,38 @@ interface BuUser {
     display_name: string;
     work_email: string;
     photo_url: string | null;
+    job_title: string | null;
   };
+  teams: Array<{
+    id: string;
+    name: string;
+    role: string;
+  }>;
 }
 
 export function useBuUsers() {
   const { currentBuId } = useBu();
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ["bu_users_permissions", currentBuId],
+    queryKey: queryKeys.permissions.buUsers(currentBuId),
     queryFn: async () => {
       if (!currentBuId) return [];
 
-      const { data, error } = await supabase
+      // Fetch memberships
+      const { data: memberships, error: membershipError } = await supabase
         .from("bu_user_memberships")
-        .select(`
-          user_id,
-          role_in_bu
-        `)
+        .select("user_id, role_in_bu")
         .eq("bu_id", currentBuId);
 
-      if (error) throw error;
+      if (membershipError) throw membershipError;
 
-      // Fetch profiles separately - use user_id column from profiles to match auth user
-      const userIds = data.map((m) => m.user_id);
+      const userIds = memberships.map((m) => m.user_id);
       if (userIds.length === 0) return [];
 
+      // Fetch profiles
       const { data: profilesRaw, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, user_id, display_name, work_email, photo_url")
+        .select("id, user_id, display_name, work_email, photo_url, job_title")
         .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
@@ -48,6 +53,7 @@ export function useBuUsers() {
         display_name: string;
         work_email: string;
         photo_url: string | null;
+        job_title: string | null;
       };
 
       const profiles = (profilesRaw ?? []) as ProfileRow[];
@@ -57,11 +63,12 @@ export function useBuUsers() {
         if (p.user_id) profilesByUserId[p.user_id] = p;
       }
 
-      return data
+      return memberships
         .map((m) => ({
           user_id: m.user_id,
           role_in_bu: m.role_in_bu,
           profiles: profilesByUserId[m.user_id],
+          teams: [], // Teams will be loaded separately if needed
         }))
         .filter((m) => m.profiles) as BuUser[];
     },

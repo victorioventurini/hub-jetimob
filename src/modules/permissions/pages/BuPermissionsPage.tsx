@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,23 +17,21 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Shield, Search, Users, Settings, ChevronRight } from "lucide-react";
+import { Shield, Search, Users, Settings, ChevronRight, Star, Crown } from "lucide-react";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
 import { useBuGroupConfigs } from "../hooks/useBuPermissions";
-import { useBuUsers } from "../hooks/useBuUsers";
+import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
 import { UserPermissionsSheet } from "../components/UserPermissionsSheet";
+import { cn } from "@/lib/utils";
 
-type BuUser = {
-  user_id: string;
-  role_in_bu: string;
-  profiles: {
-    id: string;
-    display_name: string;
-    work_email: string;
-    photo_url: string | null;
-  };
-};
-
+/**
+ * BuPermissionsPage - Gerenciamento de permissões de usuários por BU
+ * 
+ * Esta página é acessível por admin da BU e super_admin.
+ * Gerencia quais permissões cada usuário possui dentro da BU ativa.
+ * 
+ * Rota: /bu/permissions
+ */
 export default function BuPermissionsPage() {
   usePageTitle("Permissões da BU");
 
@@ -46,12 +44,15 @@ export default function BuPermissionsPage() {
   const { users, isLoading: usersLoading } = useBuUsers();
 
   // Map configs by group_id for quick lookup
-  const configByGroupId = configs.reduce(
-    (acc, c) => {
-      acc[c.group_id] = c;
-      return acc;
-    },
-    {} as Record<string, typeof configs[0]>
+  const configByGroupId = useMemo(() => 
+    configs.reduce(
+      (acc, c) => {
+        acc[c.group_id] = c;
+        return acc;
+      },
+      {} as Record<string, typeof configs[0]>
+    ),
+    [configs]
   );
 
   const activeGroups = groups.filter((g) => g.status === "active");
@@ -64,13 +65,35 @@ export default function BuPermissionsPage() {
       )
     : activeGroups;
 
-  const filteredUsers = search
-    ? users.filter(
-        (u) =>
-          u.profiles.display_name.toLowerCase().includes(search.toLowerCase()) ||
-          u.profiles.work_email.toLowerCase().includes(search.toLowerCase())
-      )
-    : users;
+  const filteredUsers = useMemo(() => {
+    if (!search) return users;
+    const lowerSearch = search.toLowerCase();
+    return users.filter(
+      (u) =>
+        u.profiles.display_name.toLowerCase().includes(lowerSearch) ||
+        u.profiles.work_email.toLowerCase().includes(lowerSearch) ||
+        u.profiles.job_title?.toLowerCase().includes(lowerSearch) ||
+        u.teams.some((t) => t.name.toLowerCase().includes(lowerSearch))
+    );
+  }, [users, search]);
+
+  // Sort users: admins first, then leaders, then by name
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      // Admins first
+      if (a.role_in_bu === "admin" && b.role_in_bu !== "admin") return -1;
+      if (b.role_in_bu === "admin" && a.role_in_bu !== "admin") return 1;
+      
+      // Then leaders
+      const aIsLeader = a.teams.some((t) => t.role === "leader");
+      const bIsLeader = b.teams.some((t) => t.role === "leader");
+      if (aIsLeader && !bIsLeader) return -1;
+      if (bIsLeader && !aIsLeader) return 1;
+      
+      // Then alphabetically
+      return a.profiles.display_name.localeCompare(b.profiles.display_name);
+    });
+  }, [filteredUsers]);
 
   const getInitials = (name: string) =>
     name
@@ -80,14 +103,39 @@ export default function BuPermissionsPage() {
       .toUpperCase()
       .slice(0, 2);
 
-  const getRoleBadge = (role: string) => {
-    if (role === "admin") {
-      return <Badge variant="default">Admin</Badge>;
+  const getRoleBadge = (user: BuUser) => {
+    if (user.role_in_bu === "admin") {
+      return (
+        <Badge variant="default" className="gap-1">
+          <Crown className="h-3 w-3" />
+          Admin
+        </Badge>
+      );
     }
-    if (role === "leader") {
-      return <Badge variant="secondary">Líder</Badge>;
+    
+    const isLeader = user.teams.some((t) => t.role === "leader");
+    if (isLeader) {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Star className="h-3 w-3" />
+          Líder
+        </Badge>
+      );
     }
+    
     return <Badge variant="outline">Membro</Badge>;
+  };
+
+  const getPermissionIndicator = (user: BuUser) => {
+    if (user.role_in_bu === "admin") {
+      return (
+        <span className="flex items-center gap-1 text-xs text-primary font-medium">
+          <Shield className="h-3 w-3" />
+          Acesso Total (*)
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -95,11 +143,11 @@ export default function BuPermissionsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Permissões da BU"
-          description="Gerencie grupos habilitados e permissões de usuários"
+          description="Gerencie grupos habilitados e permissões de usuários nesta Business Unit"
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <TabsList>
               <TabsTrigger value="users" className="gap-2">
                 <Users className="h-4 w-4" />
@@ -114,10 +162,10 @@ export default function BuPermissionsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar..."
+                placeholder="Buscar por nome, email, cargo ou time..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 w-64"
+                className="pl-10 w-80"
               />
             </div>
           </div>
@@ -125,7 +173,7 @@ export default function BuPermissionsPage() {
           <TabsContent value="users" className="mt-6">
             {usersLoading ? (
               <LoadingState text="Carregando usuários..." />
-            ) : filteredUsers.length === 0 ? (
+            ) : sortedUsers.length === 0 ? (
               <EmptyState
                 icon={Users}
                 title="Nenhum usuário encontrado"
@@ -137,16 +185,21 @@ export default function BuPermissionsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Usuário</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Papel na BU</TableHead>
+                      <TableHead>Cargo</TableHead>
+                      <TableHead>Times</TableHead>
+                      <TableHead>Papel</TableHead>
+                      <TableHead>Permissões</TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((user) => (
+                    {sortedUsers.map((user) => (
                       <TableRow
                         key={user.user_id}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          user.role_in_bu === "admin" && "bg-primary/5"
+                        )}
                         onClick={() => setSelectedUser(user)}
                       >
                         <TableCell>
@@ -157,15 +210,39 @@ export default function BuPermissionsPage() {
                                 {getInitials(user.profiles.display_name)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">
-                              {user.profiles.display_name}
-                            </span>
+                            <div>
+                              <span className="font-medium block">
+                                {user.profiles.display_name}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {user.profiles.work_email}
+                              </span>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {user.profiles.work_email}
+                          {user.profiles.job_title || "—"}
                         </TableCell>
-                        <TableCell>{getRoleBadge(user.role_in_bu)}</TableCell>
+                        <TableCell>
+                          {user.teams.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {user.teams.slice(0, 2).map((team) => (
+                                <Badge key={team.id} variant="outline" className="text-xs">
+                                  {team.name}
+                                </Badge>
+                              ))}
+                              {user.teams.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{user.teams.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user)}</TableCell>
+                        <TableCell>{getPermissionIndicator(user)}</TableCell>
                         <TableCell>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </TableCell>
@@ -187,7 +264,7 @@ export default function BuPermissionsPage() {
                 description={
                   search
                     ? "Tente ajustar a busca"
-                    : "Nenhum grupo global ativo. Crie grupos em /hub/permissions"
+                    : "Nenhum grupo global ativo. Grupos são criados em /settings/permissions"
                 }
               />
             ) : (

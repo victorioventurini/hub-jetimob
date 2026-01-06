@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type {
   BuPermissionGroupConfig,
   BuUserPermissionGroup,
@@ -13,7 +14,7 @@ export function useBuGroupConfigs() {
   const { currentBuId } = useBu();
   const queryClient = useQueryClient();
 
-  const queryKey = ["bu_permission_group_configs", currentBuId];
+  const queryKey = queryKeys.permissions.buConfigs(currentBuId);
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey,
@@ -88,7 +89,7 @@ export function useBuUserGroups(userId: string | null) {
   const { currentBuId } = useBu();
   const queryClient = useQueryClient();
 
-  const queryKey = ["bu_user_permission_groups", currentBuId, userId];
+  const queryKey = queryKeys.permissions.userGroups(currentBuId, userId);
 
   const { data: userGroups = [], isLoading } = useQuery({
     queryKey,
@@ -161,7 +162,7 @@ export function useBuUserOverrides(userId: string | null) {
   const { currentBuId } = useBu();
   const queryClient = useQueryClient();
 
-  const queryKey = ["bu_user_permission_overrides", currentBuId, userId];
+  const queryKey = queryKeys.permissions.userOverrides(currentBuId, userId);
 
   const { data: overrides = [], isLoading } = useQuery({
     queryKey,
@@ -242,7 +243,7 @@ export function useUserEffectivePermissions(userId: string | null) {
   const { currentBuId } = useBu();
 
   const { data: effectivePermissions = [], isLoading } = useQuery({
-    queryKey: ["user_effective_permissions", currentBuId, userId],
+    queryKey: queryKeys.permissions.userEffective(currentBuId, userId),
     queryFn: async () => {
       if (!currentBuId || !userId) return [];
 
