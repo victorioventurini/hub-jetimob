@@ -29,6 +29,7 @@ import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { AddPermissionDialog } from "../components/settings/AddPermissionDialog";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { PERMISSION_ROLE_LABELS } from "../types";
+import { useUrlTab } from "@/hooks/useUrlState";
 
 export default function AssetsSettingsPage() {
   const {
@@ -40,6 +41,7 @@ export default function AssetsSettingsPage() {
   } = useAssetPermissions();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useUrlTab("permissions");
 
   if (!isAssetsAdmin) {
     return (
@@ -69,7 +71,7 @@ export default function AssetsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="permissions" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="permissions" className="gap-2">
             <Shield className="h-4 w-4" />

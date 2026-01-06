@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { icons, LucideIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUrlTab, useUrlState } from "@/hooks/useUrlState";
 
 interface Module {
   id: string;
@@ -66,9 +67,10 @@ function getIconComponent(iconName: string | null): LucideIcon {
 }
 
 export default function SettingsModules() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
-  const [selectedBuId, setSelectedBuId] = useState<string>("all");
+  const [selectedBuId, setSelectedBuId] = useUrlState<string>({ key: "bu_id", defaultValue: "all" });
+  const [activeTab, setActiveTab] = useUrlTab("bu-config");
   const queryClient = useQueryClient();
 
   // Fetch all modules
@@ -234,7 +236,7 @@ export default function SettingsModules() {
         </p>
       </div>
 
-      <Tabs defaultValue="bu-config" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="bu-config" className="gap-2">
             <Building2 className="h-4 w-4" />

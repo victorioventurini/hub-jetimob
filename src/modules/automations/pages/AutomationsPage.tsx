@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,15 +29,16 @@ import {
 import { EventCategorySection } from '../components/EventCatalogCard';
 import { ActionCategorySection } from '../components/ActionCatalogCard';
 import { AutomationLogsTable } from '../components/AutomationLogsTable';
+import { useUrlTab, useUrlState } from '@/hooks/useUrlState';
 import type { AutomationEventCatalog, AutomationActionCatalog } from '../types';
 
 export default function AutomationsPage() {
   usePageTitle('Automações');
 
   const { currentBu } = useBu();
-  const [activeTab, setActiveTab] = useState('events');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [logFilter, setLogFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useUrlTab('events');
+  const [searchTerm, setSearchTerm] = useUrlState<string>({ key: 'q', defaultValue: '' });
+  const [logFilter, setLogFilter] = useUrlState<string>({ key: 'status', defaultValue: 'all' });
 
   const { data: events, isLoading: eventsLoading } = useEventCatalog();
   const { data: actions, isLoading: actionsLoading } = useActionCatalog();
