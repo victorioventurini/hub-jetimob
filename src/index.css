@@ -129,6 +129,11 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
   }
+
+  /* Placeholder text - 20% more subtle */
+  ::placeholder {
+    opacity: 0.6;
+  }
 }
 
 @layer utilities {
