@@ -22,13 +22,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Users, Trash2 } from 'lucide-react';
+import { Loader2, Users, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
 import { MultiTeamSelect, SimpleSelect } from '@/components/selects';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useDeleteTeamObjective } from '../hooks/useOkrMutations';
+import { useCancelTeamObjective } from '../hooks/useOkrMutations';
 import type { OkrStatus } from '../types';
 
 interface EditTeamObjectiveDialogProps {
@@ -63,14 +63,14 @@ export function EditTeamObjectiveDialog({
     (objective.responsibility_model as 'collaborative' | 'primary_led') || 'collaborative'
   );
   const [contributingTeamIds, setContributingTeamIds] = useState<string[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { teams } = useHierarchicalTeamList();
   const { data: existingContributors } = useObjectiveContributors(objective.id);
   const manageContributors = useManageContributors();
-  const deleteMutation = useDeleteTeamObjective();
+  const cancelMutation = useCancelTeamObjective();
 
   useEffect(() => {
     if (existingContributors) {
@@ -149,10 +149,10 @@ export function EditTeamObjectiveDialog({
     updateMutation.mutate();
   };
 
-  const handleDelete = () => {
-    deleteMutation.mutate(objective.id, {
+  const handleCancel = () => {
+    cancelMutation.mutate(objective.id, {
       onSuccess: () => {
-        setShowDeleteConfirm(false);
+        setShowCancelConfirm(false);
         onOpenChange(false);
       },
     });
@@ -264,10 +264,10 @@ export function EditTeamObjectiveDialog({
                 type="button"
                 variant="ghost"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => setShowCancelConfirm(true)}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
+                <Ban className="w-4 h-4 mr-2" />
+                Cancelar OKR
               </Button>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -284,12 +284,12 @@ export function EditTeamObjectiveDialog({
       </Dialog>
 
       <DeleteConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        onConfirm={handleDelete}
-        title="Excluir Objetivo do Time"
-        description="Tem certeza que deseja excluir este objetivo? Esta ação não pode ser desfeita."
-        isLoading={deleteMutation.isPending}
+        open={showCancelConfirm}
+        onOpenChange={setShowCancelConfirm}
+        onConfirm={handleCancel}
+        title="Cancelar Objetivo do Time"
+        description="Tem certeza que deseja cancelar este objetivo? O histórico e check-ins serão preservados, mas o objetivo ficará com status 'Cancelado'."
+        isLoading={cancelMutation.isPending}
       />
     </>
   );

@@ -20,10 +20,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useDeleteOrgObjective } from '../hooks/useOkrMutations';
+import { useCancelOrgObjective } from '../hooks/useOkrMutations';
 import type { OkrStatus } from '../types';
 
 interface EditOrgObjectiveDialogProps {
@@ -46,10 +46,10 @@ export function EditOrgObjectiveDialog({
   const [title, setTitle] = useState(objective.title);
   const [description, setDescription] = useState(objective.description || '');
   const [status, setStatus] = useState<OkrStatus>(objective.status);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const deleteMutation = useDeleteOrgObjective();
+  const cancelMutation = useCancelOrgObjective();
 
   useDialogFormReset(open, useCallback(() => {
     setTitle(objective.title);
@@ -95,10 +95,10 @@ export function EditOrgObjectiveDialog({
     updateMutation.mutate();
   };
 
-  const handleDelete = () => {
-    deleteMutation.mutate(objective.id, {
+  const handleCancel = () => {
+    cancelMutation.mutate(objective.id, {
       onSuccess: () => {
-        setShowDeleteConfirm(false);
+        setShowCancelConfirm(false);
         onOpenChange(false);
       },
     });
@@ -154,10 +154,10 @@ export function EditOrgObjectiveDialog({
                 type="button"
                 variant="ghost"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => setShowCancelConfirm(true)}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
+                <Ban className="w-4 h-4 mr-2" />
+                Cancelar OKR
               </Button>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -174,12 +174,12 @@ export function EditOrgObjectiveDialog({
       </Dialog>
 
       <DeleteConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        onConfirm={handleDelete}
-        title="Excluir Objetivo Organizacional"
-        description="Tem certeza que deseja excluir este objetivo? Esta ação não pode ser desfeita."
-        isLoading={deleteMutation.isPending}
+        open={showCancelConfirm}
+        onOpenChange={setShowCancelConfirm}
+        onConfirm={handleCancel}
+        title="Cancelar Objetivo Organizacional"
+        description="Tem certeza que deseja cancelar este objetivo? O histórico e check-ins serão preservados, mas o objetivo ficará com status 'Cancelado'."
+        isLoading={cancelMutation.isPending}
       />
     </>
   );
