@@ -42,6 +42,7 @@ export function useGlobalSearch(initialQuery = "") {
   const {
     data,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery<SearchResponse>({
@@ -51,6 +52,11 @@ export function useGlobalSearch(initialQuery = "") {
         return { query: debouncedQuery, groups: [] };
       }
 
+      console.log("[useGlobalSearch] Invoking global-search with:", {
+        bu_id: currentBu.id,
+        q: debouncedQuery,
+      });
+
       const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
           bu_id: currentBu.id,
@@ -59,12 +65,25 @@ export function useGlobalSearch(initialQuery = "") {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[useGlobalSearch] Error:", error);
+        throw error;
+      }
+
+      console.log("[useGlobalSearch] Response:", data);
+      
+      // Handle edge function error response
+      if (data?.error) {
+        console.error("[useGlobalSearch] Function error:", data.error);
+        throw new Error(data.error);
+      }
+
       return data as SearchResponse;
     },
     enabled: !!currentBu?.id && debouncedQuery.length >= 2,
     staleTime: 30000, // 30 seconds
     gcTime: 60000, // 1 minute
+    retry: 1,
   });
 
   const totalResults = useMemo(() => {
@@ -82,7 +101,7 @@ export function useGlobalSearch(initialQuery = "") {
     debouncedQuery,
     results: data?.groups || [],
     totalResults,
-    isLoading: isLoading && debouncedQuery.length >= 2,
+    isLoading: (isLoading || isFetching) && debouncedQuery.length >= 2,
     isEmpty,
     error,
     refetch,
