@@ -13,9 +13,9 @@
  *    that use the `is_platform_admin(auth.uid())` SECURITY DEFINER function
  *    to validate admin access at the database level.
  * 
- * 2. Database Functions - The `is_admin_or_ceo()` function queries the
- *    `user_roles` table directly with elevated privileges, making it
- *    impossible to bypass via client manipulation.
+ * 2. Database Functions - The `is_platform_admin()` and `is_bu_admin()` functions
+ *    query the `user_roles` and `bu_user_memberships` tables directly with
+ *    elevated privileges, making it impossible to bypass via client manipulation.
  * 
  * Even if an attacker manipulates the client-side `isAdmin` flag:
  * - They will see admin UI elements but cannot access admin data
