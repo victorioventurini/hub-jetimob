@@ -29,7 +29,7 @@
     --secondary-foreground: 222 47% 11%;
 
     --muted: 214 32% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 16% 57%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -91,7 +91,7 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 222 47% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 55%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
