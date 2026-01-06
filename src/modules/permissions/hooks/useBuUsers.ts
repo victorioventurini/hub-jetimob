@@ -35,22 +35,27 @@ export function useBuUsers() {
       const userIds = data.map((m) => m.user_id);
       if (userIds.length === 0) return [];
 
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profilesRaw, error: profilesError } = await supabase
         .from("profiles")
         .select("id, user_id, display_name, work_email, photo_url")
         .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
 
-      const profilesByUserId = (profiles || []).reduce(
-        (acc, p) => {
-          if (p.user_id) {
-            acc[p.user_id] = p;
-          }
-          return acc;
-        },
-        {} as Record<string, typeof profiles[0]>
-      );
+      type ProfileRow = {
+        id: string;
+        user_id: string | null;
+        display_name: string;
+        work_email: string;
+        photo_url: string | null;
+      };
+
+      const profiles = (profilesRaw ?? []) as ProfileRow[];
+      const profilesByUserId: Record<string, ProfileRow> = {};
+
+      for (const p of profiles) {
+        if (p.user_id) profilesByUserId[p.user_id] = p;
+      }
 
       return data
         .map((m) => ({

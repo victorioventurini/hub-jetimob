@@ -41,7 +41,12 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
-  const roleLabel = role ? roleLabels[role] : "Colaborador";
+  const roleLabel =
+    userRole === "admin" || userRole === "super_admin"
+      ? "Administrador da BU"
+      : role
+        ? roleLabels[role]
+        : "Colaborador";
 
   const initials = displayName
     .split(" ")
