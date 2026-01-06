@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
-// TCR Content embedded - Version 2.2.0
-const TCR_VERSION = "2.2.0";
+// TCR Content embedded - Version 2.3.0
+const TCR_VERSION = "2.3.0";
 const TCR_UPDATED_AT = "2026-01-06";
 
 const TCR_SECTIONS: Record<string, { title: string; content: string }> = {
