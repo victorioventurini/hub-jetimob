@@ -22,11 +22,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Trash2 } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
 import { MultiTeamSelect, SimpleSelect } from '@/components/selects';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { useDeleteTeamObjective } from '../hooks/useOkrMutations';
 import type { OkrStatus } from '../types';
 
 interface EditTeamObjectiveDialogProps {
@@ -61,21 +63,21 @@ export function EditTeamObjectiveDialog({
     (objective.responsibility_model as 'collaborative' | 'primary_led') || 'collaborative'
   );
   const [contributingTeamIds, setContributingTeamIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { teams } = useHierarchicalTeamList();
   const { data: existingContributors } = useObjectiveContributors(objective.id);
   const manageContributors = useManageContributors();
+  const deleteMutation = useDeleteTeamObjective();
 
-  // Initialize contributing team ids from existing contributors
   useEffect(() => {
     if (existingContributors) {
       setContributingTeamIds(existingContributors.map(c => c.team_id));
     }
   }, [existingContributors]);
 
-  // Reset form when dialog opens
   useDialogFormReset(open, useCallback(() => {
     setTitle(objective.title);
     setDescription(objective.description || '');
@@ -102,14 +104,12 @@ export function EditTeamObjectiveDialog({
 
       if (error) throw error;
 
-      // Manage contributors if shared
       if (isShared) {
         await manageContributors.mutateAsync({
           objectiveId: objective.id,
           teamIds: contributingTeamIds,
         });
       } else {
-        // Clear contributors if not shared
         await manageContributors.mutateAsync({
           objectiveId: objective.id,
           teamIds: [],
@@ -149,119 +149,148 @@ export function EditTeamObjectiveDialog({
     updateMutation.mutate();
   };
 
+  const handleDelete = () => {
+    deleteMutation.mutate(objective.id, {
+      onSuccess: () => {
+        setShowDeleteConfirm(false);
+        onOpenChange(false);
+      },
+    });
+  };
+
   const primaryTeamName = teams.find(t => t.id === objective.team_id)?.name;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar Objetivo do Time</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Melhorar retenção de clientes"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva o objetivo..."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as OkrStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Rascunho</SelectItem>
-                <SelectItem value="active">Ativo</SelectItem>
-                <SelectItem value="completed">Concluído</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Shared OKR Toggle */}
-          <div className="flex items-center justify-between py-3 px-4 rounded-lg border bg-muted/30">
-            <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-purple-600" />
-              <div>
-                <Label htmlFor="is-shared" className="text-sm font-medium cursor-pointer">
-                  OKR Compartilhada
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Envolve múltiplos times trabalhando juntos
-                </p>
-              </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Objetivo do Time</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Título *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Melhorar retenção de clientes"
+                required
+              />
             </div>
-            <Switch
-              id="is-shared"
-              checked={isShared}
-              onCheckedChange={setIsShared}
-              disabled={updateMutation.isPending}
-            />
-          </div>
 
-          {/* Shared OKR Fields */}
-          {isShared && (
-            <div className="space-y-4 p-4 rounded-lg border border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/30">
-              <Alert className="border-purple-200 bg-purple-100/50 dark:border-purple-800 dark:bg-purple-900/30">
-                <Users className="h-4 w-4 text-purple-600" />
-                <AlertDescription className="text-purple-800 dark:text-purple-200">
-                  Time primário: <strong>{primaryTeamName || 'Não definido'}</strong>
-                </AlertDescription>
-              </Alert>
-
-              <div className="space-y-2">
-                <Label>Times Contribuidores *</Label>
-                <MultiTeamSelect
-                  value={contributingTeamIds}
-                  onValueChange={setContributingTeamIds}
-                  excludeTeamIds={[objective.team_id]}
-                  teams={teams}
-                  placeholder="Selecione os times contribuidores"
-                  disabled={updateMutation.isPending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Modelo de Responsabilidade</Label>
-                <SimpleSelect
-                  value={responsibilityModel}
-                  onValueChange={(v) => setResponsibilityModel(v as 'collaborative' | 'primary_led')}
-                  options={RESPONSIBILITY_MODEL_OPTIONS}
-                  disabled={updateMutation.isPending}
-                  triggerClassName="w-full"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descreva o objetivo..."
+                rows={3}
+              />
             </div>
-          )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={updateMutation.isPending || !title.trim()}>
-              {updateMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as OkrStatus)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Rascunho</SelectItem>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="completed">Concluído</SelectItem>
+                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between py-3 px-4 rounded-lg border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-purple-600" />
+                <div>
+                  <Label htmlFor="is-shared" className="text-sm font-medium cursor-pointer">
+                    OKR Compartilhada
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Envolve múltiplos times trabalhando juntos
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="is-shared"
+                checked={isShared}
+                onCheckedChange={setIsShared}
+                disabled={updateMutation.isPending}
+              />
+            </div>
+
+            {isShared && (
+              <div className="space-y-4 p-4 rounded-lg border border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/30">
+                <Alert className="border-purple-200 bg-purple-100/50 dark:border-purple-800 dark:bg-purple-900/30">
+                  <Users className="h-4 w-4 text-purple-600" />
+                  <AlertDescription className="text-purple-800 dark:text-purple-200">
+                    Time primário: <strong>{primaryTeamName || 'Não definido'}</strong>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-2">
+                  <Label>Times Contribuidores *</Label>
+                  <MultiTeamSelect
+                    value={contributingTeamIds}
+                    onValueChange={setContributingTeamIds}
+                    excludeTeamIds={[objective.team_id]}
+                    teams={teams}
+                    placeholder="Selecione os times contribuidores"
+                    disabled={updateMutation.isPending}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Modelo de Responsabilidade</Label>
+                  <SimpleSelect
+                    value={responsibilityModel}
+                    onValueChange={(v) => setResponsibilityModel(v as 'collaborative' | 'primary_led')}
+                    options={RESPONSIBILITY_MODEL_OPTIONS}
+                    disabled={updateMutation.isPending}
+                    triggerClassName="w-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending || !title.trim()}>
+                  {updateMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Salvar
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <DeleteConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleDelete}
+        title="Excluir Objetivo do Time"
+        description="Tem certeza que deseja excluir este objetivo? Esta ação não pode ser desfeita."
+        isLoading={deleteMutation.isPending}
+      />
+    </>
   );
 }
