@@ -26,15 +26,14 @@ export function useBuUsers() {
         .select(`
           user_id,
           role_in_bu,
-          profiles!inner(
+          profiles:user_id(
             id,
             display_name,
             work_email,
             photo_url
           )
         `)
-        .eq("bu_id", currentBuId)
-        .order("profiles(display_name)");
+        .eq("bu_id", currentBuId);
 
       if (error) throw error;
       return data as unknown as BuUser[];
