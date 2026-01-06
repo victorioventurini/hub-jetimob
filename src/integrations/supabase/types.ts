@@ -2484,6 +2484,36 @@ export type Database = {
         }
         Relationships: []
       }
+      okr_cancellation_reasons: {
+        Row: {
+          applies_to: string[] | null
+          code: string
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          label: string
+        }
+        Insert: {
+          applies_to?: string[] | null
+          code: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+        }
+        Update: {
+          applies_to?: string[] | null
+          code?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+        }
+        Relationships: []
+      }
       okr_checkins: {
         Row: {
           blockers: string | null
@@ -2817,10 +2847,61 @@ export type Database = {
         }
         Relationships: []
       }
+      okr_objective_reviews: {
+        Row: {
+          bu_id: string | null
+          changes_summary: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          objective_id: string
+          objective_type: string
+          review_type: string
+          reviewed_at: string
+          reviewed_by: string | null
+        }
+        Insert: {
+          bu_id?: string | null
+          changes_summary?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          objective_id: string
+          objective_type: string
+          review_type: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+        }
+        Update: {
+          bu_id?: string | null
+          changes_summary?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          objective_id?: string
+          objective_type?: string
+          review_type?: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_objective_reviews_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       okr_org_key_results: {
         Row: {
           baseline: number
           bu_id: string | null
+          cancellation_learning: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           current_value: number
           deleted_at: string | null
@@ -2838,6 +2919,10 @@ export type Database = {
         Insert: {
           baseline?: number
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           current_value?: number
           deleted_at?: string | null
@@ -2855,6 +2940,10 @@ export type Database = {
         Update: {
           baseline?: number
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           current_value?: number
           deleted_at?: string | null
@@ -2896,11 +2985,18 @@ export type Database = {
       okr_org_objectives: {
         Row: {
           bu_id: string | null
+          cancellation_learning: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
+          cycle_id: string | null
           deleted_at: string | null
           description: string | null
+          end_date: string | null
           id: string
           owner_user_id: string | null
+          start_date: string | null
           status: Database["public"]["Enums"]["okr_status"]
           title: string
           updated_at: string
@@ -2908,11 +3004,18 @@ export type Database = {
         }
         Insert: {
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
+          cycle_id?: string | null
           deleted_at?: string | null
           description?: string | null
+          end_date?: string | null
           id?: string
           owner_user_id?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
           title: string
           updated_at?: string
@@ -2920,11 +3023,18 @@ export type Database = {
         }
         Update: {
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
+          cycle_id?: string | null
           deleted_at?: string | null
           description?: string | null
+          end_date?: string | null
           id?: string
           owner_user_id?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
           title?: string
           updated_at?: string
@@ -2936,6 +3046,13 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "cycles"
             referencedColumns: ["id"]
           },
         ]
@@ -2983,6 +3100,10 @@ export type Database = {
         Row: {
           baseline: number
           bu_id: string | null
+          cancellation_learning: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           co_responsibles: string[] | null
           created_at: string
           current_value: number
@@ -3007,6 +3128,10 @@ export type Database = {
         Insert: {
           baseline?: number
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           co_responsibles?: string[] | null
           created_at?: string
           current_value?: number
@@ -3031,6 +3156,10 @@ export type Database = {
         Update: {
           baseline?: number
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           co_responsibles?: string[] | null
           created_at?: string
           current_value?: number
@@ -3185,15 +3314,23 @@ export type Database = {
       okr_team_objectives: {
         Row: {
           bu_id: string | null
+          cancellation_learning: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           cycle_id: string | null
+          cycle_type: string | null
           deleted_at: string | null
           description: string | null
           id: string
           is_shared: boolean
+          last_reviewed_at: string | null
+          next_review_due: string | null
           org_objective_id: string
           owner_user_id: string | null
           responsibility_model: string | null
+          review_notes: string | null
           status: Database["public"]["Enums"]["okr_status"]
           team_id: string
           title: string
@@ -3202,15 +3339,23 @@ export type Database = {
         }
         Insert: {
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           cycle_id?: string | null
+          cycle_type?: string | null
           deleted_at?: string | null
           description?: string | null
           id?: string
           is_shared?: boolean
+          last_reviewed_at?: string | null
+          next_review_due?: string | null
           org_objective_id: string
           owner_user_id?: string | null
           responsibility_model?: string | null
+          review_notes?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
           team_id: string
           title: string
@@ -3219,15 +3364,23 @@ export type Database = {
         }
         Update: {
           bu_id?: string | null
+          cancellation_learning?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           cycle_id?: string | null
+          cycle_type?: string | null
           deleted_at?: string | null
           description?: string | null
           id?: string
           is_shared?: boolean
+          last_reviewed_at?: string | null
+          next_review_due?: string | null
           org_objective_id?: string
           owner_user_id?: string | null
           responsibility_model?: string | null
+          review_notes?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
           team_id?: string
           title?: string
@@ -4830,7 +4983,7 @@ export type Database = {
       okr_metric_role: "primary" | "guardrail"
       okr_rag_status: "green" | "yellow" | "red" | "not_started"
       okr_report_frequency: "weekly" | "monthly" | "quarterly" | "event"
-      okr_status: "draft" | "active" | "completed" | "cancelled"
+      okr_status: "draft" | "active" | "completed" | "cancelled" | "discarded"
       partner_company_status: "active" | "inactive"
       partner_contact_status: "active" | "inactive"
       partner_service_status: "active" | "inactive"
@@ -5057,7 +5210,7 @@ export const Constants = {
       okr_metric_role: ["primary", "guardrail"],
       okr_rag_status: ["green", "yellow", "red", "not_started"],
       okr_report_frequency: ["weekly", "monthly", "quarterly", "event"],
-      okr_status: ["draft", "active", "completed", "cancelled"],
+      okr_status: ["draft", "active", "completed", "cancelled", "discarded"],
       partner_company_status: ["active", "inactive"],
       partner_contact_status: ["active", "inactive"],
       partner_service_status: ["active", "inactive"],

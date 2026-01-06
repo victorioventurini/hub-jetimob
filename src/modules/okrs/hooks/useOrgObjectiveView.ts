@@ -42,7 +42,7 @@ export interface OrgObjectiveWithKrs {
   title: string;
   description: string | null;
   year: number;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'discarded';
   aggregatedStatus: 'on_track' | 'at_risk' | 'off_track';
   aggregatedProgress: number;
   orgKrs: OrgKrWithTeamKrs[];
