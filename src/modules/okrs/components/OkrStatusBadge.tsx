@@ -23,6 +23,7 @@ const objectiveToStatusMap: Record<OkrStatus, string> = {
   active: 'active',
   completed: 'completed',
   cancelled: 'cancelled',
+  discarded: 'inactive',
 };
 
 export function OkrStatusBadge({ status, type = 'objective', className }: OkrStatusBadgeProps) {

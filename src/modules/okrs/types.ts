@@ -1,6 +1,6 @@
 // OKR Module Types
 
-export type OkrStatus = 'draft' | 'active' | 'completed' | 'cancelled';
+export type OkrStatus = 'draft' | 'active' | 'completed' | 'cancelled' | 'discarded';
 export type OkrRagStatus = 'green' | 'yellow' | 'red' | 'not_started';
 export type OkrKrType = 'contribution' | 'enabler' | 'foundational';
 export type OkrDirection = 'up' | 'down';
@@ -294,5 +294,7 @@ export function getStatusLabel(status: OkrStatus): string {
       return 'Concluído';
     case 'cancelled':
       return 'Cancelado';
+    case 'discarded':
+      return 'Descartado';
   }
 }
