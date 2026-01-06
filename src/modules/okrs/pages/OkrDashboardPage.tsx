@@ -39,6 +39,7 @@ interface OkrFiltersState {
   teamId?: string;
   parentTeamId?: string;
   statuses: OkrCalculatedStatus[];
+  sharedFilter?: 'all' | 'shared' | 'exclusive';
 }
 
 export default function OkrDashboardPage() {
@@ -60,6 +61,7 @@ export default function OkrDashboardPage() {
     teamId: { key: 'team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     parentTeamId: { key: 'parent_team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     statuses: { key: 'statuses', defaultValue: [] as OkrCalculatedStatus[], parse: (v) => v.split(',').filter(Boolean) as OkrCalculatedStatus[] },
+    sharedFilter: { key: 'shared', defaultValue: 'all' as 'all' | 'shared' | 'exclusive', parse: (v) => v as 'all' | 'shared' | 'exclusive' },
   });
   
   // Convert URL filters to component state format

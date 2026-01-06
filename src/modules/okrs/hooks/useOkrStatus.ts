@@ -12,37 +12,37 @@ interface StatusConfig {
 
 export const STATUS_CONFIG: Record<OkrCalculatedStatus, StatusConfig> = {
   on_track: {
-    label: 'On Track',
+    label: 'No Caminho',
     color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-500',
     borderColor: 'border-emerald-200 dark:border-emerald-800',
   },
   at_risk: {
-    label: 'At Risk',
+    label: 'Em Risco',
     color: 'text-amber-700 dark:text-amber-400',
     bgColor: 'bg-amber-500',
     borderColor: 'border-amber-200 dark:border-amber-800',
   },
   off_track: {
-    label: 'Off Track',
+    label: 'Fora do Caminho',
     color: 'text-red-700 dark:text-red-400',
     bgColor: 'bg-red-500',
     borderColor: 'border-red-200 dark:border-red-800',
   },
   not_started: {
-    label: 'Not Started',
+    label: 'Não Iniciado',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-400',
     borderColor: 'border-slate-200 dark:border-slate-700',
   },
   completed: {
-    label: 'Completed',
+    label: 'Concluído',
     color: 'text-blue-700 dark:text-blue-400',
     bgColor: 'bg-blue-500',
     borderColor: 'border-blue-200 dark:border-blue-800',
   },
   dropped: {
-    label: 'Dropped',
+    label: 'Descontinuado',
     color: 'text-slate-500 dark:text-slate-500',
     bgColor: 'bg-slate-300',
     borderColor: 'border-slate-200 dark:border-slate-700',
