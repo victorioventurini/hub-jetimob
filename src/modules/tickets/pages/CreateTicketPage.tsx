@@ -299,7 +299,7 @@ export default function CreateTicketPage() {
                           <RadioGroupItem value="internal" id="internal" className="sr-only" />
                           <span className="font-medium">Interno</span>
                           <span className="text-xs text-muted-foreground text-center mt-1">
-                            Entre usuários e times da BU
+                            Entre usuários e times da {currentBu?.name || "BU"}
                           </span>
                         </Label>
                         <Label
