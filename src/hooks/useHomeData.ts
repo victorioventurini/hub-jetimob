@@ -174,14 +174,15 @@ interface Birthday {
 }
 
 export function useBirthdays() {
+  const { currentBu } = useBu();
   const currentMonth = new Date().getMonth() + 1;
 
   return useQuery({
-    queryKey: ["birthdays", currentMonth],
+    queryKey: ["birthdays", currentBu?.id, currentMonth],
     queryFn: async (): Promise<Birthday[]> => {
-      console.log("[useBirthdays] Fetching birthdays for month:", currentMonth);
+      console.log("[useBirthdays] Fetching birthdays for month:", currentMonth, "bu:", currentBu?.id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("profiles")
         .select(
           `
@@ -200,9 +201,18 @@ export function useBirthdays() {
         .not("birth_day", "is", null)
         .order("birth_day", { ascending: true });
 
-      console.log("[useBirthdays] Query result:", { data, error });
+      if (currentBu?.id) {
+        query = query.eq("bu_id", currentBu.id);
+      }
 
-      if (error) throw error;
+      const { data, error } = await query;
+
+      console.log("[useBirthdays] Query result:", { data, error, count: data?.length });
+
+      if (error) {
+        console.error("[useBirthdays] Error:", error);
+        throw error;
+      }
 
       return (data || []).map((profile) => ({
         id: profile.id,
@@ -214,6 +224,7 @@ export function useBirthdays() {
         birthMonth: profile.birth_month!,
       }));
     },
+    enabled: true,
   });
 }
 
