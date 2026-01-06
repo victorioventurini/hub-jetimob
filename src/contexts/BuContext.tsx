@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BuUnit, UserBuMembership } from "@/modules/bu/types";
 import { useUserBus } from "@/modules/bu/hooks/useBuData";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ const BU_STORAGE_KEY = "hub_current_bu_id";
 const BU_SELECTED_KEY = "hub_bu_selected";
 
 export function BuProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
   const { data: userBus = [], isLoading: busLoading } = useUserBus();
   const [currentBuId, setCurrentBuId] = useState<string | null>(() => {
@@ -99,20 +101,27 @@ export function BuProvider({ children }: { children: ReactNode }) {
     }
   }, [user, authLoading]);
 
-  const selectBu = (buId: string) => {
+  const selectBu = useCallback((buId: string) => {
     const hasAccess = userBus.some(m => m.bu_id === buId);
     if (hasAccess) {
+      const isChanging = currentBuId !== buId;
       setCurrentBuId(buId);
       setBuSelected(true);
       localStorage.setItem(BU_STORAGE_KEY, buId);
       localStorage.setItem(BU_SELECTED_KEY, "true");
+      
+      // Invalidate all BU-scoped queries when changing BU
+      if (isChanging) {
+        console.log("[BuContext] BU changed, clearing query cache");
+        queryClient.clear();
+      }
     }
-  };
+  }, [userBus, currentBuId, queryClient]);
 
-  const switchBu = (buId: string) => {
+  const switchBu = useCallback((buId: string) => {
     // For switching between BUs - same as selectBu but semantically different
     selectBu(buId);
-  };
+  }, [selectBu]);
 
   const clearBuSelection = () => {
     setCurrentBuId(null);
