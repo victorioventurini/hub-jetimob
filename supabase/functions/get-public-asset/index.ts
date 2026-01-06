@@ -28,8 +28,24 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch asset by internal_code
-    const { data: assets, error: assetError } = await supabase
+    // Use the RPC function to resolve asset by code (handles normalization)
+    const { data: resolvedAsset, error: resolveError } = await supabase.rpc(
+      "resolve_asset_by_code_global",
+      { code_text: ref }
+    );
+
+    if (resolveError || !resolvedAsset || resolvedAsset.length === 0) {
+      console.error("Error resolving asset:", resolveError);
+      return new Response(
+        JSON.stringify({ error: "Item não encontrado" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { asset_id, bu_id: resolved_bu_id } = resolvedAsset[0];
+
+    // Fetch full asset details
+    const { data: assetData, error: assetError } = await supabase
       .from("asset_inventory")
       .select(`
         id,
@@ -44,55 +60,38 @@ serve(async (req) => {
         last_moved_at,
         bu_id
       `)
-      .eq("internal_code", ref)
-      .is("deleted_at", null);
+      .eq("id", asset_id)
+      .maybeSingle();
 
-    if (assetError || !assets || assets.length === 0) {
-      console.error("Error fetching asset:", assetError);
+    if (assetError || !assetData) {
+      console.error("Error fetching asset details:", assetError);
       return new Response(
         JSON.stringify({ error: "Item não encontrado" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch BU info for each asset and filter by active BUs
-    const validAssets: any[] = [];
-    for (const assetItem of assets) {
-      const { data: buData } = await supabase
-        .from("bu_units")
-        .select("id, name, legal_entity, cnpj, status")
-        .eq("id", assetItem.bu_id)
-        .eq("status", "active")
-        .maybeSingle();
-      
-      if (buData) {
-        validAssets.push({ ...assetItem, bu: buData });
-      }
-    }
+    // Fetch BU info
+    const { data: buData, error: buError } = await supabase
+      .from("bu_units")
+      .select("id, name, legal_entity, cnpj, status")
+      .eq("id", assetData.bu_id)
+      .eq("status", "active")
+      .maybeSingle();
 
-    if (validAssets.length === 0) {
+    if (buError || !buData) {
+      console.error("Error fetching BU:", buError);
       return new Response(
         JSON.stringify({ error: "Item não encontrado" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Security: if multiple matches across BUs, log and return not found
-    if (validAssets.length > 1) {
-      console.warn(`Multiple assets found with internal_code ${ref} across active BUs`);
-      return new Response(
-        JSON.stringify({ error: "Item não encontrado" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const asset = validAssets[0];
 
     // Get latest movement for due_at
     const { data: latestMovement } = await supabase
       .from("asset_movements")
       .select("due_at, occurred_at")
-      .eq("asset_id", asset.id)
+      .eq("asset_id", assetData.id)
       .order("occurred_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -104,7 +103,7 @@ serve(async (req) => {
     const { data: groupItemData } = await supabase
       .from("asset_group_items")
       .select("group_id, role")
-      .eq("asset_id", asset.id)
+      .eq("asset_id", assetData.id)
       .is("deleted_at", null)
       .maybeSingle();
 
@@ -124,7 +123,7 @@ serve(async (req) => {
           .from("asset_group_items")
           .select("asset_id, role")
           .eq("group_id", groupData.id)
-          .neq("asset_id", asset.id)
+          .neq("asset_id", assetData.id)
           .is("deleted_at", null);
 
         if (kitItems && kitItems.length > 0) {
@@ -139,13 +138,13 @@ serve(async (req) => {
           if (kitAssets) {
             relatedItems = kitItems
               .map(ki => {
-                const assetData = kitAssets.find(a => a.id === ki.asset_id);
-                if (!assetData) return null;
+                const kitAsset = kitAssets.find(a => a.id === ki.asset_id);
+                if (!kitAsset) return null;
                 return {
-                  name: assetData.name,
-                  internal_code: assetData.internal_code,
-                  status: assetData.status,
-                  photo: sanitizePhotos(assetData.photos)?.[0] || null,
+                  name: kitAsset.name,
+                  internal_code: kitAsset.internal_code,
+                  status: kitAsset.status,
+                  photo: sanitizePhotos(kitAsset.photos)?.[0] || null,
                   role: ki.role,
                 };
               })
@@ -156,32 +155,32 @@ serve(async (req) => {
     }
 
     // Sanitize holder info
-    const holderSummary = getHolderSummary(asset.current_holder_type, asset.status);
+    const holderSummary = getHolderSummary(assetData.current_holder_type, assetData.status);
 
     // Build sanitized response
     const publicView = {
       asset: {
-        id: asset.id,
-        name: asset.name,
-        internal_code: asset.internal_code,
-        description: asset.description,
-        brand: asset.brand,
-        model: asset.model,
-        status: asset.status,
-        photos: sanitizePhotos(asset.photos),
+        id: assetData.id,
+        name: assetData.name,
+        internal_code: assetData.internal_code,
+        description: assetData.description,
+        brand: assetData.brand,
+        model: assetData.model,
+        status: assetData.status,
+        photos: sanitizePhotos(assetData.photos),
         holder_summary: holderSummary,
-        due_at: asset.status === "loaned" ? latestMovement?.due_at : null,
-        last_moved_at: asset.last_moved_at,
+        due_at: assetData.status === "loaned" ? latestMovement?.due_at : null,
+        last_moved_at: assetData.last_moved_at,
       },
       bu: {
-        id: asset.bu_id, // Include BU ID for internal link generation
-        name: asset.bu.name,
-        legal_entity: asset.bu.legal_entity,
-        cnpj: formatCnpj(asset.bu.cnpj),
+        id: assetData.bu_id,
+        name: buData.name,
+        legal_entity: buData.legal_entity,
+        cnpj: formatCnpj(buData.cnpj),
       },
       related_items: relatedItems,
       // Internal view path - uses /go resolver to ensure correct BU is selected
-      internal_view_path: `/go/asset/${asset.id}`,
+      internal_view_path: `/go/asset/${assetData.id}`,
     };
 
     return new Response(JSON.stringify(publicView), {

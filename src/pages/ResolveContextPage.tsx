@@ -14,8 +14,11 @@ type EntityType =
   | "ticket" 
   | "okr_org_objective" 
   | "okr_team_objective"
+  | "okr_org_kr"
+  | "okr_team_kr"
   | "keyring"
-  | "gift";
+  | "gift"
+  | "kpi";
 
 interface EntityConfig {
   targetPath: (id: string) => string;
@@ -47,6 +50,14 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
     targetPath: (id) => `/okrs/team/${id}`,
     label: "objetivo de time",
   },
+  okr_org_kr: {
+    targetPath: (id) => `/okrs/org/kr/${id}`,
+    label: "KR organizacional",
+  },
+  okr_team_kr: {
+    targetPath: (id) => `/okrs/team/kr/${id}`,
+    label: "KR de time",
+  },
   keyring: {
     targetPath: (id) => `/assets/keys?keyring=${id}`,
     label: "chaveiro",
@@ -54,6 +65,10 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
   gift: {
     targetPath: (id) => `/assets/gifts?item=${id}`,
     label: "brinde",
+  },
+  kpi: {
+    targetPath: (id) => `/kpis?metric=${id}`,
+    label: "KPI",
   },
 };
 
@@ -118,6 +133,30 @@ async function resolveBuId(entity: EntityType, id: string): Promise<string | nul
     case "gift": {
       const { data } = await supabase
         .from("asset_gift_items")
+        .select("bu_id")
+        .eq("id", id)
+        .maybeSingle();
+      return data?.bu_id ?? null;
+    }
+    case "okr_org_kr": {
+      const { data } = await supabase
+        .from("okr_org_key_results")
+        .select("bu_id")
+        .eq("id", id)
+        .maybeSingle();
+      return data?.bu_id ?? null;
+    }
+    case "okr_team_kr": {
+      const { data } = await supabase
+        .from("okr_team_key_results")
+        .select("bu_id")
+        .eq("id", id)
+        .maybeSingle();
+      return data?.bu_id ?? null;
+    }
+    case "kpi": {
+      const { data } = await supabase
+        .from("kpi_metrics")
         .select("bu_id")
         .eq("id", id)
         .maybeSingle();
