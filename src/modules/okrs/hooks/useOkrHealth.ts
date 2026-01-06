@@ -84,7 +84,7 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
       // Parse suggested_actions from JSONB
       return (data || []).map(insight => ({
         ...insight,
-        suggested_actions: insight.suggested_actions as OkrInsight['suggested_actions'],
+        suggested_actions: insight.suggested_actions as unknown as OkrInsight['suggested_actions'],
       })) as OkrInsight[];
     },
     enabled: !!currentBuId && !!scopeId,
@@ -199,7 +199,7 @@ export function useDashboardInsights(limit = 10) {
       if (error) throw error;
       return (data || []).map(insight => ({
         ...insight,
-        suggested_actions: insight.suggested_actions as OkrInsight['suggested_actions'],
+        suggested_actions: insight.suggested_actions as unknown as OkrInsight['suggested_actions'],
       })) as OkrInsight[];
     },
     enabled: !!currentBuId,
