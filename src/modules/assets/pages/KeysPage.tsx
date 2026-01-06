@@ -18,7 +18,7 @@ export default function KeysPage() {
   const [search, setSearch] = useState("");
   const [clavicularyDialogOpen, setClavicularyDialogOpen] = useState(false);
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("clavicularies");
+  const [activeTab, setActiveTab] = useState("keyrings");
 
   const filteredClavicularies = clavicularies.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
@@ -77,11 +77,11 @@ export default function KeysPage() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="clavicularies">
-            Claviculários ({filteredClavicularies.length})
-          </TabsTrigger>
           <TabsTrigger value="keyrings">
             Chaveiros ({filteredKeyrings.length})
+          </TabsTrigger>
+          <TabsTrigger value="clavicularies">
+            Claviculários ({filteredClavicularies.length})
           </TabsTrigger>
         </TabsList>
 
