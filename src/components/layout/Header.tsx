@@ -32,7 +32,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const isSettingsPage = location.pathname.startsWith("/settings");
+  const isHubPage = location.pathname.startsWith("/hub");
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -55,7 +55,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
       className={cn(
         "fixed top-0 right-0 z-30 h-16 bg-card/80 backdrop-blur-md border-b border-border",
         "transition-all duration-300 ease-in-out",
-        isSettingsPage 
+        isHubPage 
           ? "left-0" 
           : cn("left-0 lg:left-64", sidebarCollapsed && "lg:left-20")
       )}
@@ -73,8 +73,8 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
         {/* Right section */}
         <div className="flex items-center gap-2">
-          {/* BU Selector - Show button on settings, dropdown elsewhere */}
-          {isSettingsPage ? (
+          {/* BU Selector - Show button on hub, dropdown elsewhere */}
+          {isHubPage ? (
             <Button 
               variant="outline" 
               size="sm" 
@@ -125,7 +125,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
               </DropdownMenuItem>
               {role === "super_admin" && (
                 <DropdownMenuItem asChild>
-                  <Link to="/settings" className="cursor-pointer">
+                  <Link to="/hub" className="cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />
                     Configurações
                   </Link>

@@ -232,7 +232,7 @@ export default function SettingsHome() {
         <h2 className="text-lg font-semibold mb-4">Configurações da Plataforma</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <QuickAccessCard
-            to="/settings/business-units"
+            to="/hub/business-units"
             icon={Building2}
             iconBgColor="bg-green-500/10 text-green-500"
             title="Business Units"
@@ -241,7 +241,7 @@ export default function SettingsHome() {
             loading={busLoading}
           />
           <QuickAccessCard
-            to="/settings/modules"
+            to="/hub/modules"
             icon={Blocks}
             iconBgColor="bg-purple-500/10 text-purple-500"
             title="Módulos"
@@ -250,7 +250,7 @@ export default function SettingsHome() {
             loading={modulesLoading}
           />
           <QuickAccessCard
-            to="/settings/integrations"
+            to="/hub/integrations"
             icon={Puzzle}
             iconBgColor="bg-orange-500/10 text-orange-500"
             title="Integrações"
@@ -297,7 +297,7 @@ export default function SettingsHome() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Link
-              to="/settings/business-units"
+              to="/hub/business-units"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export default function SettingsHome() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
             <Link
-              to="/settings/modules"
+              to="/hub/modules"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function SettingsHome() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
             <Link
-              to="/settings/integrations"
+              to="/hub/integrations"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">

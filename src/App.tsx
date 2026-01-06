@@ -191,9 +191,9 @@ const App = () => (
                       }
                     />
 
-                    {/* ===== SETTINGS (Admin Global) ===== */}
+                    {/* ===== HUB (Admin Global) ===== */}
                     <Route
-                      path="/settings"
+                      path="/hub"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -205,7 +205,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/business-units"
+                      path="/hub/business-units"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -217,7 +217,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/modules"
+                      path="/hub/modules"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -229,7 +229,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/integrations"
+                      path="/hub/integrations"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -241,7 +241,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/integrations/:integrationKey"
+                      path="/hub/integrations/:integrationKey"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -254,7 +254,7 @@ const App = () => (
                     />
                     {/* IMPORTANTE: /agents/new DEVE vir ANTES de /agents/:agentId */}
                     <Route
-                      path="/settings/integrations/:integrationKey/agents/new"
+                      path="/hub/integrations/:integrationKey/agents/new"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -266,7 +266,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/integrations/:integrationKey/agents/:agentId"
+                      path="/hub/integrations/:integrationKey/agents/:agentId"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -278,7 +278,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/integrations/:integrationKey/agents"
+                      path="/hub/integrations/:integrationKey/agents"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -290,7 +290,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/integrations/:integrationKey/logs"
+                      path="/hub/integrations/:integrationKey/logs"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -302,7 +302,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/okrs"
+                      path="/hub/okrs"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
@@ -314,7 +314,7 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/settings/automations"
+                      path="/hub/automations"
                       element={
                         <ProtectedRoute skipBuCheck>
                           <AdminRoute>
