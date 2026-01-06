@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Package, Calendar, ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -27,13 +26,6 @@ const statusLabels: Record<string, string> = {
   loaned: "Emprestado",
   maintenance: "Em Manutenção",
   written_off: "Baixado",
-};
-
-const statusColors: Record<string, string> = {
-  available: "bg-green-500/10 text-green-700 border-green-200",
-  loaned: "bg-blue-500/10 text-blue-700 border-blue-200",
-  maintenance: "bg-amber-500/10 text-amber-700 border-amber-200",
-  written_off: "bg-gray-500/10 text-gray-700 border-gray-200",
 };
 
 const holderLabels: Record<string, string> = {
@@ -141,12 +133,10 @@ export default function PublicAsset() {
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">
                   #{asset.internal_code}
                 </span>
-                <Badge 
-                  variant="outline" 
-                  className={cn(statusColors[asset.status])}
-                >
-                  {statusLabels[asset.status] || asset.status}
-                </Badge>
+                <StatusBadge 
+                  status={asset.status}
+                  customLabel={statusLabels[asset.status] || asset.status}
+                />
               </div>
               <CardTitle className="text-xl">{asset.name}</CardTitle>
             </div>

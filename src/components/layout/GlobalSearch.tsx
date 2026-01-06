@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StatusDot } from "@/components/ui/status-badge";
 import {
   Search,
   User,
@@ -49,21 +50,22 @@ const iconMap: Record<string, React.ElementType> = {
   "package-open": PackageOpen,
 };
 
-const statusColors: Record<string, string> = {
-  green: "bg-emerald-500",
-  yellow: "bg-yellow-500",
-  red: "bg-red-500",
-  not_started: "bg-muted",
-  active: "bg-emerald-500",
-  draft: "bg-muted",
-  available: "bg-emerald-500",
-  loaned: "bg-yellow-500",
-  maintenance: "bg-orange-500",
-  written_off: "bg-red-500",
-  checked_out: "bg-yellow-500",
-  lost: "bg-red-500",
-  disabled: "bg-muted",
-  discontinued: "bg-muted",
+// Map search statuses to shared StatusBadge statuses
+const statusMapping: Record<string, string> = {
+  green: "on_track",
+  yellow: "at_risk",
+  red: "off_track",
+  not_started: "not_started",
+  active: "active",
+  draft: "draft",
+  available: "available",
+  loaned: "loaned",
+  maintenance: "maintenance",
+  written_off: "written_off",
+  checked_out: "loaned",
+  lost: "lost",
+  disabled: "inactive",
+  discontinued: "inactive",
 };
 
 interface GlobalSearchProps {
@@ -107,8 +109,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 
   const renderResultItem = (result: SearchResult) => {
     const IconComponent = iconMap[result.icon] || Package;
-    const status = result.meta?.status as string;
-    const statusColor = status ? statusColors[status] : undefined;
+    const rawStatus = result.meta?.status as string;
+    const mappedStatus = rawStatus ? statusMapping[rawStatus] || rawStatus : undefined;
 
     // Special rendering for people with avatar
     if (result.type === "people") {
@@ -152,9 +154,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-medium truncate">{result.title}</p>
-            {statusColor && (
-              <span className={cn("h-2 w-2 rounded-full", statusColor)} />
-            )}
+            {mappedStatus && <StatusDot status={mappedStatus} size="sm" />}
           </div>
           <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
         </div>

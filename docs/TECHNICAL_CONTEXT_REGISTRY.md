@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.3.0  
+**Versão:** 1.4.0  
 **Última atualização:** 2026-01-06  
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1232,7 +1232,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.3.0 |
+| **Versão do TCR** | 1.4.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1240,6 +1240,21 @@ src/
 ---
 
 ## Changelog
+
+### v1.4.0 (2026-01-06)
+- **Otimização Geral do Hub** (hardening + refactor):
+  - **Componentes compartilhados**: `StatusBadge`, `StatusDot`, `LoadingState`, `LoadingSpinner`, `SkeletonCard`, `SkeletonList`, `SkeletonTable`, `ErrorState`, `FilterBar`, `PageHeader`
+  - **Query Keys centralizadas**: `src/lib/queryKeys.ts` com padrões consistentes por módulo
+  - **Índices de banco**: 23 novos índices para performance (profiles, teams, okrs, assets, tickets, notifications, memberships)
+  - **Security Hardening**: RLS policies corrigidas para exigir autenticação e membership de BU em tabelas sensíveis (profiles, ai_agents, okr_*, teams, squads, asset_inventory, kpi_*, hub_integrations_catalog)
+  - **Migrações de componentes**: InventoryCard, InventoryListItem, PublicAsset, GlobalSearch agora usam StatusBadge/StatusDot centralizados
+- **Findings de segurança resolvidos**:
+  - Dados de profiles restritos à mesma BU
+  - AI agents requerem autenticação
+  - OKRs, Times, Squads restritos por BU
+  - Assets inventory restrito por BU (com acesso público limitado para QR codes)
+  - KPIs restritos por BU
+  - Catálogo de integrações restrito a admins
 
 ### v1.3.0 (2026-01-06)
 - **Home Dashboard** melhorado:
