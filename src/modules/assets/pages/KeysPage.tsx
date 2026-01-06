@@ -11,10 +11,12 @@ import { KeyringDialog } from "../components/keys/KeyringDialog";
 import { useUrlState } from "@/hooks/useUrlState";
 
 export default function KeysPage() {
-  const { keyrings, isLoading } = useKeys();
-  const { canManageKeys } = useAssetPermissions();
+  const { keyrings, isLoading: isLoadingKeys } = useKeys();
+  const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissions();
   const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
+
+  const isLoading = isLoadingKeys || isLoadingPermissions;
 
   const filteredKeyrings = keyrings.filter(
     (k) =>
