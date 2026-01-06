@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.5.0  
+**Versão:** 1.6.0  
 **Última atualização:** 2026-01-06  
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -509,7 +509,56 @@ Bens patrimoniais rastreáveis.
 
 **Escopo:** Por BU
 
-**URL pública:** `https://hub.jetimob.com/assets/{id}` (dados sanitizados)
+**URL pública:** `https://hub.jetimob.com/assets/{internal_code}` (dados sanitizados via Edge Function `get-public-asset`)
+
+---
+
+#### **asset_groups** — Kits de Inventário
+Agrupamento de itens (kits de notebook + acessórios).
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | FK para bu_units |
+| name | text | Nome do kit |
+| primary_asset_id | uuid | FK para asset_inventory (item principal) |
+| type | enum | `kit`, `bundle` |
+| notes | text | Observações |
+| status | enum | `active`, `inactive` |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data de atualização |
+| deleted_at | timestamp | Soft delete |
+
+**Escopo:** Por BU
+
+**Regras:**
+- Um item pode pertencer a apenas 1 kit ativo por vez
+- `primary_asset_id` deve existir em `asset_group_items` com role `primary`
+- Trigger `sync_primary_asset_id` mantém consistência automática
+
+---
+
+#### **asset_group_items** — Itens de Kits
+Vínculo entre itens de inventário e kits.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | FK para bu_units |
+| group_id | uuid | FK para asset_groups |
+| asset_id | uuid | FK para asset_inventory |
+| role | enum | `primary`, `accessory` |
+| is_required | bool | Se é obrigatório (checkout junto) |
+| quantity | int | Quantidade (default 1) |
+| notes | text | Observações |
+| deleted_at | timestamp | Soft delete |
+
+**Escopo:** Por BU
+
+**Regras:**
+- Índice único: `(asset_id)` onde `deleted_at IS NULL` e kit `active`
+- Item não pode estar em 2 kits ativos simultaneamente
+- Acessórios `is_required = true` são incluídos automaticamente no checkout do primário
 
 ---
 
@@ -923,6 +972,37 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - O usuário pode alternar entre BUs no seletor
 - Ao trocar de BU, todos os dados são recarregados
 
+### 4.3 BU Aware Routing
+
+```
+⚠️ REGRA: Toda rota operacional deve ser bu-scoped: /bu/:buId/...
+```
+
+**Padrão de URLs:**
+- `/bu/{buId}/assets/inventory/{assetId}`
+- `/bu/{buId}/okrs`
+- `/bu/{buId}/teams/{teamId}`
+- `/bu/{buId}/users/{userId}`
+- `/bu/{buId}/tickets/{ticketId}`
+
+**Helpers obrigatórios:**
+- `getBuScopedPath(buId, path)` — gera links com BU
+- `useBuRouting()` — hook para navegação bu-aware
+- `useRequiredBuId()` — exige BU ou bloqueia UI
+
+**Componentes:**
+- `BuScopedRoute` — guard que valida acesso e sincroniza contexto
+- Invalida TanStack Query ao mudar BU
+
+**Links internos:**
+- SEMPRE usar `getBuScopedPath()` para gerar links
+- PROIBIDO usar links relativos como `/assets/...` fora de `/bu/:buId/`
+- Páginas públicas montam link interno com `bu_id` do recurso (não do usuário)
+
+**Migração:**
+- Rotas legadas (ex: `/assets/inventory/:id`) redirecionam para versão bu-scoped
+- Redirect resolve `bu_id` do recurso via query segura
+
 ### 4.3 Limites de OKRs
 
 - **Máximo 3 objetivos ativos** por time
@@ -991,9 +1071,16 @@ function calculateProgress(baseline, current, target, direction) {
 ### 4.10 Regras do Módulo Assets
 
 **Inventário:**
-- URL pública sanitizada: `https://hub.jetimob.com/assets/{id}`
+- URL pública sanitizada: `https://hub.jetimob.com/assets/{internal_code}`
+- Edge Function `get-public-asset` retorna dados sanitizados
 - Visão pública NÃO exibe: nota fiscal, documentos, valor, serial, nome do colaborador
 - Movimentações atualizam status automaticamente
+
+**Kits:**
+- Checkout de item `primary` pode incluir acessórios `is_required = true`
+- Ao emprestar primário + acessórios: todos vão para mesmo holder
+- Bloqueio se acessório obrigatório estiver em posse de outro usuário/local
+- Validação via função `get_kit_required_accessories(asset_id)`
 
 **Chaves:**
 - `hook_number` deve bater com `tag_number` do chaveiro ao devolver
@@ -1107,6 +1194,7 @@ function calculateProgress(baseline, current, target, direction) {
 | `process-agent-document` | Processa documentos para RAG |
 | `get-tcr` | Retorna TCR para Custom GPT |
 | `global-search` | Busca multi-contexto (ver seção 8.1) |
+| `get-public-asset` | Retorna dados sanitizados de asset por `internal_code` (público, sem JWT) |
 
 ### 8.1 Global Search
 
@@ -1128,6 +1216,7 @@ A Edge Function `global-search` implementa busca agregada multi-contexto com sup
 | `assets_keys` | asset_keys | tag_number, description |
 | `assets_gift_items` | asset_gift_items | name, category |
 | `assets_gift_batches` | asset_gift_batches | batch_code, campaign |
+| `assets_kits` | asset_groups | name |
 
 **Segurança:**
 - Valida JWT (usuário autenticado)
@@ -1232,7 +1321,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.5.0 |
+| **Versão do TCR** | 1.6.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1240,6 +1329,33 @@ src/
 ---
 
 ## Changelog
+
+### v1.6.0 (2026-01-06)
+- **Kits de Inventário** implementados:
+  - Novas tabelas: `asset_groups`, `asset_group_items`
+  - Enums: `asset_group_type`, `asset_group_status`, `asset_group_item_role`
+  - Triggers para sincronização automática de `primary_asset_id`
+  - Função `get_kit_required_accessories(asset_id)` para checkout integrado
+  - Componentes: `KitSection`, `CreateKitDialog`, `AddToKitDialog`, `KitCheckoutInfo`
+  - Hook: `useAssetGroups` para CRUD de kits
+  - Busca global inclui kits (`assets_kits`)
+- **Página Pública de Assets** aprimorada:
+  - Edge Function `get-public-asset` retorna dados sanitizados (sem JWT)
+  - Campos públicos: name, internal_code, status, photos, holder_summary, due_at, last_moved_at
+  - Dados da BU: name, legal_entity, cnpj
+  - Itens relacionados (kit) sanitizados
+  - Nunca expõe: serial_number, acquisition_value, documents, current_user_id, nomes
+  - Rota `/assets/:code` compatível com QR codes existentes
+- **BU Aware Routing** implementado:
+  - Padrão de rotas: `/bu/:buId/{moduleRoute...}` para todos os módulos operacionais
+  - Helper: `getBuScopedPath(buId, path)` em `src/lib/buRouting.ts`
+  - Hook: `useBuRouting()` e `useRequiredBuId()` em `src/hooks/useBuRouting.ts`
+  - Guard: `BuScopedRoute` valida acesso à BU e sincroniza contexto
+  - Invalidação automática de TanStack Query ao trocar BU
+  - Links internos sempre usam BU explícita na URL
+  - Página pública monta link interno com `bu_id` do asset
+  - Rotas legadas redirecionam para versão bu-scoped
+  - Módulos cobertos: assets, okrs, teams, users, tickets
 
 ### v1.5.0 (2026-01-06)
 - **Migração de componentes para padrão centralizado**:
