@@ -174,13 +174,12 @@ interface Birthday {
 }
 
 export function useBirthdays() {
-  const { currentBu } = useBu();
   const currentMonth = new Date().getMonth() + 1;
 
   return useQuery({
-    queryKey: ["birthdays", currentBu?.id, currentMonth],
+    queryKey: ["birthdays", currentMonth],
     queryFn: async (): Promise<Birthday[]> => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select(
           `
@@ -198,12 +197,6 @@ export function useBirthdays() {
         .eq("birth_month", currentMonth)
         .not("birth_day", "is", null)
         .order("birth_day", { ascending: true });
-
-      if (currentBu?.id) {
-        query = query.eq("bu_id", currentBu.id);
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
 
