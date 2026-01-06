@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.0.0  
+**Versão:** 2.1.0  
 **Última atualização:** 2026-01-06
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -971,38 +971,128 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - Um usuário pode pertencer a múltiplas BUs
 - Cada usuário tem uma BU padrão (`is_default = true`)
 - O usuário pode alternar entre BUs no seletor
-- Ao trocar de BU, todos os dados são recarregados
+- Ao trocar de BU, todos os dados são recarregados (cache do TanStack Query é limpo)
 
-### 4.3 BU Aware Routing
+### 4.3 Padrão de Links e URLs (v2.1+)
 
 ```
-⚠️ REGRA: Toda rota operacional deve ser bu-scoped: /bu/:buId/...
+⚠️ REGRA: URLs operacionais NÃO contêm buId. BU ativa vem do contexto de sessão.
 ```
 
-**Padrão de URLs:**
-- `/bu/{buId}/assets/inventory/{assetId}`
-- `/bu/{buId}/okrs`
-- `/bu/{buId}/teams/{teamId}`
-- `/bu/{buId}/users/{userId}`
-- `/bu/{buId}/tickets/{ticketId}`
+#### Rotas Operacionais (Sem buId na URL)
 
-**Helpers obrigatórios:**
-- `getBuScopedPath(buId, path)` — gera links com BU
-- `useBuRouting()` — hook para navegação bu-aware
-- `useRequiredBuId()` — exige BU ou bloqueia UI
+| Rota | Descrição |
+|------|-----------|
+| `/` | Home (BU ativa) |
+| `/okrs` | Dashboard de OKRs |
+| `/kpis` | Dashboard de KPIs |
+| `/teams`, `/teams/:id` | Times |
+| `/users`, `/users/:id` | Usuários |
+| `/tickets`, `/tickets/:id` | Tickets |
+| `/assets/inventory`, `/assets/inventory/:id` | Inventário |
+| `/assets/keys` | Chaves |
+| `/assets/gifts` | Brindes |
+| `/settings/*` | Configurações |
 
-**Componentes:**
-- `BuScopedRoute` — guard que valida acesso e sincroniza contexto
-- Invalida TanStack Query ao mudar BU
+#### Links Compartilháveis (Padrão Oficial)
 
-**Links internos:**
-- SEMPRE usar `getBuScopedPath()` para gerar links
-- PROIBIDO usar links relativos como `/assets/...` fora de `/bu/:buId/`
-- Páginas públicas montam link interno com `bu_id` do recurso (não do usuário)
+```
+⚠️ REGRA: TODO link externo, compartilhável, notificação ou busca global DEVE usar /go/:entity/:id
+```
 
-**Migração:**
-- Rotas legadas (ex: `/assets/inventory/:id`) redirecionam para versão bu-scoped
-- Redirect resolve `bu_id` do recurso via query segura
+**Helper centralizado:** `src/lib/shareableLinks.ts`
+
+```typescript
+import { getShareableUrl, getShareableAbsoluteUrl } from '@/lib/shareableLinks';
+
+// Retorna: /go/asset/uuid-aqui
+getShareableUrl('asset', assetId);
+
+// Retorna: https://hub.jetimob.com/go/asset/uuid-aqui  
+getShareableAbsoluteUrl('asset', assetId);
+```
+
+**Entidades suportadas:**
+| Entity | Rota Interna | Uso |
+|--------|--------------|-----|
+| `asset` | `/assets/inventory/:id` | Itens de inventário |
+| `team` | `/teams/:id` | Times |
+| `user` | `/users/:id` | Usuários |
+| `ticket` | `/tickets/:id` | Tickets |
+| `okr_org_objective` | `/okrs/org/:id` | Objetivos organizacionais |
+| `okr_team_objective` | `/okrs/team/:id` | Objetivos de time |
+| `okr_org_kr` | `/okrs/org/kr/:id` | KRs organizacionais |
+| `okr_team_kr` | `/okrs/team/kr/:id` | KRs de time |
+| `keyring` | `/assets/keys/keyring/:id` | Chaveiros |
+| `gift` | `/assets/gifts/:id` | Brindes |
+| `kpi` | `/kpis/:id` | KPIs |
+
+**Onde usar:**
+- ✅ Busca global (GlobalSearch)
+- ✅ Notificações (context_url)
+- ✅ E-mails
+- ✅ Menções
+- ✅ Botões "Copiar link"
+- ✅ QR Codes (novos)
+- ✅ Automações/webhooks
+
+**Proibido:**
+- ❌ Links diretos como `/assets/inventory/uuid` em contexto compartilhável
+- ❌ Incluir buId na URL
+
+#### Rota Resolvedora: `/go/:entity/:id`
+
+Componente: `src/pages/ResolveContextPage.tsx`
+
+**Fluxo:**
+1. Valida entidade e ID
+2. Busca `bu_id` do recurso no Supabase
+3. Verifica acesso do usuário via `user_has_bu_access()`
+4. Seta `currentBuId` no contexto (limpa cache do React Query)
+5. Redireciona para rota interna
+
+**Se sem acesso:** Exibe tela de erro "Sem permissão"
+
+#### Compatibilidade com QR Codes Físicos (LEGADO)
+
+```
+⚠️ CRÍTICO: A rota /assets/:code NUNCA pode ser quebrada (etiquetas já impressas)
+```
+
+| Rota | Usuário Logado | Usuário Não Logado |
+|------|----------------|-------------------|
+| `/assets/0146` | Resolve BU → redireciona para `/go/asset/:uuid` | Renderiza `/p/assets/0146` (público) |
+| `/p/assets/0146` | Página pública | Página pública |
+
+**Componente:** `src/pages/PublicAssetRedirect.tsx`
+
+**SQL Functions:**
+```sql
+-- Normaliza código (remove não-dígitos, aplica LPAD 4)
+normalize_asset_code(code_text text) → text
+
+-- Resolve asset por código dentro de uma BU
+resolve_asset_by_code_for_bu(p_bu_id uuid, code_text text) → uuid
+
+-- Resolve asset globalmente (retorna asset_id + bu_id)
+resolve_asset_by_code_global(code_text text) → (asset_id uuid, bu_id uuid)
+```
+
+**Índice obrigatório:**
+```sql
+UNIQUE (bu_id, internal_code) WHERE deleted_at IS NULL
+```
+
+#### Contexto de BU (Sessão)
+
+**Fonte única:** `BuContext` (`src/contexts/BuContext.tsx`)
+
+- `currentBuId`: BU ativa do usuário
+- `setCurrentBuId(buId)`: Troca BU e limpa cache do TanStack Query
+- `availableBus`: BUs do usuário
+- Persistência: `localStorage.setItem('hub.currentBuId', buId)`
+
+**Guard:** `EnsureBuSelected` (se não há BU selecionada, redireciona para `/select-bu`)
 
 ### 4.3 Limites de OKRs
 
@@ -1322,7 +1412,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.0.0 |
+| **Versão do TCR** | 2.1.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1330,6 +1420,17 @@ src/
 ---
 
 ## Changelog
+
+### v2.1.0 (2026-01-06) — TCR Consolidation
+- **Documentação consolidada** do novo padrão de links:
+  - Seção 4.3 reescrita para refletir remoção de `buId` da URL
+  - Tabela completa de entidades suportadas pelo `/go/:entity/:id`
+  - Documentação do helper `getShareableUrl()` e `getShareableAbsoluteUrl()`
+  - Regras claras de onde usar links compartilháveis vs internos
+  - Fluxo detalhado do `ResolveContextPage`
+  - Documentação das SQL functions para códigos de assets
+- **Contexto de BU** documentado como fonte única de verdade
+- **Removidas referências obsoletas** a `/bu/:buId/` nas rotas
 
 ### v2.0.0 (2026-01-06) — Link Standard Refactoring
 - **Padrão Oficial de Links Compartilháveis**:
