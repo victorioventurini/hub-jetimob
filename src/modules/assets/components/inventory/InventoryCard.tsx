@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,8 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { MapPin, User, Package, MoreVertical, Copy } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { AssetInventory } from "../../types";
 import { INVENTORY_STATUS_LABELS } from "../../types";
 
@@ -16,13 +15,6 @@ interface InventoryCardProps {
   item: AssetInventory;
   onClone?: (item: AssetInventory) => void;
 }
-
-const statusColors: Record<string, string> = {
-  available: "bg-green-500/10 text-green-700 border-green-200",
-  loaned: "bg-blue-500/10 text-blue-700 border-blue-200",
-  maintenance: "bg-amber-500/10 text-amber-700 border-amber-200",
-  written_off: "bg-gray-500/10 text-gray-700 border-gray-200",
-};
 
 export function InventoryCard({ item, onClone }: InventoryCardProps) {
   return (
@@ -39,9 +31,11 @@ export function InventoryCard({ item, onClone }: InventoryCardProps) {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Badge variant="outline" className={cn("shrink-0", statusColors[item.status])}>
-              {INVENTORY_STATUS_LABELS[item.status]}
-            </Badge>
+            <StatusBadge 
+              status={item.status} 
+              customLabel={INVENTORY_STATUS_LABELS[item.status]}
+              className="shrink-0"
+            />
             {onClone && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
