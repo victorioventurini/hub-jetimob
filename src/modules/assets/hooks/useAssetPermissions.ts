@@ -7,7 +7,7 @@ import type { AssetPermission, AssetPermissionRole } from "../types";
 
 export function useAssetPermissions() {
   const { user } = useAuth();
-  const { currentBu, userRole } = useBu();
+  const { currentBu, userRole, isLoading: isBuLoading } = useBu();
   const queryClient = useQueryClient();
   const buId = currentBu?.id;
 
@@ -17,9 +17,10 @@ export function useAssetPermissions() {
   const hasFullAccess = isSuperAdmin || isBuAdmin;
 
   // Buscar permissões do usuário atual
+  // Only fetch if not loading BU context and user doesn't have full access
   const { data: userPermissions = [], isLoading: isLoadingUserPermissions } = useQuery({
-    queryKey: ["asset-permissions", "user", user?.id, buId],
-    enabled: !!user?.id && !!buId && !hasFullAccess,
+    queryKey: ["asset-permissions", "user", user?.id, buId, hasFullAccess],
+    enabled: !!user?.id && !!buId && !isBuLoading && !hasFullAccess,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_permissions")
@@ -133,7 +134,7 @@ export function useAssetPermissions() {
   return {
     userPermissions,
     allPermissions,
-    isLoading: isLoadingUserPermissions || isLoadingAllPermissions,
+    isLoading: isBuLoading || isLoadingUserPermissions || isLoadingAllPermissions,
     hasRole,
     canManageInventory,
     canManageKeys,
