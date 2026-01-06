@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,13 +27,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { useCreatePartnerContact, useUpdatePartnerContact } from "../../hooks/usePartners";
 import { PartnerContact, PartnerCompany } from "../../types";
 
+// Máscara de telefone: +55 (XX) XXXXX-XXXX
+function formatPhoneWithDDI(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `+${digits}`;
+  if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
+  if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
+  if (digits.length <= 13) {
+    const areaCode = digits.slice(2, 4);
+    const firstPart = digits.slice(4, 9);
+    const secondPart = digits.slice(9, 13);
+    return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? '-' + secondPart : ''}`;
+  }
+  return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
+}
+
 const formSchema = z.object({
   partner_company_id: z.string().min(1, "Empresa é obrigatória"),
-  name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido"),
+  name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
+  email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres"),
   phone: z.string().optional(),
   status: z.enum(["active", "inactive"]),
 });
@@ -58,6 +77,8 @@ export function PartnerContactDialog({
   const { mutate: createContact, isPending: isCreating } = useCreatePartnerContact();
   const { mutate: updateContact, isPending: isUpdating } = useUpdatePartnerContact();
   const isPending = isCreating || isUpdating;
+  
+  const [domainError, setDomainError] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -70,14 +91,63 @@ export function PartnerContactDialog({
     },
   });
 
+  const watchedCompanyId = form.watch("partner_company_id");
+  const watchedEmail = form.watch("email");
+
+  // Obter domínios permitidos da empresa selecionada
+  const selectedCompany = useMemo(() => {
+    return companies.find(c => c.id === watchedCompanyId);
+  }, [companies, watchedCompanyId]);
+
+  const allowedDomains = useMemo(() => {
+    return selectedCompany?.allowed_domains || [];
+  }, [selectedCompany]);
+
+  // Validar domínio do email quando email ou empresa mudar
+  useEffect(() => {
+    if (!watchedEmail || !watchedCompanyId) {
+      setDomainError(null);
+      return;
+    }
+
+    const emailParts = watchedEmail.toLowerCase().trim().split("@");
+    if (emailParts.length !== 2) {
+      setDomainError(null);
+      return;
+    }
+
+    const emailDomain = emailParts[1];
+    
+    // Se a empresa não tem domínios configurados, permitir qualquer domínio
+    if (allowedDomains.length === 0) {
+      setDomainError(null);
+      return;
+    }
+
+    // Verificar se o domínio do email está na lista de domínios permitidos
+    const isDomainAllowed = allowedDomains.some(
+      domain => domain.toLowerCase() === emailDomain
+    );
+
+    if (!isDomainAllowed) {
+      setDomainError(
+        `O domínio "@${emailDomain}" não está autorizado para ${selectedCompany?.name}. ` +
+        `Domínios permitidos: ${allowedDomains.map(d => `@${d}`).join(", ")}`
+      );
+    } else {
+      setDomainError(null);
+    }
+  }, [watchedEmail, watchedCompanyId, allowedDomains, selectedCompany?.name]);
+
   useEffect(() => {
     if (open) {
+      setDomainError(null);
       if (contact) {
         form.reset({
           partner_company_id: contact.partner_company_id,
           name: contact.name,
           email: contact.email,
-          phone: contact.phone || "",
+          phone: contact.phone ? formatPhoneWithDDI(contact.phone) : "",
           status: contact.status,
         });
       } else {
@@ -92,14 +162,27 @@ export function PartnerContactDialog({
     }
   }, [open, contact, defaultCompanyId, form]);
 
+  const handlePhoneChange = (value: string, onChange: (value: string) => void) => {
+    const formatted = formatPhoneWithDDI(value);
+    onChange(formatted);
+  };
+
   const onSubmit = (data: FormData) => {
+    // Bloquear submit se houver erro de domínio
+    if (domainError) {
+      return;
+    }
+
+    // Extrair apenas dígitos do telefone para salvar
+    const phoneDigits = data.phone?.replace(/\D/g, '') || null;
+
     if (contact) {
       updateContact(
         {
           id: contact.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone || null,
+          name: data.name.trim(),
+          email: data.email.trim().toLowerCase(),
+          phone: phoneDigits,
           status: data.status,
         },
         { onSuccess: () => onOpenChange(false) }
@@ -108,15 +191,17 @@ export function PartnerContactDialog({
       createContact(
         {
           partner_company_id: data.partner_company_id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone || null,
+          name: data.name.trim(),
+          email: data.email.trim().toLowerCase(),
+          phone: phoneDigits,
           status: data.status,
         },
         { onSuccess: () => onOpenChange(false) }
       );
     }
   };
+
+  const isSubmitDisabled = isPending || !!domainError;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,11 +264,23 @@ export function PartnerContactDialog({
                   </FormControl>
                   <FormDescription>
                     Este email será usado para login via Magic Link
+                    {allowedDomains.length > 0 && (
+                      <span className="block mt-1 text-muted-foreground">
+                        Domínios permitidos: {allowedDomains.map(d => `@${d}`).join(", ")}
+                      </span>
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {domainError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{domainError}</AlertDescription>
+              </Alert>
+            )}
 
             <FormField
               control={form.control}
@@ -192,8 +289,15 @@ export function PartnerContactDialog({
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
                   <FormControl>
-                    <Input placeholder="(00) 00000-0000" {...field} />
+                    <Input 
+                      placeholder="+55 (51) 99999-9999" 
+                      value={field.value}
+                      onChange={(e) => handlePhoneChange(e.target.value, field.onChange)}
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Formato: +55 (DDD) XXXXX-XXXX
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -230,7 +334,7 @@ export function PartnerContactDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isSubmitDisabled}>
                 {contact ? "Salvar" : "Criar"}
               </Button>
             </div>
