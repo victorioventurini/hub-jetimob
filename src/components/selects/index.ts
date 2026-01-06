@@ -8,3 +8,5 @@ export { CategorySelect } from "./CategorySelect";
 export type { CategoryOption } from "./CategorySelect";
 export { SimpleSelect } from "./SimpleSelect";
 export type { SelectOption } from "./SimpleSelect";
+export { CycleSelect, CycleBadge, CyclePeriodInfo } from "./CycleSelect";
+export type { Cycle } from "./CycleSelect";
