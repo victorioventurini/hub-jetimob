@@ -11,10 +11,8 @@ import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
-import { BuScopedRoute } from "@/components/auth/BuScopedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getBuScopedRoutes } from "@/routes/BuScopedOperationalRoutes";
 
 // Páginas carregadas imediatamente (críticas para primeira renderização)
 import Auth from "./pages/Auth";
@@ -72,6 +70,7 @@ const AutomationsPage = lazy(() => import("./modules/automations/pages/Automatio
 
 // Módulo Permissões (Global)
 const HubPermissionsPage = lazy(() => import("./modules/permissions/pages/HubPermissionsPage"));
+const BuPermissionsPage = lazy(() => import("./modules/permissions/pages/BuPermissionsPage"));
 
 // Módulo Tickets
 const TicketsPage = lazy(() => import("./modules/tickets/pages/TicketsPage"));
@@ -351,18 +350,6 @@ const App = () => (
                       }
                     />
 
-                    {/* ===== BU-SCOPED ROUTES (/bu/:buId/*) ===== */}
-                    {/* These routes automatically sync BU context from URL */}
-                    <Route
-                      path="/bu/:buId"
-                      element={
-                        <ProtectedRoute skipBuCheck>
-                          <BuScopedRoute />
-                        </ProtectedRoute>
-                      }
-                    >
-                      {getBuScopedRoutes()}
-                    </Route>
 
                     {/* ===== LEGACY REDIRECTS (backwards compatibility) ===== */}
                     {/* Legacy asset detail - redirects to BU-scoped route */}
@@ -567,6 +554,18 @@ const App = () => (
                       <Route path="settings" element={<TicketsSettingsPage />} />
                       <Route path=":id" element={<TicketDetailPage />} />
                     </Route>
+
+                    {/* BU Permissions - Admin da BU */}
+                    <Route
+                      path="/settings/permissions"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <BuPermissionsPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
