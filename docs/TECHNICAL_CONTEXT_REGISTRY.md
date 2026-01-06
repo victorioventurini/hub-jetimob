@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.1.0  
+**Versão:** 2.2.0  
 **Última atualização:** 2026-01-06
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -52,8 +52,8 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 |------|-----------|--------|
 | `super_admin` | Administrador global da plataforma | Acesso total a todas as BUs |
 | `admin` | Administrador | Acesso administrativo (pode gerenciar estrutura) |
-| `team_leader` | Líder de time | Gerencia seu time e seus OKRs/KPIs |
-| `collaborator` | Colaborador padrão | Acesso básico à sua BU |
+
+> **Nota:** super_admin e admin recebem wildcard `['*']` em permissões.
 
 #### Roles por BU
 
@@ -62,18 +62,33 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 | `admin` | Admin local da BU (acesso total dentro da BU) |
 | `collaborator` | Colaborador da BU (acesso via grupos de permissão) |
 
-> **Nota:** O role `ceo` foi removido na v1.8.0. Usuários que eram `ceo` agora são `admin`.
-
 #### Funções de Autorização (RLS)
 
 | Função | Descrição |
 |--------|-----------|
 | `is_platform_admin(user_id)` | Verifica se é `super_admin` ou `admin` global |
 | `is_super_admin(user_id)` | Verifica se é apenas `super_admin` |
-| `is_bu_admin(user_id, bu_id)` | Verifica se é admin/ceo da BU específica |
+| `is_bu_admin(user_id, bu_id)` | Verifica se é admin da BU específica |
 | `user_has_bu_access(user_id, bu_id)` | Verifica se tem membership na BU |
 | `has_role(user_id, role)` | Verifica se possui uma role específica |
 | `has_asset_permission(user_id, bu_id, roles)` | Verifica permissão em sub-módulos de Assets |
+| `get_my_permissions(bu_id)` | Retorna array de permission keys do usuário |
+
+#### Funções de Hierarquia de Times (v2.2+)
+
+| Função | Descrição |
+|--------|-----------|
+| `is_team_leader(user_id, team_id)` | Verifica se usuário é líder DIRETO do time |
+| `team_is_ancestor(ancestor_id, team_id)` | Verifica se um time é ancestral de outro |
+| `team_is_descendant(team_id, ancestor_id)` | Verifica se um time é descendente de outro |
+| `user_can_manage_team(user_id, team_id)` | Regra FINAL: líder direto OU admin/super_admin |
+| `get_manageable_teams(user_id, bu_id)` | Retorna IDs dos times que o usuário pode gerenciar |
+
+**Regras de Gestão de Times:**
+- ✅ Líder pode gerenciar APENAS o próprio time e times filhos diretos
+- ❌ Líder NÃO pode gerenciar time pai
+- ❌ Líder NÃO pode gerenciar times irmãos
+- ❌ Líder NÃO pode gerenciar times de outros ramos
 
 ---
 
@@ -173,9 +188,11 @@ Roles globais do usuário no sistema.
 |-------|------|-----------|
 | id | uuid | PK |
 | user_id | uuid | FK para auth.users |
-| role | enum | `super_admin`, `admin`, `team_leader`, `collaborator` |
+| role | enum | `super_admin`, `admin` |
 
 **Escopo:** Global
+
+> **Nota:** Apenas `super_admin` e `admin` são roles válidos. Demais acessos são via permission keys.
 
 ---
 
@@ -1412,7 +1429,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.1.0 |
+| **Versão do TCR** | 2.2.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1420,6 +1437,26 @@ src/
 ---
 
 ## Changelog
+
+### v2.2.0 (2026-01-06) — Permission & Team Hierarchy Hardening
+- **Remoção definitiva do role "ceo"**:
+  - Removido de `is_bu_admin()` e demais funções SQL
+  - Removidas referências no frontend (useAuth, usePageTitle, useHomeDashboard)
+  - Apenas `super_admin` e `admin` são roles válidos
+- **Hierarquia de Times (SQL Functions)**:
+  - `is_team_leader(user_id, team_id)`: verifica liderança direta
+  - `team_is_ancestor(ancestor_id, team_id)`: verifica ancestralidade via CTE recursiva
+  - `team_is_descendant(team_id, ancestor_id)`: verifica descendência via CTE recursiva
+  - `user_can_manage_team(user_id, team_id)`: regra FINAL de gestão (líder direto OU admin)
+  - `get_manageable_teams(user_id, bu_id)`: retorna IDs dos times gerenciáveis
+- **Frontend Team Management**:
+  - Novo hook `useTeamManagement()` em `src/hooks/useTeamManagement.ts`
+  - Helper `canManageTeam(teamId)` para controle de UI
+  - Array `manageableTeamIds` para filtragem
+- **Regras de gestão de times documentadas**:
+  - Líder gerencia APENAS próprio time e filhos diretos
+  - Proibido gerenciar time pai, irmãos ou outros ramos
+  - Admins e super_admins podem gerenciar qualquer time da BU
 
 ### v2.1.0 (2026-01-06) — TCR Consolidation
 - **Documentação consolidada** do novo padrão de links:
