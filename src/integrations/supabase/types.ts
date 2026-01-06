@@ -1824,6 +1824,48 @@ export type Database = {
           },
         ]
       }
+      bu_permission_group_configs: {
+        Row: {
+          bu_id: string
+          created_at: string
+          group_id: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_permission_group_configs_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_permission_group_configs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "permission_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bu_units: {
         Row: {
           allowed_email_domains: string[]
@@ -1906,6 +1948,87 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bu_user_permission_groups: {
+        Row: {
+          bu_id: string
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_permission_groups_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "permission_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bu_user_permission_overrides: {
+        Row: {
+          bu_id: string
+          created_at: string
+          effect: Database["public"]["Enums"]["permission_effect"]
+          id: string
+          permission_id: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          effect?: Database["public"]["Enums"]["permission_effect"]
+          id?: string
+          permission_id: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          effect?: Database["public"]["Enums"]["permission_effect"]
+          id?: string
+          permission_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_permission_overrides_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_overrides_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permission_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -3599,6 +3722,108 @@ export type Database = {
           },
         ]
       }
+      permission_catalog: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          module: string
+          resource: string
+          scope: Database["public"]["Enums"]["permission_scope"]
+          status: Database["public"]["Enums"]["catalog_status"]
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          module: string
+          resource: string
+          scope: Database["public"]["Enums"]["permission_scope"]
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          module?: string
+          resource?: string
+          scope?: Database["public"]["Enums"]["permission_scope"]
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      permission_group_permissions: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          permission_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          permission_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          permission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_group_permissions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "permission_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_group_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permission_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["catalog_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           birth_day: number | null
@@ -4542,6 +4767,21 @@ export type Database = {
       }
     }
     Views: {
+      user_effective_permissions: {
+        Row: {
+          action: string | null
+          bu_id: string | null
+          module: string | null
+          permission_id: string | null
+          permission_key: string | null
+          resource: string | null
+          scope: string | null
+          source: string | null
+          source_name: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       v_partner_services: {
         Row: {
           bu_id: string | null
@@ -4902,6 +5142,19 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
+      user_has_permission: {
+        Args: { p_bu_id: string; p_permission_key: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_has_permission_ctx: {
+        Args: {
+          p_bu_id: string
+          p_ctx?: Json
+          p_permission_key: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       agent_output_format: "text" | "json"
@@ -4940,6 +5193,7 @@ export type Database = {
         | "remote_hub"
         | "other"
       bu_status: "active" | "inactive"
+      catalog_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
       gift_destination_type: "event" | "campaign" | "person" | "other"
       gift_item_status: "active" | "inactive"
@@ -4987,6 +5241,16 @@ export type Database = {
       partner_company_status: "active" | "inactive"
       partner_contact_status: "active" | "inactive"
       partner_service_status: "active" | "inactive"
+      permission_effect: "allow" | "deny"
+      permission_scope:
+        | "self"
+        | "self_or_owner"
+        | "team"
+        | "team_tree"
+        | "squad"
+        | "bu"
+        | "global"
+        | "public"
       squad_product: "crm" | "cms" | "erp"
       squad_role: "product_owner" | "tech_lead" | "ux_ui_lead" | "member"
       team_status: "active" | "inactive"
@@ -5165,6 +5429,7 @@ export const Constants = {
         "other",
       ],
       bu_status: ["active", "inactive"],
+      catalog_status: ["active", "inactive"],
       employment_status: ["active", "vacation", "terminated"],
       gift_destination_type: ["event", "campaign", "person", "other"],
       gift_item_status: ["active", "inactive"],
@@ -5214,6 +5479,17 @@ export const Constants = {
       partner_company_status: ["active", "inactive"],
       partner_contact_status: ["active", "inactive"],
       partner_service_status: ["active", "inactive"],
+      permission_effect: ["allow", "deny"],
+      permission_scope: [
+        "self",
+        "self_or_owner",
+        "team",
+        "team_tree",
+        "squad",
+        "bu",
+        "global",
+        "public",
+      ],
       squad_product: ["crm", "cms", "erp"],
       squad_role: ["product_owner", "tech_lead", "ux_ui_lead", "member"],
       team_status: ["active", "inactive"],
