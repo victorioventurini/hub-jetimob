@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useInventory } from "../hooks/useInventory";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { InventoryCard } from "../components/inventory/InventoryCard";
+import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
 import type { AssetInventory, AssetInventoryStatus } from "../types";
@@ -60,9 +61,9 @@ export default function InventoryPage() {
           <Skeleton className="h-10 flex-1" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-40" />
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       </div>
@@ -120,10 +121,10 @@ export default function InventoryPage() {
           onAction={canAddItem && !search && statusFilter === "all" ? () => setDialogOpen(true) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2">
           {filteredItems.map((item) => (
             <div key={item.id} onClick={() => navigate(`/assets/inventory/${item.id}`)}>
-              <InventoryCard item={item} onClone={handleClone} />
+              <InventoryListItem item={item} onClone={handleClone} />
             </div>
           ))}
         </div>
