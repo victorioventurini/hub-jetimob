@@ -4,11 +4,14 @@ import { PartnerCompaniesTab } from "../components/settings/PartnerCompaniesTab"
 import { PartnerContactsTab } from "../components/settings/PartnerContactsTab";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { RoutingRulesTab } from "../components/settings/RoutingRulesTab";
+import { useUrlTab } from "@/hooks/useUrlState";
 
 export default function TicketsSettingsPage() {
+  const [activeTab, setActiveTab] = useUrlTab("partners");
+
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="partners" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="partners" className="gap-2">
             <Building2 className="h-4 w-4" />

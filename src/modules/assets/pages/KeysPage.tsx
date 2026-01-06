@@ -11,14 +11,15 @@ import { ClavicularyBoard } from "../components/keys/ClavicularyBoard";
 import { KeyringsList } from "../components/keys/KeyringsList";
 import { ClavicularyDialog } from "../components/keys/ClavicularyDialog";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
+import { useUrlTab, useUrlState } from "@/hooks/useUrlState";
 
 export default function KeysPage() {
   const { clavicularies, keyrings, isLoading } = useKeys();
   const { canManageKeys } = useAssetPermissions();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
   const [clavicularyDialogOpen, setClavicularyDialogOpen] = useState(false);
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("keyrings");
+  const [activeTab, setActiveTab] = useUrlTab("keyrings");
 
   const filteredClavicularies = clavicularies.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,17 +8,26 @@ import { useTickets, useMyTickets } from "../hooks/useTickets";
 import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useUrlState, useUrlTab, parsers } from "@/hooks/useUrlState";
 import type { TicketStatus, TicketType } from "../types";
+
+type TicketTab = "mine" | "waiting" | "in_progress" | "done" | "discarded";
 
 export default function TicketsListPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("mine");
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TicketType | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | "all">("all");
-  const [categoryId, setCategoryId] = useState<string>("all");
-  const [partnerId, setPartnerId] = useState<string>("all");
-  const [showOverdue, setShowOverdue] = useState(false);
+  
+  // URL State
+  const [activeTab, setActiveTab] = useUrlTab<TicketTab>("mine");
+  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
+  const [typeFilter, setTypeFilter] = useUrlState<TicketType | "all">({ key: "type", defaultValue: "all" });
+  const [statusFilter, setStatusFilter] = useUrlState<TicketStatus | "all">({ key: "status", defaultValue: "all" });
+  const [categoryId, setCategoryId] = useUrlState<string>({ key: "category", defaultValue: "all" });
+  const [partnerId, setPartnerId] = useUrlState<string>({ key: "partner", defaultValue: "all" });
+  const [showOverdue, setShowOverdue] = useUrlState<boolean>({ 
+    key: "overdue", 
+    defaultValue: false, 
+    parse: parsers.boolean 
+  });
 
   const { data: allTickets = [], isLoading: isLoadingAll } = useTickets();
   const { data: myTickets = [], isLoading: isLoadingMy } = useMyTickets();
@@ -50,8 +59,6 @@ export default function TicketsListPage() {
   };
 
   const tabTickets = useMemo(() => {
-    const base = activeTab === "mine" ? myTickets : allTickets;
-    
     switch (activeTab) {
       case "mine":
         return filterTickets(myTickets);
