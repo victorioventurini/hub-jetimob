@@ -74,6 +74,11 @@ const globalBuItems = [
   { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
 ];
 
+// Itens de admin da BU (apenas para bu_admin ou superior)
+const buAdminItems = [
+  { name: "Permissões", href: "/settings/permissions", icon: Shield },
+];
+
 // Links externos
 const externalLinks = [
   { 
@@ -91,9 +96,12 @@ const globalAdminItems: { name: string; href: string; icon: LucideIcon }[] = [
 export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
   const location = useLocation();
   const { isAdmin } = useAuth();
-  const { currentBu } = useBu();
+  const { currentBu, userRole } = useBu();
   const { symbolUrl, buName, primaryColor } = useBuBranding();
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
+  
+  // Check if user is BU admin or higher (admin role in BU = bu admin)
+  const isBuAdmin = userRole === "admin" || userRole === "super_admin" || isAdmin;
 
   const NavItem = ({ 
     name, 
@@ -255,6 +263,10 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                     .map((item) => (
                       <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                     ))}
+                  {/* Itens de admin da BU (apenas bu_admin ou superior) */}
+                  {isBuAdmin && buAdminItems.map((item) => (
+                    <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                  ))}
                 </div>
               )}
 
