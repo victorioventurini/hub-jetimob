@@ -330,3 +330,60 @@ export const PERMISSION_ROLE_LABELS: Record<AssetPermissionRole, string> = {
   gifts_manager: 'Gestor Brindes',
   viewer: 'Visualizador',
 };
+
+// =============================================
+// KITS / GRUPOS DE ATIVOS
+// =============================================
+
+export type AssetGroupType = 'kit' | 'bundle';
+export type AssetGroupStatus = 'active' | 'inactive';
+export type AssetGroupItemRole = 'primary' | 'accessory';
+
+export interface AssetGroup {
+  id: string;
+  bu_id: string;
+  name: string;
+  primary_asset_id: string | null;
+  type: AssetGroupType;
+  notes: string | null;
+  status: AssetGroupStatus;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  primary_asset?: AssetInventory | null;
+  items?: AssetGroupItem[];
+}
+
+export interface AssetGroupItem {
+  id: string;
+  bu_id: string;
+  group_id: string;
+  asset_id: string;
+  role: AssetGroupItemRole;
+  is_required: boolean;
+  quantity: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  asset?: AssetInventory | null;
+  group?: { id: string; name: string } | null;
+}
+
+export const GROUP_TYPE_LABELS: Record<AssetGroupType, string> = {
+  kit: 'Kit',
+  bundle: 'Conjunto',
+};
+
+export const GROUP_STATUS_LABELS: Record<AssetGroupStatus, string> = {
+  active: 'Ativo',
+  inactive: 'Inativo',
+};
+
+export const GROUP_ITEM_ROLE_LABELS: Record<AssetGroupItemRole, string> = {
+  primary: 'Primário',
+  accessory: 'Acessório',
+};

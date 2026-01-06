@@ -380,6 +380,38 @@ serve(async (req) => {
           icon: "package",
         })));
       }
+
+      // 11b. KITS DE INVENTÁRIO (if permitted)
+      const { data: assetGroups, error: groupsError } = await supabase
+        .from("asset_groups")
+        .select("id, name, type, status, primary_asset_id, asset_inventory!primary_asset_id(name, internal_code)")
+        .eq("bu_id", bu_id)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .ilike("name", searchPattern)
+        .limit(limit);
+
+      if (!groupsError && assetGroups) {
+        const typeLabels: Record<string, string> = {
+          kit: "Kit",
+          bundle: "Conjunto",
+        };
+        addGroup("assets_kits", "Assets · Kits", assetGroups.map((g: any) => ({
+          id: g.id,
+          type: "assets_kits",
+          title: g.name,
+          subtitle: g.asset_inventory?.name 
+            ? `${typeLabels[g.type] || g.type} · Item principal: ${g.asset_inventory.name}` 
+            : typeLabels[g.type] || g.type,
+          meta: { 
+            type: g.type,
+            primary_asset_id: g.primary_asset_id,
+            primary_internal_code: g.asset_inventory?.internal_code,
+          },
+          url: g.primary_asset_id ? `/assets/inventory/${g.primary_asset_id}` : `/assets/inventory`,
+          icon: "package-2",
+        })));
+      }
     }
 
     // 12. CHAVEIROS (if permitted)

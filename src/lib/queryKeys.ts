@@ -102,6 +102,14 @@ export const queryKeys = {
       movements: (assetId: string) => ['assets', 'inventory', 'movements', assetId] as const,
     },
     
+    // Groups/Kits
+    groups: {
+      all: (buId: string | null) => ['assets', 'groups', buId] as const,
+      detail: (groupId: string) => ['assets', 'groups', 'detail', groupId] as const,
+      items: (groupId: string) => ['assets', 'groups', 'items', groupId] as const,
+      byAsset: (assetId: string) => ['assets', 'groups', 'byAsset', assetId] as const,
+    },
+    
     // Keys
     keys: {
       all: (buId: string | null) => ['assets', 'keys', buId] as const,

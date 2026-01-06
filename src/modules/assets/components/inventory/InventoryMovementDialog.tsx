@@ -31,10 +31,12 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowRight, User, MapPin, Wrench, XCircle } from "lucide-react";
 import { useInventory } from "../../hooks/useInventory";
+import { useAssetGroups } from "../../hooks/useAssetGroups";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetProfiles } from "../../hooks/useProfiles";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { useAuth } from "@/hooks/useAuth";
+import { KitCheckoutInfo } from "./KitCheckoutInfo";
 import type { AssetInventory, AssetMovementType } from "../../types";
 import { MOVEMENT_TYPE_LABELS } from "../../types";
 
@@ -92,11 +94,13 @@ export function InventoryMovementDialog({
 }: InventoryMovementDialogProps) {
   const { user } = useAuth();
   const { createMovement, isCreatingMovement, updateItem } = useInventory();
+  const { getRequiredAccessories } = useAssetGroups();
   const { locations, defaultLocation } = useLocations();
   const { profiles } = useAssetProfiles();
   const { isInventoryAdmin, canManageInventory } = useAssetPermissions();
 
   const [movementType, setMovementType] = useState<AssetMovementType>(initialType || "checkout");
+  const [includeKitAccessories, setIncludeKitAccessories] = useState(false);
 
   // Determine available movement types based on current item status
   const availableTypes: AssetMovementType[] = [];
@@ -147,6 +151,7 @@ export function InventoryMovementDialog({
     if (open) {
       const type = initialType || availableTypes[0] || "checkout";
       setMovementType(type);
+      setIncludeKitAccessories(false);
       form.reset({
         movement_type: type,
         notes: "",
@@ -169,7 +174,7 @@ export function InventoryMovementDialog({
   };
 
   const onSubmit = async (data: any) => {
-    const movementData: any = {
+    const baseMovementData: any = {
       asset_id: item.id,
       movement_type: data.movement_type,
       notes: data.notes || undefined,
@@ -181,33 +186,67 @@ export function InventoryMovementDialog({
     // Type-specific fields
     switch (data.movement_type) {
       case "checkout":
-        movementData.to_holder_type = "user";
-        movementData.to_user_id = data.to_user_id;
-        movementData.authorized_by_user_id = data.authorized_by_user_id;
-        movementData.due_at = data.due_at || undefined;
+        baseMovementData.to_holder_type = "user";
+        baseMovementData.to_user_id = data.to_user_id;
+        baseMovementData.authorized_by_user_id = data.authorized_by_user_id;
+        baseMovementData.due_at = data.due_at || undefined;
         break;
 
       case "return":
-        movementData.to_holder_type = "location";
-        movementData.to_location_id = data.to_location_id;
+        baseMovementData.to_holder_type = "location";
+        baseMovementData.to_location_id = data.to_location_id;
         break;
 
       case "transfer":
-        movementData.to_holder_type = data.to_holder_type;
+        baseMovementData.to_holder_type = data.to_holder_type;
         if (data.to_holder_type === "location") {
-          movementData.to_location_id = data.to_location_id;
+          baseMovementData.to_location_id = data.to_location_id;
         } else {
-          movementData.to_user_id = data.to_user_id;
+          baseMovementData.to_user_id = data.to_user_id;
         }
-        movementData.authorized_by_user_id = data.authorized_by_user_id;
+        baseMovementData.authorized_by_user_id = data.authorized_by_user_id;
         break;
 
       case "write_off":
-        movementData.authorized_by_user_id = data.authorized_by_user_id;
+        baseMovementData.authorized_by_user_id = data.authorized_by_user_id;
         break;
     }
 
-    createMovement(movementData);
+    // Create movement for main item
+    createMovement(baseMovementData);
+
+    // If checkout with kit accessories, also create movements for accessories
+    if (data.movement_type === "checkout" && includeKitAccessories) {
+      try {
+        const accessories = await getRequiredAccessories(item.id);
+        for (const accessory of accessories) {
+          if (accessory.status === "available") {
+            createMovement({
+              asset_id: accessory.id,
+              movement_type: "checkout",
+              notes: `Emprestado como acessório do kit (item principal: ${item.internal_code})`,
+              from_holder_type: accessory.current_holder_type,
+              from_location_id: accessory.current_location_id,
+              to_holder_type: "user",
+              to_user_id: data.to_user_id,
+              authorized_by_user_id: data.authorized_by_user_id,
+              due_at: data.due_at || undefined,
+            });
+
+            // Update accessory status
+            updateItem({
+              id: accessory.id,
+              status: "loaned",
+              current_holder_type: "user",
+              current_user_id: data.to_user_id,
+              current_location_id: null,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error processing kit accessories:", error);
+      }
+    }
 
     // Update item status based on movement type
     const statusUpdate: any = { id: item.id };
@@ -375,6 +414,14 @@ export function InventoryMovementDialog({
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+
+                  {/* Kit Checkout Info */}
+                  <KitCheckoutInfo
+                    item={item}
+                    includeAccessories={includeKitAccessories}
+                    onIncludeAccessoriesChange={setIncludeKitAccessories}
+                    targetUserId={form.watch("to_user_id")}
                   />
                 </>
               )}
