@@ -179,6 +179,8 @@ export function useBirthdays() {
   return useQuery({
     queryKey: ["birthdays", currentMonth],
     queryFn: async (): Promise<Birthday[]> => {
+      console.log("[useBirthdays] Fetching birthdays for month:", currentMonth);
+      
       const { data, error } = await supabase
         .from("profiles")
         .select(
@@ -197,6 +199,8 @@ export function useBirthdays() {
         .eq("birth_month", currentMonth)
         .not("birth_day", "is", null)
         .order("birth_day", { ascending: true });
+
+      console.log("[useBirthdays] Query result:", { data, error });
 
       if (error) throw error;
 
