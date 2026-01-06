@@ -51,11 +51,11 @@ export function StatusDistributionBar({ counts, isLoading }: StatusDistributionB
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Progress by Status</span>
+          <span className="text-sm font-medium">Progresso por Status</span>
           <span className="text-sm text-muted-foreground">0 KRs</span>
         </div>
         <div className="h-8 w-full rounded-full bg-muted flex items-center justify-center">
-          <span className="text-xs text-muted-foreground">No Key Results</span>
+          <span className="text-xs text-muted-foreground">Nenhum Key Result</span>
         </div>
       </div>
     );
@@ -64,7 +64,7 @@ export function StatusDistributionBar({ counts, isLoading }: StatusDistributionB
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Progress by Status</span>
+        <span className="text-sm font-medium">Progresso por Status</span>
         <span className="text-sm text-muted-foreground">{total} KRs</span>
       </div>
       
