@@ -569,7 +569,7 @@ export default function CreateTicketPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="bu_all">Toda a BU</SelectItem>
+                        <SelectItem value="bu_all">Toda {currentBu?.name || "a BU"}</SelectItem>
                         <SelectItem value="teams">Times específicos</SelectItem>
                         <SelectItem value="users">Usuários específicos</SelectItem>
                         <SelectItem value="private">Privado</SelectItem>
