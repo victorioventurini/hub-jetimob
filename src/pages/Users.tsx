@@ -44,7 +44,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
 import { useUrlState } from "@/hooks/useUrlState";
@@ -90,11 +90,11 @@ const statusColors: Record<string, string> = {
 export default function UsersPage() {
   usePageTitle("Jetimobers");
   
-  const { isAdmin } = useAuth();
-  const { currentBu, userRole, isLoading: isBuLoading } = useBu();
+  const { isWildcard, has } = usePermissions();
+  const { currentBu, isLoading: isBuLoading } = useBu();
   
-  // Admin de BU ou super_admin podem gerenciar usuários
-  const canManageUsers = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  // Admin de BU ou super_admin podem gerenciar usuários via permission key
+  const canManageUsers = isWildcard || has("users.profile.manage:bu");
   
   // URL State
   const [searchQuery, setSearchQuery] = useUrlState<string>({ key: 'q', defaultValue: '' });

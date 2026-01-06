@@ -20,7 +20,7 @@ import { SquadDetailDialog } from "../components/SquadDetailDialog";
 import { TeamWithRelations } from "../types";
 import { SquadWithRelations } from "../types/squad";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, parsers } from "@/hooks/useUrlState";
@@ -56,12 +56,11 @@ export default function TeamsPage() {
   const { tree } = useTeamTree();
   const stats = useTeamStats();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
   const { canManageTeam } = useTeamManagement();
+  const { has, isWildcard } = usePermissions();
   
-  // BU admin ou super_admin podem criar times (criar é ação global)
-  // Editar é por time específico usando canManageTeam
-  const canCreateTeams = isAdmin;
+  // BU admin ou super_admin podem criar times via permission key
+  const canCreateTeams = isWildcard || has("teams.team.create:bu");
 
   // Separate parent teams and sub-teams
   const { parentTeams: mainTeams, subTeams } = useMemo(() => {
