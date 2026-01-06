@@ -37,7 +37,7 @@ const TeamDetailPage = lazy(() => import("./modules/teams/pages/TeamDetailPage")
 // Módulo OKRs
 const OkrsPage = lazy(() => import("./modules/okrs/pages/OkrsPage"));
 const OkrDashboardPage = lazy(() => import("./modules/okrs/pages/OkrDashboardPage"));
-const CeoDashboardPage = lazy(() => import("./modules/okrs/pages/CeoDashboardPage"));
+const ExecutiveDashboardPage = lazy(() => import("./modules/okrs/pages/ExecutiveDashboardPage"));
 const OrgViewListPage = lazy(() => import("./modules/okrs/pages/OrgViewListPage"));
 const OrgObjectiveViewPage = lazy(() => import("./modules/okrs/pages/OrgObjectiveViewPage"));
 const TeamContributionPage = lazy(() => import("./modules/okrs/pages/TeamContributionPage"));
@@ -437,12 +437,12 @@ const App = () => (
                       }
                     />
                     <Route
-                      path="/okrs/ceo"
+                      path="/okrs/executive"
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="okrs">
-                              <CeoDashboardPage />
+                              <ExecutiveDashboardPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>

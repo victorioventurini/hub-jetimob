@@ -28,4 +28,4 @@ export * from './components/initiatives';
 
 // Pages
 export { default as OkrDashboardPage } from './pages/OkrsPage';
-export { default as CeoDashboardPage } from './pages/CeoDashboardPage';
+export { default as ExecutiveDashboardPage } from './pages/ExecutiveDashboardPage';

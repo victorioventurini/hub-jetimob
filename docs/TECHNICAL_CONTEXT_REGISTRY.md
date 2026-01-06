@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.7.0  
+**Versão:** 1.8.0  
 **Última atualização:** 2026-01-06  
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1321,7 +1321,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 1.7.0 |
+| **Versão do TCR** | 1.8.0 |
 | **Data da última atualização** | 2026-01-06 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1330,16 +1330,24 @@ src/
 
 ## Changelog
 
+### v1.8.0 (2026-01-06)
+- **Permission Core** implementado:
+  - Nova função SQL `get_my_permissions(bu_id)` retorna array de permission keys
+  - Novo hook `usePermissions()` centralizado em `src/hooks/usePermissions.ts`
+  - Novo guard `RequirePermission` em `src/components/auth/RequirePermission.tsx`
+  - Admins/super_admins recebem `['*']` (wildcard)
+- **Remoção do role "ceo"**:
+  - Tipo `HomeDashboardData.role` agora usa `"executive" | "leader" | "collaborator"`
+  - `CeoDashboardPage` renomeado para `ExecutiveDashboardPage`
+  - Rota `/okrs/ceo` alterada para `/okrs/executive`
+  - Removidas referências a "ceo" e "director" do frontend
+- **Novas permissões no catálogo**: `hub.global.view`, `hub.global.manage`
+
 ### v1.7.0 (2026-01-06)
 - **RLS para BU Admins** aprimorado:
-  - **Teams/Squads**: BU admins agora podem gerenciar times, squads, memberships e relacionamentos dentro da sua BU
-  - **Profiles**: BU admins podem visualizar e editar perfis de usuários da sua BU
-  - Novas policies: `bu_admin_manage_teams`, `bu_admin_manage_squads`, `bu_admin_manage_squad_memberships`, `bu_admin_manage_squad_team`, `bu_admin_view_profiles`, `bu_admin_update_profiles`
-  - Frontend atualizado para usar `canManageTeams` / `canManageSquads` baseado em `userRole === 'admin' || userRole === 'ceo'`
-- **Sistema de Permissões (UI)**:
-  - UserPermissionsSheet: aba "Grupos" agora mostra mensagem informativa para admins de BU
-  - Grupos de permissão não se aplicam a administradores (já têm acesso amplo)
-  - Botões de salvar ocultos para admins na aba de grupos
+  - **Teams/Squads**: BU admins podem gerenciar times, squads, memberships
+  - **Profiles**: BU admins podem visualizar e editar perfis da sua BU
+- **Sistema de Permissões (UI)**: aba "Grupos" mostra mensagem para admins de BU
 
 ### v1.6.0 (2026-01-06)
 - **Kits de Inventário** implementados:

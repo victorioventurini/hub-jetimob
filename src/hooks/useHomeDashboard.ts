@@ -33,7 +33,7 @@ interface TeamStatus {
 }
 
 export interface HomeDashboardData {
-  role: "ceo" | "director" | "leader" | "collaborator";
+  role: "executive" | "leader" | "collaborator";
   kpis: KpiSummary[];
   okrSummary: OkrSummary;
   focusItems: FocusItem[];
@@ -41,17 +41,15 @@ export interface HomeDashboardData {
   isLoading: boolean;
 }
 
-// Map role to category
-function mapRoleToCategory(role?: string): "ceo" | "director" | "leader" | "collaborator" {
+// Map role to category (simplified - no more "ceo" role)
+function mapRoleToCategory(role?: string): "executive" | "leader" | "collaborator" {
   if (!role) return "collaborator";
   
   const roleLower = role.toLowerCase();
   
-  if (roleLower.includes("ceo") || roleLower.includes("super_admin")) {
-    return "ceo";
-  }
-  if (roleLower.includes("diretor") || roleLower.includes("director") || roleLower.includes("admin")) {
-    return "director";
+  // super_admin ou admin => executive view
+  if (roleLower.includes("super_admin") || roleLower.includes("admin")) {
+    return "executive";
   }
   if (roleLower.includes("líder") || roleLower.includes("leader") || roleLower.includes("team_leader")) {
     return "leader";
@@ -127,15 +125,10 @@ function useOkrStatusCounts(buId?: string | null, teamId?: string | null) {
 
 // Static mock data for KPIs (until KPI module is fully integrated)
 const mockKpisByRole: Record<string, KpiSummary[]> = {
-  ceo: [
+  executive: [
     { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
     { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
     { label: "EBITDA", value: "R$ 320.000", changeType: "neutral" },
-    { label: "NPS", value: "56", change: "+3", changeType: "positive" },
-  ],
-  director: [
-    { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
-    { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
     { label: "NPS", value: "56", change: "+3", changeType: "positive" },
   ],
   leader: [
@@ -192,7 +185,7 @@ export function useHomeDashboard(): HomeDashboardData {
   }
 
   // Add info items for executives
-  if (roleCategory === "ceo" || roleCategory === "director") {
+  if (roleCategory === "executive") {
     // Count teams with pending check-ins (mock for now)
     if (teams && teams.length > 0) {
       focusItems.push({
@@ -216,7 +209,7 @@ export function useHomeDashboard(): HomeDashboardData {
   if (okrCounts) {
     const total = okrCounts.onTrack + okrCounts.atRisk + okrCounts.offTrack;
     if (total > 0) {
-      const teamName = roleCategory === "ceo" || roleCategory === "director" 
+      const teamName = roleCategory === "executive" 
         ? "Toda a BU" 
         : userTeamId
           ? teams?.find(t => t.id === userTeamId)?.name || "Meu Time"
