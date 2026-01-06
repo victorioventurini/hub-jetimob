@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 1.8.0  
-**Última atualização:** 2026-01-06  
+**Versão:** 1.9.0  
+**Última atualização:** 2026-01-06
 **Responsável:** Lovable AI / Equipe de Engenharia
 
 ---
@@ -59,9 +59,10 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 
 | Role | Descrição |
 |------|-----------|
-| `ceo` | CEO da BU (admin local) |
-| `admin` | Admin local da BU |
-| `collaborator` | Colaborador da BU |
+| `admin` | Admin local da BU (acesso total dentro da BU) |
+| `collaborator` | Colaborador da BU (acesso via grupos de permissão) |
+
+> **Nota:** O role `ceo` foi removido na v1.8.0. Usuários que eram `ceo` agora são `admin`.
 
 #### Funções de Autorização (RLS)
 
@@ -1329,6 +1330,21 @@ src/
 ---
 
 ## Changelog
+
+### v1.9.0 (2026-01-06)
+- **BU Session Core** implementado (remoção de `buId` da URL):
+  - Nova página `ResolveContextPage` (`/go/:entity/:id`) resolve BU do recurso antes de navegar
+  - Entidades suportadas: `asset`, `team`, `user`, `ticket`, `okr_org_objective`, `okr_team_objective`, `keyring`, `gift`
+  - Valida acesso do usuário à BU via `user_has_bu_access()` antes de redirecionar
+  - Telas de loading e erro dedicadas para UX fluida
+  - `BuContext.setCurrentBuId()` agora limpa cache do TanStack Query (`queryClient.clear()`)
+- **Edge Function `get-public-asset`** atualizada:
+  - `internal_view_path` agora aponta para `/go/asset/{id}` (resolve BU automaticamente)
+  - Links externos sempre passam pelo resolver para garantir BU correta
+- **Padrão de links compartilháveis**:
+  - Links públicos, busca global e notificações devem usar `/go/{entity}/{id}`
+  - Rotas operacionais não têm mais `buId` na URL
+  - BU ativa vem exclusivamente do contexto de sessão (`currentBuId`)
 
 ### v1.8.0 (2026-01-06)
 - **Permission Core** implementado:
