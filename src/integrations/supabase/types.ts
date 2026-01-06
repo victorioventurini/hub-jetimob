@@ -4979,6 +4979,14 @@ export type Database = {
         }
         Relationships: []
       }
+      v_bu_id_null_report: {
+        Row: {
+          count_null: number | null
+          table_name: string | null
+          total: number | null
+        }
+        Relationships: []
+      }
       v_objective_health: {
         Row: {
           bu_id: string | null
@@ -5406,6 +5414,7 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_current_bu: { Args: { p_bu_id: string }; Returns: boolean }
       is_email_domain_allowed: { Args: { p_email: string }; Returns: boolean }
       is_ia_enabled_for_bu: { Args: { p_bu_id: string }; Returns: boolean }
       is_module_enabled_for_bu: {
