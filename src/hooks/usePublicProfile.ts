@@ -20,6 +20,12 @@ export interface PublicProfile {
   team: { id: string; name: string } | null;
   manager: { id: string; display_name: string; photo_url: string | null } | null;
   bu_id: string | null;
+  // Additional fields
+  birth_day: number | null;
+  birth_month: number | null;
+  whatsapp_personal: string | null;
+  instagram_id: string | null;
+  discord_id: string | null;
 }
 
 export function usePublicProfile(profileId?: string) {
@@ -49,6 +55,11 @@ export function usePublicProfile(profileId?: string) {
           team_id,
           bu_id,
           manager_user_id,
+          birth_day,
+          birth_month,
+          whatsapp_personal,
+          instagram_id,
+          discord_id,
           team:teams!fk_profiles_team(id, name)
         `)
         .eq("id", profileId)
