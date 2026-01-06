@@ -203,7 +203,7 @@ export function buildMagicLinkEmailHtml(options: {
         
         <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
           Clique no botão abaixo para acessar o Hub.<br>
-          Este link é válido por 1 hora.
+          Este link é válido por 10 minutos.
         </p>
         
         <div style="text-align: center; margin-bottom: 32px;">
