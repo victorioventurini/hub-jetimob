@@ -201,7 +201,7 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
                 <FormItem>
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Observações..." {...field} />
+                    <Textarea placeholder="Descreva quantas chaves e controles têm no chaveiro e o que eles abrem" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
