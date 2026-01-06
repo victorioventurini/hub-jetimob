@@ -35,7 +35,9 @@ const createTicketSchema = z.object({
   category_id: z.string().optional(),
   subcategory_id: z.string().optional(),
   partner_company_id: z.string().optional(),
-  visibility: z.enum(["bu_all", "teams", "users", "private"]),
+  visibility: z.enum(["bu_all", "teams", "users", "private"], {
+    required_error: "Selecione uma opção de visibilidade",
+  }),
   expected_due_at: z.date().optional(),
   initial_message: z.string().min(1, "Mensagem inicial é obrigatória"),
 });
@@ -66,7 +68,6 @@ export default function CreateTicketPage() {
     defaultValues: {
       type: "internal",
       title: "",
-      visibility: "bu_all",
       initial_message: "",
     },
   });
@@ -492,10 +493,10 @@ export default function CreateTicketPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Visibilidade</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Selecione a visibilidade..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
