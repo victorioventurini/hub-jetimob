@@ -1,16 +1,9 @@
-import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+// Legacy route handler - render PublicAsset directly for QR code compatibility
+// URLs like /assets/0146 must work without redirects to avoid breaking existing QR codes
+import PublicAsset from "./PublicAsset";
 
 export default function PublicAssetRedirect() {
-  const { code } = useParams<{ code: string }>();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (code) {
-      // Redirect to the public asset page
-      navigate(`/p/assets/${code}`, { replace: true });
-    }
-  }, [code, navigate]);
-
-  return null;
+  // Render the public asset page directly instead of redirecting
+  // This ensures /assets/:code works the same as /p/assets/:code
+  return <PublicAsset />;
 }
