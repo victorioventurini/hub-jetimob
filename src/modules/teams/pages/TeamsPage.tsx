@@ -21,6 +21,7 @@ import { TeamWithRelations } from "../types";
 import { SquadWithRelations } from "../types/squad";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, parsers } from "@/hooks/useUrlState";
 
@@ -56,6 +57,10 @@ export default function TeamsPage() {
   const stats = useTeamStats();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { userRole } = useBu();
+  
+  // BU admin or global admin can manage teams
+  const canManageTeams = userRole === "admin" || userRole === "super_admin" || isAdmin;
 
   // Separate parent teams and sub-teams
   const { parentTeams: mainTeams, subTeams } = useMemo(() => {
@@ -154,7 +159,7 @@ export default function TeamsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {isAdmin && <CreateTeamDialog />}
+            {canManageTeams && <CreateTeamDialog />}
           </div>
         </div>
 

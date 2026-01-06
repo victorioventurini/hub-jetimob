@@ -35,6 +35,7 @@ import {
 import { AddSquadMemberDialog } from "./AddSquadMemberDialog";
 import { EditSquadDialog } from "./EditSquadDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 
 interface SquadDetailDialogProps {
   squad: SquadWithRelations | null;
@@ -45,8 +46,12 @@ interface SquadDetailDialogProps {
 export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDialogProps) {
   const { data: fullSquad, isLoading } = useSquad(squad?.id);
   const { isAdmin } = useAuth();
+  const { userRole } = useBu();
   const updateMember = useUpdateSquadMember();
   const removeMember = useRemoveSquadMember();
+  
+  // BU admin or global admin can manage squads
+  const canManageSquads = userRole === "admin" || userRole === "super_admin" || isAdmin;
 
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -101,7 +106,7 @@ export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDial
                   </p>
                 )}
               </div>
-              {isAdmin && (
+              {canManageSquads && (
                 <Button 
                   size="sm" 
                   variant="ghost"
@@ -180,7 +185,7 @@ export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDial
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isAdmin ? (
+                        {canManageSquads ? (
                           <Select
                             value={member.role}
                             onValueChange={(v: SquadRole) => handleRoleChange(member.id, v)}
@@ -200,7 +205,7 @@ export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDial
                             {SQUAD_ROLE_LABELS[member.role]}
                           </Badge>
                         )}
-                        {isAdmin && (
+                        {canManageSquads && (
                           <Button
                             size="icon"
                             variant="ghost"
@@ -225,7 +230,7 @@ export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDial
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium">Membros</h4>
-                {isAdmin && (
+                {canManageSquads && (
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -256,7 +261,7 @@ export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDial
                           <p className="text-xs text-muted-foreground">{member.user.job_title}</p>
                         </div>
                       </div>
-                      {isAdmin && (
+                      {canManageSquads && (
                         <div className="flex items-center gap-2">
                           <Select
                             value={member.role}
