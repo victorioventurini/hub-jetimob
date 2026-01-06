@@ -53,7 +53,7 @@ export function NewJetimobersBlock() {
           <EmptyState
             icon={UserPlus}
             title="Nenhum novo Jetimober"
-            description="Não há novos colaboradores nos últimos 60 dias."
+            description="Não há novos colaboradores nos últimos 30 dias."
             compact
           />
         ) : (
