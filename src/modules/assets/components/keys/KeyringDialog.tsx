@@ -64,8 +64,12 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
     if (open) {
       form.reset();
       setAvailableHooks([]);
+      // Auto-select if only one claviculary exists
+      if (clavicularies.length === 1) {
+        form.setValue("claviculary_id", clavicularies[0].id);
+      }
     }
-  }, [open, form]);
+  }, [open, form, clavicularies]);
 
   const selectedClavicularyId = form.watch("claviculary_id");
 
