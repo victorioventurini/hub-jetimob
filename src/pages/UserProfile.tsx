@@ -103,7 +103,10 @@ export default function UserProfile() {
 
   const formatStartDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "MMMM 'de' yyyy", { locale: ptBR });
+      const date = new Date(dateStr);
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      return `${month} de ${year}`;
     } catch {
       return dateStr;
     }
@@ -231,12 +234,19 @@ export default function UserProfile() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Na Jet desde</p>
-                    <p className="font-medium capitalize">{formatStartDate(profile.start_date)}</p>
+                    <p className="font-medium">{formatStartDate(profile.start_date)}</p>
                   </div>
                   {profile.team && (
                     <div>
                       <p className="text-sm text-muted-foreground">Time</p>
-                      <TeamLink teamId={profile.team.id} teamName={profile.team.name} />
+                      <div className="flex items-center gap-2">
+                        <TeamLink teamId={profile.team.id} teamName={profile.team.name} />
+                        {squads && squads.length > 0 && (
+                          <span className="text-muted-foreground">
+                            • {squads.map((s: any) => s.squad?.name).filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
