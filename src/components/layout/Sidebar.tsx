@@ -39,7 +39,7 @@ const navigation = [
 
 const adminNavigation = [
   { name: "Business Units", href: "/business-units", icon: Briefcase },
-  { name: "Configurações", href: "/settings", icon: Settings },
+  { name: "Configurações", href: "/hub", icon: Settings },
   { name: "Auditoria", href: "/audit", icon: Shield },
 ];
 

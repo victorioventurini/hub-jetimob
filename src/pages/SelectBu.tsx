@@ -104,7 +104,7 @@ export default function SelectBu() {
               <DropdownMenuSeparator />
               {role === "super_admin" && (
                 <DropdownMenuItem 
-                  onClick={() => navigate("/settings")}
+                  onClick={() => navigate("/hub")}
                   className="cursor-pointer"
                 >
                   <Settings className="h-4 w-4 mr-2" />

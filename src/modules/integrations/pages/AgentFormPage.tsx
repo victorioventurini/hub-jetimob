@@ -206,7 +206,7 @@ export default function AgentFormPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-          <Button variant="outline" onClick={() => navigate('/settings/integrations')}>
+          <Button variant="outline" onClick={() => navigate('/hub/integrations')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>

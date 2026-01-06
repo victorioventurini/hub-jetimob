@@ -63,7 +63,7 @@ export function SettingsSidebar() {
     <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
       {/* Home */}
       <div>
-        <NavItem to="/settings" icon={Home} label="Home" />
+        <NavItem to="/hub" icon={Home} label="Home" />
       </div>
 
       {/* Plataforma Section */}
@@ -71,11 +71,11 @@ export function SettingsSidebar() {
         <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Plataforma
         </p>
-        <NavItem to="/settings/business-units" icon={Building2} label="Business Units" />
-        <NavItem to="/settings/modules" icon={Blocks} label="Módulos" />
-        <NavItem to="/settings/okrs" icon={Target} label="OKRs" />
-        <NavItem to="/settings/integrations" icon={Puzzle} label="Integrações" />
-        <NavItem to="/settings/automations" icon={Workflow} label="Automações" />
+        <NavItem to="/hub/business-units" icon={Building2} label="Business Units" />
+        <NavItem to="/hub/modules" icon={Blocks} label="Módulos" />
+        <NavItem to="/hub/okrs" icon={Target} label="OKRs" />
+        <NavItem to="/hub/integrations" icon={Puzzle} label="Integrações" />
+        <NavItem to="/hub/automations" icon={Workflow} label="Automações" />
       </div>
 
       {/* Recursos Section */}

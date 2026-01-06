@@ -128,7 +128,7 @@ export default function GlobalIntegrationDetailPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-          <Button variant="outline" onClick={() => navigate('/settings/integrations')}>
+          <Button variant="outline" onClick={() => navigate('/hub/integrations')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
@@ -143,7 +143,7 @@ export default function GlobalIntegrationDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/settings/integrations')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/hub/integrations')}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
