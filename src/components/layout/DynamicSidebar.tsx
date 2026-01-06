@@ -60,14 +60,18 @@ const fixedItems = [
   { name: "Home", href: "/", icon: Home },
 ];
 
-// Menu dentro da BU - ordem específica
+// Menu dentro da BU - ordem específica (módulos operacionais)
 const buMenuItems = [
   { name: "OKRs", href: "/okrs", icon: Target, slug: "okrs" },
   { name: "KPIs", href: "/kpis", icon: BarChart3, slug: "kpis" },
   { name: "Tickets", href: "/tickets", icon: FileText, slug: "tickets" },
   { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
-  { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
+];
+
+// Módulos globais que aparecem sempre (mesmo com BU selecionada)
+const globalBuItems = [
+  { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
 ];
 
 // Links externos
@@ -239,8 +243,15 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                       {currentBu.name}
                     </p>
                   )}
+                  {/* Módulos operacionais habilitados */}
                   {buMenuItems
                     .filter((item) => enabledOperationalModules.some((m) => m.slug === item.slug))
+                    .map((item) => (
+                      <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                    ))}
+                  {/* Módulos globais que aparecem dentro da BU */}
+                  {globalBuItems
+                    .filter((item) => globalModules.some((m) => m.slug === item.slug))
                     .map((item) => (
                       <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                     ))}
