@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
@@ -91,6 +91,7 @@ export default function Profile() {
   
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ProfileFormData | null>(null);
   const [originalFormData, setOriginalFormData] = useState<ProfileFormData | null>(null);
