@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import type { TicketMessage, CreateMessageData } from "../types";
@@ -9,6 +9,8 @@ import type { TicketMessage, CreateMessageData } from "../types";
 // ===========================================
 
 export function useTicketMessages(ticketId: string | null) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: queryKeys.tickets.messages(ticketId ?? ''),
     queryFn: async () => {
@@ -40,6 +42,7 @@ export function useCreateMessage() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -109,6 +112,7 @@ export function useCreateMessage() {
 
 export function useEditMessage() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -143,6 +147,7 @@ export function useEditMessage() {
 
 export function useDeleteMessage() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

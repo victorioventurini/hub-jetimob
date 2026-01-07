@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { queryKeys } from '@/lib/queryKeys';
@@ -67,6 +68,7 @@ export function NotificationCenter() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const supabaseBu = useBuScopedSupabase();
   const [open, setOpen] = useState(false);
 
   // Fetch notifications
@@ -75,7 +77,7 @@ export function NotificationCenter() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseBu
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
@@ -90,7 +92,7 @@ export function NotificationCenter() {
       let actorMap: Record<string, { display_name: string; photo_url: string | null }> = {};
       
       if (actorIds.length > 0) {
-        const { data: actors } = await supabase
+        const { data: actors } = await supabaseBu
           .from('profiles')
           .select('user_id, display_name, photo_url')
           .in('user_id', actorIds);
@@ -147,7 +149,7 @@ export function NotificationCenter() {
   // Mark single notification as read
   const markAsRead = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase.rpc('mark_notification_read', {
+      const { error } = await supabaseBu.rpc('mark_notification_read', {
         p_notification_id: notificationId,
       });
       if (error) throw error;
@@ -157,10 +159,9 @@ export function NotificationCenter() {
     },
   });
 
-  // Mark all as read
   const markAllAsRead = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc('mark_all_notifications_read');
+      const { error } = await supabaseBu.rpc('mark_all_notifications_read');
       if (error) throw error;
     },
     onSuccess: () => {

@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Mail, ArrowRight, UserPlus, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { TeamSelect, SimpleSelect } from "@/components/selects";
 
@@ -98,6 +98,7 @@ const ROLE_OPTIONS = [
 export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialogProps) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const isEditing = !!profile;
   
   const [step, setStep] = useState<Step>("email");
