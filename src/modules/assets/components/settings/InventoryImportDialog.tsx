@@ -32,6 +32,7 @@ const csvRowSchema = z.object({
   acquired_at: z.string().optional(),
   acquisition_value: z.string().optional(),
   quantity: z.string().optional(),
+  assigned_to_email: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -197,6 +198,26 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
         locationsMap.set(loc.name.toLowerCase(), loc.id);
       });
 
+      // Fetch existing users (profiles) for this BU via memberships
+      const { data: buMemberships } = await supabase
+        .from("bu_user_memberships")
+        .select("user_id")
+        .eq("bu_id", currentBu.id);
+
+      const userIds = buMemberships?.map((m) => m.user_id) || [];
+      
+      const { data: existingUsers } = await supabase
+        .from("profiles")
+        .select("id, work_email")
+        .in("id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+
+      const usersMap = new Map<string, string>(); // email (lowercase) -> id
+      existingUsers?.forEach((user) => {
+        if (user.work_email) {
+          usersMap.set(user.work_email.toLowerCase(), user.id);
+        }
+      });
+
       // Fetch existing inventory codes
       const { data: existingInventory } = await supabase
         .from("asset_inventory")
@@ -280,6 +301,19 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
           }
         }
 
+        // Resolve assigned user by email
+        let assignedUserId: string | null = null;
+        const assignedEmail = normalizeString(rawRow.assigned_to_email || "");
+        if (assignedEmail) {
+          assignedUserId = usersMap.get(assignedEmail.toLowerCase()) || null;
+          if (!assignedUserId) {
+            importResult.warnings.push({
+              row: i + 2,
+              message: `Usuário com email '${assignedEmail}' não encontrado na BU`,
+            });
+          }
+        }
+
         // Parse dates and numbers
         const acquiredAt = parseDate(rawRow.acquired_at || "");
         if (rawRow.acquired_at && !acquiredAt) {
@@ -299,8 +333,12 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
 
         const quantity = parseNumber(rawRow.quantity || "") || 1;
 
+        // Determine holder type and status based on assignment
+        const holderType = assignedUserId ? "user" as const : "location" as const;
+        const status = assignedUserId ? "loaned" as const : "available" as const;
+
         // Insert into database
-        const { error: insertError } = await supabase.from("asset_inventory").insert({
+        const { error: insertError } = await supabase.from("asset_inventory").insert([{
           bu_id: currentBu.id,
           internal_code: internalCode,
           name: name,
@@ -310,15 +348,17 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
           model: normalizeString(rawRow.model || "") || null,
           category_id: categoryId,
           home_location_id: locationId,
-          current_location_id: locationId,
+          current_location_id: assignedUserId ? null : locationId,
+          current_user_id: assignedUserId,
+          assigned_at: assignedUserId ? new Date().toISOString() : null,
           acquired_at: acquiredAt,
           acquisition_value: acquisitionValue,
           quantity_total: quantity,
           quantity_available: quantity,
           notes: normalizeString(rawRow.notes || "") || null,
-          status: "available",
-          current_holder_type: "location",
-        });
+          status: status,
+          current_holder_type: holderType,
+        }]);
 
         if (insertError) {
           importResult.ignoredRows.push({
