@@ -201,3 +201,92 @@ export function useUpdateContactCapability() {
     },
   });
 }
+
+/**
+ * Bulk save contact capabilities - replaces all capabilities for a contact
+ * with the provided selections.
+ */
+export function useSaveContactCapabilities() {
+  const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
+
+  return useMutation({
+    mutationFn: async ({
+      contactId,
+      companyId,
+      selections,
+    }: {
+      contactId: string;
+      companyId: string;
+      selections: Array<{
+        categoryId: string;
+        isGeneralist: boolean;
+        subcategoryIds: string[];
+      }>;
+    }) => {
+      if (!buId) throw new Error("BU não selecionada");
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // 1. Soft-delete all existing capabilities for this contact
+      await supabase
+        .from("partner_contact_capabilities")
+        .update({ deleted_at: new Date().toISOString(), is_active: false })
+        .eq("bu_id", buId)
+        .eq("contact_id", contactId)
+        .is("deleted_at", null);
+
+      // 2. Build the new capabilities to insert
+      const newCapabilities: Array<{
+        bu_id: string;
+        partner_company_id: string;
+        contact_id: string;
+        category_id: string;
+        subcategory_id: string | null;
+        created_by: string | null;
+      }> = [];
+
+      for (const selection of selections) {
+        if (selection.isGeneralist) {
+          // Generalist: one record with subcategory_id = null
+          newCapabilities.push({
+            bu_id: buId,
+            partner_company_id: companyId,
+            contact_id: contactId,
+            category_id: selection.categoryId,
+            subcategory_id: null,
+            created_by: user?.id || null,
+          });
+        } else if (selection.subcategoryIds.length > 0) {
+          // Specific subcategories
+          for (const subId of selection.subcategoryIds) {
+            newCapabilities.push({
+              bu_id: buId,
+              partner_company_id: companyId,
+              contact_id: contactId,
+              category_id: selection.categoryId,
+              subcategory_id: subId,
+              created_by: user?.id || null,
+            });
+          }
+        }
+      }
+
+      // 3. Insert new capabilities if any
+      if (newCapabilities.length > 0) {
+        const { error } = await supabase
+          .from("partner_contact_capabilities")
+          .insert(newCapabilities);
+
+        if (error) throw error;
+      }
+
+      return { count: newCapabilities.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+    },
+  });
+}
