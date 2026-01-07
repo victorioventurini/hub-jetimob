@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
 import type { 
@@ -174,46 +173,48 @@ export function useUpdateGlobalTestStatus() {
 // ============================================
 
 export function useBuIntegrationConfigs(buId: string | undefined) {
-  const supabase = useBuScopedSupabase();
+  const { client: buSupabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['bu-integration-configs', buId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!buSupabase || !buId) return [];
+      const { data, error } = await buSupabase
         .from('bu_integrations_config')
-        .select('*')
-        .eq('bu_id', buId!);
+        .select('id, bu_id, integration_key, is_enabled_in_bu, config_mode, config_override_encrypted, last_test_status, last_test_at, last_test_message, created_at, updated_at, updated_by')
+        .eq('bu_id', buId);
       
       if (error) throw error;
       return data as BuIntegrationConfig[];
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady && !!buSupabase,
   });
 }
 
 export function useBuIntegrationConfig(buId: string | undefined, integrationKey: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: buSupabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['bu-integration-config', buId, integrationKey],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!buSupabase || !buId) return null;
+      const { data, error } = await buSupabase
         .from('bu_integrations_config')
-        .select('*')
-        .eq('bu_id', buId!)
+        .select('id, bu_id, integration_key, is_enabled_in_bu, config_mode, config_override_encrypted, last_test_status, last_test_at, last_test_message, created_at, updated_at, updated_by')
+        .eq('bu_id', buId)
         .eq('integration_key', integrationKey)
         .maybeSingle();
       
       if (error) throw error;
       return data as BuIntegrationConfig | null;
     },
-    enabled: !!buId && !!integrationKey,
+    enabled: !!buId && !!integrationKey && isReady && !!buSupabase,
   });
 }
 
-export function useUpsertBuIntegrationConfig() {
+export function useUpsertBuIntegrationConfig(buId: string | undefined) {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: buSupabase } = useOptionalBuClient();
   
   return useMutation({
     mutationFn: async (config: {
@@ -223,10 +224,12 @@ export function useUpsertBuIntegrationConfig() {
       config_mode: 'use_global' | 'override';
       config_override_encrypted?: Record<string, unknown> | null;
     }) => {
+      if (!buSupabase) throw new Error('BU not selected');
+      
       const { data: user } = await supabase.auth.getUser();
       
       // Check if config exists
-      const { data: existing } = await supabase
+      const { data: existing } = await buSupabase
         .from('bu_integrations_config')
         .select('id')
         .eq('bu_id', config.bu_id)
@@ -234,7 +237,7 @@ export function useUpsertBuIntegrationConfig() {
         .maybeSingle();
       
       if (existing) {
-        const { error } = await supabase
+        const { error } = await buSupabase
           .from('bu_integrations_config')
           .update({
             is_enabled_in_bu: config.is_enabled_in_bu,
@@ -247,7 +250,7 @@ export function useUpsertBuIntegrationConfig() {
         
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await buSupabase
           .from('bu_integrations_config')
           .insert({
             bu_id: config.bu_id,
