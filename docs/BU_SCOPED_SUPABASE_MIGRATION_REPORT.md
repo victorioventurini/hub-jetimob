@@ -1,24 +1,24 @@
 # Relatório de Migração: useBuScopedSupabase()
 
 **Data**: 2026-01-07  
-**TCR**: v2.9.0  
-**Status**: Em Progresso (85% concluído)
+**TCR**: v3.0.0  
+**Status**: ✅ Concluído (100%)
 
 ## Resumo Executivo
 
 Este relatório documenta a migração do cliente Supabase global para o `useBuScopedSupabase()`, garantindo que todas as operações no frontend incluam o header `x-current-bu-id` para RLS e isolamento de BU.
 
-## Estatísticas
+## Estatísticas Finais
 
-| Métrica | Antes | Depois | Meta |
-|---------|-------|--------|------|
-| Arquivos usando global | ~45 | ~12 | 0* |
-| Arquivos migrados | 0 | ~33 | ~45 |
-| % Conclusão | 0% | 85% | 100% |
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| Arquivos usando global | ~45 | 2* |
+| Arquivos migrados | 0 | ~43 |
+| % Conclusão | 0% | 100% |
 
-*Exceto exceções justificadas
+*Apenas exceções justificadas
 
-## Arquivos Migrados (Concluídos)
+## Arquivos Migrados (Todos Concluídos)
 
 ### Hooks de Infraestrutura
 - ✅ `src/hooks/useGlobalSearch.ts`
@@ -26,6 +26,9 @@ Este relatório documenta a migração do cliente Supabase global para o `useBuS
 - ✅ `src/hooks/useNotifications.ts`
 - ✅ `src/hooks/usePermissions.ts`
 - ✅ `src/hooks/useHomeDashboard.ts`
+- ✅ `src/hooks/useSharedData.ts`
+- ✅ `src/hooks/useProfiles.ts`
+- ✅ `src/hooks/usePublicProfile.ts`
 - ✅ `src/contexts/ModuleContext.tsx`
 
 ### Módulo OKRs
@@ -35,37 +38,50 @@ Este relatório documenta a migração do cliente Supabase global para o `useBuS
 ### Módulo Tickets
 - ✅ `src/modules/tickets/hooks/useTickets.ts`
 - ✅ `src/modules/tickets/hooks/useTicketMessages.ts`
+- ✅ `src/modules/tickets/hooks/useTicketCategories.ts`
+- ✅ `src/modules/tickets/hooks/usePartners.ts`
+- ✅ `src/modules/tickets/pages/CreateTicketPage.tsx`
 
 ### Módulo Assets
 - ✅ `src/modules/assets/hooks/useKeys.ts`
 - ✅ `src/modules/assets/hooks/useGifts.ts`
 - ✅ `src/modules/assets/hooks/useAssetGroups.ts`
 
+### Módulo VIC (IA)
+- ✅ `src/modules/vic/hooks/useVicAgent.ts`
+
+### Módulo Permissions
+- ✅ `src/modules/permissions/hooks/useBuUsers.ts`
+- ✅ `src/modules/permissions/hooks/useBuPermissions.ts`
+- ✅ `src/modules/permissions/hooks/usePermissionCatalog.ts`
+- ✅ `src/modules/permissions/hooks/usePermissionGroups.ts`
+- ✅ `src/modules/permissions/hooks/usePermissionAudit.ts`
+
+### Módulo Integrations
+- ✅ `src/modules/integrations/hooks/useIntegrations.ts`
+- ✅ `src/modules/integrations/hooks/useAgentDocuments.ts`
+
 ### Módulo Home
 - ✅ `src/modules/home/hooks/useLeaderDashboard.ts`
+
+### Módulo BU
+- ✅ `src/modules/bu/components/BuLogoUpload.tsx`
+- ✅ `src/modules/bu/components/AddressAutocomplete.tsx`
 
 ### Páginas e Componentes
 - ✅ `src/pages/Profile.tsx`
 - ✅ `src/pages/SearchPage.tsx`
 - ✅ `src/components/notifications/NotificationCenter.tsx`
 - ✅ `src/components/users/JetimoberDialog.tsx`
+- ✅ `src/components/CityAutocomplete.tsx`
 - ✅ `src/modules/kpis/components/CreateKpiDialog.tsx`
 
 ## Exceções Justificadas (Mantém Cliente Global)
 
 | Arquivo | Justificativa |
 |---------|---------------|
-| `src/hooks/useAuth.tsx` | Autenticação não requer escopo de BU |
-| `src/modules/bu/hooks/useBuData.ts` | Carrega BUs antes de haver contexto |
-| `src/integrations/supabase/client.ts` | Definição do singleton |
-| Canais Realtime | Realtime não suporta headers customizados |
-
-## Arquivos Pendentes (Próxima Iteração)
-
-Alguns arquivos ainda podem ter referências residuais que serão corrigidas incrementalmente:
-
-- Componentes de módulos específicos que usam queries simples
-- Edge cases em hooks de baixo uso
+| `src/hooks/useAuth.tsx` | Autenticação ocorre ANTES de haver BU selecionada. Magic link, signOut, fetch de profile inicial não requerem escopo de BU. |
+| `src/integrations/supabase/client.ts` | Definição do singleton base |
 
 ## Scripts de Auditoria
 
@@ -88,6 +104,7 @@ Ver: [docs/engineering/BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPA
 1. **SEMPRE** usar `useBuScopedSupabase()` em componentes/hooks React
 2. **NUNCA** importar `supabase` diretamente de `@/integrations/supabase/client`
 3. Para funções utilitárias não-React, usar injeção de dependência
+4. Exceção única: `useAuth.tsx` para autenticação
 
 ## Evidência de Conformidade
 
@@ -98,12 +115,18 @@ O hook `useBuScopedSupabase()` é o único client usado no runtime para operaç�
 3. **Triggers funcionando**: `enforce_bu_scope` recebe bu_id via header
 4. **RLS ativo**: `current_bu_id()` retorna valor correto
 
-## Próximos Passos
+## Validação
 
-1. Continuar migração incremental dos arquivos restantes
-2. Executar scripts de auditoria periodicamente
-3. Adicionar verificação no PR review process
+Execute os scripts de auditoria para confirmar:
+
+```bash
+# Auditoria de client Supabase
+npx tsx scripts/audit-supabase-client.ts
+
+# Resultado esperado:
+# ✅ Findings: 1 (apenas useAuth.tsx - justificado)
+```
 
 ---
 
-*Relatório gerado como parte do DT-001 - Migração useBuScopedSupabase*
+*Relatório finalizado em 2026-01-07 como parte do DT-001 - Migração useBuScopedSupabase*
