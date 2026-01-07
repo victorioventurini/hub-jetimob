@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.audit-permissions]
 verify_jwt = true
+
+[functions.process-notification-outbox]
+verify_jwt = false
