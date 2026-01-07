@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { Loader2 } from "lucide-react";
@@ -10,6 +10,7 @@ interface OnboardingGuardProps {
 
 export function OnboardingGuard({ children }: OnboardingGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
+  const supabase = useBuScopedSupabase();
 
   const { data: profile, isLoading: profileLoading, refetch } = useQuery({
     queryKey: ["onboarding-check", user?.id],

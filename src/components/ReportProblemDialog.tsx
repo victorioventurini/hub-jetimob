@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 
@@ -50,6 +50,7 @@ export function ReportProblemDialog({
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),

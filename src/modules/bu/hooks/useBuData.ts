@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { BuUnit, UserBuMembership } from "../types";
 
 // Fetch all BUs the current user has access to
 export function useUserBus() {
   const { user } = useAuth();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["user-bus", user?.id],
@@ -29,6 +30,8 @@ export function useUserBus() {
 
 // Fetch a single BU by ID
 export function useBuUnit(buId: string | null) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["bu-unit", buId],
     queryFn: async () => {
@@ -49,6 +52,8 @@ export function useBuUnit(buId: string | null) {
 
 // Fetch all BUs (admin only)
 export function useAllBus() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["all-bus"],
     queryFn: async () => {
@@ -63,9 +68,13 @@ export function useAllBus() {
   });
 }
 
-// Check if email domain is allowed
+// Check if email domain is allowed - requires supabase client injection
+import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase as supabaseGlobal } from "@/integrations/supabase/client";
+
 export async function checkEmailDomainAllowed(email: string): Promise<{ allowed: boolean; buId: string | null }> {
-  const { data, error } = await supabase
+  // This is called before BU context exists, so use global client
+  const { data, error } = await supabaseGlobal
     .rpc("get_bu_by_email_domain", { p_email: email });
 
   if (error) {
@@ -79,6 +88,7 @@ export async function checkEmailDomainAllowed(email: string): Promise<{ allowed:
 // Create a new BU (admin only)
 export function useCreateBu() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (bu: {
@@ -105,6 +115,7 @@ export function useCreateBu() {
 // Update a BU (admin only)
 export function useUpdateBu() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<BuUnit> & { id: string }) => {

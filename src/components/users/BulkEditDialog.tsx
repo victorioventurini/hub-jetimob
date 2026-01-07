@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { TeamSelect, SimpleSelect } from "@/components/selects";
 import { useBu } from "@/contexts/BuContext";
 
@@ -31,6 +31,7 @@ export function BulkEditDialog({
 }: BulkEditDialogProps) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const [teamId, setTeamId] = useState<string>("no-change");
   const [managerId, setManagerId] = useState<string>("no-change");
 
