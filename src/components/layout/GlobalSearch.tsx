@@ -75,7 +75,7 @@ interface GlobalSearchProps {
 export function GlobalSearch({ className }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { query, setQuery, results, isLoading, isEmpty } = useGlobalSearch();
+  const { query, setQuery, results, isLoading, isEmpty, disabled } = useGlobalSearch();
 
   // Keyboard shortcut
   useEffect(() => {
@@ -224,7 +224,13 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             </CommandEmpty>
           )}
 
-          {!isLoading && !isEmpty && query.length < 2 && (
+          {disabled && (
+            <CommandEmpty>
+              Selecione uma BU para buscar
+            </CommandEmpty>
+          )}
+
+          {!disabled && !isLoading && !isEmpty && query.length < 2 && (
             <CommandEmpty>
               Digite ao menos 2 caracteres para buscar
             </CommandEmpty>
