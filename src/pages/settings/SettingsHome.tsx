@@ -107,37 +107,41 @@ export default function SettingsHome() {
     },
   });
 
-  // Fetch Modules count
+  // Fetch Modules count - optimized with parallel count queries
   const { data: modulesData, isLoading: modulesLoading } = useQuery({
     queryKey: ["settings-modules-count"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("modules")
-        .select("status");
-      if (error) throw error;
-      const active = data?.filter((m) => m.status === "active").length || 0;
-      const total = data?.length || 0;
-      return { active, total };
+      const [activeResult, totalResult] = await Promise.all([
+        supabase
+          .from("modules")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active"),
+        supabase
+          .from("modules")
+          .select("*", { count: "exact", head: true }),
+      ]);
+      if (activeResult.error) throw activeResult.error;
+      if (totalResult.error) throw totalResult.error;
+      return { active: activeResult.count || 0, total: totalResult.count || 0 };
     },
   });
 
-  // Fetch Integrations count
+  // Fetch Integrations count - optimized with parallel count queries
   const { data: integrationsData, isLoading: integrationsLoading } = useQuery({
     queryKey: ["settings-integrations-count"],
     queryFn: async () => {
-      const { data: catalog, error: catalogError } = await supabase
-        .from("hub_integrations_catalog")
-        .select("integration_key, status");
-      if (catalogError) throw catalogError;
-      
-      const { data: globalConfig, error: globalError } = await supabase
-        .from("hub_integrations_global_config")
-        .select("integration_key, is_enabled_global");
-      if (globalError) throw globalError;
-      
-      const total = catalog?.length || 0;
-      const enabled = globalConfig?.filter((c) => c.is_enabled_global).length || 0;
-      return { total, enabled };
+      const [catalogResult, enabledResult] = await Promise.all([
+        supabase
+          .from("hub_integrations_catalog")
+          .select("*", { count: "exact", head: true }),
+        supabase
+          .from("hub_integrations_global_config")
+          .select("*", { count: "exact", head: true })
+          .eq("is_enabled_global", true),
+      ]);
+      if (catalogResult.error) throw catalogResult.error;
+      if (enabledResult.error) throw enabledResult.error;
+      return { total: catalogResult.count || 0, enabled: enabledResult.count || 0 };
     },
   });
 
