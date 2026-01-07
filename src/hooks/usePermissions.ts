@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 export function usePermissions() {
   const { user } = useAuth();
   const { currentBuId, isLoading: isBuLoading } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const { data: permissions = [], isLoading: isQueryLoading } = useQuery({
     queryKey: ["permissions", currentBuId, user?.id],

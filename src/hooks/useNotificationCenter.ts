@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from './useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
@@ -51,6 +51,8 @@ export interface UserNotificationSetting {
 
 // Hook for notification events catalog
 export function useNotificationEvents() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['notification-events'],
     queryFn: async () => {
@@ -68,6 +70,8 @@ export function useNotificationEvents() {
 
 // Hook for notification channels catalog
 export function useNotificationChannels() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['notification-channels'],
     queryFn: async () => {
@@ -85,6 +89,8 @@ export function useNotificationChannels() {
 
 // Hook for BU notification channels configuration
 export function useBuNotificationChannels(buId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['bu-notification-channels', buId],
     queryFn: async () => {
@@ -105,6 +111,7 @@ export function useBuNotificationChannels(buId?: string) {
 // Hook for managing BU notification channels
 export function useBuNotificationChannelMutations() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   const upsertChannel = useMutation({
     mutationFn: async ({ 
@@ -148,6 +155,7 @@ export function useBuNotificationChannelMutations() {
 export function useUserNotificationSettings() {
   const { user } = useAuth();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   
   return useQuery({
     queryKey: queryKeys.notifications.settings(user?.id ?? '', currentBu?.id ?? ''),
@@ -171,6 +179,7 @@ export function useUserNotificationPreferenceMutation() {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({ 
@@ -210,6 +219,7 @@ export function useEmitNotificationEvent() {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 
 export interface SearchResult {
@@ -29,6 +29,7 @@ export function useGlobalSearch(initialQuery = "") {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   // Debounce query
   useEffect(() => {

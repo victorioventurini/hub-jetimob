@@ -3,7 +3,7 @@ import { usePendingCheckins, useCheckinSummary } from "@/modules/okrs/hooks/useP
 import { useTeams } from "@/modules/teams/hooks/useTeams";
 import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 
 // Types
 interface KpiSummary {
@@ -57,41 +57,65 @@ function mapRoleToCategory(role?: string): "executive" | "leader" | "collaborato
   return "collaborator";
 }
 
-// Hook to get user's team ID
-function useUserTeamId(userId?: string) {
-  return useQuery({
-    queryKey: ['user-team-id', userId],
+// Static mock data for KPIs (until KPI module is fully integrated)
+const mockKpisByRole: Record<string, KpiSummary[]> = {
+  executive: [
+    { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
+    { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
+    { label: "EBITDA", value: "R$ 320.000", changeType: "neutral" },
+    { label: "NPS", value: "56", change: "+3", changeType: "positive" },
+  ],
+  leader: [
+    { label: "Tickets Resolvidos", value: "142", change: "+12%", changeType: "positive" },
+    { label: "CSAT", value: "4.6", changeType: "neutral" },
+    { label: "Tempo Médio", value: "2.4h", change: "-18%", changeType: "positive" },
+  ],
+  collaborator: [
+    { label: "Tarefas Concluídas", value: "23", change: "+8%", changeType: "positive" },
+    { label: "Em Andamento", value: "5", changeType: "neutral" },
+  ],
+};
+
+export function useHomeDashboard(): HomeDashboardData {
+  const { role, user } = useAuth();
+  const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
+  const { data: pendingCheckins, isLoading: checkinsLoading } = usePendingCheckins();
+  const { summary: checkinSummary } = useCheckinSummary();
+  const { data: teams } = useTeams();
+  
+  // Hook to get user's team ID
+  const { data: userTeamId } = useQuery({
+    queryKey: ['user-team-id', user?.id],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!user?.id) return null;
       
       const { data, error } = await supabase
         .from('profiles')
         .select('team_id')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .maybeSingle();
       
       if (error) throw error;
       return data?.team_id || null;
     },
-    enabled: !!userId,
+    enabled: !!user?.id,
   });
-}
 
-// Hook to get real OKR status counts - scoped to BU
-function useOkrStatusCounts(buId?: string | null, teamId?: string | null) {
-  return useQuery({
-    queryKey: ['okr-status-counts', buId, teamId],
+  // Hook to get real OKR status counts - scoped to BU
+  const { data: okrCounts, isLoading: okrLoading } = useQuery({
+    queryKey: ['okr-status-counts', currentBu?.id, userTeamId],
     queryFn: async () => {
-      if (!buId) return { onTrack: 0, atRisk: 0, offTrack: 0 };
+      if (!currentBu?.id) return { onTrack: 0, atRisk: 0, offTrack: 0 };
       
       let query = supabase
         .from('okr_team_key_results')
         .select('status')
-        .eq('bu_id', buId)
+        .eq('bu_id', currentBu.id)
         .is('deleted_at', null);
 
-      if (teamId) {
-        query = query.eq('team_id', teamId);
+      if (userTeamId) {
+        query = query.eq('team_id', userTeamId);
       }
 
       const { data, error } = await query;
@@ -119,38 +143,9 @@ function useOkrStatusCounts(buId?: string | null, teamId?: string | null) {
 
       return counts;
     },
-    enabled: !!buId,
+    enabled: !!currentBu?.id,
   });
-}
 
-// Static mock data for KPIs (until KPI module is fully integrated)
-const mockKpisByRole: Record<string, KpiSummary[]> = {
-  executive: [
-    { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
-    { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
-    { label: "EBITDA", value: "R$ 320.000", changeType: "neutral" },
-    { label: "NPS", value: "56", change: "+3", changeType: "positive" },
-  ],
-  leader: [
-    { label: "Tickets Resolvidos", value: "142", change: "+12%", changeType: "positive" },
-    { label: "CSAT", value: "4.6", changeType: "neutral" },
-    { label: "Tempo Médio", value: "2.4h", change: "-18%", changeType: "positive" },
-  ],
-  collaborator: [
-    { label: "Tarefas Concluídas", value: "23", change: "+8%", changeType: "positive" },
-    { label: "Em Andamento", value: "5", changeType: "neutral" },
-  ],
-};
-
-export function useHomeDashboard(): HomeDashboardData {
-  const { role, user } = useAuth();
-  const { currentBu } = useBu();
-  const { data: pendingCheckins, isLoading: checkinsLoading } = usePendingCheckins();
-  const { summary: checkinSummary } = useCheckinSummary();
-  const { data: userTeamId } = useUserTeamId(user?.id);
-  const { data: okrCounts, isLoading: okrLoading } = useOkrStatusCounts(currentBu?.id, userTeamId);
-  const { data: teams } = useTeams();
-  
   const roleCategory = mapRoleToCategory(role as string | undefined);
   const isLoading = checkinsLoading || okrLoading;
 

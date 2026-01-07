@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from './useAuth';
 import { useBu } from '@/contexts/BuContext';
 
@@ -20,6 +20,7 @@ export function useNotifications() {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   // Get current user's profile for author name
   const getAuthorName = async (): Promise<string> => {
