@@ -1,0 +1,15 @@
+{
+  "tables": [
+    "profiles",
+    "bu_units",
+    "bu_user_memberships",
+    "permission_catalog",
+    "permission_groups",
+    "permission_group_permissions",
+    "modules",
+    "hub_integrations_catalog",
+    "automation_event_catalog",
+    "automation_action_catalog"
+  ],
+  "reason": "global/meta tables - não escopadas por BU"
+}
