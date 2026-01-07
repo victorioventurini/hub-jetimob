@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
-import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import { Loader2, AlertTriangle, Lightbulb, BookOpen } from "lucide-react";
 import type { OkrStatus } from "../types";
 
@@ -52,7 +52,7 @@ export function CancelOkrDialog({
   entityTitle,
   onSuccess,
 }: CancelOkrDialogProps) {
-  const { user } = useAuth();
+  const { profileId, isReady: identityReady } = useIdentity();
   const { client: supabase, buId } = useOptionalBuClient();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -107,7 +107,7 @@ export function CancelOkrDialog({
   const cancelMutation = useMutation({
     mutationFn: async () => {
       if (!supabase || !buId) throw new Error("Nenhuma BU selecionada");
-      if (!user) throw new Error("Não autenticado");
+      if (!profileId) throw new Error("Perfil não encontrado");
       if (!reasonCode) throw new Error("Selecione um motivo");
       if (!learning.trim()) throw new Error("Descreva o aprendizado");
 
@@ -120,7 +120,7 @@ export function CancelOkrDialog({
           cancellation_reason: `${selectedReason?.label || reasonCode}${additionalNotes ? `: ${additionalNotes}` : ""}`,
           cancellation_learning: learning.trim(),
           cancelled_at: new Date().toISOString(),
-          cancelled_by: user.id,
+          cancelled_by: profileId, // PROFILE_ID: Conforme IDENTITY_CONVENTION.md
           updated_at: new Date().toISOString(),
         })
         .eq("id", entityId);

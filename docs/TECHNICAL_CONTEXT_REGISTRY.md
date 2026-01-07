@@ -1,8 +1,11 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.8.0  
+**Versão:** 2.9.0  
 **Última atualização:** 2026-01-07
 **Responsável:** Lovable AI / Equipe de Engenharia
+
+> 📚 **Documentação Complementar:**
+> - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção de identidade (`user_id` vs `profile_id`)
 
 ---
 
@@ -261,7 +264,7 @@ Estrutura organizacional de times.
 | id | uuid | PK |
 | name | text | Nome do time |
 | description | text | Descrição |
-| leader_user_id | uuid | Líder do time |
+| leader_user_id | uuid | **PROFILE_ID**: FK para profiles.id (ver [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)) |
 | parent_team_id | uuid | Time pai (hierarquia) |
 | status | enum | `active`, `inactive` |
 | bu_id | uuid | FK para bu_units |
@@ -276,7 +279,7 @@ Vínculo de usuários com times.
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | uuid | PK |
-| user_id | uuid | FK para auth.users |
+| user_id | uuid | **PROFILE_ID**: FK para profiles.id (ver [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)) |
 | team_id | uuid | FK para teams |
 | is_active | bool | Se está ativo |
 | joined_at | timestamp | Data de entrada |
