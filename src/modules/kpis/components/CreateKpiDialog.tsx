@@ -66,6 +66,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createKpi } = useKpiData();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   const form = useForm<FormValues>({
