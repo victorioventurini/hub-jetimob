@@ -20,6 +20,10 @@ export const queryKeys = {
     all: (userId: string) => ['notifications', userId] as const,
     unread: (userId: string) => ['notifications', 'unread', userId] as const,
     count: (userId: string) => ['notifications', 'count', userId] as const,
+    settings: (userId: string, buId: string) => ['notifications', 'settings', userId, buId] as const,
+    events: () => ['notification-events'] as const,
+    channels: () => ['notification-channels'] as const,
+    buChannels: (buId: string) => ['bu-notification-channels', buId] as const,
   },
 
   // ============= Teams =============
