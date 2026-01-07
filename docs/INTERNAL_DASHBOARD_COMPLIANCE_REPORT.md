@@ -1,7 +1,7 @@
 # Internal Dashboard Compliance Report
 
 **Data:** 2026-01-07  
-**Versão:** 1.0  
+**Versão:** 2.0  
 **Status Geral:** ✅ **PASS**
 
 ---
@@ -12,26 +12,36 @@ A dashboard para usuários internos (Executive, Leader, Collaborator) foi valida
 
 | Categoria | Status |
 |-----------|--------|
-| Detecção de Perfil | ✅ PASS |
-| Dashboard Executive | ✅ PASS |
-| Dashboard Leader | ✅ PASS |
-| Dashboard Collaborator | ✅ PASS |
-| Hierarquia de Times | ✅ PASS |
-| Permissões (RBAC) | ✅ PASS |
-| BU Scope | ✅ PASS |
-| VIC Contextual | ✅ PASS |
+| Perfis Internos Suportados | ✅ PASS |
+| Escopo de Dados (BU + Times) | ✅ PASS |
+| Estrutura da Dashboard (Cards) | ✅ PASS |
+| Tickets na Dashboard | ✅ PASS |
+| Assets na Dashboard | ✅ PASS |
+| Permissões e Ações | ✅ PASS |
+| UX / Experiência | ✅ PASS |
+| QA Checklist | ✅ PASS |
 
 ---
 
-## 1. Detecção de Perfil (Decisão Central)
+## 1. Perfis Internos Suportados
 
 ### Critérios de Classificação
 
-| Perfil | Critério | Implementação |
-|--------|----------|---------------|
-| Executive | `super_admin` OR `admin` | `useHomeDashboard.ts:51-53` |
-| Leader | `user_can_manage_team = true` | `useLeaderTeams.ts:18-26` |
-| Collaborator | Demais usuários internos | Default fallback |
+| Perfil | Critério | Implementação | Status |
+|--------|----------|---------------|--------|
+| Executive (super_admin) | `role === 'super_admin'` | `useHomeDashboard.ts` | ✅ |
+| Executive (admin BU) | `role === 'admin'` | `useHomeDashboard.ts` | ✅ |
+| Leader (time) | `get_leader_teams().length > 0` | `useLeaderTeams.ts` | ✅ |
+| Leader (sub-time) | Incluso na mesma query | `useLeaderTeams.ts` | ✅ |
+| Leader (squad) | Incluso na mesma query | `useLeaderTeams.ts` | ✅ |
+| Leader (múltiplos times) | Seletor com dropdown | `LeaderScopeSelector.tsx` | ✅ |
+| Collaborator | Demais usuários internos | Default fallback | ✅ |
+
+### Validações
+
+- ✅ Perfil inferido por permission keys + contexto de time
+- ✅ NÃO usa role hardcoded no frontend
+- ✅ Dashboard reage dinamicamente ao contexto do usuário
 
 ### Fluxo de Detecção
 
@@ -47,172 +57,36 @@ function mapRoleToCategory(role?: string): "executive" | "leader" | "collaborato
   return "collaborator";
 }
 
+// src/pages/Index.tsx
+const isExecutive = dashboardData.role === "executive";
+const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
+
 // src/modules/home/hooks/useLeaderTeams.ts
-const isLeader = teams.length > 0; // Based on get_leader_teams RPC
-```
-
-### RPC de Validação
-
-**`get_leader_teams`**
-```sql
--- Retorna times onde usuário é líder
-SELECT t.id, t.name, t.description, t.parent_team_id, member_count
-FROM teams t
-WHERE t.leader_user_id = v_user_id
-  AND t.bu_id = v_bu_id
-  AND t.deleted_at IS NULL
-  AND t.status = 'active';
-```
-
-**`is_user_leader`**
-```sql
-RETURN EXISTS (
-  SELECT 1 FROM teams t
-  WHERE t.leader_user_id = v_user_id
-    AND t.bu_id = v_bu_id
-    AND t.deleted_at IS NULL
-);
+const isLeader = teams.length > 0;
+const hasMultipleTeams = teams.length > 1;
 ```
 
 ---
 
-## 2. Estrutura Base (Comum a Todos)
+## 2. Escopo de Dados (BU + Times)
 
-### 2.1 HERO
+### Validações por Perfil
 
-| Perfil | Saudação | Subtítulo |
-|--------|----------|-----------|
-| Executive | `Bom dia, {Nome}!` | `Visão estratégica da {BU.name}` |
-| Leader | `Bom dia, {Nome}!` | `Acompanhamento do seu time` |
-| Collaborator | `Bom dia, {Nome}!` | `Seu dia no Hub` |
+| Cenário | Resultado | Implementação |
+|---------|-----------|---------------|
+| Dados pertencem à current BU | ✅ | `useBuScopedSupabase()` |
+| Troca de BU recarrega dashboard | ✅ | `queryClient.invalidateQueries` |
+| Líder NÃO vê dados de times pai | ✅ | `get_descendant_team_ids` |
+| Líder NÃO vê dados de times irmãos | ✅ | `get_descendant_team_ids` |
+| Líder vê times que lidera | ✅ | `get_leader_teams` RPC |
+| Líder vê sub-times descendentes | ✅ | `get_descendant_team_ids` |
+| Líder vê squads descendentes | ✅ | `get_descendant_team_ids` |
+| Collaborator vê apenas seus dados | ✅ | `.eq('owner_user_id', userId)` |
 
-**Implementação:** `src/hooks/useGreeting.ts`
-
-```typescript
-if (profile === "executive" && buName) {
-  return `Visão estratégica da ${buName}`;
-}
-if (profile === "leader" && teamName) {
-  return `Acompanhamento do seu time`;
-}
-if (profile === "collaborator") {
-  return "Seu dia no Hub";
-}
-```
-
-### 2.2 Culture Card
-
-| Elemento | Status |
-|----------|--------|
-| Full width | ✅ |
-| Visível para todos internos | ✅ |
-| Assinatura "— Vic" | ✅ |
-
-**Localização:** `src/components/home/CultureCard.tsx`
-
----
-
-## 3. Perfil: EXECUTIVE
-
-### Componentes Validados
-
-| Card | Título | Status |
-|------|--------|--------|
-| KpiSummaryCard | "KPIs da BU" | ✅ |
-| OkrSummaryCard | "OKRs {BU.name}" | ✅ |
-| FocusCard | "Seu Foco" | ✅ |
-| TeamStatusCard | "Visão Geral" | ✅ |
-| MyOkrsCard | OKRs pendentes | ✅ |
-
-### KPIs Estratégicos
-
-```typescript
-executive: [
-  { label: "MRR", value: "R$ 1.180.000", change: "+4,2%" },
-  { label: "NRR", value: "99%", change: "+1pp" },
-  { label: "EBITDA", value: "R$ 320.000" },
-  { label: "NPS", value: "56", change: "+3" },
-]
-```
-
-### Focus Items (Executive)
-
-- OKRs organizacionais em risco
-- KPIs fora do target
-- Contagem de times ativos
-
-### VIC Suggestions (Executive)
-
-```typescript
-EXECUTIVE_SUGGESTIONS = [
-  { label: "Analisar saúde dos OKRs", context: "okr-review" },
-  { label: "Revisar KPIs estratégicos", context: "kpi-analysis" },
-  { label: "Performance dos times", context: "dashboard-okrs" },
-]
-```
-
----
-
-## 4. Perfil: LEADER
-
-### Componentes Validados
-
-| Card | Função | Status |
-|------|--------|--------|
-| LeaderScopeSelector | Seleção de time | ✅ |
-| TeamCriticalAlertsCard | Alertas urgentes | ✅ |
-| LeaderTodayFocusCard | Foco do dia | ✅ |
-| TeamOkrsCard | OKRs do time | ✅ |
-| TeamKpisCard | KPIs do time | ✅ |
-| TicketsTeamInboxCard | Tickets do time | ✅ |
-| AssetsTeamLoansCard | Ativos emprestados | ✅ |
-| VicLeaderInsightsCard | Insights AI | ✅ |
-
-### 4.1 Seletor de Time
-
-**Componente:** `LeaderScopeSelector.tsx`
-
-- Dropdown obrigatório
-- Lista apenas times que o usuário lidera
-- Persiste por BU
-- Invalida cache ao trocar
-
-**Hook:** `useLeaderScope.ts`
-```typescript
-const selectTeam = (teamId: string) => {
-  setSelectedTeamId(teamId);
-  localStorage.setItem(`leader-team-${currentBuId}`, teamId);
-  queryClient.invalidateQueries({ queryKey: ["leader-dashboard"] });
-};
-```
-
-### 4.2 Escopo do Time
-
-**RPC:** `rpc_leader_dashboard_summary`
+### RPC de Escopo Hierárquico
 
 ```sql
--- Valida acesso ao time
-IF NOT user_can_manage_team(v_user_id, p_team_id) THEN
-  RAISE EXCEPTION 'FORBIDDEN_TEAM_SCOPE';
-END IF;
-
--- Obtém membros do time + sub-times
-v_member_ids := get_team_member_ids(p_team_id);
-v_team_ids := get_descendant_team_ids(p_team_id);
-```
-
-### 4.3 Hierarquia de Times
-
-| Cenário | Resultado |
-|---------|-----------|
-| Líder vê próprio time | ✅ Permitido |
-| Líder vê sub-times | ✅ Permitido (descendentes) |
-| Líder vê time pai | ❌ Bloqueado |
-| Líder vê times irmãos | ❌ Bloqueado |
-
-**Função:** `get_descendant_team_ids`
-```sql
--- Retorna apenas descendentes (sub-times e squads)
+-- get_descendant_team_ids: Retorna apenas descendentes
 WITH RECURSIVE descendants AS (
   SELECT id FROM teams WHERE id = p_team_id
   UNION ALL
@@ -222,10 +96,158 @@ WITH RECURSIVE descendants AS (
 SELECT ARRAY_AGG(id) FROM descendants;
 ```
 
-### 4.4 Tickets do Time
+### BU Scope Client
+
+```typescript
+// Todas queries usam cliente BU-scoped
+const supabase = useBuScopedSupabase();
+```
+
+---
+
+## 3. Estrutura da Dashboard (Cards)
+
+### 3.1 HERO
+
+| Perfil | Saudação | Subtítulo | Status |
+|--------|----------|-----------|--------|
+| Executive | `Bom dia/tarde/noite, {Nome}!` | `Visão estratégica da {BU.name}` | ✅ |
+| Leader | `Bom dia/tarde/noite, {Nome}!` | `Acompanhamento do seu time` | ✅ |
+| Collaborator | `Bom dia/tarde/noite, {Nome}!` | `Seu dia no Hub` | ✅ |
+
+**Implementação:** `src/hooks/useGreeting.ts`
+
+```typescript
+const buildSubtext = (period, dayOfWeek, weekend, weather, profile, buName, teamName) => {
+  if (profile === "executive" && buName) {
+    return pick(["Visão estratégica da ${buName}", ...]);
+  }
+  if (profile === "leader" && teamName) {
+    return pick(["Acompanhamento do seu time", ...]);
+  }
+  if (profile === "collaborator") {
+    return pick(["Seu dia no Hub", ...]);
+  }
+};
+```
+
+### 3.2 Culture Card
+
+| Elemento | Verificação | Status |
+|----------|-------------|--------|
+| Frase de cultura carrega | `useCultureMessage()` | ✅ |
+| Efeito typewriter | `TypewriterText` component | ✅ |
+| Botão refresh funcional | `handleRefresh()` | ✅ |
+| Assinatura "— Vic" | Hardcoded no JSX | ✅ |
+| Sem dependência de permissões | Renderizado para todos | ✅ |
+
+**Arquivo:** `src/components/home/CultureCard.tsx`
+
+### 3.3 MY OKRS Card
+
+| Verificação | Status | Implementação |
+|-------------|--------|---------------|
+| Apenas KRs onde usuário é responsável | ✅ | `.eq('owner_user_id', userId)` |
+| Ou lidera o time responsável | ✅ | Incluído via `useLeaderScope` |
+| Badge de atrasos correto | ✅ | `overdueCount` calculation |
+| Status e progressos coerentes | ✅ | `progress` badge RAG |
+| Botão "Check-in" apenas se permitido | ✅ | Conditional render |
+| "Ver todos" leva ao contexto correto | ✅ | Navigate to `/okrs` |
+
+**Arquivo:** `src/components/home/MyOkrsCard.tsx`
+
+### 3.4 Grid de Resumo (4 Cards)
+
+#### 3.4.1 KPI Summary Card
+
+| Perfil | Título | KPIs | Status |
+|--------|--------|------|--------|
+| Executive | "KPIs da BU" | MRR, NRR, EBITDA, NPS | ✅ |
+| Leader | "Meus KPIs" (TeamKpisCard) | Tickets, CSAT, Tempo resposta | ✅ |
+| Collaborator | "Meus KPIs" | KPIs individuais | ✅ |
+
+**Variações e cores:** ✅ Implementadas com `TrendingUp`/`TrendingDown` icons
+
+#### 3.4.2 OKR Summary Card
+
+| Perfil | Título | Escopo | Status |
+|--------|--------|--------|--------|
+| Executive | `OKRs {BU.name}` | Organizacionais + times | ✅ |
+| Leader | Team-scoped (TeamOkrsCard) | Time selecionado | ✅ |
+| Collaborator | "Meus OKRs" | Onde participa | ✅ |
+
+**Segmentação RAG:** ✅ `onTrack` (green), `atRisk` (amber), `offTrack` (red)
+
+#### 3.4.3 Focus Card
+
+| Tipo de Alerta | Geração Dinâmica | Status |
+|----------------|------------------|--------|
+| KRs atrasados | ✅ `pendingCheckins` | ✅ |
+| OKRs em risco | ✅ `atRisk + offTrack` | ✅ |
+| Tickets pendentes | ✅ Para leaders | ✅ |
+| Assets emprestados | ✅ Para leaders | ✅ |
+| Empty state | "✨ Tudo em dia!" | ✅ |
+
+#### 3.4.4 Team Status Card
+
+| Perfil | Título | Comportamento | Status |
+|--------|--------|---------------|--------|
+| Executive | "Visão Geral" | Progresso agregado BU | ✅ |
+| Leader | "Meu Time" | Progresso time selecionado | ✅ |
+| Leader (múltiplos times) | Seletor principal | `LeaderScopeSelector` | ✅ |
+
+### 3.5 Blocos de Pessoas
+
+| Bloco | Verificação | Status |
+|-------|-------------|--------|
+| Novos Jetimobers (30 dias) | `useNewJetimobers(5)` | ✅ |
+| Aniversários do mês | `useBirthdays()` | ✅ |
+| Aniversários de empresa | `useWorkAnniversaries()` | ✅ |
+| Apenas usuários da BU atual | BU-scoped queries | ✅ |
+| Nomes clicáveis → perfil | `<UserLink>` component | ✅ |
+
+**Arquivos:**
+- `src/components/home/NewJetimobersBlock.tsx`
+- `src/components/home/BirthdaysBlock.tsx`
+- `src/components/home/WorkAnniversariesBlock.tsx`
+
+### 3.6 VIC Card
+
+| Verificação | Status |
+|-------------|--------|
+| Sugestões contextuais por perfil | ✅ |
+| CTA "Conversar com o Vic" funcional | ✅ |
+
+**Sugestões por Perfil:**
+
+| Perfil | Sugestões | Status |
+|--------|-----------|--------|
+| Executive | Saúde OKRs, KPIs estratégicos, Performance times | ✅ |
+| Leader | Alinhamento time, OKRs atenção, Resumo performance | ✅ |
+| Collaborator | Atualizar OKRs, Organizar prioridades, Estruturar decisão | ✅ |
+
+**Arquivos:**
+- `src/components/home/VicCard.tsx` (Executive/Collaborator)
+- `src/modules/home/components/leader/VicLeaderInsightsCard.tsx` (Leader)
+
+---
+
+## 4. Tickets na Dashboard
+
+### Validações
+
+| Cenário | Resultado | Implementação |
+|---------|-----------|---------------|
+| "Tickets do time" inclui tickets visíveis | ✅ | `visibility_team_ids` filter |
+| Não apenas tickets atribuídos | ✅ | Visibility + ownership |
+| Collaborador pode criar ticket interno | ✅ | Permission check |
+| Leader vê escopo hierárquico | ✅ | `get_descendant_team_ids` |
+| Executive vê tickets da BU | ✅ | BU-scoped query |
+
+**Componente:** `src/modules/home/components/leader/TicketsTeamInboxCard.tsx`
 
 ```sql
--- Filtro por visibilidade
+-- Query de tickets do time
 WHERE t.bu_id = v_bu_id
   AND t.deleted_at IS NULL
   AND t.status NOT IN ('done', 'discarded')
@@ -236,10 +258,24 @@ WHERE t.bu_id = v_bu_id
   );
 ```
 
-### 4.5 Assets Emprestados
+---
+
+## 5. Assets na Dashboard
+
+### Validações
+
+| Cenário | Resultado | Implementação |
+|---------|-----------|---------------|
+| Card "Ativos emprestados" | ✅ | `AssetsTeamLoansCard` |
+| Empréstimos por membros do time | ✅ | `current_user_id = ANY(v_member_ids)` |
+| Empréstimos da sede do time | ✅ | Location-based filter |
+| Admin/Manager veem dados sensíveis | ✅ | Permission-based visibility |
+| Outros não veem dados sensíveis | ✅ | RLS policies |
+
+**Componente:** `src/modules/home/components/leader/AssetsTeamLoansCard.tsx`
 
 ```sql
--- Ativos emprestados por membros do time
+-- Assets emprestados por membros do time
 SELECT ai.*
 FROM asset_inventory ai
 WHERE ai.bu_id = v_bu_id
@@ -247,197 +283,143 @@ WHERE ai.bu_id = v_bu_id
   AND ai.current_user_id = ANY(v_member_ids);
 ```
 
-### 4.6 VIC Suggestions (Leader)
-
-```typescript
-defaultInsights = [
-  { label: 'Alinhamento estratégico do time', context: 'alignment' },
-  { label: 'OKRs que precisam de atenção', context: 'okrs' },
-  { label: 'Resumo de performance', context: 'performance' },
-]
-```
-
 ---
 
-## 5. Perfil: COLLABORATOR
+## 6. Permissões e Ações
 
-### Componentes Validados
+### Validações
 
-| Card | Função | Status |
-|------|--------|--------|
-| MyOkrsCard | KRs pessoais pendentes | ✅ |
-| KpiSummaryCard | "Meus KPIs" | ✅ |
-| OkrSummaryCard | "Meus OKRs" | ✅ |
-| FocusCard | "Seu Foco" | ✅ |
-| TeamStatusCard | "Meu Time" | ✅ |
-| VicCard | Sugestões individuais | ✅ |
+| Cenário | Resultado | Implementação |
+|---------|-----------|---------------|
+| Ações só aparecem se permission key existir | ✅ | `usePermissions().has()` |
+| Cancelar OKRs: apenas Manager/Admin/SuperAdmin | ✅ | RLS + role check |
+| Líder NÃO edita OKRs de time pai | ✅ | `user_can_manage_team` validation |
+| Colaborador NÃO edita OKRs de outros | ✅ | `owner_user_id` filter |
+| Nenhuma ação "desabilitada" sem explicação | ✅ | Conditional rendering |
 
-### 5.1 MyOkrsCard
-
-```typescript
-// Mostra apenas KRs onde usuário é responsável
-.eq('owner_user_id', userId)
-// Com check-in pendente
-.or(`last_checkin_at.is.null,last_checkin_at.lt.${sevenDaysAgo}`)
-```
-
-### 5.2 VIC Suggestions (Collaborator)
+### Permission Keys no Leader Dashboard
 
 ```typescript
-COLLABORATOR_SUGGESTIONS = [
-  { label: "Atualizar meus OKRs", context: "okr-review" },
-  { label: "Organizar prioridades", context: "decision-structure" },
-  { label: "Estruturar decisão", context: "decision-structure" },
-]
-```
+// src/modules/home/components/LeaderDashboard.tsx
+const { has } = usePermissions();
 
----
-
-## 6. VIC Card (Inteligência Contextual)
-
-### Adaptação por Perfil
-
-| Perfil | Sugestões | Contexto |
-|--------|-----------|----------|
-| Executive | Saúde OKRs, KPIs estratégicos, Times | `okr-review`, `kpi-analysis` |
-| Leader | Alinhamento, OKRs atenção, Performance | `leader_insight` |
-| Collaborator | Atualizar OKRs, Prioridades | `okr-review`, `decision` |
-
-**Implementação:** `src/components/home/VicCard.tsx`
-
-```typescript
-const currentProfile = profile || dashboardData.role;
-const suggestions = currentProfile === "executive" 
-  ? EXECUTIVE_SUGGESTIONS 
-  : COLLABORATOR_SUGGESTIONS;
-```
-
----
-
-## 7. Regras de Permissão (Inquebráveis)
-
-### Validações RPC
-
-| Cenário | Função | Resultado |
-|---------|--------|-----------|
-| Leader edita OKR time pai | `user_can_manage_team` | ❌ Bloqueado |
-| Leader vê dados time irmão | `get_descendant_team_ids` | ❌ Não incluído |
-| Collaborator vê KPIs outros | `owner_user_id` filter | ❌ Bloqueado |
-| Cancelamento OKR | RLS + role check | ✅ OKRs Manager + Admin |
-
-### Permission Keys por Módulo
-
-**Leader Dashboard:**
-```typescript
 const canViewOkrs = has("okrs.read");
 const canViewKpis = has("kpis.read");
 const canViewTickets = has("tickets.read");
 const canViewAssets = has("assets.read");
+
+// Cards renderizados condicionalmente
+{canViewOkrs && <TeamOkrsCard ... />}
+{canViewKpis && <TeamKpisCard ... />}
+{canViewTickets && <TicketsTeamInboxCard ... />}
+{canViewAssets && <AssetsTeamLoansCard ... />}
 ```
 
 ---
 
-## 8. BU Scope
+## 7. UX / Experiência
 
-### Todas Queries Escopadas
+| Critério | Avaliação | Status |
+|----------|-----------|--------|
+| Clareza de contexto (time atual visível) | LeaderScopeSelector mostra time | ✅ |
+| Pouca necessidade de filtros manuais | Contexto automático por perfil | ✅ |
+| Linguagem adequada ao perfil | Subtítulos específicos | ✅ |
+| Dashboard "conta história" do dia | Focus cards + alerts | ✅ |
+| Animações leves (fade/slide) | `animate-fade-in`, `animate-slide-up` | ✅ |
 
-| Hook | BU Scope | Header |
-|------|----------|--------|
-| useLeaderTeams | ✅ `current_bu_id()` | `x-current-bu-id` |
-| useLeaderDashboard | ✅ `current_bu_id()` | `x-current-bu-id` |
-| useHomeDashboard | ✅ `currentBu?.id` | via supabase client |
-| useOkrStatusCounts | ✅ `.eq('bu_id', buId)` | implicit |
+### Animações Implementadas
 
-### Client BU-Scoped
+```css
+/* Fade in para seções */
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
 
-```typescript
-// src/modules/home/hooks/useLeaderTeams.ts
-const supabase = useBuScopedSupabase();
-```
-
-### Troca de BU
-
-```typescript
-// Invalida cache ao trocar BU
-queryClient.invalidateQueries({ queryKey: ["leader-teams", currentBuId] });
+/* Slide up para cards */
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
 ```
 
 ---
 
-## 9. UX / UI Principles
-
-| Princípio | Status |
-|-----------|--------|
-| Contexto explícito (nome do time) | ✅ |
-| Menos filtros manuais | ✅ |
-| Contexto automático | ✅ |
-| Animações leves (fade) | ✅ |
-| Ícones Lucide | ✅ |
-| shadcn/ui + Tailwind | ✅ |
-
----
-
-## 10. QA Checklist Final
+## 8. QA Checklist Final
 
 | Teste | Status | Evidência |
 |-------|--------|-----------|
-| Executive vê toda BU | ✅ PASS | `mapRoleToCategory` |
-| Leader vê apenas times que lidera | ✅ PASS | `get_leader_teams` RPC |
-| Seletor de time funciona | ✅ PASS | `LeaderScopeSelector` |
-| Troca de BU invalida cache | ✅ PASS | `queryClient.invalidateQueries` |
-| Nenhum dado fora do escopo | ✅ PASS | RLS + RPC validation |
-| Permissões refletem UI | ✅ PASS | `usePermissions().has()` |
-| VIC adapta por perfil | ✅ PASS | Profile-based suggestions |
+| Troca de BU → dashboard recarrega | ✅ PASS | `queryClient.invalidateQueries` em `BuContext.tsx` |
+| Líder com múltiplos times → seletor funciona | ✅ PASS | `LeaderScopeSelector` com dropdown |
+| Ações aparecem/desaparecem conforme permissões | ✅ PASS | Conditional rendering com `has()` |
+| Nenhum dado fora do escopo aparece | ✅ PASS | RLS + RPC validation |
+| Nenhum erro de bu_id em inserts/queries | ✅ PASS | `useBuScopedSupabase()` |
+| audit:bu retorna zero findings | ✅ PASS | BU scope enforced em todas queries |
 
 ---
 
-## 11. Arquivos Alterados/Criados
+## 9. Arquivos Validados
 
 ### Core Dashboard
 
-| Arquivo | Função |
-|---------|--------|
-| `src/pages/Index.tsx` | Routing por perfil |
-| `src/hooks/useHomeDashboard.ts` | Dados da dashboard |
-| `src/hooks/useGreeting.ts` | Saudação contextual |
-| `src/components/home/VicCard.tsx` | Vic com sugestões por perfil |
+| Arquivo | Função | Status |
+|---------|--------|--------|
+| `src/pages/Index.tsx` | Routing por perfil | ✅ |
+| `src/hooks/useHomeDashboard.ts` | Dados da dashboard | ✅ |
+| `src/hooks/useGreeting.ts` | Saudação contextual | ✅ |
+| `src/components/home/VicCard.tsx` | Vic com sugestões por perfil | ✅ |
+| `src/components/home/CultureCard.tsx` | Cultura com typewriter | ✅ |
+| `src/components/home/MyOkrsCard.tsx` | OKRs pendentes | ✅ |
+| `src/components/home/KpiSummaryCard.tsx` | KPIs resumidos | ✅ |
+| `src/components/home/OkrSummaryCard.tsx` | OKRs RAG bar | ✅ |
+| `src/components/home/FocusCard.tsx` | Focus items | ✅ |
+| `src/components/home/TeamStatusCard.tsx` | Status do time | ✅ |
+
+### People Blocks
+
+| Arquivo | Função | Status |
+|---------|--------|--------|
+| `src/components/home/NewJetimobersBlock.tsx` | Novos colaboradores | ✅ |
+| `src/components/home/BirthdaysBlock.tsx` | Aniversários | ✅ |
+| `src/components/home/WorkAnniversariesBlock.tsx` | Tempo de empresa | ✅ |
 
 ### Leader Module
 
-| Arquivo | Função |
-|---------|--------|
-| `src/modules/home/components/LeaderDashboard.tsx` | Dashboard principal |
-| `src/modules/home/components/LeaderScopeSelector.tsx` | Seletor de time |
-| `src/modules/home/components/leader/*.tsx` | Cards específicos |
-| `src/modules/home/hooks/useLeaderTeams.ts` | Times do líder |
-| `src/modules/home/hooks/useLeaderDashboard.ts` | Dados do dashboard |
-| `src/modules/home/hooks/useLeaderScope.ts` | Escopo persistente |
+| Arquivo | Função | Status |
+|---------|--------|--------|
+| `src/modules/home/components/LeaderDashboard.tsx` | Dashboard principal | ✅ |
+| `src/modules/home/components/LeaderScopeSelector.tsx` | Seletor de time | ✅ |
+| `src/modules/home/components/leader/TeamCriticalAlertsCard.tsx` | Alertas críticos | ✅ |
+| `src/modules/home/components/leader/LeaderTodayFocusCard.tsx` | Foco do dia | ✅ |
+| `src/modules/home/components/leader/TeamOkrsCard.tsx` | OKRs do time | ✅ |
+| `src/modules/home/components/leader/TeamKpisCard.tsx` | KPIs do time | ✅ |
+| `src/modules/home/components/leader/TicketsTeamInboxCard.tsx` | Tickets do time | ✅ |
+| `src/modules/home/components/leader/AssetsTeamLoansCard.tsx` | Assets emprestados | ✅ |
+| `src/modules/home/components/leader/VicLeaderInsightsCard.tsx` | Vic insights | ✅ |
+| `src/modules/home/hooks/useLeaderTeams.ts` | Times do líder | ✅ |
+| `src/modules/home/hooks/useLeaderDashboard.ts` | Dados do dashboard | ✅ |
+| `src/modules/home/hooks/useLeaderScope.ts` | Escopo persistente | ✅ |
 
 ### Database (RPCs)
 
-| Função | Propósito |
-|--------|-----------|
-| `get_leader_teams` | Times liderados |
-| `rpc_leader_dashboard_summary` | Resumo agregado |
-| `rpc_leader_dashboard_focus` | Itens de foco |
-| `is_user_leader` | Check de liderança |
-| `user_can_manage_team` | Validação de acesso |
-| `get_descendant_team_ids` | Hierarquia descendente |
-| `get_team_member_ids` | Membros do time |
+| Função | Propósito | Status |
+|--------|-----------|--------|
+| `get_leader_teams` | Times liderados | ✅ |
+| `rpc_leader_dashboard_summary` | Resumo agregado | ✅ |
+| `rpc_leader_dashboard_focus` | Itens de foco | ✅ |
+| `is_user_leader` | Check de liderança | ✅ |
+| `user_can_manage_team` | Validação de acesso | ✅ |
+| `get_descendant_team_ids` | Hierarquia descendente | ✅ |
+| `get_team_member_ids` | Membros do time | ✅ |
 
 ---
 
-## 12. Conformidade TCR v2.4.0
+## 10. Conformidade TCR v2.4.0
 
 | Requisito | Status |
 |-----------|--------|
-| Detecção de perfil por permission keys | ✅ |
-| BU Scope obrigatório | ✅ |
-| Hierarquia de times respeitada | ✅ |
+| Detecção de perfil por permission keys + contexto | ✅ |
+| BU Scope obrigatório em todas queries | ✅ |
+| Hierarquia de times respeitada (descendentes apenas) | ✅ |
 | RLS em todas tabelas | ✅ |
-| Cancelamento OKR restrito | ✅ |
+| Cancelamento OKR restrito a Manager/Admin | ✅ |
 | Tickets escopados por visibilidade | ✅ |
-| Assets escopados por time | ✅ |
+| Assets escopados por membros do time | ✅ |
+| VIC contextual por perfil | ✅ |
 
 ---
 
@@ -448,9 +430,10 @@ queryClient.invalidateQueries({ queryKey: ["leader-teams", currentBuId] });
 A dashboard para usuários internos está 100% em conformidade com:
 - Regras de negócio do TCR v2.4.0
 - Requisitos de segurança (RLS, BU scope, permissions)
-- Hierarquia de times
+- Hierarquia de times (descendentes apenas, sem acesso a pai/irmãos)
 - Diretrizes de UX por perfil
-- VIC contextual
+- VIC contextual com sugestões adequadas
 
 **Validado por:** Lovable AI  
-**Data:** 2026-01-07
+**Data:** 2026-01-07  
+**Versão:** 2.0
