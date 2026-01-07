@@ -11,9 +11,13 @@ import { useQuery } from "@tanstack/react-query";
 // URL State hooks e schemas
 import {
   useUrlStates,
-  listingSchema,
-  statusFilterSchema,
-  combineSchemas,
+  searchConfig,
+  pageConfig,
+  pageSizeConfig,
+  sortConfig,
+  sortDirConfig,
+  statusConfig,
+  type UrlParamConfig,
 } from "@/shared/url";
 
 // Query key builder
@@ -35,14 +39,29 @@ import { useBu } from "@/contexts/BuContext";
 // ============================================================
 // SCHEMA DEFINITION
 // ============================================================
-// Combine schemas conforme necessidade da página
+// Define o schema com tipagem explícita
 
 type ItemStatus = "all" | "open" | "closed" | "pending";
 
-const pageSchema = combineSchemas(
-  listingSchema, // q, page, pageSize, sort, dir
-  statusFilterSchema<ItemStatus>("all")
-);
+// Schema com tipagem explícita para garantir inferência correta
+const pageSchema = {
+  q: searchConfig(),
+  page: pageConfig(),
+  pageSize: pageSizeConfig(),
+  sort: sortConfig(),
+  dir: sortDirConfig(),
+  status: statusConfig<ItemStatus>("all"),
+} satisfies Record<string, UrlParamConfig<unknown>>;
+
+// Tipo inferido do schema
+type PageSchemaValues = {
+  q: string;
+  page: number;
+  pageSize: number;
+  sort: string;
+  dir: "asc" | "desc";
+  status: ItemStatus;
+};
 
 // ============================================================
 // COMPONENT
@@ -52,14 +71,9 @@ export default function ListPageUrlStateExample() {
   const { currentBuId } = useBu();
 
   // URL State - todos os filtros sincronizados com URL
-  const {
-    values,
-    set,
-    reset,
-    resetAll,
-    hasActiveFilters,
-    activeKeys,
-  } = useUrlStates(pageSchema);
+  // Use tipagem explícita para garantir autocomplete
+  const { values, set, reset, resetAll, hasActiveFilters } =
+    useUrlStates<PageSchemaValues>(pageSchema);
 
   // Query com URL state incluído na key
   const queryKey = useMemo(
@@ -81,7 +95,7 @@ export default function ListPageUrlStateExample() {
     queryFn: async () => {
       // Sua função de fetch aqui
       // Usar values.q, values.status, values.page, etc.
-      return { items: [], total: 0 };
+      return { items: [] as Array<{ id: string; title: string }>, total: 0 };
     },
     enabled: !!currentBuId,
   });
@@ -94,20 +108,29 @@ export default function ListPageUrlStateExample() {
   };
 
   // Formatters para exibição
-  const formatters: Record<string, (v: any) => string> = {
+  const formatters: Record<string, (v: unknown) => string> = {
     status: (v) => {
       const map: Record<string, string> = {
         open: "Aberto",
         closed: "Fechado",
         pending: "Pendente",
       };
-      return map[v] || v;
+      return map[v as string] || String(v);
     },
+  };
+
+  const defaults = {
+    q: "",
+    status: "all",
+    page: 1,
+    pageSize: 25,
+    sort: "",
+    dir: "desc",
   };
 
   const activeFilters = buildActiveFilters(
     values,
-    { q: "", status: "all", page: 1, pageSize: 25, sort: "", dir: "desc" },
+    defaults,
     filterLabels,
     formatters
   );
@@ -133,7 +156,7 @@ export default function ListPageUrlStateExample() {
       <div className="flex items-center gap-4 flex-wrap">
         <UrlSearchInput
           value={values.q}
-          onChange={(q) => set({ q, page: 1 })} // Reset page on search
+          onChange={(q) => set({ q, page: 1 })}
           placeholder="Buscar..."
           className="w-80"
         />
@@ -157,7 +180,7 @@ export default function ListPageUrlStateExample() {
       {/* Filtros ativos */}
       <UrlFilterBar
         activeFilters={activeFilters}
-        onRemoveFilter={(key) => reset(key as keyof typeof values)}
+        onRemoveFilter={(key) => reset([key as keyof PageSchemaValues])}
         onClearAll={resetAll}
       />
 
@@ -167,7 +190,7 @@ export default function ListPageUrlStateExample() {
       ) : (
         <div>
           {/* Sua tabela/lista aqui */}
-          {data?.items.map((item: any) => (
+          {data?.items.map((item) => (
             <div key={item.id}>{item.title}</div>
           ))}
         </div>
@@ -206,6 +229,7 @@ export default function ListPageUrlStateExample() {
 //    };
 //
 // 5. Para namespacing (evitar colisões):
-//    const schema = createNamespacedSchema("tickets", listingSchema);
+//    import { createNamespacedSchema } from "@/shared/url";
+//    const schema = createNamespacedSchema("tickets", baseSchema);
 //    // Resulta em: tickets.q, tickets.page, etc.
 //
