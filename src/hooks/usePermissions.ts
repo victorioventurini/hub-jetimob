@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useBu } from "@/contexts/BuContext";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Hook centralizado para verificação de permissões.
+ * 
+ * SAFE for pre-BU: Uses useOptionalBuClient() and only queries when BU is selected.
  * 
  * Retorna:
  * - permissions: array de permission keys do usuário na BU atual
@@ -21,16 +22,17 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export function usePermissions() {
   const { user } = useAuth();
-  const { currentBuId, isLoading: isBuLoading } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client, isReady, buId } = useOptionalBuClient();
 
   const { data: permissions = [], isLoading: isQueryLoading } = useQuery({
-    queryKey: ["permissions", currentBuId, user?.id],
+    queryKey: ["permissions", buId, user?.id],
     queryFn: async () => {
-      if (!currentBuId) return [];
+      if (!client || !buId) {
+        throw new Error("usePermissions: No BU client available");
+      }
 
-      const { data, error } = await supabase.rpc("get_my_permissions", {
-        p_bu_id: currentBuId,
+      const { data, error } = await client.rpc("get_my_permissions", {
+        p_bu_id: buId,
       });
 
       if (error) {
@@ -40,7 +42,7 @@ export function usePermissions() {
 
       return (data as string[]) || [];
     },
-    enabled: !!currentBuId && !!user?.id,
+    enabled: isReady && !!user?.id,
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
   });
 
@@ -76,7 +78,7 @@ export function usePermissions() {
     hasAny,
     hasAll,
     isWildcard,
-    isLoading: isBuLoading || isQueryLoading,
+    isLoading: !isReady || isQueryLoading,
   };
 }
 

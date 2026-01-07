@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { MapPin, Loader2 } from 'lucide-react';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
 interface CityPrediction {
@@ -19,6 +19,10 @@ interface CityAutocompleteProps {
   disabled?: boolean;
 }
 
+/**
+ * CityAutocomplete uses global client because it may be used during onboarding
+ * before BU is selected. Cities are not BU-scoped data.
+ */
 export function CityAutocomplete({
   value,
   state,
@@ -26,7 +30,6 @@ export function CityAutocomplete({
   placeholder = "Digite o nome da cidade",
   disabled = false,
 }: CityAutocompleteProps) {
-  const supabase = useBuScopedSupabase();
   
   // Exibe "Cidade, UF" no input
   const displayValue = value && state ? `${value}, ${state}` : value || '';
