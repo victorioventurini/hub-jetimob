@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import {
   Dialog,
   DialogContent,
@@ -102,7 +102,7 @@ const statusConfig: Record<Status, {
 
 export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const { user } = useAuth();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
   const [currentValue, setCurrentValue] = useState(kr.current_value.toString());
   const [status, setStatus] = useState<Status>(kr.status === 'not_started' ? 'green' : kr.status as Status);
   const [reflection, setReflection] = useState('');
@@ -117,9 +117,9 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   // Fetch user's team for check-in context
   const { data: userProfile } = useQuery({
-    queryKey: ['user-profile-for-checkin', user?.id],
+    queryKey: ['user-profile-for-checkin', user?.id, buId],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!supabase || !user?.id) return null;
       const { data, error } = await supabase
         .from('profiles')
         .select('id, team_id, display_name, team:teams(id, name)')
@@ -128,7 +128,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id && open,
+    enabled: !!user?.id && open && isReady && !!supabase,
   });
 
   // Só reseta o form quando o dialog abre, não quando os dados mudam
@@ -142,6 +142,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   const createCheckin = useMutation({
     mutationFn: async () => {
+      if (!supabase) throw new Error('Cliente não disponível');
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Usuário não autenticado');
 
