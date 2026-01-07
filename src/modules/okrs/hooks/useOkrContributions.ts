@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from 'sonner';
 import type { OkrContribution, OkrContributionEntityType } from '../types';
 
 export function useOkrContributions(entityType: OkrContributionEntityType, entityId: string) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-contributions', entityType, entityId],
     queryFn: async () => {
@@ -38,6 +40,7 @@ export function useOkrContributions(entityType: OkrContributionEntityType, entit
 
 export function useCreateOkrContribution() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (contribution: {
@@ -79,6 +82,7 @@ export function useCreateOkrContribution() {
 
 export function useDeleteOkrContribution() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

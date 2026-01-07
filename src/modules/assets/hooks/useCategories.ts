@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import type { AssetCategory } from "../types";
@@ -7,6 +7,7 @@ import type { AssetCategory } from "../types";
 export function useCategories() {
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   // Fetch categories

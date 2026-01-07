@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 
 export interface ProfileOption {
@@ -12,6 +12,7 @@ export interface ProfileOption {
 
 export function useAssetProfiles() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   const { data: profiles = [], isLoading } = useQuery({

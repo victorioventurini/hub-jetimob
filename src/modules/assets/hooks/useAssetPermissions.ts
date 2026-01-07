@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ export function useAssetPermissions() {
   const { user } = useAuth();
   const { currentBu, userRole, isLoading: isBuLoading } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   // Super admin ou admin de BU tem acesso total
