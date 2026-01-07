@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.5.0  
+**Versão:** 2.7.0  
 **Última atualização:** 2026-01-07
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1519,7 +1519,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.6.0 |
+| **Versão do TCR** | 2.7.0 |
 | **Data da última atualização** | 2026-01-07 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1527,6 +1527,24 @@ src/
 ---
 
 ## Changelog
+
+### v2.7.0 (2026-01-07) — Validação Final e Consolidação
+- **Validação completa da Central de Notificações**:
+  - Confirmado modelo de dados conforme especificação (7 tabelas principais)
+  - Governança 3 níveis verificada: Global → BU → Usuário
+  - Todas as RLS policies funcionando corretamente
+  - Eventos obrigatórios (`is_mandatory`) ignoram preferências do usuário
+  - Suporte a usuários externos via `audience` field
+- **Documentação consolidada**:
+  - `docs/NOTIFICATION_SYSTEM_REPORT.md` — Relatório técnico completo
+  - `docs/NOTIFICATIONS_COMPLIANCE_REPORT.md` — Relatório de conformidade
+  - `docs/QA_NOTIFICATIONS.md` — Checklist de QA executado
+- **Itens explicitamente fora de escopo (V2)**:
+  - ❌ Digest (daily/weekly)
+  - ❌ Quiet hours
+  - ❌ Agendamento de envio
+  - ❌ Automação baseada em regras complexas
+  - ❌ Integração Slack/WhatsApp completa
 
 ### v2.6.0 (2026-01-07) — Central de Notificações V1 Completa
 - **Complementos da Central de Notificações**:
