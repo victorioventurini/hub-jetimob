@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useBu } from "@/contexts/BuContext";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import type {
@@ -11,26 +10,25 @@ import type {
 } from "../types";
 
 export function useBuGroupConfigs() {
-  const { currentBuId } = useBu();
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
 
-  const queryKey = queryKeys.permissions.buConfigs(currentBuId);
+  const queryKey = queryKeys.permissions.buConfigs(buId);
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!currentBuId) return [];
+      if (!supabase || !buId) return [];
 
       const { data, error } = await supabase
         .from("bu_permission_group_configs")
-        .select("*, permission_groups(*)")
-        .eq("bu_id", currentBuId);
+        .select("id, bu_id, group_id, is_enabled, created_at, updated_at, permission_groups(id, name, description, status)")
+        .eq("bu_id", buId);
 
       if (error) throw error;
       return data as BuPermissionGroupConfig[];
     },
-    enabled: !!currentBuId,
+    enabled: isReady && !!buId,
   });
 
   const toggleGroupEnabled = useMutation({
@@ -41,13 +39,13 @@ export function useBuGroupConfigs() {
       groupId: string;
       isEnabled: boolean;
     }) => {
-      if (!currentBuId) throw new Error("BU não selecionada");
+      if (!supabase || !buId) throw new Error("BU não selecionada");
 
       // Check if config exists
       const { data: existing } = await supabase
         .from("bu_permission_group_configs")
         .select("id")
-        .eq("bu_id", currentBuId)
+        .eq("bu_id", buId)
         .eq("group_id", groupId)
         .single();
 
@@ -62,7 +60,7 @@ export function useBuGroupConfigs() {
         const { error } = await supabase
           .from("bu_permission_group_configs")
           .insert({
-            bu_id: currentBuId,
+            bu_id: buId,
             group_id: groupId,
             is_enabled: isEnabled,
           });
@@ -87,27 +85,26 @@ export function useBuGroupConfigs() {
 }
 
 export function useBuUserGroups(userId: string | null) {
-  const { currentBuId } = useBu();
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
 
-  const queryKey = queryKeys.permissions.userGroups(currentBuId, userId);
+  const queryKey = queryKeys.permissions.userGroups(buId, userId);
 
   const { data: userGroups = [], isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!currentBuId || !userId) return [];
+      if (!supabase || !buId || !userId) return [];
 
       const { data, error } = await supabase
         .from("bu_user_permission_groups")
-        .select("*, permission_groups(*)")
-        .eq("bu_id", currentBuId)
+        .select("id, bu_id, user_id, group_id, created_at, permission_groups(id, name, description, status)")
+        .eq("bu_id", buId)
         .eq("user_id", userId);
 
       if (error) throw error;
       return data as BuUserPermissionGroup[];
     },
-    enabled: !!currentBuId && !!userId,
+    enabled: isReady && !!buId && !!userId,
   });
 
   const setUserGroups = useMutation({
@@ -118,13 +115,13 @@ export function useBuUserGroups(userId: string | null) {
       userId: string;
       groupIds: string[];
     }) => {
-      if (!currentBuId) throw new Error("BU não selecionada");
+      if (!supabase || !buId) throw new Error("BU não selecionada");
 
       // Delete existing assignments
       const { error: deleteError } = await supabase
         .from("bu_user_permission_groups")
         .delete()
-        .eq("bu_id", currentBuId)
+        .eq("bu_id", buId)
         .eq("user_id", userId);
 
       if (deleteError) throw deleteError;
@@ -135,7 +132,7 @@ export function useBuUserGroups(userId: string | null) {
           .from("bu_user_permission_groups")
           .insert(
             groupIds.map((groupId) => ({
-              bu_id: currentBuId,
+              bu_id: buId,
               user_id: userId,
               group_id: groupId,
             }))
@@ -161,27 +158,26 @@ export function useBuUserGroups(userId: string | null) {
 }
 
 export function useBuUserOverrides(userId: string | null) {
-  const { currentBuId } = useBu();
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
 
-  const queryKey = queryKeys.permissions.userOverrides(currentBuId, userId);
+  const queryKey = queryKeys.permissions.userOverrides(buId, userId);
 
   const { data: overrides = [], isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!currentBuId || !userId) return [];
+      if (!supabase || !buId || !userId) return [];
 
       const { data, error } = await supabase
         .from("bu_user_permission_overrides")
-        .select("*, permission_catalog(*)")
-        .eq("bu_id", currentBuId)
+        .select("id, bu_id, user_id, permission_id, effect, created_at, permission_catalog(id, key, module, resource, action, scope, description)")
+        .eq("bu_id", buId)
         .eq("user_id", userId);
 
       if (error) throw error;
       return data as BuUserPermissionOverride[];
     },
-    enabled: !!currentBuId && !!userId,
+    enabled: isReady && !!buId && !!userId,
   });
 
   const addOverride = useMutation({
@@ -194,12 +190,12 @@ export function useBuUserOverrides(userId: string | null) {
       permissionId: string;
       effect?: "allow" | "deny";
     }) => {
-      if (!currentBuId) throw new Error("BU não selecionada");
+      if (!supabase || !buId) throw new Error("BU não selecionada");
 
       const { error } = await supabase
         .from("bu_user_permission_overrides")
         .insert({
-          bu_id: currentBuId,
+          bu_id: buId,
           user_id: userId,
           permission_id: permissionId,
           effect,
@@ -218,6 +214,8 @@ export function useBuUserOverrides(userId: string | null) {
 
   const removeOverride = useMutation({
     mutationFn: async (overrideId: string) => {
+      if (!supabase) throw new Error("BU não selecionada");
+
       const { error } = await supabase
         .from("bu_user_permission_overrides")
         .delete()
@@ -243,24 +241,23 @@ export function useBuUserOverrides(userId: string | null) {
 }
 
 export function useUserEffectivePermissions(userId: string | null) {
-  const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
 
   const { data: effectivePermissions = [], isLoading } = useQuery({
-    queryKey: queryKeys.permissions.userEffective(currentBuId, userId),
+    queryKey: queryKeys.permissions.userEffective(buId, userId),
     queryFn: async () => {
-      if (!currentBuId || !userId) return [];
+      if (!supabase || !buId || !userId) return [];
 
       const { data, error } = await supabase
         .from("user_effective_permissions")
-        .select("*")
-        .eq("bu_id", currentBuId)
+        .select("user_id, bu_id, permission_id, permission_key, module, resource, action, scope, source, source_name")
+        .eq("bu_id", buId)
         .eq("user_id", userId);
 
       if (error) throw error;
-      return data as EffectivePermission[];
+      return data as unknown as EffectivePermission[];
     },
-    enabled: !!currentBuId && !!userId,
+    enabled: isReady && !!buId && !!userId,
   });
 
   return {
