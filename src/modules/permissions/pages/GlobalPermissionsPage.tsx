@@ -185,9 +185,13 @@ export default function GlobalPermissionsPage() {
               <Key className="h-4 w-4" />
               Catálogo
             </TabsTrigger>
+            <TabsTrigger value="templates" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Templates
+            </TabsTrigger>
             <TabsTrigger value="groups" className="gap-2">
               <Users className="h-4 w-4" />
-              Grupos
+              Grupos Customizados
             </TabsTrigger>
           </TabsList>
 
@@ -299,86 +303,151 @@ export default function GlobalPermissionsPage() {
           )}
         </TabsContent>
 
+        <TabsContent value="templates" className="mt-6">
+          {groupsLoading ? (
+            <LoadingState text="Carregando templates..." />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Templates são perfis de permissões padrão do sistema. Usuários podem ter múltiplos templates atribuídos e suas permissões somam.
+              </p>
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Template</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groups
+                      .filter((g) => g.is_system)
+                      .filter((g) => !search || g.name.toLowerCase().includes(search.toLowerCase()) || g.description?.toLowerCase().includes(search.toLowerCase()))
+                      .map((template) => (
+                        <TableRow key={template.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{template.name}</span>
+                              <Badge variant="secondary" className="text-xs">Sistema</Badge>
+                            </div>
+                            {template.slug && (
+                              <code className="text-xs text-muted-foreground font-mono">{template.slug}</code>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {template.description || "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={template.status === "active"}
+                              onCheckedChange={(checked) =>
+                                toggleGroupStatus.mutate({
+                                  id: template.id,
+                                  status: checked ? "active" : "inactive",
+                                })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setPermissionsSheetGroup(template)}
+                            >
+                              <Settings className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="groups" className="mt-6">
           {groupsLoading ? (
             <LoadingState text="Carregando grupos..." />
-          ) : filteredGroups.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="Nenhum grupo encontrado"
-              description={search ? "Tente ajustar a busca" : "Crie o primeiro grupo de permissões"}
-            />
-          ) : (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredGroups.map((group) => (
-                    <TableRow key={group.id}>
-                            <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{group.name}</span>
-                          {group.is_system && (
-                            <Badge variant="secondary" className="text-xs">Sistema</Badge>
-                          )}
-                        </div>
-                        {group.slug && (
-                          <code className="text-xs text-muted-foreground font-mono">{group.slug}</code>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {group.description || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={group.status === "active"}
-                          onCheckedChange={(checked) =>
-                            toggleGroupStatus.mutate({
-                              id: group.id,
-                              status: checked ? "active" : "inactive",
-                            })
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingGroup(group);
-                                setGroupDialogOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setPermissionsSheetGroup(group)}
-                            >
-                              <Settings className="h-4 w-4 mr-2" />
-                              Permissões
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          ) : (() => {
+            const customGroups = filteredGroups.filter((g) => !g.is_system);
+            return customGroups.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="Nenhum grupo customizado"
+                description={search ? "Tente ajustar a busca" : "Crie grupos personalizados para necessidades específicas da organização"}
+              />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Grupos customizados permitem criar perfis de permissões específicos além dos templates padrão.
+                </p>
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {customGroups.map((group) => (
+                        <TableRow key={group.id}>
+                          <TableCell>
+                            <span className="font-medium">{group.name}</span>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {group.description || "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={group.status === "active"}
+                              onCheckedChange={(checked) =>
+                                toggleGroupStatus.mutate({
+                                  id: group.id,
+                                  status: checked ? "active" : "inactive",
+                                })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingGroup(group);
+                                    setGroupDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setPermissionsSheetGroup(group)}
+                                >
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Permissões
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 
