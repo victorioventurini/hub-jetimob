@@ -15,84 +15,80 @@ import * as path from 'path';
 // =====================================================
 const OPERATIONAL_TABLES = [
   // OKRs
-  'okr_org_objectives',
-  'okr_org_key_results',
-  'okr_team_objectives',
-  'okr_team_key_results',
-  'okr_checkins',
-  'okr_insights',
-  'okr_comments',
-  'okr_links',
-  'okr_initiatives',
-  'okr_health_snapshots',
-  
+  "okr_org_objectives",
+  "okr_org_key_results",
+  "okr_team_objectives",
+  "okr_team_key_results",
+  "okr_contributions",
+  "okr_kr_metrics",
+  "okr_checkins",
+  "okr_initiatives",
+  "okr_insights",
+  "okr_audit_log",
+
   // KPIs
-  'kpis',
-  'kpi_values',
-  'kpi_targets',
-  
-  // Teams & Structure
-  'teams',
-  'squads',
-  'squad_members',
-  
-  // Assets
-  'asset_inventory',
-  'asset_categories',
-  'asset_movements',
-  'asset_keyrings',
-  'asset_keys',
-  'asset_key_movements',
-  'asset_clavicularies',
-  'asset_hooks',
-  'asset_groups',
-  'asset_group_items',
-  'asset_gift_items',
-  'asset_gift_batches',
-  'asset_gift_movements',
-  'asset_permissions',
-  
+  "kpi_metrics",
+  "kpi_values",
+  "kpi_thresholds",
+  "kpi_alerts",
+
+  // Teams / Org
+  "teams",
+  "user_team_memberships",
+  "squads",
+  "team_memberships",
+  "squad_memberships",
+
+  // BU operational config / locations
+  "bu_locations",
+  "bu_module_configs",
+  "user_permission_assignments",
+  "bu_role_templates",
+
+  // Assets - Inventory
+  "asset_inventory",
+  "asset_movements",
+  "asset_categories",
+  "asset_groups",
+  "asset_group_items",
+  "asset_permissions",
+  "asset_attachments",
+  "asset_relationships",
+
+  // Assets - Keys
+  "asset_clavicularies",
+  "asset_hooks",
+  "asset_keyrings",
+  "asset_keys",
+  "asset_key_movements",
+
+  // Assets - Gifts
+  "asset_gift_items",
+  "asset_gift_batches",
+  "asset_gift_movements",
+
   // Tickets
-  'tickets',
-  'ticket_messages',
-  'ticket_attachments',
-  'ticket_mentions',
-  'ticket_participants',
-  'ticket_categories',
-  'ticket_subcategories',
-  
-  // Partners
-  'partner_companies',
-  'partner_contacts',
-  
+  "tickets",
+  "ticket_messages",
+  "ticket_attachments",
+  "ticket_categories",
+  "ticket_subcategories",
+  "ticket_routing_rules",
+  "partner_companies",
+  "partner_contacts",
+  "partner_contact_skills",
+
   // Notifications
-  'notifications',
-  'user_notification_preferences',
-  'bu_notification_channels',
-  
-  // Cycles
-  'cycles',
-  
-  // BU Config
-  'bu_locations',
-  'bu_module_configs',
-  'bu_integrations_config',
-  'bu_ia_config',
-  'bu_agent_activations',
-  'bu_permission_group_configs',
-  'bu_user_permission_groups',
-  'bu_user_permission_overrides',
-  
-  // AI Agents
-  'ai_agents',
-  'ai_agent_documents',
-  'ai_agent_logs',
-  
-  // Automations
-  'automation_connections',
-  'automation_connection_events',
-  'automation_incoming_tokens',
-  'automation_logs',
+  "notifications",
+  "mentions",
+  "notification_preferences",
+  "notification_channels",
+  "notification_endpoints",
+  "notification_deliveries",
+
+  // Automations / Integrations (if BU-scoped)
+  "automation_connections",
+  "integration_configs",
 ];
 
 // =====================================================
