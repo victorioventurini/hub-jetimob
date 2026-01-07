@@ -159,53 +159,52 @@ export function UserPermissionsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] flex flex-col h-full p-0">
-        {/* Fixed Header */}
-        <div className="p-6 pb-4 border-b shrink-0">
+      <SheetContent className="sm:max-w-md flex flex-col h-auto max-h-[85vh] p-0">
+        {/* Compact Header */}
+        <div className="px-4 py-3 border-b shrink-0">
           <SheetHeader>
-            <SheetTitle className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
+            <SheetTitle className="flex items-center gap-2.5">
+              <Avatar className="h-9 w-9">
                 <AvatarImage src={user?.profiles.photo_url || undefined} />
-                <AvatarFallback>{initials}</AvatarFallback>
+                <AvatarFallback className="text-sm">{initials}</AvatarFallback>
               </Avatar>
-              <div className="text-left">
-                <div>{user?.profiles.display_name}</div>
-                <div className="text-sm font-normal text-muted-foreground">
+              <div className="text-left min-w-0 flex-1">
+                <div className="text-base truncate">{user?.profiles.display_name}</div>
+                <div className="text-xs font-normal text-muted-foreground truncate">
                   {user?.profiles.work_email}
                 </div>
               </div>
+              {isAdmin && (
+                <Badge variant="default" className="shrink-0 text-xs">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Admin
+                </Badge>
+              )}
             </SheetTitle>
-            <SheetDescription asChild>
-              <div>
-                {isAdmin && (
-                  <Badge variant="default" className="mt-2">
-                    <Shield className="h-3 w-3 mr-1" />
-                    Administrador da BU — acesso amplo
-                  </Badge>
-                )}
-              </div>
+            <SheetDescription className="sr-only">
+              Gerenciar permissões do usuário
             </SheetDescription>
           </SheetHeader>
         </div>
 
-        {/* Tabs with flex-1 to fill remaining space */}
+        {/* Tabs - more compact */}
         <Tabs defaultValue="groups" className="flex-1 flex flex-col min-h-0">
-          <div className="px-6 pt-4 shrink-0">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="groups" className="gap-2">
-                <Users className="h-4 w-4" />
+          <div className="px-4 pt-3 shrink-0">
+            <TabsList className="grid w-full grid-cols-2 h-9">
+              <TabsTrigger value="groups" className="gap-1.5 text-sm">
+                <Users className="h-3.5 w-3.5" />
                 Grupos
                 {selectedCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
                     {selectedCount}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="effective" className="gap-2">
-                <Key className="h-4 w-4" />
+              <TabsTrigger value="effective" className="gap-1.5 text-sm">
+                <Key className="h-3.5 w-3.5" />
                 Permissões
                 {effectivePermissions.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
                     {effectivePermissions.length}
                   </Badge>
                 )}
@@ -214,58 +213,58 @@ export function UserPermissionsSheet({
           </div>
 
           {/* Groups Tab */}
-          <TabsContent value="groups" className="flex-1 flex flex-col min-h-0 mt-0 px-6 pt-4">
+          <TabsContent value="groups" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
             {!isAdmin && availableGroups.length > 3 && (
-              <div className="relative shrink-0 mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="relative shrink-0 mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar grupo..."
                   value={groupSearch}
                   onChange={(e) => setGroupSearch(e.target.value)}
-                  className="pl-9 pr-8"
+                  className="pl-8 pr-7 h-8 text-sm"
                 />
                 {groupSearch && (
                   <button
                     onClick={() => setGroupSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
             )}
 
-            <ScrollArea className="flex-1 -mx-6 px-6">
+            <ScrollArea className="flex-1 -mx-4 px-4 min-h-[200px] max-h-[320px]">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : isAdmin ? (
-                <div className="text-center py-12">
-                  <Shield className="h-12 w-12 mx-auto text-primary mb-3" />
-                  <p className="font-medium">Administrador da BU</p>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-                    Como administrador, este usuário já possui acesso amplo a todos os recursos da BU.
+                <div className="text-center py-8">
+                  <Shield className="h-10 w-10 mx-auto text-primary mb-2" />
+                  <p className="font-medium text-sm">Administrador da BU</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[220px] mx-auto">
+                    Acesso amplo a todos os recursos da BU.
                   </p>
                 </div>
               ) : availableGroups.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">Nenhum grupo habilitado nesta BU.</p>
+                <div className="text-center py-8">
+                  <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhum grupo habilitado.</p>
                 </div>
               ) : filteredGroups.length === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">
-                    Nenhum grupo encontrado para "{groupSearch}"
+                <div className="text-center py-8">
+                  <Search className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum resultado para "{groupSearch}"
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2 pb-4">
+                <div className="space-y-1.5 pb-2">
                   {filteredGroups.map((group) => (
                     <label
                       key={group.id}
-                      className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                      className="flex items-start gap-2.5 p-2.5 rounded-md border hover:bg-muted/50 cursor-pointer transition-colors"
                     >
                       <Checkbox
                         checked={selectedGroupIds.has(group.id)}
@@ -273,9 +272,9 @@ export function UserPermissionsSheet({
                         className="mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium">{group.name}</div>
+                        <div className="font-medium text-sm leading-tight">{group.name}</div>
                         {group.description && (
-                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                             {group.description}
                           </p>
                         )}
@@ -287,15 +286,16 @@ export function UserPermissionsSheet({
             </ScrollArea>
 
             {!isAdmin && (
-              <div className="flex items-center justify-between gap-2 pt-4 pb-6 border-t mt-auto shrink-0">
-                <div className="text-sm text-muted-foreground">
-                  {selectedCount} grupo{selectedCount !== 1 ? "s" : ""} selecionado{selectedCount !== 1 ? "s" : ""}
+              <div className="flex items-center justify-between gap-2 pt-3 pb-4 border-t mt-auto shrink-0">
+                <div className="text-xs text-muted-foreground">
+                  {selectedCount} selecionado{selectedCount !== 1 ? "s" : ""}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                     Cancelar
                   </Button>
                   <Button 
+                    size="sm"
                     onClick={handleSave} 
                     disabled={setUserGroups.isPending || !hasChanges}
                   >
@@ -307,77 +307,77 @@ export function UserPermissionsSheet({
           </TabsContent>
 
           {/* Effective Permissions Tab */}
-          <TabsContent value="effective" className="flex-1 flex flex-col min-h-0 mt-0 px-6 pt-4">
-            {!isAdmin && effectivePermissions.length > 5 && (
-              <div className="relative shrink-0 mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <TabsContent value="effective" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
+            {effectivePermissions.length > 5 && (
+              <div className="relative shrink-0 mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar permissão, módulo ou origem..."
+                  placeholder="Buscar permissão..."
                   value={permissionSearch}
                   onChange={(e) => setPermissionSearch(e.target.value)}
-                  className="pl-9 pr-8"
+                  className="pl-8 pr-7 h-8 text-sm"
                 />
                 {permissionSearch && (
                   <button
                     onClick={() => setPermissionSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
             )}
 
-            <ScrollArea className="flex-1 -mx-6 px-6 pb-6">
+            <ScrollArea className="flex-1 -mx-4 px-4 pb-4 min-h-[200px] max-h-[360px]">
               {effectiveLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : isAdmin ? (
-                <div className="text-center py-12">
-                  <Shield className="h-12 w-12 mx-auto text-primary mb-3" />
-                  <p className="font-medium">Administrador da BU</p>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-                    Este usuário tem acesso amplo a todos os recursos da BU por ser administrador.
+                <div className="text-center py-8">
+                  <Shield className="h-10 w-10 mx-auto text-primary mb-2" />
+                  <p className="font-medium text-sm">Administrador da BU</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[220px] mx-auto">
+                    Acesso amplo a todos os recursos.
                   </p>
                 </div>
               ) : effectivePermissions.length === 0 ? (
-                <div className="text-center py-12">
-                  <Key className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">Nenhuma permissão atribuída.</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Atribua grupos ao usuário para conceder permissões.
+                <div className="text-center py-8">
+                  <Key className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhuma permissão.</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Atribua grupos para conceder permissões.
                   </p>
                 </div>
               ) : moduleCount === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">
-                    Nenhuma permissão encontrada para "{permissionSearch}"
+                <div className="text-center py-8">
+                  <Search className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum resultado para "{permissionSearch}"
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6 pb-4">
+                <div className="space-y-4 pb-2">
                   {Object.entries(filteredPermissionsByModule)
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([module, perms]) => (
                     <div key={module}>
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 sticky top-0 bg-background py-1">
+                      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 sticky top-0 bg-background py-0.5 flex items-center gap-1.5">
                         {module}
-                        <Badge variant="outline" className="ml-2 text-xs">
+                        <Badge variant="outline" className="text-[10px] h-4 px-1">
                           {perms.length}
                         </Badge>
                       </h4>
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         {perms.map((perm) => (
                           <div
                             key={perm.permission_id}
-                            className="flex items-center justify-between p-2 rounded-md bg-muted/50 gap-2"
+                            className="flex items-center justify-between py-1 px-1.5 rounded bg-muted/40 gap-2"
                           >
-                            <code className="text-xs truncate flex-1">
+                            <code className="text-[11px] truncate flex-1">
                               {perm.permission_key}
                             </code>
-                            <Badge variant="outline" className="text-xs shrink-0">
+                            <Badge variant="outline" className="text-[10px] h-4 px-1 shrink-0">
                               {perm.source_name}
                             </Badge>
                           </div>
