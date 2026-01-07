@@ -128,9 +128,10 @@ IF v_channel = 'in_app' THEN
 **Passos:**
 1. Verificar schema de `notification_outbox`
 2. Campos `retries`, `max_retries`, `next_retry_at`, `last_error` existem
+3. Edge Function `process-notification-outbox` implementada
 
-**Resultado Esperado:** Schema suporta retry
-**Status:** ⚠️ PARTIAL - Schema OK, processador não implementado
+**Resultado Esperado:** Schema suporta retry + processador funcional
+**Status:** ✅ PASS
 
 ---
 
@@ -159,5 +160,7 @@ INSERT INTO notification_outbox (...) VALUES (..., 'pending');
 - [x] Admin BU configura Slack sem afetar outra BU
 - [x] Troca de BU isola notificações
 - [x] Notification Bell atualiza corretamente
-- [ ] Falha de envio gera retry (processador pendente)
+- [x] Falha de envio gera retry
 - [x] Outbox não perde eventos
+- [x] dedupe_key bloqueia duplicação
+- [x] Templates renderizados server-side

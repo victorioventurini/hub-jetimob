@@ -1519,7 +1519,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.5.0 |
+| **Versão do TCR** | 2.6.0 |
 | **Data da última atualização** | 2026-01-07 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1528,7 +1528,18 @@ src/
 
 ## Changelog
 
-### v2.5.0 (2026-01-07) — Central de Notificações
+### v2.6.0 (2026-01-07) — Central de Notificações V1 Completa
+- **Complementos da Central de Notificações**:
+  - Tabela `notification_templates` para templates por evento/canal
+  - Coluna `dedupe_key` na `notification_outbox` com UNIQUE INDEX para idempotência
+  - Views de observabilidade: `v_notification_delivery_health`, `v_notification_failures`
+  - Função `emit_notification_event` atualizada para gerar `dedupe_key` automaticamente
+  - Templates padrão para 10 eventos principais (email)
+  - Proteção contra duplicatas in-app (5 minutos)
+- **Formato dedupe_key**: `{event_slug}:{recipient_id}:{channel}:{context_type}:{context_id}`
+- **Relatório completo** em `docs/NOTIFICATION_SYSTEM_REPORT.md`
+
+### v2.5.0 (2026-01-07) — Central de Notificações Base
 - **Central de Notificações** implementada (arquitetura escalável multi-canal):
   - 6 novas tabelas: `notification_events`, `notification_channels`, `bu_notification_channels`, `user_notification_preferences_v2`, `notification_outbox`, coluna `event_slug` em `notifications`
   - Governança em 3 níveis: Global (catálogo de eventos/canais), BU (configuração de canais), Usuário (preferências pessoais)
