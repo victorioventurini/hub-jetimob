@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useMemo } from "react";
 import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,12 +32,12 @@ export interface KpiHistoryData {
  * Fetches KPI values history for visualization
  */
 export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { start: string; end: string }) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ["kpi-history", kpiId, dateRange?.start, dateRange?.end],
     queryFn: async () => {
-      if (!kpiId) return null;
+      if (!kpiId || !supabase) return null;
 
       // Fetch KPI metadata
       const { data: kpi, error: kpiError } = await supabase
@@ -97,7 +97,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
         variation,
       } as KpiHistoryData;
     },
-    enabled: !!kpiId,
+    enabled: !!kpiId && isReady && !!supabase,
   });
 }
 
@@ -105,11 +105,14 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
  * Fetches KPI history for a KR (via okr_kr_metrics linkage)
  */
 export function useKrKpiHistory(krId: string, krType: "org" | "team") {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
+  
   // First get the linked KPIs
   const { data: krMetrics } = useQuery({
     queryKey: ["kr-linked-kpis", krId, krType],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       const { data, error } = await supabase
         .from("okr_kr_metrics")
         .select("id, kpi_id, role")
@@ -120,7 +123,7 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!krId,
+    enabled: !!krId && isReady && !!supabase,
   });
 
   const primaryKpiId = krMetrics?.find((m) => m.role === "primary")?.kpi_id;
@@ -133,7 +136,7 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
   const { data: guardrailHistories, isLoading: guardrailsLoading } = useQuery({
     queryKey: ["kr-guardrail-histories", guardrailKpiIds],
     queryFn: async () => {
-      if (guardrailKpiIds.length === 0) return [];
+      if (guardrailKpiIds.length === 0 || !supabase) return [];
 
       const histories = await Promise.all(
         guardrailKpiIds.map(async (kpiId) => {
@@ -166,7 +169,7 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
 
       return histories.filter(Boolean);
     },
-    enabled: guardrailKpiIds.length > 0,
+    enabled: guardrailKpiIds.length > 0 && isReady && !!supabase,
   });
 
   return {

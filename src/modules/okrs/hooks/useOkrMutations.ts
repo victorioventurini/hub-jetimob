@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 
 // ========================
@@ -12,10 +12,12 @@ import { toast } from "sonner";
  */
 export function useCancelOrgObjective() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from("okr_org_objectives")
         .update({ 
@@ -51,10 +53,12 @@ export function useDeleteOrgObjective() {
  */
 export function useCancelOrgKeyResult() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (krId: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from("okr_org_key_results")
         .update({ 
@@ -92,10 +96,12 @@ export function useDeleteOrgKeyResult() {
  */
 export function useCancelTeamObjective() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from("okr_team_objectives")
         .update({ 
@@ -130,10 +136,12 @@ export function useDeleteTeamObjective() {
  */
 export function useCancelTeamKeyResult() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (krId: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from("okr_team_key_results")
         .update({ 

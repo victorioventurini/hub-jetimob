@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
 import type { OkrContribution, OkrContributionEntityType } from '../types';
 
 export function useOkrContributions(entityType: OkrContributionEntityType, entityId: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-contributions', entityType, entityId],
     queryFn: async () => {
+      if (!supabase) return { contributesTo: [], contributedBy: [] };
+      
       // Get contributions FROM this entity
       const { data: fromContributions, error: fromError } = await supabase
         .from('okr_contributions')
@@ -34,13 +36,13 @@ export function useOkrContributions(entityType: OkrContributionEntityType, entit
         contributedBy: toContributions as OkrContribution[],
       };
     },
-    enabled: !!entityId,
+    enabled: !!entityId && isReady && !!supabase,
   });
 }
 
 export function useCreateOkrContribution() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (contribution: {
@@ -51,6 +53,8 @@ export function useCreateOkrContribution() {
       bu_id?: string;
       description?: string;
     }) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       // bu_id is auto-filled by trigger, use type assertion
       const { data, error } = await supabase
         .from('okr_contributions')
@@ -83,10 +87,12 @@ export function useCreateOkrContribution() {
 
 export function useDeleteOkrContribution() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from('okr_contributions')
         .update({ deleted_at: new Date().toISOString() })

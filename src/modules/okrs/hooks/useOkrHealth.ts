@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
 import type { ObjectiveHealthData, OkrInsight } from '../types/health';
 import { toast } from 'sonner';
@@ -9,12 +9,12 @@ import { toast } from 'sonner';
  */
 export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: string | null) {
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-health', currentBuId, objectiveType, objectiveId],
     queryFn: async () => {
-      if (!currentBuId || !objectiveId) return null;
+      if (!currentBuId || !objectiveId || !supabase) return null;
 
       const { data, error } = await supabase.rpc('calculate_objective_health', {
         p_bu_id: currentBuId,
@@ -25,7 +25,7 @@ export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: s
       if (error) throw error;
       return data as unknown as ObjectiveHealthData;
     },
-    enabled: !!currentBuId && !!objectiveId,
+    enabled: !!currentBuId && !!objectiveId && isReady && !!supabase,
   });
 }
 
@@ -35,11 +35,12 @@ export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: s
 export function useRefreshObjectiveHealth() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async ({ objectiveType, objectiveId }: { objectiveType: 'org' | 'team'; objectiveId: string }) => {
       if (!currentBuId) throw new Error('BU não selecionada');
+      if (!supabase) throw new Error('Cliente não disponível');
 
       const { error } = await supabase.rpc('refresh_objective_health', {
         p_bu_id: currentBuId,
@@ -65,12 +66,12 @@ export function useRefreshObjectiveHealth() {
  */
 export function useObjectiveInsights(scopeType: string, scopeId: string | null) {
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-insights', currentBuId, scopeType, scopeId],
     queryFn: async () => {
-      if (!currentBuId || !scopeId) return [];
+      if (!currentBuId || !scopeId || !supabase) return [];
 
       const { data, error } = await supabase
         .from('okr_insights')
@@ -90,7 +91,7 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
         suggested_actions: insight.suggested_actions as unknown as OkrInsight['suggested_actions'],
       })) as OkrInsight[];
     },
-    enabled: !!currentBuId && !!scopeId,
+    enabled: !!currentBuId && !!scopeId && isReady && !!supabase,
   });
 }
 
@@ -100,11 +101,12 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
 export function useGenerateObjectiveInsights() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async ({ objectiveType, objectiveId }: { objectiveType: 'org' | 'team'; objectiveId: string }) => {
       if (!currentBuId) throw new Error('BU não selecionada');
+      if (!supabase) throw new Error('Cliente não disponível');
 
       const { data, error } = await supabase.rpc('generate_okr_insights_for_objective', {
         p_bu_id: currentBuId,
@@ -133,10 +135,12 @@ export function useGenerateObjectiveInsights() {
 export function useDismissInsight() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (insightId: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from('okr_insights')
         .update({ deleted_at: new Date().toISOString() })
@@ -159,12 +163,12 @@ export function useDismissInsight() {
  */
 export function useRiskObjectives(limit = 5) {
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-risk-objectives', currentBuId, limit],
     queryFn: async () => {
-      if (!currentBuId) return [];
+      if (!currentBuId || !supabase) return [];
 
       const { data, error } = await supabase
         .from('v_objective_health')
@@ -177,7 +181,7 @@ export function useRiskObjectives(limit = 5) {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!currentBuId,
+    enabled: !!currentBuId && isReady && !!supabase,
   });
 }
 
@@ -186,12 +190,12 @@ export function useRiskObjectives(limit = 5) {
  */
 export function useDashboardInsights(limit = 10) {
   const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-dashboard-insights', currentBuId, limit],
     queryFn: async () => {
-      if (!currentBuId) return [];
+      if (!currentBuId || !supabase) return [];
 
       const { data, error } = await supabase
         .from('okr_insights')
@@ -209,6 +213,6 @@ export function useDashboardInsights(limit = 10) {
         suggested_actions: insight.suggested_actions as unknown as OkrInsight['suggested_actions'],
       })) as OkrInsight[];
     },
-    enabled: !!currentBuId,
+    enabled: !!currentBuId && isReady && !!supabase,
   });
 }

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 
 export interface TeamOkrContribution {
@@ -80,12 +80,12 @@ const calculateAggregatedStatus = (items: { status: string }[]): 'on_track' | 'a
 
 export const useTeamContributionView = (teamId: string | undefined) => {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['team-contribution-view', teamId, currentBu?.id],
     queryFn: async (): Promise<TeamContributionData | null> => {
-      if (!teamId || !currentBu?.id) return null;
+      if (!teamId || !currentBu?.id || !supabase) return null;
 
       // Fetch team info
       const { data: team, error: teamError } = await supabase
@@ -273,6 +273,6 @@ export const useTeamContributionView = (teamId: string | undefined) => {
         contributions,
       };
     },
-    enabled: !!teamId && !!currentBu?.id,
+    enabled: !!teamId && !!currentBu?.id && isReady && !!supabase,
   });
 };

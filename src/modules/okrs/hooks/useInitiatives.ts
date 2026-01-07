@@ -1,16 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 import type { Initiative, CreateInitiativeInput, UpdateInitiativeInput, InitiativeStatus, InitiativePriority } from "../types/initiative";
 
 // Fetch initiatives for a specific KR
 export function useKrInitiatives(krId: string | undefined) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ["initiatives", "kr", krId],
     queryFn: async () => {
-      if (!krId) return [];
+      if (!krId || !supabase) return [];
       
       const { data, error } = await supabase
         .from("okr_initiatives")
@@ -39,18 +39,18 @@ export function useKrInitiatives(krId: string | undefined) {
         owner: ownerMap.get(initiative.owner_user_id),
       })) as Initiative[];
     },
-    enabled: !!krId,
+    enabled: !!krId && isReady && !!supabase,
   });
 }
 
 // Fetch all initiatives for a user (as owner) - expects profile.id
 export function useUserInitiatives(profileId: string | undefined) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ["initiatives", "user", profileId],
     queryFn: async () => {
-      if (!profileId) return [];
+      if (!profileId || !supabase) return [];
       
       const { data, error } = await supabase
         .from("okr_initiatives")
@@ -79,17 +79,19 @@ export function useUserInitiatives(profileId: string | undefined) {
         owner: ownerMap.get(initiative.owner_user_id),
       })) as Initiative[];
     },
-    enabled: !!profileId,
+    enabled: !!profileId && isReady && !!supabase,
   });
 }
 
 // Fetch initiatives by status
 export function useInitiativesByStatus(buId: string | undefined, status?: InitiativeStatus) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ["initiatives", "status", buId, status],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       let query = supabase
         .from("okr_initiatives")
         .select("*")
@@ -125,17 +127,19 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
         owner: ownerMap.get(initiative.owner_user_id),
       })) as Initiative[];
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady && !!supabase,
   });
 }
 
 // Create initiative
 export function useCreateInitiative() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (input: CreateInitiativeInput) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { data, error } = await supabase
         .from("okr_initiatives")
         .insert({
@@ -173,10 +177,12 @@ export function useCreateInitiative() {
 // Update initiative
 export function useUpdateInitiative() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (input: UpdateInitiativeInput) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { id, ...updateData } = input;
       
       const { data, error } = await supabase
@@ -205,10 +211,12 @@ export function useUpdateInitiative() {
 // Delete initiative (soft delete)
 export function useDeleteInitiative() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (initiativeId: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from("okr_initiatives")
         .update({
@@ -232,10 +240,12 @@ export function useDeleteInitiative() {
 // Update initiative status
 export function useUpdateInitiativeStatus() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: InitiativeStatus }) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from("okr_initiatives")
         .update({
