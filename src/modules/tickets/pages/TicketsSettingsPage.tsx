@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, FolderTree, Route, Users } from "lucide-react";
+import { Building2, FolderTree, Route, Users, Zap } from "lucide-react";
 import { PartnerCompaniesTab } from "../components/settings/PartnerCompaniesTab";
 import { PartnerContactsTab } from "../components/settings/PartnerContactsTab";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { RoutingRulesTab } from "../components/settings/RoutingRulesTab";
+import { ContactCapabilitiesTab } from "../components/settings/ContactCapabilitiesTab";
 import { useUrlTab } from "@/hooks/useUrlState";
 
 export default function TicketsSettingsPage() {
@@ -21,6 +22,10 @@ export default function TicketsSettingsPage() {
             <Users className="h-4 w-4" />
             Contatos
           </TabsTrigger>
+          <TabsTrigger value="capabilities" className="gap-2">
+            <Zap className="h-4 w-4" />
+            Capacidades
+          </TabsTrigger>
           <TabsTrigger value="categories" className="gap-2">
             <FolderTree className="h-4 w-4" />
             Categorias
@@ -37,6 +42,10 @@ export default function TicketsSettingsPage() {
 
         <TabsContent value="contacts">
           <PartnerContactsTab />
+        </TabsContent>
+
+        <TabsContent value="capabilities">
+          <ContactCapabilitiesTab />
         </TabsContent>
 
         <TabsContent value="categories">
