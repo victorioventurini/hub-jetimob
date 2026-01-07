@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { Loader2, Users, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
@@ -55,7 +55,7 @@ export function EditTeamObjectiveDialog({
   onOpenChange,
   objective,
 }: EditTeamObjectiveDialogProps) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const [title, setTitle] = useState(objective.title);
   const [description, setDescription] = useState(objective.description || '');
   const [status, setStatus] = useState<OkrStatus>(objective.status);
@@ -91,6 +91,8 @@ export function EditTeamObjectiveDialog({
 
   const updateMutation = useMutation({
     mutationFn: async () => {
+      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
+
       const { error } = await supabase
         .from('okr_team_objectives')
         .update({

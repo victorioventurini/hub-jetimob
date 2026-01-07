@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import {
   Dialog,
   DialogContent,
@@ -71,7 +71,7 @@ export function CycleFormDialog({
   yearCycles,
 }: CycleFormDialogProps) {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const isEditing = !!cycle;
 
   const form = useForm<FormValues>({
@@ -119,6 +119,8 @@ export function CycleFormDialog({
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
+      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
+
       const payload = {
         name: values.name,
         type: values.type,
@@ -162,13 +164,9 @@ export function CycleFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Editar Ciclo" : "Novo Ciclo"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Ciclo" : "Novo Ciclo"}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Atualize as informações do ciclo"
-              : "Configure um novo ciclo para os OKRs"}
+            {isEditing ? "Atualize as informações do ciclo" : "Configure um novo ciclo para os OKRs"}
           </DialogDescription>
         </DialogHeader>
 
@@ -194,10 +192,7 @@ export function CycleFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
@@ -327,11 +322,7 @@ export function CycleFormDialog({
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={mutation.isPending}>

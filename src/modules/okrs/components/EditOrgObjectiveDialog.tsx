@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
@@ -43,7 +43,7 @@ export function EditOrgObjectiveDialog({
   onOpenChange,
   objective,
 }: EditOrgObjectiveDialogProps) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const [title, setTitle] = useState(objective.title);
   const [description, setDescription] = useState(objective.description || '');
   const [status, setStatus] = useState<OkrStatus>(objective.status);
@@ -60,6 +60,8 @@ export function EditOrgObjectiveDialog({
 
   const updateMutation = useMutation({
     mutationFn: async () => {
+      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
+
       const { error } = await supabase
         .from('okr_org_objectives')
         .update({
