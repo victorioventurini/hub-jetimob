@@ -6,9 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
-// TCR Content embedded - Version 2.3.0
-const TCR_VERSION = "2.3.0";
-const TCR_UPDATED_AT = "2026-01-06";
+// TCR Content embedded - Version 2.4.0
+const TCR_VERSION = "2.4.0";
+const TCR_UPDATED_AT = "2026-01-07";
 
 const TCR_SECTIONS: Record<string, { title: string; content: string }> = {
   architecture: {
@@ -237,6 +237,27 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 - Cada usuário tem uma BU padrão (\`is_default = true\`)
 - O usuário pode alternar entre BUs no seletor
 - Ao trocar de BU, todos os dados são recarregados
+
+### 4.2.1 BU Scope Enforcement (v2.4+)
+
+⚠️ **REGRA CRÍTICA: Toda operação INSERT/UPDATE/DELETE em tabelas operacionais é validada no banco.**
+
+**Funções SQL:**
+| Função | Descrição |
+|--------|-----------|
+| \`current_bu_id()\` | Retorna BU ativa. **NUNCA retorna NULL** — lança \`NO_BU_CONTEXT\` se inválido. |
+| \`is_current_bu(bu_id)\` | Helper RLS: retorna \`true\` se \`bu_id\` = \`current_bu_id()\`. |
+| \`assert_bu_scope(bu_id)\` | Valida BU em triggers. Exceções: \`MISSING_BU_ID\`, \`NO_BU_CONTEXT\`, \`BU_SCOPE_VIOLATION\`. |
+
+**Triggers:** \`enforce_bu_scope_trigger\` aplicado em 20+ tabelas operacionais (OKRs, Teams, Assets, Tickets, KPIs).
+
+**RLS Hardening:** Todas policies incluem \`user_has_bu_access(auth.uid(), bu_id) AND is_current_bu(bu_id)\`.
+
+**Frontend:**
+- Hook \`useBuScopedSupabase()\` injeta header \`x-current-bu-id\` automaticamente
+- Helper \`withBuId(payload, buId)\` para inserts/updates
+
+**Scanner:** \`npx tsx scripts/audit-bu-scope.ts\` detecta operações sem \`bu_id\`.
 
 ### 4.3 Hierarquia de Times
 
