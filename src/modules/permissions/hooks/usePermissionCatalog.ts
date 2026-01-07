@@ -1,19 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import type { Permission, PermissionScope, PermissionStatus } from "../types";
 
 export function usePermissionCatalog() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   const { data: permissions = [], isLoading, error } = useQuery({
     queryKey: queryKeys.permissions.catalog(),
     queryFn: async () => {
+      if (!supabase) throw new Error("No BU client available");
+      
       const { data, error } = await supabase
         .from("permission_catalog")
-        .select("*")
+        .select("id, key, module, resource, action, scope, description, status, created_at, updated_at")
         .order("module")
         .order("resource")
         .order("action");
@@ -21,6 +23,7 @@ export function usePermissionCatalog() {
       if (error) throw error;
       return data as Permission[];
     },
+    enabled: isReady,
   });
 
   const createPermission = useMutation({
@@ -32,6 +35,8 @@ export function usePermissionCatalog() {
       scope: PermissionScope;
       description?: string;
     }) => {
+      if (!supabase) throw new Error("No BU client available");
+      
       const { data, error } = await supabase
         .from("permission_catalog")
         .insert(input)
@@ -55,6 +60,8 @@ export function usePermissionCatalog() {
       id,
       ...updates
     }: Partial<Permission> & { id: string }) => {
+      if (!supabase) throw new Error("No BU client available");
+      
       const { data, error } = await supabase
         .from("permission_catalog")
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -82,6 +89,8 @@ export function usePermissionCatalog() {
       id: string;
       status: PermissionStatus;
     }) => {
+      if (!supabase) throw new Error("No BU client available");
+      
       const { data, error } = await supabase
         .from("permission_catalog")
         .update({ status, updated_at: new Date().toISOString() })
