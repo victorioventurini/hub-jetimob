@@ -5,7 +5,6 @@ import { Sparkles, ArrowRight, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useVic } from "@/modules/vic/contexts/VicContext";
-import { useSidepanel } from "@/modules/vic/contexts/VicContext";
 
 interface VicLeaderInsightsCardProps {
   teamId: string | null;
@@ -32,28 +31,36 @@ const defaultInsights = [
 ];
 
 export function VicLeaderInsightsCard({ teamId, teamName }: VicLeaderInsightsCardProps) {
-  const { openVic, isAvailable } = useVic();
-
-  if (!isAvailable) {
-    return null;
-  }
+  const { openPanel } = useVic();
 
   const handleInsightClick = (insight: typeof defaultInsights[0]) => {
-    openVic({
-      initialMessage: insight.label,
+    openPanel({
+      agentSlug: 'coach-okrs',
+      actionContext: 'dashboard-okrs',
       context: {
-        teamId,
-        teamName,
-        insightType: insight.context,
+        type: 'leader_insight',
+        title: teamName || 'Meu Time',
+        additionalData: {
+          teamId,
+          teamName,
+          insightType: insight.context,
+          prompt: insight.label,
+        },
       },
     });
   };
 
   const handleOpenVic = () => {
-    openVic({
+    openPanel({
+      agentSlug: 'coach-okrs',
+      actionContext: 'dashboard-okrs',
       context: {
-        teamId,
-        teamName,
+        type: 'leader_chat',
+        title: teamName || 'Meu Time',
+        additionalData: {
+          teamId,
+          teamName,
+        },
       },
     });
   };
