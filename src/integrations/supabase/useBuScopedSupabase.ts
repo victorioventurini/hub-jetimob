@@ -4,6 +4,16 @@
  * Returns a Supabase client that automatically injects the
  * x-current-bu-id header in all requests for RLS enforcement.
  * 
+ * USAGE RULES:
+ * - useBuScopedSupabase(): REQUIRED for all operational data
+ * - Global supabase client: ONLY allowed for:
+ *   - Auth operations
+ *   - Membership bootstrap (useUserBus, useExternalUser)
+ *   - Realtime subscriptions (NotificationCenter)
+ *   - Pre-BU initialization hooks
+ * 
+ * Any other use of global client is considered a BUG.
+ * 
  * Usage:
  *   const supabase = useBuScopedSupabase();
  *   // All queries will include x-current-bu-id header
@@ -20,16 +30,24 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 /**
  * Creates a Supabase client with x-current-bu-id header injected.
  * The header is read by current_bu_id() function in PostgreSQL.
+ * 
+ * @throws Error if called before BuProvider is initialized (no currentBuId)
  */
 export function useBuScopedSupabase(): SupabaseClient<Database> {
   const { currentBuId } = useBu();
 
+  // Guard: Ensure this hook is only used after BU selection
+  if (!currentBuId) {
+    throw new Error(
+      'useBuScopedSupabase called before BuProvider initialization or BU selection. ' +
+      'For pre-BU hooks (useUserBus, useExternalUser), use the global supabase client instead.'
+    );
+  }
+
   const client = useMemo(() => {
     return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: {
-        headers: currentBuId 
-          ? { 'x-current-bu-id': currentBuId }
-          : {},
+        headers: { 'x-current-bu-id': currentBuId },
       },
       auth: {
         persistSession: true,
