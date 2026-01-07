@@ -107,6 +107,10 @@ export default function BuPermissionsPage() {
       );
     }
     
+    if (!user.role_in_bu) {
+      return <Badge variant="secondary">Perfil</Badge>;
+    }
+    
     return <Badge variant="outline">Membro</Badge>;
   };
 
