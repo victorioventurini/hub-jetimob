@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.7.0  
+**Versão:** 2.8.0  
 **Última atualização:** 2026-01-07
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1519,7 +1519,7 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.7.0 |
+| **Versão do TCR** | 2.8.0 |
 | **Data da última atualização** | 2026-01-07 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -1527,6 +1527,39 @@ src/
 ---
 
 ## Changelog
+
+### v2.8.0 (2026-01-07) — RBAC Phase 1 Validation Complete
+- **Validação RBAC Phase 1 completa** (Autorização Consistente):
+  - Relatório `docs/RBAC_PHASE1_VALIDATION_REPORT.md` com status PASS
+  - Relatório `docs/RBAC_CONSISTENCY_REPORT.md` com evidências
+  - Checklist QA `docs/qa/QA_RBAC_PHASE1.md` com 62 cenários de teste
+  - Checklist QA `docs/qa/QA_PERMISSIONS_TEMPLATES.md` para templates
+- **Permission Keys como fonte única de verdade**:
+  - 141 permission keys ativas em 9 módulos (assets: 41, okrs: 37, tickets: 23, kpis: 13, teams: 10, users: 7, hub: 5, platform: 4, home: 1)
+  - Catálogo centralizado em `permission_catalog`
+  - Roles servem apenas como atalhos para concessão de keys
+- **Funções SQL canônicas validadas**:
+  - `has_permission(user_id, bu_id, permission_key)` com bypass para admins
+  - `get_my_permissions(bu_id)` retorna wildcard `['*']` para admins
+  - `user_can_manage_team(user_id, team_id)` respeita hierarquia
+  - `is_team_leader(user_id, team_id)` verifica liderança direta
+  - `team_is_ancestor(ancestor_id, team_id)` usa CTE recursivo
+- **RLS Policies validadas**:
+  - Todas tabelas operacionais com RLS habilitado
+  - Policies usam funções canônicas (`user_has_bu_access`, `is_current_bu`, `is_platform_admin`, `is_bu_admin`)
+  - Nenhum role hardcoded em policies
+- **Frontend Guards validados**:
+  - `usePermissions()` hook centralizado
+  - `RequirePermission` guard component
+  - Nenhum check de role direto (exceto UI helpers documentados)
+- **Remoção total do "CEO"**:
+  - Enum `app_role` contém apenas: `super_admin`, `admin`, `team_leader`, `collaborator`
+  - Migration aplicada para converter `ceo` → `super_admin`
+  - Nenhuma referência ativa no código
+- **Scripts de auditoria**:
+  - `scripts/audit-rbac.ts` — detecta violações de RBAC no frontend
+  - `scripts/audit-useBuScopedSupabase.ts` — valida uso de BU-scoped client
+  - Ambos retornam PASS
 
 ### v2.7.0 (2026-01-07) — Auditoria Global e Consolidação
 - **Auditoria Global completa** do Hub:
