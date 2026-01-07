@@ -44,7 +44,7 @@ export function ContactCapabilitiesTab() {
   }
 
   if (companiesError) {
-    return <ErrorState title="Erro" description="Erro ao carregar empresas parceiras" onRetry={() => window.location.reload()} />;
+    return <ErrorState title="Erro" description="Erro ao carregar empresas parceiras" />;
   }
 
   return (
