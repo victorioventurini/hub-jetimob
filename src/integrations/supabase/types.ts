@@ -2985,6 +2985,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "okr_checkins_author_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "okr_checkins_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -3543,6 +3550,13 @@ export type Database = {
             referencedRelation: "okr_org_objectives"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_org_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       okr_org_objectives: {
@@ -3625,6 +3639,13 @@ export type Database = {
             columns: ["cycle_id"]
             isOneToOne: false
             referencedRelation: "cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3773,6 +3794,13 @@ export type Database = {
             columns: ["metric_id"]
             isOneToOne: false
             referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3988,6 +4016,13 @@ export type Database = {
             columns: ["org_objective_id"]
             isOneToOne: false
             referencedRelation: "okr_org_objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -5611,6 +5646,13 @@ export type Database = {
           unit: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "okr_team_key_results_team_id_fkey"
             columns: ["team_id"]

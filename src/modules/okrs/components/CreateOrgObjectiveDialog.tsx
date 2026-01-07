@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { useAuth } from '@/hooks/useAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import {
   Dialog,
@@ -38,7 +38,7 @@ export function CreateOrgObjectiveDialog({
 }: CreateOrgObjectiveDialogProps) {
   const queryClient = useQueryClient();
   const { client: supabase, buId } = useOptionalBuClient();
-  const { user } = useAuth();
+  const { profileId, isReady: identityReady } = useIdentity();
   const { currentBuId } = useBu();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -47,7 +47,7 @@ export function CreateOrgObjectiveDialog({
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!profileId) throw new Error('Perfil não encontrado');
       if (!currentBuId) throw new Error('Nenhuma BU selecionada');
       
       const { data, error } = await supabase
@@ -57,7 +57,7 @@ export function CreateOrgObjectiveDialog({
           description: description || null,
           year,
           status,
-          owner_user_id: user.id,
+          owner_user_id: profileId, // PROFILE_ID: Conforme IDENTITY_CONVENTION.md
           bu_id: currentBuId,
         })
         .select()

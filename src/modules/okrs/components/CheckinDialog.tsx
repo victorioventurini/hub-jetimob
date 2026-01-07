@@ -38,7 +38,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { OkrRagStatus, calculateProgress } from '../types';
-import { useAuth } from '@/hooks/useAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 
 interface CheckinDialogProps {
   open: boolean;
@@ -101,7 +101,7 @@ const statusConfig: Record<Status, {
 };
 
 export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
-  const { user } = useAuth();
+  const { userId, profileId, isReady: identityReady } = useIdentity();
   const { client: supabase, buId, isReady } = useOptionalBuClient();
   const [currentValue, setCurrentValue] = useState(kr.current_value.toString());
   const [status, setStatus] = useState<Status>(kr.status === 'not_started' ? 'green' : kr.status as Status);
@@ -115,20 +115,20 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   const isAutomatic = !!kr.metric_id;
 
-  // Fetch user's team for check-in context
+  // Fetch user's team for check-in context (uses auth.users.id to find profile)
   const { data: userProfile } = useQuery({
-    queryKey: ['user-profile-for-checkin', user?.id, buId],
+    queryKey: ['user-profile-for-checkin', userId, buId],
     queryFn: async () => {
-      if (!supabase || !user?.id) return null;
+      if (!supabase || !userId) return null;
       const { data, error } = await supabase
         .from('profiles')
         .select('id, team_id, display_name, team:teams(id, name)')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id && open && isReady && !!supabase,
+    enabled: !!userId && open && isReady && !!supabase,
   });
 
   // Só reseta o form quando o dialog abre, não quando os dados mudam
@@ -143,8 +143,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const createCheckin = useMutation({
     mutationFn: async () => {
       if (!supabase) throw new Error('Cliente não disponível');
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error('Usuário não autenticado');
+      if (!profileId) throw new Error('Perfil não encontrado');
 
       // Map status to confidence for database compatibility
       const confidenceMap: Record<Status, 'high' | 'medium' | 'low'> = {
@@ -169,7 +168,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
           confidence: confidenceMap[status],
           blockers: null, // Not using blockers separately anymore
           comments,
-          user_id: authUser.id,
+          user_id: profileId, // PROFILE_ID: Conforme IDENTITY_CONVENTION.md
           team_id: userProfile?.team_id || null, // NEW: capture user's team for context
         } as any) // Type assertion needed because bu_id is auto-filled by trigger
         .select('id')
