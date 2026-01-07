@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -31,6 +31,7 @@ const ModuleContext = createContext<ModuleContextType | undefined>(undefined);
 export function ModuleProvider({ children }: { children: ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const { data: modules = [], isLoading } = useQuery({
     // IMPORTANTE: incluir user?.id no cache key para evitar "cache" com resposta anônima
