@@ -1,4 +1,4 @@
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { Outlet, useLocation, Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Package, Key, Gift, FileBarChart, Settings } from "lucide-react";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
@@ -13,9 +13,16 @@ const tabs = [
 
 export function AssetsLayout() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { isAssetsAdmin } = useAssetPermissions();
 
   const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isAssetsAdmin);
+  
+  // Preserve query params when navigating between tabs
+  const getTabHref = (baseHref: string) => {
+    const params = searchParams.toString();
+    return params ? `${baseHref}?${params}` : baseHref;
+  };
 
   return (
     <div className="space-y-6">

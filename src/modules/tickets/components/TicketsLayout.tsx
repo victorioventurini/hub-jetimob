@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { List, Settings } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -10,12 +10,19 @@ const tabs = [
 
 export function TicketsLayout() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { has, isWildcard } = usePermissions();
 
   // Filtra tabs baseado em permissões - admin/super_admin tem wildcard
   const visibleTabs = tabs.filter((tab) => 
     !tab.permission || isWildcard || has(tab.permission)
   );
+  
+  // Preserve query params when navigating between tabs
+  const getTabHref = (baseHref: string) => {
+    const params = searchParams.toString();
+    return params ? `${baseHref}?${params}` : baseHref;
+  };
 
   return (
     <div className="space-y-6">

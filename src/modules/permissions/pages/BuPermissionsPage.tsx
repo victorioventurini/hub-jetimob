@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useUrlTab, useUrlState } from "@/hooks/useUrlState";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -24,19 +25,23 @@ import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
 import { UserPermissionsSheet } from "../components/UserPermissionsSheet";
 import { cn } from "@/lib/utils";
 
+type PermissionTab = "users" | "groups";
+
 /**
  * BuPermissionsPage - Gerenciamento de permissões de usuários por BU
  * 
  * Esta página é acessível por admin da BU e super_admin.
  * Gerencia quais permissões cada usuário possui dentro da BU ativa.
  * 
- * Rota: /bu/permissions
+ * Rota: /settings/permissions
  */
 export default function BuPermissionsPage() {
   usePageTitle("Permissões da BU");
 
-  const [activeTab, setActiveTab] = useState("users");
-  const [search, setSearch] = useState("");
+  // URL State para tab e busca
+  const [activeTab, setActiveTab] = useUrlTab<PermissionTab>("users");
+  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
+  
   const [selectedUser, setSelectedUser] = useState<BuUser | null>(null);
 
   const { groups, isLoading: groupsLoading } = usePermissionGroups();

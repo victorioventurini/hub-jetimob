@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -16,6 +16,7 @@ interface NavItemProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   external?: boolean;
+  preserveParams?: boolean;
 }
 
 function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
