@@ -1,7 +1,7 @@
 # Relatório de Migração: useBuScopedSupabase()
 
 **Data**: 2026-01-07  
-**TCR**: v3.1.0  
+**TCR**: v3.2.0  
 **Status**: ✅ Concluído (100%)
 
 ## Resumo Executivo
@@ -12,11 +12,11 @@ Migração completa do cliente Supabase global para `useBuScopedSupabase()`. Tod
 
 | Métrica | Antes | Depois |
 |---------|-------|--------|
-| Arquivos usando global | ~45 | 3* |
-| Arquivos migrados | 0 | ~42 |
+| Arquivos usando global | ~45 | 1* |
+| Arquivos migrados | 0 | ~44 |
 | % Conclusão | 0% | 100% |
 
-*Apenas exceções justificadas (auth, realtime, email domain check)
+*Apenas exceção justificada (`useAuth.tsx`)
 
 ## Arquivos Migrados (Todos Concluídos)
 
@@ -34,6 +34,7 @@ Migração completa do cliente Supabase global para `useBuScopedSupabase()`. Tod
 ### Módulo OKRs
 - ✅ `src/modules/okrs/hooks/useOkrHealth.ts`
 - ✅ `src/modules/okrs/components/settings/CycleFormDialog.tsx`
+- ✅ `src/modules/okrs/components/CheckinDialog.tsx`
 
 ### Módulo Tickets
 - ✅ `src/modules/tickets/hooks/useTickets.ts`
@@ -67,13 +68,27 @@ Migração completa do cliente Supabase global para `useBuScopedSupabase()`. Tod
 ### Módulo BU
 - ✅ `src/modules/bu/components/BuLogoUpload.tsx`
 - ✅ `src/modules/bu/components/AddressAutocomplete.tsx`
+- ✅ `src/modules/bu/hooks/useBuLocations.ts`
+
+### Módulo External
+- ✅ `src/modules/external/hooks/useExternalUser.ts`
+- ✅ `src/modules/external/hooks/useExternalDashboard.ts`
+
+### Módulo Automations
+- ✅ `src/modules/automations/hooks/useAutomationData.ts`
 
 ### Páginas e Componentes
 - ✅ `src/pages/Profile.tsx`
 - ✅ `src/pages/SearchPage.tsx`
+- ✅ `src/pages/PublicAssetRedirect.tsx`
 - ✅ `src/components/notifications/NotificationCenter.tsx`
+- ✅ `src/components/notifications/MentionInput.tsx`
+- ✅ `src/components/users/AddToBuDialog.tsx`
+- ✅ `src/components/users/BulkEditDialog.tsx`
 - ✅ `src/components/users/JetimoberDialog.tsx`
 - ✅ `src/components/CityAutocomplete.tsx`
+- ✅ `src/components/onboarding/OnboardingGuard.tsx`
+- ✅ `src/components/ReportProblemDialog.tsx`
 - ✅ `src/modules/kpis/components/CreateKpiDialog.tsx`
 
 ## Exceções Justificadas (Mantém Cliente Global)
@@ -81,7 +96,8 @@ Migração completa do cliente Supabase global para `useBuScopedSupabase()`. Tod
 | Arquivo | Justificativa |
 |---------|---------------|
 | `src/hooks/useAuth.tsx` | Autenticação ocorre ANTES de haver BU selecionada. Magic link, signOut, fetch de profile inicial não requerem escopo de BU. |
-| `src/integrations/supabase/client.ts` | Definição do singleton base |
+| `src/integrations/supabase/client.ts` | Definição do singleton base (não é uso operacional) |
+| `src/integrations/supabase/useBuScopedSupabase.ts` | Wrapper do cliente (não é uso operacional) |
 
 ## Scripts de Auditoria
 
