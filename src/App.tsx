@@ -24,6 +24,7 @@ const ResolveContextPage = lazy(() => import("./pages/ResolveContextPage"));
 
 // Lazy loading para módulos (carregados sob demanda)
 const Index = lazy(() => import("./pages/Index"));
+const ExternalDashboardPage = lazy(() => import("./pages/ExternalDashboard"));
 const Users = lazy(() => import("./pages/Users"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -392,6 +393,16 @@ const App = () => (
                           <BuRequiredRoute>
                             <Index />
                           </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* External Dashboard - for partner contacts */}
+                    <Route
+                      path="/dashboard/external"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <ExternalDashboardPage />
                         </ProtectedRoute>
                       }
                     />
