@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { BuUnit, UserBuMembership } from "../types";
 
 // Fetch all BUs the current user has access to
+// NOTE: Uses global supabase client (not bu-scoped) because this runs
+// BEFORE BuProvider is initialized - it's used to populate BuContext itself.
 export function useUserBus() {
   const { user } = useAuth();
-  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["user-bus", user?.id],
@@ -14,7 +16,7 @@ export function useUserBus() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("bu_user_memberships")
         .select(`
           *,
