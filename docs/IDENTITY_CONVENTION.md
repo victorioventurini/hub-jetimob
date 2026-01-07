@@ -66,11 +66,36 @@ O Hub utiliza **dois identificadores distintos** para representar usuários:
 | `user_team_memberships` | `user_id` | ✓ Sim | Participação em times |
 | `bu_user_permission_groups` | `user_id` | ✓ Sim | Grupos de permissão |
 | `okr_initiatives` | `owner_user_id` | ✓ Sim | Ownership de iniciativas |
+| `okr_org_objectives` | `owner_user_id` | ✓ Sim | Ownership de objetivos org |
+| `okr_org_key_results` | `owner_user_id` | ✓ Sim | Ownership de KRs org |
 | `okr_team_objectives` | `owner_user_id` | ✓ Sim | Ownership de objetivos |
 | `okr_team_key_results` | `owner_user_id` | ✓ Sim | Ownership de KRs |
 | `okr_checkins` | `user_id` | ✓ Sim | Autor do check-in |
 | `mentions` | `mentioned_user_id` | ✓ Sim | Menções |
 | `kpi_metrics` | `owner_user_id` | ✓ Sim | Ownership de KPIs |
+
+### ⚠️ COLUNAS LEGADAS QUE ARMAZENAM `profiles.id`
+
+> **ATENÇÃO:** As colunas abaixo possuem nomes que sugerem `auth.users.id`, mas **NÃO** armazenam `auth.users.id`. Elas foram migradas para armazenar `profiles.id` em 2026-01-07.
+
+| Tabela | Coluna (nome legado) | Armazena | FK Constraint |
+|--------|---------------------|----------|---------------|
+| `okr_org_objectives` | `owner_user_id` | **profiles.id** | `okr_org_objectives_owner_profile_fkey` |
+| `okr_org_key_results` | `owner_user_id` | **profiles.id** | `okr_org_key_results_owner_profile_fkey` |
+| `okr_team_objectives` | `owner_user_id` | **profiles.id** | `okr_team_objectives_owner_profile_fkey` |
+| `okr_team_key_results` | `owner_user_id` | **profiles.id** | `okr_team_key_results_owner_profile_fkey` |
+| `okr_checkins` | `user_id` | **profiles.id** | `okr_checkins_author_profile_fkey` |
+| `okr_initiatives` | `owner_user_id` | **profiles.id** | `okr_initiatives_owner_user_id_fkey` |
+
+**Por que não renomeamos?**
+- Evitar breaking changes em código existente
+- Manter compatibilidade com RLS policies
+- As FKs e comentários de coluna documentam a verdadeira referência
+
+**Como saber qual ID usar?**
+- Verifique a FK constraint no banco
+- Consulte esta documentação
+- Use `useIdentity().profileId` no frontend para essas colunas
 
 ### ⚠️ REGRA OBRIGATÓRIA
 
