@@ -105,7 +105,7 @@ export default function AgentFormPage() {
         .then(({ data, error }) => {
           if (error) {
             toast.error('Erro ao carregar agente');
-            navigate(`/settings/integrations/${integrationKey}/agents`);
+            navigate(`/hub/integrations/${integrationKey}/agents`);
             return;
           }
           
@@ -180,13 +180,13 @@ export default function AgentFormPage() {
         ...agentData,
       }, {
         onSuccess: () => {
-          navigate(`/settings/integrations/${integrationKey}/agents`);
+          navigate(`/hub/integrations/${integrationKey}/agents`);
         },
       });
     } else {
       createAgent.mutate(agentData, {
         onSuccess: () => {
-          navigate(`/settings/integrations/${integrationKey}/agents`);
+          navigate(`/hub/integrations/${integrationKey}/agents`);
         },
       });
     }
@@ -221,7 +221,7 @@ export default function AgentFormPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(`/hub/integrations/${integrationKey}/agents`)}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
@@ -475,7 +475,7 @@ export default function AgentFormPage() {
         <div className="flex flex-wrap gap-3 justify-end pb-6">
           <Button 
             variant="outline" 
-            onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}
+            onClick={() => navigate(`/hub/integrations/${integrationKey}/agents`)}
           >
             Cancelar
           </Button>
