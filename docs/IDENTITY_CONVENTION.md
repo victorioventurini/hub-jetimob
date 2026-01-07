@@ -363,8 +363,60 @@ violates foreign key constraint "bu_user_permission_groups_user_id_fkey"
 
 ---
 
+## 10. Dívidas Técnicas Pendentes
+
+### 10.1 Módulo Tickets (prioridade MÉDIA)
+
+**Status atual:** `tickets.owner_user_id` e `ticket_messages.author_user_id` referenciam `auth.users.id`
+
+**Problema:** Inconsistência com o padrão de identidade estabelecido para o Hub.
+
+**Plano de migração:**
+1. Criar migration para:
+   - Migrar dados existentes de `auth.users.id` para `profiles.id`
+   - Remover FKs antigas
+   - Criar novas FKs apontando para `profiles.id`
+2. Atualizar frontend (`CreateTicketDialog`, `TicketDetail`, etc.) para usar `useIdentity().profileId`
+3. Atualizar queries/hooks que fazem joins com profiles
+4. Testar RLS policies após migração
+
+**Impacto se não migrar:** 
+- Joins inconsistentes entre módulos
+- Possíveis erros de FK ao excluir usuários
+- Complexidade adicional em queries cross-module
+
+---
+
+## 11. Scripts de Validação
+
+### 11.1 Check de Convenção de Identidade
+
+**Localização:** `scripts/check-identity-convention.sh`
+
+**Uso:**
+```bash
+chmod +x scripts/check-identity-convention.sh
+./scripts/check-identity-convention.sh
+```
+
+**Integração com CI (GitHub Actions):**
+```yaml
+# .github/workflows/lint.yml
+- name: Check Identity Convention
+  run: ./scripts/check-identity-convention.sh
+```
+
+**Integração com pre-commit (husky):**
+```bash
+# .husky/pre-commit
+./scripts/check-identity-convention.sh
+```
+
+---
+
 ## Changelog
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.1.0 | 2026-01-07 | Adicionada dívida técnica de Tickets e script de validação |
 | 1.0.0 | 2026-01-07 | Documento inicial com convenções estabelecidas |
