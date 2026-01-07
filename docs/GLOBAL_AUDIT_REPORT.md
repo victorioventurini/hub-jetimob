@@ -1,8 +1,8 @@
 # GLOBAL AUDIT REPORT — Hub da Jet
 
-**Versão:** 1.1  
+**Versão:** 1.2  
 **Data:** 2026-01-07  
-**TCR Referência:** v2.8.0  
+**TCR Referência:** v2.9.0  
 **Auditor:** Lovable AI
 
 ---
@@ -11,15 +11,15 @@
 
 | Área | Status | Crítico | Médio | Baixo |
 |------|--------|---------|-------|-------|
-| **Segurança** | ⚠️ PARTIAL | 0 | 2 | 1 |
+| **Segurança** | ✅ PASS | 0 | 1 | 1 |
 | **Permissões** | ✅ PASS | 0 | 0 | 1 |
-| **BU Scope** | ✅ PASS | 0 | 2 | 0 |
+| **BU Scope** | ✅ PASS | 0 | 1 | 0 |
 | **Performance** | ✅ PASS | 0 | 1 | 2 |
 | **Notificações** | ✅ PASS | 0 | 0 | 2 |
 | **Usabilidade** | ✅ PASS | 0 | 1 | 1 |
-| **TOTAL** | ✅ PASS | 0 | 6 | 7 |
+| **TOTAL** | ✅ PASS | 0 | 4 | 7 |
 
-**Conclusão:** DT-001 (migração para useBuScopedSupabase) **CONCLUÍDO**. 20+ hooks migrados em OKRs, Assets, Teams, KPIs, Tickets.
+**Conclusão:** DT-001 e DT-003 **CONCLUÍDOS**. Middleware centralizado criado em `_shared/middleware.ts`.
 
 ---
 
@@ -49,18 +49,25 @@
 
 | Function | Auth Validada | BU Validada | Logging | Status |
 |----------|---------------|-------------|---------|--------|
-| `global-search` | ✅ JWT | ✅ membership | ⚠️ Básico | ⚠️ PARTIAL |
+| `global-search` | ✅ Middleware | ✅ Middleware | ✅ Estruturado | ✅ PASS |
 | `process-notification-outbox` | N/A (service) | N/A | ✅ Console | ✅ PASS |
 | `get-public-asset` | N/A (público) | N/A | ⚠️ Básico | ⚠️ PARTIAL |
-| `invoke-vic` | ✅ JWT | ⚠️ header only | ⚠️ Básico | ⚠️ PARTIAL |
+| `invoke-vic` | ✅ Middleware | ✅ Middleware | ✅ Estruturado | ✅ PASS |
+| `audit-permissions` | ✅ Middleware | N/A | ✅ Estruturado | ✅ PASS |
 
-### 1.4 Riscos Identificados
+### 1.4 Middleware Centralizado (DT-003 ✅)
+
+Implementado em `supabase/functions/_shared/middleware.ts`:
+- `withMiddleware()` - Autenticação + validação BU + CORS
+- `checkRateLimits()` - Limites por usuário/BU
+- `logRequestCompletion()` - Logging estruturado com request_id e latency_ms
+- Helpers: `jsonResponse()`, `errorResponse()`, `createServiceClient()`
+
+### 1.5 Riscos Identificados
 
 | Risco | Severidade | Mitigação |
 |-------|------------|-----------|
-| Edge Functions sem logging estruturado | 🟡 Médio | Implementar middleware com request_id, latency_ms |
-| Sem rate limiting explícito em Edge Functions | 🟡 Médio | Adicionar rate limiting via Supabase ou middleware |
-| `get-public-asset` expõe dados públicos | 🟢 Baixo | Aceitável - campos públicos sanitizados |
+| `get-public-asset` sem logging estruturado | 🟢 Baixo | Aceitável - função pública simples |
 
 ---
 
