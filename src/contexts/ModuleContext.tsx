@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
+import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -30,8 +31,16 @@ const ModuleContext = createContext<ModuleContextType | undefined>(undefined);
 
 export function ModuleProvider({ children }: { children: ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
-  const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { currentBuId, currentBu } = useBu();
+
+  // NOTE: ModuleProvider is mounted even before BU selection (e.g. /auth, /select-bu).
+  // We must NOT call useBuScopedSupabase() here because it intentionally throws when
+  // currentBuId is null. Instead:
+  // - Before BU selection: use global client (allowed pre-BU)
+  // - After BU selection: use BU-scoped client (createBuScopedClient)
+  const buClient = useMemo(() => {
+    return currentBuId ? createBuScopedClient(currentBuId) : null;
+  }, [currentBuId]);
 
   const { data: modules = [], isLoading } = useQuery({
     // IMPORTANTE: incluir user?.id no cache key para evitar "cache" com resposta anônima
@@ -42,7 +51,8 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
       if (!user?.id) return [];
 
       if (!currentBu?.id) {
-        // Se não há BU ativa, retornar apenas módulos globais
+        // Se não há BU ativa, retornar apenas módulos globais.
+        // Permitido usar cliente global aqui (pré-BU).
         const { data, error } = await supabase
           .from("modules")
           .select("id, name, slug, description, icon, route, type, display_order")
@@ -59,8 +69,13 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
         })) as HubModule[];
       }
 
-      // Se há BU ativa, usar a função RPC para obter módulos com config
-      const { data, error } = await supabase.rpc("get_enabled_modules_for_bu", {
+      // Se há BU ativa, usar cliente BU-scoped e a RPC de módulos.
+      if (!buClient) {
+        // Should never happen because currentBuId exists when currentBu exists
+        throw new Error("ModuleProvider: buClient not initialized for active BU");
+      }
+
+      const { data, error } = await buClient.rpc("get_enabled_modules_for_bu", {
         p_bu_id: currentBu.id,
       });
 

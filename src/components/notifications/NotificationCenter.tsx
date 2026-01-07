@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { createBuScopedClient } from '@/integrations/supabase/useBuScopedSupabase';
 import { supabase as supabaseGlobal } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   Popover,
@@ -66,20 +67,26 @@ const notificationColors = {
 
 export function NotificationCenter() {
   const { user } = useAuth();
+  const { currentBuId } = useBu();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const supabaseBu = useBuScopedSupabase();
   const [open, setOpen] = useState(false);
+
+  // NOTE: This component is mounted even on pre-BU routes (e.g. /auth).
+  // Never call useBuScopedSupabase() here; instead create a BU client only when BU is selected.
+  const supabaseBu = useMemo(() => {
+    return currentBuId ? createBuScopedClient(currentBuId) : null;
+  }, [currentBuId]);
 
   // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: queryKeys.notifications.all(user?.id ?? ''),
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id || !supabaseBu) return [];
 
       const { data, error } = await supabaseBu
         .from('notifications')
-        .select('*')
+        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -115,7 +122,7 @@ export function NotificationCenter() {
         actor: n.actor_id ? actorMap[n.actor_id] || null : null,
       })) as Notification[];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!currentBuId,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 

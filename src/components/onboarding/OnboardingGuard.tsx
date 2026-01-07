@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { Loader2 } from "lucide-react";
@@ -10,8 +10,8 @@ interface OnboardingGuardProps {
 
 export function OnboardingGuard({ children }: OnboardingGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const supabase = useBuScopedSupabase();
 
+  // NOTE: Onboarding happens before BU selection; must NOT require BU-scoped client.
   const { data: profile, isLoading: profileLoading, refetch } = useQuery({
     queryKey: ["onboarding-check", user?.id],
     queryFn: async () => {
