@@ -4,9 +4,14 @@ type PeriodOfDay = "morning" | "afternoon" | "night";
 type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 type Weather = "sunny" | "cloudy" | "rainy" | "unknown";
 
+type UserProfile = "executive" | "leader" | "collaborator" | "external";
+
 interface GreetingContext {
   userName?: string | null;
   userGender?: "male" | "female" | null;
+  profile?: UserProfile;
+  buName?: string;
+  teamName?: string;
 }
 
 interface GreetingResult {
@@ -79,9 +84,45 @@ const buildSubtext = (
   period: PeriodOfDay,
   dayOfWeek: DayOfWeek,
   weekend: boolean,
-  weather: Weather
+  weather: Weather,
+  profile?: UserProfile,
+  buName?: string,
+  teamName?: string
 ): string => {
-  // Pool contextual
+  // Profile-specific subtexts (contextual)
+  if (profile === "executive" && buName) {
+    const executiveOptions = [
+      `Visão estratégica da ${buName}`,
+      `Acompanhe os resultados da ${buName}`,
+      `Saúde estratégica da ${buName}`,
+    ];
+    return pick(executiveOptions);
+  }
+  
+  if (profile === "leader" && teamName) {
+    const leaderOptions = [
+      `Acompanhamento do seu time`,
+      `Gestão de ${teamName}`,
+      `Seu time em destaque`,
+    ];
+    return pick(leaderOptions);
+  }
+  
+  if (profile === "external") {
+    return "Acompanhe suas demandas";
+  }
+  
+  // Collaborator - "Seu dia no Hub"
+  if (profile === "collaborator") {
+    const collaboratorOptions = [
+      "Seu dia no Hub",
+      "Vamos ao que importa",
+      "Foco no que move a agulha",
+    ];
+    return pick(collaboratorOptions);
+  }
+  
+  // Default pool contextual (fallback)
   const options: string[] = [];
   
   // Clima
@@ -128,7 +169,12 @@ const buildSubtext = (
   return pick(pool);
 };
 
-export const useGreeting = ({ userName }: GreetingContext): GreetingResult => {
+export const useGreeting = ({ 
+  userName, 
+  profile, 
+  buName, 
+  teamName 
+}: GreetingContext): GreetingResult => {
   return useMemo(() => {
     const period = getPeriodOfDay();
     const dayOfWeek = getDayOfWeek();
@@ -138,7 +184,7 @@ export const useGreeting = ({ userName }: GreetingContext): GreetingResult => {
     
     return {
       greeting: buildGreeting(period, dayOfWeek, weather, userName),
-      subtext: buildSubtext(period, dayOfWeek, weekend, weather),
+      subtext: buildSubtext(period, dayOfWeek, weekend, weather, profile, buName, teamName),
     };
-  }, [userName]);
+  }, [userName, profile, buName, teamName]);
 };
