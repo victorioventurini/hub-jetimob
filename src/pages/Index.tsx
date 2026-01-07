@@ -11,12 +11,14 @@ import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
+import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
 import { useBu } from "@/contexts/BuContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Navigate } from "react-router-dom";
 
 const Index = () => {
   usePageTitle("Home");
@@ -25,11 +27,17 @@ const Index = () => {
   const dashboardData = useHomeDashboard();
   const { greeting, subtext } = useGreeting({ userName: profile?.first_name });
   const { isLeader, isLoading: isLeaderLoading } = useLeaderTeams();
+  const { isExternal, isLoading: isExternalLoading } = useExternalUser();
 
   const isExecutive = dashboardData.role === "executive";
 
-  // Loading state while determining if user is a leader
-  if (isLeaderLoading) {
+  // Redirect external users to their dedicated dashboard
+  if (!isExternalLoading && isExternal) {
+    return <Navigate to="/dashboard/external" replace />;
+  }
+
+  // Loading state while determining if user is a leader or external
+  if (isLeaderLoading || isExternalLoading) {
     return (
       <HubLayout>
         <div className="space-y-8">
