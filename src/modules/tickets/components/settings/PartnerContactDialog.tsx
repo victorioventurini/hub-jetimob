@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -31,6 +32,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useCreatePartnerContact, useUpdatePartnerContact } from "../../hooks/usePartners";
 import { PartnerContact, PartnerCompany } from "../../types";
+import { ContactCapabilitiesList } from "./ContactCapabilitiesList";
 
 // Máscara de telefone: +55 (XX) XXXXX-XXXX
 function formatPhoneWithDDI(value: string): string {
@@ -74,10 +76,12 @@ export function PartnerContactDialog({
   companies,
   defaultCompanyId,
 }: PartnerContactDialogProps) {
+  const isEditMode = !!contact;
   const { mutate: createContact, isPending: isCreating } = useCreatePartnerContact();
   const { mutate: updateContact, isPending: isUpdating } = useUpdatePartnerContact();
   const isPending = isCreating || isUpdating;
   
+  const [activeTab, setActiveTab] = useState("data");
   const [domainError, setDomainError] = useState<string | null>(null);
 
   const form = useForm<FormData>({
@@ -141,6 +145,7 @@ export function PartnerContactDialog({
 
   useEffect(() => {
     if (open) {
+      setActiveTab("data");
       setDomainError(null);
       if (contact) {
         form.reset({
@@ -203,143 +208,190 @@ export function PartnerContactDialog({
 
   const isSubmitDisabled = isPending || !!domainError;
 
+  // Form fields component para reutilização
+  const FormFields = () => (
+    <>
+      <FormField
+        control={form.control}
+        name="partner_company_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Empresa *</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nome *</FormLabel>
+            <FormControl>
+              <Input placeholder="Nome do contato" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Email *</FormLabel>
+            <FormControl>
+              <Input placeholder="email@empresa.com" type="email" {...field} />
+            </FormControl>
+            <FormDescription>
+              Este email será usado para login via Magic Link
+              {allowedDomains.length > 0 && (
+                <span className="block mt-1 text-muted-foreground">
+                  Domínios permitidos: {allowedDomains.map(d => `@${d}`).join(", ")}
+                </span>
+              )}
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {domainError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{domainError}</AlertDescription>
+        </Alert>
+      )}
+
+      <FormField
+        control={form.control}
+        name="phone"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Telefone</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="+55 (51) 99999-9999" 
+                value={field.value}
+                onChange={(e) => handlePhoneChange(e.target.value, field.onChange)}
+              />
+            </FormControl>
+            <FormDescription>
+              Formato: +55 (DDD) XXXXX-XXXX
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="status"
+        render={({ field }) => (
+          <FormItem className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <FormLabel>Ativo</FormLabel>
+              <FormDescription>
+                Contatos inativos não podem fazer login
+              </FormDescription>
+            </div>
+            <FormControl>
+              <Switch
+                checked={field.value === "active"}
+                onCheckedChange={(checked) =>
+                  field.onChange(checked ? "active" : "inactive")
+                }
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    </>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>
             {contact ? "Editar Contato" : "Novo Contato"}
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="partner_company_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Empresa *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a empresa" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {company.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {isEditMode ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="data">Dados</TabsTrigger>
+              <TabsTrigger value="capabilities">Capacidades</TabsTrigger>
+            </TabsList>
 
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome do contato" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="email@empresa.com" type="email" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Este email será usado para login via Magic Link
-                    {allowedDomains.length > 0 && (
-                      <span className="block mt-1 text-muted-foreground">
-                        Domínios permitidos: {allowedDomains.map(d => `@${d}`).join(", ")}
-                      </span>
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {domainError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{domainError}</AlertDescription>
-              </Alert>
-            )}
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefone</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="+55 (51) 99999-9999" 
-                      value={field.value}
-                      onChange={(e) => handlePhoneChange(e.target.value, field.onChange)}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Formato: +55 (DDD) XXXXX-XXXX
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>Ativo</FormLabel>
-                    <FormDescription>
-                      Contatos inativos não podem fazer login
-                    </FormDescription>
+            <TabsContent value="data" className="mt-4">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormFields />
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isSubmitDisabled}>
+                      Salvar
+                    </Button>
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value === "active"}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked ? "active" : "inactive")
-                      }
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                </form>
+              </Form>
+            </TabsContent>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitDisabled}>
-                {contact ? "Salvar" : "Criar"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+            <TabsContent value="capabilities" className="mt-4">
+              <ContactCapabilitiesList
+                contactId={contact!.id}
+                companyId={contact!.partner_company_id}
+              />
+              <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormFields />
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitDisabled}>
+                  Criar
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

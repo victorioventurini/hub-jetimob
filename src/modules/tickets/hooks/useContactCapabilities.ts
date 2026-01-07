@@ -174,3 +174,30 @@ export function useToggleContactCapability() {
     },
   });
 }
+
+export function useUpdateContactCapability() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      category_id,
+      subcategory_id,
+    }: {
+      id: string;
+      category_id: string;
+      subcategory_id: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("partner_contact_capabilities")
+        .update({ category_id, subcategory_id })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+    },
+  });
+}
