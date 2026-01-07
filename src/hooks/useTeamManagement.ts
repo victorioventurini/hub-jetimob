@@ -1,11 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 
 /**
  * Hook para verificar se o usuário pode gerenciar um time específico.
  * 
  * SAFE for pre-BU: Uses useOptionalBuClient() and disables query until BU is selected.
+ * 
+ * IDENTITY CONVENTION:
+ * - Uses auth.uid() (user_id) for RPC call (the DB function converts to profile_id internally)
+ * - The RPC `get_manageable_teams` handles the conversion from user_id → profile_id
+ * - See docs/IDENTITY_CONVENTION.md for details
  * 
  * Regras:
  * - super_admin: pode gerenciar qualquer time
@@ -14,18 +20,20 @@ import { useAuth } from "@/hooks/useAuth";
  * - NÃO pode gerenciar time pai, irmão ou de outro ramo
  */
 export function useTeamManagement() {
-  const { user, isAdmin } = useAuth();
-  const { client, buId, isReady } = useOptionalBuClient();
+  const { isAdmin } = useAuth();
+  const { userId, isReady: identityReady } = useIdentity();
+  const { client, buId, isReady: buReady } = useOptionalBuClient();
 
   const { data: manageableTeams = [], isLoading } = useQuery({
-    queryKey: ["manageable-teams", buId, user?.id],
+    queryKey: ["manageable-teams", buId, userId],
     queryFn: async () => {
-      if (!buId || !user?.id || !client) {
+      if (!buId || !userId || !client) {
         throw new Error("useTeamManagement: No BU client available");
       }
 
+      // RPC receives auth.uid() (user_id) and converts internally to profile_id
       const { data, error } = await client.rpc("get_manageable_teams", {
-        p_user_id: user.id,
+        p_user_id: userId,
         p_bu_id: buId,
       });
 
@@ -36,7 +44,7 @@ export function useTeamManagement() {
 
       return data || [];
     },
-    enabled: isReady && !!user?.id,
+    enabled: buReady && identityReady && !!userId,
     staleTime: 5 * 60 * 1000,
   });
 

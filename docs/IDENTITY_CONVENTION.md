@@ -47,6 +47,42 @@ O Hub utiliza **dois identificadores distintos** para representar usuários:
 
 ---
 
+## 1.2 Mapeamento Definitivo de Tabelas
+
+### Tabelas que usam `auth.users.id`:
+
+| Tabela | Coluna | FK Explícita | Uso |
+|--------|--------|--------------|-----|
+| `bu_user_memberships` | `user_id` | ✓ Sim | Membership em BUs |
+| `user_roles` | `user_id` | ✓ Sim | Roles globais |
+| `audit_logs` | `user_id` | ✗ Não | Audit trail (sessão) |
+| `profiles` | `user_id` | ✓ Sim | Link auth → domínio |
+
+### Tabelas que usam `profiles.id`:
+
+| Tabela | Coluna | FK Explícita | Uso |
+|--------|--------|--------------|-----|
+| `teams` | `leader_user_id` | ✓ Sim | Liderança de time |
+| `user_team_memberships` | `user_id` | ✓ Sim | Participação em times |
+| `bu_user_permission_groups` | `user_id` | ✓ Sim | Grupos de permissão |
+| `okr_initiatives` | `owner_user_id` | ✓ Sim | Ownership de iniciativas |
+| `okr_team_objectives` | `owner_user_id` | ✓ Sim | Ownership de objetivos |
+| `okr_team_key_results` | `owner_user_id` | ✓ Sim | Ownership de KRs |
+| `okr_checkins` | `user_id` | ✓ Sim | Autor do check-in |
+| `mentions` | `mentioned_user_id` | ✓ Sim | Menções |
+| `kpi_metrics` | `owner_user_id` | ✓ Sim | Ownership de KPIs |
+
+### ⚠️ REGRA OBRIGATÓRIA
+
+**Toda nova tabela com relação de ownership DEVE:**
+1. Usar `profiles.id` como referência
+2. Ter FK explícita declarada
+3. Usar `useIdentity().profileId` no frontend
+
+**PROIBIDO:** Usar `useAuth().user.id` diretamente para ownership/permissões.
+
+---
+
 ## 2. Regras de Uso
 
 ### 2.1 Use `user_id` (auth.users.id) para:
