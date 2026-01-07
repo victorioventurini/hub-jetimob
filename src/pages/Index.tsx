@@ -25,11 +25,19 @@ const Index = () => {
   const { profile } = useAuth();
   const { currentBu } = useBu();
   const dashboardData = useHomeDashboard();
-  const { greeting, subtext } = useGreeting({ userName: profile?.first_name });
-  const { isLeader, isLoading: isLeaderLoading } = useLeaderTeams();
+  const { isLeader, isLoading: isLeaderLoading, teams: leaderTeams } = useLeaderTeams();
   const { isExternal, isLoading: isExternalLoading } = useExternalUser();
 
   const isExecutive = dashboardData.role === "executive";
+  
+  // Determine profile for greeting
+  const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
+  const { greeting, subtext } = useGreeting({ 
+    userName: profile?.first_name,
+    profile: greetingProfile,
+    buName: currentBu?.name,
+    teamName: leaderTeams?.[0]?.team_name,
+  });
 
   // Redirect external users to their dedicated dashboard
   if (!isExternalLoading && isExternal) {
@@ -136,8 +144,8 @@ const Index = () => {
           <WorkAnniversariesBlock />
         </div>
 
-        {/* Vic Card - Bottom */}
-        <VicCard />
+        {/* Vic Card - Bottom (with profile-based suggestions) */}
+        <VicCard profile={greetingProfile} />
       </div>
     </HubLayout>
   );
