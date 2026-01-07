@@ -51,9 +51,10 @@ export function useCreateOkrContribution() {
       bu_id?: string;
       description?: string;
     }) => {
+      // bu_id is auto-filled by trigger, use type assertion
       const { data, error } = await supabase
         .from('okr_contributions')
-        .insert(contribution)
+        .insert(contribution as any)
         .select()
         .single();
 

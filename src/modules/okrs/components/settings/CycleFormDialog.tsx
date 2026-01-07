@@ -137,7 +137,8 @@ export function CycleFormDialog({
           .eq("id", cycle.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("cycles").insert(payload);
+        // bu_id is auto-filled by enforce_bu_scope trigger via x-current-bu-id header
+        const { error } = await supabase.from("cycles").insert(payload as any);
         if (error) throw error;
       }
     },

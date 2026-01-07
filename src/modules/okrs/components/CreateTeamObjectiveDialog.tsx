@@ -101,6 +101,7 @@ export function CreateTeamObjectiveDialog({
       if (!cycleId) throw new Error("Ciclo não selecionado");
       
       // Create the objective
+      // bu_id is auto-filled by enforce_bu_scope trigger via x-current-bu-id header
       const { data: objective, error } = await supabase
         .from('okr_team_objectives')
         .insert({
@@ -112,7 +113,7 @@ export function CreateTeamObjectiveDialog({
           status,
           is_shared: isShared,
           responsibility_model: isShared ? responsibilityModel : null,
-        })
+        } as any) // Type assertion needed because bu_id is auto-filled by trigger
         .select()
         .single();
 
