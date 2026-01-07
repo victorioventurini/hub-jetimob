@@ -3788,6 +3788,84 @@ export type Database = {
           },
         ]
       }
+      partner_contact_capabilities: {
+        Row: {
+          bu_id: string
+          category_id: string
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          partner_company_id: string
+          subcategory_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          category_id: string
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          partner_company_id: string
+          subcategory_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          category_id?: string
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          partner_company_id?: string
+          subcategory_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_contact_capabilities_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contact_capabilities_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contact_capabilities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contact_capabilities_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contact_capabilities_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_contacts: {
         Row: {
           bu_id: string
@@ -4725,6 +4803,8 @@ export type Database = {
       }
       tickets: {
         Row: {
+          assigned_contact_id: string | null
+          assignment_source: string | null
           bu_id: string
           category_id: string | null
           created_at: string
@@ -4746,6 +4826,8 @@ export type Database = {
           visibility_user_ids: string[] | null
         }
         Insert: {
+          assigned_contact_id?: string | null
+          assignment_source?: string | null
           bu_id: string
           category_id?: string | null
           created_at?: string
@@ -4767,6 +4849,8 @@ export type Database = {
           visibility_user_ids?: string[] | null
         }
         Update: {
+          assigned_contact_id?: string | null
+          assignment_source?: string | null
           bu_id?: string
           category_id?: string | null
           created_at?: string
@@ -4788,6 +4872,13 @@ export type Database = {
           visibility_user_ids?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tickets_assigned_contact_id_fkey"
+            columns: ["assigned_contact_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tickets_bu_id_fkey"
             columns: ["bu_id"]
@@ -5469,6 +5560,15 @@ export type Database = {
           asset_id: string
           bu_id: string
         }[]
+      }
+      resolve_ticket_assignee: {
+        Args: {
+          p_bu_id: string
+          p_category_id: string
+          p_partner_company_id: string
+          p_subcategory_id?: string
+        }
+        Returns: string
       }
       team_is_ancestor: {
         Args: { p_ancestor_team_id: string; p_team_id: string }

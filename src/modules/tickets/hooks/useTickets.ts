@@ -104,21 +104,14 @@ export function useTicket(ticketId: string | null) {
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name),
-          participants:ticket_participants(
-            id,
-            participant_type,
-            user_id,
-            partner_contact_id,
-            role,
-            is_active
-          )
+          assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("id", ticketId)
         .is("deleted_at", null)
         .maybeSingle();
 
       if (error) throw error;
-      return data as Ticket | null;
+      return data as unknown as Ticket | null;
     },
     enabled: !!ticketId && !!buId,
   });

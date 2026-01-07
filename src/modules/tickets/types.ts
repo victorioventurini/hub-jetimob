@@ -138,6 +138,9 @@ export interface Ticket {
   category_id: string | null;
   subcategory_id: string | null;
   external_assignee_contact_ids: string[];
+  // Contact-first routing fields (v2.4+)
+  assigned_contact_id: string | null;
+  assignment_source: 'contact_capability' | 'routing_fallback' | 'manual' | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -147,6 +150,7 @@ export interface Ticket {
   partner_company?: { id: string; name: string } | null;
   category?: { id: string; name: string } | null;
   subcategory?: { id: string; name: string } | null;
+  assigned_contact?: { id: string; name: string; email: string } | null;
   participants?: TicketParticipant[];
   messages_count?: number;
   attachments_count?: number;
