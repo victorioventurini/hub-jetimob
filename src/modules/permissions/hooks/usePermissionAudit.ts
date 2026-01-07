@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 
 export interface AuditResult {
   generatedAt: string;
@@ -32,6 +32,8 @@ export interface AuditResult {
 }
 
 export function usePermissionAudit() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['permission-audit'],
     queryFn: async (): Promise<AuditResult> => {

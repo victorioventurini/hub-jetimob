@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { AgentDocument } from '../types/agentDocument';
 
 export function useAgentDocuments(agentId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['agent-documents', agentId],
     queryFn: async () => {
@@ -23,6 +25,7 @@ export function useAgentDocuments(agentId: string | undefined) {
 
 export function useUploadAgentDocument() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({ 
@@ -87,6 +90,7 @@ export function useUploadAgentDocument() {
 
 export function useDeleteAgentDocument() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({ documentId, agentId, filePath }: { documentId: string; agentId: string; filePath: string }) => {
