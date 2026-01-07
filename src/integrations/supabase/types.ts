@@ -5416,6 +5416,10 @@ export type Database = {
         }[]
       }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
+      get_descendant_team_ids: {
+        Args: { p_team_id: string }
+        Returns: string[]
+      }
       get_enabled_modules_for_bu: {
         Args: { p_bu_id: string }
         Returns: {
@@ -5447,6 +5451,16 @@ export type Database = {
           status: string
         }[]
       }
+      get_leader_teams: {
+        Args: { p_user_id?: string }
+        Returns: {
+          member_count: number
+          parent_team_id: string
+          team_description: string
+          team_id: string
+          team_name: string
+        }[]
+      }
       get_manageable_teams: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: {
@@ -5473,6 +5487,7 @@ export type Database = {
         }[]
       }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_team_member_ids: { Args: { p_team_id: string }; Returns: string[] }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
       get_user_partner_contact_id: {
@@ -5532,6 +5547,7 @@ export type Database = {
         Args: { p_ticket_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_user_leader: { Args: { p_user_id?: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           p_action: string
@@ -5575,6 +5591,11 @@ export type Database = {
           p_subcategory_id?: string
         }
         Returns: string
+      }
+      rpc_leader_dashboard_focus: { Args: { p_team_id: string }; Returns: Json }
+      rpc_leader_dashboard_summary: {
+        Args: { p_team_id: string }
+        Returns: Json
       }
       team_is_ancestor: {
         Args: { p_ancestor_team_id: string; p_team_id: string }
