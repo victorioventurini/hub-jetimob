@@ -4,6 +4,9 @@
 // Padrão centralizado para sincronizar estado com URL
 // ============================================================
 
+// Constants
+export * from "./constants";
+
 // Types
 export type {
   UrlStateValue,
