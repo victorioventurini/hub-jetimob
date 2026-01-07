@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { supabase } from '@/integrations/supabase/client';
 import { AgentDocument } from '../types/agentDocument';
 
+// Uses global client since this is accessed from admin panel (/hub/integrations/...)
+
 export function useAgentDocuments(agentId: string | undefined) {
-  const supabase = useBuScopedSupabase();
-  
   return useQuery({
     queryKey: ['agent-documents', agentId],
     queryFn: async () => {
@@ -12,7 +12,7 @@ export function useAgentDocuments(agentId: string | undefined) {
       
       const { data, error } = await supabase
         .from('ai_agent_documents')
-        .select('*')
+        .select('id, agent_id, name, description, file_url, file_type, file_size, status, extracted_content, processing_error, created_at, updated_at, created_by')
         .eq('agent_id', agentId)
         .order('created_at', { ascending: false });
       
@@ -25,7 +25,6 @@ export function useAgentDocuments(agentId: string | undefined) {
 
 export function useUploadAgentDocument() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({ 
@@ -66,7 +65,7 @@ export function useUploadAgentDocument() {
           file_size: file.size,
           status: 'pending',
         })
-        .select()
+        .select('id, agent_id, name, description, file_url, file_type, file_size, status, extracted_content, processing_error, created_at, updated_at, created_by')
         .single();
       
       if (error) throw error;
@@ -90,7 +89,6 @@ export function useUploadAgentDocument() {
 
 export function useDeleteAgentDocument() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({ documentId, agentId, filePath }: { documentId: string; agentId: string; filePath: string }) => {
