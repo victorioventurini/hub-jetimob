@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface PendingCheckin {
@@ -66,17 +66,17 @@ export function isCheckinDueThisWeek(
  */
 export function usePendingCheckins() {
   const { user } = useAuth();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['pending-checkins', user?.id],
+    queryKey: ['pending-checkins', user?.id, buId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id || !supabase) return [];
 
       // Query the view for pending check-ins
       const { data, error } = await supabase
         .from('v_pending_checkins')
-        .select('*')
+        .select('kr_id, kr_title, owner_user_id, co_responsibles, team_id, current_value, target, baseline, direction, unit, status, last_checkin_at, team_name, checkin_frequency, checkin_day, checkin_deadline_hour, objective_title, objective_id, is_overdue, days_since_checkin')
         .or(`owner_user_id.eq.${user.id},co_responsibles.cs.{${user.id}}`);
 
       if (error) {
@@ -86,7 +86,7 @@ export function usePendingCheckins() {
 
       return (data || []) as PendingCheckin[];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && isReady && !!supabase,
   });
 }
 
@@ -94,16 +94,16 @@ export function usePendingCheckins() {
  * Hook to fetch all pending check-ins for a team (for team leaders)
  */
 export function useTeamPendingCheckins(teamId?: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['team-pending-checkins', teamId],
     queryFn: async () => {
-      if (!teamId) return [];
+      if (!teamId || !supabase) return [];
 
       const { data, error } = await supabase
         .from('v_pending_checkins')
-        .select('*')
+        .select('kr_id, kr_title, owner_user_id, co_responsibles, team_id, current_value, target, baseline, direction, unit, status, last_checkin_at, team_name, checkin_frequency, checkin_day, checkin_deadline_hour, objective_title, objective_id, is_overdue, days_since_checkin')
         .eq('team_id', teamId);
 
       if (error) {
@@ -113,7 +113,7 @@ export function useTeamPendingCheckins(teamId?: string) {
 
       return (data || []) as PendingCheckin[];
     },
-    enabled: !!teamId,
+    enabled: !!teamId && isReady && !!supabase,
   });
 }
 

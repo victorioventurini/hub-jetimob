@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { LoadingState } from "@/components/ui/loading-state";
 import PublicAsset from "./PublicAsset";
 
@@ -28,7 +28,7 @@ export default function PublicAssetRedirect() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const { userBus, isLoading: buLoading, selectBu, currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  // Uses global client since this page runs before BU selection
   
   const [state, setState] = useState<ResolveState>("checking");
   const [targetAssetId, setTargetAssetId] = useState<string | null>(null);

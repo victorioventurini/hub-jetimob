@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { TeamWithRelations, TeamFormData, TeamTreeNode } from "../types";
 import { toast } from "sonner";
@@ -7,23 +8,23 @@ import { queryKeys } from "@/lib/queryKeys";
 
 export function useTeams(includeInactive = false) {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.teams.list(currentBu?.id ?? null),
+    queryKey: queryKeys.teams.list(buId ?? null),
     queryFn: async () => {
+      if (!supabase || !buId) return [];
+      
       let query = supabase
         .from("teams")
         .select(`
-          *,
+          id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id,
           leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
         `)
         .order("name");
 
-      // Filter by BU if selected
-      if (currentBu?.id) {
-        query = query.eq("bu_id", currentBu.id);
-      }
+      // Filter by BU
+      query = query.eq("bu_id", buId);
 
       // Always exclude soft-deleted teams
       query = query.is("deleted_at", null);
@@ -69,7 +70,7 @@ export function useTeams(includeInactive = false) {
         parent_team: team.parent_team_id ? parentTeamMap.get(team.parent_team_id) : null,
       })) as TeamWithRelations[];
     },
-    enabled: !!currentBu?.id,
+    enabled: isReady && !!buId && !!supabase,
   });
 }
 
