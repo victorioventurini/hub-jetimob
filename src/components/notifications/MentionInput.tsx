@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBu } from '@/contexts/BuContext';
@@ -11,6 +12,7 @@ export function getMentionDisplayText(text: string): string {
 }
 
 // Helper to parse mentions for display (convert @[Name](id) to clickable links)
+// Returns an array with a unique key for React rendering
 export function parseMentionsForDisplay(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
@@ -23,18 +25,18 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
       parts.push(text.slice(lastIndex, match.index));
     }
 
-    // Add the mention as a link
+    // Add the mention as a Link (React Router) instead of <a> to avoid full page reload
     const displayName = match[1];
     const userId = match[2];
     parts.push(
-      <a
+      <Link
         key={`${userId}-${match.index}`}
-        href={`/users/${userId}`}
+        to={`/users/${userId}`}
         className="text-primary font-medium hover:underline"
         onClick={(e) => e.stopPropagation()}
       >
         @{displayName}
-      </a>
+      </Link>
     );
 
     lastIndex = match.index + match[0].length;

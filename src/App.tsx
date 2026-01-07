@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Páginas carregadas imediatamente (críticas para primeira renderização)
@@ -131,8 +132,9 @@ const App = () => (
             <ModuleProvider>
               <VicProvider>
                 <VicSidepanel />
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
+                <ErrorBoundary>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
                     {/* ===== ROTAS PÚBLICAS ===== */}
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/p/assets/:code" element={<PublicAsset />} />
@@ -591,8 +593,9 @@ const App = () => (
 
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
+                    </Routes>
+                  </Suspense>
+                </ErrorBoundary>
               </VicProvider>
             </ModuleProvider>
           </BuProvider>

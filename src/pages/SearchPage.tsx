@@ -325,7 +325,6 @@ export default function SearchPage() {
             <ErrorState
               title="Erro na busca"
               description={(error as Error).message}
-              onRetry={() => window.location.reload()}
               compact
             />
           )}
