@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BuUnit, UserBuMembership } from "@/modules/bu/types";
 import { useUserBus } from "@/modules/bu/hooks/useBuData";
+import { useExternalUserBus } from "@/modules/external/hooks/useExternalUserBus";
 import { useAuth } from "@/hooks/useAuth";
 
 interface BuContextType {
@@ -12,9 +13,11 @@ interface BuContextType {
   isLoading: boolean;
   hasMultipleBus: boolean;
   /** The user's role in the current BU */
-  userRole: UserBuMembership["role_in_bu"] | null;
+  userRole: UserBuMembership["role_in_bu"] | "external" | null;
   /** Indicates if the user has explicitly selected a BU (or was auto-selected for single-BU users) */
   buSelected: boolean;
+  /** True if user is an external partner (has access via partner_contacts) */
+  isExternalUser: boolean;
   /** Explicitly select a BU - sets buSelected to true */
   selectBu: (buId: string) => void;
   /** Switch to another BU (for users with multiple BUs) */
@@ -31,7 +34,22 @@ const BU_SELECTED_KEY = "hub_bu_selected";
 export function BuProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
-  const { data: userBus = [], isLoading: busLoading } = useUserBus();
+  const { data: internalBus = [], isLoading: internalBusLoading } = useUserBus();
+  const { data: externalBus = [], isLoading: externalBusLoading } = useExternalUserBus();
+  
+  // Combine internal and external BUs
+  // Internal memberships take priority if user has both
+  const userBus = useMemo(() => {
+    if (internalBus.length > 0) {
+      return internalBus;
+    }
+    // Cast external BUs to UserBuMembership format
+    return externalBus as unknown as UserBuMembership[];
+  }, [internalBus, externalBus]);
+  
+  const isExternalUser = internalBus.length === 0 && externalBus.length > 0;
+  const busLoading = internalBusLoading || externalBusLoading;
+  
   const [currentBuId, setCurrentBuId] = useState<string | null>(() => {
     return localStorage.getItem(BU_STORAGE_KEY);
   });
@@ -40,7 +58,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
   });
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Combined loading state - wait for both auth AND bus to load
+  // Combined loading state - wait for both auth AND buses to load
   const isLoading = authLoading || busLoading || (!hasInitialized && !!user);
 
   // Initialize BU state from storage on mount
@@ -132,7 +150,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
 
   const currentMembership = userBus.find(m => m.bu_id === currentBuId);
   const currentBu = currentMembership?.bu_unit || null;
-  const userRole = currentMembership?.role_in_bu || null;
+  const userRole = isExternalUser ? "external" : (currentMembership?.role_in_bu || null);
 
   return (
     <BuContext.Provider
@@ -144,6 +162,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
         hasMultipleBus: userBus.length > 1,
         userRole,
         buSelected,
+        isExternalUser,
         selectBu,
         switchBu,
         clearBuSelection,
