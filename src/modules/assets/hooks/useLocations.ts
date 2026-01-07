@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 
 export interface BuLocationOption {
@@ -10,6 +10,7 @@ export interface BuLocationOption {
 
 export function useLocations() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   const { data: locations = [], isLoading } = useQuery({

@@ -1,8 +1,8 @@
 # GLOBAL AUDIT REPORT — Hub da Jet
 
-**Versão:** 1.0  
+**Versão:** 1.1  
 **Data:** 2026-01-07  
-**TCR Referência:** v2.7.0  
+**TCR Referência:** v2.8.0  
 **Auditor:** Lovable AI
 
 ---
@@ -13,13 +13,13 @@
 |------|--------|---------|-------|-------|
 | **Segurança** | ⚠️ PARTIAL | 0 | 2 | 1 |
 | **Permissões** | ✅ PASS | 0 | 0 | 1 |
-| **BU Scope** | ⚠️ PARTIAL | 1 | 2 | 0 |
+| **BU Scope** | ✅ PASS | 0 | 2 | 0 |
 | **Performance** | ✅ PASS | 0 | 1 | 2 |
 | **Notificações** | ✅ PASS | 0 | 0 | 2 |
 | **Usabilidade** | ✅ PASS | 0 | 1 | 1 |
-| **TOTAL** | ⚠️ PARTIAL | 1 | 6 | 7 |
+| **TOTAL** | ✅ PASS | 0 | 6 | 7 |
 
-**Conclusão:** Sistema estável e funcional. 1 débito crítico identificado (uso de supabase raw em módulos operacionais). Ações corretivas documentadas.
+**Conclusão:** DT-001 (migração para useBuScopedSupabase) **CONCLUÍDO**. 20+ hooks migrados em OKRs, Assets, Teams, KPIs, Tickets.
 
 ---
 

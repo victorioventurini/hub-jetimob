@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useMemo } from "react";
-import { parseISO, format, differenceInDays } from "date-fns";
+import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export interface KpiHistoryValue {
@@ -32,6 +32,8 @@ export interface KpiHistoryData {
  * Fetches KPI values history for visualization
  */
 export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { start: string; end: string }) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["kpi-history", kpiId, dateRange?.start, dateRange?.end],
     queryFn: async () => {
@@ -103,6 +105,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
  * Fetches KPI history for a KR (via okr_kr_metrics linkage)
  */
 export function useKrKpiHistory(krId: string, krType: "org" | "team") {
+  const supabase = useBuScopedSupabase();
   // First get the linked KPIs
   const { data: krMetrics } = useQuery({
     queryKey: ["kr-linked-kpis", krId, krType],

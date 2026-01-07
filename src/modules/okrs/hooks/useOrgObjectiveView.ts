@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from '@/contexts/BuContext';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
@@ -87,6 +87,7 @@ function calculateAggregatedProgress(orgKrs: OrgKrWithTeamKrs[]): number {
 
 export function useOrgObjectiveView(objectiveId: string) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['org-objective-view', objectiveId, currentBu?.id],
@@ -198,6 +199,7 @@ export function useOrgObjectiveView(objectiveId: string) {
 export function useAllOrgObjectivesView(year?: number) {
   const { currentBu } = useBu();
   const currentYear = year || new Date().getFullYear();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['all-org-objectives-view', currentYear, currentBu?.id],

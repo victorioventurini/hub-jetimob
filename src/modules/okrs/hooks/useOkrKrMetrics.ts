@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from 'sonner';
 import type { OkrKrMetric, OkrMetricRole } from '../types';
 
 export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-kr-metrics', krId, krType],
     queryFn: async () => {
@@ -25,6 +27,8 @@ export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
 }
 
 export function usePrimaryKrMetric(krId: string, krType: 'org' | 'team') {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-kr-metrics', 'primary', krId, krType],
     queryFn: async () => {
@@ -48,6 +52,8 @@ export function usePrimaryKrMetric(krId: string, krType: 'org' | 'team') {
 }
 
 export function useGuardrailKrMetrics(krId: string, krType: 'org' | 'team') {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-kr-metrics', 'guardrails', krId, krType],
     queryFn: async () => {
@@ -71,6 +77,7 @@ export function useGuardrailKrMetrics(krId: string, krType: 'org' | 'team') {
 
 export function useCreateKrMetric() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (metric: {
@@ -107,6 +114,7 @@ export function useCreateKrMetric() {
 
 export function useUpdateKrMetric() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: OkrMetricRole }) => {
@@ -134,6 +142,7 @@ export function useUpdateKrMetric() {
 
 export function useDeleteKrMetric() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

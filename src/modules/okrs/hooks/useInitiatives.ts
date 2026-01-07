@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 import type { Initiative, CreateInitiativeInput, UpdateInitiativeInput, InitiativeStatus, InitiativePriority } from "../types/initiative";
 
 // Fetch initiatives for a specific KR
 export function useKrInitiatives(krId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["initiatives", "kr", krId],
     queryFn: async () => {
@@ -43,6 +45,8 @@ export function useKrInitiatives(krId: string | undefined) {
 
 // Fetch all initiatives for a user (as owner) - expects profile.id
 export function useUserInitiatives(profileId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["initiatives", "user", profileId],
     queryFn: async () => {
@@ -81,6 +85,8 @@ export function useUserInitiatives(profileId: string | undefined) {
 
 // Fetch initiatives by status
 export function useInitiativesByStatus(buId: string | undefined, status?: InitiativeStatus) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["initiatives", "status", buId, status],
     queryFn: async () => {
@@ -126,6 +132,7 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
 // Create initiative
 export function useCreateInitiative() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (input: CreateInitiativeInput) => {
@@ -166,6 +173,7 @@ export function useCreateInitiative() {
 // Update initiative
 export function useUpdateInitiative() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (input: UpdateInitiativeInput) => {
@@ -197,6 +205,7 @@ export function useUpdateInitiative() {
 // Delete initiative (soft delete)
 export function useDeleteInitiative() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (initiativeId: string) => {
@@ -223,6 +232,7 @@ export function useDeleteInitiative() {
 // Update initiative status
 export function useUpdateInitiativeStatus() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: InitiativeStatus }) => {

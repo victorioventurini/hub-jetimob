@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from '@/contexts/BuContext';
 import type { ObjectiveHealthData, OkrInsight } from '../types/health';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
  */
 export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: string | null) {
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['okr-health', currentBuId, objectiveType, objectiveId],
@@ -34,6 +35,7 @@ export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: s
 export function useRefreshObjectiveHealth() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ objectiveType, objectiveId }: { objectiveType: 'org' | 'team'; objectiveId: string }) => {
@@ -63,6 +65,7 @@ export function useRefreshObjectiveHealth() {
  */
 export function useObjectiveInsights(scopeType: string, scopeId: string | null) {
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['okr-insights', currentBuId, scopeType, scopeId],
@@ -97,6 +100,7 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
 export function useGenerateObjectiveInsights() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ objectiveType, objectiveId }: { objectiveType: 'org' | 'team'; objectiveId: string }) => {
@@ -129,6 +133,7 @@ export function useGenerateObjectiveInsights() {
 export function useDismissInsight() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (insightId: string) => {
@@ -154,6 +159,7 @@ export function useDismissInsight() {
  */
 export function useRiskObjectives(limit = 5) {
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['okr-risk-objectives', currentBuId, limit],
@@ -180,6 +186,7 @@ export function useRiskObjectives(limit = 5) {
  */
 export function useDashboardInsights(limit = 10) {
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['okr-dashboard-insights', currentBuId, limit],

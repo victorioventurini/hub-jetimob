@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 
 export interface OkrContributor {
@@ -17,6 +17,8 @@ export interface OkrContributor {
  * Fetch contributing teams for a specific team objective
  */
 export function useObjectiveContributors(objectiveId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-objective-contributors', objectiveId],
     queryFn: async (): Promise<OkrContributor[]> => {
@@ -44,6 +46,8 @@ export function useObjectiveContributors(objectiveId: string | undefined) {
  * Fetch all shared objectives that a team contributes to (but is not primary)
  */
 export function useTeamContributedObjectives(teamId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-team-contributed-objectives', teamId],
     queryFn: async () => {
@@ -81,6 +85,7 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
  */
 export function useManageContributors() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ 
@@ -134,6 +139,8 @@ export function useManageContributors() {
  * Hook to fetch team objectives including shared info
  */
 export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: string) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['okr-team-objectives-with-shared', buId, teamId],
     queryFn: async () => {

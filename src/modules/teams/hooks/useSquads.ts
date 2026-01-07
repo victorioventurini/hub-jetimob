@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { 
   SquadWithRelations, 
   SquadFormData, 
@@ -12,6 +12,7 @@ import { useBu } from "@/contexts/BuContext";
 
 export function useSquads(teamId?: string) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["squads", { buId: currentBu?.id, teamId }],
@@ -92,6 +93,8 @@ export function useSquads(teamId?: string) {
 }
 
 export function useSquad(squadId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["squad", squadId],
     queryFn: async () => {
@@ -145,6 +148,7 @@ export function useSquad(squadId: string | undefined) {
 export function useCreateSquad() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: SquadFormData) => {
@@ -195,6 +199,7 @@ export function useCreateSquad() {
 
 export function useUpdateSquad() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -261,6 +266,7 @@ export function useUpdateSquad() {
 
 export function useAddSquadMember() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -302,6 +308,7 @@ export function useAddSquadMember() {
 
 export function useUpdateSquadMember() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -333,6 +340,7 @@ export function useUpdateSquadMember() {
 
 export function useRemoveSquadMember() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -362,6 +370,7 @@ export function useRemoveSquadMember() {
 
 export function useDeactivateSquad() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (squadId: string) => {
@@ -384,6 +393,7 @@ export function useDeactivateSquad() {
 
 export function useDeleteSquad() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (squadId: string) => {

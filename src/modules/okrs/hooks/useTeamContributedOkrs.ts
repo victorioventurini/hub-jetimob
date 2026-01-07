@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 
 /**
  * Fetch shared OKRs where a team is a contributor (but not primary).
  * Uses the v_team_contributed_okrs view for efficient querying.
  */
 export function useTeamContributedOkrs(teamId?: string) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['team-contributed-okrs', teamId],
     queryFn: async () => {
@@ -63,6 +65,8 @@ export function useTeamContributedOkrs(teamId?: string) {
  * Summary of shared OKRs across the organization.
  */
 export function useSharedOkrsSummary() {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ['shared-okrs-summary'],
     queryFn: async () => {

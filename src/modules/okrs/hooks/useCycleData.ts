@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useMemo } from "react";
 import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval } from "date-fns";
 
@@ -19,6 +19,8 @@ export interface Cycle {
  * Fetches all cycles ordered by start date (newest first).
  */
 export function useCycles() {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["okr-cycles"],
     queryFn: async () => {
@@ -57,6 +59,8 @@ export function useActiveCycles() {
  * Fetches a single cycle by ID.
  */
 export function useCycle(cycleId: string | null | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["okr-cycle", cycleId],
     queryFn: async () => {
