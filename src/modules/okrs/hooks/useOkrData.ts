@@ -1,16 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useQuery } from '@tanstack/react-query';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 
 // ========================
 // ORG OBJECTIVES
 // ========================
 export function useOrgObjectives(buId?: string | null, year?: number, includeAllStatuses: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-org-objectives', buId, year, includeAllStatuses],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_org_objectives')
@@ -32,17 +32,17 @@ export function useOrgObjectives(buId?: string | null, year?: number, includeAll
       if (error) throw error;
       return data;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
 export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, includeAllStatuses: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-org-objectives-with-krs', buId, year, includeAllStatuses],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       // First get objectives
       let objQuery = supabase
@@ -82,16 +82,18 @@ export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, inc
 
       return objectivesWithKrs;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
 export function useOrgObjective(id: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-org-objective', id],
     queryFn: async () => {
+      if (!supabase) return null;
+      
       const { data, error } = await supabase
         .from('okr_org_objectives')
         .select('*')
@@ -101,17 +103,17 @@ export function useOrgObjective(id: string) {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && isReady,
   });
 }
 
 export function useOrgKeyResults(buId?: string | null, objectiveId?: string, includeCancelled: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-org-key-results', buId, objectiveId, includeCancelled],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_org_key_results')
@@ -132,17 +134,17 @@ export function useOrgKeyResults(buId?: string | null, objectiveId?: string, inc
       if (error) throw error;
       return data;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
 export function useAllOrgKeyResults(buId?: string | null, includeCancelled: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-org-key-results-all', buId, includeCancelled],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_org_key_results')
@@ -159,7 +161,7 @@ export function useAllOrgKeyResults(buId?: string | null, includeCancelled: bool
       if (error) throw error;
       return data;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
@@ -167,12 +169,12 @@ export function useAllOrgKeyResults(buId?: string | null, includeCancelled: bool
 // TEAM OBJECTIVES
 // ========================
 export function useTeamObjectives(buId?: string | null, teamId?: string, includeAllStatuses: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-team-objectives', buId, teamId, includeAllStatuses],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_team_objectives')
@@ -194,17 +196,17 @@ export function useTeamObjectives(buId?: string | null, teamId?: string, include
       if (error) throw error;
       return data;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
 export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, includeAllStatuses: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-team-objectives-with-krs', buId, teamId, includeAllStatuses],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       // First get objectives
       let objQuery = supabase
@@ -249,17 +251,17 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
 
       return objectivesWithKrs;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
 export function useTeamKeyResults(buId?: string | null, teamId?: string, includeCancelled: boolean = false) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-team-key-results', buId, teamId, includeCancelled],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_team_key_results')
@@ -281,17 +283,17 @@ export function useTeamKeyResults(buId?: string | null, teamId?: string, include
       if (error) throw error;
       return data;
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
 export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-my-team-key-results', buId, userId],
     queryFn: async () => {
-      if (!buId || !userId) return [];
+      if (!buId || !userId || !supabase) return [];
       
       const { data, error } = await supabase
         .from('okr_team_key_results')
@@ -305,7 +307,7 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
       if (error) throw error;
       return data;
     },
-    enabled: !!buId && !!userId,
+    enabled: !!buId && !!userId && isReady,
   });
 }
 
@@ -313,11 +315,13 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
 // CHECK-INS
 // ========================
 export function useKrCheckins(krId: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-checkins', krId],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       const { data, error } = await supabase
         .from('okr_checkins')
         .select('*')
@@ -327,16 +331,18 @@ export function useKrCheckins(krId: string) {
       if (error) throw error;
       return data;
     },
-    enabled: !!krId,
+    enabled: !!krId && isReady,
   });
 }
 
 export function useLatestCheckinDate() {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['okr-latest-checkin'],
     queryFn: async () => {
+      if (!supabase) return null;
+      
       const { data, error } = await supabase
         .from('okr_checkins')
         .select('created_at')
@@ -347,6 +353,7 @@ export function useLatestCheckinDate() {
       if (error) throw error;
       return data?.created_at;
     },
+    enabled: isReady,
   });
 }
 
