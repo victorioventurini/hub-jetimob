@@ -32,7 +32,7 @@ const csvRowSchema = z.object({
   acquired_at: z.string().optional(),
   acquisition_value: z.string().optional(),
   quantity: z.string().optional(),
-  assigned_to_email: z.string().optional(),
+  work_email: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -301,15 +301,15 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
           }
         }
 
-        // Resolve assigned user by email
+        // Resolve assigned user by work_email
         let assignedUserId: string | null = null;
-        const assignedEmail = normalizeString(rawRow.assigned_to_email || "");
-        if (assignedEmail) {
-          assignedUserId = usersMap.get(assignedEmail.toLowerCase()) || null;
+        const workEmail = normalizeString(rawRow.work_email || "");
+        if (workEmail) {
+          assignedUserId = usersMap.get(workEmail.toLowerCase()) || null;
           if (!assignedUserId) {
             importResult.warnings.push({
               row: i + 2,
-              message: `Usuário com email '${assignedEmail}' não encontrado na BU`,
+              message: `Usuário com email '${workEmail}' não encontrado na BU`,
             });
           }
         }

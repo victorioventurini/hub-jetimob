@@ -1,4 +1,4 @@
-internal_code,name,category,subcategory,description,serial_number,brand,model,location,room,acquired_at,acquisition_value,quantity,assigned_to_email,notes
+internal_code,name,category,subcategory,description,serial_number,brand,model,location,room,acquired_at,acquisition_value,quantity,work_email,notes
 INV-001,Notebook Dell Latitude,Informática,Notebooks,Notebook para uso corporativo,ABC123XYZ,Dell,Latitude 5520,Jetimob,,2024-01-15,5500.00,1,joao.silva@empresa.com,Em garantia até 2026
 INV-002,Monitor LG 27",Informática,Monitores,Monitor Full HD 27 polegadas,MON789456,LG,27MK600M,Jetimob,Sala de TI,2024-02-10,1200.00,1,,
 INV-003,Cadeira Ergonômica,Mobiliário,Cadeiras,Cadeira com apoio lombar,,,Flexform,Jetimob,Sala de Reuniões,2023-06-20,890.00,5,,Lote de 5 unidades
