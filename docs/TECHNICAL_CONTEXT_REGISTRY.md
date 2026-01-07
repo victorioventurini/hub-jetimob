@@ -92,6 +92,48 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 
 ---
 
+### 1.5 Supabase Client Usage
+
+O Hub utiliza dois tipos de clientes Supabase com regras estritas de uso:
+
+#### `useBuScopedSupabase()` — Cliente BU-Scoped (OBRIGATÓRIO)
+**Obrigatório para todos os dados operacionais.** Injeta automaticamente o header `x-current-bu-id` em todas as requisições.
+
+```typescript
+const supabase = useBuScopedSupabase();
+// Todas as queries incluem x-current-bu-id header
+```
+
+**Onde usar:**
+- ✅ Todos os módulos operacionais (OKRs, KPIs, Tickets, Assets, Teams, etc.)
+- ✅ Qualquer query que acessa dados escopados por BU
+- ✅ Mutations em tabelas com `bu_id`
+
+**Guard de segurança:** Lança erro se chamado antes de `BuProvider` inicializar.
+
+#### `supabase` (Cliente Global) — USO RESTRITO
+**Permitido APENAS para cenários específicos:**
+
+| Cenário | Justificativa |
+|---------|---------------|
+| **Auth** | Operações de login/logout não têm BU |
+| **Membership Bootstrap** | `useUserBus`, `useExternalUser` rodam ANTES do BuProvider |
+| **Realtime** | `NotificationCenter` precisa de subscription global |
+| **Pré-BU Hooks** | Hooks que populam o BuContext |
+
+```typescript
+// ✅ Correto: Auth
+import { supabase } from "@/integrations/supabase/client";
+await supabase.auth.signInWithOtp({ email });
+
+// ❌ ERRADO: Dados operacionais com cliente global
+const { data } = await supabase.from("tickets").select("*"); // BUG!
+```
+
+**Qualquer uso do cliente global fora dos cenários acima é considerado BUG.**
+
+---
+
 ## 2. Domínio de Dados
 
 ### 2.1 Entidades Principais
