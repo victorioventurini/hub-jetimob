@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PhoneLink } from "@/components/ui/phone-link";
 import {
   Table,
   TableBody,
@@ -145,7 +146,7 @@ export function PartnerContactsTab() {
                       {companies.find((c) => c.id === contact.partner_company_id)?.name || "-"}
                     </TableCell>
                     <TableCell>
-                      {contact.phone || "-"}
+                      <PhoneLink phone={contact.phone} />
                     </TableCell>
                     <TableCell>
                       <Badge variant={contact.status === "active" ? "default" : "secondary"}>

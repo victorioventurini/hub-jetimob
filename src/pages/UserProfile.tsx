@@ -26,6 +26,7 @@ import {
   Instagram,
   MessageCircle,
 } from "lucide-react";
+import { PhoneLink } from "@/components/ui/phone-link";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   usePublicProfile,
@@ -70,16 +71,6 @@ const monthNames = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
 ];
 
-const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  }
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return phone;
-};
 
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
@@ -531,17 +522,7 @@ export default function UserProfile() {
 
                 {/* WhatsApp */}
                 {profile.whatsapp_personal && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <a 
-                      href={`https://wa.me/${profile.whatsapp_personal.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {formatPhoneNumber(profile.whatsapp_personal)}
-                    </a>
-                  </div>
+                  <PhoneLink phone={profile.whatsapp_personal} />
                 )}
 
                 {/* Birthday */}
