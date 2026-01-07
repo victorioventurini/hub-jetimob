@@ -12,9 +12,10 @@ export function useBuLocations(buId: string | null) {
       
       const { data, error } = await supabase
         .from("bu_locations")
-        .select("*")
+        .select("*, parent:parent_location_id(id, name)")
         .eq("bu_id", buId)
         .is("deleted_at", null)
+        .order("parent_location_id", { nullsFirst: true })
         .order("is_default", { ascending: false })
         .order("name");
 
@@ -35,7 +36,7 @@ export function useBuLocation(locationId: string | null) {
       
       const { data, error } = await supabase
         .from("bu_locations")
-        .select("*")
+        .select("*, parent:parent_location_id(id, name)")
         .eq("id", locationId)
         .is("deleted_at", null)
         .single();
@@ -63,9 +64,10 @@ export function useCreateBuLocation() {
         .insert({
           bu_id: data.bu_id,
           name: data.name,
-          type: data.type,
+          type: data.type as any,
           status: data.status,
           is_default: data.is_default,
+          parent_location_id: data.parent_location_id || null,
           formatted_address: data.formatted_address || null,
           address_line_1: data.address_line_1 || null,
           address_line_2: data.address_line_2 || null,
@@ -80,7 +82,7 @@ export function useCreateBuLocation() {
           timezone: data.timezone || "America/Sao_Paulo",
           notes: data.notes || null,
         })
-        .select()
+        .select("*, parent:parent_location_id(id, name)")
         .single();
 
       if (error) throw error;
@@ -102,9 +104,10 @@ export function useUpdateBuLocation() {
         .from("bu_locations")
         .update({
           name: data.name,
-          type: data.type,
+          type: data.type as any,
           status: data.status,
           is_default: data.is_default,
+          parent_location_id: data.parent_location_id,
           formatted_address: data.formatted_address,
           address_line_1: data.address_line_1,
           address_line_2: data.address_line_2,
@@ -120,7 +123,7 @@ export function useUpdateBuLocation() {
           notes: data.notes,
         })
         .eq("id", id)
-        .select()
+        .select("*, parent:parent_location_id(id, name)")
         .single();
 
       if (error) throw error;
@@ -169,4 +172,19 @@ export function useSetDefaultBuLocation() {
       queryClient.invalidateQueries({ queryKey: ["bu-locations", variables.bu_id] });
     },
   });
+}
+
+// Helper hooks
+export function useRootLocations(buId: string | null) {
+  const { data: locations = [], ...rest } = useBuLocations(buId);
+  const rootLocations = locations.filter(l => !l.parent_location_id);
+  return { data: rootLocations, ...rest };
+}
+
+export function useChildLocations(buId: string | null, parentId: string | null) {
+  const { data: locations = [], ...rest } = useBuLocations(buId);
+  const childLocations = parentId 
+    ? locations.filter(l => l.parent_location_id === parentId)
+    : [];
+  return { data: childLocations, ...rest };
 }
