@@ -15,7 +15,7 @@ export interface BuUser {
   teams: Array<{
     id: string;
     name: string;
-    role: string;
+    is_primary: boolean;
   }>;
 }
 
@@ -46,6 +46,16 @@ export function useBuUsers() {
 
       if (profilesError) throw profilesError;
 
+      // Fetch team memberships
+      const { data: teamMemberships, error: teamError } = await supabase
+        .from("user_team_memberships")
+        .select("user_id, is_primary, team:teams!inner(id, name)")
+        .in("user_id", userIds);
+
+      if (teamError) {
+        console.warn("Could not load team memberships:", teamError);
+      }
+
       type ProfileRow = {
         id: string;
         user_id: string | null;
@@ -55,6 +65,12 @@ export function useBuUsers() {
         job_title: string | null;
       };
 
+      type TeamMemberRow = {
+        user_id: string;
+        is_primary: boolean;
+        team: { id: string; name: string };
+      };
+
       const profiles = (profilesRaw ?? []) as ProfileRow[];
       const profilesByUserId: Record<string, ProfileRow> = {};
 
@@ -62,12 +78,25 @@ export function useBuUsers() {
         if (p.user_id) profilesByUserId[p.user_id] = p;
       }
 
+      // Group teams by user
+      const teamsByUserId: Record<string, Array<{ id: string; name: string; is_primary: boolean }>> = {};
+      for (const tm of (teamMemberships ?? []) as unknown as TeamMemberRow[]) {
+        if (!teamsByUserId[tm.user_id]) {
+          teamsByUserId[tm.user_id] = [];
+        }
+        teamsByUserId[tm.user_id].push({
+          id: tm.team.id,
+          name: tm.team.name,
+          is_primary: tm.is_primary,
+        });
+      }
+
       return memberships
         .map((m) => ({
           user_id: m.user_id,
           role_in_bu: m.role_in_bu,
           profiles: profilesByUserId[m.user_id],
-          teams: [], // Teams will be loaded separately if needed
+          teams: teamsByUserId[m.user_id] || [],
         }))
         .filter((m) => m.profiles) as BuUser[];
     },

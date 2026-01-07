@@ -17,7 +17,7 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Shield, Search, Users, Settings, ChevronRight, Star, Crown } from "lucide-react";
+import { Shield, Search, Users, Settings, ChevronRight, Crown } from "lucide-react";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
 import { useBuGroupConfigs } from "../hooks/useBuPermissions";
 import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
@@ -77,18 +77,12 @@ export default function BuPermissionsPage() {
     );
   }, [users, search]);
 
-  // Sort users: admins first, then leaders, then by name
+  // Sort users: admins first, then by name
   const sortedUsers = useMemo(() => {
     return [...filteredUsers].sort((a, b) => {
       // Admins first
       if (a.role_in_bu === "admin" && b.role_in_bu !== "admin") return -1;
       if (b.role_in_bu === "admin" && a.role_in_bu !== "admin") return 1;
-      
-      // Then leaders
-      const aIsLeader = a.teams.some((t) => t.role === "leader");
-      const bIsLeader = b.teams.some((t) => t.role === "leader");
-      if (aIsLeader && !bIsLeader) return -1;
-      if (bIsLeader && !aIsLeader) return 1;
       
       // Then alphabetically
       return a.profiles.display_name.localeCompare(b.profiles.display_name);
@@ -109,16 +103,6 @@ export default function BuPermissionsPage() {
         <Badge variant="default" className="gap-1">
           <Crown className="h-3 w-3" />
           Admin
-        </Badge>
-      );
-    }
-    
-    const isLeader = user.teams.some((t) => t.role === "leader");
-    if (isLeader) {
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <Star className="h-3 w-3" />
-          Líder
         </Badge>
       );
     }
