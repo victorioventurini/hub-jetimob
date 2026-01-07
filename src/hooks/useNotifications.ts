@@ -12,6 +12,10 @@ interface CreateMentionNotificationParams {
   contextUrl: string;
 }
 
+/**
+ * Hook para notificações - migrado para usar o novo sistema centralizado.
+ * Mantém a API legada para compatibilidade com código existente.
+ */
 export function useNotifications() {
   const { user } = useAuth();
   const { currentBu } = useBu();
@@ -30,7 +34,7 @@ export function useNotifications() {
     return data?.display_name || 'Alguém';
   };
 
-  // Create mention notification
+  // Create mention notification using the new centralized system
   const createMentionNotification = useMutation({
     mutationFn: async (params: CreateMentionNotificationParams) => {
       if (!user?.id || !currentBu?.id) {
@@ -39,16 +43,22 @@ export function useNotifications() {
 
       const authorName = await getAuthorName();
 
-      const { data, error } = await supabase.rpc('create_mention_notification', {
-        p_mentioned_user_id: params.mentionedUserId,
-        p_author_id: user.id,
+      // Use the new emit_notification_event function
+      const { data, error } = await supabase.rpc('emit_notification_event', {
+        p_event_slug: 'core.mention',
         p_bu_id: currentBu.id,
+        p_recipient_user_ids: [params.mentionedUserId],
+        p_actor_id: user.id,
+        p_title: `${authorName} mencionou você`,
+        p_message: `Você foi mencionado em um ${params.contextType === 'checkin' ? 'check-in' : 'comentário'}`,
         p_context_type: params.contextType,
         p_context_id: params.contextId,
-        p_parent_type: params.parentType,
-        p_parent_id: params.parentId,
         p_context_url: params.contextUrl,
-        p_author_name: authorName,
+        p_metadata: {
+          parent_type: params.parentType,
+          parent_id: params.parentId,
+          author_name: authorName,
+        },
       });
 
       if (error) throw error;

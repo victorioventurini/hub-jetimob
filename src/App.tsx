@@ -88,6 +88,11 @@ const SettingsHome = lazy(() => import("./pages/settings/SettingsHome"));
 const SettingsBusinessUnits = lazy(() => import("./pages/settings/SettingsBusinessUnits"));
 const SettingsModules = lazy(() => import("./pages/settings/SettingsModules"));
 const SettingsIntegrations = lazy(() => import("./pages/settings/SettingsIntegrations"));
+const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifications"));
+
+// Páginas de Notificações
+const HubNotifications = lazy(() => import("./pages/hub/HubNotifications"));
+const NotificationPreferences = lazy(() => import("./pages/me/NotificationPreferences"));
 
 // Fallback de loading otimizado
 function PageLoader() {
@@ -343,6 +348,18 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/hub/notifications"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <HubNotifications />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* Catálogo de Módulos (Admin Global) */}
                     <Route
@@ -586,6 +603,30 @@ const App = () => (
                         <ProtectedRoute>
                           <BuRequiredRoute>
                             <BuPermissionsPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* BU Notifications Settings - Admin da BU */}
+                    <Route
+                      path="/settings/notifications"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <SettingsNotifications />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* User Notification Preferences */}
+                    <Route
+                      path="/me/notifications"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <NotificationPreferences />
                           </BuRequiredRoute>
                         </ProtectedRoute>
                       }
