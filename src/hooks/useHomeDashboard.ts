@@ -3,7 +3,7 @@ import { usePendingCheckins, useCheckinSummary } from "@/modules/okrs/hooks/useP
 import { useTeams } from "@/modules/teams/hooks/useTeams";
 import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 
 // Types
 interface KpiSummary {
@@ -79,16 +79,16 @@ const mockKpisByRole: Record<string, KpiSummary[]> = {
 export function useHomeDashboard(): HomeDashboardData {
   const { role, user } = useAuth();
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
   const { data: pendingCheckins, isLoading: checkinsLoading } = usePendingCheckins();
   const { summary: checkinSummary } = useCheckinSummary();
   const { data: teams } = useTeams();
   
   // Hook to get user's team ID
   const { data: userTeamId } = useQuery({
-    queryKey: ['user-team-id', user?.id],
+    queryKey: ['user-team-id', user?.id, buId],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id || !supabase) return null;
       
       const { data, error } = await supabase
         .from('profiles')
@@ -99,19 +99,19 @@ export function useHomeDashboard(): HomeDashboardData {
       if (error) throw error;
       return data?.team_id || null;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && isReady && !!supabase,
   });
 
   // Hook to get real OKR status counts - scoped to BU
   const { data: okrCounts, isLoading: okrLoading } = useQuery({
-    queryKey: ['okr-status-counts', currentBu?.id, userTeamId],
+    queryKey: ['okr-status-counts', buId, userTeamId],
     queryFn: async () => {
-      if (!currentBu?.id) return { onTrack: 0, atRisk: 0, offTrack: 0 };
+      if (!buId || !supabase) return { onTrack: 0, atRisk: 0, offTrack: 0 };
       
       let query = supabase
         .from('okr_team_key_results')
         .select('status')
-        .eq('bu_id', currentBu.id)
+        .eq('bu_id', buId)
         .is('deleted_at', null);
 
       if (userTeamId) {
@@ -143,7 +143,7 @@ export function useHomeDashboard(): HomeDashboardData {
 
       return counts;
     },
-    enabled: !!currentBu?.id,
+    enabled: isReady && !!buId && !!supabase,
   });
 
   const roleCategory = mapRoleToCategory(role as string | undefined);
