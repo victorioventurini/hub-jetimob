@@ -7,7 +7,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -18,6 +18,7 @@ import { queryKeys } from "@/lib/queryKeys";
  */
 export function useTeamsList() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   
   return useQuery({
     queryKey: queryKeys.teams.list(currentBu?.id ?? null),
@@ -42,6 +43,8 @@ export function useTeamsList() {
  * Lista de ciclos de OKR ordenados por data.
  */
 export function useCyclesList() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['cycles-list'] as const,
     queryFn: async () => {
@@ -60,6 +63,8 @@ export function useCyclesList() {
  * Perfil de um usuário específico (para exibição).
  */
 export function useUserProfile(userId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: queryKeys.profiles.detail(userId ?? ""),
     queryFn: async () => {
@@ -82,6 +87,8 @@ export function useUserProfile(userId?: string) {
  * Lista simples de profiles para selects (líderes, owners, etc.)
  */
 export function useProfilesList(buId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: queryKeys.profiles.list(buId ?? null),
     queryFn: async () => {

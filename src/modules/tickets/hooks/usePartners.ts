@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import type { PartnerCompany, PartnerContact, PartnerCompanyStatus, PartnerContactStatus } from "../types";
 
@@ -10,6 +10,7 @@ import type { PartnerCompany, PartnerContact, PartnerCompanyStatus, PartnerConta
 export function usePartnerCompanies() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["partner-companies", buId],
@@ -31,6 +32,8 @@ export function usePartnerCompanies() {
 }
 
 export function usePartnerCompany(id: string | null) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["partner-company", id],
     queryFn: async () => {
@@ -54,6 +57,7 @@ export function useCreatePartnerCompany() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: {
@@ -94,6 +98,7 @@ export function useCreatePartnerCompany() {
 
 export function useUpdatePartnerCompany() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -126,6 +131,7 @@ export function useUpdatePartnerCompany() {
 
 export function useDeletePartnerCompany() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -149,6 +155,7 @@ export function useDeletePartnerCompany() {
 export function usePartnerContacts(companyId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["partner-contacts", buId, companyId],
@@ -179,6 +186,8 @@ export function usePartnerContacts(companyId?: string) {
 }
 
 export function usePartnerContact(id: string | null) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["partner-contact", id],
     queryFn: async () => {
@@ -205,6 +214,7 @@ export function useCreatePartnerContact() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: {
@@ -245,6 +255,7 @@ export function useCreatePartnerContact() {
 
 export function useUpdatePartnerContact() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -281,6 +292,7 @@ export function useUpdatePartnerContact() {
 
 export function useDeletePartnerContact() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

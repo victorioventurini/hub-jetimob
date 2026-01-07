@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
@@ -13,6 +13,7 @@ import type {
 export function useBuGroupConfigs() {
   const { currentBuId } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   const queryKey = queryKeys.permissions.buConfigs(currentBuId);
 
@@ -88,6 +89,7 @@ export function useBuGroupConfigs() {
 export function useBuUserGroups(userId: string | null) {
   const { currentBuId } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   const queryKey = queryKeys.permissions.userGroups(currentBuId, userId);
 
@@ -161,6 +163,7 @@ export function useBuUserGroups(userId: string | null) {
 export function useBuUserOverrides(userId: string | null) {
   const { currentBuId } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   const queryKey = queryKeys.permissions.userOverrides(currentBuId, userId);
 
@@ -241,6 +244,7 @@ export function useBuUserOverrides(userId: string | null) {
 
 export function useUserEffectivePermissions(userId: string | null) {
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const { data: effectivePermissions = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.userEffective(currentBuId, userId),

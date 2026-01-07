@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import type { PermissionGroup, PermissionGroupPermission, PermissionStatus } from "../types";
 
 export function usePermissionGroups() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   const { data: groups = [], isLoading, error } = useQuery({
     queryKey: queryKeys.permissions.groups(),
@@ -103,6 +104,7 @@ export function usePermissionGroups() {
 
 export function useGroupPermissions(groupId: string | null) {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   const { data: groupPermissions = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.groupPermissions(groupId),

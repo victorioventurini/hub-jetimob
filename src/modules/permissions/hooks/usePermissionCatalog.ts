@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import type { Permission, PermissionScope, PermissionStatus } from "../types";
 
 export function usePermissionCatalog() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   const { data: permissions = [], isLoading, error } = useQuery({
     queryKey: queryKeys.permissions.catalog(),
