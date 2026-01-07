@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import {
   Dialog,
   DialogContent,
@@ -46,7 +46,7 @@ export function CreateTeamObjectiveDialog({
   orgObjectives,
 }: CreateTeamObjectiveDialogProps) {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [teamId, setTeamId] = useState<string | undefined>(undefined);
@@ -97,6 +97,7 @@ export function CreateTeamObjectiveDialog({
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
       if (!teamId) throw new Error("Time não selecionado");
       if (!cycleId) throw new Error("Ciclo não selecionado");
       

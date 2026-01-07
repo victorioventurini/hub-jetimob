@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import {
@@ -37,7 +37,7 @@ export function CreateOrgObjectiveDialog({
   year,
 }: CreateOrgObjectiveDialogProps) {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const { user } = useAuth();
   const { currentBuId } = useBu();
   const [title, setTitle] = useState('');
@@ -46,6 +46,7 @@ export function CreateOrgObjectiveDialog({
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
       if (!user) throw new Error('Usuário não autenticado');
       if (!currentBuId) throw new Error('Nenhuma BU selecionada');
       

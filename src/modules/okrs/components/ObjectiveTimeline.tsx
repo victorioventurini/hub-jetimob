@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +12,8 @@ import {
   CheckCircle2,
   XCircle,
   FileEdit,
-  Calendar,
   GitBranch,
   Clock,
-  User,
   Archive,
   Lightbulb,
 } from "lucide-react";
@@ -62,12 +60,14 @@ export function ObjectiveTimeline({
   objectiveType,
   className,
 }: ObjectiveTimelineProps) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const tableName = objectiveType === "org" ? "okr_org_objectives" : "okr_team_objectives";
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["objective-timeline", objectiveId, objectiveType],
+    queryKey: ["objective-timeline", buId, objectiveId, objectiveType],
     queryFn: async (): Promise<TimelineEvent[]> => {
+      if (!supabase || !buId) return [];
+
       const timelineEvents: TimelineEvent[] = [];
 
       // Fetch objective data
@@ -125,9 +125,10 @@ export function ObjectiveTimeline({
                 type: eventType,
                 date: log.created_at,
                 title,
-                description: newStatus === "cancelled" || newStatus === "discarded"
-                  ? (log.new_value as Record<string, unknown>)?.cancellation_learning as string | undefined
-                  : undefined,
+                description:
+                  newStatus === "cancelled" || newStatus === "discarded"
+                    ? ((log.new_value as Record<string, unknown>)?.cancellation_learning as string | undefined)
+                    : undefined,
               });
             }
           }
@@ -148,18 +149,22 @@ export function ObjectiveTimeline({
             id: review.id,
             type: "reviewed",
             date: review.reviewed_at,
-            title: `Revisão ${review.review_type === "quarterly" ? "trimestral" : review.review_type === "mid_year" ? "semestral" : "realizada"}`,
+            title: `Revisão ${
+              review.review_type === "quarterly"
+                ? "trimestral"
+                : review.review_type === "mid_year"
+                  ? "semestral"
+                  : "realizada"
+            }`,
             description: review.changes_summary || review.notes,
           });
         }
       }
 
       // Sort by date
-      return timelineEvents.sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
+      return timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     },
-    enabled: !!objectiveId,
+    enabled: !!objectiveId && !!buId && !!supabase,
   });
 
   if (isLoading) {
@@ -198,9 +203,7 @@ export function ObjectiveTimeline({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Nenhum evento registrado ainda.
-          </p>
+          <p className="text-sm text-muted-foreground">Nenhum evento registrado ainda.</p>
         </CardContent>
       </Card>
     );
@@ -221,7 +224,7 @@ export function ObjectiveTimeline({
             <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-border" />
 
             <div className="space-y-4">
-              {events.map((event, index) => {
+              {events.map((event) => {
                 const Icon = eventIcons[event.type];
                 const colorClass = eventColors[event.type];
 
@@ -246,9 +249,7 @@ export function ObjectiveTimeline({
                         </Badge>
                       </div>
                       {event.description && (
-                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                          {event.description}
-                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{event.description}</p>
                       )}
                       {event.type === "cancelled" && event.description && (
                         <div className="mt-2 flex items-start gap-1.5 text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30 p-2 rounded">
@@ -275,10 +276,13 @@ export function ObjectiveTimelineCompact({
   objectiveId,
   objectiveType,
 }: Omit<ObjectiveTimelineProps, "className">) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
+
   const { data: lastEvent } = useQuery({
-    queryKey: ["objective-timeline-last", objectiveId],
+    queryKey: ["objective-timeline-last", buId, objectiveId, objectiveType],
     queryFn: async (): Promise<TimelineEvent | null> => {
+      if (!supabase || !buId) return null;
+
       const tableName = objectiveType === "org" ? "okr_org_objectives" : "okr_team_objectives";
 
       const { data: objective } = await supabase
@@ -296,7 +300,7 @@ export function ObjectiveTimelineCompact({
         title: `Última atualização`,
       };
     },
-    enabled: !!objectiveId,
+    enabled: !!objectiveId && !!buId && !!supabase,
   });
 
   if (!lastEvent) return null;

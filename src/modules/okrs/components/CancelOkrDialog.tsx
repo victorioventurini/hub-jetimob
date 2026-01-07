@@ -20,7 +20,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, AlertTriangle, Lightbulb, BookOpen } from "lucide-react";
 import type { OkrStatus } from "../types";
@@ -53,7 +53,7 @@ export function CancelOkrDialog({
   onSuccess,
 }: CancelOkrDialogProps) {
   const { user } = useAuth();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,8 +74,10 @@ export function CancelOkrDialog({
 
   // Fetch cancellation reasons
   const { data: reasons = [] } = useQuery({
-    queryKey: ["okr-cancellation-reasons"],
+    queryKey: ["okr-cancellation-reasons", buId],
     queryFn: async () => {
+      if (!supabase || !buId) return [];
+
       const { data, error } = await supabase
         .from("okr_cancellation_reasons")
         .select("*")
@@ -85,12 +87,11 @@ export function CancelOkrDialog({
       if (error) throw error;
       return data as CancellationReason[];
     },
+    enabled: open && !!buId && !!supabase,
   });
 
   // Filter reasons by entity type
-  const filteredReasons = reasons.filter((r) =>
-    r.applies_to.includes(entityType)
-  );
+  const filteredReasons = reasons.filter((r) => r.applies_to.includes(entityType));
 
   const selectedReason = filteredReasons.find((r) => r.code === reasonCode);
 
@@ -105,6 +106,7 @@ export function CancelOkrDialog({
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
+      if (!supabase || !buId) throw new Error("Nenhuma BU selecionada");
       if (!user) throw new Error("Não autenticado");
       if (!reasonCode) throw new Error("Selecione um motivo");
       if (!learning.trim()) throw new Error("Descreva o aprendizado");
@@ -168,9 +170,7 @@ export function CancelOkrDialog({
             <AlertTriangle className="w-5 h-5 text-destructive" />
             Cancelar {entityType === "objective" ? "Objetivo" : "Key Result"}
           </DialogTitle>
-          <DialogDescription>
-            {entityTitle}
-          </DialogDescription>
+          <DialogDescription>{entityTitle}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -220,9 +220,7 @@ export function CancelOkrDialog({
               </SelectContent>
             </Select>
             {selectedReason?.description && (
-              <p className="text-xs text-muted-foreground">
-                {selectedReason.description}
-              </p>
+              <p className="text-xs text-muted-foreground">{selectedReason.description}</p>
             )}
           </div>
 
@@ -263,8 +261,8 @@ export function CancelOkrDialog({
           <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
             <BookOpen className="w-4 h-4 text-blue-600" />
             <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
-              Cancelar OKRs faz parte do processo de aprendizado. O importante é 
-              documentar o motivo e a lição aprendida para evoluir como organização.
+              Cancelar OKRs faz parte do processo de aprendizado. O importante é documentar o motivo e a lição
+              aprendida para evoluir como organização.
             </AlertDescription>
           </Alert>
 
@@ -277,14 +275,8 @@ export function CancelOkrDialog({
             >
               Voltar
             </Button>
-            <Button
-              type="submit"
-              variant="destructive"
-              disabled={!canSubmit || cancelMutation.isPending}
-            >
-              {cancelMutation.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
+            <Button type="submit" variant="destructive" disabled={!canSubmit || cancelMutation.isPending}>
+              {cancelMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Confirmar {finalStatus === "cancelled" ? "Cancelamento" : "Descarte"}
             </Button>
           </DialogFooter>

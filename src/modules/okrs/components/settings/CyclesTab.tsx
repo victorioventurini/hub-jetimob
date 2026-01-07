@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays } from "lucide-react";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ interface Cycle {
 }
 
 export function CyclesTab() {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId } = useOptionalBuClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
   const [deleteDialogCycle, setDeleteDialogCycle] = useState<Cycle | null>(null);
@@ -34,8 +34,10 @@ export function CyclesTab() {
 
   // Fetch all cycles
   const { data: cycles, isLoading } = useQuery({
-    queryKey: ["okr-settings-cycles"],
+    queryKey: ["okr-settings-cycles", buId],
     queryFn: async () => {
+      if (!supabase || !buId) return [];
+
       const { data, error } = await supabase
         .from("cycles")
         .select("*")
@@ -43,11 +45,13 @@ export function CyclesTab() {
       if (error) throw error;
       return data as Cycle[];
     },
+    enabled: !!buId && !!supabase,
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (cycleId: string) => {
+      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
       const { error } = await supabase.from("cycles").delete().eq("id", cycleId);
       if (error) throw error;
     },
