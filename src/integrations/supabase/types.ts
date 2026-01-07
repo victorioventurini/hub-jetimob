@@ -2704,6 +2704,7 @@ export type Database = {
           bu_id: string
           channel_slug: string
           created_at: string
+          dedupe_key: string | null
           event_slug: string
           id: string
           last_error: string | null
@@ -2719,6 +2720,7 @@ export type Database = {
           bu_id: string
           channel_slug: string
           created_at?: string
+          dedupe_key?: string | null
           event_slug: string
           id?: string
           last_error?: string | null
@@ -2734,6 +2736,7 @@ export type Database = {
           bu_id?: string
           channel_slug?: string
           created_at?: string
+          dedupe_key?: string | null
           event_slug?: string
           id?: string
           last_error?: string | null
@@ -2768,6 +2771,42 @@ export type Database = {
             referencedColumns: ["slug"]
           },
         ]
+      }
+      notification_templates: {
+        Row: {
+          body_template: string
+          channel_slug: string
+          created_at: string
+          event_slug: string
+          id: string
+          is_active: boolean
+          subject_template: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          body_template: string
+          channel_slug: string
+          created_at?: string
+          event_slug: string
+          id?: string
+          is_active?: boolean
+          subject_template?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          body_template?: string
+          channel_slug?: string
+          created_at?: string
+          event_slug?: string
+          id?: string
+          is_active?: boolean
+          subject_template?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -5346,6 +5385,76 @@ export type Database = {
           total: number | null
         }
         Relationships: []
+      }
+      v_notification_delivery_health: {
+        Row: {
+          avg_retries: number | null
+          bu_id: string | null
+          bu_name: string | null
+          channel_slug: string | null
+          last_1h: number | null
+          last_24h: number | null
+          status:
+            | Database["public"]["Enums"]["notification_outbox_status"]
+            | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_channel_slug_fkey"
+            columns: ["channel_slug"]
+            isOneToOne: false
+            referencedRelation: "notification_channels"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      v_notification_failures: {
+        Row: {
+          bu_id: string | null
+          bu_name: string | null
+          channel_slug: string | null
+          created_at: string | null
+          event_slug: string | null
+          id: string | null
+          last_error: string | null
+          processed_at: string | null
+          retries: number | null
+          status:
+            | Database["public"]["Enums"]["notification_outbox_status"]
+            | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_channel_slug_fkey"
+            columns: ["channel_slug"]
+            isOneToOne: false
+            referencedRelation: "notification_channels"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "notification_outbox_event_slug_fkey"
+            columns: ["event_slug"]
+            isOneToOne: false
+            referencedRelation: "notification_events"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       v_objective_health: {
         Row: {
