@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import {
@@ -37,6 +37,7 @@ export function CreateOrgObjectiveDialog({
   year,
 }: CreateOrgObjectiveDialogProps) {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const { user } = useAuth();
   const { currentBuId } = useBu();
   const [title, setTitle] = useState('');

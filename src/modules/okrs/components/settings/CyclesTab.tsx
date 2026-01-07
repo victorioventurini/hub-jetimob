@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ interface Cycle {
 }
 
 export function CyclesTab() {
+  const supabase = useBuScopedSupabase();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
   const [deleteDialogCycle, setDeleteDialogCycle] = useState<Cycle | null>(null);

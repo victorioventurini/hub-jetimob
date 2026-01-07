@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +62,7 @@ export function ObjectiveTimeline({
   objectiveType,
   className,
 }: ObjectiveTimelineProps) {
+  const supabase = useBuScopedSupabase();
   const tableName = objectiveType === "org" ? "okr_org_objectives" : "okr_team_objectives";
 
   const { data: events = [], isLoading } = useQuery({
@@ -274,6 +275,7 @@ export function ObjectiveTimelineCompact({
   objectiveId,
   objectiveType,
 }: Omit<ObjectiveTimelineProps, "className">) {
+  const supabase = useBuScopedSupabase();
   const { data: lastEvent } = useQuery({
     queryKey: ["objective-timeline-last", objectiveId],
     queryFn: async (): Promise<TimelineEvent | null> => {

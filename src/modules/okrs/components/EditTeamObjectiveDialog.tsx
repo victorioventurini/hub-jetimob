@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { Loader2, Users, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
@@ -55,6 +55,7 @@ export function EditTeamObjectiveDialog({
   onOpenChange,
   objective,
 }: EditTeamObjectiveDialogProps) {
+  const supabase = useBuScopedSupabase();
   const [title, setTitle] = useState(objective.title);
   const [description, setDescription] = useState(objective.description || '');
   const [status, setStatus] = useState<OkrStatus>(objective.status);

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import {
   Dialog,
@@ -49,6 +49,7 @@ export function CreateOrgKrDialog({
   objectiveId,
 }: CreateOrgKrDialogProps) {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

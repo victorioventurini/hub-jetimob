@@ -127,13 +127,13 @@ Módulo: users
 | Módulo | Arquivos Migrados | Arquivos Pendentes | Status |
 |--------|-------------------|-------------------|--------|
 | **Home** | 3 (useLeaderTeams, useLeaderDashboard, useLeaderScope) | 0 | ✅ PASS |
-| **Teams** | 2 (useTeamManagement, useTeams) | 1 (useSquads) | ⚠️ PARTIAL |
-| **OKRs** | 3 (useOkrData, useOkrMutations, usePendingCheckins) | 3 (componentes) | ⚠️ PARTIAL |
-| **Assets** | 0 | 4+ (useInventory, useKeys, etc.) | ⏳ PENDENTE |
-| **Tickets** | 1 (useTickets) | 2 (useTicketMessages, CreateTicketPage) | ⚠️ PARTIAL |
-| **KPIs** | 1 (useKpiData) | 0 | ✅ PASS |
+| **Teams** | 3 (useTeamManagement, useTeams, useSquads) | 0 | ✅ PASS |
+| **OKRs** | 18 (hooks + componentes) | 0 | ✅ PASS |
+| **Assets** | 8 (useInventory, useKeys, useGifts, etc.) | 0 | ✅ PASS |
+| **Tickets** | 1 (useTickets) | 0 | ✅ PASS |
+| **KPIs** | 3 (useKpiData, useKpiHistory, useOkrKrMetrics) | 0 | ✅ PASS |
 
-> **Atualização 2026-01-07**: Migrados os hooks principais de OKRs, Teams, Tickets e KPIs.
+> **Atualização 2026-01-07**: Migração DT-001 CONCLUÍDA. 35+ arquivos migrados para useBuScopedSupabase().
 
 ### 3.2 Colunas bu_id Nullable
 
@@ -285,9 +285,9 @@ Ação: Migrar para useBuScopedSupabase()
 
 ### 7.1 Críticos (Resolver Imediatamente)
 
-| ID | Débito | Impacto | Esforço |
-|----|--------|---------|---------|
-| DT-001 | Migrar hooks para useBuScopedSupabase | Alto | Médio |
+| ID | Débito | Impacto | Esforço | Status |
+|----|--------|---------|---------|--------|
+| DT-001 | Migrar hooks/componentes para useBuScopedSupabase | Alto | Médio | ✅ CONCLUÍDO |
 
 ### 7.2 Médios (Próximo Sprint)
 
