@@ -5606,6 +5606,14 @@ export type Database = {
           },
         ]
       }
+      v_perf_indexes_report: {
+        Row: {
+          indexdef: string | null
+          indexname: unknown
+          tablename: unknown
+        }
+        Relationships: []
+      }
       v_shared_okrs_summary: {
         Row: {
           bu_id: string | null
