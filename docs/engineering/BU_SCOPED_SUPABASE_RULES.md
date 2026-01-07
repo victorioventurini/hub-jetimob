@@ -1,24 +1,22 @@
 # Regras de Uso do Cliente Supabase com Escopo de BU
 
-## Objetivo
+**Versão**: 3.3.0  
+**Última atualização**: 2026-01-07
 
-Garantir que TODAS as operações Supabase no frontend injetem o header `x-current-bu-id` para:
+## Visão Geral
 
-1. Consistência com a seleção de BU na sessão do usuário
-2. Ativação das políticas RLS que dependem da função `current_bu_id()`
-3. Prevenção de vazamentos de dados cross-BU
-4. Funcionamento correto dos triggers `enforce_bu_scope`
+O Hub da Jet usa um sistema multi-tenant onde cada Business Unit (BU) possui seus próprios dados isolados. Para garantir que as operações Supabase sempre incluam o contexto de BU correto, **todo acesso a tabelas operacionais deve usar o cliente com escopo**.
 
 ## Regra Principal
 
-> **PROIBIDO usar o cliente global `supabase` diretamente para operações de dados.**
+> **PROIBIDO usar o cliente global `supabase` para acessar tabelas operacionais.**
 
 ### ❌ INCORRETO
 ```typescript
 import { supabase } from "@/integrations/supabase/client";
 
 // Em qualquer lugar do componente/hook:
-const { data } = await supabase.from("teams").select("*");
+const { data } = await supabase.from("tickets").select("*"); // ❌ PROIBIDO
 ```
 
 ### ✅ CORRETO
@@ -28,22 +26,33 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 function MyComponent() {
   const supabase = useBuScopedSupabase();
   
-  // Agora todas as operações incluem o header x-current-bu-id
-  const { data } = await supabase.from("teams").select("*");
+  // Agora todas as operações incluem o header X-Current-Bu-Id
+  const { data } = await supabase.from("tickets").select("*"); // ✅ CORRETO
 }
 ```
 
-## Exceções Autorizadas
+## Tabelas Operacionais (DENYLIST)
 
-Os seguintes arquivos podem usar o cliente global `supabase`:
+Ver lista completa em: `src/integrations/supabase/operationalTables.ts`
+
+Principais categorias:
+- **OKRs**: `okr_*`
+- **KPIs**: `kpis`, `kpi_values`, `kpi_targets`
+- **Teams**: `teams`, `squads`, `squad_members`
+- **Assets**: `asset_*`
+- **Tickets**: `tickets`, `ticket_*`
+- **Notifications**: `notifications`, `user_notification_preferences`
+- **Config**: `bu_*`, `cycles`
+
+## Exceções Autorizadas
 
 | Arquivo | Justificativa |
 |---------|---------------|
-| `src/hooks/useAuth.tsx` | Autenticação (magic link, login) não requer escopo de BU |
-| `src/modules/bu/hooks/useBuData.ts` | Carrega lista de BUs do usuário antes de ter contexto |
+| `src/hooks/useAuth.tsx` | Autenticação ocorre ANTES de haver BU selecionada |
+| `src/components/notifications/NotificationCenter.tsx` | Realtime não suporta headers customizados |
+| `src/modules/bu/hooks/useBuData.ts` | `checkEmailDomainAllowed` valida domínio antes de BU |
 | `src/integrations/supabase/client.ts` | Definição do singleton |
 | `src/integrations/supabase/useBuScopedSupabase.ts` | Wrapper do cliente |
-| Canais Realtime (`supabase.channel`) | Realtime não suporta headers customizados |
 
 ## Operações Afetadas
 
@@ -58,45 +67,56 @@ Todas as operações abaixo DEVEM usar `useBuScopedSupabase()`:
 - `supabase.functions.invoke("edge-function")`
 - `supabase.storage` (quando aplicável)
 
-## Verificação
+## Operações Permitidas com Cliente Global
 
-Execute os scripts de auditoria para verificar conformidade:
+Apenas para exceções documentadas:
+- `supabase.auth.*` (autenticação)
+- `supabase.channel()` (Realtime)
+- Consultas a tabelas de infraestrutura (`profiles`, `user_roles`, `bu_units`)
+
+## Verificação Automática
+
+Execute o script de auditoria para verificar conformidade:
 
 ```bash
-# Verifica uso do cliente Supabase
-npx tsx scripts/audit-supabase-client.ts
-
-# Verifica escopo de BU geral
-npx tsx scripts/audit-bu-scope.ts
+npx tsx scripts/audit-useBuScopedSupabase.ts
 ```
 
-## Consequências do Não Cumprimento
-
-1. **Vazamento de dados**: Usuário pode ver/modificar dados de outra BU
-2. **Erros de RLS**: Policies que usam `current_bu_id()` retornarão NULL
-3. **Triggers falham**: `enforce_bu_scope` não consegue obter o bu_id
-4. **Inconsistência**: Dados criados sem bu_id correto
+O script:
+1. Lista todos os usos de `supabase.from()` no projeto
+2. Verifica se tabelas operacionais usam cliente global
+3. Valida que exceções estão na lista permitida
+4. Retorna PASS/FAIL
 
 ## Padrão para Arquivos Não-React
 
-Para funções utilitárias fora de componentes React que precisam acessar Supabase:
+Para funções utilitárias fora de componentes React:
 
 ```typescript
-// Opção 1: Receber supabase por injeção de dependência
-async function fetchTeamMembers(supabase: SupabaseClient, teamId: string) {
-  const { data } = await supabase.from("profiles").select("*").eq("team_id", teamId);
-  return data;
+// ✅ Opção 1: Receber cliente por injeção
+export async function processData(supabase: SupabaseClient, data: any) {
+  const { data: result } = await supabase.from("table").insert(data);
+  return result;
 }
 
-// Opção 2: Usar factory quando o buId estiver disponível
+// ✅ Opção 2: Usar factory com buId explícito
 import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
 
-async function backgroundTask(buId: string) {
+export async function processData(buId: string, data: any) {
   const supabase = createBuScopedClient(buId);
-  // ...
+  const { data: result } = await supabase.from("table").insert(data);
+  return result;
 }
 ```
 
-## Histórico
+## Consequências de Violação
 
-- **v1.0** (2026-01-07): Documento inicial criado como parte do DT-001
+- **Desenvolvimento**: Script de auditoria falha (exit code 1)
+- **Runtime (dev)**: Erro lançado ao acessar tabela operacional via global
+- **Runtime (prod)**: Warning logado, operação pode falhar por RLS
+
+---
+
+Ver também:
+- `docs/BU_SCOPED_MIGRATION_REPORT.md` - Relatório completo da migração
+- `src/integrations/supabase/operationalTables.ts` - Lista de tabelas
