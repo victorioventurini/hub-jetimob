@@ -26,6 +26,7 @@ import { usePartnerCategories, usePartnerSubcategories, useHasPartnerServices } 
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
@@ -58,9 +59,10 @@ function formatFileSize(bytes: number): string {
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
-  const createTicket = useCreateTicket();
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
+  const { profileId } = useIdentity();
+  const createTicket = useCreateTicket(profileId);
   const supabase = useBuScopedSupabase();
   const { data: allCategories = [] } = useTicketCategories();
   const { data: partners = [] } = usePartnerCompanies();

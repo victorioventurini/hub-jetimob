@@ -76,7 +76,9 @@ O Hub utiliza **dois identificadores distintos** para representar usuários:
 
 ### ⚠️ COLUNAS LEGADAS QUE ARMAZENAM `profiles.id`
 
-> **ATENÇÃO:** As colunas abaixo possuem nomes que sugerem `auth.users.id`, mas **NÃO** armazenam `auth.users.id`. Elas foram migradas para armazenar `profiles.id` em 2026-01-07.
+> **ATENÇÃO:** As colunas abaixo possuem nomes que sugerem `auth.users.id`, mas **NÃO** armazenam `auth.users.id`. Elas foram migradas para armazenar `profiles.id`.
+
+#### Módulo OKRs (migrado em 2026-01-07)
 
 | Tabela | Coluna (nome legado) | Armazena | FK Constraint |
 |--------|---------------------|----------|---------------|
@@ -86,6 +88,25 @@ O Hub utiliza **dois identificadores distintos** para representar usuários:
 | `okr_team_key_results` | `owner_user_id` | **profiles.id** | `okr_team_key_results_owner_profile_fkey` |
 | `okr_checkins` | `user_id` | **profiles.id** | `okr_checkins_author_profile_fkey` |
 | `okr_initiatives` | `owner_user_id` | **profiles.id** | `okr_initiatives_owner_user_id_fkey` |
+
+#### Módulo Tickets (migrado em 2026-01-07)
+
+| Tabela | Coluna (nome legado) | Armazena | FK Constraint |
+|--------|---------------------|----------|---------------|
+| `tickets` | `owner_user_id` | **profiles.id** | `tickets_owner_profile_fkey` |
+| `tickets` | `created_by_user_id` | **profiles.id** | `tickets_created_by_profile_fkey` |
+| `ticket_messages` | `author_user_id` | **profiles.id** | `ticket_messages_author_profile_fkey` |
+| `ticket_participants` | `user_id` | **profiles.id** | `ticket_participants_profile_fkey` |
+
+#### Módulo Assets (migrado em 2026-01-07)
+
+| Tabela | Coluna (nome legado) | Armazena | FK Constraint |
+|--------|---------------------|----------|---------------|
+| `asset_inventory` | `current_user_id` | **profiles.id** | `asset_inventory_current_user_profile_fkey` |
+| `asset_movements` | `from_user_id` | **profiles.id** | `asset_movements_from_user_profile_fkey` |
+| `asset_movements` | `to_user_id` | **profiles.id** | `asset_movements_to_user_profile_fkey` |
+| `asset_movements` | `performed_by_user_id` | **profiles.id** | `asset_movements_performed_by_profile_fkey` |
+| `asset_movements` | `authorized_by_user_id` | **profiles.id** | `asset_movements_authorized_by_profile_fkey` |
 
 **Por que não renomeamos?**
 - Evitar breaking changes em código existente
@@ -388,27 +409,25 @@ violates foreign key constraint "bu_user_permission_groups_user_id_fkey"
 
 ---
 
-## 10. Dívidas Técnicas Pendentes
+## 10. Módulos Migrados
 
-### 10.1 Módulo Tickets (prioridade MÉDIA)
+### 10.1 OKRs ✅ (2026-01-07)
+- FKs migradas para `profiles.id`
+- Frontend usando `useIdentity().profileId`
+- Lint gate ativo: bloqueia `useAuth` no módulo
 
-**Status atual:** `tickets.owner_user_id` e `ticket_messages.author_user_id` referenciam `auth.users.id`
+### 10.2 Tickets ✅ (2026-01-07)
+- FKs migradas para `profiles.id`
+- Frontend usando `useIdentity().profileId`
+- Lint gate ativo: bloqueia `useAuth` nos hooks
 
-**Problema:** Inconsistência com o padrão de identidade estabelecido para o Hub.
+### 10.3 Assets ✅ (2026-01-07)
+- FKs migradas para `profiles.id`
+- Campos de auditoria (`created_by`, `updated_by`) mantêm `auth.users.id` (uso de auditoria)
 
-**Plano de migração:**
-1. Criar migration para:
-   - Migrar dados existentes de `auth.users.id` para `profiles.id`
-   - Remover FKs antigas
-   - Criar novas FKs apontando para `profiles.id`
-2. Atualizar frontend (`CreateTicketDialog`, `TicketDetail`, etc.) para usar `useIdentity().profileId`
-3. Atualizar queries/hooks que fazem joins com profiles
-4. Testar RLS policies após migração
-
-**Impacto se não migrar:** 
-- Joins inconsistentes entre módulos
-- Possíveis erros de FK ao excluir usuários
-- Complexidade adicional em queries cross-module
+### 10.4 KPIs ✅ (já estava correto)
+- `owner_user_id` já referenciava `profiles.id`
+- RLS usa hierarquia de times para gestão
 
 ---
 
