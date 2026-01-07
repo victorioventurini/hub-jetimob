@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import type {
@@ -19,7 +19,7 @@ interface UseVicAgentOptions {
 
 export function useVicAgent(options?: UseVicAgentOptions) {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
   const [lastResponse, setLastResponse] = useState<VicInvokeResponse | null>(null);
 
   const mutation = useMutation({
@@ -34,10 +34,14 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       context: VicContext;
       userQuestion?: string;
     }) => {
+      if (!supabase || !isReady || !buId) {
+        throw new Error("No BU selected");
+      }
+
       const { data, error } = await supabase.functions.invoke<VicInvokeResponse>("invoke-vic", {
         body: {
           agentSlug,
-          buId: currentBu?.id,
+          buId: currentBu?.id ?? buId,
           actionContext,
           context,
           userQuestion,
@@ -62,7 +66,7 @@ export function useVicAgent(options?: UseVicAgentOptions) {
     },
     onError: (error: VicError | Error) => {
       console.error("Vic agent error:", error);
-      
+
       // Handle specific error codes
       if ("code" in error) {
         const vicError = error as VicError;
@@ -127,18 +131,19 @@ export function useVicAgent(options?: UseVicAgentOptions) {
 
 // Hook to check if IA is enabled for current BU
 export function useVicEnabled() {
-  const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   const { data: iaConfig, isLoading } = useQuery({
-    queryKey: ["bu-ia-config", currentBu?.id],
+    queryKey: ["bu-ia-config", buId],
     queryFn: async () => {
-      if (!currentBu?.id) return null;
+      if (!supabase || !isReady || !buId) return null;
 
       const { data, error } = await supabase
         .from("bu_ia_config")
-        .select("*")
-        .eq("bu_id", currentBu.id)
+        .select(
+          "id, bu_id, ia_enabled, ia_mode, max_calls_per_bu_day, max_calls_per_user_day, created_at, updated_at"
+        )
+        .eq("bu_id", buId)
         .single();
 
       if (error && error.code !== "PGRST116") {
@@ -148,7 +153,7 @@ export function useVicEnabled() {
 
       return data as BuIaConfig | null;
     },
-    enabled: !!currentBu?.id,
+    enabled: !!buId && isReady,
   });
 
   // Default to enabled if no config exists
@@ -166,39 +171,34 @@ export function useVicEnabled() {
 // Hook to manage BU IA configuration
 export function useVicConfig() {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
   const queryClient = useQueryClient();
 
   const updateConfig = useMutation({
     mutationFn: async (updates: Partial<BuIaConfig>) => {
-      if (!currentBu?.id) throw new Error("No BU selected");
+      if (!supabase || !isReady || !buId) throw new Error("No BU selected");
 
       // Check if config exists
       const { data: existing } = await supabase
         .from("bu_ia_config")
         .select("id")
-        .eq("bu_id", currentBu.id)
+        .eq("bu_id", buId)
         .single();
 
       if (existing) {
         // Update existing
-        const { error } = await supabase
-          .from("bu_ia_config")
-          .update(updates)
-          .eq("bu_id", currentBu.id);
+        const { error } = await supabase.from("bu_ia_config").update(updates).eq("bu_id", buId);
 
         if (error) throw error;
       } else {
         // Insert new
-        const { error } = await supabase
-          .from("bu_ia_config")
-          .insert({ bu_id: currentBu.id, ...updates });
+        const { error } = await supabase.from("bu_ia_config").insert({ bu_id: buId, ...updates });
 
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bu-ia-config", currentBu?.id] });
+      queryClient.invalidateQueries({ queryKey: ["bu-ia-config", currentBu?.id ?? buId] });
       toast.success("Configurações de IA atualizadas");
     },
     onError: (error) => {
@@ -216,34 +216,36 @@ export function useVicConfig() {
 // Hook to manage agent activations for a BU
 export function useVicAgentActivations() {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
   const queryClient = useQueryClient();
 
   const { data: activations, isLoading } = useQuery({
-    queryKey: ["bu-agent-activations", currentBu?.id],
+    queryKey: ["bu-agent-activations", buId],
     queryFn: async () => {
-      if (!currentBu?.id) return [];
+      if (!supabase || !isReady || !buId) return [];
 
       const { data, error } = await supabase
         .from("bu_agent_activations")
-        .select("*, agent:ai_agents(id, name, slug, description)")
-        .eq("bu_id", currentBu.id);
+        .select(
+          "id, bu_id, agent_id, is_enabled, custom_system_prompt, enabled_by, created_at, updated_at, agent:ai_agents(id, name, slug, description)"
+        )
+        .eq("bu_id", buId);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!currentBu?.id,
+    enabled: !!buId && isReady,
   });
 
   const toggleAgent = useMutation({
     mutationFn: async ({ agentId, isEnabled }: { agentId: string; isEnabled: boolean }) => {
-      if (!currentBu?.id) throw new Error("No BU selected");
+      if (!supabase || !isReady || !buId) throw new Error("No BU selected");
 
       // Check if activation exists
       const { data: existing } = await supabase
         .from("bu_agent_activations")
         .select("id")
-        .eq("bu_id", currentBu.id)
+        .eq("bu_id", buId)
         .eq("agent_id", agentId)
         .single();
 
@@ -257,7 +259,7 @@ export function useVicAgentActivations() {
       } else {
         const { data: user } = await supabase.auth.getUser();
         const { error } = await supabase.from("bu_agent_activations").insert({
-          bu_id: currentBu.id,
+          bu_id: buId,
           agent_id: agentId,
           is_enabled: isEnabled,
           enabled_by: user.user?.id,
@@ -267,7 +269,7 @@ export function useVicAgentActivations() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bu-agent-activations", currentBu?.id] });
+      queryClient.invalidateQueries({ queryKey: ["bu-agent-activations", currentBu?.id ?? buId] });
       toast.success("Configuração do agente atualizada");
     },
     onError: (error) => {
@@ -283,3 +285,4 @@ export function useVicAgentActivations() {
     isToggling: toggleAgent.isPending,
   };
 }
+
