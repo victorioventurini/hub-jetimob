@@ -20,7 +20,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, AlertTriangle, Lightbulb, BookOpen } from "lucide-react";
 import type { OkrStatus } from "../types";
@@ -53,6 +53,7 @@ export function CancelOkrDialog({
   onSuccess,
 }: CancelOkrDialogProps) {
   const { user } = useAuth();
+  const supabase = useBuScopedSupabase();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

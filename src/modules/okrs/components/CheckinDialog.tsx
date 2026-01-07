@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import {
   Dialog,
   DialogContent,
@@ -102,6 +102,7 @@ const statusConfig: Record<Status, {
 
 export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const { user } = useAuth();
+  const supabase = useBuScopedSupabase();
   const [currentValue, setCurrentValue] = useState(kr.current_value.toString());
   const [status, setStatus] = useState<Status>(kr.status === 'not_started' ? 'green' : kr.status as Status);
   const [reflection, setReflection] = useState('');

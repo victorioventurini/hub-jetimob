@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { KrUnitSelect } from './KrUnitSelect';
@@ -47,6 +47,7 @@ export function EditOrgKrDialog({
   onOpenChange,
   kr,
 }: EditOrgKrDialogProps) {
+  const supabase = useBuScopedSupabase();
   const [title, setTitle] = useState(kr.title);
   const [baseline, setBaseline] = useState(kr.baseline.toString());
   const [target, setTarget] = useState(kr.target.toString());

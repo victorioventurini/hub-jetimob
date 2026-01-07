@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +71,7 @@ export function CycleFormDialog({
   yearCycles,
 }: CycleFormDialogProps) {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const isEditing = !!cycle;
 
   const form = useForm<FormValues>({

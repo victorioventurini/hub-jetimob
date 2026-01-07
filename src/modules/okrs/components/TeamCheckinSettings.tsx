@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -46,6 +46,7 @@ export function TeamCheckinSettings({
   currentDeadlineHour = 18,
   isLeader = false,
 }: TeamCheckinSettingsProps) {
+  const supabase = useBuScopedSupabase();
   const [frequency, setFrequency] = useState(currentFrequency);
   const [day, setDay] = useState(currentDay.toString());
   const [deadlineHour, setDeadlineHour] = useState(currentDeadlineHour.toString());

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +62,7 @@ export function CreateTeamKrDialog({
   buId,
 }: CreateTeamKrDialogProps) {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   // Form state
   const [title, setTitle] = useState('');

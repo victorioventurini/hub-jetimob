@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useBu } from '@/contexts/BuContext';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +46,7 @@ export function CreateTeamObjectiveDialog({
   orgObjectives,
 }: CreateTeamObjectiveDialogProps) {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [teamId, setTeamId] = useState<string | undefined>(undefined);
