@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.3.0  
-**Última atualização:** 2026-01-06
+**Versão:** 2.4.0  
+**Última atualização:** 2026-01-07
 **Responsável:** Lovable AI / Equipe de Engenharia
 
 ---
@@ -990,6 +990,96 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - O usuário pode alternar entre BUs no seletor
 - Ao trocar de BU, todos os dados são recarregados (cache do TanStack Query é limpo)
 
+### 4.2.1 BU Scope Enforcement (v2.4+)
+
+```
+⚠️ REGRA CRÍTICA: Toda operação INSERT/UPDATE/DELETE em tabelas operacionais é validada no banco.
+```
+
+#### Funções SQL de BU Scope
+
+| Função | Descrição |
+|--------|-----------|
+| `current_bu_id()` | Retorna BU ativa do contexto (via header `x-current-bu-id`). **NUNCA retorna NULL** — se não há BU válida, lança `NO_BU_CONTEXT`. |
+| `is_current_bu(bu_id)` | Helper para RLS: retorna `true` se `bu_id` = `current_bu_id()`, `false` em caso de erro. |
+| `assert_bu_scope(bu_id)` | Valida se `bu_id` do payload corresponde ao contexto. Lança exceções se inválido. |
+
+**Exceções lançadas por `assert_bu_scope()`:**
+
+| Exceção | Causa |
+|---------|-------|
+| `MISSING_BU_ID` | Payload tem `bu_id = NULL` |
+| `NO_BU_CONTEXT` | Usuário não tem BU válida no contexto |
+| `BU_SCOPE_VIOLATION` | `bu_id` do payload ≠ `current_bu_id()` |
+
+#### Triggers de Enforce BU Scope
+
+Trigger `enforce_bu_scope_trigger` aplicado em **BEFORE INSERT/UPDATE** para:
+
+| Módulo | Tabelas |
+|--------|---------|
+| **OKRs** | `okr_org_objectives`, `okr_org_key_results`, `okr_team_objectives`, `okr_team_key_results`, `okr_checkins`, `okr_initiatives` |
+| **Teams** | `teams`, `squads`, `user_team_memberships` |
+| **Assets** | `asset_inventory`, `asset_movements`, `asset_keyrings`, `asset_key_movements`, `asset_keys`, `asset_gift_items`, `asset_gift_batches`, `asset_gift_movements`, `asset_clavicularies` |
+| **Tickets** | `tickets`, `ticket_messages`, `ticket_attachments` |
+| **KPIs** | `kpi_metrics` |
+
+#### RLS Hardening
+
+Todas as RLS policies de tabelas operacionais incluem:
+
+```sql
+user_has_bu_access(auth.uid(), bu_id) AND is_current_bu(bu_id)
+```
+
+Isso garante que:
+1. Usuário tem membership na BU do registro
+2. A BU do registro é a BU ativa no contexto
+
+#### Frontend: Header Injection
+
+**Hook:** `useBuScopedSupabase()` em `src/integrations/supabase/useBuScopedSupabase.ts`
+
+```typescript
+// Retorna client Supabase que injeta x-current-bu-id automaticamente
+const supabase = useBuScopedSupabase();
+
+// Uso em módulos operacionais
+const { data } = await supabase.from('teams').select('*');
+```
+
+**Helper para inserts/updates:**
+
+```typescript
+import { withBuId } from '@/hooks/useBuScope';
+
+// Adiciona bu_id ao payload
+await supabase.from('teams').insert(withBuId({ name: 'Time' }, currentBuId));
+```
+
+#### Scanner de Auditoria
+
+**Script:** `scripts/audit-bu-scope.ts`  
+**Comando:** `npx tsx scripts/audit-bu-scope.ts`
+
+**Findings reportados:**
+- `INSERT_MISSING_BU_ID`: Insert sem `bu_id`
+- `UPDATE_MISSING_BU_ID`: Update sem `bu_id`
+- `UPSERT_MISSING_BU_ID`: Upsert sem `bu_id`
+- `SELECT_MISSING_BU_FILTER`: Select sem filtro de `bu_id`
+- `UNKNOWN_DYNAMIC_TABLE`: Tabela dinâmica (variável)
+
+**Exceções:** `scripts/audit-bu-exceptions.json` lista tabelas globais ignoradas.
+
+#### View de Auditoria de bu_id
+
+```sql
+-- Verifica tabelas com bu_id NULL
+SELECT * FROM v_bu_id_null_report;
+```
+
+Retorna: `table_name`, `count_null_bu_id`, `count_total`
+
 ### 4.3 Padrão de Links e URLs (v2.1+)
 
 ```
@@ -1437,6 +1527,24 @@ src/
 ---
 
 ## Changelog
+
+### v2.4.0 (2026-01-07) — BU Scope Enforcement
+- **BU Scope Enforcement** implementado (segurança multi-tenant):
+  - `current_bu_id()` atualizado para **NUNCA retornar NULL** — lança `NO_BU_CONTEXT` se inválido
+  - `is_current_bu(bu_id)` helper seguro para RLS policies
+  - `assert_bu_scope(bu_id)` valida BU em triggers, lança `MISSING_BU_ID`, `NO_BU_CONTEXT`, `BU_SCOPE_VIOLATION`
+  - Triggers `enforce_bu_scope_trigger` aplicados a 20+ tabelas operacionais (OKRs, Teams, Assets, Tickets, KPIs)
+  - RLS policies atualizadas: `user_has_bu_access(auth.uid(), bu_id) AND is_current_bu(bu_id)`
+  - View `v_bu_id_null_report` para auditoria de registros sem `bu_id`
+- **Frontend BU Scope**:
+  - Novo hook `useBuScopedSupabase()` injeta header `x-current-bu-id` automaticamente
+  - Helper `createBuScopedClient(buId)` para uso fora de React
+  - Helper `withBuId(payload, buId)` para inserts/updates explícitos
+- **Scanner de auditoria**:
+  - Script `scripts/audit-bu-scope.ts` detecta operações sem `bu_id`
+  - Arquivo `scripts/audit-bu-exceptions.json` lista tabelas globais ignoradas
+  - Findings: `INSERT_MISSING_BU_ID`, `UPDATE_MISSING_BU_ID`, `SELECT_MISSING_BU_FILTER`
+- **QA Checklist** documentado em `docs/qa/QA_BU_SCOPE.md`
 
 ### v2.3.0 (2026-01-06) — Full Hierarchy Enforcement
 - **Hierarquia de Times (Enforcement Total no Frontend)**:
