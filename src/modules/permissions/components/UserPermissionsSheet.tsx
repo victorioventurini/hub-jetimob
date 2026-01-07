@@ -23,6 +23,7 @@ interface UserPermissionsSheetProps {
   onOpenChange: (open: boolean) => void;
   user: {
     user_id: string;
+    profile_id: string;
     role_in_bu: string | null;
     profiles: {
       display_name: string;
@@ -43,7 +44,9 @@ export function UserPermissionsSheet({
 
   const { groups } = usePermissionGroups();
   const { configs, isLoading: configsLoading } = useBuGroupConfigs();
-  const { userGroups, isLoading: userGroupsLoading, setUserGroups } = useBuUserGroups(user?.user_id || null);
+  // Use profile_id for bu_user_permission_groups (FK references profiles.id)
+  const { userGroups, isLoading: userGroupsLoading, setUserGroups } = useBuUserGroups(user?.profile_id || null);
+  // Use user_id for effective permissions (auth context)
   const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.user_id || null);
 
   // Map configs by group_id for quick lookup
@@ -130,8 +133,9 @@ export function UserPermissionsSheet({
 
   const handleSave = () => {
     if (!user) return;
+    // Use profile_id for bu_user_permission_groups (FK references profiles.id)
     setUserGroups.mutate(
-      { userId: user.user_id, groupIds: Array.from(selectedGroupIds) },
+      { userId: user.profile_id, groupIds: Array.from(selectedGroupIds) },
       { onSuccess: () => onOpenChange(false) }
     );
   };
