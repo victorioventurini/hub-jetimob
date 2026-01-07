@@ -23,7 +23,7 @@ import { useCreateTicket } from "../hooks/useTickets";
 import { useTicketCategories, useTicketSubcategories } from "../hooks/useTicketCategories";
 import { usePartnerCompanies } from "../hooks/usePartners";
 import { usePartnerCategories, usePartnerSubcategories, useHasPartnerServices } from "../hooks/usePartnerServices";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -61,6 +61,7 @@ export default function CreateTicketPage() {
   const createTicket = useCreateTicket();
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
+  const supabase = useBuScopedSupabase();
   const { data: allCategories = [] } = useTicketCategories();
   const { data: partners = [] } = usePartnerCompanies();
   const [attachments, setAttachments] = useState<File[]>([]);

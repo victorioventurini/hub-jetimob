@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { toast } from 'sonner';
 import type { 
   IntegrationCatalogItem, 
@@ -15,6 +15,8 @@ import type { Json } from '@/integrations/supabase/types';
 // ============================================
 
 export function useIntegrationsCatalog() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['integrations-catalog'],
     queryFn: async () => {
@@ -30,6 +32,8 @@ export function useIntegrationsCatalog() {
 }
 
 export function useIntegrationByKey(integrationKey: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['integration-catalog', integrationKey],
     queryFn: async () => {
@@ -51,6 +55,8 @@ export function useIntegrationByKey(integrationKey: string) {
 // ============================================
 
 export function useGlobalConfigs() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['integrations-global-configs'],
     queryFn: async () => {
@@ -65,6 +71,8 @@ export function useGlobalConfigs() {
 }
 
 export function useGlobalConfig(integrationKey: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['integration-global-config', integrationKey],
     queryFn: async () => {
@@ -83,6 +91,7 @@ export function useGlobalConfig(integrationKey: string) {
 
 export function useUpsertGlobalConfig() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async (config: {
@@ -137,6 +146,7 @@ export function useUpsertGlobalConfig() {
 
 export function useUpdateGlobalTestStatus() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async (data: {
@@ -166,6 +176,8 @@ export function useUpdateGlobalTestStatus() {
 // ============================================
 
 export function useBuIntegrationConfigs(buId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['bu-integration-configs', buId],
     queryFn: async () => {
@@ -182,6 +194,8 @@ export function useBuIntegrationConfigs(buId: string | undefined) {
 }
 
 export function useBuIntegrationConfig(buId: string | undefined, integrationKey: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['bu-integration-config', buId, integrationKey],
     queryFn: async () => {
@@ -201,6 +215,7 @@ export function useBuIntegrationConfig(buId: string | undefined, integrationKey:
 
 export function useUpsertBuIntegrationConfig() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async (config: {
@@ -265,6 +280,8 @@ export function useUpsertBuIntegrationConfig() {
 // ============================================
 
 export function useGlobalAgents(integrationKey?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['global-agents', integrationKey],
     queryFn: async () => {
@@ -286,6 +303,8 @@ export function useGlobalAgents(integrationKey?: string) {
 }
 
 export function useBuAgents(buId: string | undefined, integrationKey?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['bu-agents', buId, integrationKey],
     queryFn: async () => {
@@ -310,6 +329,7 @@ export function useBuAgents(buId: string | undefined, integrationKey?: string) {
 
 export function useCreateAgent() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async (agent: {
@@ -366,6 +386,7 @@ export function useCreateAgent() {
 
 export function useUpdateAgent() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: { 
@@ -415,6 +436,7 @@ export function useUpdateAgent() {
 
 export function useDeleteAgent() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -447,6 +469,8 @@ export function useAgentLogs(filters?: {
   integration_key?: string;
   limit?: number;
 }) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['agent-logs', filters],
     queryFn: async () => {

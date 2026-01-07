@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { cn } from "@/lib/utils";
 
 interface AddressPrediction {
@@ -47,6 +47,7 @@ export function AddressAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+  const supabase = useBuScopedSupabase();
 
   useEffect(() => {
     setInputValue(value);
@@ -94,7 +95,7 @@ export function AddressAutocomplete({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [supabase]);
 
   const getPlaceDetails = useCallback(async (placeId: string): Promise<AddressDetails | null> => {
     try {
@@ -123,7 +124,7 @@ export function AddressAutocomplete({
       );
       return null;
     }
-  }, []);
+  }, [supabase]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
