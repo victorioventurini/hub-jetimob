@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 
 export interface AuditResult {
   generatedAt: string;
@@ -32,11 +32,15 @@ export interface AuditResult {
 }
 
 export function usePermissionAudit() {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['permission-audit'],
+    queryKey: ['permission-audit', buId],
     queryFn: async (): Promise<AuditResult> => {
+      if (!supabase || !isReady) {
+        throw new Error("No BU client available");
+      }
+      
       const { data, error } = await supabase.functions.invoke('audit-permissions');
       
       if (error) {
@@ -45,6 +49,7 @@ export function usePermissionAudit() {
       
       return data as AuditResult;
     },
+    enabled: isReady,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
   });

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useBu } from "@/contexts/BuContext";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 
 export interface BuUser {
@@ -21,19 +20,18 @@ export interface BuUser {
 }
 
 export function useBuUsers() {
-  const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: queryKeys.permissions.buUsers(currentBuId),
+    queryKey: queryKeys.permissions.buUsers(buId),
     queryFn: async () => {
-      if (!currentBuId) return [];
+      if (!supabase || !buId) return [];
 
       // Fetch memberships
       const { data: memberships, error: membershipError } = await supabase
         .from("bu_user_memberships")
         .select("user_id, role_in_bu")
-        .eq("bu_id", currentBuId);
+        .eq("bu_id", buId);
 
       if (membershipError) throw membershipError;
 
@@ -73,7 +71,7 @@ export function useBuUsers() {
         }))
         .filter((m) => m.profiles) as BuUser[];
     },
-    enabled: !!currentBuId,
+    enabled: isReady && !!buId,
   });
 
   return {
