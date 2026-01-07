@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 
 // ========================
@@ -12,6 +12,7 @@ import { toast } from "sonner";
  */
 export function useCancelOrgObjective() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
@@ -50,6 +51,7 @@ export function useDeleteOrgObjective() {
  */
 export function useCancelOrgKeyResult() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (krId: string) => {
@@ -90,6 +92,7 @@ export function useDeleteOrgKeyResult() {
  */
 export function useCancelTeamObjective() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
@@ -127,6 +130,7 @@ export function useDeleteTeamObjective() {
  */
 export function useCancelTeamKeyResult() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (krId: string) => {

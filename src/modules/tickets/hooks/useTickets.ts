@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import type {
@@ -17,6 +17,7 @@ import type {
 export function useTickets(filters?: TicketFilters) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: queryKeys.tickets.list(buId ?? null, filters as Record<string, unknown>),
@@ -91,6 +92,7 @@ export function useTickets(filters?: TicketFilters) {
 export function useTicket(ticketId: string | null) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["ticket", ticketId],
@@ -120,6 +122,7 @@ export function useTicket(ticketId: string | null) {
 export function useMyTickets() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["my-tickets", buId],
@@ -159,6 +162,7 @@ export function useCreateTicket() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: CreateTicketData) => {
@@ -237,6 +241,7 @@ export function useCreateTicket() {
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -266,6 +271,7 @@ export function useUpdateTicket() {
 
 export function useUpdateTicketStatus() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -295,6 +301,7 @@ export function useUpdateTicketStatus() {
 
 export function useDeleteTicket() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

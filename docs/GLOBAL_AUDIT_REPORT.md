@@ -127,11 +127,13 @@ Módulo: users
 | Módulo | Arquivos Migrados | Arquivos Pendentes | Status |
 |--------|-------------------|-------------------|--------|
 | **Home** | 3 (useLeaderTeams, useLeaderDashboard, useLeaderScope) | 0 | ✅ PASS |
-| **Teams** | 1 (useTeamManagement) | 2 (useTeams, useSquads) | ⚠️ PARTIAL |
-| **OKRs** | 0 | 6+ (useOkrData, useOkrMutations, etc.) | ❌ FAIL |
-| **Assets** | 0 | 4+ (useInventory, useKeys, etc.) | ❌ FAIL |
-| **Tickets** | 0 | 3+ (useTickets, useTicketMessages, etc.) | ❌ FAIL |
-| **KPIs** | 0 | 1 (useKpiData) | ❌ FAIL |
+| **Teams** | 2 (useTeamManagement, useTeams) | 1 (useSquads) | ⚠️ PARTIAL |
+| **OKRs** | 3 (useOkrData, useOkrMutations, usePendingCheckins) | 3 (componentes) | ⚠️ PARTIAL |
+| **Assets** | 0 | 4+ (useInventory, useKeys, etc.) | ⏳ PENDENTE |
+| **Tickets** | 1 (useTickets) | 2 (useTicketMessages, CreateTicketPage) | ⚠️ PARTIAL |
+| **KPIs** | 1 (useKpiData) | 0 | ✅ PASS |
+
+> **Atualização 2026-01-07**: Migrados os hooks principais de OKRs, Teams, Tickets e KPIs.
 
 ### 3.2 Colunas bu_id Nullable
 

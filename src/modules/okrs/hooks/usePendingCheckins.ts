@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface PendingCheckin {
@@ -66,6 +66,7 @@ export function isCheckinDueThisWeek(
  */
 export function usePendingCheckins() {
   const { user } = useAuth();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ['pending-checkins', user?.id],
@@ -93,6 +94,8 @@ export function usePendingCheckins() {
  * Hook to fetch all pending check-ins for a team (for team leaders)
  */
 export function useTeamPendingCheckins(teamId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['team-pending-checkins', teamId],
     queryFn: async () => {

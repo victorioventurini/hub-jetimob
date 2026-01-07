@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
 // ========================
 // ORG OBJECTIVES
 // ========================
 export function useOrgObjectives(buId?: string | null, year?: number, includeAllStatuses: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-org-objectives', buId, year, includeAllStatuses],
     queryFn: async () => {
@@ -35,6 +37,8 @@ export function useOrgObjectives(buId?: string | null, year?: number, includeAll
 }
 
 export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, includeAllStatuses: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-org-objectives-with-krs', buId, year, includeAllStatuses],
     queryFn: async () => {
@@ -83,6 +87,8 @@ export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, inc
 }
 
 export function useOrgObjective(id: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-org-objective', id],
     queryFn: async () => {
@@ -100,6 +106,8 @@ export function useOrgObjective(id: string) {
 }
 
 export function useOrgKeyResults(buId?: string | null, objectiveId?: string, includeCancelled: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-org-key-results', buId, objectiveId, includeCancelled],
     queryFn: async () => {
@@ -129,6 +137,8 @@ export function useOrgKeyResults(buId?: string | null, objectiveId?: string, inc
 }
 
 export function useAllOrgKeyResults(buId?: string | null, includeCancelled: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-org-key-results-all', buId, includeCancelled],
     queryFn: async () => {
@@ -157,6 +167,8 @@ export function useAllOrgKeyResults(buId?: string | null, includeCancelled: bool
 // TEAM OBJECTIVES
 // ========================
 export function useTeamObjectives(buId?: string | null, teamId?: string, includeAllStatuses: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-team-objectives', buId, teamId, includeAllStatuses],
     queryFn: async () => {
@@ -187,6 +199,8 @@ export function useTeamObjectives(buId?: string | null, teamId?: string, include
 }
 
 export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, includeAllStatuses: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-team-objectives-with-krs', buId, teamId, includeAllStatuses],
     queryFn: async () => {
@@ -240,6 +254,8 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
 }
 
 export function useTeamKeyResults(buId?: string | null, teamId?: string, includeCancelled: boolean = false) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-team-key-results', buId, teamId, includeCancelled],
     queryFn: async () => {
@@ -270,6 +286,8 @@ export function useTeamKeyResults(buId?: string | null, teamId?: string, include
 }
 
 export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-my-team-key-results', buId, userId],
     queryFn: async () => {
@@ -295,6 +313,8 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
 // CHECK-INS
 // ========================
 export function useKrCheckins(krId: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-checkins', krId],
     queryFn: async () => {
@@ -312,6 +332,8 @@ export function useKrCheckins(krId: string) {
 }
 
 export function useLatestCheckinDate() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['okr-latest-checkin'],
     queryFn: async () => {
