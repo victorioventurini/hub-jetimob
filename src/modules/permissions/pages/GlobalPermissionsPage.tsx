@@ -32,13 +32,15 @@ import {
   Key, 
   Pencil, 
   Settings,
-  AlertTriangle 
+  AlertTriangle,
+  ClipboardCheck
 } from "lucide-react";
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
 import { PermissionDialog } from "../components/PermissionDialog";
 import { GroupDialog } from "../components/GroupDialog";
 import { TemplateEditorSheet } from "../components/TemplateEditorSheet";
+import { AuditDashboard } from "../components/AuditDashboard";
 import type { Permission, PermissionGroup, PermissionScope } from "../types";
 
 /**
@@ -192,6 +194,10 @@ export default function GlobalPermissionsPage() {
             <TabsTrigger value="groups" className="gap-2">
               <Users className="h-4 w-4" />
               Grupos Customizados
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Auditoria
             </TabsTrigger>
           </TabsList>
 
@@ -448,6 +454,10 @@ export default function GlobalPermissionsPage() {
               </div>
             );
           })()}
+        </TabsContent>
+
+        <TabsContent value="audit" className="mt-6">
+          <AuditDashboard />
         </TabsContent>
       </Tabs>
 
