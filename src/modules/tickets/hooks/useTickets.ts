@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { useIdentity } from "@/hooks/useIdentity";
 import { queryKeys } from "@/lib/queryKeys";
 import type {
   Ticket,
@@ -123,16 +124,12 @@ export function useMyTickets() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
+  const { profileId, isReady } = useIdentity();
 
   return useQuery({
-    queryKey: ["my-tickets", buId],
+    queryKey: ["my-tickets", buId, profileId],
     queryFn: async () => {
-      if (!buId) return [];
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!buId || !profileId) return [];
 
       const { data, error } = await supabase
         .from("tickets")
@@ -142,7 +139,7 @@ export function useMyTickets() {
         `)
         .eq("bu_id", buId)
         .is("deleted_at", null)
-        .or(`created_by_user_id.eq.${user.id},owner_user_id.eq.${user.id}`)
+        .or(`created_by_user_id.eq.${profileId},owner_user_id.eq.${profileId}`)
         .order("updated_at", { ascending: false })
         .limit(20);
 
@@ -150,7 +147,7 @@ export function useMyTickets() {
 
       return data as Ticket[];
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady,
   });
 }
 
@@ -158,7 +155,7 @@ export function useMyTickets() {
 // MUTATIONS
 // ===========================================
 
-export function useCreateTicket() {
+export function useCreateTicket(profileId: string | null) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
@@ -167,13 +164,9 @@ export function useCreateTicket() {
   return useMutation({
     mutationFn: async (data: CreateTicketData) => {
       if (!buId) throw new Error("BU não selecionada");
+      if (!profileId) throw new Error("Perfil não carregado");
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Create ticket
+      // Create ticket with profileId (profiles.id)
       const { data: ticket, error } = await supabase
         .from("tickets")
         .insert({
@@ -188,30 +181,30 @@ export function useCreateTicket() {
           visibility_squad_ids: data.visibility_squad_ids || [],
           visibility_user_ids: data.visibility_user_ids || [],
           expected_due_at: data.expected_due_at || null,
-          created_by_user_id: user.id,
-          owner_user_id: user.id,
+          created_by_user_id: profileId,
+          owner_user_id: profileId,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Add creator as requester participant
+      // Add creator as requester participant with profileId
       await supabase.from("ticket_participants").insert({
         bu_id: buId,
         ticket_id: ticket.id,
         participant_type: "internal_user" as const,
-        user_id: user.id,
+        user_id: profileId,
         role: "requester" as const,
       });
 
-      // Add initial message if provided
+      // Add initial message if provided with profileId
       if (data.initial_message && Object.keys(data.initial_message).length > 0) {
         await supabase.from("ticket_messages").insert({
           bu_id: buId,
           ticket_id: ticket.id,
           author_type: "internal_user" as const,
-          author_user_id: user.id,
+          author_user_id: profileId,
           body_richtext: data.initial_message,
         } as any);
       }

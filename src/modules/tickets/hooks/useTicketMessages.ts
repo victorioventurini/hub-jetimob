@@ -4,6 +4,9 @@ import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import type { TicketMessage, CreateMessageData } from "../types";
 
+// NOTA: Este módulo usa profiles.id para author_user_id (identity convention)
+// Ver docs/IDENTITY_CONVENTION.md para detalhes
+
 // ===========================================
 // QUERIES
 // ===========================================
@@ -38,7 +41,7 @@ export function useTicketMessages(ticketId: string | null) {
 // MUTATIONS
 // ===========================================
 
-export function useCreateMessage() {
+export function useCreateMessage(profileId: string | null) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
@@ -53,20 +56,16 @@ export function useCreateMessage() {
       data: CreateMessageData;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
+      if (!profileId) throw new Error("Perfil não carregado");
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Create message
+      // Create message with profileId (profiles.id)
       const { data: message, error } = await supabase
         .from("ticket_messages")
         .insert({
           bu_id: buId,
           ticket_id: ticketId,
           author_type: "internal_user" as const,
-          author_user_id: user.id,
+          author_user_id: profileId,
           body_richtext: data.body_richtext,
         } as any)
         .select()

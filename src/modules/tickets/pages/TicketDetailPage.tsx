@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useTicket, useUpdateTicketStatus } from "../hooks/useTickets";
 import { useTicketMessages, useCreateMessage } from "../hooks/useTicketMessages";
 import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import type { TicketStatus } from "../types";
 
 const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -31,12 +32,13 @@ export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profileId } = useIdentity();
   const [newMessage, setNewMessage] = useState("");
 
   const { data: ticket, isLoading: isLoadingTicket } = useTicket(id!);
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
   const updateStatus = useUpdateTicketStatus();
-  const createMessage = useCreateMessage();
+  const createMessage = useCreateMessage(profileId);
 
   const handleStatusChange = async (newStatus: TicketStatus) => {
     if (!ticket) return;
@@ -148,7 +150,7 @@ export default function TicketDetailPage() {
                 <ScrollArea className="h-[400px] pr-4">
                   <div className="space-y-4">
                     {messages.map((message) => {
-                      const isOwnMessage = message.author_user_id === user?.id;
+                      const isOwnMessage = message.author_user_id === profileId;
                       const authorProfile = (message as any).author;
                       
                       return (
