@@ -2073,6 +2073,13 @@ export type Database = {
             referencedRelation: "permission_groups"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bu_user_permission_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bu_user_permission_overrides: {
