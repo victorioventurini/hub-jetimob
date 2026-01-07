@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
 import type { 
   IntegrationCatalogItem, 
@@ -11,18 +13,17 @@ import type {
 import type { Json } from '@/integrations/supabase/types';
 
 // ============================================
-// CATALOG HOOKS
+// CATALOG HOOKS (Global - no BU required)
 // ============================================
 
 export function useIntegrationsCatalog() {
-  const supabase = useBuScopedSupabase();
-  
+  // Uses global client since catalog is platform-level data
   return useQuery({
     queryKey: ['integrations-catalog'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_catalog')
-        .select('*')
+        .select('id, integration_key, name, description, icon, color, status, supports_global_config, supports_bu_override, supports_agents, display_order, documentation_url, created_at, updated_at')
         .order('display_order');
       
       if (error) throw error;
@@ -32,14 +33,13 @@ export function useIntegrationsCatalog() {
 }
 
 export function useIntegrationByKey(integrationKey: string) {
-  const supabase = useBuScopedSupabase();
-  
+  // Uses global client since catalog is platform-level data
   return useQuery({
     queryKey: ['integration-catalog', integrationKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_catalog')
-        .select('*')
+        .select('id, integration_key, name, description, icon, color, status, supports_global_config, supports_bu_override, supports_agents, display_order, documentation_url, created_at, updated_at')
         .eq('integration_key', integrationKey)
         .single();
       
@@ -51,18 +51,17 @@ export function useIntegrationByKey(integrationKey: string) {
 }
 
 // ============================================
-// GLOBAL CONFIG HOOKS
+// GLOBAL CONFIG HOOKS (Admin - no BU required)
 // ============================================
 
 export function useGlobalConfigs() {
-  const supabase = useBuScopedSupabase();
-  
+  // Uses global client for admin panel
   return useQuery({
     queryKey: ['integrations-global-configs'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_global_config')
-        .select('*');
+        .select('id, integration_key, is_enabled_global, config_encrypted, last_test_status, last_test_at, last_test_message, created_at, updated_at, updated_by');
       
       if (error) throw error;
       return data as IntegrationGlobalConfig[];
@@ -71,14 +70,13 @@ export function useGlobalConfigs() {
 }
 
 export function useGlobalConfig(integrationKey: string) {
-  const supabase = useBuScopedSupabase();
-  
+  // Uses global client for admin panel
   return useQuery({
     queryKey: ['integration-global-config', integrationKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_global_config')
-        .select('*')
+        .select('id, integration_key, is_enabled_global, config_encrypted, last_test_status, last_test_at, last_test_message, created_at, updated_at, updated_by')
         .eq('integration_key', integrationKey)
         .maybeSingle();
       
@@ -91,7 +89,7 @@ export function useGlobalConfig(integrationKey: string) {
 
 export function useUpsertGlobalConfig() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  // Uses global client for admin panel
   
   return useMutation({
     mutationFn: async (config: {
@@ -146,7 +144,7 @@ export function useUpsertGlobalConfig() {
 
 export function useUpdateGlobalTestStatus() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  // Uses global client for admin panel
   
   return useMutation({
     mutationFn: async (data: {
@@ -280,14 +278,13 @@ export function useUpsertBuIntegrationConfig() {
 // ============================================
 
 export function useGlobalAgents(integrationKey?: string) {
-  const supabase = useBuScopedSupabase();
-  
+  // Uses global client for admin panel
   return useQuery({
     queryKey: ['global-agents', integrationKey],
     queryFn: async () => {
       let query = supabase
         .from('ai_agents')
-        .select('*')
+        .select('id, scope, bu_id, integration_key, name, slug, description, is_active, system_prompt, output_format, output_schema, allowed_tools, model_name, max_tokens, temperature, created_at, updated_at, created_by')
         .eq('scope', 'global')
         .order('name');
       
@@ -303,16 +300,18 @@ export function useGlobalAgents(integrationKey?: string) {
 }
 
 export function useBuAgents(buId: string | undefined, integrationKey?: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: buSupabase, isReady } = useOptionalBuClient();
   
   return useQuery({
     queryKey: ['bu-agents', buId, integrationKey],
     queryFn: async () => {
-      let query = supabase
+      if (!buSupabase || !buId) return [];
+      
+      let query = buSupabase
         .from('ai_agents')
-        .select('*')
+        .select('id, scope, bu_id, integration_key, name, slug, description, is_active, system_prompt, output_format, output_schema, allowed_tools, model_name, max_tokens, temperature, created_at, updated_at, created_by')
         .eq('scope', 'bu')
-        .eq('bu_id', buId!)
+        .eq('bu_id', buId)
         .order('name');
       
       if (integrationKey) {
@@ -323,13 +322,13 @@ export function useBuAgents(buId: string | undefined, integrationKey?: string) {
       if (error) throw error;
       return data as AiAgent[];
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady && !!buSupabase,
   });
 }
 
 export function useCreateAgent() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  // Uses global client for admin panel
   
   return useMutation({
     mutationFn: async (agent: {
@@ -386,7 +385,7 @@ export function useCreateAgent() {
 
 export function useUpdateAgent() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  // Uses global client for admin panel
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: { 
@@ -436,7 +435,7 @@ export function useUpdateAgent() {
 
 export function useDeleteAgent() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  // Uses global client for admin panel
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -469,14 +468,13 @@ export function useAgentLogs(filters?: {
   integration_key?: string;
   limit?: number;
 }) {
-  const supabase = useBuScopedSupabase();
-  
+  // Uses global client for admin panel
   return useQuery({
     queryKey: ['agent-logs', filters],
     queryFn: async () => {
       let query = supabase
         .from('ai_agent_logs')
-        .select('*')
+        .select('id, agent_id, agent_name, bu_id, user_id, scope, integration_key, status, error_message, model_used, input_tokens, output_tokens, total_tokens, latency_ms, action_context, created_at')
         .order('created_at', { ascending: false })
         .limit(filters?.limit || 100);
       
