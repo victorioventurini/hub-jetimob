@@ -22,7 +22,7 @@ interface UserPermissionsSheetProps {
   onOpenChange: (open: boolean) => void;
   user: {
     user_id: string;
-    role_in_bu: string;
+    role_in_bu: string | null;
     profiles: {
       display_name: string;
       work_email: string;
