@@ -2,15 +2,17 @@
  * Hook to detect and fetch external user info
  * External users are identified via partner_contacts table
  * Supports multi-BU: returns all active contacts across BUs
+ * 
+ * NOTE: Uses global supabase client (not bu-scoped) because this runs
+ * BEFORE BuProvider is initialized - it's used to populate BuContext itself.
  */
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";
 
 export function useExternalUser() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const supabase = useBuScopedSupabase();
 
   const {
     data: externalData,
