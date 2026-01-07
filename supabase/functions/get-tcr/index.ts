@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
-// TCR Content embedded - Version 2.4.0
-const TCR_VERSION = "2.4.0";
+// TCR Content embedded - Version 2.5.0
+const TCR_VERSION = "2.5.0";
 const TCR_UPDATED_AT = "2026-01-07";
 
 const TCR_SECTIONS: Record<string, { title: string; content: string }> = {
@@ -405,6 +405,94 @@ getShareableAbsoluteUrl('asset', assetId);
 | Slack | 🚧 Planejado | Notificações e comandos |
 | n8n | 🚧 Planejado | Automações complexas |
 | Google Sheets | 🚧 Planejado | Import/export de KPIs |
+`,
+  },
+  notifications: {
+    title: "10. Central de Notificações",
+    content: `
+### 10.1 Arquitetura
+
+A Central de Notificações segue modelo de **governança em 3 níveis**:
+
+| Nível | Escopo | Responsabilidade |
+|-------|--------|------------------|
+| **Global** | Plataforma | Catálogo de eventos e canais |
+| **BU** | Business Unit | Configuração de canais (Slack, etc) |
+| **Usuário** | Individual | Preferências pessoais |
+
+### 10.2 Tabelas
+
+| Tabela | Escopo | Descrição |
+|--------|--------|-----------|
+| \`notification_events\` | Global | Catálogo de eventos (18 padrão) |
+| \`notification_channels\` | Global | Canais disponíveis (in_app, email, slack, whatsapp, webhook) |
+| \`bu_notification_channels\` | BU | Configuração de canais por BU |
+| \`user_notification_preferences_v2\` | Usuário+BU | Preferências por evento/canal |
+| \`notification_outbox\` | BU | Fila de envio assíncrono |
+| \`notifications\` | Usuário | Notificações in-app |
+
+### 10.3 Função de Emissão
+
+\`\`\`sql
+-- Emite evento para múltiplos destinatários
+emit_notification_event(
+  p_event_slug text,
+  p_bu_id uuid,
+  p_recipient_ids uuid[],
+  p_title text,
+  p_message text,
+  p_context_type text,
+  p_context_id uuid,
+  p_context_url text,
+  p_metadata jsonb
+)
+\`\`\`
+
+**Fluxo:**
+1. Valida evento existe e está ativo
+2. Para cada destinatário:
+   - Verifica se é usuário externo (partner_contact)
+   - Filtra por audiência (internal/external/both)
+   - Consulta preferências pessoais
+   - Ignora preferências se evento é obrigatório
+   - Gera \`notification\` (in_app) e/ou \`notification_outbox\` (outros canais)
+
+### 10.4 Eventos Padrão
+
+| Módulo | Eventos |
+|--------|---------|
+| Core | \`user.mentioned\`, \`user.welcomed\` |
+| OKRs | \`okr.checkin.created\`, \`okr.kr.updated\`, \`okr.objective.completed\` |
+| Tickets | \`ticket.created\`, \`ticket.assigned\`, \`ticket.status_changed\`, \`ticket.commented\`, \`ticket.resolved\` |
+| Assets | \`asset.assigned\`, \`asset.returned\`, \`asset.maintenance_due\` |
+| Teams | \`team.member_added\`, \`team.member_removed\`, \`team.leader_changed\` |
+| KPIs | \`kpi.threshold_breached\`, \`kpi.value_added\`, \`kpi.target_achieved\` |
+
+### 10.5 Frontend
+
+| Rota | Acesso | Função |
+|------|--------|--------|
+| \`/hub/notifications\` | super_admin | Gerenciar eventos e canais globais |
+| \`/settings/notifications\` | admin BU | Configurar canais da BU |
+| \`/me/notifications\` | usuário | Preferências pessoais |
+
+**Hook:**
+\`\`\`typescript
+import { useNotificationCenter } from '@/hooks/useNotificationCenter';
+
+const { 
+  events, channels, buChannels, userSettings,
+  emitEvent, setUserPreference 
+} = useNotificationCenter();
+\`\`\`
+
+### 10.6 Edge Function: process-notification-outbox
+
+Processa fila de envio com retry automático:
+- SendGrid para emails (fallback Resend)
+- Slack/WhatsApp placeholders prontos
+- Exponential backoff em falhas
+- Máximo 3 retries
 `,
   },
   "technical-debt": {
