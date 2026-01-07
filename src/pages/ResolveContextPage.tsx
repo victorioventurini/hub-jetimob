@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldX, ArrowLeft, AlertCircle } from "lucide-react";
@@ -175,6 +176,7 @@ export default function ResolveContextPage() {
   const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { userBus, isLoading: buLoading, selectBu, currentBuId } = useBu();
+  const { allBuIds: externalBuIds, isLoading: externalLoading } = useExternalUser();
   
   const [status, setStatus] = useState<ResolveStatus>("loading");
   const [targetBuId, setTargetBuId] = useState<string | null>(null);
@@ -182,8 +184,8 @@ export default function ResolveContextPage() {
 
   useEffect(() => {
     async function resolveContext() {
-      // Wait for auth and BU data to load
-      if (authLoading || buLoading) return;
+      // Wait for auth, BU data, and external data to load
+      if (authLoading || buLoading || externalLoading) return;
       
       // If not authenticated, redirect to login with return URL
       if (!user) {
@@ -211,7 +213,14 @@ export default function ResolveContextPage() {
         }
 
         // Check if user has access to this BU
-        const hasAccess = userBus.some(m => m.bu_id === buId);
+        // First check internal memberships
+        let hasAccess = userBus.some(m => m.bu_id === buId);
+        
+        // Fallback: check if user is an external partner with access to this BU
+        if (!hasAccess && externalBuIds.length > 0) {
+          hasAccess = externalBuIds.includes(buId);
+          console.log("[ResolveContext] External partner access check:", { buId, hasAccess, externalBuIds });
+        }
         
         if (!hasAccess) {
           console.warn("[ResolveContext] User does not have access to BU:", buId);
@@ -240,7 +249,7 @@ export default function ResolveContextPage() {
     }
 
     resolveContext();
-  }, [entity, id, user, userBus, authLoading, buLoading, navigate, location.pathname, currentBuId, selectBu]);
+  }, [entity, id, user, userBus, externalBuIds, authLoading, buLoading, externalLoading, navigate, location.pathname, currentBuId, selectBu]);
 
   // After BU switch, navigate to target
   useEffect(() => {

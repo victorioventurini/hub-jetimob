@@ -1,25 +1,28 @@
 /**
  * Hook to detect and fetch external user info
  * External users are identified via partner_contacts table
+ * Supports multi-BU: returns all active contacts across BUs
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { ExternalUserInfo } from "../types";
+import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";
 
 export function useExternalUser() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const {
-    data: externalInfo,
+    data: externalData,
     isLoading: isQueryLoading,
     error,
   } = useQuery({
     queryKey: ["external-user-info", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
+    queryFn: async (): Promise<ExternalUserData> => {
+      if (!user?.id) {
+        return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };
+      }
 
-      // Check if user is a partner contact
+      // Fetch ALL active partner contacts for this user (multi-BU support)
       const { data, error } = await supabase
         .from("partner_contacts")
         .select(`
@@ -40,43 +43,65 @@ export function useExternalUser() {
         `)
         .eq("profile_user_id", user.id)
         .eq("status", "active")
-        .is("deleted_at", null)
-        .maybeSingle();
+        .is("deleted_at", null);
 
       if (error) {
         console.error("Error checking external user:", error);
-        return null;
+        return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };
       }
 
-      if (!data) {
-        return null; // Not an external user
+      if (!data || data.length === 0) {
+        return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };
       }
 
-      // Type assertion for joined data
-      const company = data.partner_companies as unknown as { id: string; name: string };
-      const bu = data.bu_units as unknown as { id: string; name: string; legal_entity: string | null };
+      // Map to ExternalContactRecord array
+      const contacts: ExternalContactRecord[] = data.map((record) => {
+        const company = record.partner_companies as unknown as { id: string; name: string };
+        const bu = record.bu_units as unknown as { id: string; name: string; legal_entity: string | null };
+
+        return {
+          contactId: record.id,
+          name: record.name,
+          email: record.email,
+          companyId: company.id,
+          companyName: company.name,
+          buId: bu.id,
+          buName: bu.name,
+          buLegalName: bu.legal_entity,
+        };
+      });
+
+      // Extract unique BU IDs
+      const allBuIds = [...new Set(contacts.map(c => c.buId))];
 
       return {
-        contactId: data.id,
-        name: data.name,
-        email: data.email,
-        companyId: company.id,
-        companyName: company.name,
-        buId: bu.id,
-        buName: bu.name,
-        buLegalName: bu.legal_entity,
-      } as ExternalUserInfo;
+        contacts,
+        allBuIds,
+        primaryContact: contacts[0] ?? null,
+        isExternal: contacts.length > 0,
+      };
     },
     enabled: !!user?.id && !isAuthLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const isExternal = !!externalInfo;
   const isLoading = isAuthLoading || isQueryLoading;
 
+  // Backward compatibility: externalInfo returns the primary contact
+  const externalInfo: ExternalUserInfo | null = externalData?.primaryContact ?? null;
+  const isExternal = externalData?.isExternal ?? false;
+
   return {
+    /** True if user has any active partner_contact records */
     isExternal,
+    /** Primary contact info (for backward compatibility) */
     externalInfo,
+    /** All contacts across all BUs */
+    externalContacts: externalData?.contacts ?? [],
+    /** All BU IDs the external user has access to */
+    allBuIds: externalData?.allBuIds ?? [],
+    /** Full external user data */
+    externalData: externalData ?? null,
     isLoading,
     error,
   };
