@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { TeamWithRelations, TeamFormData, TeamTreeNode } from "../types";
 import { toast } from "sonner";
 import { useBu } from "@/contexts/BuContext";
@@ -7,6 +7,7 @@ import { queryKeys } from "@/lib/queryKeys";
 
 export function useTeams(includeInactive = false) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: queryKeys.teams.list(currentBu?.id ?? null),
@@ -73,6 +74,8 @@ export function useTeams(includeInactive = false) {
 }
 
 export function useTeam(teamId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["team", teamId],
     queryFn: async () => {
@@ -228,6 +231,7 @@ export function useHierarchicalTeamList() {
 export function useCreateTeam() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: TeamFormData) => {
@@ -238,6 +242,7 @@ export function useCreateTeam() {
       // Validate no circular reference
       if (data.parent_team_id) {
         const wouldCreateLoop = await checkCircularReference(
+          supabase,
           null,
           data.parent_team_id
         );
@@ -274,6 +279,7 @@ export function useCreateTeam() {
 
 export function useUpdateTeam() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -286,6 +292,7 @@ export function useUpdateTeam() {
       // Validate no circular reference
       if (data.parent_team_id !== undefined) {
         const wouldCreateLoop = await checkCircularReference(
+          supabase,
           id,
           data.parent_team_id
         );
@@ -320,6 +327,7 @@ export function useUpdateTeam() {
 
 export function useDeactivateTeam() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (teamId: string) => {
@@ -342,6 +350,7 @@ export function useDeactivateTeam() {
 
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (teamId: string) => {
@@ -368,6 +377,7 @@ export function useDeleteTeam() {
 }
 
 async function checkCircularReference(
+  supabase: ReturnType<typeof useBuScopedSupabase>,
   teamId: string | null,
   parentTeamId: string | null
 ): Promise<boolean> {
@@ -397,6 +407,7 @@ async function checkCircularReference(
 
 export function useAvailableLeaders() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["available-leaders", currentBu?.id],

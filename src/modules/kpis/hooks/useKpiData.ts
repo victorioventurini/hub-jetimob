@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { KpiCategory, KpiWithValues, KpiValue, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,6 +52,7 @@ interface DbKpiValue {
 export function useKpiData(options: UseKpiDataOptions = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   const { category, teamId, ownerId } = options;
 
   // Fetch all KPIs with their latest values
@@ -267,6 +268,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
 // Hook for fetching a single KPI with full history
 export function useKpiDetail(kpiId: string) {
+  const supabase = useBuScopedSupabase();
+  
   const { data: kpi, isLoading } = useQuery({
     queryKey: ["kpi", kpiId],
     queryFn: async () => {
