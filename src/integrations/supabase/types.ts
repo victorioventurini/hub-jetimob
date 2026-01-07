@@ -3271,6 +3271,13 @@ export type Database = {
             referencedRelation: "v_pending_checkins"
             referencedColumns: ["kr_id"]
           },
+          {
+            foreignKeyName: "okr_initiatives_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       okr_insights: {
@@ -5866,7 +5873,7 @@ export type Database = {
         }[]
       }
       get_manageable_teams: {
-        Args: { p_bu_id: string; p_user_id: string }
+        Args: { p_bu_id?: string; p_user_id?: string }
         Returns: {
           can_manage: boolean
           team_id: string
