@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import type { TicketCategory, TicketSubcategory, TicketCategoryScope } from "../types";
 
@@ -10,6 +10,7 @@ import type { TicketCategory, TicketSubcategory, TicketCategoryScope } from "../
 export function useTicketCategories(scope?: TicketCategoryScope) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["ticket-categories", buId, scope],
@@ -50,6 +51,7 @@ export function useCreateTicketCategory() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: {
@@ -86,6 +88,7 @@ export function useCreateTicketCategory() {
 
 export function useUpdateTicketCategory() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -116,6 +119,7 @@ export function useUpdateTicketCategory() {
 
 export function useDeleteTicketCategory() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -139,6 +143,7 @@ export function useDeleteTicketCategory() {
 export function useTicketSubcategories(categoryId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["ticket-subcategories", buId, categoryId],
@@ -173,6 +178,7 @@ export function useCreateTicketSubcategory() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: { category_id: string; name: string }) => {
@@ -205,6 +211,7 @@ export function useCreateTicketSubcategory() {
 
 export function useUpdateTicketSubcategory() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -234,6 +241,7 @@ export function useUpdateTicketSubcategory() {
 
 export function useDeleteTicketSubcategory() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

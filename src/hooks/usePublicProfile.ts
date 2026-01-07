@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 
 export interface PublicProfile {
@@ -30,6 +30,7 @@ export interface PublicProfile {
 
 export function usePublicProfile(profileId?: string) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["public-profile", profileId, currentBu?.id],
@@ -88,6 +89,7 @@ export function usePublicProfile(profileId?: string) {
 
 export function useUserOkrs(userId?: string) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["user-okrs", userId, currentBu?.id],
@@ -145,6 +147,7 @@ export function useUserOkrs(userId?: string) {
 
 export function useUserKpis(userId?: string) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["user-kpis", userId, currentBu?.id],
@@ -175,6 +178,8 @@ export function useUserKpis(userId?: string) {
 }
 
 export function useUserSquads(userId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["user-squads", userId],
     queryFn: async () => {
@@ -203,6 +208,8 @@ export function useUserSquads(userId?: string) {
 }
 
 export function useUserBuMemberships(userId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["user-bu-memberships", userId],
     queryFn: async () => {

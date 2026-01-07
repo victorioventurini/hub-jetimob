@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -22,6 +22,7 @@ export interface BuUser {
 
 export function useBuUsers() {
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.buUsers(currentBuId),
