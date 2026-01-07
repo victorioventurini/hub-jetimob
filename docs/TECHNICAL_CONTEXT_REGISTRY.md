@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.4.0  
+**Versão:** 2.5.0  
 **Última atualização:** 2026-01-07
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -1519,14 +1519,37 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.2.0 |
-| **Data da última atualização** | 2026-01-06 |
+| **Versão do TCR** | 2.5.0 |
+| **Data da última atualização** | 2026-01-07 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 
 ---
 
 ## Changelog
+
+### v2.5.0 (2026-01-07) — Central de Notificações
+- **Central de Notificações** implementada (arquitetura escalável multi-canal):
+  - 6 novas tabelas: `notification_events`, `notification_channels`, `bu_notification_channels`, `user_notification_preferences_v2`, `notification_outbox`, coluna `event_slug` em `notifications`
+  - Governança em 3 níveis: Global (catálogo de eventos/canais), BU (configuração de canais), Usuário (preferências pessoais)
+  - Função SQL `emit_notification_event(p_event_slug, p_bu_id, p_recipient_ids, p_title, p_message, p_context_type, p_context_id, p_context_url, p_metadata)`
+  - Suporte a eventos obrigatórios (`is_mandatory = true`) que ignoram preferências
+  - Suporte a audiência (`internal`, `external`, `both`) para controle de usuários externos
+  - 5 canais configurados: `in_app`, `email`, `slack`, `whatsapp`, `webhook`
+  - 18 eventos padrão em 6 módulos (core, okrs, tickets, assets, teams, kpis)
+  - Edge Function `process-notification-outbox` para envio assíncrono com retry
+  - RLS policies completas em todas as tabelas
+- **Frontend de Notificações**:
+  - `/hub/notifications` — Gerenciamento global de eventos e canais (super_admin)
+  - `/settings/notifications` — Configuração de canais por BU (admin)
+  - `/me/notifications` — Preferências pessoais do usuário
+  - Hook `useNotificationCenter` com mutations para todas as operações
+- **Preparação para canais futuros**:
+  - Arquitetura desacoplada via `notification_outbox`
+  - Payloads genéricos em JSONB
+  - Retry automático com exponential backoff
+- **QA Checklist** documentado em `docs/QA_NOTIFICATIONS.md`
+- **Compliance Report** em `docs/NOTIFICATIONS_COMPLIANCE_REPORT.md`
 
 ### v2.4.0 (2026-01-07) — BU Scope Enforcement
 - **BU Scope Enforcement** implementado (segurança multi-tenant):
