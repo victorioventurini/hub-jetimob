@@ -1528,23 +1528,27 @@ src/
 
 ## Changelog
 
-### v2.7.0 (2026-01-07) — Validação Final e Consolidação
-- **Validação completa da Central de Notificações**:
-  - Confirmado modelo de dados conforme especificação (7 tabelas principais)
-  - Governança 3 níveis verificada: Global → BU → Usuário
-  - Todas as RLS policies funcionando corretamente
-  - Eventos obrigatórios (`is_mandatory`) ignoram preferências do usuário
-  - Suporte a usuários externos via `audience` field
-- **Documentação consolidada**:
-  - `docs/NOTIFICATION_SYSTEM_REPORT.md` — Relatório técnico completo
-  - `docs/NOTIFICATIONS_COMPLIANCE_REPORT.md` — Relatório de conformidade
-  - `docs/QA_NOTIFICATIONS.md` — Checklist de QA executado
-- **Itens explicitamente fora de escopo (V2)**:
-  - ❌ Digest (daily/weekly)
-  - ❌ Quiet hours
-  - ❌ Agendamento de envio
-  - ❌ Automação baseada em regras complexas
-  - ❌ Integração Slack/WhatsApp completa
+### v2.7.0 (2026-01-07) — Auditoria Global e Consolidação
+- **Auditoria Global completa** do Hub:
+  - Relatório `docs/GLOBAL_AUDIT_REPORT.md` com 7 áreas auditadas
+  - Checklist QA manual `docs/QA_GLOBAL_AUDIT.md` com 80+ testes
+  - 1 débito crítico identificado (uso de supabase raw em módulos operacionais)
+  - 6 débitos médios, 7 débitos baixos documentados
+- **Validação de Permissões**:
+  - `usePermissions()` funcionando corretamente
+  - `PermissionGuard` e `RequirePermission` operacionais
+  - Wildcard `['*']` para admins confirmado
+- **BU Scope Audit**:
+  - 15+ arquivos identificados usando supabase raw (a migrar)
+  - 14 tabelas com bu_id nullable (a corrigir)
+  - Tabelas de Assets/Tickets corretamente NOT NULL
+- **Edge Functions**:
+  - `global-search` validando BU access corretamente
+  - `process-notification-outbox` funcional com retry
+  - Recomendação: adicionar middleware de logging estruturado
+- **Notificações V1 validado**:
+  - Idempotência via dedupe_key funcionando
+  - Views de observabilidade operacionais
 
 ### v2.6.0 (2026-01-07) — Central de Notificações V1 Completa
 - **Complementos da Central de Notificações**:
