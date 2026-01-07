@@ -6213,6 +6213,7 @@ export type Database = {
         | "warehouse"
         | "remote_hub"
         | "other"
+        | "room"
       bu_status: "active" | "inactive"
       catalog_status: "active" | "inactive"
       employment_status: "active" | "vacation" | "terminated"
@@ -6456,6 +6457,7 @@ export const Constants = {
         "warehouse",
         "remote_hub",
         "other",
+        "room",
       ],
       bu_status: ["active", "inactive"],
       catalog_status: ["active", "inactive"],
