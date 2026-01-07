@@ -159,7 +159,7 @@ export function UserPermissionsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md flex flex-col h-auto max-h-[85vh] p-0">
+      <SheetContent className="sm:max-w-md flex flex-col h-full p-0">
         {/* Compact Header */}
         <div className="px-4 py-3 border-b shrink-0">
           <SheetHeader>
@@ -234,7 +234,7 @@ export function UserPermissionsSheet({
               </div>
             )}
 
-            <ScrollArea className="flex-1 -mx-4 px-4 min-h-[200px] max-h-[320px]">
+            <ScrollArea className="flex-1 -mx-4 px-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -328,7 +328,7 @@ export function UserPermissionsSheet({
               </div>
             )}
 
-            <ScrollArea className="flex-1 -mx-4 px-4 pb-4 min-h-[200px] max-h-[360px]">
+            <ScrollArea className="flex-1 -mx-4 px-4 pb-4">
               {effectiveLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
