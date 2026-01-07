@@ -43,14 +43,21 @@ export function UserPermissionsSheet({
   const { userGroups, isLoading: userGroupsLoading, setUserGroups } = useBuUserGroups(user?.user_id || null);
   const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.user_id || null);
 
-  // Get enabled groups for this BU
-  const enabledGroupIds = new Set(
-    configs.filter((c) => c.is_enabled).map((c) => c.group_id)
+  // Map configs by group_id for quick lookup
+  const configByGroupId = configs.reduce(
+    (acc, c) => {
+      acc[c.group_id] = c;
+      return acc;
+    },
+    {} as Record<string, typeof configs[0]>
   );
 
-  const availableGroups = groups.filter(
-    (g) => g.status === "active" && enabledGroupIds.has(g.id)
-  );
+  // Get available groups: active AND enabled in this BU (default enabled if no config)
+  const availableGroups = groups.filter((g) => {
+    if (g.status !== "active") return false;
+    const config = configByGroupId[g.id];
+    return config?.is_enabled ?? true; // Default enabled if no config exists
+  });
 
   // Initialize selected groups when sheet opens
   useEffect(() => {
