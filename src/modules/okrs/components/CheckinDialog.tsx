@@ -158,6 +158,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
         : reflection.trim();
 
       // Include team_id for shared OKR context
+      // bu_id is auto-filled by enforce_bu_scope trigger via x-current-bu-id header
       const { data: checkinData, error } = await supabase
         .from('okr_checkins')
         .insert({
@@ -169,7 +170,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
           comments,
           user_id: authUser.id,
           team_id: userProfile?.team_id || null, // NEW: capture user's team for context
-        })
+        } as any) // Type assertion needed because bu_id is auto-filled by trigger
         .select('id')
         .single();
 

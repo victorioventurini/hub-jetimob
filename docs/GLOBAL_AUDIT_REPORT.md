@@ -142,29 +142,32 @@ Módulo: users
 
 > **Atualização 2026-01-07**: Migração DT-001 CONCLUÍDA. 35+ arquivos migrados para useBuScopedSupabase().
 
-### 3.2 Colunas bu_id Nullable
+### 3.2 Colunas bu_id NOT NULL (DT-002 ✅)
 
-| Tabela | Nullable | Deveria ser NOT NULL | Risco |
-|--------|----------|----------------------|-------|
-| `okr_org_objectives` | YES | ✅ SIM | 🔴 Alto |
-| `okr_org_key_results` | YES | ✅ SIM | 🔴 Alto |
-| `okr_team_objectives` | YES | ✅ SIM | 🔴 Alto |
-| `okr_team_key_results` | YES | ✅ SIM | 🔴 Alto |
-| `okr_initiatives` | YES | ✅ SIM | 🟡 Médio |
-| `okr_checkins` | YES | ✅ SIM | 🟡 Médio |
-| `teams` | YES | ✅ SIM | 🔴 Alto |
-| `kpi_metrics` | YES | ⚠️ Depende (is_global) | 🟡 Médio |
-| `cycles` | YES | ✅ SIM | 🟡 Médio |
-| `profiles` | YES | ⚠️ Pode ser NULL (sem BU) | 🟢 Baixo |
-| `notifications` | YES | ⚠️ Legado | 🟢 Baixo |
-| `mentions` | YES | ⚠️ Legado | 🟢 Baixo |
+| Tabela | Status | Data Migração |
+|--------|--------|---------------|
+| `okr_org_objectives` | ✅ NOT NULL | 2026-01-07 |
+| `okr_org_key_results` | ✅ NOT NULL | 2026-01-07 |
+| `okr_team_objectives` | ✅ NOT NULL | 2026-01-07 |
+| `okr_team_key_results` | ✅ NOT NULL | 2026-01-07 |
+| `okr_initiatives` | ✅ NOT NULL | 2026-01-07 |
+| `okr_checkins` | ✅ NOT NULL | 2026-01-07 |
+| `okr_contributions` | ✅ NOT NULL | 2026-01-07 |
+| `teams` | ✅ NOT NULL | 2026-01-07 |
+| `cycles` | ✅ NOT NULL | 2026-01-07 |
+| `kpi_metrics` | ⚠️ Nullable | is_global = true permite NULL |
+| `profiles` | ⚠️ Nullable | Usuário pode não ter BU atribuída |
+| `notifications` | ⚠️ Nullable | Legado - notificações globais |
+| `mentions` | ⚠️ Nullable | Legado |
 
-### 3.3 Tabelas Corretamente NOT NULL
+### 3.3 Tabelas com enforce_bu_scope Trigger
 
-✅ Todas as tabelas de Assets: `asset_inventory`, `asset_movements`, `asset_keyrings`, etc.
-✅ Todas as tabelas de Tickets: `tickets`, `ticket_messages`, `ticket_attachments`, etc.
-✅ Tabelas de parceiros: `partner_companies`, `partner_contacts`, etc.
-✅ Tabelas de notificação v2: `notification_outbox`, `user_notification_preferences_v2`, `bu_notification_channels`
+✅ Todas as tabelas de OKRs (org_objectives, org_key_results, team_objectives, team_key_results, initiatives, checkins, contributions)
+✅ Todas as tabelas de Assets (inventory, movements, keyrings, groups, etc.)
+✅ Todas as tabelas de Tickets (tickets, messages, attachments, categories)
+✅ Teams e Squads
+✅ Cycles
+✅ KPI Metrics e Values
 
 ### 3.4 Débito Crítico
 

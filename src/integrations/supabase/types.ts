@@ -2119,7 +2119,7 @@ export type Database = {
       }
       cycles: {
         Row: {
-          bu_id: string | null
+          bu_id: string
           created_at: string
           end_date: string
           id: string
@@ -2133,7 +2133,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bu_id?: string | null
+          bu_id: string
           created_at?: string
           end_date: string
           id?: string
@@ -2147,7 +2147,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bu_id?: string | null
+          bu_id?: string
           created_at?: string
           end_date?: string
           id?: string
@@ -2936,7 +2936,7 @@ export type Database = {
       okr_checkins: {
         Row: {
           blockers: string | null
-          bu_id: string | null
+          bu_id: string
           comments: string | null
           confidence: Database["public"]["Enums"]["okr_confidence"]
           created_at: string
@@ -2950,7 +2950,7 @@ export type Database = {
         }
         Insert: {
           blockers?: string | null
-          bu_id?: string | null
+          bu_id: string
           comments?: string | null
           confidence?: Database["public"]["Enums"]["okr_confidence"]
           created_at?: string
@@ -2964,7 +2964,7 @@ export type Database = {
         }
         Update: {
           blockers?: string | null
-          bu_id?: string | null
+          bu_id?: string
           comments?: string | null
           confidence?: Database["public"]["Enums"]["okr_confidence"]
           created_at?: string
@@ -3073,7 +3073,7 @@ export type Database = {
       }
       okr_contributions: {
         Row: {
-          bu_id: string | null
+          bu_id: string
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -3085,7 +3085,7 @@ export type Database = {
           to_type: Database["public"]["Enums"]["okr_contribution_entity_type"]
         }
         Insert: {
-          bu_id?: string | null
+          bu_id: string
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -3097,7 +3097,7 @@ export type Database = {
           to_type: Database["public"]["Enums"]["okr_contribution_entity_type"]
         }
         Update: {
-          bu_id?: string | null
+          bu_id?: string
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -3189,7 +3189,7 @@ export type Database = {
       }
       okr_initiatives: {
         Row: {
-          bu_id: string | null
+          bu_id: string
           contributors: string[] | null
           created_at: string
           deleted_at: string | null
@@ -3207,7 +3207,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bu_id?: string | null
+          bu_id: string
           contributors?: string[] | null
           created_at?: string
           deleted_at?: string | null
@@ -3225,7 +3225,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bu_id?: string | null
+          bu_id?: string
           contributors?: string[] | null
           created_at?: string
           deleted_at?: string | null
@@ -3446,7 +3446,7 @@ export type Database = {
       okr_org_key_results: {
         Row: {
           baseline: number
-          bu_id: string | null
+          bu_id: string
           cancellation_learning: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -3467,7 +3467,7 @@ export type Database = {
         }
         Insert: {
           baseline?: number
-          bu_id?: string | null
+          bu_id: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3488,7 +3488,7 @@ export type Database = {
         }
         Update: {
           baseline?: number
-          bu_id?: string | null
+          bu_id?: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3533,7 +3533,7 @@ export type Database = {
       }
       okr_org_objectives: {
         Row: {
-          bu_id: string | null
+          bu_id: string
           cancellation_learning: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -3555,7 +3555,7 @@ export type Database = {
           year: number
         }
         Insert: {
-          bu_id?: string | null
+          bu_id: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3577,7 +3577,7 @@ export type Database = {
           year: number
         }
         Update: {
-          bu_id?: string | null
+          bu_id?: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3657,7 +3657,7 @@ export type Database = {
       okr_team_key_results: {
         Row: {
           baseline: number
-          bu_id: string | null
+          bu_id: string
           cancellation_learning: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -3685,7 +3685,7 @@ export type Database = {
         }
         Insert: {
           baseline?: number
-          bu_id?: string | null
+          bu_id: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3713,7 +3713,7 @@ export type Database = {
         }
         Update: {
           baseline?: number
-          bu_id?: string | null
+          bu_id?: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3871,7 +3871,7 @@ export type Database = {
       }
       okr_team_objectives: {
         Row: {
-          bu_id: string | null
+          bu_id: string
           cancellation_learning: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -3899,7 +3899,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
-          bu_id?: string | null
+          bu_id: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3927,7 +3927,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
-          bu_id?: string | null
+          bu_id?: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -4582,7 +4582,7 @@ export type Database = {
       }
       teams: {
         Row: {
-          bu_id: string | null
+          bu_id: string
           checkin_day: number
           checkin_deadline_hour: number
           checkin_frequency: string
@@ -4597,7 +4597,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bu_id?: string | null
+          bu_id: string
           checkin_day?: number
           checkin_deadline_hour?: number
           checkin_frequency?: string
@@ -4612,7 +4612,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bu_id?: string | null
+          bu_id?: string
           checkin_day?: number
           checkin_deadline_hour?: number
           checkin_frequency?: string
