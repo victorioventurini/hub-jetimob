@@ -562,7 +562,7 @@ export default function CreateTicketPage() {
                 name="visibility"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Visibilidade</FormLabel>
+                    <FormLabel>Visibilidade *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
