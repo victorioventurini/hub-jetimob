@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import type {
@@ -19,6 +19,7 @@ interface UseVicAgentOptions {
 
 export function useVicAgent(options?: UseVicAgentOptions) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const [lastResponse, setLastResponse] = useState<VicInvokeResponse | null>(null);
 
   const mutation = useMutation({
@@ -127,6 +128,7 @@ export function useVicAgent(options?: UseVicAgentOptions) {
 // Hook to check if IA is enabled for current BU
 export function useVicEnabled() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const { data: iaConfig, isLoading } = useQuery({
     queryKey: ["bu-ia-config", currentBu?.id],
@@ -164,6 +166,7 @@ export function useVicEnabled() {
 // Hook to manage BU IA configuration
 export function useVicConfig() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
 
   const updateConfig = useMutation({
@@ -213,6 +216,7 @@ export function useVicConfig() {
 // Hook to manage agent activations for a BU
 export function useVicAgentActivations() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
 
   const { data: activations, isLoading } = useQuery({

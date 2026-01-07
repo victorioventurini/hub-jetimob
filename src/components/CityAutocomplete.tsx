@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { MapPin, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { cn } from '@/lib/utils';
 
 interface CityPrediction {
@@ -26,6 +26,8 @@ export function CityAutocomplete({
   placeholder = "Digite o nome da cidade",
   disabled = false,
 }: CityAutocompleteProps) {
+  const supabase = useBuScopedSupabase();
+  
   // Exibe "Cidade, UF" no input
   const displayValue = value && state ? `${value}, ${state}` : value || '';
   
