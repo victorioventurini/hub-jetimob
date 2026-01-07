@@ -38,7 +38,7 @@ import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
 import { PermissionDialog } from "../components/PermissionDialog";
 import { GroupDialog } from "../components/GroupDialog";
-import { GroupPermissionsSheet } from "../components/GroupPermissionsSheet";
+import { TemplateEditorSheet } from "../components/TemplateEditorSheet";
 import type { Permission, PermissionGroup, PermissionScope } from "../types";
 
 /**
@@ -322,7 +322,17 @@ export default function GlobalPermissionsPage() {
                 <TableBody>
                   {filteredGroups.map((group) => (
                     <TableRow key={group.id}>
-                      <TableCell className="font-medium">{group.name}</TableCell>
+                            <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{group.name}</span>
+                          {group.is_system && (
+                            <Badge variant="secondary" className="text-xs">Sistema</Badge>
+                          )}
+                        </div>
+                        {group.slug && (
+                          <code className="text-xs text-muted-foreground font-mono">{group.slug}</code>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {group.description || "—"}
                       </TableCell>
@@ -395,7 +405,7 @@ export default function GlobalPermissionsPage() {
         isPending={createGroup.isPending || updateGroup.isPending}
       />
 
-      <GroupPermissionsSheet
+      <TemplateEditorSheet
         open={!!permissionsSheetGroup}
         onOpenChange={(open) => {
           if (!open) setPermissionsSheetGroup(null);

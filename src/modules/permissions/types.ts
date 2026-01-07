@@ -28,7 +28,9 @@ export interface Permission {
 export interface PermissionGroup {
   id: string;
   name: string;
+  slug: string | null;
   description: string | null;
+  is_system: boolean;
   status: PermissionStatus;
   created_at: string;
   updated_at: string;
