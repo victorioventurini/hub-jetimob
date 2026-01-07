@@ -1,8 +1,10 @@
 import { Tables } from "@/integrations/supabase/types";
 
-export type BuLocation = Tables<"bu_locations">;
+export type BuLocation = Tables<"bu_locations"> & {
+  parent?: { id: string; name: string } | null;
+};
 
-export type BuLocationType = "headquarters" | "office" | "warehouse" | "remote_hub" | "other";
+export type BuLocationType = "headquarters" | "office" | "warehouse" | "remote_hub" | "room" | "other";
 export type BuLocationStatus = "active" | "inactive";
 
 export interface BuLocationFormData {
@@ -10,6 +12,7 @@ export interface BuLocationFormData {
   type: BuLocationType;
   status: BuLocationStatus;
   is_default: boolean;
+  parent_location_id?: string | null;
   formatted_address?: string;
   address_line_1?: string;
   address_line_2?: string;
@@ -30,6 +33,7 @@ export const LOCATION_TYPE_LABELS: Record<BuLocationType, string> = {
   office: "Escritório",
   warehouse: "Depósito",
   remote_hub: "Hub Remoto",
+  room: "Sala",
   other: "Outro",
 };
 

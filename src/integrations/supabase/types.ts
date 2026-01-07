@@ -1774,6 +1774,7 @@ export type Database = {
           longitude: number | null
           name: string
           notes: string | null
+          parent_location_id: string | null
           postal_code: string | null
           state: string | null
           status: Database["public"]["Enums"]["bu_location_status"]
@@ -1800,6 +1801,7 @@ export type Database = {
           longitude?: number | null
           name: string
           notes?: string | null
+          parent_location_id?: string | null
           postal_code?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["bu_location_status"]
@@ -1826,6 +1828,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           notes?: string | null
+          parent_location_id?: string | null
           postal_code?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["bu_location_status"]
@@ -1840,6 +1843,13 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_locations_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
             referencedColumns: ["id"]
           },
         ]
