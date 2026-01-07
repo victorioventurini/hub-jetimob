@@ -291,11 +291,11 @@ export default function GlobalIntegrationDetailPage() {
                   </div>
                   <div className="flex gap-2">
                     {isAdmin && (
-                      <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
+                      <Button onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/new`)}>
                         Criar Agente
                       </Button>
                     )}
-                    <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}>
+                    <Button variant="outline" onClick={() => navigate(`/hub/integrations/${integrationKey}/agents`)}>
                       Ver Todos
                     </Button>
                   </div>
@@ -326,7 +326,7 @@ export default function GlobalIntegrationDetailPage() {
                         <Button 
                           variant="ghost" 
                           className="w-full"
-                          onClick={() => navigate(`/settings/integrations/${integrationKey}/agents`)}
+                          onClick={() => navigate(`/hub/integrations/${integrationKey}/agents`)}
                         >
                           Ver mais {globalAgents.length - 5} agentes...
                         </Button>
@@ -363,7 +363,7 @@ export default function GlobalIntegrationDetailPage() {
                     Histórico de execuções de agentes desta integração
                   </CardDescription>
                 </div>
-                <Button variant="outline" onClick={() => navigate(`/settings/integrations/${integrationKey}/logs`)}>
+                <Button variant="outline" onClick={() => navigate(`/hub/integrations/${integrationKey}/logs`)}>
                   Ver Todos
                 </Button>
               </div>

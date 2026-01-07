@@ -92,7 +92,7 @@ export default function SettingsIntegrations() {
   };
 
   const handleConfigure = (integrationKey: string) => {
-    navigate(`/settings/integrations/${integrationKey}`);
+    navigate(`/hub/integrations/${integrationKey}`);
   };
 
   return (

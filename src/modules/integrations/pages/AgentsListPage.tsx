@@ -239,7 +239,7 @@ export default function AgentsListPage() {
               <Sparkles className="w-4 h-4 mr-2" />
               Criar de Template
             </Button>
-            <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
+            <Button onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/new`)}>
               <Plus className="w-4 h-4 mr-2" />
               Criar Agente
             </Button>
@@ -316,7 +316,7 @@ export default function AgentsListPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem 
-                              onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/${agent.id}`)}
+                              onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/${agent.id}`)}
                             >
                               <Pencil className="w-4 h-4 mr-2" />
                               Editar
@@ -356,7 +356,7 @@ export default function AgentsListPage() {
                       <Sparkles className="w-4 h-4 mr-2" />
                       Usar Template
                     </Button>
-                    <Button onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}>
+                    <Button onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/new`)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Criar Manualmente
                     </Button>
