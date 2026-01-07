@@ -229,7 +229,7 @@ export function useEmitNotificationEvent() {
       contextType?: string;
       contextId?: string;
       contextUrl?: string;
-      metadata?: Record<string, unknown>;
+      metadata?: Record<string, string | number | boolean>;
     }) => {
       if (!currentBu?.id) {
         throw new Error('BU not available');
@@ -245,7 +245,7 @@ export function useEmitNotificationEvent() {
         p_context_type: contextType ?? null,
         p_context_id: contextId ?? null,
         p_context_url: contextUrl ?? null,
-        p_metadata: metadata ?? {},
+        p_metadata: metadata ? JSON.parse(JSON.stringify(metadata)) : {},
       });
       
       if (error) throw error;
