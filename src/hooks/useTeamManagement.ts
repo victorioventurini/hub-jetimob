@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 
@@ -15,6 +15,7 @@ import { useBu } from "@/contexts/BuContext";
 export function useTeamManagement() {
   const { user, isAdmin } = useAuth();
   const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   const { data: manageableTeams = [], isLoading } = useQuery({
     queryKey: ["manageable-teams", currentBuId, user?.id],
