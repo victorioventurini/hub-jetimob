@@ -1,0 +1,334 @@
+# Convenção de Identidade: user_id vs profile_id
+
+**Versão:** 1.0.0  
+**Última atualização:** 2026-01-07  
+**Status:** Ativo
+
+---
+
+## 1. Definições
+
+O Hub utiliza **dois identificadores distintos** para representar usuários:
+
+| Identificador | Tabela de Origem | Propósito |
+|--------------|------------------|-----------|
+| `user_id` | `auth.users.id` | Identidade de **autenticação** (Supabase Auth) |
+| `profile_id` | `public.profiles.id` | Identidade de **domínio** (entidade de usuário no Hub) |
+
+### 1.1 Quando usar cada um
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        AUTENTICAÇÃO                             │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  auth.users                                              │   │
+│  │  └── id (UUID) ← user_id                                │   │
+│  │      • Usado em: auth.uid(), RLS policies, JWT tokens   │   │
+│  │      • Nunca expor diretamente para o usuário           │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ FK: profiles.user_id → auth.users.id
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                          DOMÍNIO                                │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  public.profiles                                         │   │
+│  │  ├── id (UUID) ← profile_id                             │   │
+│  │  └── user_id (UUID) → referência para auth.users.id     │   │
+│  │                                                          │   │
+│  │  Usado em:                                               │   │
+│  │  • Relações de domínio (memberships, teams, OKRs, etc.) │   │
+│  │  • Queries de listagem de usuários                       │   │
+│  │  • Exibição de dados na UI                               │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Regras de Uso
+
+### 2.1 Use `user_id` (auth.users.id) para:
+
+| Contexto | Exemplo |
+|----------|---------|
+| Verificar autenticação | `auth.uid()` em RLS policies |
+| Funções de autorização | `is_platform_admin(auth.uid())` |
+| Auditoria de ações | `audit_logs.user_id` |
+| Sessões e tokens | JWT claims |
+| Tabela `user_roles` | Mapping de roles globais |
+| Tabela `bu_user_memberships` | Membership em BUs |
+
+### 2.2 Use `profile_id` (profiles.id) para:
+
+| Contexto | Exemplo |
+|----------|---------|
+| Ownership de entidades | `okr_initiatives.owner_user_id` |
+| Liderança de times | `teams.leader_user_id` |
+| Participação em times | `user_team_memberships.user_id` |
+| Grupos de permissão | `bu_user_permission_groups.user_id` |
+| Menções e notificações | `mentions.mentioned_user_id` |
+| Atribuições de assets | `asset_inventory.current_user_id` |
+
+### 2.3 Nomenclatura de Colunas
+
+| Coluna no DB | Referencia | Quando usar |
+|--------------|------------|-------------|
+| `user_id` | Pode ser ambos | Verificar FK para determinar |
+| `owner_user_id` | `profiles.id` | Owner de entidades de domínio |
+| `leader_user_id` | `profiles.id` | Líder de time |
+| `created_by_user_id` | `profiles.id` | Criador de registro |
+| `author_user_id` | `profiles.id` | Autor de conteúdo |
+| `performed_by_user_id` | `profiles.id` | Executor de ação |
+| `profile_user_id` | `profiles.id` | Vínculo explícito com profile |
+
+---
+
+## 3. Conversão entre IDs
+
+### 3.1 No Frontend (TypeScript)
+
+```typescript
+// Obtendo ambos os IDs a partir do contexto de autenticação
+import { useAuth } from "@/hooks/useAuth";
+
+function useIdentity() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  
+  // user.id = auth.users.id (user_id)
+  const userId = user?.id;
+  
+  // Para obter profile_id, fazer query em profiles
+  useEffect(() => {
+    if (userId) {
+      supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single()
+        .then(({ data }) => setProfile(data));
+    }
+  }, [userId]);
+  
+  // profile.id = profiles.id (profile_id)
+  const profileId = profile?.id;
+  
+  return { userId, profileId };
+}
+```
+
+### 3.2 No Backend (PostgreSQL)
+
+```sql
+-- De user_id para profile_id
+SELECT id AS profile_id
+FROM public.profiles
+WHERE user_id = auth.uid();
+
+-- De profile_id para user_id
+SELECT user_id
+FROM public.profiles
+WHERE id = p_profile_id;
+
+-- Helper function para usar em outras funções
+CREATE OR REPLACE FUNCTION get_profile_id(p_user_id uuid)
+RETURNS uuid
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT id FROM profiles WHERE user_id = p_user_id LIMIT 1
+$$;
+
+CREATE OR REPLACE FUNCTION get_auth_user_id(p_profile_id uuid)
+RETURNS uuid
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT user_id FROM profiles WHERE id = p_profile_id LIMIT 1
+$$;
+```
+
+### 3.3 Padrão em Hooks
+
+```typescript
+// Hook que expõe ambos os IDs de forma consistente
+interface UserIdentity {
+  userId: string;      // auth.users.id
+  profileId: string;   // profiles.id
+}
+
+// Exemplo: useBuUsers retorna objeto com ambos
+interface BuUser {
+  user_id: string;     // auth.users.id
+  profile_id: string;  // profiles.id
+  profiles: ProfileData;
+}
+```
+
+---
+
+## 4. Mapeamento de Tabelas
+
+### 4.1 Tabelas que usam `auth.users.id` (user_id de autenticação)
+
+| Tabela | Coluna | Justificativa |
+|--------|--------|---------------|
+| `user_roles` | `user_id` | Roles globais de autenticação |
+| `bu_user_memberships` | `user_id` | Membership verificada via auth |
+| `audit_logs` | `user_id` | Auditoria de sessão |
+| `profiles` | `user_id` | FK para auth.users |
+
+### 4.2 Tabelas que usam `profiles.id` (profile_id de domínio)
+
+| Tabela | Coluna | Justificativa |
+|--------|--------|---------------|
+| `teams` | `leader_user_id` | Líder é entidade de domínio |
+| `user_team_memberships` | `user_id` | Membro de time |
+| `bu_user_permission_groups` | `user_id` | Grupos de permissão por BU |
+| `okr_initiatives` | `owner_user_id` | Owner de iniciativa |
+| `okr_team_objectives` | `owner_user_id` | Owner de objetivo |
+| `okr_team_key_results` | `owner_user_id` | Owner de KR |
+| `okr_checkins` | `user_id` | Autor do check-in |
+| `tickets` | `owner_user_id`, `created_by_user_id` | Responsável/criador |
+| `mentions` | `mentioned_user_id`, `author_id` | Participantes |
+| `asset_inventory` | `current_user_id` | Detentor atual |
+
+---
+
+## 5. RLS Policies
+
+### 5.1 Padrão para policies que verificam ownership
+
+```sql
+-- CORRETO: Comparar auth.uid() com profiles.user_id
+CREATE POLICY "Users can view own profile"
+  ON public.profiles FOR SELECT
+  USING (user_id = auth.uid());
+
+-- CORRETO: Para entidades de domínio, converter primeiro
+CREATE POLICY "Users can view own initiatives"
+  ON public.okr_initiatives FOR SELECT
+  USING (
+    owner_user_id IN (
+      SELECT id FROM profiles WHERE user_id = auth.uid()
+    )
+  );
+
+-- MELHOR: Usar function helper
+CREATE POLICY "Users can view own initiatives v2"
+  ON public.okr_initiatives FOR SELECT
+  USING (owner_user_id = get_profile_id(auth.uid()));
+```
+
+### 5.2 Funções de autorização existentes
+
+```sql
+-- Já existentes no sistema
+is_platform_admin(user_id)      -- Usa auth.users.id
+is_super_admin(user_id)         -- Usa auth.users.id
+is_bu_admin(user_id, bu_id)     -- Usa auth.users.id
+user_has_bu_access(user_id, bu_id)  -- Usa auth.users.id
+is_team_leader(user_id, team_id)    -- Recebe auth.users.id, converte para profile_id internamente
+user_can_manage_team(user_id, team_id)  -- Recebe auth.users.id
+```
+
+---
+
+## 6. Checklist de Implementação
+
+Ao criar novas features ou tabelas:
+
+- [ ] **Definir qual ID usar** baseado no contexto (auth vs domínio)
+- [ ] **Nomear coluna adequadamente** (ver seção 2.3)
+- [ ] **Criar FK explícita** para `auth.users(id)` ou `profiles(id)`
+- [ ] **Documentar na migração** qual referência está sendo usada
+- [ ] **No frontend**: garantir que hooks/componentes passem o ID correto
+- [ ] **Em RLS policies**: usar conversão se necessário
+
+### Exemplo de migração documentada:
+
+```sql
+-- Coluna owner_user_id referencia profiles.id (profile_id)
+-- Justificativa: ownership é conceito de domínio, não de autenticação
+ALTER TABLE public.my_new_table
+  ADD COLUMN owner_user_id uuid REFERENCES public.profiles(id);
+
+COMMENT ON COLUMN public.my_new_table.owner_user_id IS 
+  'ID do profile (profiles.id) que é owner desta entidade';
+```
+
+---
+
+## 7. Erros Comuns e Como Evitar
+
+### ❌ Erro: Misturar IDs em joins
+
+```typescript
+// ERRADO: Passando auth.users.id onde espera-se profiles.id
+const { data } = await supabase
+  .from("okr_initiatives")
+  .select("*")
+  .eq("owner_user_id", user.id); // user.id é auth.users.id!
+
+// CORRETO: Usar profile_id
+const { data } = await supabase
+  .from("okr_initiatives")
+  .select("*")
+  .eq("owner_user_id", profile.id); // profile.id é profiles.id
+```
+
+### ❌ Erro: FK violation ao inserir
+
+```
+ERROR: insert or update on table "bu_user_permission_groups" 
+violates foreign key constraint "bu_user_permission_groups_user_id_fkey"
+```
+
+**Causa**: Tentando inserir `auth.users.id` em coluna que referencia `profiles.id`
+
+**Solução**: Usar `profile_id` na operação
+
+### ❌ Erro: Dados não aparecem na query
+
+**Causa**: Comparando IDs de tipos diferentes (auth vs profile)
+
+**Solução**: Verificar qual ID a tabela espera e converter se necessário
+
+---
+
+## 8. Referência Rápida
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ RESUMO: QUAL ID USAR?                                          │
+├────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Preciso verificar se usuário está logado?                     │
+│  → auth.uid() (user_id)                                        │
+│                                                                 │
+│  Preciso verificar role/membership global?                     │
+│  → user_id (auth.users.id)                                     │
+│                                                                 │
+│  Preciso atribuir ownership de algo no Hub?                    │
+│  → profile_id (profiles.id)                                    │
+│                                                                 │
+│  Preciso listar usuários com dados?                            │
+│  → profiles.id como chave, profiles.user_id para auth checks  │
+│                                                                 │
+│  Preciso verificar liderança de time?                          │
+│  → teams.leader_user_id = profiles.id                          │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Changelog
+
+| Versão | Data | Descrição |
+|--------|------|-----------|
+| 1.0.0 | 2026-01-07 | Documento inicial com convenções estabelecidas |

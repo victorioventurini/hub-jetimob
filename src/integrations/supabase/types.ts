@@ -5783,6 +5783,7 @@ export type Database = {
         Returns: string
       }
       current_bu_id: { Args: never; Returns: string }
+      current_profile_id: { Args: never; Returns: string }
       emit_notification_event: {
         Args: {
           p_actor_id?: string
@@ -5817,6 +5818,7 @@ export type Database = {
           primary_asset_name: string
         }[]
       }
+      get_auth_user_id: { Args: { p_profile_id: string }; Returns: string }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
       get_descendant_team_ids: {
         Args: { p_team_id: string }
@@ -5888,7 +5890,7 @@ export type Database = {
           subcategory_name: string
         }[]
       }
-      get_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_profile_id: { Args: { p_user_id: string }; Returns: string }
       get_team_member_ids: { Args: { p_team_id: string }; Returns: string[] }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
