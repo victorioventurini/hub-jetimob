@@ -4,12 +4,13 @@
  * Supports multi-BU: returns all active contacts across BUs
  */
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";
 
 export function useExternalUser() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const supabase = useBuScopedSupabase();
 
   const {
     data: externalData,

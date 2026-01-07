@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase as supabaseGlobal } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { queryKeys } from '@/lib/queryKeys';
 import {
@@ -119,11 +119,11 @@ export function NotificationCenter() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Subscribe to realtime notifications
+  // Subscribe to realtime notifications (uses global client for realtime)
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
+    const channel = supabaseGlobal
       .channel('notifications-realtime')
       .on(
         'postgres_changes',
@@ -140,7 +140,7 @@ export function NotificationCenter() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseGlobal.removeChannel(channel);
     };
   }, [user?.id, queryClient]);
 

@@ -1,22 +1,22 @@
 # Relatório de Migração: useBuScopedSupabase()
 
 **Data**: 2026-01-07  
-**TCR**: v3.0.0  
+**TCR**: v3.1.0  
 **Status**: ✅ Concluído (100%)
 
 ## Resumo Executivo
 
-Este relatório documenta a migração do cliente Supabase global para o `useBuScopedSupabase()`, garantindo que todas as operações no frontend incluam o header `x-current-bu-id` para RLS e isolamento de BU.
+Migração completa do cliente Supabase global para `useBuScopedSupabase()`. Todas as operações no frontend incluem o header `x-current-bu-id`.
 
 ## Estatísticas Finais
 
 | Métrica | Antes | Depois |
 |---------|-------|--------|
-| Arquivos usando global | ~45 | 2* |
-| Arquivos migrados | 0 | ~43 |
+| Arquivos usando global | ~45 | 3* |
+| Arquivos migrados | 0 | ~42 |
 | % Conclusão | 0% | 100% |
 
-*Apenas exceções justificadas
+*Apenas exceções justificadas (auth, realtime, email domain check)
 
 ## Arquivos Migrados (Todos Concluídos)
 
@@ -25,7 +25,7 @@ Este relatório documenta a migração do cliente Supabase global para o `useBuS
 - ✅ `src/hooks/useNotificationCenter.ts`
 - ✅ `src/hooks/useNotifications.ts`
 - ✅ `src/hooks/usePermissions.ts`
-- ✅ `src/hooks/useHomeDashboard.ts`
+- ✅ `src/hooks/useHomeData.ts`
 - ✅ `src/hooks/useSharedData.ts`
 - ✅ `src/hooks/useProfiles.ts`
 - ✅ `src/hooks/usePublicProfile.ts`

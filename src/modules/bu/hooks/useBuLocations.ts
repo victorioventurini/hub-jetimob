@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import type { BuLocation, BuLocationFormData } from "../types/location";
 
 export function useBuLocations(buId: string | null) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["bu-locations", buId],
     queryFn: async () => {
@@ -24,6 +26,8 @@ export function useBuLocations(buId: string | null) {
 }
 
 export function useBuLocation(locationId: string | null) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["bu-location", locationId],
     queryFn: async () => {
@@ -45,6 +49,7 @@ export function useBuLocation(locationId: string | null) {
 
 export function useCreateBuLocation() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: BuLocationFormData & { bu_id: string }) => {
@@ -89,6 +94,7 @@ export function useCreateBuLocation() {
 
 export function useUpdateBuLocation() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, bu_id, ...data }: Partial<BuLocationFormData> & { id: string; bu_id: string }) => {
@@ -129,6 +135,7 @@ export function useUpdateBuLocation() {
 
 export function useSoftDeleteBuLocation() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, bu_id }: { id: string; bu_id: string }) => {
@@ -147,6 +154,7 @@ export function useSoftDeleteBuLocation() {
 
 export function useSetDefaultBuLocation() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, bu_id }: { id: string; bu_id: string }) => {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import type {
   AutomationEventCatalog,
   AutomationActionCatalog,
@@ -9,6 +9,8 @@ import type {
 } from '../types';
 
 export function useEventCatalog() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['automation-event-catalog'],
     queryFn: async () => {
@@ -26,6 +28,8 @@ export function useEventCatalog() {
 }
 
 export function useActionCatalog() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['automation-action-catalog'],
     queryFn: async () => {
@@ -43,6 +47,8 @@ export function useActionCatalog() {
 }
 
 export function useAutomationConnections(buId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['automation-connections', buId],
     queryFn: async () => {
@@ -73,6 +79,8 @@ export function useAutomationConnections(buId?: string) {
 }
 
 export function useAutomationTokens(buId?: string) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['automation-tokens', buId],
     queryFn: async () => {
@@ -103,6 +111,8 @@ export function useAutomationLogs(filters?: {
   eventKey?: string;
   limit?: number;
 }) {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ['automation-logs', filters],
     queryFn: async () => {

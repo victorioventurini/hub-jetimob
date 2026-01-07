@@ -3,10 +3,11 @@
  * Tickets and stats for the external user's company
  */
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import type { ExternalUserInfo, ExternalTicketSummary, ExternalDashboardStats, ExternalCompanyContext } from "../types";
 
 export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
+  const supabase = useBuScopedSupabase();
   // Fetch recent tickets
   const {
     data: tickets = [],

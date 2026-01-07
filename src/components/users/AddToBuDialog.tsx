@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { TeamSelect } from "@/components/selects";
 import { SimpleSelect } from "@/components/selects";
 
@@ -44,6 +44,7 @@ const ROLE_OPTIONS = [
 export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDialogProps) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   
   const [roleInBu, setRoleInBu] = useState<string>("collaborator");
   const [teamId, setTeamId] = useState<string | undefined>(undefined);

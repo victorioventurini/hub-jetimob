@@ -3,10 +3,16 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
-async function fetchTeamsById(teamIds: Array<string | null | undefined>) {
+// Helper function that accepts supabase client as parameter (DI pattern)
+async function fetchTeamsById(
+  supabase: SupabaseClient<Database>,
+  teamIds: Array<string | null | undefined>
+) {
   const uniqueIds = Array.from(new Set(teamIds.filter((id): id is string => !!id)));
   if (uniqueIds.length === 0) return {} as Record<string, string>;
 
@@ -34,6 +40,7 @@ interface QuickStatsData {
 
 export function useQuickStats() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["quick-stats", currentBu?.id],
@@ -127,6 +134,7 @@ interface NewJetimober {
 
 export function useNewJetimobers(limit = 5) {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["new-jetimobers", currentBu?.id, limit],
@@ -135,10 +143,10 @@ export function useNewJetimobers(limit = 5) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  let query = supabase
-    .from("profiles")
-    .select(
-      `
+      let query = supabase
+        .from("profiles")
+        .select(
+          `
           id,
           display_name,
           job_title,
@@ -146,39 +154,39 @@ export function useNewJetimobers(limit = 5) {
           start_date,
           team_id
         `
-    )
-    .is("deleted_at", null)
-    .eq("employment_status", "active")
-    .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
-    .order("start_date", { ascending: false })
-    .limit(limit);
+        )
+        .is("deleted_at", null)
+        .eq("employment_status", "active")
+        .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
+        .order("start_date", { ascending: false })
+        .limit(limit);
 
-  if (currentBu?.id) {
-    query = query.eq("bu_id", currentBu.id);
-  }
+      if (currentBu?.id) {
+        query = query.eq("bu_id", currentBu.id);
+      }
 
-  const { data, error } = await query;
+      const { data, error } = await query;
 
-  if (error) throw error;
+      if (error) throw error;
 
-  const teamsById = await fetchTeamsById((data || []).map((p) => p.team_id));
+      const teamsById = await fetchTeamsById(supabase, (data || []).map((p) => p.team_id));
 
-  const now = new Date();
-  return (data || []).map((profile) => {
-    const startDate = new Date(profile.start_date);
-    const diffTime = Math.abs(now.getTime() - startDate.getTime());
-    const daysAgo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const now = new Date();
+      return (data || []).map((profile) => {
+        const startDate = new Date(profile.start_date);
+        const diffTime = Math.abs(now.getTime() - startDate.getTime());
+        const daysAgo = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return {
-      id: profile.id,
-      name: profile.display_name || "Sem nome",
-      jobTitle: profile.job_title || "Sem cargo",
-      team: teamsById[profile.team_id] || "Sem time",
-      photoUrl: profile.photo_url || undefined,
-      startDate: profile.start_date,
-      daysAgo,
-    };
-  });
+        return {
+          id: profile.id,
+          name: profile.display_name || "Sem nome",
+          jobTitle: profile.job_title || "Sem cargo",
+          team: teamsById[profile.team_id] || "Sem time",
+          photoUrl: profile.photo_url || undefined,
+          startDate: profile.start_date,
+          daysAgo,
+        };
+      });
     },
   });
 }
@@ -195,6 +203,7 @@ interface Birthday {
 
 export function useBirthdays() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const currentMonth = new Date().getMonth() + 1;
 
   return useQuery({
@@ -227,7 +236,7 @@ export function useBirthdays() {
 
       if (error) throw error;
 
-      const teamsById = await fetchTeamsById((data || []).map((p) => p.team_id));
+      const teamsById = await fetchTeamsById(supabase, (data || []).map((p) => p.team_id));
 
       return (data || []).map((profile) => ({
         id: profile.id,
@@ -242,6 +251,7 @@ export function useBirthdays() {
     enabled: true,
   });
 }
+
 interface WorkAnniversary {
   id: string;
   name: string;
@@ -255,6 +265,7 @@ interface WorkAnniversary {
 
 export function useWorkAnniversaries() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
 
@@ -286,7 +297,7 @@ export function useWorkAnniversaries() {
 
       if (error) throw error;
 
-      const teamsById = await fetchTeamsById((data || []).map((p) => p.team_id));
+      const teamsById = await fetchTeamsById(supabase, (data || []).map((p) => p.team_id));
 
       // Filter by current month and exclude current year (no anniversary in first year)
       return (data || [])
@@ -326,6 +337,8 @@ interface ModuleItem {
 }
 
 export function useModules() {
+  const supabase = useBuScopedSupabase();
+  
   return useQuery({
     queryKey: ["modules-home"],
     queryFn: async (): Promise<ModuleItem[]> => {
