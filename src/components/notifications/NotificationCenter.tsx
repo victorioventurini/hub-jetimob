@@ -156,6 +156,7 @@ export function NotificationCenter() {
   // Mark single notification as read
   const markAsRead = useMutation({
     mutationFn: async (notificationId: string) => {
+      if (!supabaseBu) throw new Error('BU client not ready');
       const { error } = await supabaseBu.rpc('mark_notification_read', {
         p_notification_id: notificationId,
       });
@@ -168,6 +169,7 @@ export function NotificationCenter() {
 
   const markAllAsRead = useMutation({
     mutationFn: async () => {
+      if (!supabaseBu) throw new Error('BU client not ready');
       const { error } = await supabaseBu.rpc('mark_all_notifications_read');
       if (error) throw error;
     },

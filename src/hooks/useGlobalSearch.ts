@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useBu } from "@/contexts/BuContext";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 
 export interface SearchResult {
   id: string;
@@ -25,11 +24,13 @@ export interface SearchResponse {
   groups: SearchGroup[];
 }
 
+/**
+ * SAFE for pre-BU: Uses useOptionalBuClient() and disables search until BU is selected.
+ */
 export function useGlobalSearch(initialQuery = "") {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client, buId, isReady } = useOptionalBuClient();
 
   // Debounce query
   useEffect(() => {
@@ -47,20 +48,20 @@ export function useGlobalSearch(initialQuery = "") {
     error,
     refetch,
   } = useQuery<SearchResponse>({
-    queryKey: ["global-search", currentBuId, debouncedQuery],
+    queryKey: ["global-search", buId, debouncedQuery],
     queryFn: async () => {
-      if (!currentBuId || debouncedQuery.length < 2) {
+      if (!buId || !client || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
       console.log("[useGlobalSearch] Invoking global-search with:", {
-        bu_id: currentBuId,
+        bu_id: buId,
         q: debouncedQuery,
       });
 
-      const { data, error } = await supabase.functions.invoke("global-search", {
+      const { data, error } = await client.functions.invoke("global-search", {
         body: {
-          bu_id: currentBuId,
+          bu_id: buId,
           q: debouncedQuery,
           limit_per_type: 5,
         },
@@ -81,7 +82,7 @@ export function useGlobalSearch(initialQuery = "") {
 
       return data as SearchResponse;
     },
-    enabled: !!currentBuId && debouncedQuery.length >= 2,
+    enabled: isReady && debouncedQuery.length >= 2,
     staleTime: 30000, // 30 seconds
     gcTime: 60000, // 1 minute
     retry: 1,
@@ -93,9 +94,9 @@ export function useGlobalSearch(initialQuery = "") {
   }, [data?.groups]);
 
   const isEmpty = useMemo(() => {
-    if (!currentBuId) return false;
+    if (!isReady) return false;
     return debouncedQuery.length >= 2 && !isLoading && totalResults === 0;
-  }, [currentBuId, debouncedQuery, isLoading, totalResults]);
+  }, [isReady, debouncedQuery, isLoading, totalResults]);
 
   return {
     query,
@@ -107,5 +108,6 @@ export function useGlobalSearch(initialQuery = "") {
     isEmpty,
     error,
     refetch,
+    disabled: !isReady,
   };
 }

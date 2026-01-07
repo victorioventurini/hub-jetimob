@@ -1,15 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 
+/**
+ * POST-BU hook: Only executes mutations when BU is selected.
+ */
 export function useDeleteProfile() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (profileId: string) => {
+      if (!client) {
+        throw new Error("useDeleteProfile: No BU client available");
+      }
+      
       // Soft delete - set deleted_at
-      const { error } = await supabase
+      const { error } = await client
         .from("profiles")
         .update({ 
           deleted_at: new Date().toISOString(),

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useAuth } from './useAuth';
-import { useBu } from '@/contexts/BuContext';
 
 interface CreateMentionNotificationParams {
   mentionedUserId: string;
@@ -15,18 +14,19 @@ interface CreateMentionNotificationParams {
 /**
  * Hook para notificações - migrado para usar o novo sistema centralizado.
  * Mantém a API legada para compatibilidade com código existente.
+ * 
+ * SAFE for pre-BU: Uses useOptionalBuClient() and guards mutations.
  */
 export function useNotifications() {
   const { user } = useAuth();
-  const { currentBu } = useBu();
+  const { client, buId } = useOptionalBuClient();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
 
   // Get current user's profile for author name
   const getAuthorName = async (): Promise<string> => {
-    if (!user?.id) return 'Alguém';
+    if (!user?.id || !client) return 'Alguém';
     
-    const { data } = await supabase
+    const { data } = await client
       .from('profiles')
       .select('display_name')
       .eq('user_id', user.id)
@@ -38,16 +38,16 @@ export function useNotifications() {
   // Create mention notification using the new centralized system
   const createMentionNotification = useMutation({
     mutationFn: async (params: CreateMentionNotificationParams) => {
-      if (!user?.id || !currentBu?.id) {
+      if (!user?.id || !buId || !client) {
         throw new Error('User or BU not available');
       }
 
       const authorName = await getAuthorName();
 
       // Use the new emit_notification_event function
-      const { data, error } = await supabase.rpc('emit_notification_event', {
+      const { data, error } = await client.rpc('emit_notification_event', {
         p_event_slug: 'core.mention',
-        p_bu_id: currentBu.id,
+        p_bu_id: buId,
         p_recipient_user_ids: [params.mentionedUserId],
         p_actor_id: user.id,
         p_title: `${authorName} mencionou você`,

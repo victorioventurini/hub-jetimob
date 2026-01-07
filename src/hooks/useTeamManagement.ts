@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
-import { useBu } from "@/contexts/BuContext";
 
 /**
  * Hook para verificar se o usuário pode gerenciar um time específico.
+ * 
+ * SAFE for pre-BU: Uses useOptionalBuClient() and disables query until BU is selected.
  * 
  * Regras:
  * - super_admin: pode gerenciar qualquer time
@@ -14,17 +15,18 @@ import { useBu } from "@/contexts/BuContext";
  */
 export function useTeamManagement() {
   const { user, isAdmin } = useAuth();
-  const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client, buId, isReady } = useOptionalBuClient();
 
   const { data: manageableTeams = [], isLoading } = useQuery({
-    queryKey: ["manageable-teams", currentBuId, user?.id],
+    queryKey: ["manageable-teams", buId, user?.id],
     queryFn: async () => {
-      if (!currentBuId || !user?.id) return [];
+      if (!buId || !user?.id || !client) {
+        throw new Error("useTeamManagement: No BU client available");
+      }
 
-      const { data, error } = await supabase.rpc("get_manageable_teams", {
+      const { data, error } = await client.rpc("get_manageable_teams", {
         p_user_id: user.id,
-        p_bu_id: currentBuId,
+        p_bu_id: buId,
       });
 
       if (error) {
@@ -34,7 +36,7 @@ export function useTeamManagement() {
 
       return data || [];
     },
-    enabled: !!currentBuId && !!user?.id,
+    enabled: isReady && !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
