@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { 
+  withMiddleware, 
+  corsHeaders, 
+  jsonResponse, 
+  errorResponse,
+  logRequestCompletion,
+} from "../_shared/middleware.ts";
 
 interface SearchResult {
   id: string;
@@ -34,62 +35,31 @@ const KEYS_ROLES = ["assets_admin", "keys_admin", "keys_manager", "viewer"];
 const GIFTS_ROLES = ["assets_admin", "gifts_admin", "gifts_manager", "viewer"];
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  // Use centralized middleware for auth + BU validation
+  const { success, context, error } = await withMiddleware(req, {
+    requireAuth: true,
+    requireBu: true,
+    validateBuAccess: true,
+    logRequest: true,
+  });
+
+  if (!success || !context) {
+    return error!;
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("Auth error:", userError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { bu_id, q, limit_per_type = 5 } = await req.json();
+    const { supabase, user, buId: bu_id, requestId } = context;
+    
+    const body = await req.json();
+    const { q, limit_per_type = 5 } = body;
     const query = (q || "").trim().toLowerCase();
 
-    console.log(`[global-search] User: ${user.id}, BU: ${bu_id}, Query: "${query}"`);
+    console.log(`[${requestId}] User: ${user!.id}, BU: ${bu_id}, Query: "${query}"`);
 
     // Validate query length
     if (query.length < 2) {
-      return new Response(JSON.stringify({ query, groups: [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate user has access to BU
-    const { data: membership, error: membershipError } = await supabase
-      .from("bu_user_memberships")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("bu_id", bu_id)
-      .single();
-
-    if (membershipError || !membership) {
-      console.error("BU access denied:", membershipError);
-      return new Response(JSON.stringify({ error: "Access denied to this BU" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      logRequestCompletion(context, "success", "Query too short");
+      return jsonResponse({ query, groups: [] });
     }
 
     const limit = Math.min(limit_per_type, 10);
@@ -338,10 +308,10 @@ serve(async (req) => {
       .from("asset_permissions")
       .select("role")
       .eq("bu_id", bu_id)
-      .eq("user_id", user.id);
+      .eq("user_id", user!.id);
 
     const userAssetRoles = (assetPerms || []).map((p: any) => p.role);
-    console.log(`[global-search] Asset roles for user:`, userAssetRoles);
+    console.log(`[${context.requestId}] Asset roles for user:`, userAssetRoles);
 
     // Check if user can see each sub-module
     const canSeeInventory = userAssetRoles.some((r: string) => INVENTORY_ROLES.includes(r));
@@ -538,19 +508,15 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[global-search] Found ${groups.length} groups with results`);
+    console.log(`[${context.requestId}] Found ${groups.length} groups with results`);
+    logRequestCompletion(context, "success", `${groups.length} groups`);
 
     const response: SearchResponse = { query, groups };
-
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(response);
   } catch (err) {
     const error = err as Error;
-    console.error("[global-search] Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error(`[${context.requestId}] Error:`, error);
+    logRequestCompletion(context, "error", error.message);
+    return errorResponse(error.message, 500, { requestId: context.requestId, error: "SEARCH_ERROR" });
   }
 });

@@ -1,9 +1,9 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { 
+  corsHeaders, 
+  jsonResponse, 
+  errorResponse,
+  createServiceClient,
+} from "../_shared/middleware.ts";
 
 interface AuditResult {
   generatedAt: string;
@@ -41,11 +41,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
     // deno-lint-ignore no-explicit-any
-    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
+    const supabase = createServiceClient() as any;
 
     // 1. Fetch all templates with permission counts
     const { data: templates, error: templatesError } = await supabase

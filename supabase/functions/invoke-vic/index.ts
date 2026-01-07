@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { 
+  corsHeaders, 
+  jsonResponse, 
+  errorResponse,
+  logRequestCompletion,
+  checkRateLimits,
+  createServiceClient,
+  type RequestContext,
+} from "../_shared/middleware.ts";
 
 // Get integration API key from hub_integrations_global_config
 async function getIntegrationApiKey(supabase: any, integrationKey: string): Promise<string | null> {
@@ -79,15 +83,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID().slice(0, 8);
   const startTime = Date.now();
   let agentId: string | null = null;
   let agentName: string = "unknown";
+  let reqUserId: string | null = null;
+  let reqBuId: string | null = null;
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createServiceClient();
 
     // First, try to get ChatGPT/OpenAI key from integrations config (PRIMARY)
     let useOpenAI = false;
@@ -115,74 +119,27 @@ serve(async (req) => {
 
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
-    let userId: string | null = null;
     
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabase.auth.getUser(token);
-      userId = user?.id || null;
+      reqUserId = user?.id || null;
     }
 
     const body: InvokeVicRequest = await req.json();
-    const { agentSlug, buId, actionContext, context, userQuestion } = body;
+    const { agentSlug, buId, actionContext, context: aiContext, userQuestion } = body;
+    reqBuId = buId || null;
+
+    console.log(`[${requestId}] Invoke VIC: agent=${agentSlug}, user=${reqUserId}, bu=${buId}`);
 
     if (!agentSlug || !actionContext) {
-      return new Response(
-        JSON.stringify({ error: "agentSlug and actionContext are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("agentSlug and actionContext are required", 400, { requestId, error: "MISSING_PARAMS" });
     }
 
-    // Check if IA is enabled for this BU
+    // Check rate limits using middleware helper
     if (buId) {
-      const { data: iaConfig } = await supabase
-        .from("bu_ia_config")
-        .select("ia_enabled, max_calls_per_user_day, max_calls_per_bu_day")
-        .eq("bu_id", buId)
-        .single();
-
-      if (iaConfig && !iaConfig.ia_enabled) {
-        return new Response(
-          JSON.stringify({ error: "IA is disabled for this BU", code: "IA_DISABLED" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Check rate limits
-      if (iaConfig?.max_calls_per_user_day && userId) {
-        const { data: userCalls } = await supabase.rpc("count_user_calls_today", {
-          p_user_id: userId,
-          p_bu_id: buId,
-        });
-        
-        if (userCalls >= iaConfig.max_calls_per_user_day) {
-          return new Response(
-            JSON.stringify({ 
-              error: "Daily user limit reached", 
-              code: "USER_LIMIT_REACHED",
-              limit: iaConfig.max_calls_per_user_day 
-            }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
-
-      if (iaConfig?.max_calls_per_bu_day) {
-        const { data: buCalls } = await supabase.rpc("count_bu_calls_today", {
-          p_bu_id: buId,
-        });
-        
-        if (buCalls >= iaConfig.max_calls_per_bu_day) {
-          return new Response(
-            JSON.stringify({ 
-              error: "Daily BU limit reached", 
-              code: "BU_LIMIT_REACHED",
-              limit: iaConfig.max_calls_per_bu_day 
-            }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
+      const rateLimitError = await checkRateLimits(supabase, reqUserId, buId, {}, requestId);
+      if (rateLimitError) return rateLimitError;
     }
 
     // Get the agent by slug
@@ -268,15 +225,15 @@ serve(async (req) => {
     }
 
     // Build context description
-    let contextDescription = `Contexto: ${context.type}`;
-    if (context.title) contextDescription += `\nTítulo: ${context.title}`;
-    if (context.description) contextDescription += `\nDescrição: ${context.description}`;
-    if (context.currentValue !== undefined) contextDescription += `\nValor atual: ${context.currentValue}${context.unit || ''}`;
-    if (context.targetValue !== undefined) contextDescription += `\nMeta: ${context.targetValue}${context.unit || ''}`;
-    if (context.baselineValue !== undefined) contextDescription += `\nBaseline: ${context.baselineValue}${context.unit || ''}`;
-    if (context.status) contextDescription += `\nStatus: ${context.status}`;
-    if (context.additionalData) {
-      contextDescription += `\nDados adicionais: ${JSON.stringify(context.additionalData, null, 2)}`;
+    let contextDescription = `Contexto: ${aiContext.type}`;
+    if (aiContext.title) contextDescription += `\nTítulo: ${aiContext.title}`;
+    if (aiContext.description) contextDescription += `\nDescrição: ${aiContext.description}`;
+    if (aiContext.currentValue !== undefined) contextDescription += `\nValor atual: ${aiContext.currentValue}${aiContext.unit || ''}`;
+    if (aiContext.targetValue !== undefined) contextDescription += `\nMeta: ${aiContext.targetValue}${aiContext.unit || ''}`;
+    if (aiContext.baselineValue !== undefined) contextDescription += `\nBaseline: ${aiContext.baselineValue}${aiContext.unit || ''}`;
+    if (aiContext.status) contextDescription += `\nStatus: ${aiContext.status}`;
+    if (aiContext.additionalData) {
+      contextDescription += `\nDados adicionais: ${JSON.stringify(aiContext.additionalData, null, 2)}`;
     }
 
     // Build user prompt
@@ -326,7 +283,7 @@ serve(async (req) => {
         agent_name: agentName,
         scope: agent.scope,
         bu_id: buId || null,
-        user_id: userId,
+        user_id: reqUserId,
         integration_key: agent.integration_key,
         action_context: actionContext,
         status: "error",
@@ -365,7 +322,7 @@ serve(async (req) => {
       agent_name: agentName,
       scope: agent.scope,
       bu_id: buId || null,
-      user_id: userId,
+      user_id: reqUserId,
       integration_key: agent.integration_key,
       action_context: actionContext,
       status: "success",
