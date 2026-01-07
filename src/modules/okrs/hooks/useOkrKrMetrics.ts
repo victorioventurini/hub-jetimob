@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
 import type { OkrKrMetric, OkrMetricRole } from '../types';
 
 export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-kr-metrics', krId, krType],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       const { data, error } = await supabase
         .from('okr_kr_metrics')
         .select(`
@@ -22,16 +24,18 @@ export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
       if (error) throw error;
       return data as OkrKrMetric[];
     },
-    enabled: !!krId,
+    enabled: !!krId && isReady && !!supabase,
   });
 }
 
 export function usePrimaryKrMetric(krId: string, krType: 'org' | 'team') {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-kr-metrics', 'primary', krId, krType],
     queryFn: async () => {
+      if (!supabase) return null;
+      
       const { data, error } = await supabase
         .from('okr_kr_metrics')
         .select(`
@@ -47,16 +51,18 @@ export function usePrimaryKrMetric(krId: string, krType: 'org' | 'team') {
       if (error) throw error;
       return data as OkrKrMetric | null;
     },
-    enabled: !!krId,
+    enabled: !!krId && isReady && !!supabase,
   });
 }
 
 export function useGuardrailKrMetrics(krId: string, krType: 'org' | 'team') {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-kr-metrics', 'guardrails', krId, krType],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       const { data, error } = await supabase
         .from('okr_kr_metrics')
         .select(`
@@ -71,13 +77,13 @@ export function useGuardrailKrMetrics(krId: string, krType: 'org' | 'team') {
       if (error) throw error;
       return data as OkrKrMetric[];
     },
-    enabled: !!krId,
+    enabled: !!krId && isReady && !!supabase,
   });
 }
 
 export function useCreateKrMetric() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (metric: {
@@ -86,6 +92,8 @@ export function useCreateKrMetric() {
       kpi_id: string;
       role: OkrMetricRole;
     }) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { data, error } = await supabase
         .from('okr_kr_metrics')
         .insert(metric)
@@ -114,10 +122,12 @@ export function useCreateKrMetric() {
 
 export function useUpdateKrMetric() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: OkrMetricRole }) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from('okr_kr_metrics')
         .update({ role })
@@ -142,10 +152,12 @@ export function useUpdateKrMetric() {
 
 export function useDeleteKrMetric() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       const { error } = await supabase
         .from('okr_kr_metrics')
         .update({ deleted_at: new Date().toISOString() })

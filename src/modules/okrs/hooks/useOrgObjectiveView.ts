@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
@@ -87,11 +87,13 @@ function calculateAggregatedProgress(orgKrs: OrgKrWithTeamKrs[]): number {
 
 export function useOrgObjectiveView(objectiveId: string) {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['org-objective-view', objectiveId, currentBu?.id],
     queryFn: async (): Promise<OrgObjectiveWithKrs | null> => {
+      if (!supabase) return null;
+      
       // Fetch org objective
       const { data: objective, error: objError } = await supabase
         .from('okr_org_objectives')
@@ -192,18 +194,20 @@ export function useOrgObjectiveView(objectiveId: string) {
         orgKrs: orgKrsWithTeamKrs,
       };
     },
-    enabled: !!objectiveId,
+    enabled: !!objectiveId && isReady && !!supabase,
   });
 }
 
 export function useAllOrgObjectivesView(year?: number) {
   const { currentBu } = useBu();
   const currentYear = year || new Date().getFullYear();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['all-org-objectives-view', currentYear, currentBu?.id],
     queryFn: async (): Promise<OrgObjectiveWithKrs[]> => {
+      if (!supabase) return [];
+      
       // Fetch all org objectives for the year
       let query = supabase
         .from('okr_org_objectives')
@@ -314,5 +318,6 @@ export function useAllOrgObjectivesView(year?: number) {
         };
       });
     },
+    enabled: isReady && !!supabase,
   });
 }

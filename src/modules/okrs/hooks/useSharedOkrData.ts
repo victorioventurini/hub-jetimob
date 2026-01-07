@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 
 export interface OkrContributor {
@@ -17,12 +17,12 @@ export interface OkrContributor {
  * Fetch contributing teams for a specific team objective
  */
 export function useObjectiveContributors(objectiveId: string | undefined) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-objective-contributors', objectiveId],
     queryFn: async (): Promise<OkrContributor[]> => {
-      if (!objectiveId) return [];
+      if (!objectiveId || !supabase) return [];
 
       const { data, error } = await supabase
         .from('okr_team_objective_contributors')
@@ -38,7 +38,7 @@ export function useObjectiveContributors(objectiveId: string | undefined) {
       if (error) throw error;
       return data as unknown as OkrContributor[];
     },
-    enabled: !!objectiveId,
+    enabled: !!objectiveId && isReady && !!supabase,
   });
 }
 
@@ -46,12 +46,12 @@ export function useObjectiveContributors(objectiveId: string | undefined) {
  * Fetch all shared objectives that a team contributes to (but is not primary)
  */
 export function useTeamContributedObjectives(teamId: string | undefined) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-team-contributed-objectives', teamId],
     queryFn: async () => {
-      if (!teamId) return [];
+      if (!teamId || !supabase) return [];
 
       const { data: contributions, error: contribError } = await supabase
         .from('okr_team_objective_contributors')
@@ -76,7 +76,7 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
       if (objError) throw objError;
       return objectives;
     },
-    enabled: !!teamId,
+    enabled: !!teamId && isReady && !!supabase,
   });
 }
 
@@ -85,7 +85,7 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
  */
 export function useManageContributors() {
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
     mutationFn: async ({ 
@@ -95,6 +95,8 @@ export function useManageContributors() {
       objectiveId: string; 
       teamIds: string[] 
     }) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
       // First, delete existing contributors
       const { error: deleteError } = await supabase
         .from('okr_team_objective_contributors')
@@ -139,12 +141,12 @@ export function useManageContributors() {
  * Hook to fetch team objectives including shared info
  */
 export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: string) {
-  const supabase = useBuScopedSupabase();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
     queryKey: ['okr-team-objectives-with-shared', buId, teamId],
     queryFn: async () => {
-      if (!buId) return [];
+      if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_team_objectives')
@@ -197,6 +199,6 @@ export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: s
         contributors: contributorsMap.get(obj.id) || [],
       }));
     },
-    enabled: !!buId,
+    enabled: !!buId && isReady && !!supabase,
   });
 }
