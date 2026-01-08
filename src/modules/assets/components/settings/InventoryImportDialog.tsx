@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 // CSV row schema
 const csvRowSchema = z.object({
@@ -376,7 +377,7 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
       setResult(importResult);
 
       // Invalidate cache to refresh the list
-      queryClient.invalidateQueries({ queryKey: ["asset-inventory"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(currentBu?.id ?? null) });
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao processar arquivo");
