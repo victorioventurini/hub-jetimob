@@ -7,23 +7,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useInventory } from "../hooks/useInventory";
 import { useLocations } from "../hooks/useLocations";
-import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
-import type { AssetInventory, AssetInventoryStatus } from "../types";
+import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
   const navigate = useNavigate();
   const { items, categories, isLoading } = useInventory();
   const { locations } = useLocations();
-  const { isInventoryAdmin } = useAssetPermissions();
   
   // Allow any authenticated user to add items for now (permissions will be enforced on backend)
   const canAddItem = true;
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [cloneItem, setCloneItem] = useState<AssetInventory | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | AssetInventoryStatus>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [holderFilter, setHolderFilter] = useState<string>("all");
@@ -90,18 +87,6 @@ export default function InventoryPage() {
 
     return matchesSearch && matchesStatus && matchesCategory && matchesHolder && matchesLocation;
   });
-
-  const handleClone = (item: AssetInventory) => {
-    setCloneItem(item);
-    setDialogOpen(true);
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    setDialogOpen(open);
-    if (!open) {
-      setCloneItem(null);
-    }
-  };
 
   const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" || locationFilter !== "all";
 
@@ -175,21 +160,19 @@ export default function InventoryPage() {
           onAction={canAddItem && !search && !hasActiveFilters ? () => setDialogOpen(true) : undefined}
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {filteredItems.map((item) => (
             <div key={item.id} onClick={() => navigate(`/assets/inventory/${item.id}`)}>
-              <InventoryListItem item={item} onClone={handleClone} />
+              <InventoryListItem item={item} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Create/Clone dialog */}
+      {/* Create dialog */}
       <InventoryFormDialog 
         open={dialogOpen} 
-        onOpenChange={handleDialogClose} 
-        item={cloneItem}
-        cloneMode={!!cloneItem}
+        onOpenChange={setDialogOpen} 
       />
     </div>
   );
