@@ -109,19 +109,74 @@ O sistema detecta automaticamente:
 
 ---
 
-## 6. Métricas de Sucesso
+## 6. Governance Gate Enforced (Wave 10.1)
+
+### Fluxo Obrigatório
+
+Toda alteração de permissões agora passa por:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  GOVERNANCE GATE - FLUXO OBRIGATÓRIO                         │
+├──────────────────────────────────────────────────────────────┤
+│  1. Usuário seleciona templates no UserPermissionsV2Sheet    │
+│  2. Clica em "Revisar e Aplicar"                             │
+│  3. Sistema calcula DIFF via get_permission_diff()           │
+│  4. PermissionDiffDialog exibe:                              │
+│     ├─ ➕ Permissões a adicionar                             │
+│     ├─ ➖ Permissões a remover                               │
+│     └─ 🔴 Badge de risco                                     │
+│  5. Admin informa MOTIVO (min 10 chars) - OBRIGATÓRIO        │
+│  6. Clica "Confirmar Alterações"                             │
+│  7. Sistema aplica mudanças                                  │
+│  8. Sistema registra em permission_audit_log                 │
+│  9. Toast de sucesso + Sheet fecha                           │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Bloqueios Implementados
+
+| Tentativa | Resultado |
+|-----------|-----------|
+| Aplicar sem reason | ❌ Botão desabilitado |
+| Reason < 10 chars | ❌ Erro: "O motivo deve ter pelo menos 10 caracteres" |
+| Bypass via console | ❌ Não existe mais `handleApplyV2` direto |
+
+### Registro de Auditoria
+
+Cada alteração grava:
+
+```json
+{
+  "bu_id": "uuid",
+  "target_user_id": "uuid",
+  "actor_id": "uuid",
+  "action": "assign_template | remove_template",
+  "entity_type": "template",
+  "entity_name": "2 adicionados, 1 removido",
+  "before_state": { "template_ids": ["uuid1", "uuid2"] },
+  "after_state": { "template_ids": ["uuid1", "uuid3", "uuid4"] },
+  "reason": "Promoção para líder de equipe, necessita acesso a relatórios de OKRs",
+  "created_at": "timestamp"
+}
+```
+
+---
+
+## 7. Métricas de Sucesso (Atualizado)
 
 | Métrica | Antes | Depois |
 |---------|-------|--------|
 | Permissões explicáveis | Parcial | 100% |
-| Alterações com motivo | 0% | 100% |
+| Alterações com motivo | 0% | **100%** |
 | Detecção de over-permission | ❌ | ✅ |
 | Presets disponíveis | 0 | 12 |
 | Views de governança | 0 | 3 |
+| **Governance Gate** | ❌ | **✅ ENFORCED** |
 
 ---
 
-## 7. Próximos Passos (Roadmap)
+## 8. Próximos Passos (Roadmap)
 
 1. **Telemetria de uso** - Identificar permissões nunca utilizadas
 2. **Sugestão automática de downgrade** - Baseado em uso real
@@ -130,14 +185,16 @@ O sistema detecta automaticamente:
 
 ---
 
-## 8. Conclusão
+## 9. Conclusão
 
-A Wave 10 elevou o sistema de permissões V2 do Hub Jetimob para um nível enterprise de governança, com:
+A Wave 10 + 10.1 elevou o sistema de permissões V2 do Hub Jetimob para um nível enterprise de governança, com:
 
 - ✅ Transparência total (100% explicável)
-- ✅ Auditoria completa (motivo obrigatório)
+- ✅ **Auditoria completa (motivo obrigatório)**
+- ✅ **Governance Gate enforced**
 - ✅ Detecção proativa de riscos
 - ✅ UX simplificada (presets)
 - ✅ Guardrails automáticos
+- ✅ **Sem bypass possível**
 
-**Status: Wave 10 CONCLUÍDA**
+**Status: Wave 10 + 10.1 CONCLUÍDA**

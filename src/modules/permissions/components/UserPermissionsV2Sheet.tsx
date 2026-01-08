@@ -26,8 +26,11 @@ import {
   Settings2,
   AlertTriangle
 } from "lucide-react";
+import { toast } from "sonner";
 import { useUserEffectivePermissions } from "../hooks/useBuPermissions";
-import { usePermissionTemplatesV2, useUserTemplatesV2, useEffectivePermissionsV2 } from "../hooks/usePermissionsV2";
+import { usePermissionTemplatesV2, useUserTemplatesV2 } from "../hooks/usePermissionsV2";
+import { usePermissionDiff, useLogPermissionChange } from "../hooks/usePermissionGovernance";
+import { PermissionDiffDialog } from "./PermissionDiffDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 
@@ -76,6 +79,8 @@ export function UserPermissionsV2Sheet({
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
   const [permissionSearch, setPermissionSearch] = useState("");
+  const [showDiffDialog, setShowDiffDialog] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   // Effective permissions
   const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.user_id || null);
@@ -89,6 +94,13 @@ export function UserPermissionsV2Sheet({
     removeTemplate
   } = useUserTemplatesV2(user?.profile_id || null);
 
+  // Governance hooks
+  const proposedTemplateIds = useMemo(() => [...selectedTemplateIds], [selectedTemplateIds]);
+  const { additions, removals, isLoading: diffLoading } = usePermissionDiff(
+    user?.profile_id || null, 
+    proposedTemplateIds
+  );
+  const logPermissionChange = useLogPermissionChange();
   const isAdmin = user?.role_in_bu === "admin";
   const isExternal = user?.role_in_bu === "external";
 
@@ -180,20 +192,63 @@ export function UserPermissionsV2Sheet({
     });
   };
 
-  const handleApplyV2 = async () => {
+  // Open diff dialog instead of applying directly
+  const handleOpenDiffDialog = () => {
+    if (!user || !hasChanges) return;
+    setShowDiffDialog(true);
+  };
+
+  // Apply changes with governance (reason required)
+  const handleApplyWithGovernance = async (reason: string) => {
     if (!user) return;
-    
-    // Find templates to add and remove
-    const toAdd = [...selectedTemplateIds].filter(id => !currentV2TemplateIds.has(id));
-    const toRemove = v2Assignments.filter(a => !selectedTemplateIds.has(a.template_id));
-    
-    // Remove first, then add
-    for (const assignment of toRemove) {
-      await removeTemplate.mutateAsync(assignment.id);
+    if (reason.length < 10) {
+      toast.error("O motivo deve ter pelo menos 10 caracteres");
+      return;
     }
+
+    setIsApplying(true);
     
-    for (const templateId of toAdd) {
-      await assignTemplate.mutateAsync({ userId: user.profile_id, templateId });
+    try {
+      // Capture before state
+      const beforeTemplateIds = [...currentV2TemplateIds];
+      const afterTemplateIds = [...selectedTemplateIds];
+      
+      // Find templates to add and remove
+      const toAdd = afterTemplateIds.filter(id => !currentV2TemplateIds.has(id));
+      const toRemove = v2Assignments.filter(a => !selectedTemplateIds.has(a.template_id));
+      
+      // Remove first, then add
+      for (const assignment of toRemove) {
+        await removeTemplate.mutateAsync(assignment.id);
+      }
+      
+      for (const templateId of toAdd) {
+        await assignTemplate.mutateAsync({ userId: user.profile_id, templateId });
+      }
+
+      // Log to audit
+      await logPermissionChange.mutateAsync({
+        targetUserId: user.profile_id,
+        action: toAdd.length > 0 && toRemove.length > 0 
+          ? "assign_template" 
+          : toAdd.length > 0 
+            ? "assign_template" 
+            : "remove_template",
+        entityType: "template",
+        entityName: `${toAdd.length} adicionados, ${toRemove.length} removidos`,
+        beforeState: { template_ids: beforeTemplateIds },
+        afterState: { template_ids: afterTemplateIds },
+        reason,
+      });
+
+      toast.success("Permissões atualizadas com sucesso");
+      setShowDiffDialog(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao aplicar permissões:", error);
+      toast.error("Erro ao aplicar permissões");
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -213,15 +268,16 @@ export function UserPermissionsV2Sheet({
     .slice(0, 2) || "??";
 
   const isLoading = templatesLoading || v2AssignmentsLoading;
-  const isSaving = assignTemplate.isPending || removeTemplate.isPending;
+  const isSaving = assignTemplate.isPending || removeTemplate.isPending || isApplying;
 
   // Only super_admin can edit admin users
   const canEdit = !isAdmin || isSuperAdmin;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg flex flex-col h-full p-0">
-        {/* Header */}
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-lg flex flex-col h-full p-0">
+          {/* Header */}
         <div className="px-4 py-3 border-b shrink-0">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2.5">
@@ -391,6 +447,11 @@ export function UserPermissionsV2Sheet({
               <div className="flex items-center justify-between gap-2 pt-3 pb-4 border-t mt-auto shrink-0">
                 <div className="text-xs text-muted-foreground">
                   {selectedTemplateIds.size} template{selectedTemplateIds.size !== 1 ? "s" : ""}
+                  {hasChanges && (
+                    <span className="ml-2 text-amber-600">
+                      • {additions.length} a adicionar, {removals.length} a remover
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
@@ -398,10 +459,10 @@ export function UserPermissionsV2Sheet({
                   </Button>
                   <Button 
                     size="sm"
-                    onClick={handleApplyV2} 
-                    disabled={isSaving || !hasChanges}
+                    onClick={handleOpenDiffDialog} 
+                    disabled={isSaving || !hasChanges || diffLoading}
                   >
-                    {isSaving ? "Salvando..." : "Salvar"}
+                    {diffLoading ? "Calculando..." : isSaving ? "Salvando..." : "Revisar e Aplicar"}
                   </Button>
                 </div>
               </div>
@@ -494,5 +555,17 @@ export function UserPermissionsV2Sheet({
         </Tabs>
       </SheetContent>
     </Sheet>
+
+    {/* Governance Gate: Diff Dialog with required reason */}
+    <PermissionDiffDialog
+      open={showDiffDialog}
+      onOpenChange={setShowDiffDialog}
+      userName={user?.profiles.display_name || ""}
+      additions={additions}
+      removals={removals}
+      onConfirm={handleApplyWithGovernance}
+      isPending={isApplying}
+    />
+    </>
   );
 }
