@@ -9,9 +9,8 @@ export {
 } from "./hooks/useBuPermissions";
 export { useBuUsers } from "./hooks/useBuUsers";
 export { 
-  usePermissionAliases,
   usePermissionTemplatesV2,
   useTemplateItemsV2,
   useUserTemplatesV2,
-  useEffectivePermissionsPreview 
+  useEffectivePermissionsV2 
 } from "./hooks/usePermissionsV2";

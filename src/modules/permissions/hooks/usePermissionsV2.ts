@@ -5,14 +5,6 @@ import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 
 // Types
-export interface PermissionAlias {
-  id: string;
-  old_key: string;
-  new_key: string;
-  status: 'active' | 'deprecated';
-  created_at: string;
-}
-
 export interface PermissionTemplateV2 {
   id: string;
   slug: string;
@@ -44,104 +36,8 @@ export interface BuUserTemplateV2 {
 
 export interface EffectivePermission {
   permission_key: string;
-  source: 'template_v1' | 'template_v2' | 'override' | 'wildcard';
+  source: 'template_v2' | 'override' | 'wildcard';
   source_name: string;
-}
-
-// Hook: Permission Key Aliases
-export function usePermissionAliases() {
-  const queryClient = useQueryClient();
-  const { client: supabase, isReady } = useOptionalBuClient();
-
-  const { data: aliases = [], isLoading, error } = useQuery({
-    queryKey: queryKeys.permissions.aliases(),
-    queryFn: async () => {
-      if (!supabase) throw new Error("No client available");
-      
-      const { data, error } = await supabase
-        .from("permission_key_aliases")
-        .select("id, old_key, new_key, status, created_at")
-        .order("old_key");
-
-      if (error) throw error;
-      return data as PermissionAlias[];
-    },
-    enabled: isReady,
-  });
-
-  const createAlias = useMutation({
-    mutationFn: async (input: { old_key: string; new_key: string }) => {
-      if (!supabase) throw new Error("No client available");
-      
-      const { data, error } = await supabase
-        .from("permission_key_aliases")
-        .insert(input)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.aliases() });
-      toast.success("Alias criado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar alias: ${error.message}`);
-    },
-  });
-
-  const updateAliasStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'deprecated' }) => {
-      if (!supabase) throw new Error("No client available");
-      
-      const { data, error } = await supabase
-        .from("permission_key_aliases")
-        .update({ status })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.aliases() });
-      toast.success("Status do alias atualizado");
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar alias: ${error.message}`);
-    },
-  });
-
-  const deleteAlias = useMutation({
-    mutationFn: async (id: string) => {
-      if (!supabase) throw new Error("No client available");
-      
-      const { error } = await supabase
-        .from("permission_key_aliases")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.aliases() });
-      toast.success("Alias removido");
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao remover alias: ${error.message}`);
-    },
-  });
-
-  return {
-    aliases,
-    isLoading,
-    error,
-    createAlias,
-    updateAliasStatus,
-    deleteAlias,
-  };
 }
 
 // Hook: Templates V2
@@ -377,19 +273,21 @@ export function useUserTemplatesV2(userId: string | null) {
   };
 }
 
-// Hook: Effective Permissions Preview
-export function useEffectivePermissionsPreview(userId: string | null, mode: 'v1' | 'v2' | 'both' = 'both') {
+// Hook: Effective Permissions V2 Only
+export function useEffectivePermissionsV2(userId: string | null) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   const { data: permissions = [], isLoading } = useQuery({
-    queryKey: queryKeys.permissions.effectivePreview(buId, userId, mode),
+    queryKey: queryKeys.permissions.effectivePreview(buId, userId, 'v2'),
     queryFn: async () => {
       if (!supabase || !buId || !userId) return [];
       
-      const { data, error } = await supabase.rpc("get_effective_permissions_preview", {
-        p_bu_id: buId,
+      // Cast to bypass strict typing for RPC
+      const { data, error } = await (supabase as unknown as { 
+        rpc: (fn: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }> 
+      }).rpc("get_effective_permissions_v2", {
         p_user_id: userId,
-        p_mode: mode,
+        p_bu_id: buId,
       });
 
       if (error) throw error;

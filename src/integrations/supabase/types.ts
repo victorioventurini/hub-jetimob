@@ -827,6 +827,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "asset_inventory_current_user_profile_fkey"
+            columns: ["current_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "asset_inventory_home_location_id_fkey"
             columns: ["home_location_id"]
             isOneToOne: false
@@ -1148,6 +1155,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "asset_movements_authorized_by_profile_fkey"
+            columns: ["authorized_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "asset_movements_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -1169,11 +1183,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "asset_movements_from_user_profile_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "asset_movements_performed_by_profile_fkey"
             columns: ["performed_by_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_performed_by_profile_fkey"
+            columns: ["performed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "asset_movements_to_location_id_fkey"
@@ -1188,6 +1216,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_to_user_profile_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -2122,6 +2157,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bu_user_permission_templates_v2_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "bu_user_permission_templates_v2_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -2134,6 +2176,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -2413,6 +2462,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "kpi_metrics_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "kpi_metrics_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -2459,6 +2515,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_values_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "kpi_values_kpi_id_fkey"
@@ -2582,6 +2645,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -2999,6 +3069,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_checkins_author_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "okr_checkins_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -3292,6 +3369,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_initiatives_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
         ]
       }
       okr_insights: {
@@ -3557,6 +3641,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_org_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
         ]
       }
       okr_org_objectives: {
@@ -3647,6 +3738,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -3795,6 +3893,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "okr_team_key_results_parent_kr_id_fkey"
@@ -4017,6 +4122,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
@@ -4325,30 +4437,6 @@ export type Database = {
         }
         Relationships: []
       }
-      permission_key_aliases: {
-        Row: {
-          created_at: string
-          id: string
-          new_key: string
-          old_key: string
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          new_key: string
-          old_key: string
-          status?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          new_key?: string
-          old_key?: string
-          status?: string
-        }
-        Relationships: []
-      }
       permission_migrations: {
         Row: {
           bu_id: string
@@ -4411,8 +4499,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "permission_migrations_migrated_by_fkey"
+            columns: ["migrated_by"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "permission_migrations_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_verified_by_fkey"
+            columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -4421,8 +4530,8 @@ export type Database = {
             foreignKeyName: "permission_migrations_verified_by_fkey"
             columns: ["verified_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -4602,6 +4711,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
         ]
       }
       squad_memberships: {
@@ -4656,6 +4772,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -4799,6 +4922,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "teams_parent_team_id_fkey"
@@ -5032,6 +5162,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ticket_messages_author_profile_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "ticket_messages_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -5102,6 +5239,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "ticket_participants_ticket_id_fkey"
@@ -5327,11 +5471,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tickets_created_by_profile_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
             foreignKeyName: "tickets_owner_profile_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "tickets_partner_company_id_fkey"
@@ -5504,6 +5662,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_team_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
         ]
       }
     }
@@ -5518,6 +5683,26 @@ export type Database = {
           violation_type: string | null
         }
         Relationships: []
+      }
+      users_without_v2_permissions: {
+        Row: {
+          auth_user_id: string | null
+          bu_id: string | null
+          bu_name: string | null
+          display_name: string | null
+          membership_id: string | null
+          profile_id: string | null
+          work_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_bu_id_null_report: {
         Row: {
@@ -5744,6 +5929,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "okr_team_key_results_team_id_fkey"
@@ -5983,8 +6175,8 @@ export type Database = {
         Args: { p_team_id: string }
         Returns: string[]
       }
-      get_effective_permissions_preview: {
-        Args: { p_bu_id: string; p_mode?: string; p_user_id: string }
+      get_effective_permissions_v2: {
+        Args: { p_bu_id: string; p_user_id: string }
         Returns: {
           permission_key: string
           source: string
@@ -6151,10 +6343,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      log_legacy_key_usage: {
-        Args: { p_context?: string; p_old_key: string }
-        Returns: undefined
-      }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_notification_read: {
         Args: { p_notification_id: string }
@@ -6193,7 +6381,6 @@ export type Database = {
           bu_id: string
         }[]
       }
-      resolve_permission_key: { Args: { p_key: string }; Returns: string }
       resolve_ticket_assignee: {
         Args: {
           p_bu_id: string
