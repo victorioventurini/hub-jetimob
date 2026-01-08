@@ -1,11 +1,11 @@
 /**
  * TicketsTeamInboxCard - Shows ticket summary for the team
  */
+import { Link } from "react-router-dom";
 import { Inbox, ArrowRight, Clock, AlertCircle, HourglassIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
 import type { TicketSummary } from "../../types";
 
 interface TicketsTeamInboxCardProps {
@@ -15,7 +15,6 @@ interface TicketsTeamInboxCardProps {
 }
 
 export function TicketsTeamInboxCard({ tickets, teamId, isLoading }: TicketsTeamInboxCardProps) {
-  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -125,12 +124,14 @@ export function TicketsTeamInboxCard({ tickets, teamId, isLoading }: TicketsTeam
 
         {/* CTA */}
         <Button
+          asChild
           variant="outline"
           className="w-full gap-2"
-          onClick={() => navigate(teamId ? `/tickets?team=${teamId}` : '/tickets')}
         >
-          Abrir Tickets
-          <ArrowRight className="h-4 w-4" />
+          <Link to={teamId ? `/tickets?team=${teamId}` : '/tickets'}>
+            Abrir Tickets
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </Button>
       </CardContent>
     </Card>

@@ -2,12 +2,12 @@
  * TeamKpisCard - Shows KPI summary for the team
  * (Placeholder until KPI module is fully integrated)
  */
+import { Link } from "react-router-dom";
 import { TrendingUp, ArrowRight, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
 import type { KpiSummary, KpiItem } from "../../types";
 
 interface TeamKpisCardProps {
@@ -36,8 +36,6 @@ const statusColors = {
 };
 
 export function TeamKpisCard({ kpis, teamId, isLoading }: TeamKpisCardProps) {
-  const navigate = useNavigate();
-
   // Use mock data until KPI integration is complete
   const displayKpis = kpis?.top?.length ? kpis.top : mockKpis;
 
@@ -97,12 +95,14 @@ export function TeamKpisCard({ kpis, teamId, isLoading }: TeamKpisCardProps) {
 
         {/* CTA */}
         <Button
+          asChild
           variant="outline"
           className="w-full gap-2"
-          onClick={() => navigate('/kpis')}
         >
-          Ver todos os KPIs
-          <ArrowRight className="h-4 w-4" />
+          <Link to="/kpis">
+            Ver todos os KPIs
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </Button>
       </CardContent>
     </Card>

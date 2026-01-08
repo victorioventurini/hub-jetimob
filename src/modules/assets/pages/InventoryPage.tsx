@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Package, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,6 @@ import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog
 import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
-  const navigate = useNavigate();
   const { items, categories, isLoading } = useInventory();
   const { locations } = useLocations();
   
@@ -162,9 +161,9 @@ export default function InventoryPage() {
       ) : (
         <div className="space-y-1">
           {filteredItems.map((item) => (
-            <div key={item.id} onClick={() => navigate(`/assets/inventory/${item.id}`)}>
+            <Link key={item.id} to={`/assets/inventory/${item.id}`} className="block">
               <InventoryListItem item={item} />
-            </div>
+            </Link>
           ))}
         </div>
       )}

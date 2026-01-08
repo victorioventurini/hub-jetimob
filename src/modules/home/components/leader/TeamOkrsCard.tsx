@@ -1,13 +1,13 @@
 /**
  * TeamOkrsCard - Shows OKR summary for the team
  */
+import { Link } from "react-router-dom";
 import { Target, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
 import type { OkrSummary } from "../../types";
 
 interface TeamOkrsCardProps {
@@ -17,7 +17,6 @@ interface TeamOkrsCardProps {
 }
 
 export function TeamOkrsCard({ okrs, teamId, isLoading }: TeamOkrsCardProps) {
-  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -121,12 +120,14 @@ export function TeamOkrsCard({ okrs, teamId, isLoading }: TeamOkrsCardProps) {
 
         {/* CTA */}
         <Button
+          asChild
           variant="outline"
           className="w-full gap-2"
-          onClick={() => navigate(teamId ? `/okrs?team=${teamId}` : '/okrs')}
         >
-          Abrir OKRs do time
-          <ArrowRight className="h-4 w-4" />
+          <Link to={teamId ? `/okrs?team=${teamId}` : '/okrs'}>
+            Abrir OKRs do time
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </Button>
       </CardContent>
     </Card>

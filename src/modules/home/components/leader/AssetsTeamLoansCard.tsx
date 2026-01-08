@@ -1,13 +1,13 @@
 /**
  * AssetsTeamLoansCard - Shows asset loans by team members
  */
+import { Link } from "react-router-dom";
 import { Package, ArrowRight, AlertCircle, Clock, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, isPast, isFuture, addHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { AssetSummary, AssetLoanItem } from "../../types";
@@ -43,7 +43,6 @@ function formatDueDate(dueAt: string | null): string {
 }
 
 export function AssetsTeamLoansCard({ assets, teamId, isLoading }: AssetsTeamLoansCardProps) {
-  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -153,12 +152,14 @@ export function AssetsTeamLoansCard({ assets, teamId, isLoading }: AssetsTeamLoa
 
         {/* CTA */}
         <Button
+          asChild
           variant="outline"
           className="w-full gap-2"
-          onClick={() => navigate('/assets/inventory')}
         >
-          Ver empréstimos
-          <ArrowRight className="h-4 w-4" />
+          <Link to="/assets/inventory">
+            Ver empréstimos
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </Button>
       </CardContent>
     </Card>
