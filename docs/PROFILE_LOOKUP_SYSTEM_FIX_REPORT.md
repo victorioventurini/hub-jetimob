@@ -2,7 +2,20 @@
 
 **Date:** 2026-01-08  
 **Issue:** Inconsistent profile lookups using `user_id` instead of `id`  
-**Status:** ✅ FIXED
+**Status:** ✅ COMPLETE - 0 CRITICAL FINDINGS
+
+---
+
+## Audit Results
+
+### Before Fix
+- Multiple incorrect lookups using `.in('user_id', ...)` for domain columns
+- Inconsistent DTO shapes between `getItem` and `getItemByCode`
+
+### After Fix
+- **0 CRITICAL findings**
+- All domain column lookups use `profiles.id`
+- Unified DTO for all asset item queries
 
 ---
 
@@ -42,33 +55,6 @@ Domain columns like `current_user_id`, `owner_user_id`, `from_user_id` store `pr
 4. Changed Map key from `p.user_id` to `p.id`
 5. Added comments referencing `docs/IDENTITY_CONVENTION.md`
 
-#### `src/modules/assets/components/inventory/InventoryDetailView.tsx`
-
-- Added `LoanStatusCard` component to display active loan details
-- Shows: holder name, loan date, duration, due date, authorized by
-- Visual indicator for overdue loans
-
----
-
-## New Scripts
-
-### `scripts/audit-profile-lookup.ts`
-
-New audit script to detect incorrect profile lookups:
-
-```bash
-npm run audit:profile-lookup
-```
-
-**Detects:**
-- `.in('user_id', profileIds)` patterns
-- Maps keyed by `user_id` when resolving domain columns
-- Variable naming issues (`userIds` from domain columns)
-
-**Output:**
-- Console report with findings
-- Markdown report at `docs/perf/PROFILE_LOOKUP_AUDIT.md`
-
 ---
 
 ## Modules Verified
@@ -77,11 +63,27 @@ npm run audit:profile-lookup
 |--------|--------|-------|
 | Assets/Inventory | ✅ Fixed | Full DTO unification |
 | Assets/Movements | ✅ Fixed | All user references corrected |
+| Assets/Keys | ✅ Correct | Uses `profiles.id` |
 | Assets/Permissions | ✅ Correct | Uses `auth.users.id` intentionally |
-| OKRs | ✅ Correct | Uses FK joins properly |
+| OKRs | ✅ Correct | Uses `profiles.id` joins |
 | Tickets | ✅ Correct | Uses `profileId` from `useIdentity()` |
 | KPIs | ✅ Correct | Uses FK joins properly |
 | Notifications | ✅ Correct | Uses `auth.users.id` intentionally |
+
+---
+
+## Documented Exceptions (auth.users.id Tables)
+
+These tables intentionally store `auth.users.id` and are NOT violations:
+
+| Table | Column | Reason |
+|-------|--------|--------|
+| `notifications` | `user_id` | Target user (auth identity) |
+| `notifications` | `actor_id` | Acting user (auth identity) |
+| `bu_user_memberships` | `user_id` | BU membership (auth identity) |
+| `user_roles` | `user_id` | Role assignment (auth identity) |
+| `audit_logs` | `user_id` | Audit trail (session identity) |
+| `profiles` | `user_id` | Link auth→domain |
 
 ---
 
@@ -109,15 +111,34 @@ npm run audit:profile-lookup
 
 ---
 
-## QA Checklist
+## Audit Script
+
+Run audit anytime:
+```bash
+npx tsx scripts/audit-profile-lookup.ts
+```
+
+---
+
+## QA Results
 
 See: `docs/qa/QA_PROFILE_ID_LOOKUP_FIX.md`
+
+| Area | Status |
+|------|--------|
+| Assets getItem (UUID) | ✅ PASS |
+| Assets getItemByCode | ✅ PASS |
+| Assets items list | ✅ PASS |
+| Assets movements | ✅ PASS |
+| audit:profile-lookup | ✅ PASS |
+
+**Overall:** ✅ PASS
 
 ---
 
 ## Prevention
 
-1. **Audit Scripts:** Run `npm run audit:profile-lookup` in CI/pre-commit
+1. **Audit Scripts:** Run `npx tsx scripts/audit-profile-lookup.ts` in CI/pre-commit
 2. **Naming Convention:** Use `profileIds` for domain IDs, `authUserIds` for auth IDs
 3. **Documentation:** Reference `docs/IDENTITY_CONVENTION.md` in comments
 4. **Code Review:** Check profile lookups match column FK definitions
@@ -129,3 +150,4 @@ See: `docs/qa/QA_PROFILE_ID_LOOKUP_FIX.md`
 - `docs/IDENTITY_CONVENTION.md` - Complete identity mapping
 - `docs/engineering/DEVELOPMENT_STANDARDS.md` - Development guidelines
 - `scripts/audit-identity-usage.ts` - Existing identity audit script
+- `scripts/audit-profile-lookup.ts` - Profile lookup audit script
