@@ -2169,6 +2169,62 @@ export type Database = {
           },
         ]
       }
+      bu_user_permission_templates_v2: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cycles: {
         Row: {
           bu_id: string
@@ -4426,6 +4482,95 @@ export type Database = {
         }
         Relationships: []
       }
+      permission_key_aliases: {
+        Row: {
+          created_at: string
+          id: string
+          new_key: string
+          old_key: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_key: string
+          old_key: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_key?: string
+          old_key?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      permission_template_items_v2: {
+        Row: {
+          created_at: string
+          permission_key: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          permission_key: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          permission_key?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_template_items_v2_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_templates_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          module: string | null
+          name: string
+          slug: string
+          surface: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          module?: string | null
+          name: string
+          slug: string
+          surface?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          module?: string | null
+          name?: string
+          slug?: string
+          surface?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           birth_day: number | null
@@ -5919,6 +6064,14 @@ export type Database = {
         Args: { p_team_id: string }
         Returns: string[]
       }
+      get_effective_permissions_preview: {
+        Args: { p_bu_id: string; p_mode?: string; p_user_id: string }
+        Returns: {
+          permission_key: string
+          source: string
+          source_name: string
+        }[]
+      }
       get_enabled_modules_for_bu: {
         Args: { p_bu_id: string }
         Returns: {
@@ -6107,6 +6260,7 @@ export type Database = {
           bu_id: string
         }[]
       }
+      resolve_permission_key: { Args: { p_key: string }; Returns: string }
       resolve_ticket_assignee: {
         Args: {
           p_bu_id: string
