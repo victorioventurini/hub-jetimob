@@ -72,12 +72,15 @@ export function useUserProfile(userId?: string) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, photo_url, team_id, job_title")
+        .select("id, display_name, photo_url, team_id, job_title_id, job_title_rel:job_titles!job_title_id(name)")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data ? {
+        ...data,
+        job_title: (data.job_title_rel as { name: string } | null)?.name || null,
+      } : null;
     },
     enabled: !!userId,
   });
@@ -94,7 +97,7 @@ export function useProfilesList(buId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("profiles")
-        .select("id, display_name, photo_url, job_title, user_id")
+        .select("id, display_name, photo_url, job_title_id, job_title_rel:job_titles!job_title_id(name), user_id")
         .is("deleted_at", null)
         .eq("employment_status", "active")
         .order("display_name");
@@ -106,7 +109,10 @@ export function useProfilesList(buId?: string) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data;
+      return (data || []).map(p => ({
+        ...p,
+        job_title: (p.job_title_rel as { name: string } | null)?.name || null,
+      }));
     },
     enabled: buId ? !!buId : true,
   });

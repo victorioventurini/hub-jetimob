@@ -59,7 +59,7 @@ interface ProfileWithTeam {
   last_name: string;
   display_name: string;
   work_email: string;
-  job_title: string;
+  job_title_name: string;
   job_title_id: string | null;
   photo_url: string | null;
   city: string;
@@ -126,7 +126,8 @@ export default function UsersPage() {
           last_name,
           display_name,
           work_email,
-          job_title,
+          job_title_id,
+          job_title_rel:job_titles!job_title_id(name),
           photo_url,
           city,
           state,
@@ -156,7 +157,8 @@ export default function UsersPage() {
         last_name: p.last_name,
         display_name: p.display_name,
         work_email: p.work_email,
-        job_title: p.job_title,
+        job_title_name: (p.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+        job_title_id: p.job_title_id,
         photo_url: p.photo_url,
         city: p.city,
         state: p.state,
@@ -183,7 +185,7 @@ export default function UsersPage() {
     const matchesSearch =
       profile.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       profile.work_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      profile.job_title.toLowerCase().includes(searchQuery.toLowerCase());
+      profile.job_title_name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesTeam =
       teamFilter === "all" || profile.team?.id === teamFilter;
@@ -438,7 +440,7 @@ export default function UsersPage() {
                         </div>
                       </Link>
                     </TableCell>
-                    <TableCell className="text-sm">{profile.job_title}</TableCell>
+                    <TableCell className="text-sm">{profile.job_title_name}</TableCell>
                     <TableCell>
                       {profile.team ? (
                         <div className="flex items-center gap-1.5 text-sm">
