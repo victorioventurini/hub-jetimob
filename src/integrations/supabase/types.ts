@@ -5944,6 +5944,10 @@ export type Database = {
         }
         Returns: string[]
       }
+      ensure_default_v2_template_for_membership: {
+        Args: { p_auth_user_id: string; p_bu_id: string; p_role_in_bu?: string }
+        Returns: undefined
+      }
       generate_okr_insights_for_objective: {
         Args: {
           p_bu_id: string
