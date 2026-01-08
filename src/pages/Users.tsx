@@ -60,6 +60,7 @@ interface ProfileWithTeam {
   display_name: string;
   work_email: string;
   job_title: string;
+  job_title_id: string | null;
   photo_url: string | null;
   city: string;
   state: string;

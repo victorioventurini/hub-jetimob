@@ -139,7 +139,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       setStep("form");
       supabase
         .from("profiles")
-        .select("*, team_id, manager_user_id, start_date")
+        .select("*, team_id, manager_user_id, start_date, job_title_id")
         .eq("id", profile.id)
         .single()
         .then(({ data }) => {
@@ -148,7 +148,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
               first_name: data.first_name,
               last_name: data.last_name,
               work_email: data.work_email,
-              job_title: data.job_title,
+              job_title_id: data.job_title_id,
               city: data.city,
               state: data.state,
               work_mode: data.work_mode,
@@ -315,12 +315,13 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       
       const display_name = `${data.first_name} ${data.last_name}`.trim();
       
-      const { error } = await supabase.from("profiles").insert({
+      const { error } = await supabase.from("profiles").insert([{
         first_name: data.first_name,
         last_name: data.last_name,
         display_name,
         work_email: data.work_email.toLowerCase().trim(),
-        job_title: data.job_title,
+        job_title: "", // Deprecated: usando job_title_id
+        job_title_id: data.job_title_id,
         city: data.city,
         state: data.state,
         work_mode: data.work_mode,
@@ -329,7 +330,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         manager_user_id: data.manager_user_id,
         start_date: data.start_date,
         bu_id: currentBu.id,
-      });
+      }]);
       
       if (error) throw error;
     },
@@ -361,7 +362,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           last_name: data.last_name,
           display_name,
           work_email: data.work_email,
-          job_title: data.job_title,
+          job_title_id: data.job_title_id,
           city: data.city,
           state: data.state,
           work_mode: data.work_mode,
@@ -646,16 +647,15 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           </div>
         )}
         <div className={`space-y-2 ${!isEditing ? "col-span-2" : ""}`}>
-          <Label htmlFor="job_title">Cargo *</Label>
-          <Input
-            id="job_title"
-            value={formData.job_title}
-            onChange={(e) => handleChange("job_title", e.target.value)}
-            placeholder="Ex: Software Engineer"
-            className={errors.job_title ? "border-destructive" : ""}
+          <Label>Cargo *</Label>
+          <JobTitleSelect
+            value={formData.job_title_id || undefined}
+            onValueChange={(v) => handleChange("job_title_id", v || null)}
+            placeholder="Selecione o cargo"
+            className={errors.job_title_id ? "border-destructive" : ""}
           />
-          {errors.job_title && (
-            <p className="text-xs text-destructive">{errors.job_title}</p>
+          {errors.job_title_id && (
+            <p className="text-xs text-destructive">{errors.job_title_id}</p>
           )}
         </div>
       </div>
