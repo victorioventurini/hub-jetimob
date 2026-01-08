@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,11 +28,14 @@ import {
 } from "@/components/ui/select";
 import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
+import { useBrands } from "../../hooks/useBrands";
+import { AutocompleteInput } from "./AutocompleteInput";
 
 const schema = z.object({
   internal_code: z.string().min(1, "Código interno obrigatório"),
   name: z.string().min(1, "Nome obrigatório"),
-  category_id: z.string().optional(),
+  category_id: z.string().min(1, "Categoria obrigatória"),
+  subcategory_id: z.string().min(1, "Subcategoria obrigatória"),
   description: z.string().optional(),
   serial_number: z.string().optional(),
   brand: z.string().optional(),
@@ -52,6 +55,13 @@ interface InventoryItemDialogProps {
 export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogProps) {
   const { categories, createItem, isCreatingItem } = useInventory();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
+  const { brands } = useBrands();
+
+  // Separate parent categories from subcategories
+  const parentCategories = useMemo(
+    () => categories.filter((cat) => !cat.parent_id),
+    [categories]
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -59,6 +69,7 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
       internal_code: "",
       name: "",
       category_id: undefined,
+      subcategory_id: undefined,
       description: "",
       serial_number: "",
       brand: "",
@@ -74,7 +85,18 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
     name: "location_id",
   });
 
+  const selectedCategoryId = useWatch({
+    control: form.control,
+    name: "category_id",
+  });
+
   const availableRooms = selectedLocationId ? getRooms(selectedLocationId) : [];
+
+  // Get subcategories for selected parent category
+  const subcategories = useMemo(
+    () => categories.filter((cat) => cat.parent_id === selectedCategoryId),
+    [categories, selectedCategoryId]
+  );
 
   useEffect(() => {
     if (open) {
@@ -82,6 +104,7 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
         internal_code: "",
         name: "",
         category_id: undefined,
+        subcategory_id: undefined,
         description: "",
         serial_number: "",
         brand: "",
@@ -98,21 +121,32 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
     const currentRoomId = form.getValues("room_id");
     if (currentRoomId && selectedLocationId) {
       const rooms = getRooms(selectedLocationId);
-      const roomStillValid = rooms.some(r => r.id === currentRoomId);
+      const roomStillValid = rooms.some((r) => r.id === currentRoomId);
       if (!roomStillValid) {
         form.setValue("room_id", undefined);
       }
     }
   }, [selectedLocationId, form, getRooms]);
 
+  // Clear subcategory when category changes
+  useEffect(() => {
+    const currentSubcategoryId = form.getValues("subcategory_id");
+    if (currentSubcategoryId) {
+      const stillValid = subcategories.some((s) => s.id === currentSubcategoryId);
+      if (!stillValid) {
+        form.setValue("subcategory_id", undefined);
+      }
+    }
+  }, [selectedCategoryId, subcategories, form]);
+
   const onSubmit = (data: FormData) => {
     // Use room_id as home_location_id if selected, otherwise use location_id
     const homeLocationId = data.room_id || data.location_id || undefined;
-    
+
     createItem({
       internal_code: data.internal_code,
       name: data.name,
-      category_id: data.category_id || undefined,
+      category_id: data.subcategory_id, // Use subcategory as the actual category
       description: data.description || undefined,
       serial_number: data.serial_number || undefined,
       brand: data.brand || undefined,
@@ -149,10 +183,26 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
 
               <FormField
                 control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Notebook Dell Latitude" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="category_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
+                    <FormLabel>Categoria *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -160,7 +210,44 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories.map((cat) => (
+                        {parentCategories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="subcategory_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subcategoria *</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={!selectedCategoryId || subcategories.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              !selectedCategoryId
+                                ? "Selecione categoria"
+                                : subcategories.length === 0
+                                ? "Sem subcategorias"
+                                : "Selecione..."
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {subcategories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
                           </SelectItem>
@@ -172,20 +259,6 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Notebook Dell Latitude" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
@@ -233,20 +306,22 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Sala</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       value={field.value}
                       disabled={!selectedLocationId || availableRooms.length === 0}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={
-                            !selectedLocationId 
-                              ? "Selecione local primeiro" 
-                              : availableRooms.length === 0 
-                                ? "Nenhuma sala" 
+                          <SelectValue
+                            placeholder={
+                              !selectedLocationId
+                                ? "Selecione local primeiro"
+                                : availableRooms.length === 0
+                                ? "Nenhuma sala"
                                 : "Selecione..."
-                          } />
+                            }
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -271,7 +346,12 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
                   <FormItem>
                     <FormLabel>Marca</FormLabel>
                     <FormControl>
-                      <Input placeholder="Dell" {...field} />
+                      <AutocompleteInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        suggestions={brands}
+                        placeholder="Dell, Apple..."
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
