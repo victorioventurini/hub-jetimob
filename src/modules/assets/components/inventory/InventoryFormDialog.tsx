@@ -34,7 +34,7 @@ import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { useAssetProfiles } from "../../hooks/useProfiles";
-import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import { useBrands } from "../../hooks/useBrands";
 import { AutocompleteInput } from "./AutocompleteInput";
 import type { AssetInventory } from "../../types";
@@ -106,7 +106,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   const { rootLocations, getRooms, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
   const { profiles } = useAssetProfiles();
-  const { user } = useAuth();
+  const { profileId } = useIdentity();
   const { brands } = useBrands();
   const isEditing = !!item && !cloneMode;
   const isCloning = !!item && cloneMode;
@@ -269,7 +269,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       notes: data.notes?.trim() || undefined,
       // Assignment data (only for new items)
       assigned_to_user_id: !isEditing ? data.assigned_to_user_id || undefined : undefined,
-      authorized_by_user_id: !isEditing && data.assigned_to_user_id ? user?.id : undefined,
+      authorized_by_user_id: !isEditing && data.assigned_to_user_id ? profileId : undefined,
       due_at: !isEditing && data.assigned_to_user_id ? data.due_at || undefined : undefined,
     };
 

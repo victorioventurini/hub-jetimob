@@ -6107,7 +6107,9 @@ export type Database = {
         Args: { p_notification_id: string }
         Returns: boolean
       }
+      my_profile_id: { Args: never; Returns: string }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
+      profile_id_from_user_id: { Args: { p_user_id: string }; Returns: string }
       refresh_objective_health: {
         Args: {
           p_bu_id: string
@@ -6179,6 +6181,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      user_id_from_profile_id: {
+        Args: { p_profile_id: string }
+        Returns: string
       }
     }
     Enums: {
