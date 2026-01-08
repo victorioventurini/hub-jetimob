@@ -29,8 +29,8 @@ import { OkrDashboardFilters } from '../components/dashboard/OkrDashboardFilters
 import { OverallProgressCard } from '../components/dashboard/OverallProgressCard';
 import { StatusDistributionBar } from '../components/dashboard/StatusDistributionBar';
 import { ObjectiveListItem } from '../components/dashboard/ObjectiveListItem';
-import { CreateOrgObjectiveDialog } from '../components/CreateOrgObjectiveDialog';
-import { CreateTeamObjectiveDialog } from '../components/CreateTeamObjectiveDialog';
+import { OrgObjectiveFormDialog } from '../components/OrgObjectiveFormDialog';
+import { TeamObjectiveFormDialog } from '../components/TeamObjectiveFormDialog';
 import { OkrEmptyState } from '../components/OkrEmptyState';
 import { OkrAlertsCard } from '../components/OkrAlertsCard';
 import { SharedOkrInsights } from '../components/SharedOkrInsights';
@@ -375,12 +375,12 @@ export default function OkrDashboardPage() {
       </div>
 
       {/* Dialogs */}
-      <CreateOrgObjectiveDialog
+      <OrgObjectiveFormDialog
         open={showCreateOrgDialog}
         onOpenChange={setShowCreateOrgDialog}
         year={filters.year}
       />
-      <CreateTeamObjectiveDialog
+      <TeamObjectiveFormDialog
         open={showCreateTeamDialog}
         onOpenChange={setShowCreateTeamDialog}
         teams={teams || []}

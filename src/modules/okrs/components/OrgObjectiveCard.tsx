@@ -8,9 +8,8 @@ import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { useOrgKeyResults } from '../hooks/useOkrData';
 import { useBu } from '@/contexts/BuContext';
-import { CreateOrgKrDialog } from './CreateOrgKrDialog';
-import { EditOrgObjectiveDialog } from './EditOrgObjectiveDialog';
-import { EditOrgKrDialog } from './EditOrgKrDialog';
+import { OrgKrFormDialog } from './OrgKrFormDialog';
+import { OrgObjectiveFormDialog } from './OrgObjectiveFormDialog';
 import type { OkrStatus, OkrRagStatus, OkrDirection } from '../types';
 import {
   DropdownMenu,
@@ -266,22 +265,24 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
         </CardContent>
       </Card>
 
-      <CreateOrgKrDialog
+      <OrgKrFormDialog
         open={showAddKrDialog}
         onOpenChange={setShowAddKrDialog}
         objectiveId={objective.id}
       />
 
-      <EditOrgObjectiveDialog
+      <OrgObjectiveFormDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
+        year={objective.year}
         objective={objective}
       />
 
       {editingKr && (
-        <EditOrgKrDialog
+        <OrgKrFormDialog
           open={!!editingKr}
           onOpenChange={(open) => !open && setEditingKr(null)}
+          objectiveId={objective.id}
           kr={editingKr}
         />
       )}

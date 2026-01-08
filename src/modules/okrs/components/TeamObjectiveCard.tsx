@@ -10,10 +10,9 @@ import { SharedOkrBadge } from './SharedOkrBadge';
 import { useTeamKeyResults } from '../hooks/useOkrData';
 import { useObjectiveContributors } from '../hooks/useSharedOkrData';
 import { useBu } from '@/contexts/BuContext';
-import { CreateTeamKrDialog } from './CreateTeamKrDialog';
+import { TeamKrFormDialog } from './TeamKrFormDialog';
 import { CheckinDialog } from './CheckinDialog';
-import { EditTeamObjectiveDialog } from './EditTeamObjectiveDialog';
-import { EditTeamKrDialog } from './EditTeamKrDialog';
+import { TeamObjectiveFormDialog } from './TeamObjectiveFormDialog';
 import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 import {
   DropdownMenu,
@@ -360,7 +359,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
         </CardContent>
       </Card>
 
-      <CreateTeamKrDialog
+      <TeamKrFormDialog
         open={showAddKrDialog}
         onOpenChange={setShowAddKrDialog}
         objectiveId={objective.id}
@@ -368,9 +367,11 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
         buId={objective.bu_id || undefined}
       />
 
-      <EditTeamObjectiveDialog
+      <TeamObjectiveFormDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
+        teams={[]}
+        orgObjectives={[]}
         objective={objective}
       />
 
@@ -383,9 +384,11 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
       )}
 
       {editingKr && (
-        <EditTeamKrDialog
+        <TeamKrFormDialog
           open={!!editingKr}
           onOpenChange={(open) => !open && setEditingKr(null)}
+          objectiveId={objective.id}
+          teamId={objective.team_id}
           kr={editingKr}
         />
       )}
