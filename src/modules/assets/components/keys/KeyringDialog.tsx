@@ -30,10 +30,9 @@ import { useKeys } from "../../hooks/useKeys";
 import type { AssetHook } from "../../types";
 
 const schema = z.object({
-  name: z.string().min(1, "Nome obrigatório"),
-  tag_number: z.string().min(1, "Número da tag obrigatório"),
-  claviculary_id: z.string().optional(),
-  hook_id: z.string().optional(),
+  tag_number: z.string().min(1, "Número do chaveiro obrigatório"),
+  claviculary_id: z.string().min(1, "Claviculário obrigatório"),
+  hook_id: z.string().min(1, "Gancho obrigatório"),
   notes: z.string().optional(),
 });
 
@@ -52,7 +51,6 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
       tag_number: "",
       claviculary_id: undefined,
       hook_id: undefined,
@@ -88,10 +86,9 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
 
   const onSubmit = (data: FormData) => {
     createKeyring({
-      name: data.name,
       tag_number: data.tag_number,
-      claviculary_id: data.claviculary_id || undefined,
-      hook_id: data.hook_id || undefined,
+      claviculary_id: data.claviculary_id,
+      hook_id: data.hook_id,
       notes: data.notes || undefined,
     });
     onOpenChange(false);
@@ -108,26 +105,12 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Chaves Sala 101" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="tag_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Número da Tag *</FormLabel>
+                  <FormLabel>Número do Chaveiro *</FormLabel>
                   <FormControl>
-                    <Input placeholder="KEY-001" {...field} />
+                    <Input placeholder="001" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,7 +122,7 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
               name="claviculary_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Claviculário</FormLabel>
+                  <FormLabel>Claviculário *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -165,7 +148,7 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
                 name="hook_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gancho</FormLabel>
+                    <FormLabel>Gancho *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}

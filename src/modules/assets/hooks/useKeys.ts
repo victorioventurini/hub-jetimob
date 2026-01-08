@@ -224,12 +224,13 @@ export function useKeys() {
 
   // Criar chaveiro
   const createKeyringMutation = useMutation({
-    mutationFn: async (data: { name: string; tag_number: string; claviculary_id?: string; hook_id?: string; notes?: string }) => {
+    mutationFn: async (data: { tag_number: string; claviculary_id: string; hook_id: string; notes?: string }) => {
       const { data: keyring, error } = await supabase
         .from("asset_keyrings")
         .insert({
           bu_id: buId!,
           created_by: user?.id,
+          name: data.tag_number, // Use tag_number as name for backwards compatibility
           ...data,
         })
         .select()
