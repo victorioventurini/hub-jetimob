@@ -25,42 +25,6 @@ export interface Permission {
   updated_at: string;
 }
 
-export interface PermissionGroup {
-  id: string;
-  name: string;
-  slug: string | null;
-  description: string | null;
-  is_system: boolean;
-  status: PermissionStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PermissionGroupPermission {
-  id: string;
-  group_id: string;
-  permission_id: string;
-}
-
-export interface BuPermissionGroupConfig {
-  id: string;
-  bu_id: string;
-  group_id: string;
-  is_enabled: boolean;
-  created_at: string;
-  updated_at: string;
-  permission_groups?: PermissionGroup;
-}
-
-export interface BuUserPermissionGroup {
-  id: string;
-  bu_id: string;
-  user_id: string;
-  group_id: string;
-  created_at: string;
-  permission_groups?: PermissionGroup;
-}
-
 export interface BuUserPermissionOverride {
   id: string;
   bu_id: string;
@@ -80,6 +44,6 @@ export interface EffectivePermission {
   resource: string;
   action: string;
   scope: string;
-  source: 'group' | 'override';
+  source: 'template_v1' | 'template_v2' | 'override' | 'wildcard';
   source_name: string;
 }
