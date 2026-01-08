@@ -36,13 +36,15 @@ Esta auditoria analisou as Edge Functions do Supabase/Lovable Cloud, identifican
 | `culture-message` | `/culture-message/` | `useCultureMessage.ts` | ✅ | ACTIVE |
 | `hub-greeting` | `/hub-greeting/` | `useGreeting.ts` | ✅ | ACTIVE |
 
-### 1.2 Funções LEGACY
+### 1.2 Funções DEPRECATED
 
-| Função | Arquivo | Problema | Status |
-|--------|---------|----------|--------|
-| `send-magic-link` | `/send-magic-link/` | Substituída por `request-magic-link` | LEGACY |
+| Função | Arquivo | Problema | Status | Depreciação |
+|--------|---------|----------|--------|-------------|
+| `send-magic-link` | `/send-magic-link/` | Substituída por `request-magic-link` | **DEPRECATED** | 2026-01-08 |
 
-**Evidência:** Documentado em `docs/TECHNICAL_CONTEXT_REGISTRY.md:1494` como "(Legado)".
+**Evidência:** Documentado em `docs/TECHNICAL_CONTEXT_REGISTRY.md:1494` como "(Legado)".  
+**Instrumentação:** Função modificada para logar chamadas em `app_error_logs` e retornar HTTP 410 Gone.  
+**Remoção:** Após 14 dias sem chamadas (ver `docs/DEPRECATION_SEND_MAGIC_LINK.md`).
 
 ### 1.3 Funções ESPECIAIS (Não invocadas diretamente)
 
@@ -62,10 +64,12 @@ Esta auditoria analisou as Edge Functions do Supabase/Lovable Cloud, identifican
 - **Chamador:** `useAuth.tsx` durante autenticação
 - **Dependências:** SendGrid API Key
 
-### 2.2 `send-magic-link` (LEGACY)
+### 2.2 `send-magic-link` (DEPRECATED ⚠️)
 - **Propósito:** Versão antiga de envio de magic link
 - **Problema:** Substituída por `request-magic-link`
-- **Ação:** Deprecar e remover em Wave 2
+- **Status:** DEPRECATED desde 2026-01-08
+- **Comportamento Atual:** Loga chamadas e retorna HTTP 410 Gone
+- **Ação:** Remover após 14 dias sem chamadas (ver `docs/DEPRECATION_SEND_MAGIC_LINK.md`)
 
 ### 2.3 `auth-email-hook` (ACTIVE - Hook)
 - **Propósito:** Customização de emails do Supabase Auth
