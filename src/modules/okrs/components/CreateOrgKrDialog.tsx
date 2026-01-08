@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Dialog,
   DialogContent,
@@ -96,10 +97,10 @@ export function CreateOrgKrDialog({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-org-key-results'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives-with-krs'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-all-org-key-results'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResults(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsAll(null) });
       toast.success('Key Result criado com sucesso!');
       handleClose();
     },

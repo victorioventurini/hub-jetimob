@@ -3,6 +3,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type { AssetPermission, AssetPermissionRole } from "../types";
 
 export function useAssetPermissions() {
@@ -101,7 +102,7 @@ export function useAssetPermissions() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-permissions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.permissions(buId ?? null) });
       toast.success("Permissão adicionada");
     },
     onError: (error: any) => {
@@ -124,7 +125,7 @@ export function useAssetPermissions() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-permissions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.permissions(buId ?? null) });
       toast.success("Permissão removida");
     },
     onError: () => {

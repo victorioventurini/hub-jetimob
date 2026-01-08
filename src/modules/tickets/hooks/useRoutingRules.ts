@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { TicketRoutingRule } from "../types";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function useRoutingRules() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: ["ticket-routing-rules", buId],
+    queryKey: queryKeys.tickets.routingRules(buId ?? null),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -63,7 +64,7 @@ export function useCreateRoutingRule() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-routing-rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.routingRules(currentBu?.id ?? null) });
       toast.success("Regra de roteamento criada com sucesso");
     },
     onError: (error) => {
@@ -99,7 +100,7 @@ export function useUpdateRoutingRule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-routing-rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.routingRules(null) });
       toast.success("Regra de roteamento atualizada");
     },
     onError: (error) => {
@@ -122,7 +123,7 @@ export function useDeleteRoutingRule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-routing-rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.routingRules(null) });
       toast.success("Regra de roteamento removida");
     },
     onError: (error) => {

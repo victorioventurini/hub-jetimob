@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AgentDocument } from '../types/agentDocument';
+import { queryKeys } from '@/lib/queryKeys';
 
 // Uses global client since this is accessed from admin panel (/hub/integrations/...)
 
 export function useAgentDocuments(agentId: string | undefined) {
   return useQuery({
-    queryKey: ['agent-documents', agentId],
+    queryKey: queryKeys.integrations.agentDocuments(agentId ?? ''),
     queryFn: async () => {
       if (!agentId) return [];
       
@@ -82,7 +83,7 @@ export function useUploadAgentDocument() {
       return data as AgentDocument;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['agent-documents', variables.agentId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.agentDocuments(variables.agentId) });
     },
   });
 }
@@ -112,7 +113,7 @@ export function useDeleteAgentDocument() {
       return { documentId, agentId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['agent-documents', data.agentId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.agentDocuments(data.agentId) });
     },
   });
 }

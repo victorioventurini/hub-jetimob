@@ -51,13 +51,17 @@ export const queryKeys = {
     orgKeyResults: (buId: string | null, objectiveId?: string) => 
       ['okr-org-key-results', buId, objectiveId] as const,
     orgKeyResultsAll: (buId: string | null) => 
-      ['okr-org-key-results-all', buId] as const,
+      ['okr-all-org-key-results', buId] as const,
+    allOrgObjectivesView: (buId: string | null) => 
+      ['all-org-objectives-view', buId] as const,
     
     // Team level
     teamObjectives: (buId: string | null, teamId?: string) => 
       ['okr-team-objectives', buId, teamId] as const,
     teamObjectivesWithKrs: (buId: string | null, teamId?: string) => 
       ['okr-team-objectives-with-krs', buId, teamId] as const,
+    teamObjectivesWithShared: (buId: string | null, teamId?: string) => 
+      ['okr-team-objectives-with-shared', buId, teamId] as const,
     teamKeyResults: (buId: string | null, teamId?: string) => 
       ['okr-team-key-results', buId, teamId] as const,
     myTeamKeyResults: (buId: string | null, userId?: string) => 
@@ -67,17 +71,31 @@ export const queryKeys = {
     checkins: (krId: string) => ['okr-checkins', krId] as const,
     latestCheckin: () => ['okr-latest-checkin'] as const,
     pendingCheckins: (buId: string | null, teamId?: string) => 
-      ['okr-pending-checkins', buId, teamId] as const,
+      ['pending-checkins', buId, teamId] as const,
+    checkinSummary: (buId: string | null) => 
+      ['checkin-summary', buId] as const,
     
     // Contributions
-    contributions: (buId: string | null) => 
-      ['okr-contributions', buId] as const,
+    contributions: (entityType?: string, entityId?: string) => 
+      entityType && entityId 
+        ? ['okr-contributions', entityType, entityId] as const
+        : ['okr-contributions'] as const,
     teamContributions: (teamId: string) => 
       ['okr-team-contributions', teamId] as const,
+    
+    // KR Metrics
+    krMetrics: (krId: string, krType: string) => 
+      ['okr-kr-metrics', krId, krType] as const,
+    krMetricsRole: (role: string, krId: string, krType: string) => 
+      ['okr-kr-metrics', role, krId, krType] as const,
     
     // Initiatives
     initiatives: (krId: string) => ['okr-initiatives', krId] as const,
     initiativeDetail: (id: string) => ['okr-initiative', id] as const,
+    
+    // Cycles & Settings
+    settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,
+    cyclesList: (buId: string | null) => ['cycles-list', buId] as const,
     
     // Dashboard
     dashboard: (buId: string | null, teamId?: string) => 

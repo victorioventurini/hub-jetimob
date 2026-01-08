@@ -22,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
 import { Loader2, Users, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
@@ -120,8 +121,8 @@ export function EditTeamObjectiveDialog({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-shared'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithShared(null) });
       toast({
         title: 'Objetivo atualizado',
         description: 'O objetivo do time foi atualizado com sucesso.',

@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
+import { queryKeys } from '@/lib/queryKeys';
 import type { OkrKrMetric, OkrMetricRole } from '../types';
 
 export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-kr-metrics', krId, krType],
+    queryKey: queryKeys.okrs.krMetrics(krId, krType),
     queryFn: async () => {
       if (!supabase) return [];
       
@@ -104,9 +105,9 @@ export function useCreateKrMetric() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics', variables.kr_id, variables.kr_type] });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics', 'primary', variables.kr_id, variables.kr_type] });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics', 'guardrails', variables.kr_id, variables.kr_type] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.kr_id, variables.kr_type) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('primary', variables.kr_id, variables.kr_type) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('guardrails', variables.kr_id, variables.kr_type) });
       toast.success(variables.role === 'primary' ? 'KPI primário vinculado' : 'Guardrail adicionado');
     },
     onError: (error: Error) => {
