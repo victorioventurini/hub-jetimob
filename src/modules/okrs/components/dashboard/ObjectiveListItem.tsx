@@ -17,12 +17,10 @@ import { InitiativesList } from '../initiatives';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
-import { CreateOrgKrDialog } from '../CreateOrgKrDialog';
-import { CreateTeamKrDialog } from '../CreateTeamKrDialog';
-import { EditOrgKrDialog } from '../EditOrgKrDialog';
-import { EditTeamKrDialog } from '../EditTeamKrDialog';
-import { EditOrgObjectiveDialog } from '../EditOrgObjectiveDialog';
-import { EditTeamObjectiveDialog } from '../EditTeamObjectiveDialog';
+import { OrgKrFormDialog } from '../OrgKrFormDialog';
+import { TeamKrFormDialog } from '../TeamKrFormDialog';
+import { OrgObjectiveFormDialog } from '../OrgObjectiveFormDialog';
+import { TeamObjectiveFormDialog } from '../TeamObjectiveFormDialog';
 import { CheckinDialog } from '../CheckinDialog';
 import { SharedOkrBadge } from '../SharedOkrBadge';
 import { OkrScopeBadge, OkrOwnerInfo, RagSummary, OkrKrTypeBadge } from '../ui';
@@ -297,14 +295,14 @@ export function ObjectiveListItem({
 
       {/* Create KR Dialogs */}
       {type === 'org' && (
-        <CreateOrgKrDialog
+        <OrgKrFormDialog
           open={showAddKrDialog}
           onOpenChange={setShowAddKrDialog}
           objectiveId={objective.id}
         />
       )}
       {type === 'team' && (
-        <CreateTeamKrDialog
+        <TeamKrFormDialog
           open={showAddKrDialog}
           onOpenChange={setShowAddKrDialog}
           objectiveId={objective.id}
@@ -315,9 +313,10 @@ export function ObjectiveListItem({
 
       {/* Edit Objective Dialogs */}
       {type === 'org' && objective.year ? (
-        <EditOrgObjectiveDialog
+        <OrgObjectiveFormDialog
           open={showEditObjectiveDialog}
           onOpenChange={setShowEditObjectiveDialog}
+          year={objective.year}
           objective={{
             id: objective.id,
             title: objective.title,
@@ -327,9 +326,11 @@ export function ObjectiveListItem({
           }}
         />
       ) : type === 'team' && objective.team_id ? (
-        <EditTeamObjectiveDialog
+        <TeamObjectiveFormDialog
           open={showEditObjectiveDialog}
           onOpenChange={setShowEditObjectiveDialog}
+          teams={[]}
+          orgObjectives={[]}
           objective={{
             id: objective.id,
             title: objective.title,
@@ -342,9 +343,10 @@ export function ObjectiveListItem({
 
       {/* Edit KR Dialogs */}
       {editingKr && type === 'org' && (
-        <EditOrgKrDialog
+        <OrgKrFormDialog
           open={!!editingKr}
           onOpenChange={(open) => !open && setEditingKr(null)}
+          objectiveId={objective.id}
           kr={{
             id: editingKr.id,
             org_objective_id: editingKr.org_objective_id || objective.id,
@@ -360,9 +362,11 @@ export function ObjectiveListItem({
       )}
       
       {editingKr && type === 'team' && editingKr.team_id && (
-        <EditTeamKrDialog
+        <TeamKrFormDialog
           open={!!editingKr}
           onOpenChange={(open) => !open && setEditingKr(null)}
+          objectiveId={objective.id}
+          teamId={editingKr.team_id}
           kr={{
             id: editingKr.id,
             team_id: editingKr.team_id,
