@@ -9,7 +9,7 @@ export interface PublicProfile {
   last_name: string;
   display_name: string;
   work_email: string;
-  job_title: string;
+  job_title: string;  // Mapped from job_titles join
   photo_url: string | null;
   city: string;
   state: string;
@@ -46,7 +46,8 @@ export function usePublicProfile(profileId?: string) {
           last_name,
           display_name,
           work_email,
-          job_title,
+          job_title_id,
+          job_title_rel:job_titles!job_title_id(name),
           photo_url,
           city,
           state,
@@ -81,7 +82,11 @@ export function usePublicProfile(profileId?: string) {
         manager = managerData;
       }
       
-      return data ? { ...data, manager } as PublicProfile : null;
+      return data ? { 
+        ...data, 
+        manager,
+        job_title: (data.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+      } as PublicProfile : null;
     },
     enabled: !!profileId && !!currentBu?.id,
   });

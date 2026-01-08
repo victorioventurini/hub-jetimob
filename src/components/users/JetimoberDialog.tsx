@@ -50,7 +50,7 @@ interface Profile {
   first_name: string;
   last_name: string;
   work_email: string;
-  job_title: string;
+  job_title_name?: string;  // Wave 3: nome do cargo via join
   job_title_id: string | null;
   city: string;
   state: string;
@@ -66,7 +66,7 @@ interface ExistingProfile {
   display_name: string;
   work_email: string;
   photo_url: string | null;
-  job_title: string;
+  job_title_name: string;  // Wave 3: nome via join
   bu_name?: string;
 }
 
@@ -212,7 +212,8 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           display_name, 
           work_email, 
           photo_url, 
-          job_title,
+          job_title_id,
+          job_title_rel:job_titles!job_title_id(name),
           bu_id,
           bu:bu_units!profiles_bu_id_fkey(name)
         `)
@@ -238,8 +239,13 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         
         // Perfil existe, mostrar opção de adicionar à BU
         setExistingProfile({
-          ...data,
-          bu_name: (data.bu as any)?.name || undefined,
+          id: data.id,
+          user_id: data.user_id,
+          display_name: data.display_name,
+          work_email: data.work_email,
+          photo_url: data.photo_url,
+          job_title_name: (data.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+          bu_name: (data.bu as { name: string } | null)?.name || undefined,
         });
         setStep("existing");
       } else {
@@ -515,7 +521,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           <div className="flex-1">
             <p className="font-medium text-foreground">{existingProfile.display_name}</p>
             <p className="text-sm text-muted-foreground">{existingProfile.work_email}</p>
-            <p className="text-xs text-muted-foreground">{existingProfile.job_title}</p>
+            <p className="text-xs text-muted-foreground">{existingProfile.job_title_name}</p>
           </div>
           {existingProfile.bu_name && (
             <Badge variant="secondary" className="text-xs">
