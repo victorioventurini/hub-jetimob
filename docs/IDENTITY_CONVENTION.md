@@ -1,8 +1,24 @@
 # Convenção de Identidade: user_id vs profile_id
 
-**Versão:** 1.0.0  
-**Última atualização:** 2026-01-07  
+**Versão:** 2.0.0  
+**Última atualização:** 2026-01-08  
 **Status:** Ativo
+
+---
+
+## ⚠️ REGRA DE OURO
+
+> **❌ NUNCA comparar `auth.uid()` diretamente com colunas de domínio.**
+> 
+> **✅ SEMPRE converter usando `my_profile_id()` ou funções canônicas.**
+
+```sql
+-- ❌ ERRADO: Comparação direta
+WHERE owner_user_id = auth.uid()
+
+-- ✅ CORRETO: Usando função canônica
+WHERE owner_user_id = my_profile_id()
+```
 
 ---
 

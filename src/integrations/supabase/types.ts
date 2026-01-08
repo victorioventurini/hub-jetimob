@@ -5485,6 +5485,17 @@ export type Database = {
       }
     }
     Views: {
+      identity_rls_violations: {
+        Row: {
+          policyname: unknown
+          problematic_column: string | null
+          recommendation: string | null
+          schemaname: unknown
+          tablename: unknown
+          violation_type: string | null
+        }
+        Relationships: []
+      }
       user_effective_permissions: {
         Row: {
           action: string | null
@@ -5852,6 +5863,10 @@ export type Database = {
     }
     Functions: {
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
+      assert_profile_identity: {
+        Args: { p_profile_id: string }
+        Returns: boolean
+      }
       calculate_kr_progress: {
         Args: {
           p_baseline: number
@@ -6108,6 +6123,7 @@ export type Database = {
         Returns: boolean
       }
       my_profile_id: { Args: never; Returns: string }
+      my_profile_id_strict: { Args: never; Returns: string }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
       profile_id_from_user_id: { Args: { p_user_id: string }; Returns: string }
       refresh_objective_health: {
