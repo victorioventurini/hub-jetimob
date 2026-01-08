@@ -6,9 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
-// TCR Content embedded - Version 2.5.0
-const TCR_VERSION = "2.5.0";
-const TCR_UPDATED_AT = "2026-01-07";
+// TCR Content embedded - Version 2.10.0
+const TCR_VERSION = "2.10.0";
+const TCR_UPDATED_AT = "2026-01-08";
 
 const TCR_SECTIONS: Record<string, { title: string; content: string }> = {
   architecture: {
@@ -307,6 +307,45 @@ function calculateProgress(baseline, current, target, direction) {
 - Frequência sugerida: semanal
 - Suportam menções (@usuario)
 - Atualizam automaticamente \`current_value\` e \`last_checkin_at\` do KR
+
+### 4.9 Modelo de Identidade (auth.users.id vs profiles.id)
+
+⚠️ **REGRA CRÍTICA: Nunca comparar auth.uid() diretamente com colunas de domínio.**
+
+O Hub usa dois tipos de identidade:
+
+| Tipo | ID | Onde usar |
+|------|-----|-----------|
+| **Autenticação** | \`auth.users.id\` | Sessão, roles, memberships, RLS de auth |
+| **Domínio** | \`profiles.id\` | Ownership, liderança, atribuição, holders |
+
+**Colunas de Domínio (armazenam profiles.id):**
+- \`owner_user_id\` (okr_*, kpi_metrics, tickets)
+- \`leader_user_id\` (teams, squads)
+- \`created_by_user_id\` (tickets, ticket_messages)
+- \`current_user_id\` (asset_inventory, asset_keyrings)
+- \`to_user_id\`, \`from_user_id\`, \`performed_by_user_id\` (asset_movements)
+
+**Funções Canônicas SQL:**
+| Função | Descrição |
+|--------|-----------|
+| \`my_profile_id()\` | Retorna \`profiles.id\` do \`auth.uid()\` atual |
+| \`profile_id_from_user_id(uuid)\` | Converte \`auth.users.id\` → \`profiles.id\` |
+| \`is_team_leader(user_id, team_id)\` | Verifica liderança (converte internamente) |
+| \`assert_profile_identity(uuid)\` | Valida que profile existe e pertence ao usuário |
+
+**Regras de RLS:**
+\`\`\`sql
+-- ❌ ERRADO: Comparando auth.uid() com coluna de domínio
+owner_user_id = auth.uid()
+
+-- ✅ CORRETO: Usando função canônica
+owner_user_id = my_profile_id()
+\`\`\`
+
+**Frontend:** Usar hook \`useMyProfileId()\` para obter profile_id.
+
+**Prevenção:** View \`identity_rls_violations\` detecta policies incorretas.
 
 ### 4.9 Histórico e Soft Delete
 

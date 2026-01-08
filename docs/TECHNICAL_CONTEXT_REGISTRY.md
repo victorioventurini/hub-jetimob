@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.9.0  
-**Última atualização:** 2026-01-07
+**Versão:** 2.10.0  
+**Última atualização:** 2026-01-08
 **Responsável:** Lovable AI / Equipe de Engenharia
 
 > 📚 **Documentação Complementar:**
@@ -1311,7 +1311,71 @@ function calculateProgress(baseline, current, target, direction) {
 - `okr_audit_log` para OKRs, `audit_logs` para demais
 - Movimentações de Assets NUNCA são apagadas
 
-### 4.10 Regras do Módulo Assets
+### 4.10 Modelo de Identidade (auth.users.id vs profiles.id)
+
+⚠️ **REGRA CRÍTICA: Nunca comparar auth.uid() diretamente com colunas de domínio.**
+
+O Hub usa dois tipos de identidade:
+
+| Tipo | ID | Onde usar |
+|------|-----|-----------|
+| **Autenticação** | `auth.users.id` | Sessão, roles, memberships, RLS de auth |
+| **Domínio** | `profiles.id` | Ownership, liderança, atribuição, holders |
+
+#### Colunas de Domínio (armazenam profiles.id)
+
+| Coluna | Tabelas |
+|--------|---------|
+| `owner_user_id` | okr_*, kpi_metrics, tickets, okr_initiatives |
+| `leader_user_id` | teams, squads |
+| `created_by_user_id` | tickets, ticket_messages, ticket_attachments |
+| `current_user_id` | asset_inventory, asset_keyrings |
+| `to_user_id`, `from_user_id` | asset_movements |
+| `performed_by_user_id` | asset_movements, asset_key_movements, asset_gift_movements |
+| `authorized_by_user_id` | asset_movements, asset_key_movements |
+
+#### Funções Canônicas SQL
+
+| Função | Descrição |
+|--------|-----------|
+| `my_profile_id()` | Retorna `profiles.id` do `auth.uid()` atual |
+| `my_profile_id_strict()` | Idem, mas lança exceção se não existir |
+| `profile_id_from_user_id(uuid)` | Converte `auth.users.id` → `profiles.id` |
+| `user_id_from_profile_id(uuid)` | Converte `profiles.id` → `auth.users.id` |
+| `is_team_leader(user_id, team_id)` | Verifica liderança (converte internamente) |
+| `user_can_manage_team(user_id, team_id)` | Verifica gestão de time |
+| `assert_profile_identity(uuid)` | Valida que profile existe e pertence ao usuário |
+
+#### Regras de RLS
+
+```sql
+-- ❌ ERRADO: Comparando auth.uid() com coluna de domínio
+owner_user_id = auth.uid()
+
+-- ✅ CORRETO: Usando função canônica
+owner_user_id = my_profile_id()
+```
+
+#### Frontend
+
+```typescript
+// Hook para obter profile_id do usuário logado
+import { useMyProfileId } from '@/hooks/useMyProfileId';
+
+const { profileId, isLoading } = useMyProfileId();
+
+// Usar profileId para operações de domínio (ownership, etc.)
+```
+
+#### Prevenção de Regressão
+
+- **View SQL:** `identity_rls_violations` detecta policies com comparações incorretas
+- **Script:** `npm run audit:identity` varre código SQL/TS
+- Resultado esperado: **0 violações** em módulos operacionais
+
+> 📚 Ver detalhes completos em [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)
+
+### 4.11 Regras do Módulo Assets
 
 **Inventário:**
 - URL pública sanitizada: `https://hub.jetimob.com/assets/{internal_code}`
@@ -1751,6 +1815,18 @@ src/
 - **ResolveContextPage expandido**:
   - Novas entidades: `okr_org_kr`, `okr_team_kr`, `kpi`
   - Labels e rotas para todas entidades do Hub
+
+### v2.10.0 (2026-01-08)
+- **Modelo de Identidade documentado e enforced**:
+  - Nova seção 4.10 "Modelo de Identidade (auth.users.id vs profiles.id)"
+  - Funções canônicas: `my_profile_id()`, `my_profile_id_strict()`, `profile_id_from_user_id()`, `user_id_from_profile_id()`, `assert_profile_identity()`
+  - View `identity_rls_violations` para detectar RLS policies incorretas
+  - Script `npm run audit:identity` para varredura de código
+  - Correção de 18 policies RLS em OKRs, Tickets, KPIs, Teams
+  - Correção de 4 registros legados em Assets (auth.users.id → profiles.id)
+  - Documentação completa em `docs/IDENTITY_CONVENTION.md` v2.0
+  - Relatórios: `IDENTITY_FULL_SYSTEM_COMPLIANCE_REPORT.md`, `IDENTITY_PREVENTION_REPORT.md`
+- **Regra de Ouro**: Colunas de domínio (`owner_user_id`, `leader_user_id`, `current_user_id`, etc.) armazenam `profiles.id`. Comparações em RLS devem usar `my_profile_id()`, nunca `auth.uid()` diretamente.
 
 ### v1.9.0 (2026-01-06)
 - **BU Session Core** implementado (remoção de `buId` da URL):
