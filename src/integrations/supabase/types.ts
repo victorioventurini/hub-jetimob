@@ -2335,7 +2335,7 @@ export type Database = {
       }
       job_titles: {
         Row: {
-          bu_ids: string[]
+          bu_id: string
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -2345,7 +2345,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bu_ids?: string[]
+          bu_id: string
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -2355,7 +2355,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bu_ids?: string[]
+          bu_id?: string
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -2364,7 +2364,15 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_titles_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kpi_metrics: {
         Row: {

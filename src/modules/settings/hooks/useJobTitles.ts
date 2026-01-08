@@ -8,7 +8,7 @@ const QUERY_KEY = "job-titles";
 
 /**
  * Hook para gerenciar cargos da BU atual
- * Busca cargos que incluem a BU atual no array bu_ids
+ * @updated Wave 2.5 - Normalizado para usar bu_id ao invés de bu_ids[]
  */
 export function useJobTitles() {
   const { currentBu } = useBu();
@@ -20,11 +20,11 @@ export function useJobTitles() {
     queryFn: async (): Promise<JobTitleWithUsageCount[]> => {
       if (!buId) return [];
 
-      // Buscar cargos que contêm a BU atual no array bu_ids
+      // Buscar cargos da BU atual (bu_id singular)
       const { data: jobTitles, error } = await supabase
         .from("job_titles")
-        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
-        .contains("bu_ids", [buId])
+        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
+        .eq("bu_id", buId)
         .is("deleted_at", null)
         .order("name");
 
@@ -72,8 +72,8 @@ export function useActiveJobTitles() {
 
       const { data, error } = await supabase
         .from("job_titles")
-        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
-        .contains("bu_ids", [buId])
+        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
+        .eq("bu_id", buId)
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("name");
@@ -97,24 +97,19 @@ export function useCreateJobTitle() {
     mutationFn: async (data: JobTitleFormData) => {
       if (!currentBu?.id) throw new Error("BU não selecionada");
 
-      // Se bu_ids foi passado, usa ele, senão usa a BU atual
-      const buIds = data.bu_ids && data.bu_ids.length > 0 
-        ? data.bu_ids 
-        : [currentBu.id];
-
       const { data: result, error } = await supabase
         .from("job_titles")
         .insert({
-          bu_ids: buIds,
+          bu_id: currentBu.id,
           name: data.name.trim(),
           description: data.description?.trim() || null,
           is_active: data.is_active,
         })
-        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
+        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
         .single();
 
       if (error) {
-        if (error.message?.includes("job_titles_bu_name_unique")) {
+        if (error.message?.includes("job_titles_bu_id_name_unique")) {
           throw new Error("Já existe um cargo com este nome nesta BU");
         }
         throw error;
@@ -144,13 +139,11 @@ export function useUpdateJobTitle() {
       name, 
       description, 
       is_active,
-      bu_ids 
     }: { 
       id: string; 
       name?: string; 
       description?: string; 
       is_active?: boolean;
-      bu_ids?: string[];
     }) => {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
@@ -159,7 +152,6 @@ export function useUpdateJobTitle() {
       if (name !== undefined) updateData.name = name.trim();
       if (description !== undefined) updateData.description = description?.trim() || null;
       if (is_active !== undefined) updateData.is_active = is_active;
-      if (bu_ids !== undefined) updateData.bu_ids = bu_ids;
 
       const { error } = await supabase
         .from("job_titles")
@@ -167,7 +159,7 @@ export function useUpdateJobTitle() {
         .eq("id", id);
 
       if (error) {
-        if (error.message?.includes("job_titles_bu_name_unique")) {
+        if (error.message?.includes("job_titles_bu_id_name_unique")) {
           throw new Error("Já existe um cargo com este nome nesta BU");
         }
         throw error;
