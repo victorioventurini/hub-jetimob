@@ -6081,6 +6081,10 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_bu_member: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_current_bu: { Args: { p_bu_id: string }; Returns: boolean }
       is_email_domain_allowed: { Args: { p_email: string }; Returns: boolean }
       is_ia_enabled_for_bu: { Args: { p_bu_id: string }; Returns: boolean }

@@ -269,7 +269,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         .insert({
           user_id: existingProfile.user_id,
           bu_id: currentBu.id,
-          role_in_bu: roleInBu as "super_admin" | "admin" | "team_leader" | "collaborator",
+          role_in_bu: roleInBu as "super_admin" | "admin" | "collaborator",
           is_default: false,
         });
       
