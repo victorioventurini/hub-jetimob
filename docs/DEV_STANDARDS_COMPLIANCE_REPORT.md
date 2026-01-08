@@ -1,88 +1,125 @@
 # Relatório de Compliance: Padrões de Desenvolvimento
 
 **Data:** 2026-01-08  
-**Versão TCR:** 2.10.0 → 2.11.0
+**Versão DEVELOPMENT_STANDARDS:** 1.0.0 → 1.0.1  
+**Versão TCR:** 2.11.0 (sem alterações)
 
 ---
 
 ## Resumo Executivo
 
-Este relatório documenta a criação do documento `DEVELOPMENT_STANDARDS.md` e as atualizações no TCR para consolidar todos os padrões de desenvolvimento do Hub da Jet.
+Este relatório documenta os ajustes cirúrgicos aplicados ao `DEVELOPMENT_STANDARDS.md` v1.0.1.
 
 ---
 
-## O Que Foi Adicionado
+## Mudanças Aplicadas (v1.0.1)
 
-### 1. Novo Documento: `docs/engineering/DEVELOPMENT_STANDARDS.md`
+### 1. Correção de Contradição select('*')
 
-Documento normativo único contendo:
+| Local | Antes | Depois |
+|-------|-------|--------|
+| Exemplo PRE-BU (linha ~50) | `select("*")` | `select("id, name, status")` |
 
-| Seção | Conteúdo |
-|-------|----------|
-| **A. Arquitetura e Contextos** | PRE-BU vs POST-BU, BU scope enforcement, exceções autorizadas |
-| **B. Identidade** | Convenção auth.users.id vs profiles.id, funções canônicas, padrões |
-| **C. Permissões (RBAC)** | usePermissions(), guards, templates somáveis, naming de keys |
-| **D. Queries e Performance** | Query keys centralizadas, proibição select(*), paginação, RPCs |
-| **E. URL State** | useUrlState, convenções de nomes, quando usar |
-| **F. Edge Functions** | Estrutura padrão, validação JWT, BU, correlation ID, idempotência |
-| **G. Banco de Dados** | RLS 100%, triggers, soft delete, migrations idempotentes |
-| **H. Checklist de PR** | Audits obrigatórios, checklist manual, report de compliance |
-
-### 2. Atualizações no TCR v2.11.0
-
-| Alteração | Descrição |
-|-----------|-----------|
-| Header atualizado | Versão 2.10.0 → 2.11.0 |
-| Documentação Complementar | Adicionados 5 novos links (DEVELOPMENT_STANDARDS, RBAC_TEMPLATES_V3, URL_STATE_STANDARD, QUERY_KEYS_STANDARD, BU_SCOPED_SUPABASE_RULES) |
+**Justificativa:** O documento proíbe `select('*')` na seção D.2, mas o exemplo PRE-BU usava `select("*")`. Contradição corrigida.
 
 ---
 
-## Seções do TCR Referenciadas
+### 2. Clarificação do Padrão de Permission Keys
 
-O novo documento consolida e referencia informações já presentes no TCR:
+Seção C.5 expandida para refletir o padrão real do catálogo:
 
-| Seção TCR | Seção DEVELOPMENT_STANDARDS |
-|-----------|----------------------------|
-| 1.5 Supabase Client Usage | A.1 PRE-BU vs POST-BU |
-| 4.2.1 BU Scope Enforcement | A.2 BU Scope Enforcement |
-| 4.10 Modelo de Identidade | B. Identidade |
-| 1.4 Controle de Permissões | C. Permissões (RBAC) |
-| 4.3 Padrão de Links e URLs | E. URL State |
-| 8. Edge Functions | F. Edge Functions |
-| 4.9 Histórico e Soft Delete | G.3 Soft Delete |
+```
+<module>.<entity>.<action>:<scope>
+```
 
----
+**Scopes documentados:**
+- `bu` — Acesso a todos da BU
+- `team` — Apenas do próprio time
+- `team_tree` — Time + sub-times
+- `self_or_owner` — Apenas recursos próprios
 
-## Scripts de Auditoria Consolidados
+**6 exemplos reais adicionados:**
+- `okrs.org_objective.read:bu`
+- `okrs.team_objective.create:team`
+- `okrs.team_kr.update:self_or_owner`
+- `okrs.checkin.create:self_or_owner`
+- `teams.team.update:bu`
+- `tickets.ticket.assign:bu`
 
-O documento lista todos os scripts obrigatórios:
-
-| Script | Arquivo | Propósito |
-|--------|---------|-----------|
-| BU Scope | `scripts/audit-bu-scope.ts` | Verifica inserts/updates sem bu_id |
-| Query Keys | `scripts/audit-querykeys.ts` | Detecta queryKeys hardcoded |
-| Identity | `scripts/audit-identity-usage.ts` | Detecta violações de identity convention |
-| RBAC | `scripts/audit-rbac.ts` | Detecta hardcode de roles |
-| URL State | `scripts/audit-url-state.ts` | Detecta useState para filtros/paginação |
-| Overfetch | `scripts/audit-overfetch.ts` | Detecta select("*") |
-| Supabase Client | `scripts/audit-supabase-client.ts` | Detecta cliente global em módulos operacionais |
-| Pre-BU | `scripts/audit-prebu-buscoped.ts` | Detecta useBuScopedSupabase em contexto PRE-BU |
+**Nota:** Escopo é aplicado por RLS + funções como `user_can_manage_team()`.
 
 ---
 
-## Gaps Identificados
+### 3. Regras de Realtime / NotificationCenter
 
-### Nenhum Gap Crítico
+Seção A.1 expandida com regras obrigatórias para `NotificationCenter`:
 
-Todos os padrões já estavam implementados e documentados em documentos separados. O `DEVELOPMENT_STANDARDS.md` consolida e padroniza.
+| Regra | Descrição |
+|-------|-----------|
+| Gating obrigatório | Só conectar realtime após `buId` existir |
+| Ignorar payload sem bu_id | Payload incompleto não processado |
+| Ignorar payload de outra BU | `payload.new.bu_id !== currentBuId` |
+| Query com `enabled: !!buId` | Previne fetch sem contexto |
 
-### Melhorias Futuras Sugeridas
+Exemplo de código adicionado demonstrando padrão correto.
 
-| Item | Prioridade | Descrição |
-|------|------------|-----------|
-| CI/CD Integration | Baixa | Integrar audits como gates em pipeline CI |
-| Testes Automatizados | Média | Criar testes para validar padrões |
-| Linter Rules | Baixa | ESLint rules customizadas para detectar violações |
+---
+
+### 4. Nova Seção: Anti-patterns (Proibidos)
+
+Seção I adicionada com 10 anti-patterns proibidos:
+
+| # | Anti-pattern |
+|---|--------------|
+| 1 | `select("*")` |
+| 2 | Cliente global em módulo operacional |
+| 3 | `auth.uid()` comparado com coluna de domínio |
+| 4 | QueryKey hardcoded |
+| 5 | Filtros/paginação em `useState` |
+| 6 | RLS policy `USING (true)` em tabela operacional |
+| 7 | Tabela operacional sem `bu_id` + trigger |
+| 8 | Disparo de email direto (sem outbox) |
+| 9 | Hardcode de role no frontend |
+| 10 | Insert sem `bu_id` explícito |
+
+---
+
+### 5. Checklist de PR Atualizado
+
+Novo item adicionado ao checklist manual (H.2):
+- [ ] **URL State**: Não usar wrapper legado (`src/hooks/useUrlState.ts`)
+
+---
+
+## Verificação de Conflitos com TCR
+
+| Seção TCR | Conflito? | Ação |
+|-----------|-----------|------|
+| 1.5 Supabase Client Usage | ❌ Não | — |
+| 4.2.1 BU Scope Enforcement | ❌ Não | — |
+| 4.10 Modelo de Identidade | ❌ Não | — |
+| 1.4 Controle de Permissões | ❌ Não | — |
+| 4.3 Padrão de Links e URLs | ❌ Não | — |
+
+**Resultado:** Nenhum conflito identificado. TCR v2.11.0 mantido sem alterações.
+
+---
+
+## Scripts de Auditoria
+
+Nenhuma alteração nos scripts. Lista atualizada:
+
+| Script | Verifica |
+|--------|----------|
+| `audit-bu-scope.ts` | Inserts/updates sem bu_id |
+| `audit-overfetch.ts` | select("*") |
+| `audit-querykeys.ts` | QueryKeys hardcoded |
+| `audit-identity-usage.ts` | Violações de identity convention |
+| `audit-url-state.ts` | useState para filtros/paginação |
+| `audit-rbac.ts` | Hardcode de roles |
+| `audit-supabase-client.ts` | Cliente global em módulos operacionais |
+| `audit-prebu-buscoped.ts` | useBuScopedSupabase em contexto PRE-BU |
+| `audit-useUrlState-legacy.ts` | Imports do wrapper legado |
 
 ---
 
@@ -90,21 +127,28 @@ Todos os padrões já estavam implementados e documentados em documentos separad
 
 | Documento | Alteração |
 |-----------|-----------|
-| `docs/TECHNICAL_CONTEXT_REGISTRY.md` | Versão 2.11.0, links para documentação complementar |
-| `docs/engineering/DEVELOPMENT_STANDARDS.md` | **NOVO** - Padrões consolidados |
+| `docs/engineering/DEVELOPMENT_STANDARDS.md` | v1.0.0 → v1.0.1 |
+| `docs/DEV_STANDARDS_COMPLIANCE_REPORT.md` | Atualizado |
 
 ---
 
 ## Próximos Passos
 
-1. ✅ Documento de padrões criado
-2. ✅ TCR atualizado com links
-3. [ ] Comunicar equipe sobre novo documento
-4. [ ] Executar audits e verificar baseline
-5. [ ] Adicionar ao onboarding de novos devs
+1. ✅ Correção de contradição select('*')
+2. ✅ Clarificação de permission keys
+3. ✅ Regras de Realtime/NotificationCenter
+4. ✅ Seção Anti-patterns
+5. ✅ Checklist de PR atualizado
+6. [ ] Comunicar equipe sobre mudanças
+7. [ ] Executar audits e verificar baseline
 
 ---
 
 ## Conclusão
 
-O documento `DEVELOPMENT_STANDARDS.md` agora serve como fonte única de verdade para padrões de desenvolvimento. Todos os padrões estão alinhados com o que já foi implementado (BU scope, RBAC, identity convention, URL state, etc.) sem contradições com o TCR existente.
+O documento `DEVELOPMENT_STANDARDS.md` v1.0.1 está agora:
+- Sem contradições internas
+- Com padrão de permission keys clarificado
+- Com regras explícitas para Realtime/NotificationCenter
+- Com seção de Anti-patterns para referência rápida
+- Alinhado 100% com TCR v2.11.0

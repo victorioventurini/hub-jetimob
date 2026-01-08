@@ -1,6 +1,6 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.0.0  
+**Versão:** 1.0.1  
 **Última atualização:** 2026-01-08  
 **Status:** Normativo
 
@@ -9,6 +9,14 @@
 ## Índice
 
 - [A. Arquitetura e Contextos](#a-arquitetura-e-contextos)
+- [B. Identidade (auth vs profiles)](#b-identidade-auth-vs-profiles)
+- [C. Permissões (RBAC)](#c-permissões-rbac)
+- [D. Queries, Performance e DX](#d-queries-performance-e-dx)
+- [E. URL State](#e-url-state)
+- [F. Edge Functions](#f-edge-functions)
+- [G. Banco de Dados](#g-banco-de-dados)
+- [H. Checklist de PR](#h-checklist-de-pr)
+- [I. Anti-patterns (Proibidos)](#i-anti-patterns-proibidos)
 - [B. Identidade (auth vs profiles)](#b-identidade-auth-vs-profiles)
 - [C. Permissões (RBAC)](#c-permissões-rbac)
 - [D. Queries, Performance e DX](#d-queries-performance-e-dx)
@@ -47,7 +55,7 @@ function MyPreBuComponent() {
     queryKey: ["my-data", buId],
     queryFn: async () => {
       if (!client || !buId) return null; // Gating
-      return client.from("table").select("*");
+      return client.from("table").select("id, name, status"); // ✅ Campos explícitos
     },
     enabled: isReady && !!buId,
   });
@@ -76,10 +84,40 @@ const { data } = await supabase.from("tickets").select("*"); // BUG!
 |------------------|---------------|
 | `useAuth.tsx` | Operações de auth não têm BU |
 | `useUserBus.ts`, `useExternalUser.ts` | Bootstrap antes do BuProvider |
-| `NotificationCenter.tsx` | Realtime subscription global |
+| `NotificationCenter.tsx` | Realtime subscription global (ver regras abaixo) |
 | `validateDomain.ts` | Validação pré-auth |
 
-> 📚 Ver: [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md)
+#### Regras para NotificationCenter (Realtime)
+
+O `NotificationCenter` é exceção autorizada mas DEVE seguir regras rígidas:
+
+```typescript
+// ✅ CORRETO: Gating obrigatório antes de conectar realtime
+const channel = useMemo(() => {
+  if (!buId) return null; // ⚠️ Não conectar sem BU
+  
+  return supabase
+    .channel(`notifications:${buId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
+      // ⚠️ Ignorar payload sem bu_id
+      if (!payload.new?.bu_id) return;
+      
+      // ⚠️ Ignorar payload de outra BU
+      if (payload.new.bu_id !== buId) return;
+      
+      // Processar notificação
+      handleNotification(payload.new);
+    })
+    .subscribe();
+}, [buId]);
+
+// ✅ Query de notifications também precisa de gating
+const { data } = useQuery({
+  queryKey: ["notifications", buId],
+  queryFn: () => supabase.from("notifications").select("id, title, body, read_at, created_at"),
+  enabled: !!buId, // ⚠️ Obrigatório
+});
+```
 
 ### A.2 BU Scope Enforcement
 
@@ -230,18 +268,69 @@ Usuários recebem templates que somam permissões:
 | Responsabilidade | `okrs_team_manager` | Gestão de OKRs do time |
 | Responsabilidade | `inventory_manager` | Movimentação de inventário |
 
-### C.5 Padrão para Novas Permission Keys
+### C.5 Padrão para Permission Keys
+
+O Hub usa o padrão:
 
 ```
-<module>.<entity>.<action>
-
-Exemplos:
-- okrs.objective.create
-- okrs.objective.update
-- okrs.kr.create
-- assets.inventory.movement.create
-- tickets.thread.assign
+<module>.<entity>.<action>:<scope>
 ```
+
+#### Componentes
+
+| Componente | Descrição | Exemplos |
+|------------|-----------|----------|
+| `module` | Módulo do sistema | `okrs`, `teams`, `tickets`, `assets` |
+| `entity` | Entidade/recurso | `objective`, `team_kr`, `org_objective`, `squad` |
+| `action` | Ação CRUD ou especial | `read`, `create`, `update`, `delete`, `manage`, `assign` |
+| `scope` | Alcance da permissão | `bu`, `team`, `team_tree`, `self_or_owner` |
+
+#### Scopes Suportados
+
+| Scope | Significado |
+|-------|-------------|
+| `bu` | Acesso a todos da BU |
+| `team` | Apenas do próprio time |
+| `team_tree` | Time + sub-times |
+| `self_or_owner` | Apenas recursos próprios (criador/owner) |
+
+#### Exemplos Reais do Catálogo
+
+```typescript
+// OKRs
+"okrs.org_objective.read:bu"           // Ver objetivos organizacionais da BU
+"okrs.team_objective.create:team"      // Criar objetivo no próprio time
+"okrs.team_kr.update:self_or_owner"    // Editar KR que é owner
+"okrs.checkin.create:self_or_owner"    // Criar check-in próprio
+
+// Teams
+"teams.team.update:bu"                 // Editar times da BU
+"teams.squad.update:bu"                // Editar squads da BU
+
+// Tickets
+"tickets.ticket.assign:bu"             // Atribuir tickets na BU
+"tickets.ticket.update:self_or_owner"  // Editar ticket próprio
+```
+
+#### Verificação no Frontend
+
+```typescript
+// O hook has() faz match exato da key
+if (has("okrs.team_objective.create:team")) {
+  // Pode criar objetivo no próprio time
+}
+
+// Para verificar qualquer scope de uma ação:
+if (hasAny([
+  "okrs.team_objective.update:bu",
+  "okrs.team_objective.update:team",
+  "okrs.team_objective.update:self_or_owner"
+])) {
+  // Pode editar de alguma forma
+}
+```
+
+> ⚠️ O escopo real é aplicado por RLS + funções como `user_can_manage_team()`. A permission key indica a intenção, RLS garante o enforcement.
 
 ### C.6 RLS: Usar has_permission()
 
@@ -629,6 +718,7 @@ Antes de considerar qualquer mudança completa, verificar:
 - [ ] **Select Fields**: Sem `select("*")` em novas queries?
 - [ ] **URL State**: Filtros/paginação usam `useUrlState`?
 - [ ] **Permissions**: Usando `usePermissions()`, não hardcode?
+- [ ] **URL State**: Não usar wrapper legado (`src/hooks/useUrlState.ts`)
 - [ ] **Documentação**: TCR/docs atualizados se necessário?
 
 ### H.3 Report de Compliance
@@ -642,6 +732,25 @@ npx tsx scripts/audit-querykeys.ts > /tmp/qk.txt
 npx tsx scripts/audit-identity-usage.ts > /tmp/id.txt
 # ... consolidar em docs/qa/<MODULE>_COMPLIANCE_REPORT.md
 ```
+
+---
+
+## I. Anti-patterns (Proibidos)
+
+Os seguintes padrões são **PROIBIDOS** no Hub da Jet. Não há exceções.
+
+| # | Anti-pattern | Razão |
+|---|--------------|-------|
+| 1 | `select("*")` | Overfetch, performance, exposição de dados |
+| 2 | Cliente global (`supabase`) em módulo operacional | Bypass de BU scope |
+| 3 | `auth.uid()` comparado com coluna de domínio | Viola identity convention (usar `my_profile_id()`) |
+| 4 | QueryKey hardcoded (`["tickets", buId]`) | Dificulta invalidação, erro de cache |
+| 5 | Filtros/paginação em `useState` | Não compartilhável, não bookmarkável |
+| 6 | RLS policy `USING (true)` em tabela operacional | Expõe dados de outras BUs |
+| 7 | Tabela operacional sem `bu_id` + trigger `enforce_bu_scope` | Dados órfãos, vazamento cross-BU |
+| 8 | Disparo de email direto por módulo (sem outbox) | Sem retry, sem auditoria, sem rate limit |
+| 9 | Hardcode de role (`role === 'admin'`) no frontend | Bypass do sistema de permissões |
+| 10 | Insert sem `bu_id` explícito | Falha no trigger, dado sem escopo |
 
 ---
 
