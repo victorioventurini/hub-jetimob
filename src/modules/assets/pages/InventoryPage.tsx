@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useInventory } from "../hooks/useInventory";
+import { useLocations } from "../hooks/useLocations";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
@@ -15,6 +16,7 @@ import type { AssetInventory, AssetInventoryStatus } from "../types";
 export default function InventoryPage() {
   const navigate = useNavigate();
   const { items, categories, isLoading } = useInventory();
+  const { locations } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
   
   // Allow any authenticated user to add items for now (permissions will be enforced on backend)
@@ -25,6 +27,7 @@ export default function InventoryPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | AssetInventoryStatus>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [holderFilter, setHolderFilter] = useState<string>("all");
+  const [locationFilter, setLocationFilter] = useState<string>("all");
 
   // Get unique holders from items for the filter
   const holders = items
@@ -47,14 +50,11 @@ export default function InventoryPage() {
     // Category filter - supports both category and subcategory
     let matchesCategory = categoryFilter === "all";
     if (!matchesCategory && item.category_id) {
-      // Direct match
       if (item.category_id === categoryFilter) {
         matchesCategory = true;
       } else {
-        // Check if filter is a parent category
         const selectedCategory = categories.find(c => c.id === categoryFilter);
         if (selectedCategory && !selectedCategory.parent_id) {
-          // It's a parent category, check if item's category is a child
           const itemCategory = categories.find(c => c.id === item.category_id);
           if (itemCategory?.parent_id === categoryFilter) {
             matchesCategory = true;
@@ -66,7 +66,29 @@ export default function InventoryPage() {
     // Holder filter
     const matchesHolder = holderFilter === "all" || item.current_user_id === holderFilter;
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesHolder;
+    // Location filter - supports both headquarters and rooms
+    let matchesLocation = locationFilter === "all";
+    if (!matchesLocation) {
+      // Check home_location or current_location
+      const itemLocationId = item.home_location_id || item.current_location_id;
+      if (itemLocationId) {
+        if (itemLocationId === locationFilter) {
+          matchesLocation = true;
+        } else {
+          // Check if filter is a parent location (headquarters)
+          const selectedLocation = locations.find(l => l.id === locationFilter);
+          if (selectedLocation && !selectedLocation.parent_location_id) {
+            // It's a headquarters, check if item's location is a room within it
+            const itemLocation = locations.find(l => l.id === itemLocationId);
+            if (itemLocation?.parent_location_id === locationFilter) {
+              matchesLocation = true;
+            }
+          }
+        }
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesHolder && matchesLocation;
   });
 
   const handleClone = (item: AssetInventory) => {
@@ -81,6 +103,8 @@ export default function InventoryPage() {
     }
   };
 
+  const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" || locationFilter !== "all";
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -89,6 +113,7 @@ export default function InventoryPage() {
           <Skeleton className="h-10 w-32" />
         </div>
         <div className="flex gap-4">
+          <Skeleton className="h-10 w-40" />
           <Skeleton className="h-10 w-40" />
           <Skeleton className="h-10 w-40" />
           <Skeleton className="h-10 w-40" />
@@ -131,8 +156,11 @@ export default function InventoryPage() {
         onCategoryChange={setCategoryFilter}
         holderFilter={holderFilter}
         onHolderChange={setHolderFilter}
+        locationFilter={locationFilter}
+        onLocationChange={setLocationFilter}
         categories={categories}
         holders={holders}
+        locations={locations}
       />
 
       {/* Items grid */}
@@ -140,11 +168,11 @@ export default function InventoryPage() {
         <EmptyState
           icon={Package}
           title="Nenhum item encontrado"
-          description={search || statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" 
+          description={search || hasActiveFilters 
             ? "Tente ajustar os filtros" 
             : "Cadastre o primeiro item do inventário"}
-          actionLabel={canAddItem && !search && statusFilter === "all" && categoryFilter === "all" && holderFilter === "all" ? "Novo Item" : undefined}
-          onAction={canAddItem && !search && statusFilter === "all" && categoryFilter === "all" && holderFilter === "all" ? () => setDialogOpen(true) : undefined}
+          actionLabel={canAddItem && !search && !hasActiveFilters ? "Novo Item" : undefined}
+          onAction={canAddItem && !search && !hasActiveFilters ? () => setDialogOpen(true) : undefined}
         />
       ) : (
         <div className="space-y-2">
