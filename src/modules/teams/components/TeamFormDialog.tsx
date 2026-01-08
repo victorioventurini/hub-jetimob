@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import { Plus, AlertTriangle, Trash2 } from "lucide-react";
 import { useCreateTeam, useUpdateTeam, useTeams, useAvailableLeaders, useDeleteTeam } from "../hooks/useTeams";
 import { TeamWithRelations, TeamFormData } from "../types";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { TeamSelect } from "@/components/selects/TeamSelect";
 
 interface TeamFormDialogProps {
   /** Team to edit. If null/undefined, dialog is in create mode */
@@ -70,22 +71,25 @@ export function TeamFormDialog({
   const { data: teams } = useTeams(true);
   const { data: leaders } = useAvailableLeaders();
 
-  // For edit mode: filter out self and descendants as parent options
-  const availableParentTeams = teams?.filter((t) => {
-    if (!team) return t.status === "active";
-    if (t.id === team.id) return false;
-    const isDescendant = (parentId: string | null): boolean => {
-      if (!parentId) return false;
-      if (parentId === team.id) return true;
-      const parent = teams.find((p) => p.id === parentId);
-      return parent ? isDescendant(parent.parent_team_id) : false;
+  // Calculate IDs to exclude from parent team selection (self + descendants)
+  const excludedTeamIds = useMemo(() => {
+    if (!team || !teams) return [];
+    
+    const excluded: string[] = [team.id];
+    
+    // Find all descendants recursively
+    const findDescendants = (parentId: string) => {
+      teams.forEach((t) => {
+        if (t.parent_team_id === parentId && !excluded.includes(t.id)) {
+          excluded.push(t.id);
+          findDescendants(t.id);
+        }
+      });
     };
-    return !isDescendant(t.parent_team_id) && t.status === "active";
-  }) || [];
-
-  // For create mode: just active teams
-  const activeTeams = teams?.filter((t) => t.status === "active") || [];
-  const parentTeamOptions = isEditing ? availableParentTeams : activeTeams;
+    
+    findDescendants(team.id);
+    return excluded;
+  }, [team, teams]);
 
   const selectedParentTeam = teams?.find((t) => t.id === formData.parent_team_id);
 
@@ -222,27 +226,19 @@ export function TeamFormDialog({
         {/* Parent Team */}
         <div className="space-y-2">
           <Label htmlFor="parent_team">Time Pai</Label>
-          <Select
-            value={formData.parent_team_id || "none"}
+          <TeamSelect
+            value={formData.parent_team_id}
             onValueChange={(value) =>
               setFormData({
                 ...formData,
-                parent_team_id: value === "none" ? null : value,
+                parent_team_id: value ?? null,
               })
             }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um time pai (opcional)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhum (time raiz)</SelectItem>
-              {parentTeamOptions.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Selecione um time pai (opcional)"
+            includeNone
+            noneLabel="Nenhum (time raiz)"
+            excludeIds={excludedTeamIds}
+          />
           {selectedParentTeam?.status === "inactive" && (
             <div className="flex items-center gap-2 text-xs text-amber-600">
               <AlertTriangle className="h-3 w-3" />

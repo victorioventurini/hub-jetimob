@@ -125,7 +125,6 @@ export default function OrgObjectiveViewPage() {
             onStatusFilterChange={setStatusFilter}
             teamFilter={teamFilter}
             onTeamFilterChange={setTeamFilter}
-            availableTeams={availableTeams}
           />
         </div>
 

@@ -152,7 +152,6 @@ export default function OkrsPage() {
               <TeamSelect
                 value={selectedTeam === "all" ? undefined : selectedTeam}
                 onValueChange={(v) => setSelectedTeam(v ?? "all")}
-                teams={teams.map(t => ({ id: t.id, name: t.name, level: 0, parentId: null }))}
                 includeAll
                 allLabel="Todos os times"
                 triggerClassName="w-[180px]"

@@ -1,8 +1,7 @@
-import { StatusSelect, RAG_STATUS_OPTIONS } from '@/components/selects';
+import { StatusSelect } from '@/components/selects';
 import { TeamSelect } from '@/components/selects';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 
 export type StatusFilter = 'all' | 'green' | 'yellow' | 'red' | 'not_started';
 export type TeamFilter = string;
@@ -12,7 +11,6 @@ interface OrgViewFiltersProps {
   onStatusFilterChange: (value: StatusFilter) => void;
   teamFilter: TeamFilter;
   onTeamFilterChange: (value: TeamFilter) => void;
-  availableTeams: { id: string; name: string }[];
 }
 
 export function OrgViewFilters({
@@ -20,7 +18,6 @@ export function OrgViewFilters({
   onStatusFilterChange,
   teamFilter,
   onTeamFilterChange,
-  availableTeams,
 }: OrgViewFiltersProps) {
   const hasActiveFilters = statusFilter !== 'all' || teamFilter !== 'all';
 
@@ -28,14 +25,6 @@ export function OrgViewFilters({
     onStatusFilterChange('all');
     onTeamFilterChange('all');
   };
-
-  // Convert availableTeams to FlatTeamItem format for TeamSelect
-  const teamsAsFlatItems: FlatTeamItem[] = availableTeams.map((team) => ({
-    id: team.id,
-    name: team.name,
-    level: 0,
-    parentId: null,
-  }));
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -49,7 +38,6 @@ export function OrgViewFilters({
       <TeamSelect
         value={teamFilter === 'all' ? undefined : teamFilter}
         onValueChange={(value) => onTeamFilterChange(value ?? 'all')}
-        teams={teamsAsFlatItems}
         includeAll
         allLabel="Todos os times"
         placeholder="Filtrar por time"
