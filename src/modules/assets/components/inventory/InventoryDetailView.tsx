@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { format, formatDistanceToNow, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -186,7 +186,6 @@ function LoanStatusCard({ item, movements }: { item: AssetInventory; movements: 
 }
 export function InventoryDetailView() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { getItem, getItemByCode, getMovements, items, isLoading } = useInventory();
   const { canManageInventory, isInventoryAdmin } = useAssetPermissions();
 
@@ -260,8 +259,8 @@ export function InventoryDetailView() {
       <div className="text-center py-12">
         <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h2 className="text-lg font-medium">Item não encontrado</h2>
-        <Button variant="link" onClick={() => navigate("/assets/inventory")}>
-          Voltar para lista
+        <Button asChild variant="link">
+          <Link to="/assets/inventory">Voltar para lista</Link>
         </Button>
       </div>
     );
@@ -278,8 +277,10 @@ export function InventoryDetailView() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/assets/inventory")}>
-          <ArrowLeft className="h-5 w-5" />
+        <Button asChild variant="ghost" size="icon">
+          <Link to="/assets/inventory">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
         </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-foreground truncate">{item.name}</h1>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";

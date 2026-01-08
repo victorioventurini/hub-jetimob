@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +30,6 @@ const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { profileId } = useIdentity();
   const [newMessage, setNewMessage] = useState("");
@@ -68,8 +67,8 @@ export default function TicketDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Ticket não encontrado</p>
-        <Button variant="link" onClick={() => navigate("/tickets")}>
-          Voltar para lista
+        <Button asChild variant="link">
+          <Link to="/tickets">Voltar para lista</Link>
         </Button>
       </div>
     );
@@ -83,8 +82,10 @@ export default function TicketDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/tickets")}>
-            <ArrowLeft className="h-4 w-4" />
+          <Button asChild variant="ghost" size="icon">
+            <Link to="/tickets">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
           <div>
             <div className="flex items-center gap-2 mb-1">

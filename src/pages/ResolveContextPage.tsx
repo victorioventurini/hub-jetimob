@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -293,9 +293,11 @@ export default function ResolveContextPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/", { replace: true })} variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para o início
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar para o início
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -318,12 +320,16 @@ export default function ResolveContextPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button onClick={() => navigate("/", { replace: true })} variant="outline" className="gap-2 w-full">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para o início
+            <Button asChild variant="outline" className="gap-2 w-full">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar para o início
+              </Link>
             </Button>
-            <Button onClick={() => navigate("/select-bu", { replace: true })} variant="ghost" className="w-full">
-              Trocar de Business Unit
+            <Button asChild variant="ghost" className="w-full">
+              <Link to="/select-bu">
+                Trocar de Business Unit
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -345,9 +351,11 @@ export default function ResolveContextPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => navigate("/", { replace: true })} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para o início
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para o início
+            </Link>
           </Button>
         </CardContent>
       </Card>

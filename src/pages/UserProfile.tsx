@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,7 +74,6 @@ const monthNames = [
 
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: profile, isLoading } = usePublicProfile(id);
   const { data: okrData } = useUserOkrs(profile?.id);
   const { data: kpis } = useUserKpis(profile?.id);
@@ -137,7 +136,9 @@ export default function UserProfile() {
             <p className="text-muted-foreground mb-4">
               O usuário que você está procurando não existe ou você não tem acesso.
             </p>
-            <Button onClick={() => navigate("/users")}>Voltar para Jetimobers</Button>
+            <Button asChild>
+              <Link to="/users">Voltar para Jetimobers</Link>
+            </Button>
           </div>
         </div>
       </HubLayout>
@@ -150,12 +151,14 @@ export default function UserProfile() {
         {/* Header */}
         <div className="flex items-start gap-4">
           <Button
+            asChild
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
             className="mt-1"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <Link to="/users">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
           </Button>
 
           <div className="flex flex-col sm:flex-row gap-6 flex-1">

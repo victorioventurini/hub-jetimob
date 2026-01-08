@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,18 +27,10 @@ export function IntegrationCard({
   showConfigureButton = true,
   navigateToPath,
 }: IntegrationCardProps) {
-  const navigate = useNavigate();
-  
   const isEnabled = globalConfig?.is_enabled_global ?? false;
   const isConfigured = globalConfig !== null && globalConfig !== undefined;
   
-  const handleNavigate = () => {
-    if (navigateToPath) {
-      navigate(navigateToPath);
-    } else {
-      navigate(`/hub/integrations/${integration.integration_key}`);
-    }
-  };
+  const configPath = navigateToPath || `/hub/integrations/${integration.integration_key}`;
   
   return (
     <Card className="group hover:shadow-md transition-shadow">
@@ -99,12 +91,14 @@ export function IntegrationCard({
         <div className="flex items-center justify-between pt-2 border-t">
           {showConfigureButton && (
             <Button
+              asChild
               variant="outline"
               size="sm"
-              onClick={handleNavigate}
             >
-              <Settings className="w-4 h-4 mr-1" />
-              Configurar
+              <Link to={configPath}>
+                <Settings className="w-4 h-4 mr-1" />
+                Configurar
+              </Link>
             </Button>
           )}
           

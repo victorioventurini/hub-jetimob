@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +40,6 @@ import { useUrlTab } from "@/shared/url";
 
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: team, isLoading } = useTeam(id);
   const { data: squads } = useSquads(id);
   const deleteTeam = useDeleteTeam();
@@ -100,7 +99,9 @@ export default function TeamDetailPage() {
           <p className="text-muted-foreground mb-4">
             O time que você está procurando não existe ou foi removido.
           </p>
-          <Button onClick={() => navigate("/teams")}>Voltar para Times</Button>
+          <Button asChild>
+            <Link to="/teams">Voltar para Times</Link>
+          </Button>
         </div>
       </HubLayout>
     );
@@ -113,11 +114,13 @@ export default function TeamDetailPage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button
+              asChild
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/teams")}
             >
-              <ArrowLeft className="h-5 w-5" />
+              <Link to="/teams">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
             </Button>
             <div>
               <div className="flex items-center gap-3">
@@ -251,8 +254,10 @@ export default function TeamDetailPage() {
                     <p className="text-sm text-muted-foreground mb-4">
                       Veja como este time contribui para os Objetivos Organizacionais através de seus OKRs.
                     </p>
-                    <Button onClick={() => navigate(`/okrs/team-contribution/${team.id}`)}>
-                      Ver Contribuição Completa
+                    <Button asChild>
+                      <Link to={`/okrs/team-contribution/${team.id}`}>
+                        Ver Contribuição Completa
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>
