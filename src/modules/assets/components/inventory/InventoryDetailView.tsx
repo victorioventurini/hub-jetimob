@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   UserCheck,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,6 +194,7 @@ export function InventoryDetailView() {
   const [movements, setMovements] = useState<AssetMovement[]>([]);
   const [isLoadingItem, setIsLoadingItem] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [movementType, setMovementType] = useState<AssetMovementType | undefined>();
   
@@ -344,10 +346,16 @@ export function InventoryDetailView() {
               </Button>
             )}
             {isInventoryAdmin && (
-              <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </Button>
+              <>
+                <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setCloneDialogOpen(true)}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Clonar
+                </Button>
+              </>
             )}
             {showWriteOff && (
               <Button
@@ -583,6 +591,12 @@ export function InventoryDetailView() {
             open={editDialogOpen}
             onOpenChange={setEditDialogOpen}
             item={item}
+          />
+          <InventoryFormDialog
+            open={cloneDialogOpen}
+            onOpenChange={setCloneDialogOpen}
+            item={item}
+            cloneMode
           />
           <InventoryMovementDialog
             open={movementDialogOpen}
