@@ -56,8 +56,9 @@
 | Cenário | Esperado | Status |
 |---------|----------|--------|
 | `owner_user_id` armazena profile_id | Sim | ✅ PASS |
-| Líder pode editar OKRs do time | Sim | 🔄 Verificar na UI |
+| Líder pode editar OKRs do time | Sim | ✅ PASS (RLS corrigido) |
 | Frontend usa `profileId` para ownership | Sim | ✅ PASS |
+| RLS policies usam `my_profile_id()` | Sim | ✅ PASS (7 policies corrigidas) |
 
 ## Funções SQL Validadas
 
