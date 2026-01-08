@@ -1,11 +1,11 @@
 /**
  * LeaderTodayFocusCard - Shows top 3 actionable items for today
  */
+import { Link } from "react-router-dom";
 import { Zap, AlertCircle, Info, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
 import type { FocusItem } from "../../types";
 
 interface LeaderTodayFocusCardProps {
@@ -26,7 +26,6 @@ const typeStyles: Record<string, { icon: string; bg: string }> = {
 };
 
 export function LeaderTodayFocusCard({ items, isLoading }: LeaderTodayFocusCardProps) {
-  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -77,13 +76,15 @@ export function LeaderTodayFocusCard({ items, isLoading }: LeaderTodayFocusCardP
                 </div>
                 {item.url && item.cta && (
                   <Button
+                    asChild
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate(item.url!)}
                     className="gap-1 text-primary"
                   >
-                    {item.cta}
-                    <ArrowRight className="h-3 w-3" />
+                    <Link to={item.url}>
+                      {item.cta}
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
                   </Button>
                 )}
               </div>

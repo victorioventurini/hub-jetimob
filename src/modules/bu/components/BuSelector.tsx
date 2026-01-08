@@ -1,19 +1,17 @@
-import { Building2, ChevronDown, Check, ArrowLeftRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Building2, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 
 export function BuSelector() {
-  const navigate = useNavigate();
-  const { currentBu, userBus, hasMultipleBus, switchBu, clearBuSelection } = useBu();
+  const { currentBu, userBus, hasMultipleBus, switchBu } = useBu();
   const { role } = useAuth();
 
   const isSuperAdmin = role === "super_admin";
@@ -26,20 +24,17 @@ export function BuSelector() {
   // If no currentBu selected yet (super_admin case), show a placeholder
   if (!currentBu) {
     return (
-      <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/select-bu")}>
-        <Building2 className="h-4 w-4" />
-        <span>Selecionar BU</span>
+      <Button asChild variant="outline" size="sm" className="gap-2">
+        <Link to="/select-bu">
+          <Building2 className="h-4 w-4" />
+          <span>Selecionar BU</span>
+        </Link>
       </Button>
     );
   }
 
   const handleSwitchBu = (buId: string) => {
     switchBu(buId);
-  };
-
-  const handleViewAllBus = () => {
-    clearBuSelection();
-    navigate("/select-bu");
   };
 
   return (

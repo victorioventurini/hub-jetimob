@@ -66,7 +66,6 @@ export function SquadSection({ teamId, teamName }: SquadSectionProps) {
                 <SquadCard 
                   key={squad.id} 
                   squad={squad}
-                  onClick={() => setSelectedSquad(squad)}
                 />
               ))}
             </div>

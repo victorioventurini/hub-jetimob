@@ -1,12 +1,12 @@
 /**
  * Card showing recent tickets for external user
  */
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, Plus, ArrowRight, Clock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { ExternalTicketSummary } from "../types";
@@ -33,8 +33,6 @@ const statusVariants: Record<string, "default" | "secondary" | "outline" | "dest
 };
 
 export function MyTicketsCard({ tickets, isLoading }: MyTicketsCardProps) {
-  const navigate = useNavigate();
-
   if (isLoading) {
     return (
       <Card className="col-span-full">
@@ -59,12 +57,11 @@ export function MyTicketsCard({ tickets, isLoading }: MyTicketsCardProps) {
           </div>
           <CardTitle className="text-lg">Meus Tickets</CardTitle>
         </div>
-        <Button
-          size="sm"
-          onClick={() => navigate("/tickets/new?type=external")}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Criar novo ticket
+        <Button asChild size="sm">
+          <Link to="/tickets/new?type=external">
+            <Plus className="h-4 w-4 mr-1" />
+            Criar novo ticket
+          </Link>
         </Button>
       </CardHeader>
       <CardContent>
@@ -77,10 +74,10 @@ export function MyTicketsCard({ tickets, isLoading }: MyTicketsCardProps) {
         ) : (
           <div className="space-y-3">
             {tickets.map((ticket) => (
-              <button
+              <Link
                 key={ticket.id}
-                onClick={() => navigate(`/tickets/${ticket.id}`)}
-                className="w-full group flex items-start gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted border border-transparent hover:border-border transition-all text-left"
+                to={`/tickets/${ticket.id}`}
+                className="w-full group flex items-start gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted border border-transparent hover:border-border transition-all text-left block"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -113,7 +110,7 @@ export function MyTicketsCard({ tickets, isLoading }: MyTicketsCardProps) {
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all mt-1" />
-              </button>
+              </Link>
             ))}
           </div>
         )}
@@ -121,13 +118,15 @@ export function MyTicketsCard({ tickets, isLoading }: MyTicketsCardProps) {
         {tickets.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border">
             <Button
+              asChild
               variant="ghost"
               size="sm"
               className="w-full text-muted-foreground hover:text-primary"
-              onClick={() => navigate("/tickets?type=external")}
             >
-              Ver todos os tickets
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <Link to="/tickets?type=external">
+                Ver todos os tickets
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
             </Button>
           </div>
         )}

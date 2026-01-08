@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,11 +9,9 @@ import { usePendingCheckins, getDayName } from '@/modules/okrs/hooks/usePendingC
 import { CheckinDialog } from '@/modules/okrs/components/CheckinDialog';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
 
 export function MyOkrsCard() {
   const { data: pendingCheckins, isLoading } = usePendingCheckins();
-  const navigate = useNavigate();
   
   const [selectedKr, setSelectedKr] = useState<any>(null);
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -96,13 +95,15 @@ export function MyOkrsCard() {
               )}
             </CardTitle>
             <Button
+              asChild
               variant="ghost"
               size="sm"
               className="text-xs"
-              onClick={() => navigate('/okrs')}
             >
-              Ver todos
-              <ChevronRight className="h-3 w-3 ml-1" />
+              <Link to="/okrs">
+                Ver todos
+                <ChevronRight className="h-3 w-3 ml-1" />
+              </Link>
             </Button>
           </div>
         </CardHeader>
@@ -177,11 +178,13 @@ export function MyOkrsCard() {
 
           {totalCount > 3 && (
             <Button
+              asChild
               variant="ghost"
               className="w-full text-xs text-muted-foreground"
-              onClick={() => navigate('/okrs')}
             >
-              +{totalCount - 3} outros OKRs
+              <Link to="/okrs">
+                +{totalCount - 3} outros OKRs
+              </Link>
             </Button>
           )}
         </CardContent>

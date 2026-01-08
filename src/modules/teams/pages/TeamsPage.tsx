@@ -443,7 +443,6 @@ export default function TeamsPage() {
                           <SquadCard
                             key={squad.id}
                             squad={squad}
-                            onClick={() => setSelectedSquad(squad)}
                           />
                         ))}
                       </div>

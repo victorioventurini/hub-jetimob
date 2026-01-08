@@ -1,10 +1,10 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, ChevronRight, Building2, Edit, Layers3, ArrowUpRight } from "lucide-react";
 import { TeamWithRelations } from "../types";
-import { useNavigate } from "react-router-dom";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,6 @@ interface TeamCardProps {
 }
 
 export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
-  const navigate = useNavigate();
   const { canManageTeam } = useTeamManagement();
   
   // Verificar se usuário pode gerenciar ESTE time específico
@@ -31,20 +30,16 @@ export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
       .toUpperCase()
       .slice(0, 2);
 
-  const handleClick = () => {
-    navigate(`/teams/${team.id}`);
-  };
-
   return (
-    <Card
-      className={cn(
-        "group hover:shadow-lg transition-all duration-200 cursor-pointer relative",
-        isSubteam 
-          ? "hover:border-blue-500/30 border-l-4 border-l-blue-500/50" 
-          : "hover:border-primary/30 border-l-4 border-l-primary/50"
-      )}
-      onClick={handleClick}
-    >
+    <Link to={`/teams/${team.id}`} className="block">
+      <Card
+        className={cn(
+          "group hover:shadow-lg transition-all duration-200 cursor-pointer relative",
+          isSubteam 
+            ? "hover:border-blue-500/30 border-l-4 border-l-blue-500/50" 
+            : "hover:border-primary/30 border-l-4 border-l-primary/50"
+        )}
+      >
       {/* Edit Button */}
       {canManageThisTeam && onEdit && (
         <Button
@@ -144,5 +139,6 @@ export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 }

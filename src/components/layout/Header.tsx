@@ -74,14 +74,11 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
         <div className="flex items-center gap-2">
           {/* BU Selector - Show button on hub, dropdown elsewhere */}
           {isHubPage ? (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
-              onClick={() => navigate("/select-bu")}
-            >
-              <Building2 className="h-4 w-4" />
-              Selecionar BU
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/select-bu">
+                <Building2 className="h-4 w-4" />
+                Selecionar BU
+              </Link>
             </Button>
           ) : (
             <BuSelector />

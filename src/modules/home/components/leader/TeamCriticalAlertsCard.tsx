@@ -2,11 +2,11 @@
  * TeamCriticalAlertsCard - Shows critical alerts requiring attention
  * Full width, only appears if there are critical items
  */
+import { Link } from "react-router-dom";
 import { AlertTriangle, Clock, Target, Package, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 interface CriticalAlert {
   type: string;
@@ -36,8 +36,6 @@ const severityColors: Record<string, string> = {
 };
 
 export function TeamCriticalAlertsCard({ alerts }: TeamCriticalAlertsCardProps) {
-  const navigate = useNavigate();
-
   if (!alerts || alerts.length === 0) {
     return null;
   }
@@ -77,13 +75,15 @@ export function TeamCriticalAlertsCard({ alerts }: TeamCriticalAlertsCardProps) 
                     {alert.severity === 'high' ? 'Urgente' : alert.severity === 'medium' ? 'Atenção' : 'Info'}
                   </Badge>
                   <Button
+                    asChild
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(alert.url)}
                     className="gap-1"
                   >
-                    {alert.cta}
-                    <ExternalLink className="h-3 w-3" />
+                    <Link to={alert.url}>
+                      {alert.cta}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
                   </Button>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,10 +12,9 @@ import {
 
 interface SquadCardProps {
   squad: SquadWithRelations;
-  onClick?: () => void;
 }
 
-export function SquadCard({ squad, onClick }: SquadCardProps) {
+export function SquadCard({ squad }: SquadCardProps) {
   const getInitials = (name: string) =>
     name
       .split(" ")
@@ -29,10 +29,8 @@ export function SquadCard({ squad, onClick }: SquadCardProps) {
   ) || [];
 
   return (
-    <Card 
-      className="hover:border-accent/50 transition-colors cursor-pointer"
-      onClick={onClick}
-    >
+    <Link to={`/squads/${squad.id}`} className="block">
+      <Card className="hover:border-accent/50 transition-colors cursor-pointer">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
@@ -95,5 +93,6 @@ export function SquadCard({ squad, onClick }: SquadCardProps) {
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 }
