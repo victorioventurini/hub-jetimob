@@ -4510,6 +4510,59 @@ export type Database = {
           },
         ]
       }
+      permission_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          after_state: Json | null
+          before_state: Json | null
+          bu_id: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string
+          id: string
+          reason: string
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_state?: Json | null
+          before_state?: Json | null
+          bu_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          reason: string
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_state?: Json | null
+          before_state?: Json | null
+          bu_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          reason?: string
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_audit_log_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permission_catalog: {
         Row: {
           action: string
@@ -4667,6 +4720,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      permission_preset_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          preset_id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          preset_id: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          preset_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_preset_items_preset_id_fkey"
+            columns: ["preset_id"]
+            isOneToOne: false
+            referencedRelation: "permission_presets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_preset_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_presets: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          module: string | null
+          name: string
+          slug: string
+          sort_order: number | null
+          surface: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          module?: string | null
+          name: string
+          slug: string
+          sort_order?: number | null
+          surface?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          module?: string | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          surface?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       permission_template_items_v2: {
         Row: {
@@ -6196,6 +6327,58 @@ export type Database = {
         }
         Relationships: []
       }
+      v_permission_risk_report: {
+        Row: {
+          bu_id: string | null
+          permission_count: number | null
+          risk_level: string | null
+          risk_reasons: string[] | null
+          template_count: number | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_active_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_permissions_without_explanation: {
+        Row: {
+          action: string | null
+          module: string | null
+          permission_key: string | null
+          resource: string | null
+          status: Database["public"]["Enums"]["catalog_status"] | null
+        }
+        Relationships: []
+      }
       v_shared_okrs_summary: {
         Row: {
           bu_id: string | null
@@ -6302,6 +6485,25 @@ export type Database = {
           },
         ]
       }
+      v_users_without_templates: {
+        Row: {
+          bu_id: string | null
+          display_name: string | null
+          membership_created_at: string | null
+          role_in_bu: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+          work_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
@@ -6381,6 +6583,18 @@ export type Database = {
       ensure_default_v2_template_for_membership: {
         Args: { p_auth_user_id: string; p_bu_id: string; p_role_in_bu?: string }
         Returns: undefined
+      }
+      explain_permission: {
+        Args: { p_bu_id: string; p_permission_key: string; p_user_id: string }
+        Returns: {
+          granted_at: string
+          granted_by: string
+          granted_by_name: string
+          is_auto_assigned: boolean
+          source_id: string
+          source_name: string
+          source_type: string
+        }[]
       }
       generate_okr_insights_for_objective: {
         Args: {
@@ -6491,6 +6705,18 @@ export type Database = {
           subcategory_name: string
         }[]
       }
+      get_permission_diff: {
+        Args: {
+          p_bu_id: string
+          p_new_template_ids: string[]
+          p_user_id: string
+        }
+        Returns: {
+          change_type: string
+          permission_key: string
+          source_name: string
+        }[]
+      }
       get_profile_id: { Args: { p_user_id: string }; Returns: string }
       get_team_member_ids: { Args: { p_team_id: string }; Returns: string[] }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
@@ -6584,6 +6810,20 @@ export type Database = {
           p_old_values?: Json
         }
         Returns: undefined
+      }
+      log_permission_change: {
+        Args: {
+          p_action: string
+          p_after_state: Json
+          p_before_state: Json
+          p_bu_id: string
+          p_entity_id: string
+          p_entity_name: string
+          p_entity_type: string
+          p_reason: string
+          p_target_user_id: string
+        }
+        Returns: string
       }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_notification_read: {
