@@ -17,16 +17,18 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { 
-  Search, Plus, MoreHorizontal, Key, Pencil, AlertTriangle, ClipboardCheck, Layers, FileStack
+  Search, Plus, MoreHorizontal, Key, Pencil, AlertTriangle, ClipboardCheck, Layers, FileStack, Package, Shield
 } from "lucide-react";
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { PermissionDialog } from "../components/PermissionDialog";
 import { AuditDashboard } from "../components/AuditDashboard";
 import { SurfacesTab } from "../components/SurfacesTab";
 import { TemplatesV2Tab } from "../components/TemplatesV2Tab";
+import { PresetsTab } from "../components/PresetsTab";
+import { GovernanceTab } from "../components/GovernanceTab";
 import type { Permission, PermissionScope } from "../types";
 
-type GlobalPermissionTab = "catalog" | "templates-v2" | "surfaces" | "audit";
+type GlobalPermissionTab = "catalog" | "templates-v2" | "presets" | "governance" | "surfaces" | "audit";
 
 /**
  * GlobalPermissionsPage - Gerenciamento do catálogo global de permissões do Hub
@@ -81,6 +83,8 @@ export default function GlobalPermissionsPage() {
           <TabsList className="flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="catalog" className="gap-2"><Key className="h-4 w-4" />Catálogo</TabsTrigger>
             <TabsTrigger value="templates-v2" className="gap-2"><FileStack className="h-4 w-4" />Templates</TabsTrigger>
+            <TabsTrigger value="presets" className="gap-2"><Package className="h-4 w-4" />Presets</TabsTrigger>
+            <TabsTrigger value="governance" className="gap-2"><Shield className="h-4 w-4" />Governança</TabsTrigger>
             <TabsTrigger value="surfaces" className="gap-2"><Layers className="h-4 w-4" />Surfaces</TabsTrigger>
             <TabsTrigger value="audit" className="gap-2"><ClipboardCheck className="h-4 w-4" />Auditoria</TabsTrigger>
           </TabsList>
@@ -150,6 +154,8 @@ export default function GlobalPermissionsPage() {
         </TabsContent>
 
         <TabsContent value="templates-v2" className="mt-6"><TemplatesV2Tab /></TabsContent>
+        <TabsContent value="presets" className="mt-6"><PresetsTab /></TabsContent>
+        <TabsContent value="governance" className="mt-6"><GovernanceTab /></TabsContent>
         <TabsContent value="surfaces" className="mt-6"><SurfacesTab /></TabsContent>
         <TabsContent value="audit" className="mt-6"><AuditDashboard /></TabsContent>
       </Tabs>
