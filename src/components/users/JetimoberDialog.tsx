@@ -92,7 +92,6 @@ const defaultFormData: JetimoberFormData = {
 
 const ROLE_OPTIONS = [
   { value: "collaborator", label: "Colaborador" },
-  { value: "team_leader", label: "Líder de Time" },
   { value: "admin", label: "Administrador" },
 ];
 

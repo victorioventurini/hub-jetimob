@@ -6206,7 +6206,7 @@ export type Database = {
     Enums: {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
-      app_role: "super_admin" | "admin" | "team_leader" | "collaborator"
+      app_role: "super_admin" | "admin" | "collaborator"
       asset_group_item_role: "primary" | "accessory"
       asset_group_status: "active" | "inactive"
       asset_group_type: "kit" | "bundle"
@@ -6447,7 +6447,7 @@ export const Constants = {
     Enums: {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
-      app_role: ["super_admin", "admin", "team_leader", "collaborator"],
+      app_role: ["super_admin", "admin", "collaborator"],
       asset_group_item_role: ["primary", "accessory"],
       asset_group_status: ["active", "inactive"],
       asset_group_type: ["kit", "bundle"],
