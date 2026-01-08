@@ -9,7 +9,7 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
 import { YearSelect } from '@/components/selects';
-import { useUrlState, parsers } from '@/hooks/useUrlState';
+import { useUrlState, parsers } from '@/shared/url';
 
 const statusConfig = {
   on_track: {
@@ -34,8 +34,10 @@ export default function OrgViewListPage() {
   
   const currentYear = new Date().getFullYear();
   
-  // URL State
-  const [selectedYear, setSelectedYear] = useUrlState({ key: 'year', defaultValue: currentYear, parse: parsers.number });
+  // URL State - object API
+  const yearState = useUrlState<number>({ key: 'year', defaultValue: currentYear, parse: parsers.number });
+  const selectedYear = yearState.value;
+  const setSelectedYear = yearState.set;
   
   const { data: objectives, isLoading } = useAllOrgObjectivesView(selectedYear);
 

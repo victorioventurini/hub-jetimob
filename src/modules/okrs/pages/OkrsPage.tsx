@@ -10,16 +10,22 @@ import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
 import { mockOrgObjectives, mockTeamObjectives, getMockStats } from '../hooks/useMockOkrData';
 import { YearSelect, TeamSelect } from '@/components/selects';
 import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
-import { useUrlState, parsers } from "@/hooks/useUrlState";
+import { useUrlState, useUrlTab, parsers } from "@/shared/url";
 
 export default function OkrsPage() {
   usePageTitle("OKRs");
   const currentYear = new Date().getFullYear();
   
-  // URL State
-  const [selectedYear, setSelectedYear] = useUrlState<number>({ key: 'year', defaultValue: currentYear, parse: parsers.number });
-  const [selectedTeam, setSelectedTeam] = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
-  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'org' });
+  // URL State - object API
+  const yearState = useUrlState<number>({ key: 'year', defaultValue: currentYear, parse: parsers.number });
+  const selectedYear = yearState.value;
+  const setSelectedYear = yearState.set;
+  
+  const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
+  const selectedTeam = teamState.value;
+  const setSelectedTeam = teamState.set;
+  
+  const [activeTab, setActiveTab] = useUrlTab<string>('org');
 
   const years = [currentYear, currentYear + 1];
   const stats = useMemo(() => getMockStats(), []);

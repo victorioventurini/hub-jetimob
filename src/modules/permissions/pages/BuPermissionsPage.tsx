@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useUrlTab, useUrlState } from "@/hooks/useUrlState";
+import { useUrlTab, useUrlSearch } from "@/shared/url";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export default function BuPermissionsPage() {
 
   // URL State para tab e busca
   const [activeTab, setActiveTab] = useUrlTab<PermissionTab>("users");
-  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
+  const { value: search, set: setSearch } = useUrlSearch("q");
   
   const [selectedUser, setSelectedUser] = useState<BuUser | null>(null);
 

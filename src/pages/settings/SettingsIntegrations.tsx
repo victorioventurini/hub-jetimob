@@ -10,12 +10,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { IntegrationIcon } from "@/modules/integrations/components/IntegrationIcon";
 import { toast } from "sonner";
-import { useUrlState } from "@/hooks/useUrlState";
+import { useUrlSearch } from "@/shared/url";
 import { queryKeys } from "@/lib/queryKeys";
 
 export default function SettingsIntegrations() {
   // URL State
-  const [search, setSearch] = useUrlState<string>({ key: 'q', defaultValue: '' });
+  const { value: search, set: setSearch } = useUrlSearch("q");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

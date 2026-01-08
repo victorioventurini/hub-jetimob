@@ -6,7 +6,7 @@ import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { ClaviculariesTab } from "../components/settings/ClaviculariesTab";
 import { InventoryTab } from "../components/settings/InventoryTab";
-import { useUrlTab } from "@/hooks/useUrlState";
+import { useUrlTab } from "@/shared/url";
 
 export default function AssetsSettingsPage() {
   const { isAssetsAdmin, isLoading } = useAssetPermissions();

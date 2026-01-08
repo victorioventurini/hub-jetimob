@@ -22,29 +22,41 @@ import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState, parsers } from "@/hooks/useUrlState";
+import { useUrlState, useUrlTab, useUrlSearch, parsers } from "@/shared/url";
 
 export default function TeamsPage() {
   usePageTitle("Times");
   
-  // URL State
-  const [search, setSearch] = useUrlState<string>({ key: 'q', defaultValue: '' });
-  const [parentTeamFilter, setParentTeamFilter] = useUrlState<string | null>({ 
+  // URL State - using object-based API
+  const searchState = useUrlSearch("q");
+  const search = searchState.value;
+  const setSearch = searchState.set;
+  
+  const parentTeamState = useUrlState<string | null>({ 
     key: 'parent_team_id', 
     defaultValue: null,
     parse: (v) => v || null,
   });
-  const [leaderFilter, setLeaderFilter] = useUrlState<string | null>({ 
+  const parentTeamFilter = parentTeamState.value;
+  const setParentTeamFilter = parentTeamState.set;
+  
+  const leaderState = useUrlState<string | null>({ 
     key: 'leader_id', 
     defaultValue: null,
     parse: (v) => v || null,
   });
-  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'sections' });
-  const [showInactive, setShowInactive] = useUrlState<boolean>({ 
+  const leaderFilter = leaderState.value;
+  const setLeaderFilter = leaderState.set;
+  
+  const [activeTab, setActiveTab] = useUrlTab<string>('sections');
+  
+  const showInactiveState = useUrlState<boolean>({ 
     key: 'show_inactive', 
     defaultValue: false,
     parse: parsers.boolean,
   });
+  const showInactive = showInactiveState.value;
+  const setShowInactive = showInactiveState.set;
   
   // Local state
   const [editingTeam, setEditingTeam] = useState<TeamWithRelations | null>(null);

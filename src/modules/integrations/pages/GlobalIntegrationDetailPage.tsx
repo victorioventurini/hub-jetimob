@@ -31,7 +31,7 @@ import {
   useAgentLogs,
 } from '../hooks/useIntegrations';
 import { useAuth } from '@/hooks/useAuth';
-import { useUrlState } from '@/hooks/useUrlState';
+import { useUrlTab } from '@/shared/url';
 
 export default function GlobalIntegrationDetailPage() {
   const { integrationKey } = useParams<{ integrationKey: string }>();
@@ -50,7 +50,7 @@ export default function GlobalIntegrationDetailPage() {
   const updateTestStatus = useUpdateGlobalTestStatus();
   
   // URL State for tab
-  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'config' });
+  const [activeTab, setActiveTab] = useUrlTab<string>('config');
   
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('');

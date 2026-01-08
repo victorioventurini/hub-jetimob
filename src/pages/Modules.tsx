@@ -34,7 +34,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
-import { useUrlState } from "@/hooks/useUrlState";
+import { useUrlTab } from "@/shared/url";
 
 // Mapeamento de ícones
 const iconMap: Record<string, LucideIcon> = {
@@ -108,12 +108,8 @@ export default function Modules() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   
-  // URL State
-  const [activeTab, setActiveTab] = useUrlState<"all" | "global" | "operational">({ 
-    key: 'tab', 
-    defaultValue: 'all',
-    parse: (v) => v as "all" | "global" | "operational",
-  });
+  // URL State - object API
+  const [activeTab, setActiveTab] = useUrlTab<"all" | "global" | "operational">("all");
 
   // Buscar todos os módulos
   const { data: modules = [], isLoading } = useQuery({

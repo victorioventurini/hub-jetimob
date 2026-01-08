@@ -8,7 +8,7 @@ import { useTickets, useMyTickets } from "../hooks/useTickets";
 import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState, useUrlTab, parsers } from "@/hooks/useUrlState";
+import { useUrlState, useUrlTab, useUrlSearch, parsers } from "@/shared/url";
 import type { TicketStatus, TicketType } from "../types";
 
 type TicketTab = "mine" | "waiting" | "in_progress" | "done" | "discarded";
@@ -16,18 +16,33 @@ type TicketTab = "mine" | "waiting" | "in_progress" | "done" | "discarded";
 export default function TicketsListPage() {
   const navigate = useNavigate();
   
-  // URL State
+  // URL State - object API
   const [activeTab, setActiveTab] = useUrlTab<TicketTab>("mine");
-  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
-  const [typeFilter, setTypeFilter] = useUrlState<TicketType | "all">({ key: "type", defaultValue: "all" });
-  const [statusFilter, setStatusFilter] = useUrlState<TicketStatus | "all">({ key: "status", defaultValue: "all" });
-  const [categoryId, setCategoryId] = useUrlState<string>({ key: "category", defaultValue: "all" });
-  const [partnerId, setPartnerId] = useUrlState<string>({ key: "partner", defaultValue: "all" });
-  const [showOverdue, setShowOverdue] = useUrlState<boolean>({ 
+  const { value: search, set: setSearch } = useUrlSearch("q");
+  
+  const typeState = useUrlState<TicketType | "all">({ key: "type", defaultValue: "all" });
+  const typeFilter = typeState.value;
+  const setTypeFilter = typeState.set;
+  
+  const statusState = useUrlState<TicketStatus | "all">({ key: "status", defaultValue: "all" });
+  const statusFilter = statusState.value;
+  const setStatusFilter = statusState.set;
+  
+  const categoryState = useUrlState<string>({ key: "category", defaultValue: "all" });
+  const categoryId = categoryState.value;
+  const setCategoryId = categoryState.set;
+  
+  const partnerState = useUrlState<string>({ key: "partner", defaultValue: "all" });
+  const partnerId = partnerState.value;
+  const setPartnerId = partnerState.set;
+  
+  const overdueState = useUrlState<boolean>({ 
     key: "overdue", 
     defaultValue: false, 
     parse: parsers.boolean 
   });
+  const showOverdue = overdueState.value;
+  const setShowOverdue = overdueState.set;
 
   const { data: allTickets = [], isLoading: isLoadingAll } = useTickets();
   const { data: myTickets = [], isLoading: isLoadingMy } = useMyTickets();

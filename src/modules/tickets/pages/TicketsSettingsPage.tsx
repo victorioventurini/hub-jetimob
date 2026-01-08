@@ -5,7 +5,7 @@ import { PartnerContactsTab } from "../components/settings/PartnerContactsTab";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { RoutingRulesTab } from "../components/settings/RoutingRulesTab";
 import { ContactCapabilitiesTab } from "../components/settings/ContactCapabilitiesTab";
-import { useUrlTab } from "@/hooks/useUrlState";
+import { useUrlTab } from "@/shared/url";
 
 export default function TicketsSettingsPage() {
   const [activeTab, setActiveTab] = useUrlTab("partners");

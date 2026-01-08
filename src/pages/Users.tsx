@@ -47,7 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
-import { useUrlState } from "@/hooks/useUrlState";
+import { useUrlState } from "@/shared/url";
 
 import { useDeleteProfile } from "@/hooks/useProfiles";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
@@ -97,10 +97,18 @@ export default function UsersPage() {
   // Admin de BU ou super_admin podem gerenciar usuários via permission key
   const canManageUsers = isWildcard || has("users.profile.manage:bu");
   
-  // URL State
-  const [searchQuery, setSearchQuery] = useUrlState<string>({ key: 'q', defaultValue: '' });
-  const [teamFilter, setTeamFilter] = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
-  const [statusFilter, setStatusFilter] = useUrlState<string>({ key: 'status', defaultValue: 'active' });
+  // URL State - object API
+  const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
+  const searchQuery = searchState.value;
+  const setSearchQuery = searchState.set;
+  
+  const teamFilterState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
+  const teamFilter = teamFilterState.value;
+  const setTeamFilter = teamFilterState.set;
+  
+  const statusFilterState = useUrlState<string>({ key: 'status', defaultValue: 'active' });
+  const statusFilter = statusFilterState.value;
+  const setStatusFilter = statusFilterState.set;
   
   // Local state
   const [dialogOpen, setDialogOpen] = useState(false);

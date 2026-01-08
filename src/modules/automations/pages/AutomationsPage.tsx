@@ -29,7 +29,7 @@ import {
 import { EventCategorySection } from '../components/EventCatalogCard';
 import { ActionCategorySection } from '../components/ActionCatalogCard';
 import { AutomationLogsTable } from '../components/AutomationLogsTable';
-import { useUrlTab, useUrlState } from '@/hooks/useUrlState';
+import { useUrlTab, useUrlSearch } from '@/shared/url';
 import type { AutomationEventCatalog, AutomationActionCatalog } from '../types';
 
 export default function AutomationsPage() {
@@ -37,8 +37,10 @@ export default function AutomationsPage() {
 
   const { currentBu } = useBu();
   const [activeTab, setActiveTab] = useUrlTab('events');
-  const [searchTerm, setSearchTerm] = useUrlState<string>({ key: 'q', defaultValue: '' });
-  const [logFilter, setLogFilter] = useUrlState<string>({ key: 'status', defaultValue: 'all' });
+  const { value: searchTerm, set: setSearchTerm } = useUrlSearch('q');
+  const logFilterState = useUrlSearch('status');
+  const logFilter = logFilterState.value || 'all';
+  const setLogFilter = logFilterState.set;
 
   const { data: events, isLoading: eventsLoading } = useEventCatalog();
   const { data: actions, isLoading: actionsLoading } = useActionCatalog();
