@@ -93,17 +93,17 @@ export function MentionInput({
     queryFn: async () => {
       if (!currentBu?.id) return [];
 
+      // Use canonical view - shows ALL registered users
       let query = supabase
-        .from('profiles')
+        .from('v_bu_active_profiles')
         .select(`
           id,
           user_id,
           display_name,
           photo_url,
-          team:teams(name)
+          team_name
         `)
         .eq('bu_id', currentBu.id)
-        .eq('employment_status', 'active')
         .order('display_name');
 
       if (searchTerm) {
@@ -120,7 +120,7 @@ export function MentionInput({
         user_id: u.user_id,
         display_name: u.display_name,
         photo_url: u.photo_url,
-        team_name: (u.team as any)?.name || null,
+        team_name: u.team_name || null,
       })) as MentionUser[];
     },
     enabled: !!currentBu?.id && showSuggestions,

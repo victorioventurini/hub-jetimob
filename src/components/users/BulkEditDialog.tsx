@@ -40,12 +40,11 @@ export function BulkEditDialog({
     queryKey: ["managers-select", currentBu?.id],
     queryFn: async () => {
       if (!currentBu?.id) return [];
+      // Use canonical view - shows ALL registered users
       const { data, error } = await supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select("id, display_name")
         .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .neq("employment_status", "terminated")
         .order("display_name");
       if (error) throw error;
       return data;

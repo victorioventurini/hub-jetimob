@@ -102,12 +102,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
     queryKey: ["profiles-list", buId],
     queryFn: async () => {
       if (!buId) return [];
+      // Use canonical view - shows ALL registered users
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name")
+        .from("v_bu_active_profiles")
+        .select("id, display_name, onboarding_completed")
         .eq("bu_id", buId)
-        .is("deleted_at", null)
-        .eq("employment_status", "active")
         .order("display_name");
       if (error) throw error;
       return data;

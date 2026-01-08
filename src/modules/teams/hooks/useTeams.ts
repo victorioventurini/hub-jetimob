@@ -421,11 +421,10 @@ export function useAvailableLeaders() {
   return useQuery({
     queryKey: ["available-leaders", currentBu?.id],
     queryFn: async () => {
+      // Use canonical view - shows ALL registered users
       let query = supabase
-        .from("profiles")
-        .select("id, display_name, photo_url")
-        .is("deleted_at", null)
-        .eq("employment_status", "active")
+        .from("v_bu_active_profiles")
+        .select("id, display_name, photo_url, onboarding_completed")
         .order("display_name");
 
       if (currentBu?.id) {
