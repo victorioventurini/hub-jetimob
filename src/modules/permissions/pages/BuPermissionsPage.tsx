@@ -90,8 +90,8 @@ export default function BuPermissionsPage() {
       if (b.role_in_bu === "admin" && a.role_in_bu !== "admin") return 1;
       
       // Externals last
-      const aExternal = a.is_external ?? false;
-      const bExternal = b.is_external ?? false;
+      const aExternal = a.role_in_bu === "external";
+      const bExternal = b.role_in_bu === "external";
       if (aExternal && !bExternal) return 1;
       if (!aExternal && bExternal) return -1;
       
@@ -118,7 +118,7 @@ export default function BuPermissionsPage() {
       );
     }
     
-    if (user.is_external) {
+    if (user.role_in_bu === "external") {
       return (
         <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-700">
           <ExternalLink className="h-3 w-3" />
@@ -210,7 +210,7 @@ export default function BuPermissionsPage() {
                         className={cn(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
                           user.role_in_bu === "admin" && "bg-primary/5",
-                          user.is_external && "bg-amber-500/5"
+                          user.role_in_bu === "external" && "bg-amber-500/5"
                         )}
                         onClick={() => setSelectedUser(user)}
                       >

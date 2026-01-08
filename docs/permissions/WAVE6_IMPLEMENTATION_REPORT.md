@@ -177,19 +177,29 @@ Nova RPC para preview de permissões efetivas.
 
 ## 8. Resultados dos Audits
 
-### 8.1 audit-rbac.ts
+### 8.1 Build Status
+```
+Status: ✅ PASS
+Data: 2026-01-08
+Correções aplicadas:
+- is_super_admin → role === 'super_admin' (via useAuth)
+- is_external derivado de role_in_bu === 'external'
+- Dialog props: onSubmit → onSave, removido modules
+```
+
+### 8.2 audit-rbac.ts
 ```
 Status: PENDENTE
 Observações: Executar após deploy
 ```
 
-### 8.2 audit-identity-usage.ts
+### 8.3 audit-identity-usage.ts
 ```
 Status: PENDENTE
 Observações: Executar após deploy
 ```
 
-### 8.3 audit-bu-scope.ts
+### 8.4 audit-bu-scope.ts
 ```
 Status: PENDENTE
 Observações: Executar após deploy

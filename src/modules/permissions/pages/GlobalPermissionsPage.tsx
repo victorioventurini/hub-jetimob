@@ -511,8 +511,7 @@ export default function GlobalPermissionsPage() {
           if (!open) setEditingPermission(null);
         }}
         permission={editingPermission}
-        modules={modules}
-        onSubmit={editingPermission ? handleUpdatePermission : handleCreatePermission}
+        onSave={editingPermission ? handleUpdatePermission : handleCreatePermission}
         isPending={createPermission.isPending || updatePermission.isPending}
       />
 
@@ -523,7 +522,7 @@ export default function GlobalPermissionsPage() {
           if (!open) setEditingGroup(null);
         }}
         group={editingGroup}
-        onSubmit={editingGroup ? handleUpdateGroup : handleCreateGroup}
+        onSave={editingGroup ? handleUpdateGroup : handleCreateGroup}
         isPending={createGroup.isPending || updateGroup.isPending}
       />
 
