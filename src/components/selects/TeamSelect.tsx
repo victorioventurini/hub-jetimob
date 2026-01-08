@@ -3,7 +3,7 @@ import { useHierarchicalTeamList, FlatTeamItem } from "@/modules/teams/hooks/use
 import { cn } from "@/lib/utils";
 
 interface TeamSelectProps {
-  value: string | undefined;
+  value: string | undefined | null;
   onValueChange: (value: string | undefined) => void;
   placeholder?: string;
   includeAll?: boolean;
@@ -15,6 +15,8 @@ interface TeamSelectProps {
   triggerClassName?: string;
   /** Override teams list if you already have the data */
   teams?: FlatTeamItem[];
+  /** Team IDs to exclude from the list */
+  excludeIds?: string[];
 }
 
 /**
@@ -33,9 +35,14 @@ export function TeamSelect({
   className,
   triggerClassName,
   teams: externalTeams,
+  excludeIds = [],
 }: TeamSelectProps) {
   const { teams: hookTeams, isLoading } = useHierarchicalTeamList();
-  const teams = externalTeams ?? hookTeams;
+  
+  // Filter out excluded IDs
+  const filteredTeams = (externalTeams ?? hookTeams).filter(
+    (team) => !excludeIds.includes(team.id)
+  );
 
   const handleValueChange = (newValue: string) => {
     if (newValue === "all") {
@@ -47,7 +54,9 @@ export function TeamSelect({
     }
   };
 
-  const displayValue = value ?? (includeAll ? "all" : includeNone ? "none" : "");
+  // Handle null value (treat as none/all based on config)
+  const normalizedValue = value === null ? undefined : value;
+  const displayValue = normalizedValue ?? (includeAll ? "all" : includeNone ? "none" : "");
 
   return (
     <Select
@@ -55,10 +64,10 @@ export function TeamSelect({
       onValueChange={handleValueChange}
       disabled={disabled || isLoading}
     >
-      <SelectTrigger className={cn("w-[200px]", triggerClassName, className)}>
+      <SelectTrigger className={cn("w-full", triggerClassName, className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-h-[300px]">
         {includeAll && (
           <SelectItem value="all" className="font-medium">
             {allLabel}
@@ -69,7 +78,7 @@ export function TeamSelect({
             {noneLabel}
           </SelectItem>
         )}
-        {teams.map((team) => (
+        {filteredTeams.map((team) => (
           <SelectItem
             key={team.id}
             value={team.id}
