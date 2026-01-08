@@ -16,6 +16,9 @@ interface CreateMentionNotificationParams {
  * Hook para notificações - migrado para usar o novo sistema centralizado.
  * Mantém a API legada para compatibilidade com código existente.
  * 
+ * @deprecated Wave 2: Este hook será consolidado em useNotificationCenter.
+ * Para novos usos, prefira emit_notification_event via RPC direto.
+ * 
  * SAFE for pre-BU: Uses useOptionalBuClient() and guards mutations.
  */
 export function useNotifications() {

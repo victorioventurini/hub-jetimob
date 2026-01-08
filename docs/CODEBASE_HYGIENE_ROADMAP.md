@@ -272,27 +272,25 @@ git checkout HEAD~1 -- supabase/functions/send-magic-link/
 
 ## Checklist por Wave
 
-### Wave 1 Checklist
-- [ ] `NavLink.tsx` - Verificar uso
-- [ ] `CopyLinkButton.tsx` - Verificar uso
-- [ ] `useUrlState.ts` - Verificar migração
-- [ ] Rodar build após remoções
-- [ ] Atualizar este documento
+### Wave 1 Checklist ✅ DONE
+- [x] `NavLink.tsx` - Removido
+- [x] `CopyLinkButton.tsx` - Removido
+- [x] Build validado
 
-### Wave 2 Checklist
-- [ ] `send-magic-link` - Verificar logs
-- [ ] `profiles.job_title` - Verificar migração
+### Wave 2 Checklist ✅ DONE (parcial)
+- [x] `profiles.job_title` → `job_title_id` - 64/64 migrados
+- [x] `useNotifications` - Marcado @deprecated
+- [ ] `send-magic-link` - Verificar logs (pendente)
+- [ ] Imports URL State - Deferred (API incompatível)
+
+### Wave 3 Checklist (PENDENTE)
+- [ ] `metrics` - Confirmar obsoleto e DROP
+- [ ] `profiles.job_title` - DROP coluna após frontend migrado
 - [ ] `user_notification_preferences` - Migrar para v2
-- [ ] `useNotifications` - Consolidar
-- [ ] Rodar testes completos
-- [ ] Atualizar este documento
-
-### Wave 3 Checklist
-- [ ] `metrics` - Confirmar obsoleto
-- [ ] Migrations de `bu_id` - Testar em staging
-- [ ] Backup antes de drops
-- [ ] Deploy em janela de manutenção
-- [ ] Atualizar este documento
+- [ ] `squad_memberships` - Avaliar uso
+- [ ] URL State - Migrar sintaxe tuple → object
+- [ ] `useNotifications` - Consolidar em useNotificationCenter
+- [ ] `send-magic-link` - Remover se zero chamadas
 
 ---
 
