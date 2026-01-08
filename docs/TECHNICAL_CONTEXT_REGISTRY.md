@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.11.1  
+**Versão:** 2.12.0  
 **Última atualização:** 2026-01-08
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -11,6 +11,7 @@
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
 > - [engineering/QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys
 > - [engineering/BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase
+> - [ops/BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook oficial de backup e restore
 
 ---
 
@@ -1941,6 +1942,22 @@ src/
   - `EmptyState` - Estado vazio com CTA
   - `FilterBar`, `FilterSection` - Barra de filtros reutilizável
   - `PageHeader` - Cabeçalho de página padronizado
+
+### v2.12.0 (2026-01-08)
+- **Wave 7 — Sunset V1 (Permissions)**:
+  - Modelo de permissões v1 congelado (read-only) via triggers
+  - UI de edição v1 removida (apenas visualização legado)
+  - Sistema de migração controlada v1 → v2 implementado
+  - Tabela `permission_migrations` para tracking de migração por usuário
+  - Dashboard de migração em `/hub/permissions` (aba "Migração")
+  - Script `audit-permissions-v1-usage.ts` para detectar uso residual de v1
+  - Documentação: `docs/permissions/WAVE7_V1_V2_MAP.md`, `docs/permissions/WAVE7_SUNSET_V1_REPORT.md`
+- **Operações**:
+  - **Playbook de Backup & Restore** criado em `docs/ops/BACKUP_RESTORE_PLAYBOOK.md`
+    - Estratégias: Supabase Pro backups, PITR, pg_dump
+    - Procedimentos por tipo de incidente
+    - Checklist pós-restore
+    - Responsabilidades e boas práticas
 
 ### v1.4.0 (2026-01-06)
 - **Otimização Geral do Hub** (hardening + refactor):
