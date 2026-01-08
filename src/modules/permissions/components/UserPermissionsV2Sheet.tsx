@@ -14,28 +14,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import { 
   Loader2, 
   Shield, 
   Key, 
-  Users, 
   Search, 
   X, 
   FileStack,
   Eye,
   Wrench,
   Settings2,
-  Plus,
-  Minus,
-  ArrowRight,
   AlertTriangle
 } from "lucide-react";
-import { useBuGroupConfigs, useBuUserGroups, useUserEffectivePermissions } from "../hooks/useBuPermissions";
-import { usePermissionGroups } from "../hooks/usePermissionGroups";
+import { useUserEffectivePermissions } from "../hooks/useBuPermissions";
 import { usePermissionTemplatesV2, useUserTemplatesV2, useEffectivePermissionsPreview } from "../hooks/usePermissionsV2";
 import { useAuth } from "@/hooks/useAuth";
-import type { PermissionGroup } from "../types";
 import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 
 const SURFACE_ICONS = {
@@ -83,13 +76,9 @@ export function UserPermissionsV2Sheet({
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
   const [permissionSearch, setPermissionSearch] = useState("");
-  const [previewMode, setPreviewMode] = useState<'v1' | 'v2' | 'both'>('both');
 
-  // V1 hooks (read-only)
-  const { groups } = usePermissionGroups();
-  const { configs } = useBuGroupConfigs();
-  const { userGroups, isLoading: userGroupsLoading } = useBuUserGroups(user?.profile_id || null);
-  const { effectivePermissions: v1Permissions, isLoading: v1Loading } = useUserEffectivePermissions(user?.user_id || null);
+  // Effective permissions
+  const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.user_id || null);
 
   // V2 hooks
   const { templates, isLoading: templatesLoading } = usePermissionTemplatesV2();
@@ -99,12 +88,6 @@ export function UserPermissionsV2Sheet({
     assignTemplate,
     removeTemplate
   } = useUserTemplatesV2(user?.profile_id || null);
-
-  // Preview hook
-  const { permissions: previewPermissions, isLoading: previewLoading } = useEffectivePermissionsPreview(
-    user?.user_id || null,
-    previewMode
-  );
 
   const isAdmin = user?.role_in_bu === "admin";
   const isExternal = user?.role_in_bu === "external";
@@ -148,24 +131,25 @@ export function UserPermissionsV2Sheet({
     );
   }, [filteredTemplates]);
 
-  // V1 groups for display
-  const v1GroupNames = useMemo(() => {
-    return userGroups.map(ug => {
-      const group = groups.find(g => g.id === ug.group_id);
-      return group?.name || 'Grupo desconhecido';
-    });
-  }, [userGroups, groups]);
-
-  // Calculate diff for preview
-  const permissionDiff = useMemo(() => {
-    const v1Keys = new Set(v1Permissions.map(p => p.permission_key));
-    const v2Keys = new Set(previewPermissions.filter(p => p.source === 'template_v2').map(p => p.permission_key));
-    
-    const gained = [...v2Keys].filter(k => !v1Keys.has(k));
-    const lost = [...v1Keys].filter(k => !v2Keys.has(k));
-    
-    return { gained, lost };
-  }, [v1Permissions, previewPermissions]);
+  // Group effective permissions by module
+  const permissionsByModule = useMemo(() => {
+    let filtered = effectivePermissions;
+    if (permissionSearch.trim()) {
+      const search = permissionSearch.toLowerCase();
+      filtered = effectivePermissions.filter(p => 
+        p.permission_key.toLowerCase().includes(search) ||
+        p.module.toLowerCase().includes(search)
+      );
+    }
+    return filtered.reduce(
+      (acc, p) => {
+        if (!acc[p.module]) acc[p.module] = [];
+        acc[p.module].push(p);
+        return acc;
+      },
+      {} as Record<string, typeof effectivePermissions>
+    );
+  }, [effectivePermissions, permissionSearch]);
 
   // Initialize selected templates when sheet opens
   useEffect(() => {
@@ -181,7 +165,6 @@ export function UserPermissionsV2Sheet({
     if (!open) {
       setTemplateSearch("");
       setPermissionSearch("");
-      setPreviewMode('both');
     }
   }, [open]);
 
@@ -229,7 +212,7 @@ export function UserPermissionsV2Sheet({
     .toUpperCase()
     .slice(0, 2) || "??";
 
-  const isLoading = userGroupsLoading || templatesLoading || v2AssignmentsLoading;
+  const isLoading = templatesLoading || v2AssignmentsLoading;
   const isSaving = assignTemplate.isPending || removeTemplate.isPending;
 
   // Only super_admin can edit admin users
@@ -267,77 +250,34 @@ export function UserPermissionsV2Sheet({
               </div>
             </SheetTitle>
             <SheetDescription className="sr-only">
-              Gerenciar permissões v2 do usuário
+              Gerenciar permissões do usuário
             </SheetDescription>
           </SheetHeader>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="v2" className="flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="templates" className="flex-1 flex flex-col min-h-0">
           <div className="px-4 pt-3 shrink-0">
-            <TabsList className="grid w-full grid-cols-3 h-9">
-              <TabsTrigger value="v1" className="gap-1 text-xs">
-                <Users className="h-3 w-3" />
-                v1
-                <Badge variant="outline" className="ml-0.5 h-4 px-1 text-[10px]">
-                  {v1GroupNames.length}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="v2" className="gap-1 text-xs">
+            <TabsList className="grid w-full grid-cols-2 h-9">
+              <TabsTrigger value="templates" className="gap-1 text-xs">
                 <FileStack className="h-3 w-3" />
-                v2
+                Templates
                 <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
                   {selectedTemplateIds.size}
                 </Badge>
               </TabsTrigger>
-              <TabsTrigger value="preview" className="gap-1 text-xs">
+              <TabsTrigger value="effective" className="gap-1 text-xs">
                 <Key className="h-3 w-3" />
-                Preview
+                Permissões
+                <Badge variant="outline" className="ml-0.5 h-4 px-1 text-[10px]">
+                  {effectivePermissions.length}
+                </Badge>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* V1 Tab - Read Only */}
-          <TabsContent value="v1" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
-            <Alert className="mb-3">
-              <AlertDescription className="text-xs">
-                Templates v1 são somente leitura. Use a aba <strong>v2</strong> para gerenciar permissões.
-              </AlertDescription>
-            </Alert>
-
-            <ScrollArea className="flex-1 -mx-4 px-4 pb-4">
-              {userGroupsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : isAdmin ? (
-                <div className="text-center py-8">
-                  <Shield className="h-10 w-10 mx-auto text-primary mb-2" />
-                  <p className="font-medium text-sm">Administrador da BU</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Acesso amplo (*) a todos os recursos.
-                  </p>
-                </div>
-              ) : v1GroupNames.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-                  <p className="text-sm text-muted-foreground">Nenhum template v1 atribuído.</p>
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  {v1GroupNames.map((name, i) => (
-                    <div key={i} className="p-2 rounded border bg-muted/30">
-                      <span className="text-sm">{name}</span>
-                      <Badge variant="secondary" className="ml-2 text-xs">v1</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-
-          {/* V2 Tab - Editable */}
-          <TabsContent value="v2" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
+          {/* Templates Tab */}
+          <TabsContent value="templates" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
             {isExternal && (
               <Alert className="mb-3 border-amber-500/50 bg-amber-500/10">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -392,7 +332,7 @@ export function UserPermissionsV2Sheet({
                 <div className="text-center py-8">
                   <FileStack className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    {templateSearch ? `Nenhum resultado para "${templateSearch}"` : "Nenhum template v2 disponível."}
+                    {templateSearch ? `Nenhum resultado para "${templateSearch}"` : "Nenhum template disponível."}
                   </p>
                 </div>
               ) : (
@@ -450,7 +390,7 @@ export function UserPermissionsV2Sheet({
             {canEdit && !isAdmin && (
               <div className="flex items-center justify-between gap-2 pt-3 pb-4 border-t mt-auto shrink-0">
                 <div className="text-xs text-muted-foreground">
-                  {selectedTemplateIds.size} template{selectedTemplateIds.size !== 1 ? "s" : ""} v2
+                  {selectedTemplateIds.size} template{selectedTemplateIds.size !== 1 ? "s" : ""}
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
@@ -461,51 +401,16 @@ export function UserPermissionsV2Sheet({
                     onClick={handleApplyV2} 
                     disabled={isSaving || !hasChanges}
                   >
-                    {isSaving ? "Salvando..." : "Aplicar v2"}
+                    {isSaving ? "Salvando..." : "Salvar"}
                   </Button>
                 </div>
               </div>
             )}
           </TabsContent>
 
-          {/* Preview Tab */}
-          <TabsContent value="preview" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
-            {/* Mode selector */}
-            <div className="flex gap-2 mb-3 shrink-0">
-              {(['v1', 'v2', 'both'] as const).map(mode => (
-                <Button
-                  key={mode}
-                  variant={previewMode === mode ? "default" : "outline"}
-                  size="sm"
-                  className="flex-1 text-xs"
-                  onClick={() => setPreviewMode(mode)}
-                >
-                  {mode === 'v1' && 'Apenas v1'}
-                  {mode === 'v2' && 'Apenas v2'}
-                  {mode === 'both' && 'v1 + v2'}
-                </Button>
-              ))}
-            </div>
-
-            {/* Diff summary */}
-            {previewMode === 'both' && (permissionDiff.gained.length > 0 || permissionDiff.lost.length > 0) && (
-              <div className="flex gap-2 mb-3 shrink-0">
-                {permissionDiff.gained.length > 0 && (
-                  <Badge variant="outline" className="gap-1 bg-green-500/10 text-green-700 border-green-500/30">
-                    <Plus className="h-3 w-3" />
-                    {permissionDiff.gained.length} novas
-                  </Badge>
-                )}
-                {permissionDiff.lost.length > 0 && (
-                  <Badge variant="outline" className="gap-1 bg-red-500/10 text-red-700 border-red-500/30">
-                    <Minus className="h-3 w-3" />
-                    {permissionDiff.lost.length} perdidas
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {previewPermissions.length > 5 && (
+          {/* Effective Permissions Tab */}
+          <TabsContent value="effective" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
+            {effectivePermissions.length > 5 && (
               <div className="relative shrink-0 mb-2">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
@@ -526,7 +431,7 @@ export function UserPermissionsV2Sheet({
             )}
 
             <ScrollArea className="flex-1 -mx-4 px-4 pb-4">
-              {previewLoading ? (
+              {effectiveLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
@@ -538,44 +443,50 @@ export function UserPermissionsV2Sheet({
                     Acesso amplo (*) a todos os recursos.
                   </p>
                 </div>
-              ) : previewPermissions.length === 0 ? (
+              ) : effectivePermissions.length === 0 ? (
                 <div className="text-center py-8">
                   <Key className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-                  <p className="text-sm text-muted-foreground">Nenhuma permissão efetiva.</p>
+                  <p className="text-sm text-muted-foreground">Nenhuma permissão.</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Atribua templates para conceder permissões.
+                  </p>
+                </div>
+              ) : Object.keys(permissionsByModule).length === 0 ? (
+                <div className="text-center py-8">
+                  <Search className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum resultado para "{permissionSearch}"
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {previewPermissions
-                    .filter(p => !permissionSearch || p.permission_key.toLowerCase().includes(permissionSearch.toLowerCase()))
-                    .map((perm, i) => {
-                      const isGained = permissionDiff.gained.includes(perm.permission_key);
-                      const isLost = permissionDiff.lost.includes(perm.permission_key);
-                      
-                      return (
-                        <div
-                          key={`${perm.permission_key}-${i}`}
-                          className={`flex items-center justify-between py-1.5 px-2 rounded gap-2 ${
-                            isGained ? 'bg-green-500/10' : isLost ? 'bg-red-500/10' : 'bg-muted/40'
-                          }`}
-                        >
-                          <code className="text-[11px] truncate flex-1">
-                            {perm.permission_key}
-                          </code>
-                          <div className="flex gap-1 shrink-0">
-                            {isGained && <Plus className="h-3 w-3 text-green-600" />}
-                            {isLost && <Minus className="h-3 w-3 text-red-600" />}
-                            <Badge 
-                              variant="outline" 
-                              className={`text-[10px] h-4 px-1 ${
-                                perm.source === 'template_v2' ? 'border-primary/50' : ''
-                              }`}
-                            >
+                <div className="space-y-4 pb-2">
+                  {Object.entries(permissionsByModule)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([module, perms]) => (
+                    <div key={module}>
+                      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 sticky top-0 bg-background py-0.5 flex items-center gap-1.5">
+                        {module}
+                        <Badge variant="outline" className="text-[10px] h-4 px-1">
+                          {perms.length}
+                        </Badge>
+                      </h4>
+                      <div className="space-y-0.5">
+                        {perms.map((perm) => (
+                          <div
+                            key={perm.permission_id}
+                            className="flex items-center justify-between py-1 px-1.5 rounded bg-muted/40 gap-2"
+                          >
+                            <code className="text-[11px] truncate flex-1">
+                              {perm.permission_key}
+                            </code>
+                            <Badge variant="outline" className="text-[10px] h-4 px-1 shrink-0">
                               {perm.source_name}
                             </Badge>
                           </div>
-                        </div>
-                      );
-                    })}
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </ScrollArea>

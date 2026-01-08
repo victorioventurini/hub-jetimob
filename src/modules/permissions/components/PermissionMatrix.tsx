@@ -7,13 +7,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Permission, PermissionGroup } from "../types";
+import type { Permission } from "../types";
+import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 
 interface PermissionMatrixProps {
   permissions: Permission[];
   selectedPermissionIds: Set<string>;
   onPermissionToggle: (permissionId: string) => void;
-  group?: PermissionGroup | null;
+  template?: PermissionTemplateV2 | null;
   readOnly?: boolean;
 }
 
@@ -71,7 +72,7 @@ export function PermissionMatrix({
   permissions,
   selectedPermissionIds,
   onPermissionToggle,
-  group,
+  template,
   readOnly = false,
 }: PermissionMatrixProps) {
   const [search, setSearch] = useState("");
@@ -123,23 +124,23 @@ export function PermissionMatrix({
 
   return (
     <div className="space-y-4">
-      {/* Header with group info */}
-      {group && (
+      {/* Header with template info */}
+      {template && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">{group.name}</CardTitle>
-                {group.slug && (
-                  <code className="text-xs text-muted-foreground font-mono">{group.slug}</code>
+                <CardTitle className="text-lg">{template.name}</CardTitle>
+                {template.slug && (
+                  <code className="text-xs text-muted-foreground font-mono">{template.slug}</code>
                 )}
               </div>
-              {group.is_system && (
+              {template.is_system && (
                 <Badge variant="secondary">Template do Sistema</Badge>
               )}
             </div>
-            {group.description && (
-              <CardDescription>{group.description}</CardDescription>
+            {template.description && (
+              <CardDescription>{template.description}</CardDescription>
             )}
           </CardHeader>
         </Card>
