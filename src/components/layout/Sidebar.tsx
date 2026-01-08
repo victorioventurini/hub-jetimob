@@ -85,9 +85,6 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
-      <div className="fixed inset-0 bg-foreground/50 z-40 lg:hidden hidden" />
-
       {/* Sidebar */}
       <aside
         className={cn(

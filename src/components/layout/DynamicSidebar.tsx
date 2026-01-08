@@ -175,9 +175,6 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
-      <div className="fixed inset-0 bg-foreground/50 z-40 lg:hidden hidden" />
-
       {/* Sidebar */}
       <aside
         className={cn(
