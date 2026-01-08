@@ -321,6 +321,14 @@ export const queryKeys = {
     modules: (userId: string | null, buId: string | null) => 
       ['identity', 'modules', userId, buId] as const,
   },
+
+  // ============= User Directory =============
+  users: {
+    directory: (buId: string | null, filters?: { q?: string; teamId?: string; includeTerminated?: boolean }) => 
+      ['users', 'directory', buId, filters] as const,
+    selectOptions: (buId: string | null) => 
+      ['users', 'select-options', buId] as const,
+  },
 } as const;
 
 // Helper type for extracting query key types

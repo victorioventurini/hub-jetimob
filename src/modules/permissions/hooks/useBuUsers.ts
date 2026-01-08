@@ -6,6 +6,8 @@ export interface BuUser {
   user_id: string;
   profile_id: string;
   role_in_bu: string | null;
+  has_bu_membership: boolean;
+  onboarding_completed: boolean;
   profiles: {
     id: string;
     display_name: string;
@@ -28,12 +30,11 @@ export function useBuUsers() {
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
-      // Fetch all profiles in the BU (same as /users page)
+      // Use canonical view - shows ALL registered users in the BU
       const { data: profilesRaw, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, user_id, display_name, work_email, photo_url, job_title_rel:job_titles!job_title_id(name)")
+        .from("v_bu_active_profiles")
+        .select("id, user_id, display_name, work_email, photo_url, job_title_name, onboarding_completed, has_bu_membership")
         .eq("bu_id", buId)
-        .is("deleted_at", null)
         .order("display_name");
 
       if (profilesError) throw profilesError;
@@ -87,12 +88,14 @@ export function useBuUsers() {
         user_id: p.user_id || p.id,
         profile_id: p.id,
         role_in_bu: p.user_id ? (membershipByUserId[p.user_id] || null) : null,
+        has_bu_membership: p.has_bu_membership,
+        onboarding_completed: p.onboarding_completed,
         profiles: {
           id: p.id,
           display_name: p.display_name,
           work_email: p.work_email,
           photo_url: p.photo_url,
-          job_title_name: (p.job_title_rel as { name: string } | null)?.name || null,
+          job_title_name: p.job_title_name || null,
         },
         teams: p.user_id ? (teamsByUserId[p.user_id] || []) : [],
       })) as BuUser[];
