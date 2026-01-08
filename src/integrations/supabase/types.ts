@@ -6528,6 +6528,10 @@ export type Database = {
         }
         Returns: Json
       }
+      can_manage_asset_inventory: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_manage_gifts: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
