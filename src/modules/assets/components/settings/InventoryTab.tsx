@@ -83,6 +83,10 @@ export function InventoryTab() {
                 <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">location</span>
                 <span className="text-muted-foreground ml-2">Localização base</span>
               </div>
+              <div>
+                <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">room</span>
+                <span className="text-muted-foreground ml-2">Sala/ambiente</span>
+              </div>
             </div>
           </div>
 
