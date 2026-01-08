@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -54,11 +55,21 @@ const schema = z.object({
   model: z.string().max(100, "Modelo muito longo").optional(),
   acquired_at: z.string().optional(),
   serial_number: z.string().max(100, "Número de série muito longo").optional(),
+  no_serial_number: z.boolean().optional(),
   acquisition_value: z.coerce.number().optional(),
   notes: z.string().max(2000, "Observações muito longas").optional(),
   // Assignment fields
   assigned_to_user_id: z.string().optional(),
   due_at: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Se não marcou "não possui" E serial_number está vazio → erro
+  if (!data.no_serial_number && !data.serial_number?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Número de série obrigatório. Marque 'Não possui' se o item não tem.",
+      path: ["serial_number"],
+    });
+  }
 });
 
 type FormData = z.infer<typeof schema>;
@@ -152,12 +163,15 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       model: "",
       acquired_at: "",
       serial_number: "",
+      no_serial_number: false,
       acquisition_value: undefined,
       notes: "",
       assigned_to_user_id: undefined,
       due_at: "",
     },
   });
+
+  const watchNoSerialNumber = form.watch("no_serial_number");
 
   const watchAssignedTo = form.watch("assigned_to_user_id");
 
@@ -187,6 +201,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         model: item.model || "",
         acquired_at: item.acquired_at || "",
         serial_number: item.serial_number || "",
+        no_serial_number: !item.serial_number,
         acquisition_value: item.acquisition_value || undefined,
         notes: item.notes || "",
         assigned_to_user_id: undefined,
@@ -205,6 +220,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         model: item.model || "",
         acquired_at: item.acquired_at || "",
         serial_number: "",
+        no_serial_number: false,
         acquisition_value: item.acquisition_value || undefined,
         notes: item.notes || "",
         assigned_to_user_id: undefined,
@@ -223,6 +239,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         model: "",
         acquired_at: "",
         serial_number: "",
+        no_serial_number: false,
         acquisition_value: undefined,
         notes: "",
         assigned_to_user_id: undefined,
@@ -556,9 +573,33 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                   name="serial_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Número de Série</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>
+                          Número de Série {!watchNoSerialNumber && <span className="text-destructive">*</span>}
+                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="no_serial_number"
+                            checked={watchNoSerialNumber}
+                            onCheckedChange={(checked) => {
+                              form.setValue("no_serial_number", !!checked);
+                              if (checked) {
+                                form.clearErrors("serial_number");
+                                form.setValue("serial_number", "");
+                              }
+                            }}
+                          />
+                          <label htmlFor="no_serial_number" className="text-sm text-muted-foreground cursor-pointer">
+                            Não possui
+                          </label>
+                        </div>
+                      </div>
                       <FormControl>
-                        <Input placeholder="SN12345" {...field} />
+                        <Input 
+                          placeholder="SN12345" 
+                          disabled={watchNoSerialNumber}
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
