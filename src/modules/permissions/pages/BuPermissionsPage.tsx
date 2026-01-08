@@ -18,14 +18,15 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Shield, Search, Users, Settings, ChevronRight, Crown, FileStack, ExternalLink } from "lucide-react";
+import { Shield, Search, Users, Settings, ChevronRight, Crown, ExternalLink, ArrowLeftRight } from "lucide-react";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
 import { useBuGroupConfigs } from "../hooks/useBuPermissions";
 import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
 import { UserPermissionsV2Sheet } from "../components/UserPermissionsV2Sheet";
+import { MigrationDashboard } from "../components/MigrationDashboard";
 import { cn } from "@/lib/utils";
 
-type PermissionTab = "users" | "groups";
+type PermissionTab = "users" | "groups" | "migration";
 
 /**
  * BuPermissionsPage - Gerenciamento de permissões de usuários por BU
@@ -166,19 +167,26 @@ export default function BuPermissionsPage() {
               </TabsTrigger>
               <TabsTrigger value="groups" className="gap-2">
                 <Settings className="h-4 w-4" />
-                Grupos Habilitados
+                Grupos v1
+              </TabsTrigger>
+              <TabsTrigger value="migration" className="gap-2">
+                <ArrowLeftRight className="h-4 w-4" />
+                Migração
+                <Badge variant="secondary" className="ml-1 text-xs">v2</Badge>
               </TabsTrigger>
             </TabsList>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, email, cargo ou time..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 w-80"
-              />
-            </div>
+            {activeTab !== "migration" && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, email, cargo ou time..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 w-80"
+                />
+              </div>
+            )}
           </div>
 
           <TabsContent value="users" className="mt-6">
@@ -324,6 +332,10 @@ export default function BuPermissionsPage() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="migration" className="mt-6">
+            <MigrationDashboard />
           </TabsContent>
         </Tabs>
 
