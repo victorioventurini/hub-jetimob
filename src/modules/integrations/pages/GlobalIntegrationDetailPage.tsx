@@ -128,9 +128,11 @@ export default function GlobalIntegrationDetailPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-          <Button variant="outline" onClick={() => navigate('/hub/integrations')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
+          <Button variant="outline" asChild>
+            <Link to="/hub/integrations">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Link>
           </Button>
         </CardContent>
       </Card>
@@ -143,8 +145,10 @@ export default function GlobalIntegrationDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/hub/integrations')}>
-          <ArrowLeft className="w-5 h-5" />
+        <Button variant="ghost" size="icon" asChild>
+          <Link to="/hub/integrations">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
         </Button>
         <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
         <div className="flex-1">
@@ -291,12 +295,16 @@ export default function GlobalIntegrationDetailPage() {
                   </div>
                   <div className="flex gap-2">
                     {isAdmin && (
-                      <Button onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/new`)}>
-                        Criar Agente
+                      <Button asChild>
+                        <Link to={`/hub/integrations/${integrationKey}/agents/new`}>
+                          Criar Agente
+                        </Link>
                       </Button>
                     )}
-                    <Button variant="outline" onClick={() => navigate(`/hub/integrations/${integrationKey}/agents`)}>
-                      Ver Todos
+                    <Button variant="outline" asChild>
+                      <Link to={`/hub/integrations/${integrationKey}/agents`}>
+                        Ver Todos
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -305,10 +313,10 @@ export default function GlobalIntegrationDetailPage() {
                   {globalAgents && globalAgents.length > 0 ? (
                     <div className="space-y-3">
                       {globalAgents.slice(0, 5).map((agent) => (
-                        <div 
+                        <Link 
                           key={agent.id}
+                          to={`/hub/integrations/${integrationKey}/agents/${agent.id}`}
                           className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/${agent.id}`)}
                         >
                           <div className="flex items-center gap-3">
                             <Bot className="w-5 h-5 text-primary" />
@@ -320,15 +328,17 @@ export default function GlobalIntegrationDetailPage() {
                             </div>
                           </div>
                           <Switch checked={agent.is_active} disabled />
-                        </div>
+                        </Link>
                       ))}
                       {globalAgents.length > 5 && (
                         <Button 
                           variant="ghost" 
                           className="w-full"
-                          onClick={() => navigate(`/hub/integrations/${integrationKey}/agents`)}
+                          asChild
                         >
-                          Ver mais {globalAgents.length - 5} agentes...
+                          <Link to={`/hub/integrations/${integrationKey}/agents`}>
+                            Ver mais {globalAgents.length - 5} agentes...
+                          </Link>
                         </Button>
                       )}
                     </div>
@@ -340,9 +350,11 @@ export default function GlobalIntegrationDetailPage() {
                         <Button 
                           variant="outline" 
                           className="mt-4"
-                          onClick={() => navigate(`/settings/integrations/${integrationKey}/agents/new`)}
+                          asChild
                         >
-                          Criar primeiro agente
+                          <Link to={`/hub/integrations/${integrationKey}/agents/new`}>
+                            Criar primeiro agente
+                          </Link>
                         </Button>
                       )}
                     </div>
@@ -363,8 +375,10 @@ export default function GlobalIntegrationDetailPage() {
                     Histórico de execuções de agentes desta integração
                   </CardDescription>
                 </div>
-                <Button variant="outline" onClick={() => navigate(`/hub/integrations/${integrationKey}/logs`)}>
-                  Ver Todos
+                <Button variant="outline" asChild>
+                  <Link to={`/hub/integrations/${integrationKey}/logs`}>
+                    Ver Todos
+                  </Link>
                 </Button>
               </div>
             </CardHeader>
@@ -395,9 +409,11 @@ export default function GlobalIntegrationDetailPage() {
                       <Button 
                         variant="ghost" 
                         className="w-full"
-                        onClick={() => navigate(`/settings/integrations/${integrationKey}/logs`)}
+                        asChild
                       >
-                        Ver mais {logs.length - 10} logs...
+                        <Link to={`/hub/integrations/${integrationKey}/logs`}>
+                          Ver mais {logs.length - 10} logs...
+                        </Link>
                       </Button>
                     )}
                   </div>

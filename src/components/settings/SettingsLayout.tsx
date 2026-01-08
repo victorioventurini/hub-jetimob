@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Building2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -31,7 +31,6 @@ const roleLabels: Record<string, string> = {
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const { profile, role, signOut } = useAuth();
-  const navigate = useNavigate();
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -89,10 +88,12 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
                 variant="outline" 
                 size="sm" 
                 className="gap-2"
-                onClick={() => navigate("/select-bu")}
+                asChild
               >
-                <Building2 className="h-4 w-4" />
-                Selecionar BU
+                <Link to="/select-bu">
+                  <Building2 className="h-4 w-4" />
+                  Selecionar BU
+                </Link>
               </Button>
 
               {/* Notifications */}

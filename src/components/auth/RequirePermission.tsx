@@ -65,9 +65,11 @@ export function RequirePermission({
             <p className="text-sm text-muted-foreground text-center">
               Entre em contato com o administrador da sua BU para solicitar acesso.
             </p>
-            <Button onClick={() => navigate(-1)} variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar ao início
+              </Link>
             </Button>
           </CardContent>
         </Card>

@@ -50,11 +50,13 @@ export default function TeamContributionPage() {
       <Button 
         variant="ghost" 
         size="sm" 
-        onClick={() => navigate(-1)}
+        asChild
         className="gap-2"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar
+        <Link to="/teams">
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Link>
       </Button>
 
       {/* Header */}

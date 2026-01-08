@@ -1,5 +1,5 @@
 import { Blocks, Search, CheckCircle2, XCircle, Clock, MoreVertical, Building2, ToggleLeft, ToggleRight, Settings, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -83,10 +83,8 @@ export default function SettingsModules() {
   
   const [activeTab, setActiveTab] = useUrlTab("bu-config");
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const hasSettings = (slug: string) => MODULES_WITH_SETTINGS.includes(slug);
-  const navigateToSettings = (slug: string) => navigate(`/hub/modules/${slug}/settings`);
 
   // Fetch all modules
   const { data: modules, isLoading: modulesLoading } = useQuery({
@@ -406,14 +404,9 @@ export default function SettingsModules() {
                 {globalModules?.map((module) => {
                   const IconComponent = getIconComponent(module.icon);
                   const moduleHasSettings = hasSettings(module.slug);
-                  return (
-                    <div
-                      key={module.id}
-                      className={`flex items-center gap-3 p-3 border rounded-lg bg-muted/20 ${
-                        moduleHasSettings ? "cursor-pointer hover:bg-muted/40 transition-colors" : ""
-                      }`}
-                      onClick={() => moduleHasSettings && navigateToSettings(module.slug)}
-                    >
+                  
+                  const content = (
+                    <>
                       <div className="p-2 rounded-lg bg-blue-500/10">
                         <IconComponent className="h-4 w-4 text-blue-500" />
                       </div>
@@ -424,6 +417,23 @@ export default function SettingsModules() {
                       {moduleHasSettings && (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
+                    </>
+                  );
+                  
+                  return moduleHasSettings ? (
+                    <Link
+                      key={module.id}
+                      to={`/hub/modules/${module.slug}/settings`}
+                      className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div
+                      key={module.id}
+                      className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20"
+                    >
+                      {content}
                     </div>
                   );
                 })}
@@ -498,9 +508,11 @@ export default function SettingsModules() {
                                 Ver detalhes
                               </DropdownMenuItem>
                               {hasSettings(module.slug) && (
-                                <DropdownMenuItem onClick={() => navigateToSettings(module.slug)}>
-                                  <Settings className="h-4 w-4 mr-2" />
-                                  Configurações
+                                <DropdownMenuItem asChild>
+                                  <Link to={`/hub/modules/${module.slug}/settings`}>
+                                    <Settings className="h-4 w-4 mr-2" />
+                                    Configurações
+                                  </Link>
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -582,13 +594,13 @@ export default function SettingsModules() {
                 <div className="pt-4 border-t">
                   <Button 
                     className="w-full" 
-                    onClick={() => {
-                      setSelectedModule(null);
-                      navigateToSettings(selectedModule.slug);
-                    }}
+                    asChild
+                    onClick={() => setSelectedModule(null)}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configurações do Módulo
+                    <Link to={`/hub/modules/${selectedModule.slug}/settings`}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Configurações do Módulo
+                    </Link>
                   </Button>
                 </div>
               )}
