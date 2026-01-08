@@ -10,8 +10,7 @@ import { LayoutGrid, GitBranch, Building2, Users, Network, Layers3, Box } from "
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeams, useTeamTree, useTeamStats } from "../hooks/useTeams";
 import { useSquads } from "../hooks/useSquads";
-import { CreateTeamDialog } from "../components/CreateTeamDialog";
-import { EditTeamDialog } from "../components/EditTeamDialog";
+import { TeamFormDialog } from "../components/TeamFormDialog";
 import { TeamCard } from "../components/TeamCard";
 import { TeamTreeView } from "../components/TeamTreeView";
 import { TeamFilters } from "../components/TeamFilters";
@@ -159,7 +158,7 @@ export default function TeamsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {canCreateTeams && <CreateTeamDialog />}
+            {canCreateTeams && <TeamFormDialog />}
           </div>
         </div>
 
@@ -482,7 +481,7 @@ export default function TeamsPage() {
       </div>
 
       {/* Edit Team Dialog */}
-      <EditTeamDialog
+      <TeamFormDialog
         team={editingTeam}
         open={!!editingTeam}
         onOpenChange={(open) => !open && setEditingTeam(null)}

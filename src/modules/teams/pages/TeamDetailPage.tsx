@@ -30,7 +30,7 @@ import {
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeam, useDeleteTeam } from "../hooks/useTeams";
 import { useSquads } from "../hooks/useSquads";
-import { EditTeamDialog } from "../components/EditTeamDialog";
+import { TeamFormDialog } from "../components/TeamFormDialog";
 import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
@@ -442,7 +442,7 @@ export default function TeamDetailPage() {
       </div>
 
       {/* Edit Dialog */}
-      <EditTeamDialog
+      <TeamFormDialog
         team={team}
         open={editOpen}
         onOpenChange={setEditOpen}

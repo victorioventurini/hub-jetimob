@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Layers } from "lucide-react";
 import { useSquads } from "../hooks/useSquads";
 import { SquadCard } from "./SquadCard";
-import { CreateSquadDialog } from "./CreateSquadDialog";
+import { SquadFormDialog } from "./SquadFormDialog";
 import { SquadDetailDialog } from "./SquadDetailDialog";
 import { SquadWithRelations } from "../types/squad";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
@@ -90,7 +90,7 @@ export function SquadSection({ teamId, teamName }: SquadSectionProps) {
         </CardContent>
       </Card>
 
-      <CreateSquadDialog 
+      <SquadFormDialog 
         open={createOpen} 
         onOpenChange={setCreateOpen}
         defaultTeamId={teamId}
