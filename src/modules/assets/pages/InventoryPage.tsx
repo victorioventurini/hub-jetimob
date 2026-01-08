@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Package, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useInventory } from "../hooks/useInventory";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
-import { InventoryCard } from "../components/inventory/InventoryCard";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
@@ -15,7 +14,7 @@ import type { AssetInventory, AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
   const navigate = useNavigate();
-  const { items, isLoading } = useInventory();
+  const { items, categories, isLoading } = useInventory();
   const { isInventoryAdmin } = useAssetPermissions();
   
   // Allow any authenticated user to add items for now (permissions will be enforced on backend)
@@ -23,9 +22,18 @@ export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cloneItem, setCloneItem] = useState<AssetInventory | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | AssetInventoryStatus>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [holderFilter, setHolderFilter] = useState<string>("all");
+
+  // Get unique holders from items for the filter
+  const holders = items
+    .filter(item => item.current_user)
+    .map(item => item.current_user!)
+    .filter((holder, index, self) => 
+      self.findIndex(h => h.id === holder.id) === index
+    )
+    .sort((a, b) => a.full_name.localeCompare(b.full_name));
 
   const filteredItems = items.filter((item) => {
     // Text search
@@ -36,10 +44,29 @@ export default function InventoryPage() {
     // Status filter
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
 
-    // Category filter
-    const matchesCategory = categoryFilter === "all" || item.category_id === categoryFilter;
+    // Category filter - supports both category and subcategory
+    let matchesCategory = categoryFilter === "all";
+    if (!matchesCategory && item.category_id) {
+      // Direct match
+      if (item.category_id === categoryFilter) {
+        matchesCategory = true;
+      } else {
+        // Check if filter is a parent category
+        const selectedCategory = categories.find(c => c.id === categoryFilter);
+        if (selectedCategory && !selectedCategory.parent_id) {
+          // It's a parent category, check if item's category is a child
+          const itemCategory = categories.find(c => c.id === item.category_id);
+          if (itemCategory?.parent_id === categoryFilter) {
+            matchesCategory = true;
+          }
+        }
+      }
+    }
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    // Holder filter
+    const matchesHolder = holderFilter === "all" || item.current_user_id === holderFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesHolder;
   });
 
   const handleClone = (item: AssetInventory) => {
@@ -60,6 +87,11 @@ export default function InventoryPage() {
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 flex-1" />
           <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-40" />
         </div>
         <div className="space-y-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -83,42 +115,36 @@ export default function InventoryPage() {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? "bg-accent" : ""}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
+        {canAddItem && (
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Item
           </Button>
-          {canAddItem && (
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Item
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <InventoryFilters
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          categoryFilter={categoryFilter}
-          onCategoryChange={setCategoryFilter}
-        />
-      )}
+      {/* Filters - always visible */}
+      <InventoryFilters
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+        holderFilter={holderFilter}
+        onHolderChange={setHolderFilter}
+        categories={categories}
+        holders={holders}
+      />
 
       {/* Items grid */}
       {filteredItems.length === 0 ? (
         <EmptyState
           icon={Package}
           title="Nenhum item encontrado"
-          description={search || statusFilter !== "all" ? "Tente ajustar os filtros" : "Cadastre o primeiro item do inventário"}
-          actionLabel={canAddItem && !search && statusFilter === "all" ? "Novo Item" : undefined}
-          onAction={canAddItem && !search && statusFilter === "all" ? () => setDialogOpen(true) : undefined}
+          description={search || statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" 
+            ? "Tente ajustar os filtros" 
+            : "Cadastre o primeiro item do inventário"}
+          actionLabel={canAddItem && !search && statusFilter === "all" && categoryFilter === "all" && holderFilter === "all" ? "Novo Item" : undefined}
+          onAction={canAddItem && !search && statusFilter === "all" && categoryFilter === "all" && holderFilter === "all" ? () => setDialogOpen(true) : undefined}
         />
       ) : (
         <div className="space-y-2">
