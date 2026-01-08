@@ -41,6 +41,9 @@ import { PermissionDialog } from "../components/PermissionDialog";
 import { GroupDialog } from "../components/GroupDialog";
 import { TemplateEditorSheet } from "../components/TemplateEditorSheet";
 import { AuditDashboard } from "../components/AuditDashboard";
+import { AliasesTab } from "../components/AliasesTab";
+import { SurfacesTab } from "../components/SurfacesTab";
+import { TemplatesV2Tab } from "../components/TemplatesV2Tab";
 import type { Permission, PermissionGroup, PermissionScope } from "../types";
 
 /**
