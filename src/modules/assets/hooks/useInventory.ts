@@ -204,9 +204,9 @@ export function useInventory() {
 
   // Criar item
   const createItemMutation = useMutation({
-    mutationFn: async (data: { 
-      internal_code: string; 
-      name: string; 
+    mutationFn: async (data: {
+      internal_code: string;
+      name: string;
       category_id?: string;
       description?: string;
       home_location_id?: string;
@@ -221,7 +221,7 @@ export function useInventory() {
       due_at?: string;
     }) => {
       const { assigned_to_user_id, authorized_by_user_id, due_at, ...itemData } = data;
-      
+
       // Create the item
       const insertData: any = {
         bu_id: buId!,
@@ -231,23 +231,19 @@ export function useInventory() {
 
       // If assigning to user, set initial status as loaned
       if (assigned_to_user_id) {
-        insertData.status = 'loaned';
-        insertData.current_holder_type = 'user';
+        insertData.status = "loaned";
+        insertData.current_holder_type = "user";
         insertData.current_user_id = assigned_to_user_id;
         insertData.current_location_id = null;
         insertData.assigned_at = new Date().toISOString();
       } else {
         // Default: available at home location
-        insertData.status = 'available';
-        insertData.current_holder_type = 'location';
+        insertData.status = "available";
+        insertData.current_holder_type = "location";
         insertData.current_location_id = itemData.home_location_id;
       }
 
-      const { data: item, error } = await supabase
-        .from("asset_inventory")
-        .insert(insertData)
-        .select()
-        .single();
+      const { data: item, error } = await supabase.from("asset_inventory").insert(insertData).select().single();
 
       if (error) throw error;
 
@@ -256,15 +252,15 @@ export function useInventory() {
         await supabase.from("asset_movements").insert({
           bu_id: buId!,
           asset_id: item.id,
-          movement_type: 'checkout',
-          from_holder_type: 'location',
+          movement_type: "checkout",
+          from_holder_type: "location",
           from_location_id: itemData.home_location_id,
-          to_holder_type: 'user',
+          to_holder_type: "user",
           to_user_id: assigned_to_user_id,
           authorized_by_user_id: authorized_by_user_id,
           performed_by_user_id: user?.id,
           due_at: due_at || null,
-          notes: 'Atribuição inicial no cadastro',
+          notes: "Atribuição inicial no cadastro",
         });
       }
 
@@ -279,8 +275,11 @@ export function useInventory() {
       }
     },
     onError: (error: any) => {
-      if (error.code === "23505") {
+      console.error("Erro ao criar item", error);
+      if (error?.code === "23505") {
         toast.error("Código interno já existe");
+      } else if (error?.message) {
+        toast.error(`Erro ao criar item: ${error.message}`);
       } else {
         toast.error("Erro ao criar item");
       }
@@ -307,8 +306,13 @@ export function useInventory() {
       queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
       toast.success("Item atualizado");
     },
-    onError: () => {
-      toast.error("Erro ao atualizar item");
+    onError: (error: any) => {
+      console.error("Erro ao atualizar item", error);
+      if (error?.message) {
+        toast.error(`Erro ao atualizar item: ${error.message}`);
+      } else {
+        toast.error("Erro ao atualizar item");
+      }
     },
   });
 
@@ -380,7 +384,9 @@ export function useInventory() {
     getMovements,
     createCategory: createCategoryMutation.mutate,
     createItem: createItemMutation.mutate,
+    createItemAsync: createItemMutation.mutateAsync,
     updateItem: updateItemMutation.mutate,
+    updateItemAsync: updateItemMutation.mutateAsync,
     deleteItem: deleteItemMutation.mutate,
     createMovement: createMovementMutation.mutate,
     isCreatingCategory: createCategoryMutation.isPending,

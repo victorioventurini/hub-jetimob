@@ -102,7 +102,7 @@ interface InventoryFormDialogProps {
 }
 
 export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false }: InventoryFormDialogProps) {
-  const { items, categories, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
+  const { items, categories, createItemAsync, updateItemAsync, isCreatingItem, isUpdatingItem } = useInventory();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
   const { profiles } = useAssetProfiles();
@@ -110,6 +110,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   const { brands } = useBrands();
   const isEditing = !!item && !cloneMode;
   const isCloning = !!item && cloneMode;
+  const itemId = item?.id ?? null;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   // Build subcategory list with parent names
@@ -159,7 +160,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   });
 
   const watchAssignedTo = form.watch("assigned_to_user_id");
-  
+
   const selectedLocationId = useWatch({
     control: form.control,
     name: "home_location_id",
@@ -229,7 +230,8 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       });
     }
     setDuplicateError(null);
-  }, [open, item, cloneMode, form, defaultLocation]);
+    // NOTE: we intentionally depend on itemId (not the whole item object) to avoid form resets on background refetches.
+  }, [open, itemId, cloneMode, form, defaultLocation?.id]);
 
   // Clear room when location changes
   useEffect(() => {
@@ -247,14 +249,12 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   const checkDuplicateCode = (code: string): boolean => {
     const trimmedCode = code.trim();
     if (!trimmedCode) return false;
-    
+
     // Check if any existing item has the same code (excluding current item if editing)
-    return items.some(
-      (i) => i.internal_code === trimmedCode && (!isEditing || i.id !== item?.id)
-    );
+    return items.some((i) => i.internal_code === trimmedCode && (!isEditing || i.id !== item?.id));
   };
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     // Check for duplicate code before submitting
     if (checkDuplicateCode(data.internal_code)) {
       setDuplicateError("Este código já está em uso por outro item");
@@ -284,12 +284,16 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       due_at: !isEditing && data.assigned_to_user_id ? data.due_at || undefined : undefined,
     };
 
-    if (isEditing && item) {
-      updateItem({ id: item.id, ...payload });
-    } else {
-      createItem(payload as any);
+    try {
+      if (isEditing && item) {
+        await updateItemAsync({ id: item.id, ...payload } as any);
+      } else {
+        await createItemAsync(payload as any);
+      }
+      onOpenChange(false);
+    } catch {
+      // keep dialog open; the mutation already shows a toast with the real error
     }
-    onOpenChange(false);
   };
 
   // Clear duplicate error when code changes
@@ -297,7 +301,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
     // Only allow digits
     const numericValue = value.replace(/\D/g, "");
     onChange(numericValue);
-    
+
     if (duplicateError && !checkDuplicateCode(numericValue)) {
       setDuplicateError(null);
     }
