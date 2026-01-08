@@ -60,6 +60,23 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Engineering Standards
+
+### Query Keys
+
+❗ **Nunca usar `queryKey` inline. Sempre importar de `queryKeys.ts`.**
+
+```typescript
+// ✅ Correto
+import { queryKeys } from "@/lib/queryKeys";
+queryKey: queryKeys.assets.categories(buId)
+
+// ❌ Incorreto
+queryKey: ["assets", "categories", buId]
+```
+
+Veja a documentação completa em [`docs/engineering/QUERY_KEYS_STANDARD.md`](docs/engineering/QUERY_KEYS_STANDARD.md).
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
