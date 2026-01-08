@@ -18,11 +18,11 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Shield, Search, Users, Settings, ChevronRight, Crown } from "lucide-react";
+import { Shield, Search, Users, Settings, ChevronRight, Crown, FileStack, ExternalLink } from "lucide-react";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
 import { useBuGroupConfigs } from "../hooks/useBuPermissions";
 import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
-import { UserPermissionsSheet } from "../components/UserPermissionsSheet";
+import { UserPermissionsV2Sheet } from "../components/UserPermissionsV2Sheet";
 import { cn } from "@/lib/utils";
 
 type PermissionTab = "users" | "groups";
@@ -33,7 +33,7 @@ type PermissionTab = "users" | "groups";
  * Esta página é acessível por admin da BU e super_admin.
  * Gerencia quais permissões cada usuário possui dentro da BU ativa.
  * 
- * Rota: /settings/permissions
+ * Rota: /hub/permissions
  */
 export default function BuPermissionsPage() {
   usePageTitle("Permissões da BU");
@@ -82,12 +82,18 @@ export default function BuPermissionsPage() {
     );
   }, [users, search]);
 
-  // Sort users: admins first, then by name
+  // Sort users: admins first, externals last, then by name
   const sortedUsers = useMemo(() => {
     return [...filteredUsers].sort((a, b) => {
       // Admins first
       if (a.role_in_bu === "admin" && b.role_in_bu !== "admin") return -1;
       if (b.role_in_bu === "admin" && a.role_in_bu !== "admin") return 1;
+      
+      // Externals last
+      const aExternal = a.is_external ?? false;
+      const bExternal = b.is_external ?? false;
+      if (aExternal && !bExternal) return 1;
+      if (!aExternal && bExternal) return -1;
       
       // Then alphabetically
       return a.profiles.display_name.localeCompare(b.profiles.display_name);
@@ -112,6 +118,15 @@ export default function BuPermissionsPage() {
       );
     }
     
+    if (user.is_external) {
+      return (
+        <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-700">
+          <ExternalLink className="h-3 w-3" />
+          Externo
+        </Badge>
+      );
+    }
+    
     if (!user.role_in_bu) {
       return <Badge variant="secondary">Perfil</Badge>;
     }
@@ -128,6 +143,9 @@ export default function BuPermissionsPage() {
         </span>
       );
     }
+    
+    // Show v2 indicator if user has v2 templates
+    // This would require fetching v2 assignments - for now just show nothing
     return null;
   };
 
@@ -191,7 +209,8 @@ export default function BuPermissionsPage() {
                         key={user.user_id}
                         className={cn(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
-                          user.role_in_bu === "admin" && "bg-primary/5"
+                          user.role_in_bu === "admin" && "bg-primary/5",
+                          user.is_external && "bg-amber-500/5"
                         )}
                         onClick={() => setSelectedUser(user)}
                       >
@@ -308,8 +327,8 @@ export default function BuPermissionsPage() {
           </TabsContent>
         </Tabs>
 
-        {/* User Permissions Sheet */}
-        <UserPermissionsSheet
+        {/* User Permissions V2 Sheet */}
+        <UserPermissionsV2Sheet
           open={!!selectedUser}
           onOpenChange={(open) => {
             if (!open) setSelectedUser(null);
