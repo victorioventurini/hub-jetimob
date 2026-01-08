@@ -154,8 +154,8 @@ export interface FlatTeamItem {
   parentId: string | null;
 }
 
-export function useTeamTree() {
-  const { data: teams, ...rest } = useTeams(true);
+export function useTeamTree(includeInactive = false) {
+  const { data: teams, ...rest } = useTeams(includeInactive);
 
   const buildTree = (teams: TeamWithRelations[]): TeamTreeNode[] => {
     const teamMap = new Map<string, TeamTreeNode>();
