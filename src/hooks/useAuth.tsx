@@ -101,14 +101,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchUserData(userId: string) {
     try {
-      // Fetch profile with job_title from job_titles table
+      // Fetch profile with job_title from job_titles table via FK job_title_id
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, display_name, work_email, photo_url, onboarding_completed, job_titles(name)')
+        .select('id, first_name, last_name, display_name, work_email, photo_url, onboarding_completed, job_title_rel:job_titles!job_title_id(name)')
         .eq('user_id', userId)
         .maybeSingle();
       
-      // Map job_title from joined table
+      // Map job_title from joined table, fallback para coluna legada se FK null
       const profile = profileData ? {
         id: profileData.id,
         first_name: profileData.first_name,
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         work_email: profileData.work_email,
         photo_url: profileData.photo_url,
         onboarding_completed: profileData.onboarding_completed,
-        job_title: (profileData.job_titles as { name: string } | null)?.name ?? null,
+        job_title: (profileData.job_title_rel as { name: string } | null)?.name ?? null,
       } : null;
       
       setProfile(profile);
