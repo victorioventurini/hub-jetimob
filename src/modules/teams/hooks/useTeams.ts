@@ -109,12 +109,20 @@ export function useTeam(teamId: string | undefined) {
         .is("deleted_at", null);
 
       // Get team members
-      const { data: members } = await supabase
+      const { data: membersRaw } = await supabase
         .from("profiles")
-        .select("id, display_name, photo_url, job_title, work_email")
+        .select("id, display_name, photo_url, job_title_rel:job_titles!job_title_id(name), work_email")
         .eq("team_id", teamId)
         .is("deleted_at", null)
         .order("display_name");
+      
+      const members = (membersRaw || []).map(m => ({
+        id: m.id,
+        display_name: m.display_name,
+        photo_url: m.photo_url,
+        job_title: (m.job_title_rel as { name: string } | null)?.name || null,
+        work_email: m.work_email,
+      }));
 
       // Get parent team info
       let parentTeam = null;

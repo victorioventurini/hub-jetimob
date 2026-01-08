@@ -77,7 +77,7 @@ export default function BuPermissionsPage() {
       (u) =>
         u.profiles.display_name.toLowerCase().includes(lowerSearch) ||
         u.profiles.work_email.toLowerCase().includes(lowerSearch) ||
-        u.profiles.job_title?.toLowerCase().includes(lowerSearch) ||
+        u.profiles.job_title_name?.toLowerCase().includes(lowerSearch) ||
         u.teams.some((t) => t.name.toLowerCase().includes(lowerSearch))
     );
   }, [users, search]);
@@ -214,7 +214,7 @@ export default function BuPermissionsPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {user.profiles.job_title || "—"}
+                          {user.profiles.job_title_name || "—"}
                         </TableCell>
                         <TableCell>
                           {user.teams.length > 0 ? (

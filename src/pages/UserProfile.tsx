@@ -174,7 +174,7 @@ export default function UserProfile() {
                 </Badge>
               </div>
 
-              <p className="text-lg text-muted-foreground mb-3">{profile.job_title}</p>
+              <p className="text-lg text-muted-foreground mb-3">{profile.job_title || "Sem cargo"}</p>
 
               <div className="flex flex-wrap gap-2">
                 {profile.team && (
@@ -217,7 +217,7 @@ export default function UserProfile() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Cargo</p>
-                    <p className="font-medium">{profile.job_title}</p>
+                    <p className="font-medium">{profile.job_title || "Sem cargo"}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Modelo de trabalho</p>
