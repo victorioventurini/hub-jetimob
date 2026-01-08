@@ -1,5 +1,5 @@
 // Users page with BU filtering
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
@@ -49,8 +49,10 @@ import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
 import { useUrlState } from "@/shared/url";
 
-import { useDeleteProfile } from "@/hooks/useProfiles";
+import { useDeleteProfile, useTransferDependencies } from "@/hooks/useProfiles";
+import { useUserDependencies } from "@/hooks/useUserDependencies";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { UserDependenciesDialog } from "@/components/users/UserDependenciesDialog";
 
 interface ProfileWithTeam {
   id: string;
@@ -116,9 +118,25 @@ export default function UsersPage() {
   const [editingProfile, setEditingProfile] = useState<ProfileWithTeam | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dependenciesDialogOpen, setDependenciesDialogOpen] = useState(false);
   const [deletingProfile, setDeletingProfile] = useState<ProfileWithTeam | null>(null);
 
   const deleteProfile = useDeleteProfile();
+  const transferDependencies = useTransferDependencies();
+
+  // Check dependencies for the profile being deleted
+  const deps = useUserDependencies(deletingProfile?.id ?? null);
+
+  // Open the correct dialog based on dependencies when deletingProfile is set
+  useEffect(() => {
+    if (deletingProfile && !deps.isLoading) {
+      if (deps.hasMandatoryDependencies) {
+        setDependenciesDialogOpen(true);
+      } else {
+        setDeleteDialogOpen(true);
+      }
+    }
+  }, [deletingProfile, deps.isLoading, deps.hasMandatoryDependencies]);
 
   const { data: profiles, isLoading, error: profilesError } = useQuery({
     queryKey: queryKeys.profiles.list(currentBu?.id ?? null, { status: statusFilter }),
@@ -496,7 +514,7 @@ export default function UsersPage() {
                             <DropdownMenuItem 
                               onClick={() => {
                                 setDeletingProfile(profile);
-                                setDeleteDialogOpen(true);
+                                // Will check dependencies after state is set
                               }}
                               className="text-destructive focus:text-destructive"
                             >
@@ -542,9 +560,30 @@ export default function UsersPage() {
         onComplete={clearSelection}
       />
 
+      {/* Dependencies Dialog - shown when user has mandatory dependencies */}
+      <UserDependenciesDialog
+        open={dependenciesDialogOpen}
+        onOpenChange={(open) => {
+          setDependenciesDialogOpen(open);
+          if (!open) setDeletingProfile(null);
+        }}
+        profileId={deletingProfile?.id ?? null}
+        profileName={deletingProfile?.display_name ?? ""}
+        onTransfer={async (config) => {
+          await transferDependencies.mutateAsync(config);
+          setDependenciesDialogOpen(false);
+          setDeletingProfile(null);
+        }}
+        isTransferring={transferDependencies.isPending}
+      />
+
+      {/* Simple Delete Dialog - shown when user has NO mandatory dependencies */}
       <DeleteConfirmDialog
         open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setDeletingProfile(null);
+        }}
         onConfirm={async () => {
           if (deletingProfile) {
             await deleteProfile.mutateAsync(deletingProfile.id);
@@ -553,7 +592,7 @@ export default function UsersPage() {
           }
         }}
         title="Excluir Jetimober"
-        description={`Tem certeza que deseja excluir "${deletingProfile?.display_name}"? O registro será marcado como desligado.`}
+        description={`Tem certeza que deseja excluir "${deletingProfile?.display_name}"?${deps.totalOptional > 0 ? ` A liderança de ${deps.totalOptional} time(s) será removida automaticamente.` : ""} O registro será marcado como desligado.`}
         isLoading={deleteProfile.isPending}
       />
     </HubLayout>
