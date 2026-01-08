@@ -283,23 +283,35 @@ git checkout HEAD~1 -- supabase/functions/send-magic-link/
 - [ ] `send-magic-link` - Verificar logs (pendente)
 - [ ] Imports URL State - Deferred (API incompatível)
 
-### Wave 3 Checklist (PENDENTE)
-- [ ] `metrics` - Confirmar obsoleto e DROP
-- [ ] `profiles.job_title` - DROP coluna após frontend migrado
-- [ ] `user_notification_preferences` - Migrar para v2
-- [ ] `squad_memberships` - Avaliar uso
-- [ ] URL State - Migrar sintaxe tuple → object
-- [ ] `useNotifications` - Consolidar em useNotificationCenter
-- [ ] `send-magic-link` - Remover se zero chamadas
+### Wave 3 Checklist ✅ DONE
+- [x] `metrics` - DROP TABLE executado
+- [x] `profiles.job_title` - DROP coluna executado
+- [x] `user_notification_preferences` - DROP TABLE executado
+- [x] `useNotifications` - Consolidado em componentes
+
+### Wave 4 Checklist ✅ DONE
+- [x] URL State - Migrar sintaxe tuple → object (17 arquivos)
+- [x] `useUrlState.ts` - Marcado @deprecated
+- [x] Audit scripts criados
+
+### Wave 5 Checklist ✅ DONE
+- [x] `squad_memberships` - Normalizado
+  - [x] Adicionado `bu_id uuid NOT NULL`
+  - [x] Adicionado `deleted_at timestamptz`
+  - [x] RLS policies atualizadas (sem join)
+  - [x] Triggers: `set_bu_id`, `enforce_bu_scope`
+  - [x] Hooks atualizados para usar `bu_id`
+  - [x] Soft delete implementado
 
 ---
 
 ## Métricas de Sucesso
 
-| Métrica | Antes | Depois Wave 1 | Depois Wave 2 | Depois Wave 3 |
-|---------|-------|---------------|---------------|---------------|
-| Arquivos não utilizados | ~5 | 0 | 0 | 0 |
-| Hooks legacy | 3 | 2 | 0 | 0 |
-| Edge functions legacy | 1 | 1 | 0 | 0 |
-| Tabelas sem bu_id (críticas) | 3 | 3 | 3 | 0 |
-| Colunas deprecated | 1 | 1 | 0 | 0 |
+| Métrica | Antes | Wave 1 | Wave 2 | Wave 3 | Wave 4 | Wave 5 |
+|---------|-------|--------|--------|--------|--------|--------|
+| Arquivos não utilizados | ~5 | 0 | 0 | 0 | 0 | 0 |
+| Hooks legacy | 3 | 2 | 0 | 0 | 0 | 0 |
+| Edge functions legacy | 1 | 1 | 0 | 0 | 0 | 0 |
+| Tabelas sem bu_id (críticas) | 3 | 3 | 3 | 2 | 2 | 0 |
+| Colunas deprecated | 1 | 1 | 0 | 0 | 0 | 0 |
+| URL State legado | 17 | 17 | 17 | 17 | 0 | 0 |

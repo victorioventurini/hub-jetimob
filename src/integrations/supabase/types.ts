@@ -4541,7 +4541,9 @@ export type Database = {
       }
       squad_memberships: {
         Row: {
+          bu_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           role: Database["public"]["Enums"]["squad_role"]
           squad_id: string
@@ -4549,7 +4551,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bu_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["squad_role"]
           squad_id: string
@@ -4557,7 +4561,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bu_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["squad_role"]
           squad_id?: string
@@ -4565,6 +4571,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "squad_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "squad_memberships_squad_id_fkey"
             columns: ["squad_id"]
