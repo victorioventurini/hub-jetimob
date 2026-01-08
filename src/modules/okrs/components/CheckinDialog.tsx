@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Dialog,
   DialogContent,
@@ -200,10 +201,10 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-team-key-results'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-checkins', kr.id] });
-      queryClient.invalidateQueries({ queryKey: ['pending-checkins'] });
-      queryClient.invalidateQueries({ queryKey: ['checkin-summary'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkins(kr.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null) });
       
       toast({
         title: '✓ Check-in registrado',

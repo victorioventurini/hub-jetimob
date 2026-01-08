@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Dialog,
   DialogContent,
@@ -140,9 +141,9 @@ export function CreateTeamObjectiveDialog({
       return objective;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-krs'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-shared'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithShared(null) });
       toast.success('Objetivo de time criado com sucesso!');
       handleClose();
     },

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   Dialog,
   DialogContent,
@@ -145,8 +146,8 @@ export function CycleFormDialog({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["okr-settings-cycles"] });
-      queryClient.invalidateQueries({ queryKey: ["cycles-list"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null) });
       toast.success(isEditing ? "Ciclo atualizado" : "Ciclo criado");
       onOpenChange(false);
     },

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Dialog,
   DialogContent,
@@ -148,10 +149,10 @@ export function CreateTeamKrDialog({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-team-key-results'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-krs'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-checkins'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
       toast.success('Key Result criado com sucesso!');
       handleClose();
     },

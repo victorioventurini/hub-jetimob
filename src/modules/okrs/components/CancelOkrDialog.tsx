@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useIdentity } from "@/hooks/useIdentity";
+import { queryKeys } from "@/lib/queryKeys";
 import { Loader2, AlertTriangle, Lightbulb, BookOpen } from "lucide-react";
 import type { OkrStatus } from "../types";
 
@@ -129,11 +130,11 @@ export function CancelOkrDialog({
     },
     onSuccess: () => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["okr-org-objectives"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-team-objectives"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-org-key-results"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-team-key-results"] });
-      queryClient.invalidateQueries({ queryKey: ["all-org-objectives-view"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResults(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.allOrgObjectivesView(null) });
 
       toast({
         title: finalStatus === "cancelled" ? "Cancelado" : "Descartado",

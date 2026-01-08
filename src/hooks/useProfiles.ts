@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
+import { useBu } from "@/contexts/BuContext";
 
 /**
  * POST-BU hook: Only executes mutations when BU is selected.
@@ -8,6 +10,7 @@ import { toast } from "sonner";
 export function useDeleteProfile() {
   const queryClient = useQueryClient();
   const { client } = useOptionalBuClient();
+  const { currentBu } = useBu();
 
   return useMutation({
     mutationFn: async (profileId: string) => {
@@ -28,7 +31,7 @@ export function useDeleteProfile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null) });
       toast.success("Jetimober excluído com sucesso");
     },
     onError: () => {

@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
+import { queryKeys } from '@/lib/queryKeys';
 import type { OkrContribution, OkrContributionEntityType } from '../types';
 
 export function useOkrContributions(entityType: OkrContributionEntityType, entityId: string) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-contributions', entityType, entityId],
+    queryKey: queryKeys.okrs.contributions(entityType, entityId),
     queryFn: async () => {
       if (!supabase) return { contributesTo: [], contributedBy: [] };
       
@@ -66,8 +67,8 @@ export function useCreateOkrContribution() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['okr-contributions', variables.from_type, variables.from_id] });
-      queryClient.invalidateQueries({ queryKey: ['okr-contributions', variables.to_type, variables.to_id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(variables.from_type, variables.from_id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(variables.to_type, variables.to_id) });
       toast.success('Contribuição criada com sucesso');
     },
     onError: (error: Error) => {
@@ -101,7 +102,7 @@ export function useDeleteOkrContribution() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-contributions'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions() });
       toast.success('Contribuição removida');
     },
     onError: () => {

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { KpiCategory, KpiWithValues, KpiValue, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface UseKpiDataOptions {
   category?: KpiCategory;
@@ -57,7 +58,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
   // Fetch all KPIs with their latest values
   const { data: kpis, isLoading, error } = useQuery({
-    queryKey: ["kpis", category, teamId, ownerId],
+    queryKey: queryKeys.kpis.list(null, { category, teamId, ownerId }),
     queryFn: async () => {
       let query = supabase
         .from("kpi_metrics")
@@ -89,7 +90,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
   // Fetch values for all KPIs
   const { data: allValues } = useQuery({
-    queryKey: ["kpi-values", kpis?.map((k) => k.id)],
+    queryKey: ['kpi-values-batch', kpis?.map((k) => k.id)],
     queryFn: async () => {
       if (!kpis || kpis.length === 0) return [];
 
@@ -200,7 +201,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kpis"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null) });
       toast({
         title: "KPI criado",
         description: "O KPI foi criado com sucesso.",
@@ -242,7 +243,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kpi-values"] });
+      queryClient.invalidateQueries({ queryKey: ['kpi-values-batch'] });
       toast({
         title: "Valor registrado",
         description: "O valor do KPI foi registrado com sucesso.",
@@ -271,7 +272,7 @@ export function useKpiDetail(kpiId: string) {
   const supabase = useBuScopedSupabase();
   
   const { data: kpi, isLoading } = useQuery({
-    queryKey: ["kpi", kpiId],
+    queryKey: queryKeys.kpis.detail(kpiId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("kpi_metrics")
@@ -290,7 +291,7 @@ export function useKpiDetail(kpiId: string) {
   });
 
   const { data: values } = useQuery({
-    queryKey: ["kpi-values", kpiId],
+    queryKey: queryKeys.kpis.values(kpiId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("kpi_values")
