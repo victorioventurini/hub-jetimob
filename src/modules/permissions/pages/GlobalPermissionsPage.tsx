@@ -82,7 +82,6 @@ export default function GlobalPermissionsPage() {
             <TabsTrigger value="catalog" className="gap-2"><Key className="h-4 w-4" />Catálogo</TabsTrigger>
             <TabsTrigger value="templates-v2" className="gap-2"><FileStack className="h-4 w-4" />Templates</TabsTrigger>
             <TabsTrigger value="surfaces" className="gap-2"><Layers className="h-4 w-4" />Surfaces</TabsTrigger>
-            <TabsTrigger value="aliases" className="gap-2"><Link2 className="h-4 w-4" />Aliases</TabsTrigger>
             <TabsTrigger value="audit" className="gap-2"><ClipboardCheck className="h-4 w-4" />Auditoria</TabsTrigger>
           </TabsList>
 
@@ -152,7 +151,6 @@ export default function GlobalPermissionsPage() {
 
         <TabsContent value="templates-v2" className="mt-6"><TemplatesV2Tab /></TabsContent>
         <TabsContent value="surfaces" className="mt-6"><SurfacesTab /></TabsContent>
-        <TabsContent value="aliases" className="mt-6"><AliasesTab /></TabsContent>
         <TabsContent value="audit" className="mt-6"><AuditDashboard /></TabsContent>
       </Tabs>
 

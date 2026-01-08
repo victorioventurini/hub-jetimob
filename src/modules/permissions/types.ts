@@ -44,6 +44,6 @@ export interface EffectivePermission {
   resource: string;
   action: string;
   scope: string;
-  source: 'template_v1' | 'template_v2' | 'override' | 'wildcard';
+  source: 'template_v2' | 'override' | 'wildcard';
   source_name: string;
 }
