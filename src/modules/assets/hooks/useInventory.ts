@@ -88,8 +88,34 @@ export function useInventory() {
       .eq("id", itemId)
       .single();
 
-    if (error) return null;
-    return data as AssetInventory;
+    if (error || !data) return null;
+    
+    // Fetch location and user data
+    const locationIds = [data.home_location_id, data.current_location_id].filter(Boolean) as string[];
+    const profileIds = [data.current_user_id].filter(Boolean) as string[];
+
+    const [{ data: locations }, { data: profiles }] = await Promise.all([
+      locationIds.length > 0 
+        ? supabase.from("bu_locations").select("id, name").in("id", locationIds)
+        : Promise.resolve({ data: [] }),
+      profileIds.length > 0
+        ? supabase.from("profiles").select("id, first_name, last_name, display_name, photo_url").in("id", profileIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const locationMap = new Map((locations || []).map(l => [l.id, l]));
+    const profileMap = new Map((profiles || []).map(p => [p.id, {
+      id: p.id,
+      full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome',
+      avatar_url: p.photo_url,
+    }]));
+
+    return {
+      ...data,
+      home_location: data.home_location_id ? locationMap.get(data.home_location_id) || null : null,
+      current_location: data.current_location_id ? locationMap.get(data.current_location_id) || null : null,
+      current_user: data.current_user_id ? profileMap.get(data.current_user_id) || null : null,
+    } as AssetInventory;
   };
 
   // Buscar item específico por código interno
@@ -111,20 +137,20 @@ export function useInventory() {
     
     // Fetch location and user data
     const locationIds = [data.home_location_id, data.current_location_id].filter(Boolean) as string[];
-    const userIds = [data.current_user_id].filter(Boolean) as string[];
+    const profileIds = [data.current_user_id].filter(Boolean) as string[];
 
     const [{ data: locations }, { data: profiles }] = await Promise.all([
       locationIds.length > 0 
         ? supabase.from("bu_locations").select("id, name").in("id", locationIds)
         : Promise.resolve({ data: [] }),
-      userIds.length > 0
-        ? supabase.from("profiles").select("user_id, first_name, last_name, display_name, photo_url").in("user_id", userIds)
+      profileIds.length > 0
+        ? supabase.from("profiles").select("id, first_name, last_name, display_name, photo_url").in("id", profileIds)
         : Promise.resolve({ data: [] }),
     ]);
 
     const locationMap = new Map((locations || []).map(l => [l.id, l]));
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, {
-      id: p.user_id,
+    const profileMap = new Map((profiles || []).map(p => [p.id, {
+      id: p.id,
       full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome',
       avatar_url: p.photo_url,
     }]));
