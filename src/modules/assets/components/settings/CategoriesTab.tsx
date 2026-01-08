@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, FolderTree, Folder, FolderOpen, ChevronRight, ChevronDown, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderTree, Folder, FolderOpen, ChevronRight, ChevronDown, Upload, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,7 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { useCategories } from "../../hooks/useCategories";
@@ -277,6 +277,53 @@ export function CategoriesTab() {
     }
   };
 
+  const handleExport = () => {
+    if (categories.length === 0) {
+      toast.error("Nenhuma categoria para exportar");
+      return;
+    }
+
+    // Build parent map for subcategory lookup
+    const parentMap = new Map<string, string>();
+    categories.forEach((cat) => {
+      parentMap.set(cat.id, cat.name);
+    });
+
+    // Create CSV rows
+    const rows: string[][] = [["category_name", "subcategory_name", "description"]];
+    
+    categories.forEach((cat) => {
+      if (!cat.parent_id) {
+        // It's a parent category
+        rows.push([cat.name, "", cat.description || ""]);
+      } else {
+        // It's a subcategory
+        const parentName = parentMap.get(cat.parent_id) || "";
+        rows.push([parentName, cat.name, cat.description || ""]);
+      }
+    });
+
+    // Convert to CSV string
+    const csvContent = rows
+      .map((row) =>
+        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")
+      )
+      .join("\n");
+
+    // Download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "categorias-assets.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success("Categorias exportadas com sucesso!");
+  };
+
   const categoryTree = buildCategoryTree(categories);
 
   if (isLoading) {
@@ -298,6 +345,10 @@ export function CategoriesTab() {
           </CardDescription>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={categories.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Importar CSV
