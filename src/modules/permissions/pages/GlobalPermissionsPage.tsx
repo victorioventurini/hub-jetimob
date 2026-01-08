@@ -37,7 +37,8 @@ import {
   ClipboardCheck,
   Link2,
   Layers,
-  FileStack
+  FileStack,
+  Eye
 } from "lucide-react";
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
@@ -339,9 +340,11 @@ export default function GlobalPermissionsPage() {
             <LoadingState text="Carregando templates..." />
           ) : (
             <div className="space-y-4">
-              <Alert>
-                <AlertDescription>
-                  Templates v1 (legado). Novos usuários devem usar <strong>Templates v2</strong> para melhor organização por módulo e surface.
+              <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <AlertDescription className="text-amber-700 dark:text-amber-300">
+                  <strong>Templates v1 — LEGADO (Read-Only desde Wave 7)</strong><br />
+                  Novos usuários devem usar <strong>Templates v2</strong>. Edição desabilitada.
                 </AlertDescription>
               </Alert>
               <div className="border rounded-lg">
@@ -359,11 +362,13 @@ export default function GlobalPermissionsPage() {
                       .filter((g) => g.is_system)
                       .filter((g) => !search || g.name.toLowerCase().includes(search.toLowerCase()) || g.description?.toLowerCase().includes(search.toLowerCase()))
                       .map((template) => (
-                        <TableRow key={template.id}>
+                        <TableRow key={template.id} className="opacity-70">
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{template.name}</span>
-                              <Badge variant="secondary" className="text-xs">v1</Badge>
+                              <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-700">
+                                v1 (legado)
+                              </Badge>
                             </div>
                             {template.slug && (
                               <code className="text-xs text-muted-foreground font-mono">{template.slug}</code>
@@ -373,23 +378,18 @@ export default function GlobalPermissionsPage() {
                             {template.description || "—"}
                           </TableCell>
                           <TableCell>
-                            <Switch
-                              checked={template.status === "active"}
-                              onCheckedChange={(checked) =>
-                                toggleGroupStatus.mutate({
-                                  id: template.id,
-                                  status: checked ? "active" : "inactive",
-                                })
-                              }
-                            />
+                            <Badge variant={template.status === "active" ? "secondary" : "outline"} className="text-xs">
+                              {template.status === "active" ? "Ativo" : "Inativo"}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => setPermissionsSheetGroup(template)}
+                              title="Visualizar permissões (read-only)"
                             >
-                              <Settings className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
                           </TableCell>
                         </TableRow>
