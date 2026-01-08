@@ -21,7 +21,8 @@ export function useTeamsList() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: queryKeys.teams.list(currentBu?.id ?? null),
+    // Default: do not include inactive teams in dropdowns
+    queryKey: queryKeys.teams.list(currentBu?.id ?? null, false),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       
@@ -30,6 +31,7 @@ export function useTeamsList() {
         .select("id, name, parent_team_id, leader_user_id")
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
+        .eq("status", "active")
         .order("name");
 
       if (error) throw error;
