@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -35,7 +35,8 @@ import { useLocations } from "../../hooks/useLocations";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { useAssetProfiles } from "../../hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
-import { AssetCategorySelect } from "../selects/AssetCategorySelect";
+import { useBrands } from "../../hooks/useBrands";
+import { AutocompleteInput } from "./AutocompleteInput";
 import type { AssetInventory } from "../../types";
 
 const schema = z.object({
@@ -45,8 +46,9 @@ const schema = z.object({
     .max(20, "Código deve ter no máximo 20 caracteres")
     .regex(/^\d+$/, "Código deve conter apenas números"),
   name: z.string().min(1, "Nome obrigatório").max(200, "Nome muito longo"),
-  category_id: z.string().optional(),
+  category_id: z.string().min(1, "Subcategoria obrigatória"),
   home_location_id: z.string().min(1, "Localização obrigatória"),
+  room_id: z.string().optional(),
   description: z.string().max(1000, "Descrição muito longa").optional(),
   brand: z.string().max(100, "Marca muito longa").optional(),
   model: z.string().max(100, "Modelo muito longo").optional(),
@@ -61,6 +63,36 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface SubcategoryItem {
+  id: string;
+  name: string;
+  parentName: string;
+}
+
+function buildSubcategoryList(
+  categories: Array<{ id: string; name: string; parent_id: string | null }>
+): SubcategoryItem[] {
+  const parentMap = new Map<string, string>();
+  categories.forEach((cat) => {
+    if (!cat.parent_id) {
+      parentMap.set(cat.id, cat.name);
+    }
+  });
+
+  return categories
+    .filter((cat) => cat.parent_id !== null)
+    .map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      parentName: parentMap.get(cat.parent_id!) || "Sem categoria",
+    }))
+    .sort((a, b) => {
+      const parentCompare = a.parentName.localeCompare(b.parentName);
+      if (parentCompare !== 0) return parentCompare;
+      return a.name.localeCompare(b.name);
+    });
+}
+
 interface InventoryFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -70,14 +102,30 @@ interface InventoryFormDialogProps {
 }
 
 export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false }: InventoryFormDialogProps) {
-  const { items, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
-  const { locations, defaultLocation } = useLocations();
+  const { items, categories, createItem, updateItem, isCreatingItem, isUpdatingItem } = useInventory();
+  const { rootLocations, getRooms, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
   const { profiles } = useAssetProfiles();
   const { user } = useAuth();
+  const { brands } = useBrands();
   const isEditing = !!item && !cloneMode;
   const isCloning = !!item && cloneMode;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+
+  // Build subcategory list with parent names
+  const subcategories = useMemo(() => buildSubcategoryList(categories), [categories]);
+
+  // Group subcategories by parent for display
+  const groupedSubcategories = useMemo(() => {
+    const groups: Record<string, SubcategoryItem[]> = {};
+    subcategories.forEach((sub) => {
+      if (!groups[sub.parentName]) {
+        groups[sub.parentName] = [];
+      }
+      groups[sub.parentName].push(sub);
+    });
+    return groups;
+  }, [subcategories]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -86,6 +134,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
       name: "",
       category_id: undefined,
       home_location_id: "",
+      room_id: undefined,
       description: "",
       brand: "",
       model: "",
@@ -99,6 +148,13 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   });
 
   const watchAssignedTo = form.watch("assigned_to_user_id");
+  
+  const selectedLocationId = useWatch({
+    control: form.control,
+    name: "home_location_id",
+  });
+
+  const availableRooms = selectedLocationId ? getRooms(selectedLocationId) : [];
 
   useEffect(() => {
     if (!open) {
@@ -113,6 +169,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         name: item.name,
         category_id: item.category_id || undefined,
         home_location_id: item.home_location_id || "",
+        room_id: undefined,
         description: item.description || "",
         brand: item.brand || "",
         model: item.model || "",
@@ -130,6 +187,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         name: item.name,
         category_id: item.category_id || undefined,
         home_location_id: item.home_location_id || "",
+        room_id: undefined,
         description: item.description || "",
         brand: item.brand || "",
         model: item.model || "",
@@ -147,6 +205,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
         name: "",
         category_id: undefined,
         home_location_id: defaultLocation?.id || "",
+        room_id: undefined,
         description: "",
         brand: "",
         model: "",
@@ -160,6 +219,18 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
     }
     setDuplicateError(null);
   }, [open, item, cloneMode, form, defaultLocation]);
+
+  // Clear room when location changes
+  useEffect(() => {
+    const currentRoomId = form.getValues("room_id");
+    if (currentRoomId && selectedLocationId) {
+      const rooms = getRooms(selectedLocationId);
+      const roomStillValid = rooms.some((r) => r.id === currentRoomId);
+      if (!roomStillValid) {
+        form.setValue("room_id", undefined);
+      }
+    }
+  }, [selectedLocationId, form, getRooms]);
 
   // Check for duplicate code
   const checkDuplicateCode = (code: string): boolean => {
@@ -181,11 +252,14 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
 
     setDuplicateError(null);
 
+    // Use room_id as location if selected, otherwise use home_location_id
+    const finalLocationId = data.room_id || data.home_location_id;
+
     const payload = {
       internal_code: data.internal_code.trim(),
       name: data.name.trim(),
       category_id: data.category_id || undefined,
-      home_location_id: data.home_location_id || undefined,
+      home_location_id: finalLocationId || undefined,
       description: data.description?.trim() || undefined,
       brand: data.brand?.trim() || undefined,
       model: data.model?.trim() || undefined,
@@ -236,7 +310,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Row 1: Code, Category */}
+            {/* Row 1: Code, Name */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -264,16 +338,12 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
 
               <FormField
                 control={form.control}
-                name="category_id"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
+                    <FormLabel>Nome *</FormLabel>
                     <FormControl>
-                      <AssetCategorySelect
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Selecione..."
-                      />
+                      <Input placeholder="Notebook Dell Latitude" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -281,39 +351,31 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
               />
             </div>
 
-            {/* Row 2: Name */}
+            {/* Row 2: Subcategory */}
             <FormField
               control={form.control}
-              name="name"
+              name="category_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Notebook Dell Latitude" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Row 3: Location */}
-            <FormField
-              control={form.control}
-              name="home_location_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Localização Base *</FormLabel>
+                  <FormLabel>Subcategoria *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a sede..." />
+                        <SelectValue placeholder="Selecione uma subcategoria..." />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {locations.map((loc) => (
-                        <SelectItem key={loc.id} value={loc.id}>
-                          {loc.name} {loc.is_default && "(Padrão)"}
-                        </SelectItem>
+                      {Object.entries(groupedSubcategories).map(([parentName, subs]) => (
+                        <div key={parentName}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                            {parentName}
+                          </div>
+                          {subs.map((sub) => (
+                            <SelectItem key={sub.id} value={sub.id} className="pl-4">
+                              {sub.name}
+                            </SelectItem>
+                          ))}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>
@@ -321,6 +383,71 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                 </FormItem>
               )}
             />
+
+            {/* Row 3: Location and Room */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="home_location_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização Base *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a sede..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {rootLocations.map((loc) => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name} {loc.is_default && "(Padrão)"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="room_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sala</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={!selectedLocationId || availableRooms.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              !selectedLocationId
+                                ? "Selecione local primeiro"
+                                : availableRooms.length === 0
+                                ? "Nenhuma sala cadastrada"
+                                : "Selecione..."
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableRooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            {room.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Row 4: Description */}
             <FormField
@@ -346,7 +473,12 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                   <FormItem>
                     <FormLabel>Marca</FormLabel>
                     <FormControl>
-                      <Input placeholder="Dell" {...field} />
+                      <AutocompleteInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        suggestions={brands}
+                        placeholder="Dell, Apple..."
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
