@@ -41,7 +41,7 @@ interface Profile {
 }
 
 interface UserRole {
-  role: 'super_admin' | 'admin' | 'team_leader' | 'collaborator';
+  role: 'super_admin' | 'admin' | 'collaborator';
 }
 
 interface AuthContextType {
