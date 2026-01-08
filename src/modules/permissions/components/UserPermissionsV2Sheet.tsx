@@ -64,7 +64,6 @@ interface UserPermissionsV2SheetProps {
     user_id: string;
     profile_id: string;
     role_in_bu: string | null;
-    is_external?: boolean;
     profiles: {
       display_name: string;
       work_email: string;
@@ -78,8 +77,8 @@ export function UserPermissionsV2Sheet({
   onOpenChange,
   user,
 }: UserPermissionsV2SheetProps) {
-  const { profile } = useAuth();
-  const isSuperAdmin = profile?.is_super_admin ?? false;
+  const { role } = useAuth();
+  const isSuperAdmin = role === 'super_admin';
   
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
@@ -108,7 +107,7 @@ export function UserPermissionsV2Sheet({
   );
 
   const isAdmin = user?.role_in_bu === "admin";
-  const isExternal = user?.is_external ?? false;
+  const isExternal = user?.role_in_bu === "external";
 
   // Filter templates based on user type
   const availableTemplates = useMemo(() => {
