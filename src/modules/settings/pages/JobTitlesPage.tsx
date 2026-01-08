@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HubLayout } from "@/components/layout/HubLayout";
+import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,7 +101,7 @@ export default function JobTitlesPage() {
   };
 
   return (
-    <HubLayout>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-2">
           <Briefcase className="h-8 w-8 text-primary" />
@@ -253,6 +253,6 @@ export default function JobTitlesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </HubLayout>
+    </div>
   );
 }
