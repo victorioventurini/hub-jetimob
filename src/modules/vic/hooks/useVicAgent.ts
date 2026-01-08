@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type {
   VicAgentSlug,
   VicActionContext,
@@ -134,7 +135,7 @@ export function useVicEnabled() {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   const { data: iaConfig, isLoading } = useQuery({
-    queryKey: ["bu-ia-config", buId],
+    queryKey: queryKeys.vic.buConfig(buId ?? null),
     queryFn: async () => {
       if (!supabase || !isReady || !buId) return null;
 
@@ -198,7 +199,7 @@ export function useVicConfig() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bu-ia-config", currentBu?.id ?? buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vic.buConfig(currentBu?.id ?? buId ?? null) });
       toast.success("Configurações de IA atualizadas");
     },
     onError: (error) => {
@@ -220,7 +221,7 @@ export function useVicAgentActivations() {
   const queryClient = useQueryClient();
 
   const { data: activations, isLoading } = useQuery({
-    queryKey: ["bu-agent-activations", buId],
+    queryKey: queryKeys.vic.agentActivations(buId ?? null),
     queryFn: async () => {
       if (!supabase || !isReady || !buId) return [];
 
@@ -269,7 +270,7 @@ export function useVicAgentActivations() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bu-agent-activations", currentBu?.id ?? buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vic.agentActivations(currentBu?.id ?? buId ?? null) });
       toast.success("Configuração do agente atualizada");
     },
     onError: (error) => {

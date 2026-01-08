@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useMemo } from "react";
 import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval } from "date-fns";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface Cycle {
   id: string;
@@ -22,7 +23,7 @@ export function useCycles() {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["okr-cycles"],
+    queryKey: queryKeys.okrs.cyclesList(null),
     queryFn: async () => {
       if (!supabase) return [];
       

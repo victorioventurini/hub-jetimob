@@ -159,6 +159,7 @@ export const queryKeys = {
     // Shared
     categories: (buId: string | null) => ['assets', 'categories', buId] as const,
     locations: (buId: string | null) => ['assets', 'locations', buId] as const,
+    locationsOptions: (buId: string | null) => ['assets', 'locations-options', buId] as const,
     permissions: (buId: string | null) => ['assets', 'permissions', buId] as const,
   },
 
@@ -167,12 +168,18 @@ export const queryKeys = {
     all: (buId: string | null) => ['tickets', buId] as const,
     list: (buId: string | null, filters?: Record<string, unknown>) => 
       ['tickets', 'list', buId, filters] as const,
+    myTickets: (buId: string | null) => ['tickets', 'my', buId] as const,
     detail: (ticketId: string) => ['tickets', 'detail', ticketId] as const,
     messages: (ticketId: string) => ['tickets', 'messages', ticketId] as const,
-    categories: (buId: string | null) => ['tickets', 'categories', buId] as const,
-    subcategories: (categoryId: string) => ['tickets', 'subcategories', categoryId] as const,
+    categories: (buId: string | null, scope?: string) => ['tickets', 'categories', buId, scope] as const,
+    subcategories: (buId: string | null, categoryId?: string) => ['tickets', 'subcategories', buId, categoryId] as const,
     partners: (buId: string | null) => ['tickets', 'partners', buId] as const,
+    partnerCompany: (id: string | null) => ['tickets', 'partner-company', id] as const,
     routingRules: (buId: string | null) => ['tickets', 'routing-rules', buId] as const,
+    contactCapabilities: (buId: string | null, contactId?: string) => 
+      ['tickets', 'contact-capabilities', buId, contactId] as const,
+    companyContactCapabilities: (buId: string | null, companyId?: string) => 
+      ['tickets', 'company-contact-capabilities', buId, companyId] as const,
   },
 
   // ============= Integrations =============
@@ -253,12 +260,44 @@ export const queryKeys = {
     anniversaries: (buId: string | null) => ['home', 'anniversaries', buId] as const,
     newJetimobers: (buId: string | null) => ['home', 'new-jetimobers', buId] as const,
     cultureMessage: () => ['home', 'culture-message'] as const,
+    leaderSummary: (buId: string | null, teamId: string | null) => 
+      ['home', 'leader-summary', buId, teamId] as const,
+    leaderFocus: (buId: string | null, teamId: string | null) => 
+      ['home', 'leader-focus', buId, teamId] as const,
+    leaderTeams: (buId: string | null, userId: string | null) => 
+      ['home', 'leader-teams', buId, userId] as const,
   },
 
   // ============= Global Search =============
   search: {
     global: (buId: string | null, query: string) => 
       ['search', 'global', buId, query] as const,
+  },
+
+  // ============= External =============
+  external: {
+    tickets: (contactId: string | null) => ['external', 'tickets', contactId] as const,
+    stats: (contactId: string | null) => ['external', 'stats', contactId] as const,
+    companyContext: (companyId: string | null) => ['external', 'company-context', companyId] as const,
+    userInfo: (userId: string | null) => ['external', 'user-info', userId] as const,
+  },
+
+  // ============= Vic (IA) =============
+  vic: {
+    buConfig: (buId: string | null) => ['vic', 'bu-config', buId] as const,
+    agentActivations: (buId: string | null) => ['vic', 'agent-activations', buId] as const,
+    globalAgents: () => ['vic', 'global-agents'] as const,
+    buUnitsForAudit: () => ['vic', 'bu-units-audit'] as const,
+    logs: (timeRange: string, buId: string | null) => ['vic', 'logs', timeRange, buId] as const,
+  },
+
+  // ============= Identity & Core =============
+  identity: {
+    profile: (userId: string | null) => ['identity', 'profile', userId] as const,
+    permissions: (buId: string | null, userId: string | null) => 
+      ['identity', 'permissions', buId, userId] as const,
+    modules: (userId: string | null, buId: string | null) => 
+      ['identity', 'modules', userId, buId] as const,
   },
 } as const;
 

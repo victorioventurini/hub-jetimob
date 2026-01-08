@@ -9,6 +9,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface UserIdentity {
   /** ID de autenticação (auth.users.id) - usar para auth checks, RLS */
@@ -39,7 +40,7 @@ export function useIdentity(): UserIdentity {
   const { user, isLoading: authLoading } = useAuth();
   
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["identity-profile", user?.id],
+    queryKey: queryKeys.identity.profile(user?.id ?? null),
     queryFn: async () => {
       if (!user?.id) return null;
       

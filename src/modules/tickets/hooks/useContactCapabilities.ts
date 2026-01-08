@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 // ===========================================
 // TYPES
@@ -40,7 +41,7 @@ export function useContactCapabilities(contactId?: string) {
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: ["contact-capabilities", buId, contactId],
+    queryKey: queryKeys.tickets.contactCapabilities(buId ?? null, contactId),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -131,8 +132,8 @@ export function useCreateContactCapability() {
       return capability;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
-      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.contactCapabilities(null, undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.companyContactCapabilities(null, undefined) });
     },
   });
 }

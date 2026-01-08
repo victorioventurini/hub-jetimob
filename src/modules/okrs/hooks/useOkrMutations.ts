@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 
 // ========================
 // ORG OBJECTIVES MUTATIONS
@@ -29,8 +30,8 @@ export function useCancelOrgObjective() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["okr-org-objectives"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-org-objectives-with-krs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
       toast.success("Objetivo organizacional cancelado");
     },
     onError: () => {
@@ -113,8 +114,8 @@ export function useCancelTeamObjective() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["okr-team-objectives"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-team-objectives-with-krs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(null) });
       toast.success("Objetivo de time cancelado");
     },
     onError: () => {

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface BuLocationOption {
   id: string;
@@ -16,7 +17,7 @@ export function useLocations() {
   const buId = currentBu?.id;
 
   const { data: locations = [], isLoading } = useQuery({
-    queryKey: ["bu-locations-options", buId],
+    queryKey: queryKeys.assets.locationsOptions(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
       const { data, error } = await supabase

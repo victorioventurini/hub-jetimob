@@ -3,6 +3,7 @@ import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient
 import { useMemo } from "react";
 import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface KpiHistoryValue {
   id: string;
@@ -35,7 +36,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["kpi-history", kpiId, dateRange?.start, dateRange?.end],
+    queryKey: [...queryKeys.kpis.values(kpiId ?? ''), 'history', dateRange?.start, dateRange?.end],
     queryFn: async () => {
       if (!kpiId || !supabase) return null;
 

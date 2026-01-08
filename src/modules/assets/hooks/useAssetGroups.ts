@@ -3,6 +3,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type { 
   AssetGroup, 
   AssetGroupItem, 
@@ -21,7 +22,7 @@ export function useAssetGroups() {
 
   // Buscar todos os kits/grupos
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
-    queryKey: ["asset-groups", buId],
+    queryKey: queryKeys.assets.groups.all(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -180,7 +181,7 @@ export function useAssetGroups() {
       return group;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Kit criado com sucesso");
     },
     onError: (error: any) => {

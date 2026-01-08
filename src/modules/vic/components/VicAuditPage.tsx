@@ -11,6 +11,7 @@ import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { useUrlState } from "@/hooks/useUrlState";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface AgentLog {
   id: string;
@@ -43,7 +44,7 @@ export function VicAuditPage() {
 
   // Fetch BUs for filter
   const { data: bus } = useQuery({
-    queryKey: ["bu-units-for-audit"],
+    queryKey: queryKeys.vic.buUnitsForAudit(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
@@ -58,7 +59,7 @@ export function VicAuditPage() {
 
   // Fetch logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
-    queryKey: ["ai-agent-logs", timeRange, selectedBu],
+    queryKey: queryKeys.vic.logs(timeRange, selectedBu === 'all' ? null : selectedBu),
     queryFn: async () => {
       const daysMap = { "7d": 7, "30d": 30, "90d": 90 };
       const fromDate = subDays(new Date(), daysMap[timeRange]);

@@ -4,6 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type { LeaderDashboardSummary, FocusItem } from "../types";
 
 export function useLeaderDashboard(teamId: string | null) {
@@ -17,7 +18,7 @@ export function useLeaderDashboard(teamId: string | null) {
     error: summaryError,
     refetch: refetchSummary,
   } = useQuery({
-    queryKey: ["leader-dashboard-summary", currentBuId, teamId],
+    queryKey: queryKeys.home.leaderSummary(currentBuId ?? null, teamId),
     queryFn: async () => {
       if (!teamId) return null;
 
@@ -42,7 +43,7 @@ export function useLeaderDashboard(teamId: string | null) {
     isLoading: isFocusLoading,
     error: focusError,
   } = useQuery({
-    queryKey: ["leader-dashboard-focus", currentBuId, teamId],
+    queryKey: queryKeys.home.leaderFocus(currentBuId ?? null, teamId),
     queryFn: async () => {
       if (!teamId) return [];
 
