@@ -1,11 +1,16 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.10.0  
+**Versão:** 2.11.0  
 **Última atualização:** 2026-01-08
 **Responsável:** Lovable AI / Equipe de Engenharia
 
 > 📚 **Documentação Complementar:**
+> - [DEVELOPMENT_STANDARDS.md](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
 > - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção de identidade (`user_id` vs `profile_id`)
+> - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de permissões e templates
+> - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
+> - [engineering/QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys
+> - [engineering/BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase
 
 ---
 
