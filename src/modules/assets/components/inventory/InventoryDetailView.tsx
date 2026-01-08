@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, formatDistanceToNow, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
@@ -14,9 +14,11 @@ import {
   XCircle,
   History,
   Edit,
-  QrCode,
   Link2,
-  
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +44,145 @@ const movementTypeIcons: Record<AssetMovementType, typeof Package> = {
   write_off: XCircle,
 };
 
+// Component to show active loan details
+function LoanStatusCard({ item, movements }: { item: AssetInventory; movements: AssetMovement[] }) {
+  // Only show for loaned items
+  if (item.status !== "loaned" || item.current_holder_type !== "user") {
+    return null;
+  }
+
+  // Find the last checkout movement to get loan details
+  const lastCheckout = useMemo(() => {
+    return movements.find(m => m.movement_type === "checkout");
+  }, [movements]);
+
+  const assignedAt = item.assigned_at ? new Date(item.assigned_at) : null;
+  const dueAt = lastCheckout?.due_at ? new Date(lastCheckout.due_at) : null;
+  
+  // Calculate loan duration
+  const loanDuration = assignedAt 
+    ? formatDistanceToNow(assignedAt, { locale: ptBR, addSuffix: false })
+    : null;
+
+  // Check if overdue
+  const isOverdue = dueAt ? isPast(dueAt) : false;
+  const daysUntilDue = dueAt ? differenceInDays(dueAt, new Date()) : null;
+
+  return (
+    <Card className={isOverdue ? "border-destructive bg-destructive/5" : "border-primary bg-primary/5"}>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          {isOverdue ? (
+            <>
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <span className="text-destructive">Empréstimo Atrasado</span>
+            </>
+          ) : (
+            <>
+              <Clock className="h-5 w-5 text-primary" />
+              <span>Empréstimo Ativo</span>
+            </>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Current holder */}
+        {item.current_user && (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 border-2 border-background">
+              <AvatarImage src={item.current_user.avatar_url || undefined} />
+              <AvatarFallback className="text-lg">
+                {item.current_user.full_name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="font-semibold text-lg">{item.current_user.full_name}</p>
+              <p className="text-sm text-muted-foreground">Responsável atual</p>
+            </div>
+          </div>
+        )}
+
+        <Separator />
+
+        {/* Loan details grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Loan date */}
+          {assignedAt && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Data do empréstimo
+              </p>
+              <p className="font-medium text-sm">
+                {format(assignedAt, "dd/MM/yyyy", { locale: ptBR })}
+              </p>
+            </div>
+          )}
+
+          {/* Duration */}
+          {loanDuration && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Tempo emprestado
+              </p>
+              <p className="font-medium text-sm">{loanDuration}</p>
+            </div>
+          )}
+
+          {/* Due date */}
+          {dueAt && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                {isOverdue ? (
+                  <AlertTriangle className="h-3 w-3 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-3 w-3" />
+                )}
+                Devolução prevista
+              </p>
+              <p className={`font-medium text-sm ${isOverdue ? "text-destructive" : ""}`}>
+                {format(dueAt, "dd/MM/yyyy", { locale: ptBR })}
+                {isOverdue && (
+                  <span className="block text-xs">
+                    ({Math.abs(daysUntilDue!)} dias de atraso)
+                  </span>
+                )}
+                {!isOverdue && daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0 && (
+                  <span className="block text-xs text-amber-600">
+                    ({daysUntilDue === 0 ? "Vence hoje" : `${daysUntilDue} dias restantes`})
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Authorized by */}
+          {lastCheckout?.authorized_by && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <UserCheck className="h-3 w-3" />
+                Autorizado por
+              </p>
+              <p className="font-medium text-sm">{lastCheckout.authorized_by.full_name}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Notes from checkout */}
+        {lastCheckout?.notes && (
+          <>
+            <Separator />
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Observações do empréstimo</p>
+              <p className="text-sm">{lastCheckout.notes}</p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 export function InventoryDetailView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -231,6 +372,9 @@ export function InventoryDetailView() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
+          {/* Active Loan Card - Only show when item is loaned */}
+          <LoanStatusCard item={item} movements={movements} />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Location & Holder */}
             <Card>
