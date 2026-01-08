@@ -2333,6 +2333,47 @@ export type Database = {
           },
         ]
       }
+      job_titles: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_titles_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_metrics: {
         Row: {
           bu_id: string | null
@@ -4461,6 +4502,7 @@ export type Database = {
           id: string
           instagram_id: string | null
           job_title: string
+          job_title_id: string | null
           last_name: string
           manager_user_id: string | null
           onboarding_completed: boolean
@@ -4488,6 +4530,7 @@ export type Database = {
           id?: string
           instagram_id?: string | null
           job_title: string
+          job_title_id?: string | null
           last_name: string
           manager_user_id?: string | null
           onboarding_completed?: boolean
@@ -4515,6 +4558,7 @@ export type Database = {
           id?: string
           instagram_id?: string | null
           job_title?: string
+          job_title_id?: string | null
           last_name?: string
           manager_user_id?: string | null
           onboarding_completed?: boolean
@@ -4541,6 +4585,13 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_job_title_id_fkey"
+            columns: ["job_title_id"]
+            isOneToOne: false
+            referencedRelation: "job_titles"
             referencedColumns: ["id"]
           },
           {
