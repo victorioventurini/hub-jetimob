@@ -23,6 +23,7 @@ import { Loader2, Mail, ArrowRight, UserPlus, ArrowLeft } from "lucide-react";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { TeamSelect, SimpleSelect } from "@/components/selects";
+import { JobTitleSelect } from "@/modules/settings/components/JobTitleSelect";
 
 const emailSchema = z.object({
   work_email: z.string().trim().email("E-mail inválido"),
@@ -32,7 +33,7 @@ const jetimoberSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
   work_email: z.string().trim().email("E-mail inválido"),
-  job_title: z.string().trim().min(1, "Cargo é obrigatório").max(100),
+  job_title_id: z.string().uuid("Cargo é obrigatório").nullable(),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
   work_mode: z.enum(["onsite", "hybrid", "remote"]),
@@ -50,6 +51,7 @@ interface Profile {
   last_name: string;
   work_email: string;
   job_title: string;
+  job_title_id: string | null;
   city: string;
   state: string;
   work_mode: "onsite" | "hybrid" | "remote";
@@ -80,7 +82,7 @@ const defaultFormData: JetimoberFormData = {
   first_name: "",
   last_name: "",
   work_email: "",
-  job_title: "",
+  job_title_id: null,
   city: "Porto Alegre",
   state: "RS",
   work_mode: "hybrid",
