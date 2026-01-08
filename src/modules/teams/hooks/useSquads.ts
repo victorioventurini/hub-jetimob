@@ -266,6 +266,7 @@ export function useUpdateSquad() {
 
 export function useAddSquadMember() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -276,12 +277,17 @@ export function useAddSquadMember() {
       squadId: string;
       data: SquadMemberFormData;
     }) => {
+      if (!currentBu?.id) {
+        throw new Error("Nenhuma BU selecionada");
+      }
+
       const { data: membership, error } = await supabase
         .from("squad_memberships")
         .insert({
           squad_id: squadId,
           user_id: data.user_id,
           role: data.role,
+          bu_id: currentBu.id,
         })
         .select()
         .single();
@@ -350,9 +356,10 @@ export function useRemoveSquadMember() {
       membershipId: string;
       squadId: string;
     }) => {
+      // Soft delete via deleted_at
       const { error } = await supabase
         .from("squad_memberships")
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq("id", membershipId);
 
       if (error) throw error;

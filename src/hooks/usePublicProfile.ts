@@ -184,9 +184,10 @@ export function useUserKpis(userId?: string) {
 
 export function useUserSquads(userId?: string) {
   const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
   
   return useQuery({
-    queryKey: ["user-squads", userId],
+    queryKey: ["user-squads", userId, currentBu?.id],
     queryFn: async () => {
       if (!userId) return [];
 
@@ -198,12 +199,11 @@ export function useUserSquads(userId?: string) {
           squad:squads!squad_memberships_squad_id_fkey(
             id,
             name,
-            description,
-            team_id,
-            team:teams!squads_team_id_fkey(id, name)
+            description
           )
         `)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .is("deleted_at", null);
 
       if (error) throw error;
       return data || [];
