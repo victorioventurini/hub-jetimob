@@ -35,7 +35,7 @@ interface Profile {
   last_name: string;
   display_name: string;
   work_email: string;
-  job_title: string;
+  job_title: string | null;
   photo_url: string | null;
   onboarding_completed: boolean;
 }
@@ -101,14 +101,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchUserData(userId: string) {
     try {
-      // Fetch profile
+      // Fetch profile with job_title from job_titles table
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, display_name, work_email, job_title, photo_url, onboarding_completed')
+        .select('id, first_name, last_name, display_name, work_email, photo_url, onboarding_completed, job_titles(name)')
         .eq('user_id', userId)
         .maybeSingle();
       
-      setProfile(profileData);
+      // Map job_title from joined table
+      const profile = profileData ? {
+        id: profileData.id,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        display_name: profileData.display_name,
+        work_email: profileData.work_email,
+        photo_url: profileData.photo_url,
+        onboarding_completed: profileData.onboarding_completed,
+        job_title: (profileData.job_titles as { name: string } | null)?.name ?? null,
+      } : null;
+      
+      setProfile(profile);
 
       // Fetch role
       const { data: roleData } = await supabase

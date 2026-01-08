@@ -22,13 +22,6 @@ interface HeaderProps {
   sidebarCollapsed: boolean;
 }
 
-const roleLabels: Record<string, string> = {
-  super_admin: "Super Admin",
-  admin: "Administrador",
-  team_leader: "Líder de Time",
-  collaborator: "Colaborador",
-};
-
 export function Header({ sidebarCollapsed }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
   const { userRole } = useBu();
@@ -41,12 +34,8 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
-  const roleLabel =
-    userRole === "admin" || userRole === "super_admin"
-      ? "Administrador da BU"
-      : role
-        ? roleLabels[role]
-        : "Colaborador";
+  // Exibir job_title do perfil, fallback para "Membro"
+  const jobTitleLabel = profile?.job_title || "Membro";
 
   const initials = displayName
     .split(" ")
@@ -113,7 +102,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 </Avatar>
                 <div className="hidden md:flex flex-col items-start">
                   <span className="text-sm font-medium">{displayName}</span>
-                  <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                  <span className="text-xs text-muted-foreground">{jobTitleLabel}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
