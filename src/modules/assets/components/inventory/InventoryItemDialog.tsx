@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useInventory } from "../../hooks/useInventory";
+import { useLocations } from "../../hooks/useLocations";
 
 const schema = z.object({
   internal_code: z.string().min(1, "Código interno obrigatório"),
@@ -36,6 +37,8 @@ const schema = z.object({
   serial_number: z.string().optional(),
   brand: z.string().optional(),
   model: z.string().optional(),
+  location_id: z.string().optional(),
+  room_id: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -48,6 +51,7 @@ interface InventoryItemDialogProps {
 
 export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogProps) {
   const { categories, createItem, isCreatingItem } = useInventory();
+  const { rootLocations, getRooms, defaultLocation } = useLocations();
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -59,17 +63,52 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
       serial_number: "",
       brand: "",
       model: "",
+      location_id: undefined,
+      room_id: undefined,
       notes: "",
     },
   });
 
+  const selectedLocationId = useWatch({
+    control: form.control,
+    name: "location_id",
+  });
+
+  const availableRooms = selectedLocationId ? getRooms(selectedLocationId) : [];
+
   useEffect(() => {
     if (open) {
-      form.reset();
+      form.reset({
+        internal_code: "",
+        name: "",
+        category_id: undefined,
+        description: "",
+        serial_number: "",
+        brand: "",
+        model: "",
+        location_id: defaultLocation?.id || undefined,
+        room_id: undefined,
+        notes: "",
+      });
     }
-  }, [open, form]);
+  }, [open, form, defaultLocation]);
+
+  // Clear room when location changes
+  useEffect(() => {
+    const currentRoomId = form.getValues("room_id");
+    if (currentRoomId && selectedLocationId) {
+      const rooms = getRooms(selectedLocationId);
+      const roomStillValid = rooms.some(r => r.id === currentRoomId);
+      if (!roomStillValid) {
+        form.setValue("room_id", undefined);
+      }
+    }
+  }, [selectedLocationId, form, getRooms]);
 
   const onSubmit = (data: FormData) => {
+    // Use room_id as home_location_id if selected, otherwise use location_id
+    const homeLocationId = data.room_id || data.location_id || undefined;
+    
     createItem({
       internal_code: data.internal_code,
       name: data.name,
@@ -78,6 +117,7 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
       serial_number: data.serial_number || undefined,
       brand: data.brand || undefined,
       model: data.model || undefined,
+      home_location_id: homeLocationId,
       notes: data.notes || undefined,
     });
     onOpenChange(false);
@@ -160,6 +200,68 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="location_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {rootLocations.map((loc) => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="room_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sala</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={!selectedLocationId || availableRooms.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={
+                            !selectedLocationId 
+                              ? "Selecione local primeiro" 
+                              : availableRooms.length === 0 
+                                ? "Nenhuma sala" 
+                                : "Selecione..."
+                          } />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableRooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            {room.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-3 gap-4">
               <FormField
