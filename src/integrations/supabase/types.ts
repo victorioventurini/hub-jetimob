@@ -1953,48 +1953,6 @@ export type Database = {
           },
         ]
       }
-      bu_permission_group_configs: {
-        Row: {
-          bu_id: string
-          created_at: string
-          group_id: string
-          id: string
-          is_enabled: boolean
-          updated_at: string
-        }
-        Insert: {
-          bu_id: string
-          created_at?: string
-          group_id: string
-          id?: string
-          is_enabled?: boolean
-          updated_at?: string
-        }
-        Update: {
-          bu_id?: string
-          created_at?: string
-          group_id?: string
-          id?: string
-          is_enabled?: boolean
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bu_permission_group_configs_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_permission_group_configs_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "permission_groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bu_units: {
         Row: {
           allowed_email_domains: string[]
@@ -2077,52 +2035,6 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bu_user_permission_groups: {
-        Row: {
-          bu_id: string
-          created_at: string
-          group_id: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          bu_id: string
-          created_at?: string
-          group_id: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          bu_id?: string
-          created_at?: string
-          group_id?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bu_user_permission_groups_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_permission_groups_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "permission_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_permission_groups_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4413,75 +4325,6 @@ export type Database = {
         }
         Relationships: []
       }
-      permission_group_permissions: {
-        Row: {
-          created_at: string
-          group_id: string
-          id: string
-          permission_id: string
-        }
-        Insert: {
-          created_at?: string
-          group_id: string
-          id?: string
-          permission_id: string
-        }
-        Update: {
-          created_at?: string
-          group_id?: string
-          id?: string
-          permission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "permission_group_permissions_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "permission_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "permission_group_permissions_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "permission_catalog"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      permission_groups: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_system: boolean
-          name: string
-          slug: string | null
-          status: Database["public"]["Enums"]["catalog_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_system?: boolean
-          name: string
-          slug?: string | null
-          status?: Database["public"]["Enums"]["catalog_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_system?: boolean
-          name?: string
-          slug?: string | null
-          status?: Database["public"]["Enums"]["catalog_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
       permission_key_aliases: {
         Row: {
           created_at: string
@@ -5673,21 +5516,6 @@ export type Database = {
           schemaname: unknown
           tablename: unknown
           violation_type: string | null
-        }
-        Relationships: []
-      }
-      user_effective_permissions: {
-        Row: {
-          action: string | null
-          bu_id: string | null
-          module: string | null
-          permission_id: string | null
-          permission_key: string | null
-          resource: string | null
-          scope: string | null
-          source: string | null
-          source_name: string | null
-          user_id: string | null
         }
         Relationships: []
       }

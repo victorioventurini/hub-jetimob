@@ -10,6 +10,8 @@ export interface AuditResult {
     isSystem: boolean;
     permissionCount: number;
     status: string;
+    module: string | null;
+    surface: string | null;
   }>;
   catalogStats: {
     totalKeys: number;
@@ -22,13 +24,14 @@ export interface AuditResult {
     userCanManageTeam: boolean;
     hasRole: boolean;
     getMyPermissions: boolean;
+    getEffectivePermissionsV2: boolean;
   };
   rlsPoliciesCount: number;
-  expectedTemplates: Array<{
-    name: string;
-    exists: boolean;
-    slug: string | null;
-  }>;
+  migrationStatus: {
+    totalUsers: number;
+    migratedUsers: number;
+    pendingUsers: number;
+  };
 }
 
 export function usePermissionAudit() {

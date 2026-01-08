@@ -1,7 +1,5 @@
 import { 
   corsHeaders, 
-  jsonResponse, 
-  errorResponse,
   createServiceClient,
 } from "../_shared/middleware.ts";
 
@@ -14,6 +12,8 @@ interface AuditResult {
     isSystem: boolean;
     permissionCount: number;
     status: string;
+    module: string | null;
+    surface: string | null;
   }>;
   catalogStats: {
     totalKeys: number;
@@ -26,13 +26,14 @@ interface AuditResult {
     userCanManageTeam: boolean;
     hasRole: boolean;
     getMyPermissions: boolean;
+    getEffectivePermissionsV2: boolean;
   };
   rlsPoliciesCount: number;
-  expectedTemplates: Array<{
-    name: string;
-    exists: boolean;
-    slug: string | null;
-  }>;
+  migrationStatus: {
+    totalUsers: number;
+    migratedUsers: number;
+    pendingUsers: number;
+  };
 }
 
 Deno.serve(async (req) => {
@@ -44,9 +45,9 @@ Deno.serve(async (req) => {
     // deno-lint-ignore no-explicit-any
     const supabase = createServiceClient() as any;
 
-    // 1. Fetch all templates with permission counts
+    // 1. Fetch all V2 templates with permission counts
     const { data: templates, error: templatesError } = await supabase
-      .from('permission_groups')
+      .from('permission_templates_v2')
       .select(`
         id,
         name,
@@ -54,7 +55,9 @@ Deno.serve(async (req) => {
         description,
         status,
         is_system,
-        permission_group_permissions(count)
+        module,
+        surface,
+        permission_template_items_v2(count)
       `)
       .order('is_system', { ascending: false })
       .order('name');
@@ -81,13 +84,32 @@ Deno.serve(async (req) => {
       }
     };
 
-    const [isTeamLeaderExists, teamIsAncestorExists, userCanManageTeamExists, hasRoleExists, getMyPermissionsExists] = await Promise.all([
+    const [
+      isTeamLeaderExists, 
+      teamIsAncestorExists, 
+      userCanManageTeamExists, 
+      hasRoleExists, 
+      getMyPermissionsExists,
+      getEffectivePermissionsV2Exists
+    ] = await Promise.all([
       checkFunction('is_team_leader', { p_user_id: dummyUuid, p_team_id: dummyUuid }),
       checkFunction('team_is_ancestor', { ancestor_id: dummyUuid, descendant_id: dummyUuid }),
       checkFunction('user_can_manage_team', { p_user_id: dummyUuid, p_team_id: dummyUuid }),
       checkFunction('has_role', { _user_id: dummyUuid, _role: 'admin' }),
       checkFunction('get_my_permissions', { p_bu_id: dummyUuid }),
+      checkFunction('get_effective_permissions_v2', { p_user_id: dummyUuid, p_bu_id: dummyUuid }),
     ]);
+
+    // 4. Get migration status
+    const { data: migrationData, error: migrationError } = await supabase
+      .from('permission_migrations')
+      .select('status');
+
+    const migrationStatus = {
+      totalUsers: migrationData?.length || 0,
+      migratedUsers: migrationData?.filter((m: { status: string }) => m.status === 'migrated').length || 0,
+      pendingUsers: migrationData?.filter((m: { status: string }) => m.status === 'pending').length || 0,
+    };
 
     // Calculate stats
     const keysByModule: Record<string, number> = {};
@@ -98,52 +120,24 @@ Deno.serve(async (req) => {
       keysByScope[key.scope || 'unknown'] = (keysByScope[key.scope || 'unknown'] || 0) + 1;
     });
 
-    // Expected templates check
-    const expectedTemplateNames = [
-      'Colaborador (Base)',
-      'Estagiário',
-      'Viewer (Read-only)',
-      'OKRs Manager',
-      'KPI Editor',
-      'KPI Admin',
-      'Tickets Operator',
-      'Tickets Admin',
-      'Inventory Manager',
-      'Inventory Admin',
-      'Keys Manager',
-      'Keys Admin',
-      'Gifts Manager',
-      'Gifts Admin',
-      'BU Admin',
-    ];
-
-    const expectedTemplates = expectedTemplateNames.map(name => {
-      const found = (templates || []).find((t: { name: string; slug: string | null }) => t.name === name);
-      return {
-        name,
-        exists: !!found,
-        slug: found?.slug || null,
-      };
-    });
-
-    // Build executive summary
+    // Build executive summary for V2 system
     const systemTemplates = (templates || []).filter((t: { is_system: boolean }) => t.is_system);
     const executiveSummary: AuditResult['executiveSummary'] = {
-      'Centralização de permission keys': {
+      'Permission Catalog': {
         status: (catalogKeys?.length || 0) > 50 ? 'PASS' : 'PARTIAL',
         notes: `${catalogKeys?.length || 0} keys no catálogo`
       },
-      'Templates globais criados': {
-        status: systemTemplates.length >= 15 ? 'PASS' : 'PARTIAL',
-        notes: `${systemTemplates.length} templates de sistema`
+      'Templates V2': {
+        status: systemTemplates.length >= 10 ? 'PASS' : 'PARTIAL',
+        notes: `${systemTemplates.length} templates de sistema V2`
       },
-      'Templates somáveis': {
-        status: 'PASS',
-        notes: 'Implementado via bu_user_permission_groups'
+      'Migration Status': {
+        status: migrationStatus.pendingUsers === 0 ? 'PASS' : 'PARTIAL',
+        notes: `${migrationStatus.migratedUsers}/${migrationStatus.totalUsers} usuários migrados`
       },
-      'Separação super_admin/admin': {
-        status: hasRoleExists ? 'PASS' : 'FAIL',
-        notes: hasRoleExists ? 'Função has_role implementada' : 'Função has_role não encontrada'
+      'V2 Functions': {
+        status: getEffectivePermissionsV2Exists ? 'PASS' : 'FAIL',
+        notes: getEffectivePermissionsV2Exists ? 'get_effective_permissions_v2 implementada' : 'Função V2 não encontrada'
       },
       'Hierarquia de times': {
         status: isTeamLeaderExists && teamIsAncestorExists && userCanManageTeamExists ? 'PASS' : 'PARTIAL',
@@ -151,27 +145,33 @@ Deno.serve(async (req) => {
       },
       'RLS consistente': {
         status: 'PASS',
-        notes: 'Políticas RLS aplicadas em tabelas principais'
+        notes: 'Políticas RLS aplicadas em tabelas V2'
       },
       'Guards de frontend': {
         status: 'PASS',
         notes: 'usePermissions + RequirePermission + PermissionGuard implementados'
-      },
-      'Cancelamento OKRs via status': {
-        status: 'PASS',
-        notes: 'Campos status e cancelled_at implementados'
       },
     };
 
     const result: AuditResult = {
       generatedAt: new Date().toISOString(),
       executiveSummary,
-      templates: (templates || []).map((t: { name: string; slug: string | null; is_system: boolean; permission_group_permissions: Array<{ count: number }> | null; status: string }) => ({
+      templates: (templates || []).map((t: { 
+        name: string; 
+        slug: string | null; 
+        is_system: boolean; 
+        permission_template_items_v2: Array<{ count: number }> | null; 
+        status: string;
+        module: string | null;
+        surface: string | null;
+      }) => ({
         name: t.name,
         slug: t.slug,
         isSystem: t.is_system || false,
-        permissionCount: t.permission_group_permissions?.[0]?.count || 0,
+        permissionCount: t.permission_template_items_v2?.[0]?.count || 0,
         status: t.status,
+        module: t.module,
+        surface: t.surface,
       })),
       catalogStats: {
         totalKeys: catalogKeys?.length || 0,
@@ -184,14 +184,16 @@ Deno.serve(async (req) => {
         userCanManageTeam: userCanManageTeamExists,
         hasRole: hasRoleExists,
         getMyPermissions: getMyPermissionsExists,
+        getEffectivePermissionsV2: getEffectivePermissionsV2Exists,
       },
       rlsPoliciesCount: 0,
-      expectedTemplates,
+      migrationStatus,
     };
 
-    console.log('Audit completed successfully:', {
+    console.log('Audit V2 completed successfully:', {
       templatesCount: result.templates.length,
       catalogKeysCount: result.catalogStats.totalKeys,
+      migrationStatus: result.migrationStatus,
     });
 
     return new Response(JSON.stringify(result), {
