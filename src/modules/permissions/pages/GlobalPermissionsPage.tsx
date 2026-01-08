@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useUrlTab, useUrlSearch } from "@/shared/url";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,10 @@ import {
   Pencil, 
   Settings,
   AlertTriangle,
-  ClipboardCheck
+  ClipboardCheck,
+  Link2,
+  Layers,
+  FileStack
 } from "lucide-react";
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { usePermissionGroups } from "../hooks/usePermissionGroups";
@@ -46,6 +50,8 @@ import { SurfacesTab } from "../components/SurfacesTab";
 import { TemplatesV2Tab } from "../components/TemplatesV2Tab";
 import type { Permission, PermissionGroup, PermissionScope } from "../types";
 
+type GlobalPermissionTab = "catalog" | "templates" | "templates-v2" | "aliases" | "surfaces" | "groups" | "audit";
+
 /**
  * GlobalPermissionsPage - Gerenciamento do catálogo global de permissões do Hub
  * 
@@ -57,8 +63,9 @@ import type { Permission, PermissionGroup, PermissionScope } from "../types";
 export default function GlobalPermissionsPage() {
   usePageTitle("Permissões Globais");
 
-  const [activeTab, setActiveTab] = useState("catalog");
-  const [search, setSearch] = useState("");
+  // URL State for tab and search
+  const [activeTab, setActiveTab] = useUrlTab<GlobalPermissionTab>("catalog");
+  const { value: search, set: setSearch } = useUrlSearch("q");
 
   // Catalog state
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
@@ -185,18 +192,31 @@ export default function GlobalPermissionsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="catalog" className="gap-2">
               <Key className="h-4 w-4" />
               Catálogo
             </TabsTrigger>
             <TabsTrigger value="templates" className="gap-2">
               <Shield className="h-4 w-4" />
-              Templates
+              Templates v1
+            </TabsTrigger>
+            <TabsTrigger value="templates-v2" className="gap-2">
+              <FileStack className="h-4 w-4" />
+              Templates v2
+              <Badge variant="secondary" className="ml-1 text-xs">Novo</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="surfaces" className="gap-2">
+              <Layers className="h-4 w-4" />
+              Surfaces
+            </TabsTrigger>
+            <TabsTrigger value="aliases" className="gap-2">
+              <Link2 className="h-4 w-4" />
+              Aliases
             </TabsTrigger>
             <TabsTrigger value="groups" className="gap-2">
               <Users className="h-4 w-4" />
-              Grupos Customizados
+              Grupos
             </TabsTrigger>
             <TabsTrigger value="audit" className="gap-2">
               <ClipboardCheck className="h-4 w-4" />
@@ -205,15 +225,17 @@ export default function GlobalPermissionsPage() {
           </TabsList>
 
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 w-64"
-              />
-            </div>
+            {(activeTab === "catalog" || activeTab === "templates" || activeTab === "groups") && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+            )}
             {activeTab === "catalog" && (
               <Button onClick={() => setPermissionDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -317,9 +339,11 @@ export default function GlobalPermissionsPage() {
             <LoadingState text="Carregando templates..." />
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Templates são perfis de permissões padrão do sistema. Usuários podem ter múltiplos templates atribuídos e suas permissões somam.
-              </p>
+              <Alert>
+                <AlertDescription>
+                  Templates v1 (legado). Novos usuários devem usar <strong>Templates v2</strong> para melhor organização por módulo e surface.
+                </AlertDescription>
+              </Alert>
               <div className="border rounded-lg">
                 <Table>
                   <TableHeader>
@@ -339,7 +363,7 @@ export default function GlobalPermissionsPage() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{template.name}</span>
-                              <Badge variant="secondary" className="text-xs">Sistema</Badge>
+                              <Badge variant="secondary" className="text-xs">v1</Badge>
                             </div>
                             {template.slug && (
                               <code className="text-xs text-muted-foreground font-mono">{template.slug}</code>
@@ -375,6 +399,21 @@ export default function GlobalPermissionsPage() {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        {/* Templates V2 Tab */}
+        <TabsContent value="templates-v2" className="mt-6">
+          <TemplatesV2Tab />
+        </TabsContent>
+
+        {/* Surfaces Tab */}
+        <TabsContent value="surfaces" className="mt-6">
+          <SurfacesTab />
+        </TabsContent>
+
+        {/* Aliases Tab */}
+        <TabsContent value="aliases" className="mt-6">
+          <AliasesTab />
         </TabsContent>
 
         <TabsContent value="groups" className="mt-6">
@@ -444,7 +483,7 @@ export default function GlobalPermissionsPage() {
                                   onClick={() => setPermissionsSheetGroup(group)}
                                 >
                                   <Settings className="h-4 w-4 mr-2" />
-                                  Permissões
+                                  Gerenciar Permissões
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -472,7 +511,8 @@ export default function GlobalPermissionsPage() {
           if (!open) setEditingPermission(null);
         }}
         permission={editingPermission}
-        onSave={editingPermission ? handleUpdatePermission : handleCreatePermission}
+        modules={modules}
+        onSubmit={editingPermission ? handleUpdatePermission : handleCreatePermission}
         isPending={createPermission.isPending || updatePermission.isPending}
       />
 
@@ -483,7 +523,7 @@ export default function GlobalPermissionsPage() {
           if (!open) setEditingGroup(null);
         }}
         group={editingGroup}
-        onSave={editingGroup ? handleUpdateGroup : handleCreateGroup}
+        onSubmit={editingGroup ? handleUpdateGroup : handleCreateGroup}
         isPending={createGroup.isPending || updateGroup.isPending}
       />
 
