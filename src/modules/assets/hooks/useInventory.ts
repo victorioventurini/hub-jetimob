@@ -48,22 +48,24 @@ export function useInventory() {
       if (error) throw error;
 
       // Fetch locations and users separately
+      // IMPORTANT: current_user_id stores profiles.id (NOT auth.users.id)
+      // See docs/IDENTITY_CONVENTION.md
       const items = data || [];
       const locationIds = [...new Set(items.flatMap(i => [i.home_location_id, i.current_location_id].filter(Boolean)))];
-      const userIds = [...new Set(items.map(i => i.current_user_id).filter(Boolean))];
+      const profileIds = [...new Set(items.map(i => i.current_user_id).filter(Boolean))];
 
       const [{ data: locations }, { data: profiles }] = await Promise.all([
         locationIds.length > 0 
           ? supabase.from("bu_locations").select("id, name").in("id", locationIds)
           : Promise.resolve({ data: [] }),
-        userIds.length > 0
-          ? supabase.from("profiles").select("user_id, first_name, last_name, display_name, photo_url").in("user_id", userIds)
+        profileIds.length > 0
+          ? supabase.from("profiles").select("id, first_name, last_name, display_name, photo_url").in("id", profileIds)
           : Promise.resolve({ data: [] }),
       ]);
 
       const locationMap = new Map((locations || []).map(l => [l.id, l]));
-      const profileMap = new Map((profiles || []).map(p => [p.user_id, {
-        id: p.user_id,
+      const profileMap = new Map((profiles || []).map(p => [p.id, {
+        id: p.id,
         full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome',
         avatar_url: p.photo_url,
       }]));
@@ -174,22 +176,24 @@ export function useInventory() {
     if (error) return [];
 
     // Fetch related data
+    // IMPORTANT: from_user_id, to_user_id, performed_by_user_id, authorized_by_user_id
+    // all store profiles.id (NOT auth.users.id). See docs/IDENTITY_CONVENTION.md
     const movements = data || [];
     const locationIds = [...new Set(movements.flatMap(m => [m.from_location_id, m.to_location_id].filter(Boolean)))];
-    const userIds = [...new Set(movements.flatMap(m => [m.from_user_id, m.to_user_id, m.authorized_by_user_id, m.performed_by_user_id].filter(Boolean)))];
+    const profileIds = [...new Set(movements.flatMap(m => [m.from_user_id, m.to_user_id, m.authorized_by_user_id, m.performed_by_user_id].filter(Boolean)))];
 
     const [{ data: locations }, { data: profiles }] = await Promise.all([
       locationIds.length > 0
         ? supabase.from("bu_locations").select("id, name").in("id", locationIds)
         : Promise.resolve({ data: [] }),
-      userIds.length > 0
-        ? supabase.from("profiles").select("user_id, first_name, last_name, display_name").in("user_id", userIds)
+      profileIds.length > 0
+        ? supabase.from("profiles").select("id, first_name, last_name, display_name").in("id", profileIds)
         : Promise.resolve({ data: [] }),
     ]);
 
     const locationMap = new Map((locations || []).map(l => [l.id, l]));
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, {
-      id: p.user_id,
+    const profileMap = new Map((profiles || []).map(p => [p.id, {
+      id: p.id,
       full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome',
     }]));
 
