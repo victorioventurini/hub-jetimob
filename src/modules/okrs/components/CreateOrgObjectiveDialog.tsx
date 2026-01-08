@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Dialog,
   DialogContent,
@@ -67,8 +68,8 @@ export function CreateOrgObjectiveDialog({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives-with-krs'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
       toast.success('Objetivo organizacional criado com sucesso!');
       handleClose();
     },

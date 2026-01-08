@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   Dialog,
   DialogContent,
@@ -57,7 +58,7 @@ export function CycleRetrospectiveDialog({
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
       toast({
         title: 'Ciclo encerrado',
         description: 'A retrospectiva foi salva e o ciclo foi arquivado.',

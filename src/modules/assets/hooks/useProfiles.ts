@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface ProfileOption {
   id: string;
@@ -16,7 +17,7 @@ export function useAssetProfiles() {
   const buId = currentBu?.id;
 
   const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ["asset-profiles", buId],
+    queryKey: queryKeys.profiles.buProfiles(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
       // Get all users that belong to this BU

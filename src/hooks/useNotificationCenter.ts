@@ -54,7 +54,7 @@ export function useNotificationEvents() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['notification-events'],
+    queryKey: queryKeys.notifications.events(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_events')
@@ -73,7 +73,7 @@ export function useNotificationChannels() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['notification-channels'],
+    queryKey: queryKeys.notifications.channels(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_channels')
@@ -92,7 +92,7 @@ export function useBuNotificationChannels(buId?: string) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['bu-notification-channels', buId],
+    queryKey: queryKeys.notifications.buChannels(buId ?? null),
     queryFn: async () => {
       if (!buId) return [];
       
@@ -262,7 +262,7 @@ export function useEmitNotificationEvent() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
     },
   });
 }

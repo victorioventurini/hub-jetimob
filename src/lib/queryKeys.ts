@@ -7,23 +7,31 @@
 
 export const queryKeys = {
   // ============= Auth & Profiles =============
+  auth: {
+    identity: (userId: string | null) => ['auth', 'identity', userId] as const,
+    onboardingCheck: (userId: string | null) => ['auth', 'onboarding-check', userId] as const,
+    userRole: (userId: string | null) => ['auth', 'user-role', userId] as const,
+  },
+
   profiles: {
     all: (buId: string | null) => ['profiles', buId] as const,
     list: (buId: string | null, filters?: Record<string, unknown>) => 
       ['profiles', 'list', buId, filters] as const,
     detail: (userId: string) => ['profiles', 'detail', userId] as const,
     me: () => ['profiles', 'me'] as const,
+    buProfiles: (buId: string | null) => ['profiles', 'bu', buId] as const,
+    buMembers: (buId: string | null) => ['profiles', 'bu-members', buId] as const,
   },
 
   // ============= Notifications =============
   notifications: {
-    all: (userId: string) => ['notifications', userId] as const,
+    all: (userId?: string | null) => userId ? ['notifications', userId] as const : ['notifications'] as const,
     unread: (userId: string) => ['notifications', 'unread', userId] as const,
     count: (userId: string) => ['notifications', 'count', userId] as const,
     settings: (userId: string, buId: string) => ['notifications', 'settings', userId, buId] as const,
-    events: () => ['notification-events'] as const,
-    channels: () => ['notification-channels'] as const,
-    buChannels: (buId: string) => ['bu-notification-channels', buId] as const,
+    events: () => ['notifications', 'events'] as const,
+    channels: () => ['notifications', 'channels'] as const,
+    buChannels: (buId: string | null) => ['notifications', 'bu-channels', buId] as const,
   },
 
   // ============= Teams =============
@@ -217,8 +225,24 @@ export const queryKeys = {
     all: () => ['bu'] as const,
     detail: (buId: string) => ['bu', 'detail', buId] as const,
     locations: (buId: string | null) => ['bu', 'locations', buId] as const,
+    location: (locationId: string) => ['bu', 'location', locationId] as const,
     memberships: (userId: string) => ['bu', 'memberships', userId] as const,
     modules: (buId: string | null) => ['bu', 'modules', buId] as const,
+    allModules: (buId: string | null) => ['bu', 'all-modules', buId] as const,
+  },
+
+  // ============= Settings =============
+  settings: {
+    modulesList: () => ['settings', 'modules-list'] as const,
+    busList: () => ['settings', 'bus-list'] as const,
+    moduleConfigs: (buId: string | null) => ['settings', 'module-configs', buId] as const,
+    profilesCount: (buId: string | null) => ['settings', 'profiles-count', buId] as const,
+    integrationsCatalog: () => ['settings', 'integrations-catalog'] as const,
+  },
+
+  // ============= Onboarding =============
+  onboarding: {
+    teams: (buId: string | null) => ['onboarding', 'teams', buId] as const,
   },
 
   // ============= Home Dashboard =============

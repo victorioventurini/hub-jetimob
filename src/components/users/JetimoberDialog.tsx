@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import { z } from "zod";
 import {
   Dialog,
@@ -290,8 +291,8 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["bu-members"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.buMembers(currentBu?.id ?? null) });
       toast.success(`${existingProfile?.display_name} adicionado à ${currentBu?.name}!`);
       onOpenChange(false);
     },
