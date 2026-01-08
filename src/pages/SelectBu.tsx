@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Building2, ArrowRight, Loader2, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -103,12 +103,11 @@ export default function SelectBu() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {role === "super_admin" && (
-                <DropdownMenuItem 
-                  onClick={() => navigate("/hub")}
-                  className="cursor-pointer"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configurações
+                <DropdownMenuItem asChild>
+                  <Link to="/hub" className="cursor-pointer">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurações
+                  </Link>
                 </DropdownMenuItem>
               )}
               {role === "super_admin" && <DropdownMenuSeparator />}

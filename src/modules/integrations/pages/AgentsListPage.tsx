@@ -213,9 +213,11 @@ export default function AgentsListPage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <h3 className="text-lg font-semibold mb-2">Integração não encontrada</h3>
-          <Button variant="outline" onClick={() => navigate('/hub/integrations')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
+          <Button variant="outline" asChild>
+            <Link to="/hub/integrations">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Link>
           </Button>
         </CardContent>
       </Card>
@@ -225,8 +227,10 @@ export default function AgentsListPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/hub/integrations/${integrationKey}`)}>
-          <ArrowLeft className="w-5 h-5" />
+        <Button variant="ghost" size="icon" asChild>
+          <Link to={`/hub/integrations/${integrationKey}`}>
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
         </Button>
         <IntegrationIcon icon={integration.icon} color={integration.color} size="lg" />
         <div className="flex-1">
@@ -239,9 +243,11 @@ export default function AgentsListPage() {
               <Sparkles className="w-4 h-4 mr-2" />
               Criar de Template
             </Button>
-            <Button onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/new`)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Criar Agente
+            <Button asChild>
+              <Link to={`/hub/integrations/${integrationKey}/agents/new`}>
+                <Plus className="w-4 h-4 mr-2" />
+                Criar Agente
+              </Link>
             </Button>
           </div>
         )}
@@ -315,11 +321,11 @@ export default function AgentsListPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/${agent.id}`)}
-                            >
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Editar
+                            <DropdownMenuItem asChild>
+                              <Link to={`/hub/integrations/${integrationKey}/agents/${agent.id}`}>
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDuplicate(agent)}>
                               <Copy className="w-4 h-4 mr-2" />
@@ -356,9 +362,11 @@ export default function AgentsListPage() {
                       <Sparkles className="w-4 h-4 mr-2" />
                       Usar Template
                     </Button>
-                    <Button onClick={() => navigate(`/hub/integrations/${integrationKey}/agents/new`)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Manualmente
+                    <Button asChild>
+                      <Link to={`/hub/integrations/${integrationKey}/agents/new`}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Criar Manualmente
+                      </Link>
                     </Button>
                   </div>
                 )}
