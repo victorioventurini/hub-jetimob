@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.11.0  
+**Versão:** 2.11.1  
 **Última atualização:** 2026-01-08
 **Responsável:** Lovable AI / Equipe de Engenharia
 
@@ -302,11 +302,40 @@ Agrupamentos temporários/projetos de times.
 | id | uuid | PK |
 | name | text | Nome do squad |
 | description | text | Descrição |
-| leader_user_id | uuid | Líder do squad |
+| leader_user_id | uuid | **PROFILE_ID**: Líder do squad (ver [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)) |
 | bu_id | uuid | FK para bu_units |
 | status | enum | `active`, `inactive` |
+| deleted_at | timestamptz | Soft delete |
 
 **Escopo:** Por BU
+
+---
+
+#### **squad_memberships** — Membros de Squads
+Vínculo de usuários com squads, incluindo papel específico.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| squad_id | uuid | FK para squads |
+| user_id | uuid | **PROFILE_ID**: FK para profiles.id (ver [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)) |
+| bu_id | uuid | NOT NULL — FK para bu_units (auto-set via trigger) |
+| role | enum | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
+| deleted_at | timestamptz | Soft delete |
+
+**Escopo:** Por BU (direto, não via join)
+
+**Triggers:**
+- `trg_squad_membership_set_bu_id` — Auto-preenche `bu_id` a partir do squad
+- `trg_enforce_squad_membership_bu_scope` — Valida que `bu_id` coincide com squad
+
+**RLS:**
+- SELECT: `is_current_bu(bu_id) AND user_has_bu_access(auth.uid(), bu_id)`
+- INSERT/UPDATE/DELETE: `is_bu_admin(auth.uid(), bu_id) OR is_platform_admin(auth.uid())`
+
+**Diferença de `user_team_memberships`:**
+- `user_team_memberships`: vínculo permanente usuário ↔ time (is_primary)
+- `squad_memberships`: papel específico em squad de projeto (PO, Tech Lead, etc.)
 
 ---
 

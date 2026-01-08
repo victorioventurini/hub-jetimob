@@ -662,6 +662,47 @@ CREATE INDEX idx_my_table_active ON public.my_table (bu_id)
 WHERE deleted_at IS NULL;
 ```
 
+### G.4 Checklist Completo para Novas Tabelas Operacionais
+
+Toda nova tabela operacional (dados de BU) DEVE ter:
+
+| Requisito | Exemplo |
+|-----------|---------|
+| `bu_id uuid NOT NULL` | FK para bu_units |
+| `deleted_at timestamptz` | Para soft delete |
+| `RLS ENABLED` | `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` |
+| Trigger `enforce_bu_scope` | Valida bu_id no INSERT/UPDATE |
+| Policy SELECT com `is_current_bu(bu_id)` | Isolamento de contexto |
+| Policy WRITE com `is_bu_admin` ou permission key | Controle de acesso |
+| Índice `(bu_id)` | Performance |
+| Índice parcial `WHERE deleted_at IS NULL` | Queries ativas |
+
+**Exemplo: squad_memberships (Wave 5)**
+```sql
+-- Estrutura
+CREATE TABLE squad_memberships (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  squad_id uuid NOT NULL REFERENCES squads(id),
+  user_id uuid NOT NULL REFERENCES profiles(id),
+  bu_id uuid NOT NULL REFERENCES bu_units(id),
+  role squad_role NOT NULL DEFAULT 'member',
+  deleted_at timestamptz,
+  UNIQUE(squad_id, user_id)
+);
+
+-- Triggers
+CREATE TRIGGER trg_set_bu_id BEFORE INSERT ...
+CREATE TRIGGER trg_enforce_bu_scope BEFORE INSERT OR UPDATE ...
+
+-- RLS
+CREATE POLICY "view" FOR SELECT USING (
+  deleted_at IS NULL AND is_current_bu(bu_id) AND user_has_bu_access(...)
+);
+CREATE POLICY "manage" FOR ALL USING (is_bu_admin(...));
+```
+WHERE deleted_at IS NULL;
+```
+
 ### G.4 Migrations Idempotentes
 
 ```sql

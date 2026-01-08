@@ -86,9 +86,10 @@ Validar que a normalização da tabela `squad_memberships` foi concluída com su
 - [x] Trigger `trg_enforce_squad_membership_bu_scope` criado
 
 ### 5.2 RLS Policies
-- [x] Policy SELECT com `deleted_at IS NULL`
+- [x] Policy SELECT com `deleted_at IS NULL` e `is_current_bu(bu_id)`
 - [x] Policy INSERT/UPDATE/DELETE para BU admins
 - [x] `is_platform_admin` como fallback em todas
+- [x] Políticas legadas permissivas removidas (`squad_memberships_select`, `squad_memberships_admin`)
 
 ### 5.3 Build
 ```bash
