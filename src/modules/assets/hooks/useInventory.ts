@@ -3,6 +3,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type { AssetInventory, AssetMovement, AssetCategory, AssetMovementType } from "../types";
 
 export function useInventory() {
@@ -14,7 +15,7 @@ export function useInventory() {
 
   // Buscar categorias
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["asset-categories", buId],
+    queryKey: queryKeys.assets.categories(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,7 +32,7 @@ export function useInventory() {
 
   // Buscar itens de inventário
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
-    queryKey: ["asset-inventory", buId],
+    queryKey: queryKeys.assets.inventory.all(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -193,7 +194,7 @@ export function useInventory() {
       return category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-categories", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null) });
       toast.success("Categoria criada");
     },
     onError: () => {
@@ -270,7 +271,7 @@ export function useInventory() {
       return { item, assigned_to_user_id };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["asset-inventory", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
       if (result.assigned_to_user_id) {
         toast.success("Item criado e atribuído ao colaborador");
       } else {
@@ -303,7 +304,7 @@ export function useInventory() {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-inventory", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
       toast.success("Item atualizado");
     },
     onError: () => {
@@ -325,7 +326,7 @@ export function useInventory() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-inventory", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
       toast.success("Item removido");
     },
     onError: () => {
@@ -362,7 +363,7 @@ export function useInventory() {
       return movement;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-inventory", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
       toast.success("Movimentação registrada");
     },
     onError: () => {
