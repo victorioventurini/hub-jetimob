@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
@@ -75,7 +76,7 @@ export function EditOrgObjectiveDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
       toast({
         title: 'Objetivo atualizado',
         description: 'O objetivo organizacional foi atualizado com sucesso.',

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useAuth } from './useAuth';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface CreateMentionNotificationParams {
   mentionedUserId: string;
@@ -66,7 +67,7 @@ export function useNotifications() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
     },
   });
 

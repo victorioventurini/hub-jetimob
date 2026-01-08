@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays } from "lucide-react";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { queryKeys } from "@/lib/queryKeys";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ export function CyclesTab() {
 
   // Fetch all cycles
   const { data: cycles, isLoading } = useQuery({
-    queryKey: ["okr-settings-cycles", buId],
+    queryKey: queryKeys.okrs.settingsCycles(buId ?? null),
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
@@ -56,8 +57,8 @@ export function CyclesTab() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["okr-settings-cycles"] });
-      queryClient.invalidateQueries({ queryKey: ["cycles-list"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null) });
       toast.success("Ciclo removido com sucesso");
       setDeleteDialogCycle(null);
     },

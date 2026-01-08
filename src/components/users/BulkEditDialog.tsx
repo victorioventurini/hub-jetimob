@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,7 @@ export function BulkEditDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(null) });
       toast.success(`${selectedIds.length} jetimobers atualizados com sucesso!`);
       handleClose();
       onComplete();

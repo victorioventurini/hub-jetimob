@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import type { BuLocation, BuLocationFormData } from "../types/location";
 
 export function useBuLocations(buId: string | null) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["bu-locations", buId],
+    queryKey: queryKeys.bu.locations(buId),
     queryFn: async () => {
       if (!buId) return [];
       
@@ -30,7 +31,7 @@ export function useBuLocation(locationId: string | null) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["bu-location", locationId],
+    queryKey: queryKeys.bu.location(locationId ?? ''),
     queryFn: async () => {
       if (!locationId) return null;
       
@@ -89,7 +90,7 @@ export function useCreateBuLocation() {
       return result as BuLocation;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["bu-locations", variables.bu_id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.locations(variables.bu_id) });
     },
   });
 }
@@ -130,8 +131,8 @@ export function useUpdateBuLocation() {
       return result as BuLocation;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["bu-locations", variables.bu_id] });
-      queryClient.invalidateQueries({ queryKey: ["bu-location", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.locations(variables.bu_id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.location(variables.id) });
     },
   });
 }
@@ -150,7 +151,7 @@ export function useSoftDeleteBuLocation() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["bu-locations", variables.bu_id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.locations(variables.bu_id) });
     },
   });
 }
@@ -169,7 +170,7 @@ export function useSetDefaultBuLocation() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["bu-locations", variables.bu_id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.locations(variables.bu_id) });
     },
   });
 }

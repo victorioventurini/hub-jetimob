@@ -19,6 +19,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { queryKeys } from '@/lib/queryKeys';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { KrUnitSelect } from './KrUnitSelect';
@@ -91,7 +92,7 @@ export function EditTeamKrDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-team-key-results', kr.team_id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null, kr.team_id) });
       toast({
         title: 'KR atualizado',
         description: 'O Key Result foi atualizado com sucesso.',
