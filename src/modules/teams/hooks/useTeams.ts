@@ -86,7 +86,7 @@ export function useTeam(teamId: string | undefined) {
         .from("teams")
         .select(`
           *,
-          leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url, job_title)
+          leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
         `)
         .eq("id", teamId)
         .maybeSingle();
@@ -423,7 +423,7 @@ export function useAvailableLeaders() {
     queryFn: async () => {
       let query = supabase
         .from("profiles")
-        .select("id, display_name, photo_url, job_title")
+        .select("id, display_name, photo_url")
         .is("deleted_at", null)
         .eq("employment_status", "active")
         .order("display_name");

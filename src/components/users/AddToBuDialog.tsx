@@ -26,7 +26,7 @@ interface ExistingProfile {
   display_name: string;
   work_email: string;
   photo_url: string | null;
-  job_title: string;
+  job_title_name?: string | null;
   bu_name?: string;
 }
 
@@ -146,7 +146,7 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
             <div className="flex-1">
               <p className="font-medium text-foreground">{existingProfile.display_name}</p>
               <p className="text-sm text-muted-foreground">{existingProfile.work_email}</p>
-              <p className="text-xs text-muted-foreground">{existingProfile.job_title}</p>
+              {existingProfile.job_title_name && <p className="text-xs text-muted-foreground">{existingProfile.job_title_name}</p>}
             </div>
             {existingProfile.bu_name && (
               <Badge variant="secondary" className="text-xs">

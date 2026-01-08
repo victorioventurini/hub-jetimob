@@ -82,7 +82,7 @@ serve(async (req) => {
     const { data: people, error: peopleError } = await supabase
       .from("profiles")
       .select(
-        "id, first_name, last_name, display_name, job_title, photo_url, work_email"
+        "id, first_name, last_name, display_name, job_title_rel:job_titles!job_title_id(name), photo_url, work_email"
       )
       .eq("bu_id", bu_id)
       .eq("employment_status", "active")
@@ -107,7 +107,7 @@ serve(async (req) => {
             p.display_name ||
             `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
             "Sem nome",
-          subtitle: p.job_title || "Colaborador",
+          subtitle: p.job_title_rel?.name || "Colaborador",
           meta: { email: p.work_email, photo_url: p.photo_url },
           url: `/go/user/${p.id}`,
           icon: "user",

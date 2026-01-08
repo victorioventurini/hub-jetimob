@@ -370,11 +370,6 @@ export default function TeamDetailPage() {
                     </Avatar>
                     <div>
                       <p className="font-medium hover:text-accent transition-colors">{team.leader.display_name}</p>
-                      {(team.leader as any).job_title && (
-                        <p className="text-sm text-muted-foreground">
-                          {(team.leader as any).job_title}
-                        </p>
-                      )}
                     </div>
                   </Link>
                 ) : (
