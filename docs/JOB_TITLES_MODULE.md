@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-O módulo de Cargos permite gerenciar uma lista padronizada de títulos de cargo por Business Unit (BU), substituindo o campo de texto livre anteriormente utilizado no cadastro de usuários.
+O módulo de Cargos permite gerenciar uma lista padronizada de títulos de cargo por uma ou mais Business Units (BUs), substituindo o campo de texto livre anteriormente utilizado no cadastro de usuários.
 
 ### Benefícios
 
@@ -10,27 +10,26 @@ O módulo de Cargos permite gerenciar uma lista padronizada de títulos de cargo
 - **Consistência**: Única fonte de verdade para nomes de cargos
 - **Relatórios**: Facilita análises e people analytics
 - **Escalabilidade**: Preparado para extensões futuras (nível, senioridade, trilha)
+- **Multi-BU**: Um cargo pode ser compartilhado entre múltiplas BUs
 
 ## Arquitetura
 
-### Modelo de Dados
+### Modelo de Dados (Atualizado 2026-01-08)
 
 ```sql
 CREATE TABLE public.job_titles (
-  id UUID PRIMARY KEY,
-  bu_id UUID NOT NULL REFERENCES bu_units(id),  -- Cargos são por BU
-  name TEXT NOT NULL,                            -- Nome único por BU
-  description TEXT,                              -- Descrição opcional
-  is_active BOOLEAN DEFAULT true,                -- Soft status
-  created_at TIMESTAMPTZ,
-  updated_at TIMESTAMPTZ,
-  deleted_at TIMESTAMPTZ                         -- Soft delete
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  bu_ids UUID[] NOT NULL DEFAULT '{}',             -- Array de BUs (multi-BU)
+  name TEXT NOT NULL,                               -- Nome do cargo
+  description TEXT,                                 -- Descrição opcional
+  is_active BOOLEAN DEFAULT true,                   -- Soft status
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  deleted_at TIMESTAMPTZ                            -- Soft delete
 );
 
--- Unicidade case-insensitive por BU
-CREATE UNIQUE INDEX job_titles_bu_name_unique 
-ON job_titles (bu_id, lower(name)) 
-WHERE deleted_at IS NULL;
+-- Índice GIN para buscas eficientes no array
+CREATE INDEX idx_job_titles_bu_ids ON job_titles USING GIN (bu_ids);
 ```
 
 ### Relacionamento com Profiles
@@ -44,10 +43,11 @@ A coluna `job_title` (texto livre) é mantida temporariamente para compatibilida
 
 ## Decisões de Design
 
-### Por que por BU?
+### Por que Multi-BU (bu_ids[])?
 
-1. **Autonomia**: Cada BU pode ter sua própria estrutura organizacional
-2. **Flexibilidade**: Cargos de Marketing na BU1 podem diferir da BU2
+1. **Flexibilidade**: Cargos comuns podem ser compartilhados entre BUs
+2. **Autonomia**: Cada BU ainda pode ter cargos exclusivos
+3. **Manutenção**: Evita duplicação de cargos idênticos
 3. **Isolamento**: Mudanças em uma BU não afetam outras
 4. **Segurança**: RLS garante que usuários só vejam cargos de suas BUs
 

@@ -1,11 +1,11 @@
 /**
  * Job Titles Module Types
- * Cargos padronizados por BU
+ * Cargos padronizados por BU(s)
  */
 
 export interface JobTitle {
   id: string;
-  bu_id: string;
+  bu_ids: string[];
   name: string;
   description: string | null;
   is_active: boolean;
@@ -18,6 +18,7 @@ export interface JobTitleFormData {
   name: string;
   description?: string;
   is_active: boolean;
+  bu_ids?: string[]; // Para criação/edição multi-BU
 }
 
 export interface JobTitleWithUsageCount extends JobTitle {
