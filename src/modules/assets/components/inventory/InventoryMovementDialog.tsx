@@ -34,6 +34,7 @@ import { useInventory } from "../../hooks/useInventory";
 import { useAssetGroups } from "../../hooks/useAssetGroups";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetProfiles } from "../../hooks/useProfiles";
+import { useBuAdmins } from "../../hooks/useBuAdmins";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { useAuth } from "@/hooks/useAuth";
 import { KitCheckoutInfo } from "./KitCheckoutInfo";
@@ -97,6 +98,7 @@ export function InventoryMovementDialog({
   const { getRequiredAccessories } = useAssetGroups();
   const { locations, defaultLocation } = useLocations();
   const { profiles } = useAssetProfiles();
+  const { admins } = useBuAdmins();
   const { isInventoryAdmin, canManageInventory } = useAssetPermissions();
 
   const [movementType, setMovementType] = useState<AssetMovementType>(initialType || "checkout");
@@ -590,15 +592,24 @@ export function InventoryMovementDialog({
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Quem autoriza..." />
+                              <SelectValue placeholder="Selecione um administrador..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
+                            {admins.length === 0 ? (
+                              <SelectItem value="__none__" disabled>
+                                Nenhum administrador encontrado
                               </SelectItem>
-                            ))}
+                            ) : (
+                              admins.map((admin) => (
+                                <SelectItem key={admin.id} value={admin.id}>
+                                  {admin.full_name}
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({admin.role === "super_admin" ? "Super Admin" : "Admin"})
+                                  </span>
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
