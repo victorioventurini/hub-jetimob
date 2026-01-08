@@ -6079,6 +6079,10 @@ export type Database = {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_team_leader_by_profile: {
+        Args: { p_profile_id: string; p_team_id: string }
+        Returns: boolean
+      }
       is_ticket_contact_participant: {
         Args: { p_contact_id: string; p_ticket_id: string }
         Returns: boolean
