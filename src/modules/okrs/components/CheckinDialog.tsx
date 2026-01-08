@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { OkrProgressBar } from './OkrProgressBar';
 import { MentionInput, getMentionDisplayText } from '@/components/notifications/MentionInput';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Target, 
   User, 
@@ -103,6 +103,7 @@ const statusConfig: Record<Status, {
 
 export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const { userId, profileId, isReady: identityReady } = useIdentity();
+  const { user } = useAuth();
   const { client: supabase, buId, isReady } = useOptionalBuClient();
   const [currentValue, setCurrentValue] = useState(kr.current_value.toString());
   const [status, setStatus] = useState<Status>(kr.status === 'not_started' ? 'green' : kr.status as Status);
@@ -112,7 +113,6 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { processMentions } = useNotifications();
 
   const isAutomatic = !!kr.metric_id;
 
@@ -131,6 +131,63 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
     },
     enabled: !!userId && open && isReady && !!supabase,
   });
+
+  // Inlined processMentions logic (consolidado de useNotifications)
+  const processMentions = useCallback(async (
+    text: string,
+    contextType: 'checkin' | 'comment',
+    contextId: string,
+    parentType: 'kr' | 'okr',
+    parentId: string,
+    contextUrl: string
+  ) => {
+    if (!user?.id || !buId || !supabase) return;
+
+    // Extract user IDs from mention format: @[Name](user_id)
+    const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+    const mentions: string[] = [];
+    let match;
+    while ((match = mentionRegex.exec(text)) !== null) {
+      mentions.push(match[2]);
+    }
+    
+    const uniqueMentions = [...new Set(mentions)];
+    if (uniqueMentions.length === 0) return;
+
+    // Get author name
+    const { data: authorProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('user_id', user.id)
+      .single();
+    const authorName = authorProfile?.display_name || 'Alguém';
+
+    // Create notifications for each mention
+    for (const mentionedUserId of uniqueMentions) {
+      try {
+        await supabase.rpc('emit_notification_event', {
+          p_event_slug: 'core.mention',
+          p_bu_id: buId,
+          p_recipient_user_ids: [mentionedUserId],
+          p_actor_id: user.id,
+          p_title: `${authorName} mencionou você`,
+          p_message: `Você foi mencionado em um ${contextType === 'checkin' ? 'check-in' : 'comentário'}`,
+          p_context_type: contextType,
+          p_context_id: contextId,
+          p_context_url: contextUrl,
+          p_metadata: {
+            parent_type: parentType,
+            parent_id: parentId,
+            author_name: authorName,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to create mention notification:', error);
+      }
+    }
+    
+    queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+  }, [user?.id, buId, supabase, queryClient]);
 
   // Só reseta o form quando o dialog abre, não quando os dados mudam
   useDialogFormReset(open, useCallback(() => {

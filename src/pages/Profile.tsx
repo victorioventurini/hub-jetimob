@@ -50,7 +50,7 @@ interface FullProfile {
   last_name: string;
   display_name: string;
   work_email: string;
-  job_title: string;
+  job_title_name: string | null;
   photo_url: string | null;
   whatsapp_personal: string | null;
   city: string;
@@ -107,12 +107,22 @@ export default function Profile() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id, user_id, first_name, last_name, display_name, work_email,
+          job_title_rel:job_titles!job_title_id(name),
+          photo_url, whatsapp_personal, city, state, work_mode, employment_status,
+          start_date, birth_day, birth_month, discord_id, instagram_id, team_id
+        `)
         .eq('user_id', user.id)
         .maybeSingle();
       
       if (error) throw error;
-      return data as FullProfile | null;
+      if (!data) return null;
+      
+      return {
+        ...data,
+        job_title_name: (data.job_title_rel as { name: string } | null)?.name || null,
+      } as FullProfile;
     },
     enabled: !!user?.id,
   });
@@ -486,7 +496,7 @@ export default function Profile() {
               </div>
               <div className="flex-1 space-y-1">
                 <h2 className="text-2xl font-bold">{profile.display_name}</h2>
-                <p className="text-muted-foreground">{profile.job_title}</p>
+                <p className="text-muted-foreground">{profile.job_title_name || "Sem cargo"}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge variant="outline">{getRoleLabel(role)}</Badge>
                   <Badge variant="secondary">{getWorkModeLabel(profile.work_mode)}</Badge>
@@ -696,7 +706,7 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Cargo</p>
-                    <p className="font-medium">{profile.job_title}</p>
+                    <p className="font-medium">{profile.job_title_name || "—"}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Data de início na Jet</p>

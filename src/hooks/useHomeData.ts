@@ -149,7 +149,7 @@ export function useNewJetimobers(limit = 5) {
           `
           id,
           display_name,
-          job_title,
+          job_title_rel:job_titles!job_title_id(name),
           photo_url,
           start_date,
           team_id
@@ -180,7 +180,7 @@ export function useNewJetimobers(limit = 5) {
         return {
           id: profile.id,
           name: profile.display_name || "Sem nome",
-          jobTitle: profile.job_title || "Sem cargo",
+          jobTitle: (profile.job_title_rel as { name: string } | null)?.name || "Sem cargo",
           team: teamsById[profile.team_id] || "Sem time",
           photoUrl: profile.photo_url || undefined,
           startDate: profile.start_date,
@@ -215,7 +215,7 @@ export function useBirthdays() {
           `
           id,
           display_name,
-          job_title,
+          job_title_rel:job_titles!job_title_id(name),
           photo_url,
           birth_day,
           birth_month,
@@ -241,7 +241,7 @@ export function useBirthdays() {
       return (data || []).map((profile) => ({
         id: profile.id,
         name: profile.display_name || "Sem nome",
-        jobTitle: profile.job_title || "Sem cargo",
+        jobTitle: (profile.job_title_rel as { name: string } | null)?.name || "Sem cargo",
         team: teamsById[profile.team_id] || "Sem time",
         photoUrl: profile.photo_url || undefined,
         birthDay: profile.birth_day!,
@@ -279,7 +279,7 @@ export function useWorkAnniversaries() {
           `
           id,
           display_name,
-          job_title,
+          job_title_rel:job_titles!job_title_id(name),
           photo_url,
           start_date,
           team_id
@@ -314,7 +314,7 @@ export function useWorkAnniversaries() {
           return {
             id: profile.id,
             name: profile.display_name || "Sem nome",
-            jobTitle: profile.job_title || "Sem cargo",
+            jobTitle: (profile.job_title_rel as { name: string } | null)?.name || "Sem cargo",
             team: teamsById[profile.team_id] || "Sem time",
             photoUrl: profile.photo_url || undefined,
             startDate: profile.start_date,

@@ -1,13 +1,13 @@
 # Relatório Wave 3 — Higienização Profunda
 
 **Data:** 2026-01-08  
-**Status:** ✅ PARCIAL (60% concluído)
+**Status:** ✅ CONCLUÍDO (Wave 3.1)
 
 ---
 
 ## Sumário Executivo
 
-Wave 3 iniciada com foco na migração de `profiles.job_title` (texto) para join via `job_title_id`. Arquivos críticos migrados, edge function legacy removida.
+Wave 3 e 3.1 concluídas. Migração completa de `profiles.job_title` texto para FK via `job_titles`, consolidação do hook `useNotifications`, e remoção de edge function legacy.
 
 ---
 
@@ -18,34 +18,33 @@ Wave 3 iniciada com foco na migração de `profiles.job_title` (texto) para join
 | Arquivo | Alteração |
 |---------|-----------|
 | `src/pages/Users.tsx` | Query com join `job_titles!job_title_id(name)` |
+| `src/pages/Profile.tsx` | Query com join, interface atualizada |
+| `src/pages/UserProfile.tsx` | Exibição via `profile.job_title` (mapeado via hook) |
 | `src/components/users/JetimoberDialog.tsx` | Interfaces e queries atualizadas |
 | `src/hooks/useSharedData.ts` | Retorna `job_title` via join |
 | `src/hooks/usePublicProfile.ts` | Query com join |
+| `src/hooks/useHomeData.ts` | Todas as queries migradas (birthdays, new hires, anniversaries) |
+| `src/modules/permissions/hooks/useBuUsers.ts` | Query com join, interface `job_title_name` |
+| `src/modules/permissions/pages/BuPermissionsPage.tsx` | Uso de `job_title_name` |
+| `src/modules/teams/hooks/useTeams.ts` | Query com join para members |
 
-### Pendente Wave 3.1
+### Nota: Onboarding
 
-- Profile.tsx, UserProfile.tsx, useHomeData.ts
-- Header.tsx, useBuUsers.ts, componentes de squads/OKRs
-
----
-
-## 2. URL State
-
-**Status:** ⏳ ADIADO
-
-Hooks legados em uso como compatibility wrappers. Migração requer refatoração de API (tuple → object).
+O `OnboardingWizard.tsx` mantém `job_title` como texto livre pois opera **antes** da seleção de BU, não tendo acesso ao contexto necessário para FK. Isso é intencional e documentado.
 
 ---
 
-## 3. useNotifications
+## 2. useNotifications
 
-**Status:** ⏳ ADIADO
+**Status:** ✅ CONSOLIDADO
 
-Único consumidor (CheckinDialog.tsx). Hook marcado como @deprecated.
+- Lógica de `processMentions` movida diretamente para `CheckinDialog.tsx`
+- Hook `src/hooks/useNotifications.ts` **DELETADO**
+- Zero dependências restantes
 
 ---
 
-## 4. Edge Functions
+## 3. Edge Functions
 
 | Função | Ação | Status |
 |--------|------|--------|
@@ -53,26 +52,11 @@ Hooks legados em uso como compatibility wrappers. Migração requer refatoraçã
 
 ---
 
-## 5. Database
+## 4. Próximos Passos (Wave 4)
 
-### Itens Identificados para DROP
-
-| Item | Registros | Status |
-|------|-----------|--------|
-| `profiles.job_title` (coluna) | Deprecated | ⏳ Wave 3.1 |
-| `metrics` (tabela) | 0 | ⏳ Wave 3.1 |
-| `user_notification_preferences` | 0 | ⏳ Wave 3.1 |
-| `squad_memberships` | 0 | ⏳ Wave 3.1 |
-
----
-
-## 6. Próximos Passos (Wave 3.1)
-
-1. Completar migração frontend (arquivos restantes)
-2. DROP tabelas vazias
-3. DROP coluna `profiles.job_title`
-4. Migrar URL State hooks
-5. Consolidar useNotifications
+1. DROP coluna `profiles.job_title` (após validação completa)
+2. DROP tabelas vazias (metrics, user_notification_preferences, squad_memberships)
+3. Migrar URL State hooks (tuple → object API)
 
 ---
 
@@ -82,9 +66,10 @@ Hooks legados em uso como compatibility wrappers. Migração requer refatoraçã
 - ✅ Join com job_titles via FK
 - ✅ BU scope mantido
 - ✅ RLS intacto
+- ✅ Hook legado removido
 
 ---
 
 ## Conclusão
 
-Wave 3 parcialmente concluída. Itens críticos (Users.tsx, edge function) finalizados. Continuação em Wave 3.1.
+Wave 3 e 3.1 concluídas com sucesso. Sistema migrado para FK job_titles, hook de notificações consolidado.

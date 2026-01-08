@@ -11,7 +11,7 @@ export interface BuUser {
     display_name: string;
     work_email: string;
     photo_url: string | null;
-    job_title: string | null;
+    job_title_name: string | null;
   };
   teams: Array<{
     id: string;
@@ -31,7 +31,7 @@ export function useBuUsers() {
       // Fetch all profiles in the BU (same as /users page)
       const { data: profilesRaw, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, user_id, display_name, work_email, photo_url, job_title")
+        .select("id, user_id, display_name, work_email, photo_url, job_title_rel:job_titles!job_title_id(name)")
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .order("display_name");
@@ -92,7 +92,7 @@ export function useBuUsers() {
           display_name: p.display_name,
           work_email: p.work_email,
           photo_url: p.photo_url,
-          job_title: p.job_title,
+          job_title_name: (p.job_title_rel as { name: string } | null)?.name || null,
         },
         teams: p.user_id ? (teamsByUserId[p.user_id] || []) : [],
       })) as BuUser[];
