@@ -17,17 +17,16 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { 
-  Search, Plus, MoreHorizontal, Key, Pencil, AlertTriangle, ClipboardCheck, Link2, Layers, FileStack
+  Search, Plus, MoreHorizontal, Key, Pencil, AlertTriangle, ClipboardCheck, Layers, FileStack
 } from "lucide-react";
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { PermissionDialog } from "../components/PermissionDialog";
 import { AuditDashboard } from "../components/AuditDashboard";
-import { AliasesTab } from "../components/AliasesTab";
 import { SurfacesTab } from "../components/SurfacesTab";
 import { TemplatesV2Tab } from "../components/TemplatesV2Tab";
 import type { Permission, PermissionScope } from "../types";
 
-type GlobalPermissionTab = "catalog" | "templates-v2" | "aliases" | "surfaces" | "audit";
+type GlobalPermissionTab = "catalog" | "templates-v2" | "surfaces" | "audit";
 
 /**
  * GlobalPermissionsPage - Gerenciamento do catálogo global de permissões do Hub

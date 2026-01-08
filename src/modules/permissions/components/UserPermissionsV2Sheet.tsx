@@ -27,7 +27,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { useUserEffectivePermissions } from "../hooks/useBuPermissions";
-import { usePermissionTemplatesV2, useUserTemplatesV2, useEffectivePermissionsPreview } from "../hooks/usePermissionsV2";
+import { usePermissionTemplatesV2, useUserTemplatesV2, useEffectivePermissionsV2 } from "../hooks/usePermissionsV2";
 import { useAuth } from "@/hooks/useAuth";
 import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 
