@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart } from 'lucide-react';
+import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
@@ -24,6 +24,7 @@ import { TeamObjectiveFormDialog } from '../TeamObjectiveFormDialog';
 import { CheckinDialog } from '../CheckinDialog';
 import { SharedOkrBadge } from '../SharedOkrBadge';
 import { OkrScopeBadge, OkrOwnerInfo, RagSummary, OkrKrTypeBadge } from '../ui';
+import { KrHistoryDialog } from '../KrHistoryDialog';
 
 interface KeyResult {
   id: string;
@@ -88,6 +89,7 @@ export function ObjectiveListItem({
   const [showEditObjectiveDialog, setShowEditObjectiveDialog] = useState(false);
   const [editingKr, setEditingKr] = useState<KeyResult | null>(null);
   const [checkinKr, setCheckinKr] = useState<KeyResult | null>(null);
+  const [historyKr, setHistoryKr] = useState<KeyResult | null>(null);
 
   const { progress, status, krCount } = useMemo(() => {
     if (!keyResults || keyResults.length === 0) {
@@ -284,6 +286,7 @@ export function ObjectiveListItem({
                       teamName={teamName}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
+                      onShowHistory={() => setHistoryKr(kr)}
                     />
                   ))}
                 </div>
@@ -401,6 +404,29 @@ export function ObjectiveListItem({
           }}
         />
       )}
+
+      {/* KR History Dialog */}
+      {historyKr && (
+        <KrHistoryDialog
+          open={!!historyKr}
+          onOpenChange={(open) => !open && setHistoryKr(null)}
+          kr={{
+            id: historyKr.id,
+            title: historyKr.title,
+            baseline: historyKr.baseline,
+            current_value: historyKr.current_value,
+            target: historyKr.target,
+            unit: historyKr.unit,
+            direction: historyKr.direction,
+            status: historyKr.status,
+            type: historyKr.type || 'contribution',
+            owner_name: historyKr.owner?.display_name,
+            owner_photo: historyKr.owner?.photo_url,
+            team_name: teamName,
+            objective_title: objective.title,
+          }}
+        />
+      )}
     </>
   );
 }
@@ -412,9 +438,10 @@ interface KeyResultRowProps {
   teamName?: string;
   onEdit: () => void;
   onCheckin: () => void;
+  onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(false);
   
   const progress = calculateProgress(
@@ -476,6 +503,19 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin }:
                 <Lightbulb className="w-3 h-3" />
               </Button>
             )}
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowHistory();
+              }}
+              title="Ver histórico"
+            >
+              <History className="w-3 h-3" />
+            </Button>
             
             <Button
               variant="ghost"
