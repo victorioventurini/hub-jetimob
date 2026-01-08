@@ -1,9 +1,19 @@
 // ============================================================
-// URL STATE UTILITIES - Hub da Jet (Legacy API)
+// URL STATE UTILITIES - Hub da Jet (DEPRECATED)
 // ============================================================
-// Este arquivo mantém compatibilidade com a API antiga.
-// Novos componentes devem importar de '@/shared/url'
+// @deprecated Este arquivo foi mantido apenas para compatibilidade.
+// NOVOS COMPONENTES DEVEM IMPORTAR DE '@/shared/url'
+// 
+// A migração foi concluída na Wave 4B.
+// Este arquivo será removido em uma versão futura.
 // ============================================================
+
+if (import.meta.env.DEV) {
+  console.warn(
+    '[DEPRECATED] useUrlState from src/hooks/useUrlState.ts is deprecated. ' +
+    'Import from @/shared/url instead.'
+  );
+}
 
 import { useCallback, useMemo, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";

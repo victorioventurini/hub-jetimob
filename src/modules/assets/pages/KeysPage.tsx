@@ -8,12 +8,12 @@ import { useKeys } from "../hooks/useKeys";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { KeyringsList } from "../components/keys/KeyringsList";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
-import { useUrlState } from "@/hooks/useUrlState";
+import { useUrlSearch } from "@/shared/url";
 
 export default function KeysPage() {
   const { keyrings, isLoading: isLoadingKeys } = useKeys();
   const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissions();
-  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
+  const { value: search, set: setSearch } = useUrlSearch("q");
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
 
   const isLoading = isLoadingKeys || isLoadingPermissions;

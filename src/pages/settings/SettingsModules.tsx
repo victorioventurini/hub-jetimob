@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { icons, LucideIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUrlTab, useUrlState } from "@/hooks/useUrlState";
+import { useUrlTab, useUrlState } from "@/shared/url";
 
 interface Module {
   id: string;
@@ -71,9 +71,16 @@ function getIconComponent(iconName: string | null): LucideIcon {
 const MODULES_WITH_SETTINGS = ["okrs"];
 
 export default function SettingsModules() {
-  const [search, setSearch] = useUrlState<string>({ key: "q", defaultValue: "" });
+  const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const search = searchState.value;
+  const setSearch = searchState.set;
+  
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
-  const [selectedBuId, setSelectedBuId] = useUrlState<string>({ key: "bu_id", defaultValue: "all" });
+  
+  const buIdState = useUrlState<string>({ key: "bu_id", defaultValue: "all" });
+  const selectedBuId = buIdState.value;
+  const setSelectedBuId = buIdState.set;
+  
   const [activeTab, setActiveTab] = useUrlTab("bu-config");
   const queryClient = useQueryClient();
   const navigate = useNavigate();

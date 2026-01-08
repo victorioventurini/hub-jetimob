@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
-import { useUrlState, useUrlStates, parsers, serializers } from '@/hooks/useUrlState';
+import { useUrlState, useUrlStates, parsers, serializers } from '@/shared/url';
 import { 
   useOrgObjectivesWithKrs, 
   useTeamObjectivesWithKrs, 
@@ -50,15 +50,17 @@ export default function OkrDashboardPage() {
   const { has, isWildcard } = usePermissions();
   const { currentBu } = useBu();
   
-  // URL State - View
-  const [activeView, setActiveView] = useUrlState<OkrView>({
+  // URL State - View (object API)
+  const viewState = useUrlState<OkrView>({
     key: 'view',
     defaultValue: 'company',
     parse: (v) => v as OkrView,
   });
+  const activeView = viewState.value;
+  const setActiveView = viewState.set;
   
-  // URL State - Filters
-  const [urlFilters, setUrlFilters] = useUrlStates({
+  // URL State - Filters (object API)
+  const urlFiltersResult = useUrlStates({
     year: { key: 'year', defaultValue: currentYear, parse: parsers.number },
     teamId: { key: 'team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     parentTeamId: { key: 'parent_team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
@@ -67,8 +69,8 @@ export default function OkrDashboardPage() {
   });
   
   // Convert URL filters to component state format
-  const filters: OkrFiltersState = urlFilters;
-  const setFilters = (newFilters: OkrFiltersState) => setUrlFilters(newFilters);
+  const filters: OkrFiltersState = urlFiltersResult.values;
+  const setFilters = (newFilters: OkrFiltersState) => urlFiltersResult.set(newFilters);
   
   const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(false);
   const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);

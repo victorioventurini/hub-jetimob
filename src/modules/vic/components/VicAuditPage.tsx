@@ -10,7 +10,7 @@ import { BarChart3, Bot, Clock, User, Building2, AlertCircle, CheckCircle2, XCir
 import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
-import { useUrlState } from "@/hooks/useUrlState";
+import { useUrlState } from "@/shared/url";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface AgentLog {
@@ -33,14 +33,22 @@ interface AgentLog {
 export function VicAuditPage() {
   const { isAdmin } = useAuth();
   
-  // URL State
-  const [timeRange, setTimeRange] = useUrlState<"7d" | "30d" | "90d">({ 
+  // URL State - object API
+  const timeRangeState = useUrlState<"7d" | "30d" | "90d">({ 
     key: 'range', 
     defaultValue: '7d',
     parse: (v) => v as "7d" | "30d" | "90d",
   });
-  const [selectedBu, setSelectedBu] = useUrlState<string>({ key: 'bu_id', defaultValue: 'all' });
-  const [activeTab, setActiveTab] = useUrlState<string>({ key: 'tab', defaultValue: 'by-agent' });
+  const timeRange = timeRangeState.value;
+  const setTimeRange = timeRangeState.set;
+  
+  const buState = useUrlState<string>({ key: 'bu_id', defaultValue: 'all' });
+  const selectedBu = buState.value;
+  const setSelectedBu = buState.set;
+  
+  const tabState = useUrlState<string>({ key: 'tab', defaultValue: 'by-agent' });
+  const activeTab = tabState.value;
+  const setActiveTab = tabState.set;
 
   // Fetch BUs for filter
   const { data: bus } = useQuery({
