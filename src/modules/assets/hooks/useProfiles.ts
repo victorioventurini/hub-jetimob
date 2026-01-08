@@ -20,22 +20,13 @@ export function useAssetProfiles() {
     queryKey: queryKeys.profiles.buProfiles(buId ?? null),
     enabled: !!buId,
     queryFn: async () => {
-      // Get all users that belong to this BU
-      const { data: memberships, error: membershipError } = await supabase
-        .from("bu_user_memberships")
-        .select("user_id")
-        .eq("bu_id", buId!);
-
-      if (membershipError) throw membershipError;
-
-      const userIds = (memberships || []).map((m) => m.user_id);
-      if (userIds.length === 0) return [];
-
+      // Get all active profiles directly from bu_id (includes users who haven't logged in yet)
       const { data, error } = await supabase
         .from("profiles")
         .select("id, user_id, first_name, last_name, display_name, photo_url, work_email")
-        .in("user_id", userIds)
+        .eq("bu_id", buId!)
         .eq("employment_status", "active")
+        .is("deleted_at", null)
         .order("display_name");
 
       if (error) throw error;
