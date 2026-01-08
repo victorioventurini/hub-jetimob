@@ -373,12 +373,6 @@ const App = () => (
 
 
                     {/* ===== LEGACY REDIRECTS (backwards compatibility) ===== */}
-                    {/* Legacy asset detail - redirects to BU-scoped route */}
-                    <Route
-                      path="/assets/inventory/:id"
-                      element={<LegacyAssetRedirect />}
-                    />
-                    
                     {/* Context Resolver - resolves BU from resource and redirects */}
                     <Route
                       path="/go/:entity/:id"
