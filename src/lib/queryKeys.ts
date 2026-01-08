@@ -37,7 +37,7 @@ export const queryKeys = {
   // ============= Teams =============
   teams: {
     all: (buId: string | null) => ['teams', buId] as const,
-    list: (buId: string | null) => ['teams', 'list', buId] as const,
+    list: (buId: string | null, includeInactive = false) => ['teams', 'list', buId, includeInactive] as const,
     detail: (teamId: string) => ['teams', 'detail', teamId] as const,
     members: (teamId: string) => ['teams', 'members', teamId] as const,
   },

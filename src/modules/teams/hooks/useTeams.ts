@@ -11,7 +11,7 @@ export function useTeams(includeInactive = false) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.teams.list(buId ?? null),
+    queryKey: queryKeys.teams.list(buId ?? null, includeInactive),
     queryFn: async () => {
       if (!supabase || !buId) return [];
       
