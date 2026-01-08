@@ -226,8 +226,8 @@ export function useCreateTicket(profileId: string | null) {
       return ticket;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
     },
   });
 }
@@ -255,9 +255,9 @@ export function useUpdateTicket() {
       return ticket;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
     },
   });
 }

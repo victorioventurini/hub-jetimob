@@ -9,6 +9,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/lib/queryKeys";
 import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";
 
 export function useExternalUser() {
@@ -19,7 +20,7 @@ export function useExternalUser() {
     isLoading: isQueryLoading,
     error,
   } = useQuery({
-    queryKey: ["external-user-info", user?.id],
+    queryKey: queryKeys.external.userInfo(user?.id ?? null),
     queryFn: async (): Promise<ExternalUserData> => {
       if (!user?.id) {
         return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };

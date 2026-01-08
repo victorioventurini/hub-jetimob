@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useLeaderTeams } from "./useLeaderTeams";
+import { queryKeys } from "@/lib/queryKeys";
 
 const STORAGE_KEY_PREFIX = "hub.leader.selectedTeamId";
 
@@ -62,10 +63,10 @@ export function useLeaderScope() {
 
     // Invalidate dashboard queries to refetch with new team
     queryClient.invalidateQueries({ 
-      queryKey: ["leader-dashboard-summary", currentBuId] 
+      queryKey: queryKeys.home.leaderSummary(currentBuId ?? null, null) 
     });
     queryClient.invalidateQueries({ 
-      queryKey: ["leader-dashboard-focus", currentBuId] 
+      queryKey: queryKeys.home.leaderFocus(currentBuId ?? null, null) 
     });
   }, [currentBuId, teams, queryClient]);
 

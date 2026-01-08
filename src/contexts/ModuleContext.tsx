@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface HubModule {
   id: string;
@@ -45,7 +46,7 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
   const { data: modules = [], isLoading } = useQuery({
     // IMPORTANTE: incluir user?.id no cache key para evitar "cache" com resposta anônima
     // (sem sessão) que acontece no primeiro load e só resolve após refresh.
-    queryKey: ["bu-modules", user?.id ?? null, currentBu?.id ?? null],
+    queryKey: queryKeys.identity.modules(user?.id ?? null, currentBu?.id ?? null),
     enabled: !authLoading && !!user?.id,
     queryFn: async () => {
       if (!user?.id) return [];

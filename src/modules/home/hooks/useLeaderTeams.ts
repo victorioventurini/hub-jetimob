@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/lib/queryKeys";
 import type { LeaderTeam } from "../types";
 
 export function useLeaderTeams() {
@@ -13,7 +14,7 @@ export function useLeaderTeams() {
   const { user } = useAuth();
 
   const { data: teams = [], isLoading, error } = useQuery({
-    queryKey: ["leader-teams", currentBuId, user?.id],
+    queryKey: queryKeys.home.leaderTeams(currentBuId ?? null, user?.id ?? null),
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_leader_teams");
 

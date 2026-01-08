@@ -4,6 +4,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import type { ExternalUserInfo, ExternalTicketSummary, ExternalDashboardStats, ExternalCompanyContext } from "../types";
 
 export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
@@ -13,7 +14,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
     data: tickets = [],
     isLoading: isTicketsLoading,
   } = useQuery({
-    queryKey: ["external-tickets", externalInfo?.contactId],
+    queryKey: queryKeys.external.tickets(externalInfo?.contactId ?? null),
     queryFn: async () => {
       if (!externalInfo) return [];
 
@@ -58,7 +59,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
     data: stats,
     isLoading: isStatsLoading,
   } = useQuery({
-    queryKey: ["external-stats", externalInfo?.contactId],
+    queryKey: queryKeys.external.stats(externalInfo?.contactId ?? null),
     queryFn: async () => {
       if (!externalInfo) return { totalOpen: 0, awaitingResponse: 0 };
 
@@ -95,7 +96,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
     data: companyContext,
     isLoading: isContextLoading,
   } = useQuery({
-    queryKey: ["external-company-context", externalInfo?.companyId],
+    queryKey: queryKeys.external.companyContext(externalInfo?.companyId ?? null),
     queryFn: async () => {
       if (!externalInfo) return null;
 

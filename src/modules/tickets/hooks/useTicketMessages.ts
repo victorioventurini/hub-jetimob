@@ -100,10 +100,10 @@ export function useCreateMessage(profileId: string | null) {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["ticket-messages", variables.ticketId],
+        queryKey: queryKeys.tickets.messages(variables.ticketId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["ticket", variables.ticketId],
+        queryKey: queryKeys.tickets.detail(variables.ticketId),
       });
     },
   });
@@ -137,7 +137,7 @@ export function useEditMessage() {
     onSuccess: (data) => {
       if (data?.ticket_id) {
         queryClient.invalidateQueries({
-          queryKey: ["ticket-messages", data.ticket_id],
+          queryKey: queryKeys.tickets.messages(data.ticket_id),
         });
       }
     },
@@ -163,7 +163,7 @@ export function useDeleteMessage() {
     onSuccess: (data) => {
       if (data?.ticket_id) {
         queryClient.invalidateQueries({
-          queryKey: ["ticket-messages", data.ticket_id],
+          queryKey: queryKeys.tickets.messages(data.ticket_id),
         });
       }
     },

@@ -15,6 +15,7 @@ import { useVicConfig, useVicAgentActivations, VIC_AGENTS } from "@/modules/vic"
 import type { VicAgentSlug } from "@/modules/vic";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function BuIaSettings() {
   const { currentBu } = useBu();
@@ -29,7 +30,7 @@ export function BuIaSettings() {
 
   // Fetch current config
   const { data: iaConfig, isLoading: isLoadingConfig } = useQuery({
-    queryKey: ["bu-ia-config", currentBu?.id],
+    queryKey: queryKeys.vic.buConfig(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return null;
 
@@ -50,7 +51,7 @@ export function BuIaSettings() {
 
   // Fetch global agents
   const { data: globalAgents, isLoading: isLoadingAgents } = useQuery({
-    queryKey: ["global-agents-for-settings"],
+    queryKey: queryKeys.vic.globalAgents(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_agents")

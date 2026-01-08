@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { IntegrationIcon } from "@/modules/integrations/components/IntegrationIcon";
 import { toast } from "sonner";
 import { useUrlState } from "@/hooks/useUrlState";
+import { queryKeys } from "@/lib/queryKeys";
 
 export default function SettingsIntegrations() {
   // URL State
@@ -19,7 +20,7 @@ export default function SettingsIntegrations() {
   const queryClient = useQueryClient();
 
   const { data: integrations, isLoading } = useQuery({
-    queryKey: ["settings-integrations-catalog"],
+    queryKey: queryKeys.settings.integrationsCatalog(),
     queryFn: async () => {
       const { data: catalog, error: catalogError } = await supabase
         .from("hub_integrations_catalog")

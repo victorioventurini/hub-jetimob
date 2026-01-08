@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * Hook centralizado para verificação de permissões.
@@ -25,7 +26,7 @@ export function usePermissions() {
   const { client, isReady, buId } = useOptionalBuClient();
 
   const { data: permissions = [], isLoading: isQueryLoading } = useQuery({
-    queryKey: ["permissions", buId, user?.id],
+    queryKey: queryKeys.identity.permissions(buId ?? null, user?.id ?? null),
     queryFn: async () => {
       if (!client || !buId) {
         throw new Error("usePermissions: No BU client available");

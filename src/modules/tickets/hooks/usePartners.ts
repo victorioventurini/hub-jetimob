@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type { PartnerCompany, PartnerContact, PartnerCompanyStatus, PartnerContactStatus } from "../types";
 
 // ===========================================
@@ -13,7 +14,7 @@ export function usePartnerCompanies() {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partner-companies", buId],
+    queryKey: queryKeys.tickets.partners(buId ?? null),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -35,7 +36,7 @@ export function usePartnerCompany(id: string | null) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["partner-company", id],
+    queryKey: queryKeys.tickets.partnerCompany(id),
     queryFn: async () => {
       if (!id) return null;
 
@@ -91,7 +92,7 @@ export function useCreatePartnerCompany() {
       return company as PartnerCompany;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partner-companies"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(null) });
     },
   });
 }

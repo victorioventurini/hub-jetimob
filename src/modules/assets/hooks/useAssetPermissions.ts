@@ -21,7 +21,7 @@ export function useAssetPermissions() {
   // Buscar permissões do usuário atual
   // Only fetch if not loading BU context and user doesn't have full access
   const { data: userPermissions = [], isLoading: isLoadingUserPermissions } = useQuery({
-    queryKey: ["asset-permissions", "user", user?.id, buId, hasFullAccess],
+    queryKey: [...queryKeys.assets.permissions(buId ?? null), 'user', user?.id, hasFullAccess],
     enabled: !!user?.id && !!buId && !isBuLoading && !hasFullAccess,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,7 +37,7 @@ export function useAssetPermissions() {
 
   // Buscar todas as permissões da BU (para admins)
   const { data: allPermissions = [], isLoading: isLoadingAllPermissions, refetch: refetchAllPermissions } = useQuery({
-    queryKey: ["asset-permissions", "all", buId],
+    queryKey: [...queryKeys.assets.permissions(buId ?? null), 'all'],
     enabled: !!buId,
     queryFn: async () => {
       const { data: permissions, error } = await supabase

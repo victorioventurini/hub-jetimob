@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type { TicketCategory, TicketSubcategory, TicketCategoryScope } from "../types";
 
 // ===========================================
@@ -13,7 +14,7 @@ export function useTicketCategories(scope?: TicketCategoryScope) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["ticket-categories", buId, scope],
+    queryKey: queryKeys.tickets.categories(buId ?? null, scope),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -146,7 +147,7 @@ export function useTicketSubcategories(categoryId?: string) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["ticket-subcategories", buId, categoryId],
+    queryKey: queryKeys.tickets.subcategories(buId ?? null, categoryId),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -203,8 +204,8 @@ export function useCreateTicketSubcategory() {
       return subcategory as TicketSubcategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket-subcategories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.categories(null, undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.subcategories(null, undefined) });
     },
   });
 }
