@@ -89,6 +89,7 @@ const SettingsBusinessUnits = lazy(() => import("./pages/settings/SettingsBusine
 const SettingsModules = lazy(() => import("./pages/settings/SettingsModules"));
 const SettingsIntegrations = lazy(() => import("./pages/settings/SettingsIntegrations"));
 const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifications"));
+const JobTitlesPage = lazy(() => import("./modules/settings/pages/JobTitlesPage").then(m => ({ default: m.JobTitlesPage })));
 
 // Páginas de Notificações
 const HubNotifications = lazy(() => import("./pages/hub/HubNotifications"));
@@ -343,6 +344,18 @@ const App = () => (
                           <AdminRoute>
                             <SettingsLayout>
                               <GlobalPermissionsPage />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/hub/job-titles"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <JobTitlesPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>
