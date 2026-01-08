@@ -238,6 +238,12 @@ export const queryKeys = {
     userEffective: (buId: string | null, userId: string | null) => 
       ['permissions', 'user-effective', buId, userId] as const,
     
+    // Migration tracking (Wave 7)
+    migrationStatus: (buId: string | null) => 
+      ['permissions', 'migration-status', buId] as const,
+    userMigration: (buId: string | null, userId: string | null) => 
+      ['permissions', 'user-migration', buId, userId] as const,
+    
     // Current user
     myPermissions: (buId: string | null, userId: string | null) => 
       ['permissions', 'my', buId, userId] as const,

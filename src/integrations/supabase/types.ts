@@ -4506,6 +4506,83 @@ export type Database = {
         }
         Relationships: []
       }
+      permission_migrations: {
+        Row: {
+          bu_id: string
+          created_at: string | null
+          id: string
+          migrated_at: string | null
+          migrated_by: string | null
+          notes: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+          v1_groups_snapshot: Json | null
+          v2_templates_applied: Json | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string | null
+          id?: string
+          migrated_at?: string | null
+          migrated_by?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+          v1_groups_snapshot?: Json | null
+          v2_templates_applied?: Json | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string | null
+          id?: string
+          migrated_at?: string | null
+          migrated_by?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+          v1_groups_snapshot?: Json | null
+          v2_templates_applied?: Json | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_migrations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_migrated_by_fkey"
+            columns: ["migrated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permission_template_items_v2: {
         Row: {
           created_at: string
@@ -6060,6 +6137,16 @@ export type Database = {
       }
       get_auth_user_id: { Args: { p_profile_id: string }; Returns: string }
       get_bu_by_email_domain: { Args: { p_email: string }; Returns: string }
+      get_bu_migration_status: {
+        Args: { p_bu_id: string }
+        Returns: {
+          migrated_users: number
+          migration_percentage: number
+          not_started_users: number
+          total_users: number
+          verified_users: number
+        }[]
+      }
       get_descendant_team_ids: {
         Args: { p_team_id: string }
         Returns: string[]
@@ -6232,10 +6319,24 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_legacy_key_usage: {
+        Args: { p_context?: string; p_old_key: string }
+        Returns: undefined
+      }
       mark_all_notifications_read: { Args: never; Returns: number }
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean
+      }
+      mark_user_migrated: {
+        Args: {
+          p_bu_id: string
+          p_notes?: string
+          p_user_id: string
+          p_v1_snapshot?: Json
+          p_v2_templates?: Json
+        }
+        Returns: string
       }
       my_profile_id: { Args: never; Returns: string }
       my_profile_id_strict: { Args: never; Returns: string }
@@ -6317,6 +6418,10 @@ export type Database = {
       user_id_from_profile_id: {
         Args: { p_profile_id: string }
         Returns: string
+      }
+      verify_user_migration: {
+        Args: { p_bu_id: string; p_notes?: string; p_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
