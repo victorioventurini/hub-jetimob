@@ -391,6 +391,37 @@ const { values, set, resetAll, hasActiveFilters } = useUrlStates(schema);
 | `teamId` | Filtro de time |
 | `year` | Ano selecionado |
 
+### E.4 API de Migração (Wave 2 → Wave 3)
+
+```
+⚠️ Hooks antigos podem ser mantidos como compatibility wrappers até Wave 3.
+❌ Novas páginas NÃO PODEM usar API tuple [value, setValue].
+✅ Novas páginas DEVEM usar API object { value, set, ... }.
+```
+
+#### Hooks Legados (src/hooks/useUrlState.ts)
+
+Os hooks em `src/hooks/useUrlState.ts` retornam tuple para compatibilidade:
+
+```typescript
+// ⚠️ LEGADO - Apenas para código existente
+const [search, setSearch] = useUrlState({ key: "q", defaultValue: "" });
+```
+
+#### Hooks Novos (@/shared/url)
+
+Novos hooks retornam objeto com métodos adicionais:
+
+```typescript
+// ✅ NOVO PADRÃO - Para código novo
+const { value, set, clear } = useUrlState({ key: "q", defaultValue: "" });
+```
+
+#### Prazo de Remoção
+
+- **Wave 3:** Migrar todas as páginas existentes para `@/shared/url`
+- **Pós-Wave 3:** Remover `src/hooks/useUrlState.ts`
+
 > 📚 Ver: [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md)
 
 ---
