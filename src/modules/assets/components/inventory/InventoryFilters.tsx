@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { INVENTORY_STATUS_LABELS, type AssetInventoryStatus, type AssetCategory } from "../../types";
+import type { BuLocationOption } from "../../hooks/useLocations";
 
 interface HolderOption {
   id: string;
@@ -14,14 +15,14 @@ interface HolderOption {
   avatar_url?: string | null;
 }
 
-interface FlatCategoryItem {
+interface FlatItem {
   id: string;
   name: string;
   level: number;
 }
 
-function buildFlatCategoryList(categories: AssetCategory[]): FlatCategoryItem[] {
-  const result: FlatCategoryItem[] = [];
+function buildFlatCategoryList(categories: AssetCategory[]): FlatItem[] {
+  const result: FlatItem[] = [];
   
   const childrenMap = new Map<string | null, AssetCategory[]>();
   categories.forEach((cat) => {
@@ -50,6 +51,36 @@ function buildFlatCategoryList(categories: AssetCategory[]): FlatCategoryItem[] 
   return result;
 }
 
+function buildFlatLocationList(locations: BuLocationOption[]): FlatItem[] {
+  const result: FlatItem[] = [];
+  
+  const childrenMap = new Map<string | null, BuLocationOption[]>();
+  locations.forEach((loc) => {
+    const parentId = loc.parent_location_id || null;
+    if (!childrenMap.has(parentId)) {
+      childrenMap.set(parentId, []);
+    }
+    childrenMap.get(parentId)!.push(loc);
+  });
+
+  function addWithLevel(parentId: string | null, level: number) {
+    const children = childrenMap.get(parentId) || [];
+    children.sort((a, b) => a.name.localeCompare(b.name));
+    
+    for (const child of children) {
+      result.push({
+        id: child.id,
+        name: child.name,
+        level,
+      });
+      addWithLevel(child.id, level + 1);
+    }
+  }
+
+  addWithLevel(null, 0);
+  return result;
+}
+
 interface InventoryFiltersProps {
   statusFilter: AssetInventoryStatus | "all";
   onStatusChange: (value: AssetInventoryStatus | "all") => void;
@@ -57,8 +88,11 @@ interface InventoryFiltersProps {
   onCategoryChange: (value: string) => void;
   holderFilter: string;
   onHolderChange: (value: string) => void;
+  locationFilter: string;
+  onLocationChange: (value: string) => void;
   categories: AssetCategory[];
   holders: HolderOption[];
+  locations: BuLocationOption[];
 }
 
 export function InventoryFilters({
@@ -68,10 +102,14 @@ export function InventoryFilters({
   onCategoryChange,
   holderFilter,
   onHolderChange,
+  locationFilter,
+  onLocationChange,
   categories,
   holders,
+  locations,
 }: InventoryFiltersProps) {
   const flatCategories = buildFlatCategoryList(categories);
+  const flatLocations = buildFlatLocationList(locations);
 
   return (
     <div className="flex flex-wrap gap-3">
@@ -114,6 +152,36 @@ export function InventoryFilters({
                   <span className="mr-1.5 text-muted-foreground/50">└</span>
                 )}
                 {cat.name}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Localização - hierarchical */}
+      <Select value={locationFilter} onValueChange={onLocationChange}>
+        <SelectTrigger className="w-[200px] h-9">
+          <SelectValue placeholder="Localização" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas as localizações</SelectItem>
+          {flatLocations.map((loc) => (
+            <SelectItem
+              key={loc.id}
+              value={loc.id}
+              className={cn(
+                loc.level === 0 && "font-medium",
+                loc.level > 0 && "text-[13px] text-muted-foreground"
+              )}
+            >
+              <span 
+                className="flex items-center"
+                style={{ paddingLeft: `${loc.level * 16}px` }}
+              >
+                {loc.level > 0 && (
+                  <span className="mr-1.5 text-muted-foreground/50">└</span>
+                )}
+                {loc.name}
               </span>
             </SelectItem>
           ))}
