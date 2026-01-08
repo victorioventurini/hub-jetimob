@@ -129,15 +129,15 @@ export function useKeys() {
 
     if (error) return [];
 
-    // Fetch users separately
+    // Fetch users separately - these columns store profiles.id (IDENTITY_CONVENTION.md)
     const movements = data || [];
-    const userIds = [...new Set(movements.flatMap(m => [m.user_id, m.authorized_by_user_id, m.performed_by_user_id].filter(Boolean)))];
-    const { data: profiles } = userIds.length > 0
-      ? await supabase.from("profiles").select("user_id, first_name, last_name, display_name").in("user_id", userIds)
+    const profileIds = [...new Set(movements.flatMap(m => [m.user_id, m.authorized_by_user_id, m.performed_by_user_id].filter(Boolean)))];
+    const { data: profiles } = profileIds.length > 0
+      ? await supabase.from("profiles").select("id, first_name, last_name, display_name").in("id", profileIds)
       : { data: [] };
 
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, {
-      id: p.user_id,
+    const profileMap = new Map((profiles || []).map(p => [p.id, {
+      id: p.id,
       full_name: formatProfileName(p),
     }]));
 
