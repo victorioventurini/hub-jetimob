@@ -2555,53 +2555,6 @@ export type Database = {
           },
         ]
       }
-      metrics: {
-        Row: {
-          created_at: string
-          definition: string
-          deleted_at: string | null
-          formula: string | null
-          id: string
-          name: string
-          owner_user_id: string | null
-          source: string | null
-          unit: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          definition: string
-          deleted_at?: string | null
-          formula?: string | null
-          id?: string
-          name: string
-          owner_user_id?: string | null
-          source?: string | null
-          unit: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          definition?: string
-          deleted_at?: string | null
-          formula?: string | null
-          id?: string
-          name?: string
-          owner_user_id?: string | null
-          source?: string | null
-          unit?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "metrics_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       modules: {
         Row: {
           created_at: string
@@ -3623,13 +3576,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "okr_org_key_results_metric_id_fkey"
-            columns: ["metric_id"]
-            isOneToOne: false
-            referencedRelation: "metrics"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "okr_org_key_results_org_objective_id_fkey"
             columns: ["org_objective_id"]
             isOneToOne: false
@@ -3873,13 +3819,6 @@ export type Database = {
             columns: ["linked_org_kr_id"]
             isOneToOne: false
             referencedRelation: "okr_org_key_results"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_key_results_metric_id_fkey"
-            columns: ["metric_id"]
-            isOneToOne: false
-            referencedRelation: "metrics"
             referencedColumns: ["id"]
           },
           {
@@ -4501,7 +4440,6 @@ export type Database = {
           first_name: string
           id: string
           instagram_id: string | null
-          job_title: string
           job_title_id: string | null
           last_name: string
           manager_user_id: string | null
@@ -4529,7 +4467,6 @@ export type Database = {
           first_name: string
           id?: string
           instagram_id?: string | null
-          job_title: string
           job_title_id?: string | null
           last_name: string
           manager_user_id?: string | null
@@ -4557,7 +4494,6 @@ export type Database = {
           first_name?: string
           id?: string
           instagram_id?: string | null
-          job_title?: string
           job_title_id?: string | null
           last_name?: string
           manager_user_id?: string | null
@@ -5334,48 +5270,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_notification_preferences: {
-        Row: {
-          checkin_email: boolean
-          checkin_internal: boolean
-          created_at: string
-          id: string
-          mention_email: boolean
-          mention_internal: boolean
-          mention_slack: boolean
-          status_change_email: boolean
-          status_change_internal: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          checkin_email?: boolean
-          checkin_internal?: boolean
-          created_at?: string
-          id?: string
-          mention_email?: boolean
-          mention_internal?: boolean
-          mention_slack?: boolean
-          status_change_email?: boolean
-          status_change_internal?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          checkin_email?: boolean
-          checkin_internal?: boolean
-          created_at?: string
-          id?: string
-          mention_email?: boolean
-          mention_internal?: boolean
-          mention_slack?: boolean
-          status_change_email?: boolean
-          status_change_internal?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       user_notification_preferences_v2: {
         Row: {

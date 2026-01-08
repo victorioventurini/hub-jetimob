@@ -148,7 +148,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
           birth_day: data.birth_day,
           birth_month: data.birth_month,
           whatsapp_personal: data.whatsapp_personal,
-          job_title: data.job_title,
+          // job_title text removido - onboarding não define cargo FK
           start_date: format(data.start_date, "yyyy-MM-dd"),
           city: data.city,
           state: data.state,

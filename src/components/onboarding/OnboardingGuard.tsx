@@ -19,7 +19,7 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, job_title, city, state, work_mode, team_id, onboarding_completed")
+        .select("id, first_name, last_name, city, state, work_mode, team_id, onboarding_completed")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -74,7 +74,7 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
         initialData={{
           first_name: profile.first_name || "",
           last_name: profile.last_name || "",
-          job_title: profile.job_title || "",
+          job_title: "", // Será preenchido no wizard
           city: profile.city || "Porto Alegre",
           state: profile.state || "RS",
           work_mode: (profile.work_mode as "onsite" | "hybrid" | "remote") || "hybrid",
