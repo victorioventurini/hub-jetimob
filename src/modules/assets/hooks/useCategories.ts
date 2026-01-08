@@ -49,7 +49,7 @@ export function useCategories() {
       return category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-categories", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null) });
     },
   });
 
@@ -79,7 +79,7 @@ export function useCategories() {
       return category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-categories", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null) });
     },
   });
 
@@ -94,7 +94,7 @@ export function useCategories() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-categories", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null) });
     },
   });
 
