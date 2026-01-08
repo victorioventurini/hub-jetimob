@@ -8,7 +8,7 @@ const QUERY_KEY = "job-titles";
 
 /**
  * Hook para gerenciar cargos da BU atual
- * SEMPRE usa useBuScopedSupabase para garantir escopo correto
+ * Busca cargos que incluem a BU atual no array bu_ids
  */
 export function useJobTitles() {
   const { currentBu } = useBu();
@@ -20,11 +20,11 @@ export function useJobTitles() {
     queryFn: async (): Promise<JobTitleWithUsageCount[]> => {
       if (!buId) return [];
 
-      // Buscar cargos com contagem de uso
+      // Buscar cargos que contêm a BU atual no array bu_ids
       const { data: jobTitles, error } = await supabase
         .from("job_titles")
-        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
-        .eq("bu_id", buId)
+        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
+        .contains("bu_ids", [buId])
         .is("deleted_at", null)
         .order("name");
 
@@ -72,8 +72,8 @@ export function useActiveJobTitles() {
 
       const { data, error } = await supabase
         .from("job_titles")
-        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
-        .eq("bu_id", buId)
+        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
+        .contains("bu_ids", [buId])
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("name");
@@ -97,15 +97,20 @@ export function useCreateJobTitle() {
     mutationFn: async (data: JobTitleFormData) => {
       if (!currentBu?.id) throw new Error("BU não selecionada");
 
+      // Se bu_ids foi passado, usa ele, senão usa a BU atual
+      const buIds = data.bu_ids && data.bu_ids.length > 0 
+        ? data.bu_ids 
+        : [currentBu.id];
+
       const { data: result, error } = await supabase
         .from("job_titles")
         .insert({
-          bu_id: currentBu.id,
+          bu_ids: buIds,
           name: data.name.trim(),
           description: data.description?.trim() || null,
           is_active: data.is_active,
         })
-        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
+        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
         .single();
 
       if (error) {
@@ -134,7 +139,19 @@ export function useUpdateJobTitle() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, name, description, is_active }: { id: string; name?: string; description?: string; is_active?: boolean }) => {
+    mutationFn: async ({ 
+      id, 
+      name, 
+      description, 
+      is_active,
+      bu_ids 
+    }: { 
+      id: string; 
+      name?: string; 
+      description?: string; 
+      is_active?: boolean;
+      bu_ids?: string[];
+    }) => {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
@@ -142,6 +159,7 @@ export function useUpdateJobTitle() {
       if (name !== undefined) updateData.name = name.trim();
       if (description !== undefined) updateData.description = description?.trim() || null;
       if (is_active !== undefined) updateData.is_active = is_active;
+      if (bu_ids !== undefined) updateData.bu_ids = bu_ids;
 
       const { error } = await supabase
         .from("job_titles")
