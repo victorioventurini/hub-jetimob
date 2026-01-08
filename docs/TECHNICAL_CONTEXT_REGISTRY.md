@@ -5,7 +5,7 @@
 **Responsável:** Lovable AI / Equipe de Engenharia
 
 > 📚 **Documentação Complementar:**
-> - [DEVELOPMENT_STANDARDS.md](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
+> - [DEVELOPMENT_STANDARDS.md v1.0.1](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
 > - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção de identidade (`user_id` vs `profile_id`)
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de permissões e templates
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
