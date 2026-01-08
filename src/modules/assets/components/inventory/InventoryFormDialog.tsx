@@ -115,6 +115,17 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   // Build subcategory list with parent names
   const subcategories = useMemo(() => buildSubcategoryList(categories), [categories]);
 
+  // Check if item has a parent category (legacy/imported data)
+  const itemHasParentCategory = useMemo(() => {
+    if (!item?.category_id) return null;
+    const category = categories.find((c) => c.id === item.category_id);
+    // If it's a parent category (no parent_id), return it for display
+    if (category && !category.parent_id) {
+      return { id: category.id, name: category.name };
+    }
+    return null;
+  }, [item?.category_id, categories]);
+
   // Group subcategories by parent for display
   const groupedSubcategories = useMemo(() => {
     const groups: Record<string, SubcategoryItem[]> = {};
@@ -365,6 +376,20 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      {/* Show legacy parent category if item was imported with one */}
+                      {itemHasParentCategory && isEditing && (
+                        <div>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-amber-600 bg-amber-50">
+                            Categoria atual (legado)
+                          </div>
+                          <SelectItem 
+                            value={itemHasParentCategory.id} 
+                            className="pl-4 text-amber-700"
+                          >
+                            {itemHasParentCategory.name} (categoria pai)
+                          </SelectItem>
+                        </div>
+                      )}
                       {Object.entries(groupedSubcategories).map(([parentName, subs]) => (
                         <div key={parentName}>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
@@ -379,6 +404,11 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                       ))}
                     </SelectContent>
                   </Select>
+                  {itemHasParentCategory && isEditing && (
+                    <p className="text-xs text-amber-600">
+                      Este item foi importado com uma categoria pai. Selecione uma subcategoria para melhor organização.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
