@@ -10,7 +10,7 @@ import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
 import { mockOrgObjectives, mockTeamObjectives, getMockStats } from '../hooks/useMockOkrData';
 import { YearSelect, TeamSelect } from '@/components/selects';
 import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
-import { useUrlState, parsers } from '@/hooks/useUrlState';
+import { useUrlState, parsers } from "@/hooks/useUrlState";
 
 export default function OkrsPage() {
   usePageTitle("OKRs");
