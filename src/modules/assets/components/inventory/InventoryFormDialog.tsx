@@ -399,25 +399,25 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                     <SelectContent>
                       {/* Show legacy parent category if item was imported with one */}
                       {itemHasParentCategory && isEditing && (
-                        <div>
+                        <>
                           <div className="px-2 py-1.5 text-xs font-semibold text-amber-600 bg-amber-50">
                             Categoria atual (legado)
                           </div>
                           <SelectItem 
                             value={itemHasParentCategory.id} 
-                            className="pl-4 text-amber-700"
+                            className="pl-6 text-amber-700"
                           >
                             {itemHasParentCategory.name} (categoria pai)
                           </SelectItem>
-                        </div>
+                        </>
                       )}
                       {Object.entries(groupedSubcategories).map(([parentName, subs]) => (
                         <div key={parentName}>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                          <div className="px-2 py-1.5 text-xs font-semibold text-primary">
                             {parentName}
                           </div>
                           {subs.map((sub) => (
-                            <SelectItem key={sub.id} value={sub.id} className="pl-4">
+                            <SelectItem key={sub.id} value={sub.id} className="pl-6">
                               {sub.name}
                             </SelectItem>
                           ))}
