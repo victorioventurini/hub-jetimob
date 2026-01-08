@@ -64,7 +64,7 @@ export default function TeamsPage() {
 
   const { data: teams, isLoading } = useTeams(showInactive);
   const { data: squads, isLoading: isLoadingSquads } = useSquads();
-  const { tree } = useTeamTree();
+  const { tree } = useTeamTree(showInactive);
   const stats = useTeamStats();
   const navigate = useNavigate();
   const { canManageTeam } = useTeamManagement();
