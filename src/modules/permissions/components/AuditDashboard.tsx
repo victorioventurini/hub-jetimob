@@ -1,9 +1,10 @@
-import { RefreshCw, CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
+import { RefreshCw, CheckCircle2, XCircle, AlertCircle, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { usePermissionAudit } from "../hooks/usePermissionAudit";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -64,6 +65,10 @@ export function AuditDashboard() {
 
   if (!audit) return null;
 
+  const migrationProgress = audit.migrationStatus.totalUsers > 0 
+    ? (audit.migrationStatus.migratedUsers / audit.migrationStatus.totalUsers) * 100 
+    : 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -83,8 +88,8 @@ export function AuditDashboard() {
       {/* Executive Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Resumo Executivo</CardTitle>
-          <CardDescription>Status geral do sistema de permissões</CardDescription>
+          <CardTitle>Resumo Executivo - Sistema V2</CardTitle>
+          <CardDescription>Status geral do sistema de permissões V2</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -130,7 +135,7 @@ export function AuditDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl">{audit.templates.length}</CardTitle>
-            <CardDescription>Templates de Permissão</CardDescription>
+            <CardDescription>Templates V2</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
@@ -148,19 +153,23 @@ export function AuditDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-2xl">
-              {audit.expectedTemplates.filter(t => t.exists).length}/{audit.expectedTemplates.length}
-            </CardTitle>
-            <CardDescription>Templates Esperados</CardDescription>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-2xl">
+                {audit.migrationStatus.migratedUsers}/{audit.migrationStatus.totalUsers}
+              </CardTitle>
+            </div>
+            <CardDescription>Migração V1 → V2</CardDescription>
           </CardHeader>
           <CardContent>
+            <Progress value={migrationProgress} className="h-2 mb-2" />
             <div className="text-xs text-muted-foreground">
-              {audit.expectedTemplates.filter(t => !t.exists).length > 0 ? (
-                <span className="text-yellow-600">
-                  Faltando: {audit.expectedTemplates.filter(t => !t.exists).map(t => t.name).join(', ')}
-                </span>
+              {audit.migrationStatus.pendingUsers === 0 ? (
+                <span className="text-green-600">Migração completa!</span>
               ) : (
-                <span className="text-green-600">Todos os templates esperados existem</span>
+                <span className="text-yellow-600">
+                  {audit.migrationStatus.pendingUsers} usuários pendentes
+                </span>
               )}
             </div>
           </CardContent>
@@ -170,11 +179,11 @@ export function AuditDashboard() {
       {/* SQL Functions */}
       <Card>
         <CardHeader>
-          <CardTitle>Funções SQL de Hierarquia</CardTitle>
-          <CardDescription>Funções críticas para controle de acesso baseado em times</CardDescription>
+          <CardTitle>Funções SQL</CardTitle>
+          <CardDescription>Funções críticas para controle de acesso</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Object.entries(audit.sqlFunctions).map(([fn, exists]) => (
               <div key={fn} className="flex items-center gap-2 p-3 border rounded-lg">
                 <FunctionStatusIcon exists={exists} />
@@ -185,60 +194,19 @@ export function AuditDashboard() {
         </CardContent>
       </Card>
 
-      {/* Expected Templates */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Templates Esperados</CardTitle>
-          <CardDescription>Verificação dos perfis de permissão requeridos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Template</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Slug</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {audit.expectedTemplates.map((template) => (
-                <TableRow key={template.name}>
-                  <TableCell className="font-medium">{template.name}</TableCell>
-                  <TableCell>
-                    {template.exists ? (
-                      <Badge variant="outline" className="bg-green-100 text-green-800">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Existe
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-red-100 text-red-800">
-                        <XCircle className="w-3 h-3 mr-1" />
-                        Faltando
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm text-muted-foreground">
-                    {template.slug || '-'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
       {/* All Templates Detail */}
       <Card>
         <CardHeader>
-          <CardTitle>Todos os Templates</CardTitle>
-          <CardDescription>Lista completa de templates de permissão no sistema</CardDescription>
+          <CardTitle>Templates V2</CardTitle>
+          <CardDescription>Lista completa de templates de permissão no sistema V2</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Slug</TableHead>
+                <TableHead>Módulo</TableHead>
+                <TableHead>Superfície</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Permissões</TableHead>
                 <TableHead>Status</TableHead>
@@ -248,7 +216,12 @@ export function AuditDashboard() {
               {audit.templates.map((template) => (
                 <TableRow key={template.slug || template.name}>
                   <TableCell className="font-medium">{template.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{template.slug || '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{template.module || 'global'}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{template.surface || '-'}</Badge>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={template.isSystem ? "secondary" : "outline"}>
                       {template.isSystem ? 'Sistema' : 'Customizado'}

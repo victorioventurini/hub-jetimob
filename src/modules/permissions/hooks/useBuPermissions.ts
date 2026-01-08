@@ -95,14 +95,16 @@ export function useUserEffectivePermissions(userId: string | null) {
     queryFn: async () => {
       if (!supabase || !buId || !userId) return [];
 
-      const { data, error } = await supabase
-        .from("user_effective_permissions")
-        .select("user_id, bu_id, permission_id, permission_key, module, resource, action, scope, source, source_name")
-        .eq("bu_id", buId)
-        .eq("user_id", userId);
+      // Use RPC to call get_effective_permissions_v2 function
+      // Cast to any to bypass strict typing since the function may not be in generated types
+      const { data, error } = await (supabase as unknown as { rpc: (fn: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }> })
+        .rpc('get_effective_permissions_v2', {
+          p_user_id: userId,
+          p_bu_id: buId,
+        });
 
       if (error) throw error;
-      return data as unknown as EffectivePermission[];
+      return (data || []) as EffectivePermission[];
     },
     enabled: isReady && !!buId && !!userId,
   });
