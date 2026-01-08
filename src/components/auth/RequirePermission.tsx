@@ -1,10 +1,9 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Link, useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldX, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface RequirePermissionProps {
   children: React.ReactNode;

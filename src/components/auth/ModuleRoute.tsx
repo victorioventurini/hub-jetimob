@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { useModules } from "@/contexts/ModuleContext";
 import { useBu } from "@/contexts/BuContext";
 import { HubLayout } from "@/components/layout/HubLayout";
@@ -25,7 +25,6 @@ export function ModuleRoute({
   moduleSlug, 
   requiresBu = true 
 }: ModuleRouteProps) {
-  const navigate = useNavigate();
   const { currentBu, isLoading: buLoading } = useBu();
   const { isModuleEnabled, getModuleBySlug, isLoading: modulesLoading } = useModules();
 
@@ -76,8 +75,8 @@ export function ModuleRoute({
                 Para acessar <strong>{module.name}</strong>, você precisa selecionar 
                 uma Business Unit no menu superior.
               </p>
-              <Button variant="outline" onClick={() => navigate("/")}>
-                Voltar ao início
+              <Button asChild variant="outline">
+                <Link to="/">Voltar ao início</Link>
               </Button>
             </CardContent>
           </Card>
@@ -106,8 +105,8 @@ export function ModuleRoute({
               <p className="text-sm text-muted-foreground">
                 Entre em contato com o administrador da sua BU para solicitar acesso.
               </p>
-              <Button variant="outline" onClick={() => navigate("/")}>
-                Voltar ao início
+              <Button asChild variant="outline">
+                <Link to="/">Voltar ao início</Link>
               </Button>
             </CardContent>
           </Card>
