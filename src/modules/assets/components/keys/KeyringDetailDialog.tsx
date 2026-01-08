@@ -71,8 +71,7 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
                   <Key className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">{keyring.name}</DialogTitle>
-                  <p className="text-sm text-muted-foreground">Tag: {keyring.tag_number}</p>
+                  <DialogTitle className="text-lg">Chaveiro {keyring.tag_number}</DialogTitle>
                 </div>
               </div>
               <Badge variant="outline" className={cn("shrink-0", statusColors[keyring.status])}>

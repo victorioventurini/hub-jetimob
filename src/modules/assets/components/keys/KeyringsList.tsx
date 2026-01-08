@@ -42,7 +42,7 @@ export function KeyringsList({ keyrings }: KeyringsListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Chaveiro</TableHead>
-              <TableHead>Tag</TableHead>
+              <TableHead>Observações</TableHead>
               <TableHead>Claviculário</TableHead>
               <TableHead>Responsável</TableHead>
               <TableHead>Status</TableHead>
@@ -60,11 +60,11 @@ export function KeyringsList({ keyrings }: KeyringsListProps) {
                     <div className="p-2 rounded-lg bg-amber-500/10 shrink-0">
                       <Key className="h-4 w-4 text-amber-600" />
                     </div>
-                    <span className="font-medium">{keyring.name}</span>
+                    <span className="font-medium">{keyring.tag_number}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {keyring.tag_number}
+                  {keyring.notes || "-"}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {keyring.claviculary ? (
