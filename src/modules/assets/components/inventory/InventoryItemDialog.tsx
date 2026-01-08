@@ -30,12 +30,12 @@ import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
 import { useBrands } from "../../hooks/useBrands";
 import { AutocompleteInput } from "./AutocompleteInput";
+import { cn } from "@/lib/utils";
 
 const schema = z.object({
   internal_code: z.string().min(1, "Código interno obrigatório"),
   name: z.string().min(1, "Nome obrigatório"),
-  category_id: z.string().min(1, "Categoria obrigatória"),
-  subcategory_id: z.string().min(1, "Subcategoria obrigatória"),
+  category_id: z.string().min(1, "Subcategoria obrigatória"),
   description: z.string().optional(),
   serial_number: z.string().optional(),
   brand: z.string().optional(),
@@ -47,6 +47,38 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface SubcategoryItem {
+  id: string;
+  name: string;
+  parentName: string;
+}
+
+function buildSubcategoryList(
+  categories: Array<{ id: string; name: string; parent_id: string | null }>
+): SubcategoryItem[] {
+  const parentMap = new Map<string, string>();
+  categories.forEach((cat) => {
+    if (!cat.parent_id) {
+      parentMap.set(cat.id, cat.name);
+    }
+  });
+
+  // Only return subcategories (items with parent_id)
+  return categories
+    .filter((cat) => cat.parent_id !== null)
+    .map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      parentName: parentMap.get(cat.parent_id!) || "Sem categoria",
+    }))
+    .sort((a, b) => {
+      // Sort by parent name first, then by name
+      const parentCompare = a.parentName.localeCompare(b.parentName);
+      if (parentCompare !== 0) return parentCompare;
+      return a.name.localeCompare(b.name);
+    });
+}
+
 interface InventoryItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,11 +89,20 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
   const { rootLocations, getRooms, defaultLocation } = useLocations();
   const { brands } = useBrands();
 
-  // Separate parent categories from subcategories
-  const parentCategories = useMemo(
-    () => categories.filter((cat) => !cat.parent_id),
-    [categories]
-  );
+  // Build flat list of subcategories with parent name
+  const subcategories = useMemo(() => buildSubcategoryList(categories), [categories]);
+
+  // Group subcategories by parent for display
+  const groupedSubcategories = useMemo(() => {
+    const groups: Record<string, SubcategoryItem[]> = {};
+    subcategories.forEach((sub) => {
+      if (!groups[sub.parentName]) {
+        groups[sub.parentName] = [];
+      }
+      groups[sub.parentName].push(sub);
+    });
+    return groups;
+  }, [subcategories]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -69,7 +110,6 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
       internal_code: "",
       name: "",
       category_id: undefined,
-      subcategory_id: undefined,
       description: "",
       serial_number: "",
       brand: "",
@@ -85,18 +125,7 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
     name: "location_id",
   });
 
-  const selectedCategoryId = useWatch({
-    control: form.control,
-    name: "category_id",
-  });
-
   const availableRooms = selectedLocationId ? getRooms(selectedLocationId) : [];
-
-  // Get subcategories for selected parent category
-  const subcategories = useMemo(
-    () => categories.filter((cat) => cat.parent_id === selectedCategoryId),
-    [categories, selectedCategoryId]
-  );
 
   useEffect(() => {
     if (open) {
@@ -104,7 +133,6 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
         internal_code: "",
         name: "",
         category_id: undefined,
-        subcategory_id: undefined,
         description: "",
         serial_number: "",
         brand: "",
@@ -128,17 +156,6 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
     }
   }, [selectedLocationId, form, getRooms]);
 
-  // Clear subcategory when category changes
-  useEffect(() => {
-    const currentSubcategoryId = form.getValues("subcategory_id");
-    if (currentSubcategoryId) {
-      const stillValid = subcategories.some((s) => s.id === currentSubcategoryId);
-      if (!stillValid) {
-        form.setValue("subcategory_id", undefined);
-      }
-    }
-  }, [selectedCategoryId, subcategories, form]);
-
   const onSubmit = (data: FormData) => {
     // Use room_id as home_location_id if selected, otherwise use location_id
     const homeLocationId = data.room_id || data.location_id || undefined;
@@ -146,7 +163,7 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
     createItem({
       internal_code: data.internal_code,
       name: data.name,
-      category_id: data.subcategory_id, // Use subcategory as the actual category
+      category_id: data.category_id,
       description: data.description || undefined,
       serial_number: data.serial_number || undefined,
       brand: data.brand || undefined,
@@ -196,69 +213,41 @@ export function InventoryItemDialog({ open, onOpenChange }: InventoryItemDialogP
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {parentCategories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="subcategory_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategoria *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={!selectedCategoryId || subcategories.length === 0}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              !selectedCategoryId
-                                ? "Selecione categoria"
-                                : subcategories.length === 0
-                                ? "Sem subcategorias"
-                                : "Selecione..."
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {subcategories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subcategoria *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma subcategoria..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(groupedSubcategories).map(([parentName, subs]) => (
+                        <div key={parentName}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                            {parentName}
+                          </div>
+                          {subs.map((sub) => (
+                            <SelectItem
+                              key={sub.id}
+                              value={sub.id}
+                              className="pl-4"
+                            >
+                              {sub.name}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
