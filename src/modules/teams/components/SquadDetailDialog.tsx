@@ -33,7 +33,7 @@ import {
   SquadRole
 } from "../types/squad";
 import { AddSquadMemberDialog } from "./AddSquadMemberDialog";
-import { EditSquadDialog } from "./EditSquadDialog";
+import { SquadFormDialog } from "./SquadFormDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 
 interface SquadDetailDialogProps {
@@ -304,7 +304,7 @@ export function SquadDetailDialog({ squad, open, onOpenChange }: SquadDetailDial
             onOpenChange={setAddMemberOpen}
             existingMemberIds={displaySquad.members?.map((m) => m.user_id) || []}
           />
-          <EditSquadDialog
+          <SquadFormDialog
             squad={displaySquad}
             open={editOpen}
             onOpenChange={setEditOpen}
