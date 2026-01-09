@@ -38,7 +38,7 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
         )}
       >
         <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5" />
+          <Icon className="h-5 w-5 pointer-events-none" />
           <span>{label}</span>
         </div>
         <ExternalLink className="h-4 w-4 opacity-50" />
@@ -56,7 +56,7 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
           : "text-muted-foreground hover:text-foreground hover:bg-muted"
       )}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-5 w-5 pointer-events-none" />
       <span>{label}</span>
     </NavLink>
   );

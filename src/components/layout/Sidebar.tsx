@@ -56,13 +56,13 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
       <Link
         to={item.href}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200",
           "hover:bg-sidebar-accent",
           isActive && "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary",
           !isActive && "text-sidebar-foreground/70 hover:text-sidebar-foreground"
         )}
       >
-        <Icon className="h-5 w-5 shrink-0" />
+        <Icon className="h-5 w-5 shrink-0 pointer-events-none" />
         {!collapsed && (
           <span className="text-sm font-medium truncate">{item.name}</span>
         )}
@@ -71,7 +71,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
 
     if (collapsed) {
       return (
-        <Tooltip delayDuration={0}>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
           <TooltipContent side="right" className="font-medium">
             {item.name}
