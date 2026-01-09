@@ -76,6 +76,7 @@ const AutomationsPage = lazy(() => import("./modules/automations/pages/Automatio
 
 // Módulo Permissões (Global)
 const GlobalPermissionsPage = lazy(() => import("./modules/permissions/pages/GlobalPermissionsPage"));
+const GlobalUsersPage = lazy(() => import("./modules/users-global/pages/GlobalUsersPage"));
 const BuPermissionsPage = lazy(() => import("./modules/permissions/pages/BuPermissionsPage"));
 
 // Módulo Tickets
@@ -408,6 +409,18 @@ const App = () => {
                           <AdminRoute>
                             <SettingsLayout>
                               <HubNotifications />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/hub/users"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <GlobalUsersPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>

@@ -11,6 +11,7 @@ import {
   Shield,
   Briefcase,
   Bell,
+  Users,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -80,6 +81,7 @@ export function SettingsSidebar() {
         <NavItem to="/hub/automations" icon={Workflow} label="Automações" />
         <NavItem to="/hub/permissions" icon={Shield} label="Permissões" />
         <NavItem to="/hub/job-titles" icon={Briefcase} label="Cargos" />
+        <NavItem to="/hub/users" icon={Users} label="Usuários" />
         <NavItem to="/hub/notifications" icon={Bell} label="Notificações" />
       </div>
 
