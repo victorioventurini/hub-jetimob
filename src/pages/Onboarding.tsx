@@ -3,11 +3,17 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Loader2 } from "lucide-react";
 
 export default function Onboarding() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  usePageTitle("Seja bem-vindo(a)", {
+    skipBu: true,
+    customDescription: "Complete seu perfil para começar a usar o Hub. Configure suas informações pessoais, contato e localização em poucos passos.",
+  });
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["onboarding-page", user?.id],
