@@ -16,6 +16,7 @@ import {
 import { LogOut, User, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 
 interface SettingsLayoutProps {
@@ -31,6 +32,7 @@ const roleLabels: Record<string, string> = {
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const { profile, role, signOut } = useAuth();
+  const { hasMultipleBus } = useBu();
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -83,18 +85,20 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
 
             {/* Right section */}
             <div className="flex items-center gap-2">
-              {/* BU Selector button */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2"
-                asChild
-              >
-                <Link to="/select-bu">
-                  <Building2 className="h-4 w-4" />
-                  Selecionar BU
-                </Link>
-              </Button>
+              {/* BU Selector button - only show if user has multiple BUs */}
+              {hasMultipleBus && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  asChild
+                >
+                  <Link to="/select-bu">
+                    <Building2 className="h-4 w-4" />
+                    Selecionar BU
+                  </Link>
+                </Button>
+              )}
 
               {/* Notifications */}
               <NotificationCenter />

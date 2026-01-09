@@ -24,7 +24,7 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
-  const { userRole } = useBu();
+  const { userRole, hasMultipleBus } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
@@ -72,14 +72,16 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
         {/* Right section */}
         <div className="flex items-center gap-2">
-          {/* BU Selector - Show button on hub, dropdown elsewhere */}
+          {/* BU Selector - Show button on hub (if multiple BUs), dropdown elsewhere */}
           {isHubPage ? (
-            <Button asChild variant="outline" size="sm" className="gap-2">
-              <Link to="/select-bu">
-                <Building2 className="h-4 w-4" />
-                Selecionar BU
-              </Link>
-            </Button>
+            hasMultipleBus && (
+              <Button asChild variant="outline" size="sm" className="gap-2">
+                <Link to="/select-bu">
+                  <Building2 className="h-4 w-4" />
+                  Selecionar BU
+                </Link>
+              </Button>
+            )
           ) : (
             <BuSelector />
           )}
