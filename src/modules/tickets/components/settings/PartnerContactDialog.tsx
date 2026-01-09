@@ -34,22 +34,7 @@ import { useCreatePartnerContact, useUpdatePartnerContact } from "../../hooks/us
 import { PartnerContact, PartnerCompany } from "../../types";
 import { ContactCapabilitiesList } from "./ContactCapabilitiesList";
 
-// Máscara de telefone: +55 (XX) XXXXX-XXXX
-function formatPhoneWithDDI(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  
-  if (digits.length === 0) return '';
-  if (digits.length <= 2) return `+${digits}`;
-  if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
-  if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
-  if (digits.length <= 13) {
-    const areaCode = digits.slice(2, 4);
-    const firstPart = digits.slice(4, 9);
-    const secondPart = digits.slice(9, 13);
-    return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? '-' + secondPart : ''}`;
-  }
-  return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
-}
+import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from "@/lib/phone";
 
 const formSchema = z.object({
   partner_company_id: z.string().min(1, "Empresa é obrigatória"),
@@ -152,7 +137,7 @@ export function PartnerContactDialog({
           partner_company_id: contact.partner_company_id,
           name: contact.name,
           email: contact.email,
-          phone: contact.phone ? formatPhoneWithDDI(contact.phone) : "",
+          phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
           status: contact.status,
         });
       } else {
@@ -168,7 +153,7 @@ export function PartnerContactDialog({
   }, [open, contact, defaultCompanyId, form]);
 
   const handlePhoneChange = (value: string, onChange: (value: string) => void) => {
-    const formatted = formatPhoneWithDDI(value);
+    const formatted = formatPhoneInput(value);
     onChange(formatted);
   };
 
@@ -178,8 +163,8 @@ export function PartnerContactDialog({
       return;
     }
 
-    // Extrair apenas dígitos do telefone para salvar
-    const phoneDigits = data.phone?.replace(/\D/g, '') || null;
+    // Normalize phone to digits only for storage
+    const phoneDigits = normalizePhone(data.phone);
 
     if (contact) {
       updateContact(

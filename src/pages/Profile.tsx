@@ -27,6 +27,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
+import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from '@/lib/phone';
 
 const profileSchema = z.object({
   first_name: z.string().trim().min(1, 'Nome é obrigatório').max(100),
@@ -146,11 +147,12 @@ export default function Profile() {
 
   useEffect(() => {
     if (profile) {
+      // Format phone for display in form
       const initialData: ProfileFormData = {
         first_name: profile.first_name,
         last_name: profile.last_name,
         display_name: profile.display_name,
-        whatsapp_personal: profile.whatsapp_personal,
+        whatsapp_personal: profile.whatsapp_personal ? formatPhoneDisplay(profile.whatsapp_personal) : null,
         city: profile.city,
         state: profile.state,
         birth_day: profile.birth_day,
@@ -202,10 +204,12 @@ export default function Profile() {
     mutationFn: async (data: ProfileFormData) => {
       if (!user?.id || !profile?.id) throw new Error('Perfil não encontrado');
       
+      // Normalize phone to digits only for storage
       const { error } = await supabase
         .from('profiles')
         .update({
           ...data,
+          whatsapp_personal: normalizePhone(data.whatsapp_personal), // Store as digits only
           display_name: `${data.first_name} ${data.last_name}`.trim(),
           updated_at: new Date().toISOString(),
         })
@@ -356,25 +360,9 @@ export default function Profile() {
     }
   };
 
-  // Phone mask with DDI: +55 (51) 99999-9999
-  const formatPhoneWithDDI = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    
-    if (digits.length === 0) return '';
-    if (digits.length <= 2) return `+${digits}`;
-    if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
-    if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
-    if (digits.length <= 13) {
-      const areaCode = digits.slice(2, 4);
-      const firstPart = digits.slice(4, 9);
-      const secondPart = digits.slice(9, 13);
-      return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? '-' + secondPart : ''}`;
-    }
-    return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
-  };
-
+  // Phone input handler using centralized utility
   const handlePhoneChange = (value: string) => {
-    const formatted = formatPhoneWithDDI(value);
+    const formatted = formatPhoneInput(value);
     handleChange('whatsapp_personal', formatted || null);
   };
 
