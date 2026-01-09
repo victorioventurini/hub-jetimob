@@ -425,8 +425,10 @@ $$ LANGUAGE sql STABLE;
 | `audit-supabase-client.ts` | `npx tsx scripts/audit-supabase-client.ts` | Cliente global em módulos operacionais |
 | `audit-prebu-buscoped.ts` | `npx tsx scripts/audit-prebu-buscoped.ts` | useBuScopedSupabase em contexto PRE-BU |
 | `audit-user-directory.ts` | `npx tsx scripts/audit-user-directory.ts` | INNER JOIN memberships em listagem de usuários |
+| `audit-docs-vs-tcr.ts` | `npx tsx scripts/audit-docs-vs-tcr.ts` | Documentação contradizendo TCR |
 
 > 📚 Ver: [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md)
+> 📚 Ver: [DOCS_CONSISTENCY_RULES.md](./DOCS_CONSISTENCY_RULES.md)
 
 ---
 
