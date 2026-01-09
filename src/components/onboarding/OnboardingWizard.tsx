@@ -18,7 +18,7 @@ import { useBu } from "@/contexts/BuContext";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { cn } from "@/lib/utils";
 import { User, Briefcase, MapPin, Building2, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, CalendarIcon, Phone } from "lucide-react";
-import logoJetimob from "@/assets/logo-jetimob-branco.svg";
+
 
 const MONTHS = [
   { value: 1, label: "Janeiro" },
@@ -281,7 +281,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-xl bg-primary">
-              <img src={logoJetimob} alt="Jetimob" className="h-8" />
+              <Sparkles className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
           <CardTitle className="text-2xl">Bem-vindo ao Hub!</CardTitle>
