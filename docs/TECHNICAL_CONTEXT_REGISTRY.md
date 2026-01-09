@@ -1,18 +1,21 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.12.0  
-**Última atualização:** 2026-01-08
+**Versão:** 2.13.0  
+**Última atualização:** 2026-01-09
 **Responsável:** Lovable AI / Equipe de Engenharia
+**Status:** V2-only mode ativo (V1 removido definitivamente)
 
 > 📚 **Documentação Complementar:**
-> - [DEVELOPMENT_STANDARDS.md v1.0.1](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
+> - [DEVELOPMENT_STANDARDS.md v1.1.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
 > - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção de identidade (`user_id` vs `profile_id`)
-> - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de permissões e templates
+> - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de permissões e templates V2
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
 > - [engineering/QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys
 > - [engineering/BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase
 > - [ops/BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook oficial de backup e restore
 > - [ops/GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist oficial de go-live
+> - [permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md](./permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md) — Remoção definitiva V1
+> - [WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md](./WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md) — Governance Gate
 
 ---
 
@@ -1664,49 +1667,68 @@ src/
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.8.0 |
-| **Data da última atualização** | 2026-01-07 |
+| **Versão do TCR** | 2.13.0 |
+| **Data da última atualização** | 2026-01-09 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
+| **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
+| **Permission Keys** | 160 |
+| **Permission Templates V2** | 27 |
+| **Permission Presets** | 12 |
 
 ---
 
 ## Changelog
 
-### v2.8.0 (2026-01-07) — RBAC Phase 1 Validation Complete
-- **Validação RBAC Phase 1 completa** (Autorização Consistente):
-  - Relatório `docs/RBAC_PHASE1_VALIDATION_REPORT.md` com status PASS
-  - Relatório `docs/RBAC_CONSISTENCY_REPORT.md` com evidências
-  - Checklist QA `docs/qa/QA_RBAC_PHASE1.md` com 62 cenários de teste
-  - Checklist QA `docs/qa/QA_PERMISSIONS_TEMPLATES.md` para templates
-- **Permission Keys como fonte única de verdade**:
-  - 141 permission keys ativas em 9 módulos (assets: 41, okrs: 37, tickets: 23, kpis: 13, teams: 10, users: 7, hub: 5, platform: 4, home: 1)
-  - Catálogo centralizado em `permission_catalog`
-  - Roles servem apenas como atalhos para concessão de keys
-- **Funções SQL canônicas validadas**:
-  - `has_permission(user_id, bu_id, permission_key)` com bypass para admins
-  - `get_my_permissions(bu_id)` retorna wildcard `['*']` para admins
-  - `user_can_manage_team(user_id, team_id)` respeita hierarquia
-  - `is_team_leader(user_id, team_id)` verifica liderança direta
-  - `team_is_ancestor(ancestor_id, team_id)` usa CTE recursivo
-- **RLS Policies validadas**:
-  - Todas tabelas operacionais com RLS habilitado
-  - Policies usam funções canônicas (`user_has_bu_access`, `is_current_bu`, `is_platform_admin`, `is_bu_admin`)
-  - Nenhum role hardcoded em policies
-- **Frontend Guards validados**:
-  - `usePermissions()` hook centralizado
-  - `RequirePermission` guard component
-  - Nenhum check de role direto (exceto UI helpers documentados)
-- **Remoção total do "CEO"**:
-  - Enum `app_role` contém apenas: `super_admin`, `admin`, `team_leader`, `collaborator`
-  - Migration aplicada para converter `ceo` → `super_admin`
-  - Nenhuma referência ativa no código
-- **Scripts de auditoria**:
-  - `scripts/audit-rbac.ts` — detecta violações de RBAC no frontend
-  - `scripts/audit-useBuScopedSupabase.ts` — valida uso de BU-scoped client
-  - Ambos retornam PASS
+### v2.13.0 (2026-01-09) — V2-Only Mode & Governance Hardening
+- **V1 Permissions completamente removido** (Wave 9 Final):
+  - Todas tabelas V1 dropadas: `permission_groups`, `permission_group_permissions`, `bu_user_permission_groups`, `permission_key_aliases`
+  - Funções V1 removidas: `resolve_permission_key`, `log_legacy_key_usage`, `block_v1_writes`
+  - Frontend limpo: `usePermissionAliases`, `AliasesTab.tsx` removidos
+  - **V2 é a única fonte de verdade para controle de acesso**
+- **Wave 10 — Governance Gate Enforced**:
+  - Presets inteligentes (12 configurados): `assets_viewer`, `assets_operator`, `okrs_leader`, `tickets_admin`, etc.
+  - Visual Diff obrigatório antes de aplicar alterações
+  - Motivo obrigatório (min 10 chars) para qualquer alteração de permissão
+  - Logs de auditoria estruturados em `permission_audit_log`
+  - Views de governança: `v_permission_risk_report`, `v_users_without_templates`
+  - `PermissionDiffDialog` + `PermissionExplanationDrawer` no frontend
+- **User Directory Global v2** consolidado:
+  - View canônica `v_bu_active_profiles` como fonte única
+  - Hooks: `useBuUsersDirectory`, componentes: `BuUserSelect`, `BuUserMultiSelect`
+  - Regra: usuários aparecem no diretório mesmo com `profiles.user_id = NULL`
+  - Audit script `audit-user-directory.ts` retorna 0 findings
+- **OKR Cycle Checkins**:
+  - RPC `get_cycle_checkins` com feed paginado, agregações e KRs overdue
+  - Página `/okrs/checkins` com tabs Feed, Pendências, Resumo
+  - Filtros por time, owner, confidence, status via URL state
+- **Métricas atualizadas**:
+  - Permission Keys: 160 (era 143)
+  - Templates V2: 27
+  - Presets: 12
+  - User Assignments V2: 37
 
-### v2.7.0 (2026-01-07) — Auditoria Global e Consolidação
+### v2.12.0 (2026-01-08) — Wave 7-9 Consolidation
+- **Wave 7 — Sunset V1 (Permissions)**:
+  - Modelo de permissões v1 congelado (read-only) via triggers
+  - UI de edição v1 removida (apenas visualização legado)
+  - Sistema de migração controlada v1 → v2 implementado
+- **Wave 8-9 — DROP V1**:
+  - Tabelas e funções V1 removidas definitivamente
+  - Guardrail view `users_without_v2_permissions` implementado
+  - Auto-assign trigger para template base V2
+
+### v2.11.0 (2026-01-08) — Notifications & OKR Hardening
+- **Central de Notificações V1 completa**:
+  - Outbox Pattern implementado com retry automático
+  - Templates versionados por evento/canal
+  - Canais ativos: `in_app`, `email` (Slack/WhatsApp planejados)
+  - Views de observabilidade: `v_notification_delivery_health`, `v_notification_failures`
+- **OKR Team Scope Hardening**:
+  - Função `get_manageable_teams()` para RBAC de times
+  - RLS enforced para objetivos e KRs por hierarquia de times
+
+### v2.10.0 (2026-01-08)
 - **Auditoria Global completa** do Hub:
   - Relatório `docs/GLOBAL_AUDIT_REPORT.md` com 7 áreas auditadas
   - Checklist QA manual `docs/QA_GLOBAL_AUDIT.md` com 80+ testes
