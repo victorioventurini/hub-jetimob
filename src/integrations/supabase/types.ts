@@ -6613,6 +6613,10 @@ export type Database = {
         Args: { p_ticket_id: string; p_user_id: string }
         Returns: boolean
       }
+      check_scope_access: {
+        Args: { p_ctx?: Json; p_scope: string; p_user_id: string }
+        Returns: boolean
+      }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
@@ -6748,7 +6752,7 @@ export type Database = {
         }[]
       }
       get_leader_teams: {
-        Args: { p_user_id?: string }
+        Args: { p_bu_id?: string }
         Returns: {
           member_count: number
           parent_team_id: string
@@ -6795,7 +6799,12 @@ export type Database = {
         }[]
       }
       get_profile_id: { Args: { p_user_id: string }; Returns: string }
-      get_team_member_ids: { Args: { p_team_id: string }; Returns: string[] }
+      get_team_member_ids:
+        | { Args: { p_team_id: string }; Returns: string[] }
+        | {
+            Args: { p_include_subtree?: boolean; p_team_id: string }
+            Returns: string[]
+          }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
       get_user_notification_settings: {
