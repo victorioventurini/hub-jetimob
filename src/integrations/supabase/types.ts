@@ -5359,6 +5359,30 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       teams: {
         Row: {
           bu_id: string
@@ -6757,6 +6781,7 @@ export type Database = {
       }
     }
     Functions: {
+      _identity_dual_mode_deadline: { Args: never; Returns: string }
       acknowledge_health_alert: {
         Args: { p_alert_id: string; p_notes?: string }
         Returns: boolean
@@ -7053,6 +7078,7 @@ export type Database = {
         }[]
       }
       get_profile_id: { Args: { p_user_id: string }; Returns: string }
+      get_system_setting: { Args: { p_key: string }; Returns: Json }
       get_team_member_ids: {
         Args: { p_include_subtree?: boolean; p_team_id: string }
         Returns: string[]
