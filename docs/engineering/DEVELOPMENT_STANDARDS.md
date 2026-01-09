@@ -1,8 +1,8 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.0.1  
-**Última atualização:** 2026-01-08  
-**Status:** Normativo
+**Versão:** 1.1.0  
+**Última atualização:** 2026-01-09  
+**Status:** Normativo (V2-only mode ativo)
 
 ---
 
@@ -10,20 +10,14 @@
 
 - [A. Arquitetura e Contextos](#a-arquitetura-e-contextos)
 - [B. Identidade (auth vs profiles)](#b-identidade-auth-vs-profiles)
-- [C. Permissões (RBAC)](#c-permissões-rbac)
+- [C. Permissões (RBAC V2-only)](#c-permissões-rbac)
 - [D. Queries, Performance e DX](#d-queries-performance-e-dx)
 - [E. URL State](#e-url-state)
 - [F. Edge Functions](#f-edge-functions)
 - [G. Banco de Dados](#g-banco-de-dados)
 - [H. Checklist de PR](#h-checklist-de-pr)
 - [I. Anti-patterns (Proibidos)](#i-anti-patterns-proibidos)
-- [B. Identidade (auth vs profiles)](#b-identidade-auth-vs-profiles)
-- [C. Permissões (RBAC)](#c-permissões-rbac)
-- [D. Queries, Performance e DX](#d-queries-performance-e-dx)
-- [E. URL State](#e-url-state)
-- [F. Edge Functions](#f-edge-functions)
-- [G. Banco de Dados](#g-banco-de-dados)
-- [H. Checklist de PR](#h-checklist-de-pr)
+- [J. User Directory Global](#j-user-directory-global)
 
 ---
 
@@ -823,13 +817,45 @@ O único motivo para exclusão:
 
 ---
 
+## J. User Directory Global
+
+### J.1 View Canônica
+
+A fonte única de verdade para listagem de usuários é `v_bu_active_profiles`:
+
+```sql
+-- View que inclui TODOS os usuários ativos, mesmo sem login (user_id NULL)
+SELECT * FROM v_bu_active_profiles WHERE bu_id = current_bu_id();
+```
+
+### J.2 Hooks e Componentes
+
+| Artefato | Uso |
+|----------|-----|
+| `useBuUsersDirectory()` | Hook canônico para listar usuários da BU |
+| `BuUserSelect` | Componente de seleção única de usuário |
+| `BuUserMultiSelect` | Componente de seleção múltipla |
+
+### J.3 Regras Invioláveis
+
+- ✅ Usuários aparecem no diretório mesmo com `profiles.user_id = NULL`
+- ✅ Exclusão apenas por `employment_status = 'terminated'` ou `deleted_at IS NOT NULL`
+- ❌ **PROIBIDO**: `INNER JOIN bu_user_memberships` para listar pessoas
+- ❌ **PROIBIDO**: Filtro `user_id IS NOT NULL` em listagem
+
+> 📚 Ver: [QA_USER_DIRECTORY_GLOBAL_v2.md](../qa/QA_USER_DIRECTORY_GLOBAL_v2.md)
+
+---
+
 ## Referências
 
 | Documento | Descrição |
 |-----------|-----------|
 | [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | Visão completa do sistema |
 | [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção auth vs profiles |
-| [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de permissões |
+| [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de permissões V2 |
 | [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md) | Padrão de URL state |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
+| [permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md](../permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md) | Remoção V1 |
+| [WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md](../WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md) | Governance Gate |
