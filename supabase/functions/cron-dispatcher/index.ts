@@ -44,63 +44,41 @@ async function getCronSecret(supabase: any): Promise<string | null> {
   return config?.cron_secret || null;
 }
 
-// Process outbox items
-async function processOutbox(supabase: any): Promise<OutboxResult> {
+// Process outbox items by calling the dedicated edge function
+async function processOutbox(): Promise<OutboxResult> {
   const result: OutboxResult = { processed: 0, sent: 0, failed: 0 };
 
-  const now = new Date().toISOString();
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   
-  console.log("[cron-dispatcher] Fetching pending outbox items...");
+  console.log("[cron-dispatcher] Calling process-notification-outbox edge function...");
   
-  // Fetch all pending items - next_retry_at check is optional
-  const { data: items, error } = await supabase
-    .from("notification_outbox")
-    .select("id, channel_slug, event_slug, payload, bu_id, user_id, retries, max_retries, next_retry_at")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true })
-    .limit(50);
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/process-notification-outbox`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ source: "cron-dispatcher" }),
+    });
 
-  if (error) {
-    console.error("[cron-dispatcher] Error fetching outbox:", error);
-    return result;
-  }
-
-  console.log(`[cron-dispatcher] Found ${items?.length || 0} pending items`);
-
-  // Filter items that are ready to process (null next_retry_at or past due)
-  const readyItems = (items || []).filter((item: any) => {
-    if (!item.next_retry_at) return true;
-    return new Date(item.next_retry_at) <= new Date(now);
-  });
-
-  console.log(`[cron-dispatcher] ${readyItems.length} items ready to process`);
-
-  if (readyItems.length === 0) {
-    console.log("[cron-dispatcher] No pending outbox items ready");
-    return result;
-  }
-
-  result.processed = readyItems.length;
-
-  for (const item of readyItems) {
-    try {
-      const { error: updateError } = await supabase
-        .from("notification_outbox")
-        .update({ 
-          status: "sent", 
-          sent_at: now,
-          processed_at: now 
-        })
-        .eq("id", item.id);
-
-      if (updateError) {
-        result.failed++;
-      } else {
-        result.sent++;
-      }
-    } catch {
-      result.failed++;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[cron-dispatcher] Edge function returned ${response.status}: ${errorText}`);
+      return result;
     }
+
+    const data = await response.json();
+    console.log("[cron-dispatcher] Edge function response:", JSON.stringify(data));
+    
+    // Extract results from the edge function response
+    result.processed = data.processed || 0;
+    result.sent = data.sent || 0;
+    result.failed = data.failed || 0;
+    
+  } catch (error: unknown) {
+    console.error("[cron-dispatcher] Error calling edge function:", error instanceof Error ? error.message : error);
   }
 
   return result;
@@ -176,7 +154,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const outboxResult = await processOutbox(supabase);
+    const outboxResult = await processOutbox();
     const healthResult = await evaluateHealth(supabase);
     const duration = Date.now() - startTime;
 
