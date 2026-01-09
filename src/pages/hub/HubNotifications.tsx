@@ -125,14 +125,15 @@ export default function HubNotifications() {
   const { value: moduleFilter, set: setModuleFilter } = useUrlState<string>({ key: 'module', defaultValue: 'all' });
   const { value: severityFilter, set: setSeverityFilter } = useUrlState<string>({ key: 'severity', defaultValue: 'all' });
   
-  // Global outbox stats
+  // Global outbox stats with per-channel breakdown
   const { data: outboxStats, isLoading: statsLoading } = useQuery({
     queryKey: ['notification-outbox-stats-global'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_outbox')
-        .select('status, created_at')
-        .order('created_at', { ascending: false });
+        .select('status, channel_slug, created_at')
+        .order('created_at', { ascending: false })
+        .limit(1000);
       
       if (error) throw error;
       
@@ -141,7 +142,23 @@ export default function HubNotifications() {
       const failed = data?.filter(r => r.status === 'failed').length || 0;
       const lastProcessed = data?.find(r => r.status === 'sent')?.created_at || null;
       
-      return { pending, sent, failed, total: data?.length || 0, lastProcessed };
+      // Per-channel stats
+      const byChannel: Record<string, { pending: number; sent: number; failed: number }> = {
+        email: { pending: 0, sent: 0, failed: 0 },
+        slack: { pending: 0, sent: 0, failed: 0 },
+        webhook: { pending: 0, sent: 0, failed: 0 },
+      };
+      
+      data?.forEach(r => {
+        const ch = r.channel_slug as string;
+        if (byChannel[ch]) {
+          if (r.status === 'pending') byChannel[ch].pending++;
+          else if (r.status === 'sent') byChannel[ch].sent++;
+          else if (r.status === 'failed') byChannel[ch].failed++;
+        }
+      });
+      
+      return { pending, sent, failed, total: data?.length || 0, lastProcessed, byChannel };
     },
   });
   
@@ -524,6 +541,7 @@ export default function HubNotifications() {
             </p>
           </div>
           
+          {/* Global Stats */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
@@ -591,6 +609,76 @@ export default function HubNotifications() {
             </Card>
           </div>
           
+          {/* Per-Channel Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Métricas por Canal</CardTitle>
+              <CardDescription>Estatísticas de envio por canal de notificação</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Canal</TableHead>
+                    <TableHead className="text-center">Pendentes</TableHead>
+                    <TableHead className="text-center">Enviadas</TableHead>
+                    <TableHead className="text-center">Falhas</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {['email', 'slack', 'webhook'].map(ch => {
+                    const Icon = channelIcons[ch] || Bell;
+                    const stats = outboxStats?.byChannel?.[ch] || { pending: 0, sent: 0, failed: 0 };
+                    const hasPending = stats.pending > 0;
+                    const hasFailed = stats.failed > 0;
+                    
+                    return (
+                      <TableRow key={ch}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-muted-foreground" />
+                            <span className="capitalize font-medium">{ch}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={hasPending ? "secondary" : "outline"} className={hasPending ? "bg-yellow-100 text-yellow-800" : ""}>
+                            {stats.pending}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-green-600">
+                            {stats.sent}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={hasFailed ? "destructive" : "outline"}>
+                            {stats.failed}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(hasPending || hasFailed) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // Deep link to BU outbox filtered by channel
+                                window.location.href = `/settings/notifications?tab=outbox&channel=${ch}&status=${hasFailed ? 'failed' : 'pending'}`;
+                              }}
+                            >
+                              Ver detalhes
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          
+          {/* System Status */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Status do Sistema</CardTitle>
