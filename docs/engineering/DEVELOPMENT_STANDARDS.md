@@ -430,6 +430,19 @@ $$ LANGUAGE sql STABLE;
 > 📚 Ver: [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md)
 > 📚 Ver: [DOCS_CONSISTENCY_RULES.md](./DOCS_CONSISTENCY_RULES.md)
 
+### D.6 Data Model Registry (OBRIGATÓRIO)
+
+```
+⚠️ REGRA INQUEBRÁVEL: É proibido inventar nomes de tabela/view/função.
+✅ OBRIGATÓRIO: Usar exclusivamente o DATA_MODEL_REGISTRY.
+```
+
+- **Fonte única:** `docs/engineering/DATA_MODEL_REGISTRY.md` + `.json`
+- **Regenerar:** `npx tsx scripts/generate-data-model-registry.ts`
+- **Quando:** Após cada migration
+
+> 📚 Ver: [DATA_MODEL_REGISTRY.md](./DATA_MODEL_REGISTRY.md)
+
 ---
 
 ## E. URL State
