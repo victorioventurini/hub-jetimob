@@ -3032,11 +3032,144 @@ export type Database = {
           },
         ]
       }
+      notification_template_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          changes: Json | null
+          created_at: string
+          id: string
+          template_id: string
+          version_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          template_id: string
+          version_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          template_id?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_template_audit_log_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_template_audit_log_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "notification_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_template_variables: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_slug: string
+          example_value: string | null
+          id: string
+          is_required: boolean
+          variable_key: string
+          variable_label: string
+          variable_type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_slug: string
+          example_value?: string | null
+          id?: string
+          is_required?: boolean
+          variable_key: string
+          variable_label: string
+          variable_type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_slug?: string
+          example_value?: string | null
+          id?: string
+          is_required?: boolean
+          variable_key?: string
+          variable_label?: string
+          variable_type?: string
+        }
+        Relationships: []
+      }
+      notification_template_versions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_approved: boolean
+          subject: string | null
+          template_id: string
+          variables_used: string[]
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_approved?: boolean
+          subject?: string | null
+          template_id: string
+          variables_used?: string[]
+          version: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_approved?: boolean
+          subject?: string | null
+          template_id?: string
+          variables_used?: string[]
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_templates: {
         Row: {
           body_template: string
-          channel_slug: string
+          bu_id: string | null
+          channel: string
           created_at: string
+          current_version_id: string | null
           event_slug: string
           id: string
           is_active: boolean
@@ -3046,8 +3179,10 @@ export type Database = {
         }
         Insert: {
           body_template: string
-          channel_slug: string
+          bu_id?: string | null
+          channel: string
           created_at?: string
+          current_version_id?: string | null
           event_slug: string
           id?: string
           is_active?: boolean
@@ -3057,8 +3192,10 @@ export type Database = {
         }
         Update: {
           body_template?: string
-          channel_slug?: string
+          bu_id?: string | null
+          channel?: string
           created_at?: string
+          current_version_id?: string | null
           event_slug?: string
           id?: string
           is_active?: boolean
@@ -3066,7 +3203,15 @@ export type Database = {
           updated_at?: string
           version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notification_templates_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -6955,6 +7100,17 @@ export type Database = {
         Args: { p_auth_user_id: string }
         Returns: Json
       }
+      resolve_notification_template: {
+        Args: { p_bu_id?: string; p_channel: string; p_event_slug: string }
+        Returns: {
+          body: string
+          is_bu_override: boolean
+          subject: string
+          template_id: string
+          variables_used: string[]
+          version_id: string
+        }[]
+      }
       resolve_ticket_assignee: {
         Args: {
           p_bu_id: string
@@ -7039,6 +7195,14 @@ export type Database = {
       user_id_from_profile_id: {
         Args: { p_profile_id: string }
         Returns: string
+      }
+      validate_template_variables: {
+        Args: { p_body: string; p_event_slug: string; p_subject?: string }
+        Returns: {
+          invalid_variables: string[]
+          is_valid: boolean
+          missing_required: string[]
+        }[]
       }
       verify_user_migration: {
         Args: { p_bu_id: string; p_notes?: string; p_user_id: string }

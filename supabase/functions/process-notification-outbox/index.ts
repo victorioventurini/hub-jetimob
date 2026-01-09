@@ -44,6 +44,15 @@ interface WebhookConfig {
   configured?: boolean;
 }
 
+interface TemplateResolution {
+  template_id: string;
+  version_id: string;
+  subject: string | null;
+  body: string;
+  variables_used: string[];
+  is_bu_override: boolean;
+}
+
 // deno-lint-ignore no-explicit-any
 type SupabaseClient = any;
 
@@ -338,11 +347,58 @@ async function sendWebhook(
   }
 }
 
-// Build notification email HTML
-function buildNotificationEmailHtml(payload: Record<string, unknown>): string {
-  const title = (payload.title as string) || "Nova Notificação";
-  const message = (payload.message as string) || "";
-  const contextUrl = payload.context_url as string | undefined;
+// Resolve notification template from database
+async function resolveTemplate(
+  supabase: SupabaseClient,
+  eventSlug: string,
+  channel: string,
+  buId: string | null
+): Promise<TemplateResolution | null> {
+  const { data, error } = await supabase.rpc("resolve_notification_template", {
+    p_event_slug: eventSlug,
+    p_channel: channel,
+    p_bu_id: buId,
+  });
+
+  if (error || !data || data.length === 0) {
+    console.log(`[Outbox] No template found for ${eventSlug}/${channel}, using fallback`);
+    return null;
+  }
+
+  return data[0] as TemplateResolution;
+}
+
+// Render template variables
+function renderTemplate(template: string, variables: Record<string, unknown>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const placeholder = `{{${key}}}`;
+    result = result.split(placeholder).join(String(value ?? ""));
+  }
+  // Remove any unresolved placeholders
+  result = result.replace(/\{\{\w+\}\}/g, "");
+  return result;
+}
+
+// Convert markdown to simple HTML (basic conversion for email)
+function markdownToHtml(markdown: string): string {
+  return markdown
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br>")
+    .replace(/^(.+)$/, "<p>$1</p>");
+}
+
+// Build notification email HTML from template
+function buildNotificationEmailHtmlFromTemplate(
+  subject: string,
+  body: string,
+  contextUrl: string | undefined
+): string {
+  const siteUrl = Deno.env.get("SITE_URL") || "https://hub.jetimob.com";
+  const bodyHtml = markdownToHtml(body);
 
   return `
     <!DOCTYPE html>
@@ -357,23 +413,19 @@ function buildNotificationEmailHtml(payload: Record<string, unknown>): string {
           <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub</h1>
         </div>
         
-        <h2 style="color: #18181b; font-size: 18px; margin-bottom: 16px;">${title}</h2>
+        <h2 style="color: #18181b; font-size: 18px; margin-bottom: 16px;">${subject}</h2>
         
-        <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-          ${message}
-        </p>
+        <div style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+          ${bodyHtml}
+        </div>
         
-        ${
-          contextUrl
-            ? `
+        ${contextUrl ? `
         <div style="text-align: center; margin-bottom: 32px;">
-          <a href="${Deno.env.get("SITE_URL") || "https://hub.jetimob.com"}${contextUrl}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          <a href="${siteUrl}${contextUrl}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
             Ver no Hub
           </a>
         </div>
-        `
-            : ""
-        }
+        ` : ""}
         
         <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;">
         
@@ -384,6 +436,14 @@ function buildNotificationEmailHtml(payload: Record<string, unknown>): string {
     </body>
     </html>
   `;
+}
+
+// Build fallback notification email HTML (when no template exists)
+function buildFallbackEmailHtml(payload: Record<string, unknown>): string {
+  const title = (payload.title as string) || "Nova Notificação";
+  const message = (payload.message as string) || "";
+  const contextUrl = payload.context_url as string | undefined;
+  return buildNotificationEmailHtmlFromTemplate(title, message, contextUrl);
 }
 
 // Process a single outbox item
@@ -415,11 +475,36 @@ async function processOutboxItem(
           error: "NO_WORK_EMAIL: Recipient has no work_email and no auth email fallback" 
         };
       }
-      const html = buildNotificationEmailHtml(payload);
-      const title = (payload.title as string) || "Nova Notificação";
+      
+      // Build variables for template rendering
+      const templateVars: Record<string, unknown> = {
+        ...payload,
+        user_name: recipient.display_name || "Usuário",
+        context_url: payload.context_url,
+      };
+      
+      // Try to resolve template from database
+      const template = await resolveTemplate(supabase, item.event_slug, "email", bu_id);
+      
+      let subject: string;
+      let html: string;
+      
+      if (template) {
+        // Render template with variables
+        subject = renderTemplate(template.subject || "{{title}}", templateVars);
+        const renderedBody = renderTemplate(template.body, templateVars);
+        html = buildNotificationEmailHtmlFromTemplate(subject, renderedBody, payload.context_url as string | undefined);
+        console.log(`[Outbox] Using template version_id=${template.version_id} for ${item.event_slug}/email`);
+      } else {
+        // Fallback to hardcoded minimal template
+        subject = `[Hub] ${(payload.title as string) || "Nova Notificação"}`;
+        html = buildFallbackEmailHtml(payload);
+        console.log(`[Outbox] Using fallback template for ${item.event_slug}/email`);
+      }
+      
       return await sendEmail(supabase, {
         to: recipient.work_email,
-        subject: `[Hub] ${title}`,
+        subject,
         html,
       });
     }
