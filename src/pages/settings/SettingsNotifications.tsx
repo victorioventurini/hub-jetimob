@@ -71,7 +71,9 @@ import {
   Clock,
   AlertTriangle,
   X,
+  FileText,
 } from 'lucide-react';
+import { TemplatesList } from '@/components/notifications/templates';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -96,7 +98,7 @@ const moduleNames: Record<string, string> = {
   kpis: 'KPIs',
 };
 
-type TabValue = 'channels' | 'events' | 'outbox' | 'inapp' | 'test';
+type TabValue = 'channels' | 'events' | 'templates' | 'outbox' | 'inapp' | 'test';
 
 // Channels that are configurable in Phase 3
 const CONFIGURABLE_CHANNELS = ['email', 'slack', 'webhook'];
@@ -402,7 +404,7 @@ export default function SettingsNotifications() {
       </div>
       
       <Tabs value={tabState.value} onValueChange={(v) => tabState.set(v as TabValue)}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="channels" className="gap-2">
             <Settings2 className="h-4 w-4" />
             Canais
@@ -411,6 +413,12 @@ export default function SettingsNotifications() {
             <ListChecks className="h-4 w-4" />
             Eventos
           </TabsTrigger>
+          <PermissionGuard permission="notifications.templates.read:bu" fallback={null}>
+            <TabsTrigger value="templates" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Templates
+            </TabsTrigger>
+          </PermissionGuard>
           <PermissionGuard permission="notifications.outbox.view:bu" fallback={null}>
             <TabsTrigger value="outbox" className="gap-2">
               <Inbox className="h-4 w-4" />
@@ -550,6 +558,13 @@ export default function SettingsNotifications() {
                 </div>
               </CardContent>
             </Card>
+          </PermissionGuard>
+        </TabsContent>
+        
+        {/* Tab: Templates (Phase 5) */}
+        <TabsContent value="templates">
+          <PermissionGuard permission="notifications.templates.read:bu">
+            <TemplatesList />
           </PermissionGuard>
         </TabsContent>
         
