@@ -1,0 +1,35 @@
+name: Documentation Consistency Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+
+jobs:
+  audit-docs:
+    name: Audit Docs vs TCR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git diff
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run documentation consistency audit
+        run: npx tsx scripts/audit-docs-vs-tcr.ts --changed-only
+      
+      - name: Report result
+        if: failure()
+        run: |
+          echo "::error::Documentation contradicts TCR. See job output for details."
+          echo "📚 Reference: docs/engineering/DOCS_CONSISTENCY_RULES.md"
