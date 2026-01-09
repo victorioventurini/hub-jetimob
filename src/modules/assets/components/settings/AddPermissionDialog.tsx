@@ -157,22 +157,29 @@ export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availableProfiles.slice(0, 20).map((profile) => (
-                        <SelectItem key={profile.user_id} value={profile.user_id}>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={profile.photo_url || undefined} />
-                              <AvatarFallback className="text-xs">
-                                {getProfileName(profile).slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p>{getProfileName(profile)}</p>
-                              <p className="text-xs text-muted-foreground">{profile.work_email}</p>
+                      {availableProfiles
+                        .filter((profile) => profile.user_id)
+                        .slice(0, 20)
+                        .map((profile) => (
+                          <SelectItem 
+                            key={profile.user_id!} 
+                            value={profile.user_id!}
+                            textValue={getProfileName(profile)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src={profile.photo_url || undefined} />
+                                <AvatarFallback className="text-xs">
+                                  {getProfileName(profile).slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p>{getProfileName(profile)}</p>
+                                <p className="text-xs text-muted-foreground">{profile.work_email}</p>
+                              </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

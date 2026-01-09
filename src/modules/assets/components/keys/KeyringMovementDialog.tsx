@@ -271,11 +271,17 @@ export function KeyringMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
-                              </SelectItem>
-                            ))}
+                            {profiles
+                              .filter((profile) => profile.user_id)
+                              .map((profile) => (
+                                <SelectItem 
+                                  key={profile.user_id!} 
+                                  value={profile.user_id!}
+                                  textValue={profile.full_name}
+                                >
+                                  {profile.full_name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -311,11 +317,17 @@ export function KeyringMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
-                              </SelectItem>
-                            ))}
+                            {profiles
+                              .filter((profile) => profile.user_id)
+                              .map((profile) => (
+                                <SelectItem 
+                                  key={profile.user_id!} 
+                                  value={profile.user_id!}
+                                  textValue={profile.full_name}
+                                >
+                                  {profile.full_name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -437,9 +449,13 @@ export function KeyringMovementDialog({
                             </FormControl>
                             <SelectContent>
                               {profiles
-                                .filter((p) => p.user_id !== keyring.current_user_id)
+                                .filter((p) => p.user_id && p.user_id !== keyring.current_user_id)
                                 .map((profile) => (
-                                  <SelectItem key={profile.user_id} value={profile.user_id}>
+                                  <SelectItem 
+                                    key={profile.user_id!} 
+                                    value={profile.user_id!}
+                                    textValue={profile.full_name}
+                                  >
                                     {profile.full_name}
                                   </SelectItem>
                                 ))}
@@ -493,11 +509,17 @@ export function KeyringMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
-                              </SelectItem>
-                            ))}
+                            {profiles
+                              .filter((profile) => profile.user_id)
+                              .map((profile) => (
+                                <SelectItem 
+                                  key={profile.user_id!} 
+                                  value={profile.user_id!}
+                                  textValue={profile.full_name}
+                                >
+                                  {profile.full_name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -532,11 +554,17 @@ export function KeyringMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
-                              </SelectItem>
-                            ))}
+                            {profiles
+                              .filter((profile) => profile.user_id)
+                              .map((profile) => (
+                                <SelectItem 
+                                  key={profile.user_id!} 
+                                  value={profile.user_id!}
+                                  textValue={profile.full_name}
+                                >
+                                  {profile.full_name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

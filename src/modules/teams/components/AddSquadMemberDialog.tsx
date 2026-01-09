@@ -103,7 +103,11 @@ export function AddSquadMemberDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {availableProfiles.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
+                    <SelectItem 
+                      key={profile.id} 
+                      value={profile.id}
+                      textValue={profile.display_name || undefined}
+                    >
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={profile.photo_url || undefined} />
