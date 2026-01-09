@@ -361,7 +361,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       </FormControl>
                       <SelectContent>
                         {profiles?.map((profile) => (
-                          <SelectItem key={profile.id} value={profile.id}>
+                          <SelectItem 
+                            key={profile.id} 
+                            value={profile.id}
+                            textValue={profile.display_name || undefined}
+                          >
                             {profile.display_name}
                           </SelectItem>
                         ))}

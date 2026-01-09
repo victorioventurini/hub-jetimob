@@ -924,7 +924,11 @@ export default function SettingsNotifications() {
                       </SelectTrigger>
                       <SelectContent>
                         {profiles.map(profile => (
-                          <SelectItem key={profile.id} value={profile.id}>
+                          <SelectItem 
+                            key={profile.id} 
+                            value={profile.id}
+                            textValue={profile.display_name || profile.work_email || 'Usuário'}
+                          >
                             <div className="flex items-center gap-2">
                               <Avatar className="w-6 h-6">
                                 <AvatarImage src={profile.photo_url ?? undefined} />
