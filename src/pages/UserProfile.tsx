@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -162,12 +163,14 @@ export default function UserProfile() {
           </Button>
 
           <div className="flex flex-col sm:flex-row gap-6 flex-1">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-              <AvatarImage src={profile.photo_url || undefined} alt={profile.display_name} />
-              <AvatarFallback className="text-2xl bg-accent text-accent-foreground">
-                {getInitials(profile.display_name)}
-              </AvatarFallback>
-            </Avatar>
+            <OptimizedAvatar 
+              src={profile.photo_url} 
+              alt={profile.display_name}
+              fallback={getInitials(profile.display_name)}
+              size="lg"
+              className="h-24 w-24 border-4 border-background shadow-lg"
+              fallbackClassName="text-2xl bg-accent text-accent-foreground"
+            />
 
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -460,12 +463,12 @@ export default function UserProfile() {
                     to={`/users/${profile.manager.id}`}
                     className="flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={profile.manager.photo_url || undefined} />
-                      <AvatarFallback className="bg-accent/10 text-accent">
-                        {getInitials(profile.manager.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <OptimizedAvatar 
+                      src={profile.manager.photo_url} 
+                      fallback={getInitials(profile.manager.display_name)}
+                      size="sm"
+                      className="h-10 w-10"
+                    />
                     <span className="font-medium">{profile.manager.display_name}</span>
                   </Link>
                 </CardContent>

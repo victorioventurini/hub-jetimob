@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
@@ -93,12 +93,13 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-3 px-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.photo_url || undefined} />
-                  <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <OptimizedAvatar
+                  src={profile?.photo_url}
+                  fallback={initials}
+                  size="sm"
+                  className="h-8 w-8"
+                  fallbackClassName="bg-accent text-accent-foreground text-sm font-semibold"
+                />
                 <div className="hidden md:flex flex-col items-start">
                   <span className="text-sm font-medium">{displayName}</span>
                   <span className="text-xs text-muted-foreground">{jobTitleLabel}</span>

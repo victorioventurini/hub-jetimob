@@ -13,7 +13,7 @@ import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -205,12 +205,13 @@ export function BuUserMultiSelect({
                       disabled={isLocked && isSelected}
                       onCheckedChange={() => handleToggle(profile.id)}
                     />
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={profile.photo_url || undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {getInitials(profile.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <OptimizedAvatar
+                      src={profile.photo_url}
+                      fallback={getInitials(profile.display_name)}
+                      size="sm"
+                      className="h-7 w-7"
+                      fallbackClassName="text-[10px]"
+                    />
                     <div className="flex flex-col flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <span className="text-sm truncate">

@@ -10,7 +10,7 @@
  */
 
 import { useState, useMemo } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -83,12 +83,13 @@ export function BuUserSelect({
         <SelectValue placeholder={placeholder}>
           {selectedProfile && (
             <div className="flex items-center gap-2">
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={selectedProfile.photo_url || undefined} />
-                <AvatarFallback className="text-[10px]">
-                  {getInitials(selectedProfile.display_name)}
-                </AvatarFallback>
-              </Avatar>
+              <OptimizedAvatar
+                src={selectedProfile.photo_url}
+                fallback={getInitials(selectedProfile.display_name)}
+                size="sm"
+                className="h-5 w-5"
+                fallbackClassName="text-[10px]"
+              />
               <span className="truncate">
                 {selectedProfile.display_name || "Sem nome"}
               </span>
@@ -124,12 +125,13 @@ export function BuUserSelect({
                 className="cursor-pointer"
               >
                 <div className="flex items-center gap-2 w-full">
-                  <Avatar className="h-7 w-7 flex-shrink-0">
-                    <AvatarImage src={profile.photo_url || undefined} />
-                    <AvatarFallback className="text-[10px]">
-                      {getInitials(profile.display_name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <OptimizedAvatar
+                    src={profile.photo_url}
+                    fallback={getInitials(profile.display_name)}
+                    size="sm"
+                    className="h-7 w-7 flex-shrink-0"
+                    fallbackClassName="text-[10px]"
+                  />
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <span className="truncate text-sm">
