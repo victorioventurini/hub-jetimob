@@ -2023,6 +2023,44 @@ export type Database = {
           },
         ]
       }
+      bu_notification_event_settings: {
+        Row: {
+          bu_id: string
+          channel: string
+          created_at: string
+          event_slug: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          channel: string
+          created_at?: string
+          event_slug: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          channel?: string
+          created_at?: string
+          event_slug?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_notification_event_settings_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bu_units: {
         Row: {
           allowed_email_domains: string[]
@@ -6880,6 +6918,19 @@ export type Database = {
       rpc_leader_dashboard_summary: {
         Args: { p_team_id: string }
         Returns: Json
+      }
+      send_test_notification: {
+        Args: {
+          p_bu_id: string
+          p_channels?: string[]
+          p_target_user_id: string
+        }
+        Returns: {
+          channel: string
+          notification_id: string
+          outbox_id: string
+          status: string
+        }[]
       }
       set_user_notification_preference: {
         Args: {

@@ -143,7 +143,7 @@ export function useBuNotificationChannelMutations() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
-        queryKey: ['bu-notification-channels', variables.buId] 
+        queryKey: queryKeys.notifications.buChannels(variables.buId) 
       });
     },
   });
@@ -267,7 +267,39 @@ export function useEmitNotificationEvent() {
   });
 }
 
-// Helper to group settings by module
+// Hook for sending test notifications (admin)
+export function useSendTestNotification() {
+  const { currentBu } = useBu();
+  const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
+  
+  return useMutation({
+    mutationFn: async ({
+      targetUserId,
+      channels = ['in_app', 'email'],
+    }: {
+      targetUserId: string;
+      channels?: string[];
+    }) => {
+      if (!currentBu?.id) {
+        throw new Error('BU not available');
+      }
+      
+      const { data, error } = await supabase.rpc('send_test_notification', {
+        p_bu_id: currentBu.id,
+        p_target_user_id: targetUserId,
+        p_channels: channels,
+      });
+      
+      if (error) throw error;
+      return data as Array<{ notification_id: string | null; outbox_id: string | null; channel: string; status: string }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+    },
+  });
+}
+
 export function groupSettingsByModule(settings: UserNotificationSetting[]) {
   const grouped: Record<string, {
     events: Record<string, {
