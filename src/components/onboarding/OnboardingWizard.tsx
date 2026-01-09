@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,14 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { cn } from "@/lib/utils";
-import { User, Briefcase, MapPin, Building2, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, CalendarIcon, Phone } from "lucide-react";
+import { User, MapPin, Building2, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, Phone } from "lucide-react";
 
 
 const MONTHS = [
@@ -55,11 +51,8 @@ const baseOnboardingSchema = z.object({
   birth_day: z.number().min(1, "Dia é obrigatório").max(31),
   birth_month: z.number().min(1, "Mês é obrigatório").max(12),
   whatsapp_personal: z.string().trim().min(14, "WhatsApp inválido").max(15),
-  job_title: z.string().trim().min(1, "Cargo é obrigatório").max(100),
-  start_date: z.date({ required_error: "Data de início é obrigatória" }),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
-  work_mode: z.enum(["onsite", "hybrid", "remote"]),
   team_id: z.string().optional().or(z.literal("")),
 });
 
@@ -78,7 +71,6 @@ interface OnboardingWizardProps {
 
 const STEPS = [
   { id: "personal", title: "Dados Pessoais", icon: User },
-  { id: "professional", title: "Profissional", icon: Briefcase },
   { id: "location", title: "Localização", icon: MapPin },
   { id: "team", title: "Time", icon: Building2 },
 ];
@@ -93,11 +85,8 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
     birth_day: initialData?.birth_day || 0,
     birth_month: initialData?.birth_month || 0,
     whatsapp_personal: initialData?.whatsapp_personal || "",
-    job_title: initialData?.job_title || "",
-    start_date: initialData?.start_date || new Date(),
     city: initialData?.city || "Porto Alegre",
     state: initialData?.state || "RS",
-    work_mode: initialData?.work_mode || "hybrid",
     team_id: initialData?.team_id || "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof OnboardingFormData, string>>>({});
@@ -148,11 +137,8 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
           birth_day: data.birth_day,
           birth_month: data.birth_month,
           whatsapp_personal: data.whatsapp_personal,
-          // job_title text removido - onboarding não define cargo FK
-          start_date: format(data.start_date, "yyyy-MM-dd"),
           city: data.city,
           state: data.state,
-          work_mode: data.work_mode,
           team_id: data.team_id || null,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
@@ -206,15 +192,11 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
           newErrors.whatsapp_personal = "WhatsApp inválido";
         }
         break;
-      case 1: // Professional
-        if (!formData.job_title.trim()) newErrors.job_title = "Cargo é obrigatório";
-        if (!formData.start_date) newErrors.start_date = "Data de início é obrigatória";
-        break;
-      case 2: // Location
+      case 1: // Location
         if (!formData.city.trim()) newErrors.city = "Cidade é obrigatória";
         if (!formData.state.trim()) newErrors.state = "Estado é obrigatório";
         break;
-      case 3: // Team - required unless super_admin or admin
+      case 2: // Team - required unless super_admin or admin
         if (!isExemptFromTeam && !formData.team_id) newErrors.team_id = "Selecione um time";
         break;
     }
@@ -433,76 +415,6 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
               )}
 
               {currentStep === 1 && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="job_title">Cargo *</Label>
-                    <Input
-                      id="job_title"
-                      value={formData.job_title}
-                      onChange={(e) => handleChange("job_title", e.target.value)}
-                      placeholder="Ex: Software Engineer"
-                      className={errors.job_title ? "border-destructive" : ""}
-                      autoFocus
-                    />
-                    {errors.job_title && (
-                      <p className="text-xs text-destructive">{errors.job_title}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Modalidade de Trabalho *</Label>
-                    <Select
-                      value={formData.work_mode}
-                      onValueChange={(v) => handleChange("work_mode", v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="onsite">Presencial</SelectItem>
-                        <SelectItem value="hybrid">Híbrido</SelectItem>
-                        <SelectItem value="remote">Remoto</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data de Início na Jet *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !formData.start_date && "text-muted-foreground",
-                            errors.start_date && "border-destructive"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.start_date ? (
-                            format(formData.start_date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                          ) : (
-                            <span>Selecione a data</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={formData.start_date}
-                          onSelect={(date) => date && handleChange("start_date", date)}
-                          disabled={(date) => date > new Date()}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {errors.start_date && (
-                      <p className="text-xs text-destructive">{errors.start_date}</p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Cidade e Estado *</Label>
@@ -522,7 +434,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                 </div>
               )}
 
-              {currentStep === 3 && (
+              {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>
