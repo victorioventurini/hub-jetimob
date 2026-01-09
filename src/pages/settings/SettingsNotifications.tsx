@@ -270,21 +270,28 @@ export default function SettingsNotifications() {
   const handleTestChannel = (channelSlug: string) => {
     if (!currentBu?.id) return;
     
-    // Get current user as recipient
-    const currentUser = profiles.find(p => p.id === currentBu?.id) || profiles[0];
+    // Get current user as recipient - use first profile with user_id
+    const currentUser = profiles.find(p => p.user_id) || profiles[0];
     if (!currentUser) {
       toast.error('Nenhum usuário disponível para teste');
       return;
     }
     
+    if (!currentUser.user_id) {
+      toast.error('Usuário ainda não fez login. Não é possível enviar teste.');
+      return;
+    }
+    
     setTestingChannel(true);
     sendTest.mutate(
-      { targetUserId: currentUser.id, channels: [channelSlug] },
+      { targetProfileId: currentUser.id, channels: [channelSlug] },
       {
         onSuccess: (data) => {
           const result = data[0];
-          if (result?.status === 'created' || result?.status === 'queued') {
+          if (result?.status === 'sent' || result?.status === 'queued') {
             toast.success(`Teste ${channelSlug} enviado! Verifique o Outbox.`);
+          } else if (result?.status === 'error') {
+            toast.error(`Erro no teste ${channelSlug}`, { description: result.error_message || 'Erro desconhecido' });
           } else {
             toast.info(`Teste ${channelSlug}: ${result?.status || 'enviado'}`);
           }
@@ -327,15 +334,29 @@ export default function SettingsNotifications() {
       }
     }
     
+    // testRecipient is now profile.id (v2 RPC accepts profile_id)
     sendTest.mutate(
-      { targetUserId: testRecipient, channels: testChannels },
+      { targetProfileId: testRecipient, channels: testChannels },
       {
         onSuccess: (data) => {
-          toast.success('Notificação de teste enviada!');
+          // Check for partial errors
+          const errors = data.filter(d => d.status === 'error');
+          const successes = data.filter(d => d.status !== 'error');
+          
+          if (successes.length > 0) {
+            toast.success('Notificação de teste enviada!');
+          }
+          if (errors.length > 0) {
+            errors.forEach(e => {
+              toast.error(`Erro no canal ${e.channel}`, { description: e.error_message || 'Erro desconhecido' });
+            });
+          }
+          
           setTestResult(data.map(d => ({
             channel: d.channel,
             status: d.status,
             id: d.notification_id || d.outbox_id,
+            error: d.error_message ?? undefined,
           })));
         },
         onError: (error) => {
@@ -928,7 +949,7 @@ export default function SettingsNotifications() {
                           .map(profile => (
                           <SelectItem 
                             key={profile.id} 
-                            value={profile.user_id!}
+                            value={profile.id}
                             textValue={profile.display_name || profile.work_email || 'Usuário'}
                           >
                             <div className="flex items-center gap-2">
