@@ -78,15 +78,13 @@ serve(async (req) => {
       }
     };
 
-    // 1. PESSOAS (profiles within BU)
+    // 1. PESSOAS (profiles within BU) - using canonical view
     const { data: people, error: peopleError } = await supabase
-      .from("profiles")
+      .from("v_bu_active_profiles")
       .select(
-        "id, first_name, last_name, display_name, job_title_rel:job_titles!job_title_id(name), photo_url, work_email"
+        "id, first_name, last_name, display_name, job_title_name, photo_url, work_email"
       )
       .eq("bu_id", bu_id)
-      .eq("employment_status", "active")
-      .is("deleted_at", null)
       .or(
         `first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},display_name.ilike.${searchPattern},work_email.ilike.${searchPattern}`
       )
@@ -107,7 +105,7 @@ serve(async (req) => {
             p.display_name ||
             `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
             "Sem nome",
-          subtitle: p.job_title_rel?.name || "Colaborador",
+          subtitle: p.job_title_name || "Colaborador",
           meta: { email: p.work_email, photo_url: p.photo_url },
           url: `/go/user/${p.id}`,
           icon: "user",

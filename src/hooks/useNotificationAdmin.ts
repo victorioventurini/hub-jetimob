@@ -303,7 +303,7 @@ export function useOutboxStats() {
   });
 }
 
-// Hook for BU profiles (for recipient selector)
+// Hook for BU profiles (for recipient selector) - uses canonical view
 export function useBuProfiles(buId?: string) {
   const supabase = useBuScopedSupabase();
   
@@ -312,24 +312,14 @@ export function useBuProfiles(buId?: string) {
     queryFn: async () => {
       if (!buId) return [];
       
-      // First get memberships
-      const { data: memberships, error: membershipError } = await supabase
-        .from('bu_user_memberships')
-        .select('user_id')
-        .eq('bu_id', buId);
-      
-      if (membershipError) throw membershipError;
-      
-      const userIds = memberships?.map(m => m.user_id) ?? [];
-      if (userIds.length === 0) return [];
-      
-      // Then get profiles
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
+      // Use canonical view - shows ALL registered users (even without first login)
+      const { data: profiles, error } = await supabase
+        .from('v_bu_active_profiles')
         .select('id, display_name, work_email, photo_url')
-        .in('id', userIds);
+        .eq('bu_id', buId)
+        .order('display_name');
       
-      if (profileError) throw profileError;
+      if (error) throw error;
       
       return (profiles ?? []) as Array<{
         id: string;

@@ -115,16 +115,15 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const [roleInBu, setRoleInBu] = useState<string>("collaborator");
   const [teamIdForExisting, setTeamIdForExisting] = useState<string | undefined>(undefined);
 
+  // Use canonical view for managers select
   const { data: managers } = useQuery({
     queryKey: ["managers-select", currentBu?.id],
     queryFn: async () => {
       if (!currentBu?.id) return [];
       const { data, error } = await supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select("id, display_name")
         .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .neq("employment_status", "terminated")
         .order("display_name");
       if (error) throw error;
       return data;

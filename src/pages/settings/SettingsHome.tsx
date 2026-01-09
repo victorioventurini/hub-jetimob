@@ -145,17 +145,15 @@ export default function SettingsHome() {
     },
   });
 
-  // Fetch Profiles count - scoped to current BU
+  // Fetch Profiles count - scoped to current BU using canonical view
   const { data: profilesData, isLoading: profilesLoading } = useQuery({
     queryKey: ["settings-profiles-count", currentBu?.id],
     queryFn: async () => {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select("*", { count: "exact", head: true })
-        .eq("bu_id", currentBu.id)
-        .eq("employment_status", "active")
-        .is("deleted_at", null);
+        .eq("bu_id", currentBu.id);
       if (error) throw error;
       return count || 0;
     },

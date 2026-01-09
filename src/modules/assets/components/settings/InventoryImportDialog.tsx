@@ -199,18 +199,11 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
         locationsMap.set(loc.name.toLowerCase(), loc.id);
       });
 
-      // Fetch existing users (profiles) for this BU via memberships
-      const { data: buMemberships } = await supabase
-        .from("bu_user_memberships")
-        .select("user_id")
-        .eq("bu_id", currentBu.id);
-
-      const userIds = buMemberships?.map((m) => m.user_id) || [];
-      
+      // Fetch existing users (profiles) for this BU using canonical view
       const { data: existingUsers } = await supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select("id, work_email")
-        .in("id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+        .eq("bu_id", currentBu.id);
 
       const usersMap = new Map<string, string>(); // email (lowercase) -> id
       existingUsers?.forEach((user) => {
