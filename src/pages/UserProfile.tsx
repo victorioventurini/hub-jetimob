@@ -536,12 +536,6 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* Start date */}
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span className="text-muted-foreground">Na Jet desde</span>
-                  <span className="capitalize">{formatStartDate(profile.start_date)}</span>
-                </div>
 
                 {/* Location */}
                 {(profile.work_mode === "remote" || profile.work_mode === "hybrid") && profile.city && (
