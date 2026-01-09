@@ -6716,6 +6716,10 @@ export type Database = {
         Args: { p_alert_id: string; p_notes?: string }
         Returns: boolean
       }
+      activate_template_version: {
+        Args: { p_reason?: string; p_template_id: string; p_version_id: string }
+        Returns: boolean
+      }
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
       assert_profile_identity: {
         Args: { p_profile_id: string }
@@ -6767,6 +6771,17 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: number
       }
+      create_bu_template: {
+        Args: {
+          p_body: string
+          p_bu_id: string
+          p_channel: string
+          p_event_slug: string
+          p_reason?: string
+          p_subject: string
+        }
+        Returns: string
+      }
       create_mention_notification: {
         Args: {
           p_author_id: string
@@ -6778,6 +6793,15 @@ export type Database = {
           p_mentioned_user_id: string
           p_parent_id: string
           p_parent_type: string
+        }
+        Returns: string
+      }
+      create_template_version: {
+        Args: {
+          p_body: string
+          p_reason?: string
+          p_subject: string
+          p_template_id: string
         }
         Returns: string
       }

@@ -44,6 +44,15 @@ export const queryKeys = {
     healthAlerts: () => ['notifications', 'health-alerts'] as const,
     healthRunbooks: () => ['notifications', 'health-runbooks'] as const,
     alertActions: (alertId: string) => ['notifications', 'alert-actions', alertId] as const,
+    // Phase 5: Templates
+    templates: {
+      list: (buId: string | null, filters?: { channel?: string; eventSlug?: string }) => 
+        ['notifications', 'templates', 'list', buId, filters] as const,
+      detail: (templateId: string) => ['notifications', 'templates', 'detail', templateId] as const,
+      versions: (templateId: string) => ['notifications', 'templates', 'versions', templateId] as const,
+      variables: (eventSlug: string | null) => ['notifications', 'templates', 'variables', eventSlug] as const,
+      audit: (templateId: string) => ['notifications', 'templates', 'audit', templateId] as const,
+    },
   },
 
   // ============= Teams =============
