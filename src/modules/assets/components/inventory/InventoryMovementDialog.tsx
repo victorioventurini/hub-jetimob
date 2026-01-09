@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -105,6 +105,7 @@ export function InventoryMovementDialog({
 
   const [movementType, setMovementType] = useState<AssetMovementType>(initialType || "checkout");
   const [includeKitAccessories, setIncludeKitAccessories] = useState(false);
+  const wasOpenRef = useRef(false);
 
   // Determine available movement types based on current item status
   const availableTypes: AssetMovementType[] = [];
@@ -152,21 +153,24 @@ export function InventoryMovementDialog({
   });
 
   useEffect(() => {
-    if (open) {
-      const type = initialType || availableTypes[0] || "checkout";
-      setMovementType(type);
-      setIncludeKitAccessories(false);
-      form.reset({
-        movement_type: type,
-        notes: "",
-        due_at: "",
-        to_user_id: "",
-        to_location_id: item.home_location_id || defaultLocation?.id || "",
-        to_holder_type: "location",
-        authorized_by_user_id: profileId || "",
-      });
-    }
-  }, [open, initialType, item, profileId, form, defaultLocation]);
+    const justOpened = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+
+    if (!justOpened) return;
+
+    const type = initialType || availableTypes[0] || "checkout";
+    setMovementType(type);
+    setIncludeKitAccessories(false);
+    form.reset({
+      movement_type: type,
+      notes: "",
+      due_at: "",
+      to_user_id: "",
+      to_location_id: item.home_location_id || defaultLocation?.id || "",
+      to_holder_type: "location",
+      authorized_by_user_id: profileId || "",
+    });
+  }, [open, initialType, item, profileId, form, defaultLocation, availableTypes]);
 
   const handleTypeChange = (type: AssetMovementType) => {
     setMovementType(type);
@@ -333,7 +337,13 @@ export function InventoryMovementDialog({
                           <User className="h-4 w-4" />
                           Emprestar para *
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          value={field.value ?? ""}
+                          onValueChange={(v) => {
+                            console.log("[assets][InventoryMovementDialog] to_user_id", v);
+                            field.onChange(v);
+                          }}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o colaborador..." />
@@ -377,7 +387,13 @@ export function InventoryMovementDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Autorizado por *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          value={field.value ?? ""}
+                          onValueChange={(v) => {
+                            console.log("[assets][InventoryMovementDialog] authorized_by_user_id", v);
+                            field.onChange(v);
+                          }}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Quem autoriza..." />
@@ -435,7 +451,7 @@ export function InventoryMovementDialog({
                         <MapPin className="h-4 w-4" />
                         Devolver para *
                       </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value ?? ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione a sede..." />
@@ -464,7 +480,7 @@ export function InventoryMovementDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Transferir para</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue />
@@ -495,7 +511,7 @@ export function InventoryMovementDialog({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Localização de Destino *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione..." />
@@ -522,7 +538,7 @@ export function InventoryMovementDialog({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Colaborador de Destino *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione..." />
@@ -552,7 +568,7 @@ export function InventoryMovementDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Autorizado por *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Quem autoriza..." />
@@ -607,7 +623,7 @@ export function InventoryMovementDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Autorizado por *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione um administrador..." />
