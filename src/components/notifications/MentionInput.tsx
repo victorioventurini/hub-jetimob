@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, AtSign, Users, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Helper function to extract display text (without mention syntax)
@@ -88,7 +90,7 @@ export function MentionInput({
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Fetch users for mention suggestions
-  const { data: users = [] } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['mention-users', currentBu?.id, searchTerm],
     queryFn: async () => {
       if (!currentBu?.id) return [];
@@ -125,6 +127,12 @@ export function MentionInput({
     },
     enabled: !!currentBu?.id && showSuggestions,
   });
+
+  // Count mentions in text
+  const mentionCount = useMemo(() => {
+    const regex = /@\[([^\]]+)\]\([^)]+\)/g;
+    return (value.match(regex) || []).length;
+  }, [value]);
 
   // Extract mentions from text
   const extractMentions = useCallback((text: string): string[] => {
@@ -273,60 +281,120 @@ export function MentionInput({
 
   return (
     <div className="relative">
-      <textarea
-        ref={textareaRef}
-        id={id}
-        value={renderDisplayText()}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        rows={rows}
-        required={required}
-        className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none",
-          className
-        )}
-      />
+      {/* Textarea with mention support */}
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          id={id}
+          value={renderDisplayText()}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          rows={rows}
+          required={required}
+          className={cn(
+            "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+            showSuggestions && "ring-2 ring-primary/50",
+            className
+          )}
+        />
+        
+        {/* Mention indicator */}
+        <div className="absolute right-2 top-2 flex items-center gap-1">
+          {mentionCount > 0 && (
+            <Badge variant="secondary" className="h-5 px-1.5 text-xs gap-1">
+              <AtSign className="w-3 h-3" />
+              {mentionCount}
+            </Badge>
+          )}
+        </div>
+      </div>
 
       {/* Mention Suggestions Dropdown */}
-      {showSuggestions && users.length > 0 && (
+      {showSuggestions && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto"
+          className={cn(
+            "absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-xl overflow-hidden",
+            "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+          )}
         >
-          {users.map((user, index) => (
-            <button
-              key={user.id}
-              type="button"
-              onClick={() => selectUser(user)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors",
-                index === selectedIndex && "bg-accent"
-              )}
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.photo_url || undefined} />
-                <AvatarFallback className="text-xs">
-                  {getInitials(user.display_name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.display_name}</p>
-                {user.team_name && (
-                  <p className="text-xs text-muted-foreground truncate">{user.team_name}</p>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+          {/* Header */}
+          <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
+            <Search className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {searchTerm ? `Buscando "${searchTerm}"...` : 'Digite para buscar'}
+            </span>
+            {isLoadingUsers && (
+              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground ml-auto" />
+            )}
+          </div>
 
-      {showSuggestions && users.length === 0 && searchTerm && (
-        <div
-          ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3"
-        >
-          <p className="text-sm text-muted-foreground">Nenhum usuário encontrado</p>
+          {/* Results */}
+          {users.length > 0 ? (
+            <div className="max-h-52 overflow-y-auto py-1">
+              {users.map((user, index) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => selectUser(user)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                    "hover:bg-accent/80",
+                    index === selectedIndex && "bg-accent"
+                  )}
+                >
+                  <div className="relative">
+                    <Avatar className="h-9 w-9 ring-2 ring-background">
+                      <AvatarImage src={user.photo_url || undefined} />
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        {getInitials(user.display_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{user.display_name}</p>
+                    {user.team_name && (
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {user.team_name}
+                      </p>
+                    )}
+                  </div>
+                  <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                    {index === selectedIndex ? '↵' : index + 1}
+                  </kbd>
+                </button>
+              ))}
+            </div>
+          ) : !isLoadingUsers && searchTerm ? (
+            <div className="px-3 py-6 text-center">
+              <AtSign className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhum usuário encontrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Tente outro nome
+              </p>
+            </div>
+          ) : isLoadingUsers ? (
+            <div className="px-3 py-6 text-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Buscando usuários...</p>
+            </div>
+          ) : null}
+
+          {/* Footer hint */}
+          {users.length > 0 && (
+            <div className="px-3 py-1.5 bg-muted/30 border-t">
+              <p className="text-[10px] text-muted-foreground text-center">
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">↑↓</kbd> navegar
+                <span className="mx-2">•</span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">Enter</kbd> selecionar
+                <span className="mx-2">•</span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">Esc</kbd> fechar
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
