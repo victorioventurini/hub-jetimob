@@ -100,13 +100,19 @@ const STEPS = [
 export function OnboardingWizard({ profileId, initialData, onComplete }: OnboardingWizardProps) {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
+  
+  // Apply formatWhatsApp to initial value to ensure proper formatting
+  const initialWhatsApp = initialData?.whatsapp_personal 
+    ? formatWhatsApp(initialData.whatsapp_personal) 
+    : "";
+  
   const [formData, setFormData] = useState<OnboardingFormData>({
     first_name: initialData?.first_name || "",
     last_name: initialData?.last_name || "",
     photo_url: initialData?.photo_url || "",
     birth_day: initialData?.birth_day || 0,
     birth_month: initialData?.birth_month || 0,
-    whatsapp_personal: initialData?.whatsapp_personal || "",
+    whatsapp_personal: initialWhatsApp,
     discord_id: initialData?.discord_id || "",
     instagram_id: initialData?.instagram_id || "",
     city: initialData?.city || "Porto Alegre",
