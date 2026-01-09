@@ -159,31 +159,38 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
 async function sendEmail(
   supabase: SupabaseClient,
   options: EmailOptions
-): Promise<{ success: boolean; error?: string }> {
-  // Try SendGrid first
-  try {
-    const sendgridKey = await getIntegrationApiKey(supabase, "sendgrid");
-    if (sendgridKey) {
+): Promise<{ success: boolean; provider?: string; error?: string }> {
+  console.log(`[Outbox] Attempting to send email to=${options.to} subject="${options.subject}"`);
+  
+  // Try SendGrid first (primary)
+  const sendgridKey = await getIntegrationApiKey(supabase, "sendgrid");
+  if (sendgridKey) {
+    try {
       await sendViaSendGrid(options, sendgridKey);
-      return { success: true };
+      console.log(`[Outbox] ✅ EMAIL SENT via SendGrid to=${options.to}`);
+      return { success: true, provider: "sendgrid" };
+    } catch (error: unknown) {
+      console.error("[Outbox] SendGrid failed, trying Resend fallback:", error instanceof Error ? error.message : error);
     }
-  } catch (error: unknown) {
-    console.error("[Outbox] SendGrid failed:", error instanceof Error ? error.message : error);
+  } else {
+    console.warn("[Outbox] SendGrid not configured, trying Resend...");
   }
 
   // Fallback to Resend
-  try {
-    const resendKey = await getIntegrationApiKey(supabase, "resend");
-    if (resendKey) {
+  const resendKey = await getIntegrationApiKey(supabase, "resend");
+  if (resendKey) {
+    try {
       await sendViaResend(options, resendKey);
-      return { success: true };
+      console.log(`[Outbox] ✅ EMAIL SENT via Resend (fallback) to=${options.to}`);
+      return { success: true, provider: "resend" };
+    } catch (error: unknown) {
+      console.error("[Outbox] Resend also failed:", error instanceof Error ? error.message : error);
+      return { success: false, error: `Resend error: ${error instanceof Error ? error.message : "Unknown error"}` };
     }
-  } catch (error: unknown) {
-    console.error("[Outbox] Resend failed:", error instanceof Error ? error.message : error);
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 
-  return { success: false, error: "No email provider configured" };
+  console.error("[Outbox] ❌ NO EMAIL PROVIDER CONFIGURED - both SendGrid and Resend are missing or disabled");
+  return { success: false, error: "No email provider configured (SendGrid and Resend both unavailable)" };
 }
 
 // Send via Slack
@@ -613,7 +620,8 @@ const handler = async (req: Request): Promise<Response> => {
           })
           .eq("id", item.id);
         successCount++;
-        console.log(`[Outbox] SUCCESS outbox_id=${item.id} channel=${item.channel_slug}`);
+        const providerInfo = (result as { provider?: string }).provider ? ` provider=${(result as { provider?: string }).provider}` : "";
+        console.log(`[Outbox] ✅ SUCCESS outbox_id=${item.id} channel=${item.channel_slug}${providerInfo}`);
       } else {
         const newRetries = item.retries + 1;
         const isFinalFailure = newRetries >= maxRetries;
