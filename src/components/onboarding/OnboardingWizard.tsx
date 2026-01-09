@@ -57,7 +57,7 @@ const onboardingSchema = z.object({
   photo_url: z.string().optional(),
   birth_day: z.number().min(1, "Dia é obrigatório").max(31),
   birth_month: z.number().min(1, "Mês é obrigatório").max(12),
-  whatsapp_personal: z.string().trim().min(14, "WhatsApp inválido").max(15),
+  whatsapp_personal: z.string().trim().min(18, "WhatsApp inválido").max(19),
   discord_id: z.string().trim().optional(),
   instagram_id: z.string().trim().optional(),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
