@@ -18,6 +18,7 @@ export const queryKeys = {
     list: (buId: string | null, filters?: Record<string, unknown>) => 
       ['profiles', 'list', buId, filters] as const,
     detail: (userId: string) => ['profiles', 'detail', userId] as const,
+    hoverCard: (userId: string) => ['profiles', 'hover-card', userId] as const,
     me: () => ['profiles', 'me'] as const,
     buProfiles: (buId: string | null) => ['profiles', 'bu', buId] as const,
     buMembers: (buId: string | null) => ['profiles', 'bu-members', buId] as const,

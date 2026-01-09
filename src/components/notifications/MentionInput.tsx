@@ -7,13 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UserHoverCard } from '@/components/user/UserHoverCard';
 
 // Helper function to extract display text (without mention syntax)
 export function getMentionDisplayText(text: string): string {
   return text.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
 }
 
-// Helper to parse mentions for display (convert @[Name](id) to styled chips)
+// Helper to parse mentions for display (convert @[Name](id) to styled chips with hover)
 export function parseMentionsForDisplay(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
@@ -28,14 +29,15 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
     const displayName = match[1];
     const userId = match[2];
     parts.push(
-      <Link
-        key={`${userId}-${match.index}`}
-        to={`/users/${userId}`}
-        className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
-        onClick={(e) => e.stopPropagation()}
-      >
-        @{displayName}
-      </Link>
+      <UserHoverCard key={`${userId}-${match.index}`} userId={userId}>
+        <Link
+          to={`/users/${userId}`}
+          className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          @{displayName}
+        </Link>
+      </UserHoverCard>
     );
 
     lastIndex = match.index + match[0].length;
