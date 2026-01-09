@@ -33,8 +33,9 @@ export function PermissionGuard({
 }: PermissionGuardProps) {
   const { has, hasAny, hasAll, isLoading, isWildcard } = usePermissions();
 
-  // Enquanto carrega, não renderiza nada
-  if (isLoading) return null;
+  // Enquanto carrega, renderiza children para evitar flash de conteúdo vazio
+  // Isso é seguro porque a query de dados também dependerá do buId estar pronto
+  if (isLoading) return <>{children}</>;
 
   // Wildcard (admin) sempre passa
   if (isWildcard) return <>{children}</>;

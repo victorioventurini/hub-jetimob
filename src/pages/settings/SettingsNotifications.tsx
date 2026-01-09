@@ -404,35 +404,35 @@ export default function SettingsNotifications() {
       </div>
       
       <Tabs value={tabState.value} onValueChange={(v) => tabState.set(v as TabValue)}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="channels" className="gap-2">
+        <TabsList className="flex w-full">
+          <TabsTrigger value="channels" className="gap-2 flex-1">
             <Settings2 className="h-4 w-4" />
             Canais
           </TabsTrigger>
-          <TabsTrigger value="events" className="gap-2">
+          <TabsTrigger value="events" className="gap-2 flex-1">
             <ListChecks className="h-4 w-4" />
             Eventos
           </TabsTrigger>
           <PermissionGuard permission="notifications.templates.read:bu" fallback={null}>
-            <TabsTrigger value="templates" className="gap-2">
+            <TabsTrigger value="templates" className="gap-2 flex-1">
               <FileText className="h-4 w-4" />
               Templates
             </TabsTrigger>
           </PermissionGuard>
           <PermissionGuard permission="notifications.outbox.view:bu" fallback={null}>
-            <TabsTrigger value="outbox" className="gap-2">
+            <TabsTrigger value="outbox" className="gap-2 flex-1">
               <Inbox className="h-4 w-4" />
               Outbox
             </TabsTrigger>
           </PermissionGuard>
           <PermissionGuard permission="notifications.bu.view:bu" fallback={null}>
-            <TabsTrigger value="inapp" className="gap-2">
+            <TabsTrigger value="inapp" className="gap-2 flex-1">
               <Bell className="h-4 w-4" />
               In-App
             </TabsTrigger>
           </PermissionGuard>
           <PermissionGuard permission="notifications.test.send:bu" fallback={null}>
-            <TabsTrigger value="test" className="gap-2">
+            <TabsTrigger value="test" className="gap-2 flex-1">
               <TestTube className="h-4 w-4" />
               Teste
             </TabsTrigger>
