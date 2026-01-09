@@ -1,18 +1,11 @@
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
   TrendingDown,
@@ -21,8 +14,8 @@ import {
   User,
   Calendar,
   ArrowRight,
-  MessageSquare,
   ChartLine,
+  ExternalLink,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -214,117 +207,30 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
               ) : null}
             </div>
 
-            {/* History Table */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Histórico de Check-ins
-                {historyData?.totalCheckins ? (
-                  <Badge variant="secondary" className="text-xs">
-                    {historyData.totalCheckins}
-                  </Badge>
-                ) : null}
-              </h3>
-              {isLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : !historyData?.checkins?.length ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  Nenhum check-in registrado ainda.
-                </div>
-              ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead className="w-[100px]">Data</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead className="w-[80px]">Confiança</TableHead>
-                        <TableHead>Comentário</TableHead>
-                        <TableHead className="w-[120px]">Usuário</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {historyData.checkins.map((checkin, index) => (
-                        <TableRow key={checkin.id}>
-                          <TableCell className="text-xs">
-                            {format(parseISO(checkin.date), "dd/MM/yyyy", { locale: ptBR })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5 text-sm">
-                              {checkin.previous_value !== null && (
-                                <>
-                                  <span className="text-muted-foreground">
-                                    {formatValueWithUnit(checkin.previous_value, kr.unit)}
-                                  </span>
-                                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                                </>
-                              )}
-                              <span className="font-medium">
-                                {formatValueWithUnit(checkin.current_value, kr.unit)}
-                              </span>
-                              {index === 0 && (
-                                <Badge variant="outline" className="text-[10px] ml-1">atual</Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="secondary"
-                              className={cn("text-[10px]", confidenceColors[checkin.confidence])}
-                            >
-                              {confidenceLabels[checkin.confidence]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {checkin.comments ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground cursor-help max-w-[150px]">
-                                    <MessageSquare className="w-3 h-3 shrink-0" />
-                                    <span className="truncate">{checkin.comments}</span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-[300px]">
-                                  {checkin.comments}
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {checkin.user ? (
-                              <div className="flex items-center gap-1.5">
-                                <Avatar className="w-5 h-5">
-                                  <AvatarImage src={checkin.user.photo_url || undefined} />
-                                  <AvatarFallback className="text-[9px]">
-                                    {checkin.user.display_name
-                                      .split(' ')
-                                      .map(n => n[0])
-                                      .slice(0, 2)
-                                      .join('')
-                                      .toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs truncate max-w-[80px]">
-                                  {checkin.user.display_name.split(' ')[0]}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
+            {/* Link to Full Check-ins Page */}
+            {historyData?.checkins?.length ? (
+              <div className="pt-2 border-t">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  asChild
+                >
+                  <Link to={`/okrs/checkins?q=${encodeURIComponent(kr.title)}`}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Ver histórico completo de check-ins
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {historyData.totalCheckins}
+                    </Badge>
+                    <ExternalLink className="w-3.5 h-3.5 ml-auto" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground text-sm border-t">
+                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                Nenhum check-in registrado ainda.
+              </div>
+            )}
           </div>
         </ScrollArea>
       </DialogContent>
