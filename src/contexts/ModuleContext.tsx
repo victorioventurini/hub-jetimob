@@ -34,14 +34,12 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
   const { currentBuId, currentBu } = useBu();
 
-  // NOTE: ModuleProvider is mounted even before BU selection (e.g. /auth, /select-bu).
-  // We must NOT call useBuScopedSupabase() here because it intentionally throws when
-  // currentBuId is null. Instead:
-  // - Before BU selection: use global client (allowed pre-BU)
-  // - After BU selection: use BU-scoped client (createBuScopedClient)
+  // Create BU-scoped client when BU is selected
+  // Use currentBu?.id to ensure consistency (both come from same source)
   const buClient = useMemo(() => {
-    return currentBuId ? createBuScopedClient(currentBuId) : null;
-  }, [currentBuId]);
+    const buId = currentBu?.id;
+    return buId ? createBuScopedClient(buId) : null;
+  }, [currentBu?.id]);
 
   const { data: modules = [], isLoading } = useQuery({
     // IMPORTANTE: incluir user?.id no cache key para evitar "cache" com resposta anônima
@@ -71,9 +69,11 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
       }
 
       // Se há BU ativa, usar cliente BU-scoped e a RPC de módulos.
+      // Guard: se buClient ainda não está pronto, retornar array vazio (não lançar exceção)
+      // Isso pode acontecer transitoriamente após voltar de outra aba do navegador
       if (!buClient) {
-        // Should never happen because currentBuId exists when currentBu exists
-        throw new Error("ModuleProvider: buClient not initialized for active BU");
+        console.warn("[ModuleProvider] buClient not ready for BU", currentBu.id);
+        return [];
       }
 
       const { data, error } = await buClient.rpc("get_enabled_modules_for_bu", {
