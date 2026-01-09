@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUrlTab, useUrlSearch } from "@/shared/url";
 import { PageHeader } from "@/components/ui/page-header";
@@ -31,15 +31,34 @@ export default function BuPermissionsPage() {
   usePageTitle("Permissões da BU");
 
   const [activeTab, setActiveTab] = useUrlTab<PermissionTab>("users");
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  const { value: urlSearch, set: setUrlSearch } = useUrlSearch("q", 300);
+  
+  // Estado local para input responsivo - sincroniza com URL após debounce
+  const [localSearch, setLocalSearch] = useState(urlSearch);
+  
+  // Sincroniza estado local quando URL muda (ex: navegação, reload)
+  useEffect(() => {
+    setLocalSearch(urlSearch);
+  }, [urlSearch]);
+  
+  // Debounce: atualiza URL após 300ms de inatividade
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== urlSearch) {
+        setUrlSearch(localSearch);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localSearch, urlSearch, setUrlSearch]);
   
   const [selectedUser, setSelectedUser] = useState<BuUser | null>(null);
 
   const { users, isLoading: usersLoading } = useBuUsers();
 
+  // Filtra usando o estado local para feedback instantâneo
   const filteredUsers = useMemo(() => {
-    if (!search) return users;
-    const lowerSearch = search.toLowerCase();
+    if (!localSearch) return users;
+    const lowerSearch = localSearch.toLowerCase();
     return users.filter(
       (u) =>
         u.profiles.display_name.toLowerCase().includes(lowerSearch) ||
@@ -47,7 +66,7 @@ export default function BuPermissionsPage() {
         u.profiles.job_title_name?.toLowerCase().includes(lowerSearch) ||
         u.teams.some((t) => t.name.toLowerCase().includes(lowerSearch))
     );
-  }, [users, search]);
+  }, [users, localSearch]);
 
   const sortedUsers = useMemo(() => {
     return [...filteredUsers].sort((a, b) => {
@@ -105,8 +124,8 @@ export default function BuPermissionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome, email, cargo ou time..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
                 className="pl-10 w-80"
               />
             </div>
@@ -119,7 +138,7 @@ export default function BuPermissionsPage() {
               <EmptyState
                 icon={Users}
                 title="Nenhum usuário encontrado"
-                description={search ? "Tente ajustar a busca" : "Nenhum usuário nesta BU"}
+                description={localSearch ? "Tente ajustar a busca" : "Nenhum usuário nesta BU"}
               />
             ) : (
               <div className="border rounded-lg">
