@@ -834,6 +834,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "asset_inventory_current_user_profile_fkey"
+            columns: ["current_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_inventory_current_user_profile_fkey"
+            columns: ["current_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "asset_inventory_home_location_id_fkey"
             columns: ["home_location_id"]
             isOneToOne: false
@@ -1162,6 +1176,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "asset_movements_authorized_by_profile_fkey"
+            columns: ["authorized_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_authorized_by_profile_fkey"
+            columns: ["authorized_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "asset_movements_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -1190,6 +1218,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "asset_movements_from_user_profile_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_from_user_profile_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "asset_movements_performed_by_profile_fkey"
             columns: ["performed_by_user_id"]
             isOneToOne: false
@@ -1202,6 +1244,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "asset_movements_performed_by_profile_fkey"
+            columns: ["performed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_performed_by_profile_fkey"
+            columns: ["performed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "asset_movements_to_location_id_fkey"
@@ -1223,6 +1279,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "asset_movements_to_user_profile_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_movements_to_user_profile_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2130,6 +2200,20 @@ export type Database = {
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
           },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bu_user_permission_overrides: {
@@ -2222,6 +2306,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "bu_user_permission_templates_v2_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bu_user_permission_templates_v2_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -2241,6 +2339,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2572,6 +2684,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "kpi_metrics_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_metrics_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "kpi_metrics_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -2625,6 +2751,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "kpi_values_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_values_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "kpi_values_kpi_id_fkey"
@@ -2755,6 +2895,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "modules_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2925,6 +3079,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "notification_health_alert_actions_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_health_alert_actions_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "notification_health_alert_actions_alert_id_fkey"
@@ -3462,6 +3630,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "okr_checkins_author_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_checkins_author_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "okr_checkins_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -3762,6 +3944,20 @@ export type Database = {
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
           },
+          {
+            foreignKeyName: "okr_initiatives_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_initiatives_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       okr_insights: {
@@ -4034,6 +4230,20 @@ export type Database = {
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
           },
+          {
+            foreignKeyName: "okr_org_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       okr_org_objectives: {
@@ -4131,6 +4341,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4286,6 +4510,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "okr_team_key_results_parent_kr_id_fkey"
@@ -4515,6 +4753,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
@@ -4945,6 +5197,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "permission_migrations_migrated_by_fkey"
+            columns: ["migrated_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_migrated_by_fkey"
+            columns: ["migrated_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "permission_migrations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -4959,6 +5225,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "permission_migrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "permission_migrations_verified_by_fkey"
             columns: ["verified_by"]
             isOneToOne: false
@@ -4971,6 +5251,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_migrations_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5244,6 +5538,20 @@ export type Database = {
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
           },
+          {
+            foreignKeyName: "profiles_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       squad_memberships: {
@@ -5305,6 +5613,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "squad_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5479,6 +5801,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "teams_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "teams_parent_team_id_fkey"
@@ -5719,6 +6055,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "ticket_messages_author_profile_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_author_profile_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ticket_messages_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -5796,6 +6146,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_profile_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ticket_participants_ticket_id_fkey"
@@ -6028,6 +6392,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "tickets_created_by_profile_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_created_by_profile_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tickets_owner_profile_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
@@ -6040,6 +6418,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "tickets_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tickets_partner_company_id_fkey"
@@ -6219,6 +6611,20 @@ export type Database = {
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
           },
+          {
+            foreignKeyName: "user_team_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_team_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -6261,24 +6667,131 @@ export type Database = {
           bu_id: string | null
           created_at: string | null
           display_name: string | null
+          email: string | null
           employment_status:
             | Database["public"]["Enums"]["employment_status"]
             | null
           first_name: string | null
+          global_status: string | null
           has_bu_membership: boolean | null
+          id: string | null
+          is_default: boolean | null
+          job_title_id: string | null
+          job_title_name: string | null
+          last_name: string | null
+          onboarding_completed: boolean | null
+          photo_url: string | null
+          role_in_bu: Database["public"]["Enums"]["app_role"] | null
+          start_date: string | null
+          team_id: string | null
+          team_name: string | null
+          user_id: string | null
+          user_type: string | null
+          work_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_job_title_id_fkey"
+            columns: ["job_title_id"]
+            isOneToOne: false
+            referencedRelation: "job_titles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_bu_all_profiles_admin: {
+        Row: {
+          active_membership_count: number | null
+          active_memberships: Json | null
+          computed_status: string | null
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          employment_status:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          first_name: string | null
+          global_status: string | null
           id: string | null
           job_title_id: string | null
           job_title_name: string | null
           last_name: string | null
           onboarding_completed: boolean | null
           photo_url: string | null
+          primary_bu_id: string | null
+          profile_deleted_at: string | null
           start_date: string | null
           team_id: string | null
           team_name: string | null
           user_id: string | null
+          user_type: string | null
           work_email: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_bu_id_fkey"
+            columns: ["primary_bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_job_title_id_fkey"
+            columns: ["job_title_id"]
+            isOneToOne: false
+            referencedRelation: "job_titles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_bu_id_null_report: {
         Row: {
@@ -6287,6 +6800,89 @@ export type Database = {
           total: number | null
         }
         Relationships: []
+      }
+      v_bu_memberships_active: {
+        Row: {
+          birth_day: number | null
+          birth_month: number | null
+          bu_id: string | null
+          bu_name: string | null
+          display_name: string | null
+          email: string | null
+          employment_status:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          first_name: string | null
+          global_status: string | null
+          is_default: boolean | null
+          job_title_id: string | null
+          job_title_name: string | null
+          last_name: string | null
+          membership_created_at: string | null
+          membership_id: string | null
+          onboarding_completed: boolean | null
+          photo_url: string | null
+          profile_created_at: string | null
+          profile_id: string | null
+          role_in_bu: Database["public"]["Enums"]["app_role"] | null
+          start_date: string | null
+          team_id: string | null
+          team_name: string | null
+          user_id: string | null
+          user_type: string | null
+          work_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bu_user_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_job_title_id_fkey"
+            columns: ["job_title_id"]
+            isOneToOne: false
+            referencedRelation: "job_titles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_notification_delivery_health: {
         Row: {
@@ -6599,6 +7195,20 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
           {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "okr_team_key_results_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -6648,6 +7258,20 @@ export type Database = {
             referencedRelation: "users_without_v2_permissions"
             referencedColumns: ["profile_id"]
           },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       v_permissions_without_explanation: {
@@ -6659,6 +7283,55 @@ export type Database = {
           status: Database["public"]["Enums"]["catalog_status"] | null
         }
         Relationships: []
+      }
+      v_profiles_directory: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          employment_status:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          first_name: string | null
+          global_status: string | null
+          has_any_active_membership: boolean | null
+          id: string | null
+          job_title_id: string | null
+          job_title_name: string | null
+          last_name: string | null
+          onboarding_completed: boolean | null
+          photo_url: string | null
+          primary_bu_id: string | null
+          start_date: string | null
+          team_id: string | null
+          team_name: string | null
+          user_id: string | null
+          user_type: string | null
+          work_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_bu_id_fkey"
+            columns: ["primary_bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_job_title_id_fkey"
+            columns: ["job_title_id"]
+            isOneToOne: false
+            referencedRelation: "job_titles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_shared_okrs_summary: {
         Row: {
@@ -6762,29 +7435,6 @@ export type Database = {
             columns: ["primary_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      v_user_directory_health: {
-        Row: {
-          bu_id: string | null
-          bu_name: string | null
-          directory_visible_count: number | null
-          profiles_active_visible: number | null
-          profiles_deleted: number | null
-          profiles_pending_onboarding: number | null
-          profiles_terminated: number | null
-          profiles_visible_without_login: number | null
-          profiles_without_user_id: number | null
-          total_profiles: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
         ]
