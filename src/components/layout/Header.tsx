@@ -1,4 +1,4 @@
-import { Menu, LogOut, User, Settings, Building2 } from "lucide-react";
+import { Menu, LogOut, User, Settings, Building2, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -127,6 +127,14 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                   <Link to="/settings" className="cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />
                     Configurações da BU
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              {role === "super_admin" && (
+                <DropdownMenuItem asChild>
+                  <Link to="/hub" className="cursor-pointer">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Configurações do Hub
                   </Link>
                 </DropdownMenuItem>
               )}
