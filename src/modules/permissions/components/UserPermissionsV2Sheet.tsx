@@ -24,13 +24,15 @@ import {
   Eye,
   Wrench,
   Settings2,
-  AlertTriangle
+  AlertTriangle,
+  UserX
 } from "lucide-react";
 import { toast } from "sonner";
 import { useUserEffectivePermissions } from "../hooks/useBuPermissions";
 import { usePermissionTemplatesV2, useUserTemplatesV2 } from "../hooks/usePermissionsV2";
 import { usePermissionDiff, useLogPermissionChange } from "../hooks/usePermissionGovernance";
 import { PermissionDiffDialog } from "./PermissionDiffDialog";
+import { RevokeAccessDialog } from "./RevokeAccessDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 
@@ -80,8 +82,8 @@ export function UserPermissionsV2Sheet({
   const [templateSearch, setTemplateSearch] = useState("");
   const [permissionSearch, setPermissionSearch] = useState("");
   const [showDiffDialog, setShowDiffDialog] = useState(false);
+  const [showRevokeDialog, setShowRevokeDialog] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-
   // Effective permissions
   const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.user_id || null);
 
@@ -309,6 +311,19 @@ export function UserPermissionsV2Sheet({
               Gerenciar permissões do usuário
             </SheetDescription>
           </SheetHeader>
+          
+          {/* Revoke Access Button */}
+          {user?.role_in_bu && (isSuperAdmin || !isAdmin) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 text-destructive hover:text-destructive hover:bg-destructive/10 w-full justify-start"
+              onClick={() => setShowRevokeDialog(true)}
+            >
+              <UserX className="h-4 w-4 mr-2" />
+              Revogar Acesso à BU
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -565,6 +580,14 @@ export function UserPermissionsV2Sheet({
       removals={removals}
       onConfirm={handleApplyWithGovernance}
       isPending={isApplying}
+    />
+
+    {/* Revoke Access Dialog */}
+    <RevokeAccessDialog
+      open={showRevokeDialog}
+      onOpenChange={setShowRevokeDialog}
+      user={user}
+      onSuccess={() => onOpenChange(false)}
     />
     </>
   );
