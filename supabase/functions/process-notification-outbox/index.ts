@@ -393,25 +393,32 @@ async function processOutboxItem(
 ): Promise<{ success: boolean; error?: string }> {
   const { channel_slug, payload, user_id, bu_id } = item;
 
-  // Get user email for email channel
-  // Note: profiles table uses work_email, not email
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("work_email, display_name")
-    .eq("user_id", user_id)
-    .maybeSingle();
+  // Use canonical resolver for recipient info
+  // This ensures we always use work_email with fallback to auth.users.email
+  const { data: recipientData, error: recipientError } = await supabase.rpc(
+    "resolve_notification_recipient",
+    { p_auth_user_id: user_id }
+  );
 
-  const profileData = profile as { work_email: string; display_name: string } | null;
+  const recipient = recipientData as {
+    profile_id: string | null;
+    display_name: string;
+    work_email: string | null;
+    has_profile: boolean;
+  } | null;
 
   switch (channel_slug) {
     case "email": {
-      if (profileError || !profileData?.work_email) {
-        return { success: false, error: "User email not found (work_email missing)" };
+      if (recipientError || !recipient?.work_email) {
+        return { 
+          success: false, 
+          error: "NO_WORK_EMAIL: Recipient has no work_email and no auth email fallback" 
+        };
       }
       const html = buildNotificationEmailHtml(payload);
       const title = (payload.title as string) || "Nova Notificação";
       return await sendEmail(supabase, {
-        to: profileData.work_email,
+        to: recipient.work_email,
         subject: `[Hub] ${title}`,
         html,
       });

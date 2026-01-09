@@ -6951,6 +6951,10 @@ export type Database = {
         Args: { p_alert_id: string; p_notes?: string }
         Returns: boolean
       }
+      resolve_notification_recipient: {
+        Args: { p_auth_user_id: string }
+        Returns: Json
+      }
       resolve_ticket_assignee: {
         Args: {
           p_bu_id: string
@@ -6960,6 +6964,7 @@ export type Database = {
         }
         Returns: string
       }
+      resolve_work_email: { Args: { p_auth_user_id: string }; Returns: string }
       rpc_leader_dashboard_focus: { Args: { p_team_id: string }; Returns: Json }
       rpc_leader_dashboard_summary: {
         Args: { p_team_id: string }
