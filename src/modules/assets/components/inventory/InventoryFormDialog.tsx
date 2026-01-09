@@ -662,25 +662,23 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="__none__">Nenhum (disponível)</SelectItem>
-                          {profiles
-                            .filter((profile) => profile.user_id)
-                            .map((profile) => (
-                              <SelectItem 
-                                key={profile.user_id!} 
-                                value={profile.user_id!}
-                                textValue={profile.full_name}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Avatar className="h-5 w-5">
-                                    <AvatarImage src={profile.avatar_url || undefined} />
-                                    <AvatarFallback className="text-xs">
-                                      {profile.full_name.slice(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span>{profile.full_name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
+                          {profiles.map((profile) => (
+                            <SelectItem 
+                              key={profile.id} 
+                              value={profile.id}
+                              textValue={profile.full_name}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={profile.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {profile.full_name.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{profile.full_name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormDescription>

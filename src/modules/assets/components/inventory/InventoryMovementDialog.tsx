@@ -37,7 +37,7 @@ import { useAssetProfiles } from "../../hooks/useProfiles";
 import { useBuAdmins } from "../../hooks/useBuAdmins";
 import { useAuthorizers } from "../../hooks/useAuthorizers";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
-import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import { KitCheckoutInfo } from "./KitCheckoutInfo";
 import type { AssetInventory, AssetMovementType } from "../../types";
 import { MOVEMENT_TYPE_LABELS } from "../../types";
@@ -94,7 +94,7 @@ export function InventoryMovementDialog({
   item,
   initialType,
 }: InventoryMovementDialogProps) {
-  const { user } = useAuth();
+  const { profileId } = useIdentity();
   const { createMovement, isCreatingMovement, updateItem } = useInventory();
   const { getRequiredAccessories } = useAssetGroups();
   const { locations, defaultLocation } = useLocations();
@@ -147,7 +147,7 @@ export function InventoryMovementDialog({
       to_user_id: "",
       to_location_id: item.home_location_id || defaultLocation?.id || "",
       to_holder_type: "location",
-      authorized_by_user_id: user?.id || "",
+      authorized_by_user_id: profileId || "",
     },
   });
 
@@ -163,10 +163,10 @@ export function InventoryMovementDialog({
         to_user_id: "",
         to_location_id: item.home_location_id || defaultLocation?.id || "",
         to_holder_type: "location",
-        authorized_by_user_id: user?.id || "",
+        authorized_by_user_id: profileId || "",
       });
     }
-  }, [open, initialType, item, user, form, defaultLocation]);
+  }, [open, initialType, item, profileId, form, defaultLocation]);
 
   const handleTypeChange = (type: AssetMovementType) => {
     setMovementType(type);
@@ -340,17 +340,15 @@ export function InventoryMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles
-                              .filter((profile) => profile.user_id)
-                              .map((profile) => (
-                                <SelectItem 
-                                  key={profile.user_id!} 
-                                  value={profile.user_id!}
-                                  textValue={profile.full_name}
-                                >
-                                  {profile.full_name}
-                                </SelectItem>
-                              ))}
+                            {profiles.map((profile) => (
+                              <SelectItem 
+                                key={profile.id} 
+                                value={profile.id}
+                                textValue={profile.full_name}
+                              >
+                                {profile.full_name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -531,17 +529,15 @@ export function InventoryMovementDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {profiles
-                                .filter((profile) => profile.user_id)
-                                .map((profile) => (
-                                  <SelectItem 
-                                    key={profile.user_id!} 
-                                    value={profile.user_id!}
-                                    textValue={profile.full_name}
-                                  >
-                                    {profile.full_name}
-                                  </SelectItem>
-                                ))}
+                              {profiles.map((profile) => (
+                                <SelectItem 
+                                  key={profile.id} 
+                                  value={profile.id}
+                                  textValue={profile.full_name}
+                                >
+                                  {profile.full_name}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
