@@ -130,6 +130,10 @@ export const queryKeys = {
     // Dashboard
     dashboard: (buId: string | null, teamId?: string) => 
       ['okr-dashboard', buId, teamId] as const,
+    
+    // Cycle Check-ins Page
+    cycleCheckins: (buId: string | null, cycleId?: string, filters?: Record<string, unknown>) => 
+      ['okr-cycle-checkins', buId, cycleId, filters] as const,
   },
 
   // ============= KPIs =============
