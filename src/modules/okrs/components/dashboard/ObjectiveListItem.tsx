@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
+import { useKrInitiativesCount } from '../../hooks/useInitiatives';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
@@ -443,6 +444,7 @@ interface KeyResultRowProps {
 
 function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(false);
+  const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
@@ -493,6 +495,15 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, o
                   <span>
                     {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
                   </span>
+                  {type === 'team' && initiativesCount > 0 && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 text-primary">
+                        <Lightbulb className="w-3 h-3" />
+                        {initiativesCount} iniciativa{initiativesCount !== 1 ? 's' : ''}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               
