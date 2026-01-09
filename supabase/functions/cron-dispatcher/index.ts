@@ -48,12 +48,13 @@ async function getCronSecret(supabase: any): Promise<string | null> {
 async function processOutbox(supabase: any): Promise<OutboxResult> {
   const result: OutboxResult = { processed: 0, sent: 0, failed: 0 };
 
+  const now = new Date().toISOString();
   const { data: items, error } = await supabase
     .from("notification_outbox")
-    .select("id, channel, recipient, template_slug, variables, bu_id, retry_count, max_retries")
+    .select("id, channel_slug, event_slug, payload, bu_id, user_id, retries, max_retries")
     .eq("status", "pending")
-    .lte("scheduled_for", new Date().toISOString())
-    .order("scheduled_for", { ascending: true })
+    .or(`next_retry_at.is.null,next_retry_at.lte.${now}`)
+    .order("created_at", { ascending: true })
     .limit(50);
 
   if (error) {
@@ -72,7 +73,11 @@ async function processOutbox(supabase: any): Promise<OutboxResult> {
     try {
       const { error: updateError } = await supabase
         .from("notification_outbox")
-        .update({ status: "sent", sent_at: new Date().toISOString() })
+        .update({ 
+          status: "sent", 
+          sent_at: now,
+          processed_at: now 
+        })
         .eq("id", item.id);
 
       if (updateError) {
