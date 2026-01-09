@@ -22,6 +22,7 @@ import {
   User,
   BookOpen,
   ExternalLink,
+  Bell,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,7 @@ const globalBuItems = [
 // Itens de admin da BU (apenas para bu_admin ou superior)
 const buAdminItems = [
   { name: "Permissões", href: "/settings/permissions", icon: Shield },
+  { name: "Notificações", href: "/settings/notifications", icon: Bell },
 ];
 
 // Links externos
