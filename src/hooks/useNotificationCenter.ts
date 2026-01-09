@@ -293,6 +293,16 @@ export function useSendTestNotification() {
       });
       
       if (error) throw error;
+      
+      // If email or other outbox channels were included, trigger the outbox processor
+      const hasOutboxChannels = channels.some(ch => ['email', 'slack', 'webhook'].includes(ch));
+      if (hasOutboxChannels) {
+        // Trigger outbox processing (fire and forget)
+        supabase.functions.invoke('process-notification-outbox').catch((err: unknown) => {
+          console.warn('[useSendTestNotification] Failed to trigger outbox processor:', err);
+        });
+      }
+      
       return data as Array<{ notification_id: string | null; outbox_id: string | null; channel: string; status: string }>;
     },
     onSuccess: () => {
