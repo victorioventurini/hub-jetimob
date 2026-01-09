@@ -180,10 +180,10 @@ export function useUpdateInitiative() {
   const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
-    mutationFn: async (input: UpdateInitiativeInput) => {
+    mutationFn: async (input: UpdateInitiativeInput & { kr_id?: string }) => {
       if (!supabase) throw new Error('Cliente não disponível');
       
-      const { id, ...updateData } = input;
+      const { id, kr_id, ...updateData } = input;
       
       const { data, error } = await supabase
         .from("okr_initiatives")
@@ -192,14 +192,19 @@ export function useUpdateInitiative() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
-        .select()
+        .select("id, kr_id")
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+    onSuccess: (data) => {
+      // Invalidate the specific KR initiatives list
+      if (data?.kr_id) {
+        queryClient.invalidateQueries({ queryKey: ["initiatives", "kr", data.kr_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["initiatives", "user"] });
+      queryClient.invalidateQueries({ queryKey: ["initiatives", "status"] });
       toast.success("Iniciativa atualizada");
     },
     onError: () => {
@@ -214,7 +219,7 @@ export function useDeleteInitiative() {
   const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
-    mutationFn: async (initiativeId: string) => {
+    mutationFn: async ({ initiativeId, krId }: { initiativeId: string; krId: string }) => {
       if (!supabase) throw new Error('Cliente não disponível');
       
       const { error } = await supabase
@@ -226,9 +231,13 @@ export function useDeleteInitiative() {
         .eq("id", initiativeId);
 
       if (error) throw error;
+      return { krId };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+    onSuccess: (data) => {
+      // Invalidate the specific KR initiatives list
+      queryClient.invalidateQueries({ queryKey: ["initiatives", "kr", data.krId] });
+      queryClient.invalidateQueries({ queryKey: ["initiatives", "user"] });
+      queryClient.invalidateQueries({ queryKey: ["initiatives", "status"] });
       toast.success("Iniciativa removida");
     },
     onError: () => {

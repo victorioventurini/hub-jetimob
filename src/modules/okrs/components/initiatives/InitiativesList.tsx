@@ -37,7 +37,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
 
   const handleDelete = async () => {
     if (!deletingInitiative) return;
-    await deleteMutation.mutateAsync(deletingInitiative.id);
+    await deleteMutation.mutateAsync({ initiativeId: deletingInitiative.id, krId });
     setDeletingInitiative(null);
   };
 
