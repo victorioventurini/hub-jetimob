@@ -394,23 +394,24 @@ async function processOutboxItem(
   const { channel_slug, payload, user_id, bu_id } = item;
 
   // Get user email for email channel
+  // Note: profiles table uses work_email, not email
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("email, display_name")
+    .select("work_email, display_name")
     .eq("user_id", user_id)
     .maybeSingle();
 
-  const profileData = profile as { email: string; display_name: string } | null;
+  const profileData = profile as { work_email: string; display_name: string } | null;
 
   switch (channel_slug) {
     case "email": {
-      if (profileError || !profileData?.email) {
-        return { success: false, error: "User email not found" };
+      if (profileError || !profileData?.work_email) {
+        return { success: false, error: "User email not found (work_email missing)" };
       }
       const html = buildNotificationEmailHtml(payload);
       const title = (payload.title as string) || "Nova Notificação";
       return await sendEmail(supabase, {
-        to: profileData.email,
+        to: profileData.work_email,
         subject: `[Hub] ${title}`,
         html,
       });
