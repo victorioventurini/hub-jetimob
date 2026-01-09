@@ -7187,6 +7187,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      sync_profile_bu_to_default_membership: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       team_is_ancestor: {
         Args: { p_ancestor_team_id: string; p_team_id: string }
         Returns: boolean
