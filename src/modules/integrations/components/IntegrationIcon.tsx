@@ -8,6 +8,7 @@ import {
   Plug,
   Database,
   Cloud,
+  Clock,
   LucideIcon,
 } from 'lucide-react';
 
@@ -21,6 +22,7 @@ const iconComponents: Record<string, LucideIcon> = {
   plug: Plug,
   database: Database,
   cloud: Cloud,
+  clock: Clock,
 };
 
 interface IntegrationIconProps {

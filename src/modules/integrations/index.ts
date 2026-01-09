@@ -4,6 +4,7 @@ export { default as GlobalIntegrationDetailPage } from './pages/GlobalIntegratio
 export { default as AgentsListPage } from './pages/AgentsListPage';
 export { default as AgentFormPage } from './pages/AgentFormPage';
 export { default as AgentLogsPage } from './pages/AgentLogsPage';
+export { default as CronJobConfigPage } from './pages/CronJobConfigPage';
 
 // Components
 export { IntegrationIcon } from './components/IntegrationIcon';

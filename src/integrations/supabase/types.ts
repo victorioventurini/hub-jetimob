@@ -2224,6 +2224,51 @@ export type Database = {
           },
         ]
       }
+      cron_execution_logs: {
+        Row: {
+          correlation_id: string | null
+          created_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          health_alerts_created: number | null
+          health_alerts_resolved: number | null
+          id: string
+          outbox_failed: number | null
+          outbox_processed: number | null
+          outbox_sent: number | null
+          ran_at: string
+          status: string
+        }
+        Insert: {
+          correlation_id?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          health_alerts_created?: number | null
+          health_alerts_resolved?: number | null
+          id?: string
+          outbox_failed?: number | null
+          outbox_processed?: number | null
+          outbox_sent?: number | null
+          ran_at?: string
+          status: string
+        }
+        Update: {
+          correlation_id?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          health_alerts_created?: number | null
+          health_alerts_resolved?: number | null
+          id?: string
+          outbox_failed?: number | null
+          outbox_processed?: number | null
+          outbox_sent?: number | null
+          ran_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       cycles: {
         Row: {
           bu_id: string
