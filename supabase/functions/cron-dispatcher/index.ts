@@ -27,6 +27,23 @@ interface ExecutionResult {
   ran_at: string;
 }
 
+// Get CRON_SECRET from database config (same pattern as other integrations)
+async function getCronSecret(supabase: any): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", "cron-job")
+    .maybeSingle();
+
+  if (error || !data?.is_enabled_global) {
+    console.log("[cron-dispatcher] Integration not enabled or error:", error);
+    return null;
+  }
+
+  const config = data.config_encrypted as { cron_secret?: string } | null;
+  return config?.cron_secret || null;
+}
+
 // Process outbox items
 async function processOutbox(supabase: any): Promise<OutboxResult> {
   const result: OutboxResult = { processed: 0, sent: 0, failed: 0 };
@@ -115,12 +132,19 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
   const correlationId = crypto.randomUUID();
 
-  // Validate cron secret
+  // Create supabase client first (needed to get secret from DB)
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } }
+  );
+
+  // Validate cron secret from database config
   const cronSecret = req.headers.get("x-cron-secret");
-  const expectedSecret = Deno.env.get("CRON_SECRET");
+  const expectedSecret = await getCronSecret(supabase);
 
   if (!expectedSecret) {
-    return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+    return new Response(JSON.stringify({ error: "Integration not configured or disabled" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -132,12 +156,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    { auth: { persistSession: false } }
-  );
 
   try {
     const outboxResult = await processOutbox(supabase);

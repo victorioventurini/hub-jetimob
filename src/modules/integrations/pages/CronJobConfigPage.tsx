@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, ExternalLink, Play, RefreshCw, Check, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Play, RefreshCw, Check, Clock, AlertCircle, Eye, EyeOff, Key, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { IntegrationIcon } from '../components/IntegrationIcon';
@@ -30,11 +31,18 @@ interface CronLog {
   correlation_id: string | null;
 }
 
+interface ConfigEncrypted {
+  cron_secret?: string;
+}
+
 export default function CronJobConfigPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState<string | null>(null);
   const [isTestRunning, setIsTestRunning] = useState(false);
+  const [cronSecret, setCronSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'oiwnghihyqdsinouwmga';
   const endpointUrl = `https://${projectId}.supabase.co/functions/v1/cron-dispatcher`;
@@ -51,6 +59,14 @@ export default function CronJobConfigPage() {
       return data;
     },
   });
+
+  // Load secret from config when data arrives
+  useEffect(() => {
+    if (config?.config_encrypted) {
+      const encrypted = config.config_encrypted as ConfigEncrypted;
+      setCronSecret(encrypted.cron_secret || '');
+    }
+  }, [config]);
 
   const { data: logs, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
     queryKey: ['cron-execution-logs'],
@@ -80,6 +96,40 @@ export default function CronJobConfigPage() {
     onError: () => toast.error('Erro ao atualizar'),
   });
 
+  // Save secret mutation
+  const saveSecretMutation = useMutation({
+    mutationFn: async (secret: string) => {
+      const currentConfig = (config?.config_encrypted as ConfigEncrypted) || {};
+      const { error } = await supabase
+        .from('hub_integrations_global_config')
+        .update({ 
+          config_encrypted: { ...currentConfig, cron_secret: secret }
+        })
+        .eq('integration_key', 'cron-job');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['integrations', 'global-config', 'cron-job'] });
+      setHasUnsavedChanges(false);
+      toast.success('Secret salvo com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao salvar secret');
+    },
+  });
+
+  const generateSecret = () => {
+    const newSecret = `cron_hub_${crypto.randomUUID().replace(/-/g, '')}`;
+    setCronSecret(newSecret);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSecretChange = (value: string) => {
+    setCronSecret(value);
+    const originalSecret = (config?.config_encrypted as ConfigEncrypted)?.cron_secret || '';
+    setHasUnsavedChanges(value !== originalSecret);
+  };
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(label);
@@ -88,21 +138,38 @@ export default function CronJobConfigPage() {
   };
 
   const handleTestRun = async () => {
+    if (!cronSecret) {
+      toast.error('Configure o CRON_SECRET primeiro');
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      toast.error('Salve o secret antes de executar o teste');
+      return;
+    }
+
     setIsTestRunning(true);
     toast.info('Executando teste...');
     try {
-      const response = await fetch(endpointUrl, { method: 'POST' });
+      const response = await fetch(endpointUrl, { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-cron-secret': cronSecret,
+        },
+      });
       if (response.status === 401) {
-        toast.warning('Teste requer CRON_SECRET. Configure no cron-job.org.');
+        toast.error('Falha na autenticação. Verifique o CRON_SECRET.');
       } else if (response.ok) {
         const result = await response.json();
         toast.success(`Teste concluído! Outbox: ${result.outbox?.sent || 0} enviados`);
         refetchLogs();
       } else {
-        toast.error('Erro no teste');
+        const result = await response.json();
+        toast.error(`Erro: ${result.error || 'Falha na execução'}`);
       }
     } catch {
-      toast.error('Erro ao executar. Verifique CRON_SECRET.');
+      toast.error('Erro ao executar teste');
     } finally {
       setIsTestRunning(false);
     }
@@ -123,6 +190,75 @@ export default function CronJobConfigPage() {
           <p className="text-muted-foreground">Agendador externo para processamento automático</p>
         </div>
       </div>
+
+      {/* Secret Configuration Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            CRON_SECRET
+          </CardTitle>
+          <CardDescription>
+            Chave de autenticação para validar chamadas do cron-job.org
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Secret</Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type={showSecret ? 'text' : 'password'}
+                  value={cronSecret}
+                  onChange={(e) => handleSecretChange(e.target.value)}
+                  placeholder="Gere ou insira um secret..."
+                  className="font-mono text-sm pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowSecret(!showSecret)}
+                >
+                  {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <Button variant="outline" size="icon" onClick={generateSecret} title="Gerar novo secret">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => copyToClipboard(cronSecret, 'Secret')}
+                disabled={!cronSecret}
+                title="Copiar secret"
+              >
+                {copied === 'Secret' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            {hasUnsavedChanges && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                ⚠️ Alterações não salvas
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => saveSecretMutation.mutate(cronSecret)}
+              disabled={!hasUnsavedChanges || saveSecretMutation.isPending}
+            >
+              {saveSecretMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar Secret
+            </Button>
+          </div>
+
+          <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
+            <p>💡 Após alterar o secret, atualize o header <code className="bg-muted px-1 rounded">x-cron-secret</code> no cron-job.org.</p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -153,15 +289,30 @@ export default function CronJobConfigPage() {
             <div className="space-y-2">
               <Label>Header de Autenticação</Label>
               <div className="flex gap-2">
-                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">x-cron-secret: {'<seu_secret>'}</code>
-                <Button variant="outline" size="icon" onClick={() => copyToClipboard('x-cron-secret', 'Header')}>
+                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">
+                  x-cron-secret: {cronSecret ? '***' : '<configure acima>'}
+                </code>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => copyToClipboard(`x-cron-secret: ${cronSecret}`, 'Header')}
+                  disabled={!cronSecret}
+                >
                   {copied === 'Header' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
             <Separator />
-            <Button onClick={handleTestRun} disabled={isTestRunning} className="w-full">
-              {isTestRunning ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Executando...</> : <><Play className="mr-2 h-4 w-4" />Executar Teste</>}
+            <Button 
+              onClick={handleTestRun} 
+              disabled={isTestRunning || !cronSecret || hasUnsavedChanges} 
+              className="w-full"
+            >
+              {isTestRunning ? (
+                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Executando...</>
+              ) : (
+                <><Play className="mr-2 h-4 w-4" />Executar Teste</>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -173,16 +324,17 @@ export default function CronJobConfigPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>Configure o <strong>CRON_SECRET</strong> acima (gere ou insira um valor)</li>
               <li>Acesse <a href="https://cron-job.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">cron-job.org<ExternalLink className="h-3 w-3" /></a></li>
               <li>Crie um novo cronjob</li>
-              <li><strong>URL:</strong> Cole a URL acima</li>
+              <li><strong>URL:</strong> Cole a URL do endpoint</li>
               <li><strong>Método:</strong> POST</li>
-              <li><strong>Header:</strong> x-cron-secret: seu_secret</li>
+              <li><strong>Header:</strong> x-cron-secret: (copie o secret)</li>
               <li><strong>Frequência:</strong> <code className="bg-muted px-1 rounded">*/1 * * * *</code></li>
             </ol>
-            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-              <p className="text-sm text-amber-600 dark:text-amber-400">
-                <strong>Importante:</strong> Configure o CRON_SECRET nas variáveis de ambiente antes.
+            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <p className="text-sm text-green-600 dark:text-green-400">
+                ✓ O secret é armazenado de forma segura e validado a cada chamada.
               </p>
             </div>
           </CardContent>
