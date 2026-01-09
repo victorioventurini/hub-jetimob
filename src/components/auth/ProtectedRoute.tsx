@@ -8,9 +8,11 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   /** If true, skip BU selection check (for global pages and select-bu page) */
   skipBuCheck?: boolean;
+  /** If true, skip onboarding check (for onboarding page itself) */
+  skipOnboardingCheck?: boolean;
 }
 
-export function ProtectedRoute({ children, skipBuCheck = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, skipBuCheck = false, skipOnboardingCheck = false }: ProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { userBus, buSelected, isLoading: buLoading } = useBu();
   const location = useLocation();
@@ -29,6 +31,11 @@ export function ProtectedRoute({ children, skipBuCheck = false }: ProtectedRoute
   // Skip this check for the select-bu page itself and global routes
   if (!skipBuCheck && userBus.length > 1 && !buSelected) {
     return <Navigate to="/select-bu" replace />;
+  }
+
+  // Skip onboarding guard for onboarding page itself
+  if (skipOnboardingCheck) {
+    return <>{children}</>;
   }
 
   // Wrap with OnboardingGuard to enforce onboarding completion
