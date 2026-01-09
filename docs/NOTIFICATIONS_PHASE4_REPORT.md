@@ -86,13 +86,46 @@ ROUND(
 
 ## 5. UI Changes
 
-Novos componentes em `/hub/notifications?tab=diagnostics`:
+Novos componentes criados:
 
 - `DiagnosticsSloCard`: Métricas SLO por canal e eventos problemáticos
 - `DiagnosticsHealthAlertsCard`: Alertas com ações, runbooks e cooldown
 
-## 6. QA
+### Integração Final
+
+Componentes integrados em `HubNotifications.tsx` na tab Diagnostics:
+
+```tsx
+{/* Phase 4: SLO/SLA Card */}
+<DiagnosticsSloCard />
+
+{/* Phase 4: Health Alerts Card with Cooldown/Escalation/Runbooks */}
+<DiagnosticsHealthAlertsCard />
+```
+
+Acesso via: `/hub/notifications?tab=diagnostics`
+
+## 6. Arquivos Modificados
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/hub/HubNotifications.tsx` | Atualizado - Integração Phase 4 |
+| `src/components/hub/notifications/DiagnosticsSloCard.tsx` | Criado |
+| `src/components/hub/notifications/DiagnosticsHealthAlertsCard.tsx` | Criado |
+| `src/lib/queryKeys.ts` | Atualizado - Novas keys |
+| `supabase/functions/evaluate-notification-health/index.ts` | Atualizado |
+
+## 7. QA
 
 Ver `docs/qa/QA_NOTIFICATIONS_PHASE4.md`
 
-**Resultado: PASS**
+**Resultado: ✅ PASS**
+
+## 8. Conclusão
+
+Phase 4 finalizada com sucesso:
+- ✅ Migration SQL corrigida e aplicada
+- ✅ Views SLO funcionando
+- ✅ Cooldown/Escalation implementado
+- ✅ UI integrada em HubNotifications.tsx
+- ✅ Documentação atualizada

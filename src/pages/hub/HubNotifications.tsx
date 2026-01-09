@@ -62,6 +62,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useUrlTab, useUrlSearch, useUrlState } from '@/shared/url';
 import { queryKeys } from '@/lib/queryKeys';
+import { DiagnosticsSloCard } from '@/components/hub/notifications/DiagnosticsSloCard';
+import { DiagnosticsHealthAlertsCard } from '@/components/hub/notifications/DiagnosticsHealthAlertsCard';
 
 const channelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   in_app: Bell,
@@ -563,57 +565,21 @@ export default function HubNotifications() {
         </TabsContent>
         
         {/* Diagnostics Tab */}
-        <TabsContent value="diagnostics" className="space-y-4">
+        <TabsContent value="diagnostics" className="space-y-6">
           <div>
             <h2 className="text-lg font-semibold">Diagnóstico Global</h2>
             <p className="text-sm text-muted-foreground">
-              Visão geral do sistema de notificações
+              SLO/SLA, Health Alerts e métricas do sistema de notificações
             </p>
           </div>
 
-          {/* Health Alerts Card */}
-          {(activeAlerts.length > 0 || alertsLoading) && (
-            <Card className="border-destructive/50 bg-destructive/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-destructive" />
-                  Alertas de Saúde Ativos
-                </CardTitle>
-                <CardDescription>Problemas detectados que requerem atenção</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {alertsLoading ? (
-                  <Skeleton className="h-16 w-full" />
-                ) : (
-                  <div className="space-y-3">
-                    {activeAlerts.map(alert => (
-                      <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg bg-background border">
-                        <Badge variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}>
-                          {alert.severity}
-                        </Badge>
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">
-                            {alert.alert_type === 'outbox_backlog' && '⚠️ Fila Acumulada'}
-                            {alert.alert_type === 'high_failure_rate' && '🔴 Alta Taxa de Falhas'}
-                            {alert.alert_type === 'channel_down' && '❌ Canal Fora do Ar'}
-                            {alert.alert_type === 'event_disabled_mandatory' && '⚙️ Evento Obrigatório Desabilitado'}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {alert.metadata?.pending_count && `${alert.metadata.pending_count} pendentes`}
-                            {alert.metadata?.failure_rate_pct && `${alert.metadata.failure_rate_pct}% de falhas`}
-                            {alert.metadata?.channel_slug && ` no canal ${alert.metadata.channel_slug}`}
-                            {' • '}Detectado {new Date(alert.detected_at).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Global Stats */}
+          {/* Phase 4: SLO/SLA Card */}
+          <DiagnosticsSloCard />
+
+          {/* Phase 4: Health Alerts Card with Cooldown/Escalation/Runbooks */}
+          <DiagnosticsHealthAlertsCard />
+
+          {/* Legacy Global Stats (keeping for backward compatibility) */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
@@ -680,75 +646,6 @@ export default function HubNotifications() {
               </CardContent>
             </Card>
           </div>
-          
-          {/* Per-Channel Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Métricas por Canal</CardTitle>
-              <CardDescription>Estatísticas de envio por canal de notificação</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Canal</TableHead>
-                    <TableHead className="text-center">Pendentes</TableHead>
-                    <TableHead className="text-center">Enviadas</TableHead>
-                    <TableHead className="text-center">Falhas</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {['email', 'slack', 'webhook'].map(ch => {
-                    const Icon = channelIcons[ch] || Bell;
-                    const stats = outboxStats?.byChannel?.[ch] || { pending: 0, sent: 0, failed: 0 };
-                    const hasPending = stats.pending > 0;
-                    const hasFailed = stats.failed > 0;
-                    
-                    return (
-                      <TableRow key={ch}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4 text-muted-foreground" />
-                            <span className="capitalize font-medium">{ch}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={hasPending ? "secondary" : "outline"} className={hasPending ? "bg-yellow-100 text-yellow-800" : ""}>
-                            {stats.pending}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="text-green-600">
-                            {stats.sent}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={hasFailed ? "destructive" : "outline"}>
-                            {stats.failed}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {(hasPending || hasFailed) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // Deep link to BU outbox filtered by channel
-                                window.location.href = `/settings/notifications?tab=outbox&channel=${ch}&status=${hasFailed ? 'failed' : 'pending'}`;
-                              }}
-                            >
-                              Ver detalhes
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
           
           {/* System Status */}
           <Card>

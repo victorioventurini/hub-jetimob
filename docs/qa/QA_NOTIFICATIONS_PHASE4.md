@@ -56,9 +56,17 @@ CREATE UNIQUE INDEX idx_unique_active_alert_per_bu_type
 - SLO Card com tabela por canal
 - Health Alerts com ações (ack/resolve)
 - Runbook modal funcional
+- **Integração em HubNotifications.tsx** (Tab Diagnostics)
+
+### 7. Integração Final
+
+- DiagnosticsSloCard integrado em `/hub/notifications?tab=diagnostics`
+- DiagnosticsHealthAlertsCard integrado em `/hub/notifications?tab=diagnostics`
+- Cards legacy mantidos para compatibilidade
 
 ## Resultado Final
 
 **STATUS: ✅ PASS**
 
 Todos os cenários foram validados com sucesso.
+Phase 4 finalizada com integração completa na UI.
