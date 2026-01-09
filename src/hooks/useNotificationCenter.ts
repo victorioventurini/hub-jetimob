@@ -36,6 +36,8 @@ export interface BuNotificationChannel {
   channel_slug: string;
   is_enabled: boolean;
   config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserNotificationSetting {
@@ -59,7 +61,7 @@ export function useNotificationEvents() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_events')
-        .select('*')
+        .select('id, slug, module, name, description, audience, severity, is_mandatory, default_channels, icon')
         .order('module', { ascending: true })
         .order('slug', { ascending: true });
       
@@ -78,7 +80,7 @@ export function useNotificationChannels() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_channels')
-        .select('*')
+        .select('id, slug, name, description, icon, requires_configuration, status, display_order')
         .eq('status', 'active')
         .order('display_order', { ascending: true });
       
@@ -99,7 +101,7 @@ export function useBuNotificationChannels(buId?: string) {
       
       const { data, error } = await supabase
         .from('bu_notification_channels')
-        .select('*')
+        .select('id, bu_id, channel_slug, is_enabled, config, created_at, updated_at')
         .eq('bu_id', buId);
       
       if (error) throw error;
