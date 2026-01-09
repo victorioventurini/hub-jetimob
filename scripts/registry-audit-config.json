@@ -1,0 +1,64 @@
+{
+  "$schema": "./registry-audit-config.schema.json",
+  "description": "Configuration for audit-sql-against-registry.ts",
+  "version": "1.0.0",
+  
+  "ignore_paths": [
+    "docs/qa/**",
+    "docs/perf/**",
+    "docs/archive/**"
+  ],
+  
+  "allow_unknown_patterns": [
+    "auth.users",
+    "auth.uid",
+    "auth.jwt",
+    "auth.role",
+    "auth.email",
+    "storage.objects",
+    "storage.buckets",
+    "storage.foldername",
+    "realtime.subscription",
+    "realtime.messages"
+  ],
+  
+  "allow_schemas": [
+    "auth",
+    "storage",
+    "realtime",
+    "supabase_functions",
+    "vault",
+    "extensions",
+    "graphql",
+    "graphql_public",
+    "pgsodium",
+    "pgsodium_masks"
+  ],
+  
+  "allow_tokens": [
+    "pg_catalog",
+    "information_schema",
+    "pg_class",
+    "pg_namespace",
+    "pg_proc",
+    "pg_trigger",
+    "pg_type",
+    "pg_enum",
+    "pg_policies",
+    "pg_extension",
+    "pg_stat",
+    "pg_index",
+    "pg_constraint",
+    "pg_attribute",
+    "pg_description",
+    "pg_depend",
+    "pg_rewrite",
+    "pg_publication"
+  ],
+  
+  "notes": {
+    "auth.users": "Supabase Auth managed table - referenced but not in public schema",
+    "storage.objects": "Supabase Storage managed table",
+    "pg_catalog": "PostgreSQL system catalog - always available"
+  }
+}
