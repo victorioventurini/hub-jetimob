@@ -6765,6 +6765,15 @@ export type Database = {
         Args: { p_reason?: string; p_template_id: string; p_version_id: string }
         Returns: boolean
       }
+      add_user_bu_access: {
+        Args: {
+          p_is_default?: boolean
+          p_role_in_bu?: string
+          target_bu_id: string
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
       assert_profile_identity: {
         Args: { p_profile_id: string }
@@ -6954,6 +6963,25 @@ export type Database = {
           route: string
           slug: string
           type: Database["public"]["Enums"]["module_type"]
+        }[]
+      }
+      get_global_users_admin: {
+        Args: {
+          p_bu_id?: string
+          p_onboarding_status?: string
+          p_search?: string
+        }
+        Returns: {
+          bu_accesses: Json
+          display_name: string
+          global_role: string
+          last_sign_in_at: string
+          onboarding_completed: boolean
+          primary_bu_id: string
+          primary_bu_name: string
+          profile_id: string
+          user_id: string
+          work_email: string
         }[]
       }
       get_integration_config_for_bu: {
@@ -7162,6 +7190,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      remove_user_bu_access: {
+        Args: { target_bu_id: string; target_user_id: string }
+        Returns: undefined
+      }
+      reset_user_onboarding: {
+        Args: { target_profile_id: string }
+        Returns: undefined
+      }
       resolve_asset_by_code_for_bu: {
         Args: { code_text: string; p_bu_id: string }
         Returns: string
@@ -7255,6 +7291,10 @@ export type Database = {
       team_is_descendant: {
         Args: { p_ancestor_team_id: string; p_team_id: string }
         Returns: boolean
+      }
+      update_user_global_role: {
+        Args: { new_role: string; target_user_id: string }
+        Returns: undefined
       }
       user_can_manage_team: {
         Args: { p_team_id: string; p_user_id: string }

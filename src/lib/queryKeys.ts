@@ -284,6 +284,7 @@ export const queryKeys = {
     memberships: (userId: string) => ['bu', 'memberships', userId] as const,
     modules: (buId: string | null) => ['bu', 'modules', buId] as const,
     allModules: (buId: string | null) => ['bu', 'all-modules', buId] as const,
+    allList: () => ['bu', 'all-list'] as const,
   },
 
   // ============= Settings =============
@@ -354,6 +355,10 @@ export const queryKeys = {
       ['users', 'directory', buId, filters] as const,
     selectOptions: (buId: string | null) => 
       ['users', 'select-options', buId] as const,
+    globalList: (filters?: { q?: string; buId?: string; onboardingStatus?: string }) =>
+      ['users', 'global-list', filters] as const,
+    globalDetail: (profileId: string) =>
+      ['users', 'global-detail', profileId] as const,
   },
 } as const;
 
