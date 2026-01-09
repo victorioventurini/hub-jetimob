@@ -133,23 +133,29 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
     mutationFn: async (data: OnboardingFormData) => {
       const displayName = `${data.first_name} ${data.last_name}`.trim();
 
+      // Build update object, only including fields that have values
+      // This preserves existing data for optional fields not filled in onboarding
+      const updateData: Record<string, unknown> = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        display_name: displayName,
+        birth_day: data.birth_day,
+        birth_month: data.birth_month,
+        whatsapp_personal: data.whatsapp_personal,
+        city: data.city,
+        state: data.state,
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Only update optional fields if they have new values
+      if (data.photo_url) updateData.photo_url = data.photo_url;
+      if (data.discord_id) updateData.discord_id = data.discord_id;
+      if (data.instagram_id) updateData.instagram_id = data.instagram_id;
+
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          display_name: displayName,
-          photo_url: data.photo_url || null,
-          birth_day: data.birth_day,
-          birth_month: data.birth_month,
-          whatsapp_personal: data.whatsapp_personal,
-          discord_id: data.discord_id || null,
-          instagram_id: data.instagram_id || null,
-          city: data.city,
-          state: data.state,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", profileId);
 
       if (profileError) throw profileError;
