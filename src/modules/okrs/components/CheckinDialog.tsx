@@ -166,7 +166,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
     for (const mentionedUserId of uniqueMentions) {
       try {
         await supabase.rpc('emit_notification_event', {
-          p_event_slug: 'core.mention',
+          p_event_slug: 'mention.created',
           p_bu_id: buId,
           p_recipient_user_ids: [mentionedUserId],
           p_actor_id: user.id,
