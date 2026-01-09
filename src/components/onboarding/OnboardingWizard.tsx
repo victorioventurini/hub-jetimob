@@ -36,11 +36,19 @@ const getDaysInMonth = (month: number) => {
 };
 
 const formatWhatsApp = (value: string) => {
-  const numbers = value.replace(/\D/g, "");
-  if (numbers.length <= 2) return numbers;
-  if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-  if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
-  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  const digits = value.replace(/\D/g, '');
+  
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `+${digits}`;
+  if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
+  if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
+  if (digits.length <= 13) {
+    const areaCode = digits.slice(2, 4);
+    const firstPart = digits.slice(4, 9);
+    const secondPart = digits.slice(9, 13);
+    return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? '-' + secondPart : ''}`;
+  }
+  return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
 };
 
 const onboardingSchema = z.object({
@@ -442,9 +450,9 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
                         id="whatsapp"
                         value={formData.whatsapp_personal}
                         onChange={(e) => handleWhatsAppChange(e.target.value)}
-                        placeholder="(00) 00000-0000"
-                        className={cn("pl-10", errors.whatsapp_personal ? "border-destructive" : "")}
-                        maxLength={15}
+                      placeholder="+55 (51) 99999-9999"
+                      className={cn("pl-10", errors.whatsapp_personal ? "border-destructive" : "")}
+                      maxLength={19}
                         autoFocus
                       />
                     </div>
