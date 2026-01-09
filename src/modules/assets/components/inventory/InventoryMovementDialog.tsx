@@ -303,7 +303,7 @@ export function InventoryMovementDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRight className="h-5 w-5" />
-            Movimentar: {item.name}
+            {MOVEMENT_TYPE_LABELS[movementType]}: {item.name}
           </DialogTitle>
           <DialogDescription>
             {item.internal_code} • Status atual: {item.status}
@@ -320,34 +320,6 @@ export function InventoryMovementDialog({
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Movement Type Selection */}
-              <FormField
-                control={form.control}
-                name="movement_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Movimentação</FormLabel>
-                    <Select
-                      onValueChange={(val) => handleTypeChange(val as AssetMovementType)}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {MOVEMENT_TYPE_LABELS[type]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {/* Checkout Fields */}
               {movementType === "checkout" && (
