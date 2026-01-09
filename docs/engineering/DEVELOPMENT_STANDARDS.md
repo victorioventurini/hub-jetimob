@@ -430,6 +430,7 @@ $$ LANGUAGE sql STABLE;
 | `audit-rbac.ts` | `npx tsx scripts/audit-rbac.ts` | Hardcode de roles |
 | `audit-supabase-client.ts` | `npx tsx scripts/audit-supabase-client.ts` | Cliente global em módulos operacionais |
 | `audit-prebu-buscoped.ts` | `npx tsx scripts/audit-prebu-buscoped.ts` | useBuScopedSupabase em contexto PRE-BU |
+| `audit-user-directory.ts` | `npx tsx scripts/audit-user-directory.ts` | INNER JOIN memberships em listagem de usuários |
 
 > 📚 Ver: [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md)
 
@@ -747,6 +748,9 @@ Antes de considerar qualquer mudança completa, verificar:
 | URL State | `npx tsx scripts/audit-url-state.ts` | 0 novas violações |
 | Overfetch | `npx tsx scripts/audit-overfetch.ts` | 0 novos select(*) |
 | Supabase Client | `npx tsx scripts/audit-supabase-client.ts` | 0 erros |
+| User Directory | `npx tsx scripts/audit-user-directory.ts` | 0 findings |
+
+> ⚠️ **PR Gate - User Directory**: PRs que toquem em `profiles`, selects de usuários, dialogs de atribuição ou contagens de usuários **devem anexar output** do `audit-user-directory.ts`. PR com findings ≠ 0 **NÃO pode ser aprovado**.
 
 ### H.2 Checklist Manual
 
@@ -760,6 +764,8 @@ Antes de considerar qualquer mudança completa, verificar:
 - [ ] **URL State**: Filtros/paginação usam `useUrlState`?
 - [ ] **Permissions**: Usando `usePermissions()`, não hardcode?
 - [ ] **URL State**: Não usar wrapper legado (`src/hooks/useUrlState.ts`)
+- [ ] **User Directory**: Selects de usuários usam `v_bu_active_profiles` / `useBuUsersDirectory`?
+- [ ] **User Directory**: Não usa `bu_user_memberships` para listar pessoas?
 - [ ] **Documentação**: TCR/docs atualizados se necessário?
 
 ### H.3 Report de Compliance
@@ -792,6 +798,28 @@ Os seguintes padrões são **PROIBIDOS** no Hub da Jet. Não há exceções.
 | 8 | Disparo de email direto por módulo (sem outbox) | Sem retry, sem auditoria, sem rate limit |
 | 9 | Hardcode de role (`role === 'admin'`) no frontend | Bypass do sistema de permissões |
 | 10 | Insert sem `bu_id` explícito | Falha no trigger, dado sem escopo |
+| 11 | `INNER JOIN bu_user_memberships` para listar usuários | Exclui usuários sem primeiro login (`user_id NULL`) |
+| 12 | Query em `profiles` filtrando por `user_id IS NOT NULL` | Idem acima, usar `v_bu_active_profiles` |
+
+### I.1 User Directory Global — Contrato Inquebrável
+
+```
+⚠️ REGRA GLOBAL: Listas de usuários internos vêm de profiles (domínio), não de memberships (auth).
+```
+
+| ✅ CORRETO | ❌ PROIBIDO |
+|------------|-------------|
+| `v_bu_active_profiles` | `INNER JOIN bu_user_memberships` para listar pessoas |
+| `useBuUsersDirectory()` | Filtro `user_id IS NOT NULL` em listagem |
+| `BuUserSelect` / `BuUserMultiSelect` | Query direta em `profiles` + `memberships` |
+
+**Um usuário DEVE aparecer no diretório mesmo com `profiles.user_id = NULL`.**
+
+O único motivo para exclusão:
+- `employment_status = 'terminated'`
+- `deleted_at IS NOT NULL`
+
+> 📚 Ver: [QA_USER_DIRECTORY_GLOBAL_v2.md](../qa/QA_USER_DIRECTORY_GLOBAL_v2.md)
 
 ---
 
