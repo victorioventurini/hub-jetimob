@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { queryKeys } from '@/lib/queryKeys';
@@ -25,11 +25,12 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Ban } from 'lucide-react';
+import { Loader2, Users, Ban, Lock } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { VicActionButton } from '@/modules/vic';
 import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
 import { FlatTeamItem, useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useManageableTeamsFlat } from '../hooks/useManageableTeams';
 import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
 import { useCycles } from '../hooks/useCycleData';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
@@ -81,8 +82,24 @@ export function TeamObjectiveFormDialog({
   const manageContributors = useManageContributors();
   const cancelMutation = useCancelTeamObjective();
   
-  // Use hook teams for editing, props teams for creating
+  // Use the new hook for manageable teams (enforces hierarchy rules)
+  const { 
+    teams: manageableTeams, 
+    isLoading: isLoadingManageable, 
+    hasManageableTeams,
+    userTeamId 
+  } = useManageableTeamsFlat();
+  
+  // Use hook teams for editing, manageable teams for creating
   const teams = isEditing ? hookTeams : (propsTeams || []);
+  
+  // For the team select in create mode, use only manageable teams
+  const allowedTeamsForCreate = useMemo(() => {
+    return manageableTeams;
+  }, [manageableTeams]);
+  
+  // Determine if team select should be read-only (only one option)
+  const isTeamSelectReadOnly = !isEditing && allowedTeamsForCreate.length === 1;
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -105,7 +122,21 @@ export function TeamObjectiveFormDialog({
     }
   }, [existingContributors]);
 
-  // Build hierarchical teams for select
+  // Pre-select user's team when dialog opens in create mode
+  useEffect(() => {
+    if (open && !isEditing && !teamId) {
+      // If user has only one manageable team, select it
+      if (allowedTeamsForCreate.length === 1) {
+        setTeamId(allowedTeamsForCreate[0].id);
+      } 
+      // Otherwise, try to pre-select user's own team if it's in the allowed list
+      else if (userTeamId && allowedTeamsForCreate.some(t => t.id === userTeamId)) {
+        setTeamId(userTeamId);
+      }
+    }
+  }, [open, isEditing, teamId, allowedTeamsForCreate, userTeamId]);
+
+  // Build hierarchical teams for select (used for contributors and edit mode)
   const buildHierarchicalTeams = (): FlatTeamItem[] => {
     const parentTeams = teams.filter(t => !('parent_team_id' in t) || !t.parent_team_id);
     const childTeamsMap = new Map<string, typeof teams>();
@@ -280,6 +311,14 @@ export function TeamObjectiveFormDialog({
         toast.error('Selecione um time primário');
         return;
       }
+      
+      // Validate team is in allowed list (frontend guard - backend also enforces)
+      const isTeamAllowed = allowedTeamsForCreate.some(t => t.id === teamId);
+      if (!isTeamAllowed) {
+        toast.error('Você não tem permissão para criar OKRs para este time');
+        return;
+      }
+      
       if (!orgObjectiveId) {
         toast.error('Selecione um objetivo organizacional');
         return;
@@ -313,7 +352,8 @@ export function TeamObjectiveFormDialog({
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const selectedPrimaryTeamName = teams.find(t => t.id === (isEditing ? objective?.team_id : teamId))?.name;
+  const selectedPrimaryTeamName = allowedTeamsForCreate.find(t => t.id === teamId)?.name 
+    || teams.find(t => t.id === (isEditing ? objective?.team_id : teamId))?.name;
 
   return (
     <>
@@ -334,20 +374,49 @@ export function TeamObjectiveFormDialog({
               {/* Team selection - only for create mode */}
               {!isEditing && (
                 <div className="space-y-2">
-                  <Label htmlFor="team">Time Primário *</Label>
-                  <TeamSelect
-                    value={teamId}
-                    onValueChange={(value) => {
-                      setTeamId(value);
-                      if (value) {
-                        setContributingTeamIds(prev => prev.filter(id => id !== value));
-                      }
-                    }}
-                    teams={hierarchicalTeams}
-                    placeholder="Selecione o time responsável"
-                    disabled={isPending}
-                    triggerClassName="w-full"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="team">Time Primário *</Label>
+                    {isTeamSelectReadOnly && (
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </div>
+                  {!hasManageableTeams ? (
+                    <Alert variant="destructive" className="py-2">
+                      <AlertDescription className="text-sm">
+                        Você não tem permissão para criar OKRs em nenhum time. 
+                        Apenas líderes de time podem criar OKRs para seu time e sub-times.
+                      </AlertDescription>
+                    </Alert>
+                  ) : isTeamSelectReadOnly ? (
+                    // Read-only display when only one team is available
+                    <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted/50">
+                      <span className="text-sm font-medium">
+                        {allowedTeamsForCreate[0]?.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        (único time disponível)
+                      </span>
+                    </div>
+                  ) : (
+                    <TeamSelect
+                      value={teamId}
+                      onValueChange={(value) => {
+                        setTeamId(value);
+                        if (value) {
+                          setContributingTeamIds(prev => prev.filter(id => id !== value));
+                        }
+                      }}
+                      teams={allowedTeamsForCreate}
+                      placeholder="Selecione o time responsável"
+                      disabled={isPending || isLoadingManageable}
+                      triggerClassName="w-full"
+                    />
+                  )}
+                  {allowedTeamsForCreate.length > 1 && (
+                    <p className="text-xs text-muted-foreground">
+                      Você pode criar OKRs para seu time e sub-times sob sua gestão.
+                    </p>
+                  )}
                 </div>
               )}
 
