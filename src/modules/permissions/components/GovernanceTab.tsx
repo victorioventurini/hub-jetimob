@@ -218,8 +218,8 @@ export function GovernanceTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usersWithoutTemplates.map((user) => (
-                    <TableRow key={user.user_id}>
+                {usersWithoutTemplates.map((user) => (
+                    <TableRow key={user.profile_id}>
                       <TableCell className="font-medium">{user.display_name}</TableCell>
                       <TableCell className="text-muted-foreground">{user.work_email}</TableCell>
                       <TableCell>
