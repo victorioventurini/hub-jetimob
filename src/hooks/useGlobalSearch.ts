@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { useBu } from "@/contexts/BuContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SearchResult {
   id: string;
@@ -25,12 +26,14 @@ export interface SearchResponse {
 }
 
 /**
- * SAFE for pre-BU: Uses useOptionalBuClient() and disables search until BU is selected.
+ * Global search hook.
+ * Uses the global supabase client (which has the user session) to invoke edge functions.
+ * The bu_id is passed in the request body, not via headers.
  */
 export function useGlobalSearch(initialQuery = "") {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const { client, buId, isReady } = useOptionalBuClient();
+  const { currentBuId } = useBu();
 
   // Debounce query
   useEffect(() => {
@@ -48,20 +51,21 @@ export function useGlobalSearch(initialQuery = "") {
     error,
     refetch,
   } = useQuery<SearchResponse>({
-    queryKey: ["global-search", buId, debouncedQuery],
+    queryKey: ["global-search", currentBuId, debouncedQuery],
     queryFn: async () => {
-      if (!buId || !client || debouncedQuery.length < 2) {
+      if (!currentBuId || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
       console.log("[useGlobalSearch] Invoking global-search with:", {
-        bu_id: buId,
+        bu_id: currentBuId,
         q: debouncedQuery,
       });
 
-      const { data, error } = await client.functions.invoke("global-search", {
+      // Use the global supabase client which has the auth session
+      const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
-          bu_id: buId,
+          bu_id: currentBuId,
           q: debouncedQuery,
           limit_per_type: 5,
         },
@@ -82,7 +86,7 @@ export function useGlobalSearch(initialQuery = "") {
 
       return data as SearchResponse;
     },
-    enabled: isReady && debouncedQuery.length >= 2,
+    enabled: !!currentBuId && debouncedQuery.length >= 2,
     staleTime: 30000, // 30 seconds
     gcTime: 60000, // 1 minute
     retry: 1,
@@ -94,9 +98,9 @@ export function useGlobalSearch(initialQuery = "") {
   }, [data?.groups]);
 
   const isEmpty = useMemo(() => {
-    if (!isReady) return false;
+    if (!currentBuId) return false;
     return debouncedQuery.length >= 2 && !isLoading && totalResults === 0;
-  }, [isReady, debouncedQuery, isLoading, totalResults]);
+  }, [currentBuId, debouncedQuery, isLoading, totalResults]);
 
   return {
     query,
@@ -108,6 +112,6 @@ export function useGlobalSearch(initialQuery = "") {
     isEmpty,
     error,
     refetch,
-    disabled: !isReady,
+    disabled: !currentBuId,
   };
 }
