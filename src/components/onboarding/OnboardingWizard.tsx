@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useBu } from "@/contexts/BuContext";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { cn } from "@/lib/utils";
-import { User, MapPin, Building2, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, Phone } from "lucide-react";
+import { User, MapPin, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, Phone } from "lucide-react";
 
 
 const MONTHS = [
@@ -45,7 +44,7 @@ const formatWhatsApp = (value: string) => {
   return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
 };
 
-const baseOnboardingSchema = z.object({
+const onboardingSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
   birth_day: z.number().min(1, "Dia é obrigatório").max(31),
@@ -53,18 +52,12 @@ const baseOnboardingSchema = z.object({
   whatsapp_personal: z.string().trim().min(14, "WhatsApp inválido").max(15),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
-  team_id: z.string().optional().or(z.literal("")),
 });
 
-const onboardingSchemaWithTeam = baseOnboardingSchema.extend({
-  team_id: z.string().uuid("Selecione um time"),
-});
-
-type OnboardingFormData = z.infer<typeof baseOnboardingSchema>;
+type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 interface OnboardingWizardProps {
   profileId: string;
-  userId: string;
   initialData?: Partial<OnboardingFormData>;
   onComplete: () => void;
 }
@@ -72,12 +65,10 @@ interface OnboardingWizardProps {
 const STEPS = [
   { id: "personal", title: "Dados Pessoais", icon: User },
   { id: "location", title: "Localização", icon: MapPin },
-  { id: "team", title: "Time", icon: Building2 },
 ];
 
-export function OnboardingWizard({ profileId, userId, initialData, onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({ profileId, initialData, onComplete }: OnboardingWizardProps) {
   const queryClient = useQueryClient();
-  const { currentBu } = useBu();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<OnboardingFormData>({
     first_name: initialData?.first_name || "",
@@ -87,41 +78,9 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
     whatsapp_personal: initialData?.whatsapp_personal || "",
     city: initialData?.city || "Porto Alegre",
     state: initialData?.state || "RS",
-    team_id: initialData?.team_id || "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof OnboardingFormData, string>>>({});
 
-  const { data: teams } = useQuery({
-    queryKey: ["onboarding-teams", currentBu?.id],
-    queryFn: async () => {
-      if (!currentBu?.id) return [];
-      const { data, error } = await supabase
-        .from("teams")
-        .select("id, name")
-        .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .eq("status", "active")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!currentBu?.id,
-  });
-
-  const { data: userRole } = useQuery({
-    queryKey: ["user-role", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (error) throw error;
-      return data?.role;
-    },
-  });
-
-  const isExemptFromTeam = userRole === "super_admin" || userRole === "admin";
 
   const completeMutation = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
@@ -139,28 +98,12 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
           whatsapp_personal: data.whatsapp_personal,
           city: data.city,
           state: data.state,
-          team_id: data.team_id || null,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
         })
         .eq("id", profileId);
 
       if (profileError) throw profileError;
-
-      // Create team membership only if team was selected
-      if (data.team_id) {
-        const { error: membershipError } = await supabase
-          .from("user_team_memberships")
-          .upsert({
-            user_id: profileId,
-            team_id: data.team_id,
-            is_primary: true,
-          }, {
-            onConflict: "user_id,team_id",
-          });
-
-        if (membershipError) throw membershipError;
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
@@ -196,9 +139,6 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
         if (!formData.city.trim()) newErrors.city = "Cidade é obrigatória";
         if (!formData.state.trim()) newErrors.state = "Estado é obrigatório";
         break;
-      case 2: // Team - required unless super_admin or admin
-        if (!isExemptFromTeam && !formData.team_id) newErrors.team_id = "Selecione um time";
-        break;
     }
 
     setErrors(newErrors);
@@ -222,8 +162,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
   };
 
   const handleSubmit = () => {
-    const schema = isExemptFromTeam ? baseOnboardingSchema : onboardingSchemaWithTeam;
-    const result = schema.safeParse(formData);
+    const result = onboardingSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof OnboardingFormData, string>> = {};
       result.error.errors.forEach((err) => {
@@ -434,49 +373,6 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                 </div>
               )}
 
-              {currentStep === 2 && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>
-                      Time Principal {isExemptFromTeam ? <span className="text-muted-foreground text-xs">(opcional)</span> : "*"}
-                    </Label>
-                    <Select
-                      value={formData.team_id}
-                      onValueChange={(v) => handleChange("team_id", v)}
-                    >
-                      <SelectTrigger className={errors.team_id ? "border-destructive" : ""}>
-                        <SelectValue placeholder={isExemptFromTeam ? "Selecione seu time (opcional)" : "Selecione seu time"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teams?.map((team) => (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.team_id && (
-                      <p className="text-xs text-destructive">{errors.team_id}</p>
-                    )}
-                    {isExemptFromTeam && (
-                      <p className="text-xs text-muted-foreground">
-                        Como {userRole === "super_admin" ? "Super Admin" : "Admin"}, você pode deixar este campo em branco
-                      </p>
-                    )}
-                  </div>
-                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                    <div className="flex gap-3">
-                      <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Quase lá!</p>
-                        <p className="text-xs text-muted-foreground">
-                          Após completar, você terá acesso completo ao Hub Jetimob
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </motion.div>
           </AnimatePresence>
 
