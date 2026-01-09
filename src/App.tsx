@@ -37,6 +37,7 @@ const SearchPage = lazy(() => import("./pages/SearchPage"));
 // Módulo Teams
 const TeamsPage = lazy(() => import("./modules/teams/pages/TeamsPage"));
 const TeamDetailPage = lazy(() => import("./modules/teams/pages/TeamDetailPage"));
+const SquadDetailPage = lazy(() => import("./modules/teams/pages/SquadDetailPage"));
 
 // Módulo OKRs
 const OkrsPage = lazy(() => import("./modules/okrs/pages/OkrsPage"));
@@ -506,6 +507,18 @@ const App = () => {
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="teams">
                               <TeamDetailPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/squads/:id"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="teams">
+                              <SquadDetailPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>
