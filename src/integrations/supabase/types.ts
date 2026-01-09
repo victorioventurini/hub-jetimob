@@ -5107,8 +5107,10 @@ export type Database = {
           deleted_at: string | null
           discord_id: string | null
           display_name: string
+          email: string | null
           employment_status: Database["public"]["Enums"]["employment_status"]
           first_name: string
+          global_status: string | null
           id: string
           instagram_id: string | null
           job_title_id: string | null
@@ -5121,6 +5123,7 @@ export type Database = {
           team_id: string | null
           updated_at: string
           user_id: string | null
+          user_type: string | null
           whatsapp_personal: string | null
           work_email: string
           work_mode: Database["public"]["Enums"]["work_mode"]
@@ -5134,8 +5137,10 @@ export type Database = {
           deleted_at?: string | null
           discord_id?: string | null
           display_name: string
+          email?: string | null
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name: string
+          global_status?: string | null
           id?: string
           instagram_id?: string | null
           job_title_id?: string | null
@@ -5148,6 +5153,7 @@ export type Database = {
           team_id?: string | null
           updated_at?: string
           user_id?: string | null
+          user_type?: string | null
           whatsapp_personal?: string | null
           work_email: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
@@ -5161,8 +5167,10 @@ export type Database = {
           deleted_at?: string | null
           discord_id?: string | null
           display_name?: string
+          email?: string | null
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name?: string
+          global_status?: string | null
           id?: string
           instagram_id?: string | null
           job_title_id?: string | null
@@ -5175,6 +5183,7 @@ export type Database = {
           team_id?: string | null
           updated_at?: string
           user_id?: string | null
+          user_type?: string | null
           whatsapp_personal?: string | null
           work_email?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
