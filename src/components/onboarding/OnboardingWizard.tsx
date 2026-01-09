@@ -166,11 +166,13 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
     },
     onSuccess: () => {
       toast.success("Bem-vindo ao Hub Jetimob! 🚀");
-      // Chamar onComplete ANTES de invalidar queries para evitar race condition
-      // onde o componente é desmontado antes do navigate executar
-      onComplete();
-      // Invalidar queries após navegação iniciada
+      // Invalidar TODAS as queries de profile/onboarding ANTES de navegar
+      // para garantir que guards e páginas vejam o estado atualizado
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["onboarding-check"] });
+      queryClient.invalidateQueries({ queryKey: ["onboarding-page"] });
+      // Navegar após invalidar queries
+      onComplete();
     },
     onError: (error) => {
       console.error("Onboarding error:", error);
