@@ -43,6 +43,28 @@ export function useKrInitiatives(krId: string | undefined) {
   });
 }
 
+// Fetch initiative count for a specific KR (lightweight query)
+export function useKrInitiativesCount(krId: string | undefined) {
+  const { client: supabase, isReady } = useOptionalBuClient();
+
+  return useQuery({
+    queryKey: ["initiatives", "kr", krId, "count"],
+    queryFn: async () => {
+      if (!krId || !supabase) return 0;
+      
+      const { count, error } = await supabase
+        .from("okr_initiatives")
+        .select("id", { count: 'exact', head: true })
+        .eq("kr_id", krId)
+        .is("deleted_at", null);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!krId && isReady && !!supabase,
+  });
+}
+
 // Fetch all initiatives for a user (as owner) - expects profile.id
 export function useUserInitiatives(profileId: string | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
