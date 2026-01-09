@@ -414,10 +414,16 @@ export function InventoryMovementDialog({
                               </SelectItem>
                             ) : (
                               authorizers.map((auth) => (
-                                <SelectItem key={auth.id} value={auth.id}>
-                                  {auth.full_name}
-                                  <span className="ml-2 text-xs text-muted-foreground">
-                                    ({auth.role_label})
+                                <SelectItem 
+                                  key={auth.id} 
+                                  value={auth.id}
+                                  textValue={auth.full_name}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    {auth.full_name}
+                                    <span className="text-xs text-muted-foreground">
+                                      ({auth.role_label})
+                                    </span>
                                   </span>
                                 </SelectItem>
                               ))
@@ -579,10 +585,16 @@ export function InventoryMovementDialog({
                               </SelectItem>
                             ) : (
                               authorizers.map((auth) => (
-                                <SelectItem key={auth.id} value={auth.id}>
-                                  {auth.full_name}
-                                  <span className="ml-2 text-xs text-muted-foreground">
-                                    ({auth.role_label})
+                                <SelectItem 
+                                  key={auth.id} 
+                                  value={auth.id}
+                                  textValue={auth.full_name}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    {auth.full_name}
+                                    <span className="text-xs text-muted-foreground">
+                                      ({auth.role_label})
+                                    </span>
                                   </span>
                                 </SelectItem>
                               ))
