@@ -1,0 +1,93 @@
+# Data Model Registry Audit Workflow
+# 
+# Validates that SQL migrations and edge functions only reference
+# objects that exist in the canonical DATA_MODEL_REGISTRY.
+#
+# Runs on PRs that modify:
+# - supabase/migrations/**
+# - supabase/functions/**
+# - docs/engineering/**
+# - docs/TECHNICAL_CONTEXT_REGISTRY.md
+
+name: Schema Registry Audit
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+      - 'docs/engineering/**'
+      - 'docs/TECHNICAL_CONTEXT_REGISTRY.md'
+      - 'scripts/audit-sql-against-registry.ts'
+      - 'scripts/registry-audit-config.json'
+
+jobs:
+  audit:
+    name: Validate SQL References
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check Registry Exists
+        run: |
+          if [ ! -f "docs/engineering/DATA_MODEL_REGISTRY.json" ]; then
+            echo "❌ DATA_MODEL_REGISTRY.json not found!"
+            echo "   Run: npx tsx scripts/generate-data-model-registry.ts"
+            exit 1
+          fi
+          echo "✅ Registry found"
+      
+      - name: Run Schema Registry Audit
+        run: npx tsx scripts/audit-sql-against-registry.ts --verbose
+      
+      - name: Upload Audit Results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-results
+          path: |
+            docs/engineering/DATA_MODEL_REGISTRY.json
+            scripts/registry-audit-config.json
+          retention-days: 7
+
+  registry-freshness:
+    name: Check Registry Freshness
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'migration')
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Check Last Update
+        run: |
+          REGISTRY_DATE=$(jq -r '.generated_at' docs/engineering/DATA_MODEL_REGISTRY.json | cut -d'T' -f1)
+          TODAY=$(date +%Y-%m-%d)
+          
+          echo "Registry date: $REGISTRY_DATE"
+          echo "Today: $TODAY"
+          
+          # Warn if registry is older than 7 days
+          REGISTRY_EPOCH=$(date -d "$REGISTRY_DATE" +%s)
+          TODAY_EPOCH=$(date +%s)
+          DIFF_DAYS=$(( (TODAY_EPOCH - REGISTRY_EPOCH) / 86400 ))
+          
+          if [ $DIFF_DAYS -gt 7 ]; then
+            echo "⚠️  Registry is $DIFF_DAYS days old. Consider regenerating."
+            echo "   Run: npx tsx scripts/generate-data-model-registry.ts"
+          else
+            echo "✅ Registry is fresh ($DIFF_DAYS days old)"
+          fi

@@ -426,9 +426,11 @@ $$ LANGUAGE sql STABLE;
 | `audit-prebu-buscoped.ts` | `npx tsx scripts/audit-prebu-buscoped.ts` | useBuScopedSupabase em contexto PRE-BU |
 | `audit-user-directory.ts` | `npx tsx scripts/audit-user-directory.ts` | INNER JOIN memberships em listagem de usuários |
 | `audit-docs-vs-tcr.ts` | `npx tsx scripts/audit-docs-vs-tcr.ts` | Documentação contradizendo TCR |
+| `audit-sql-against-registry.ts` | `npx tsx scripts/audit-sql-against-registry.ts` | **Referências a tabelas/funções inexistentes** |
 
 > 📚 Ver: [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md)
 > 📚 Ver: [DOCS_CONSISTENCY_RULES.md](./DOCS_CONSISTENCY_RULES.md)
+> 📚 Ver: [DATA_MODEL_REGISTRY_AUDIT.md](./DATA_MODEL_REGISTRY_AUDIT.md)
 
 ### D.6 Data Model Registry (OBRIGATÓRIO)
 
