@@ -208,10 +208,25 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
-      // First get objectives
+      // First get objectives with team info
       let objQuery = supabase
         .from('okr_team_objectives')
-        .select('*')
+        .select(`
+          id,
+          bu_id,
+          team_id,
+          title,
+          description,
+          year,
+          status,
+          org_objective_id,
+          is_shared,
+          responsibility_model,
+          created_at,
+          updated_at,
+          deleted_at,
+          team:teams!okr_team_objectives_team_id_fkey(id, name)
+        `)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
