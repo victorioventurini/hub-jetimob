@@ -2,24 +2,20 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { Loader2 } from "lucide-react";
 
-interface OnboardingGuardProps {
-  children: React.ReactNode;
-}
-
-export function OnboardingGuard({ children }: OnboardingGuardProps) {
+export default function Onboarding() {
   const { user, isLoading: authLoading } = useAuth();
 
-  // NOTE: Onboarding happens before BU selection; must NOT require BU-scoped client.
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["onboarding-check", user?.id],
+  const { data: profile, isLoading: profileLoading, refetch } = useQuery({
+    queryKey: ["onboarding-page", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, onboarding_completed")
+        .select("id, first_name, last_name, city, state, work_mode, team_id, onboarding_completed")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -27,12 +23,14 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos para evitar refetch desnecessário
+    staleTime: 5 * 60 * 1000,
   });
 
-  const onboardingCompleted = profile?.onboarding_completed ?? false;
+  const handleOnboardingComplete = () => {
+    refetch();
+  };
 
-  // Still loading auth or profile
+  // Loading
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -44,12 +42,12 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
     );
   }
 
-  // User not logged in - let the auth flow handle it
+  // Not logged in
   if (!user) {
-    return <>{children}</>;
+    return <Navigate to="/auth" replace />;
   }
 
-  // Profile doesn't exist - should not happen with handle_new_user trigger
+  // No profile
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -61,11 +59,26 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
     );
   }
 
-  // Onboarding not completed - redirect to /onboarding
-  if (!onboardingCompleted) {
-    return <Navigate to="/onboarding" replace />;
+  // Onboarding already completed - redirect to home
+  if (profile.onboarding_completed) {
+    return <Navigate to="/" replace />;
   }
 
-  // Onboarding completed - render children
-  return <>{children}</>;
+  // Show onboarding wizard
+  return (
+    <OnboardingWizard
+      profileId={profile.id}
+      userId={user.id}
+      initialData={{
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        job_title: "",
+        city: profile.city || "Porto Alegre",
+        state: profile.state || "RS",
+        work_mode: (profile.work_mode as "onsite" | "hybrid" | "remote") || "hybrid",
+        team_id: profile.team_id || "",
+      }}
+      onComplete={handleOnboardingComplete}
+    />
+  );
 }

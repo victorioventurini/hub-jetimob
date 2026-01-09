@@ -31,6 +31,7 @@ const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Modules = lazy(() => import("./pages/Modules"));
 const SelectBu = lazy(() => import("./pages/SelectBu"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 // Módulo Teams
@@ -161,6 +162,16 @@ const App = () => {
 
                     {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
                     
+                    {/* Onboarding */}
+                    <Route
+                      path="/onboarding"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <Onboarding />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Seleção de Business Unit */}
                     <Route
                       path="/select-bu"
