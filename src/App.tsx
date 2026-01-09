@@ -95,6 +95,7 @@ const SettingsBusinessUnits = lazy(() => import("./pages/settings/SettingsBusine
 const SettingsModules = lazy(() => import("./pages/settings/SettingsModules"));
 const SettingsIntegrations = lazy(() => import("./pages/settings/SettingsIntegrations"));
 const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifications"));
+const BuSettingsPage = lazy(() => import("./pages/settings/BuSettingsPage"));
 const JobTitlesPage = lazy(() => import("./modules/settings/pages/JobTitlesPage"));
 
 // Páginas de Notificações
@@ -680,6 +681,18 @@ const App = () => {
                       <Route path="settings" element={<TicketsSettingsPage />} />
                       <Route path=":id" element={<TicketDetailPage />} />
                     </Route>
+
+                    {/* BU Settings Home - Admin da BU */}
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <BuSettingsPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* BU Permissions - Admin da BU */}
                     <Route
