@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   useNotificationEvents,
   useNotificationChannels,
@@ -52,9 +52,16 @@ import {
   AlertTriangle,
   AlertCircle,
   Info,
+  Search,
+  Activity,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useUrlTab, useUrlSearch, useUrlState } from '@/shared/url';
+import { queryKeys } from '@/lib/queryKeys';
 
 const channelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   in_app: Bell,
@@ -111,6 +118,32 @@ export default function HubNotifications() {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [eventForm, setEventForm] = useState<EventFormData>(defaultEventForm);
+  
+  // URL State
+  const [tab, setTab] = useUrlTab<'events' | 'channels' | 'diagnostics'>('events');
+  const { value: searchQuery, set: setSearchQuery } = useUrlSearch('q', 300);
+  const { value: moduleFilter, set: setModuleFilter } = useUrlState<string>({ key: 'module', defaultValue: 'all' });
+  const { value: severityFilter, set: setSeverityFilter } = useUrlState<string>({ key: 'severity', defaultValue: 'all' });
+  
+  // Global outbox stats
+  const { data: outboxStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['notification-outbox-stats-global'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notification_outbox')
+        .select('status, created_at')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      const pending = data?.filter(r => r.status === 'pending').length || 0;
+      const sent = data?.filter(r => r.status === 'sent').length || 0;
+      const failed = data?.filter(r => r.status === 'failed').length || 0;
+      const lastProcessed = data?.find(r => r.status === 'sent')?.created_at || null;
+      
+      return { pending, sent, failed, total: data?.length || 0, lastProcessed };
+    },
+  });
   
   const isLoading = eventsLoading || channelsLoading;
   
@@ -210,8 +243,25 @@ export default function HubNotifications() {
     updateChannelStatus.mutate({ slug: channelSlug, status: newStatus });
   };
   
+  // Filter events
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      if (searchQuery && !event.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+          !event.slug.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      if (moduleFilter !== 'all' && event.module !== moduleFilter) {
+        return false;
+      }
+      if (severityFilter !== 'all' && event.severity !== severityFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [events, searchQuery, moduleFilter, severityFilter]);
+
   // Group events by module
-  const eventsByModule = events.reduce((acc, event) => {
+  const eventsByModule = filteredEvents.reduce((acc, event) => {
     if (!acc[event.module]) acc[event.module] = [];
     acc[event.module].push(event);
     return acc;
@@ -242,25 +292,66 @@ export default function HubNotifications() {
         <p className="text-muted-foreground">Gerencie canais e eventos de notificação do Hub</p>
       </div>
       
-      <Tabs defaultValue="events">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="events">Eventos</TabsTrigger>
           <TabsTrigger value="channels">Canais</TabsTrigger>
+          <TabsTrigger value="diagnostics">
+            <Activity className="w-4 h-4 mr-2" />
+            Diagnóstico
+          </TabsTrigger>
         </TabsList>
         
         {/* Events Tab */}
         <TabsContent value="events" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold">Catálogo de Eventos</h2>
-              <p className="text-sm text-muted-foreground">
-                {events.length} eventos configurados
-              </p>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold">Catálogo de Eventos</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filteredEvents.length} de {events.length} eventos
+                </p>
+              </div>
+              <Button onClick={handleNewEvent}>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Evento
+              </Button>
             </div>
-            <Button onClick={handleNewEvent}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Evento
-            </Button>
+            
+            {/* Filters */}
+            <div className="flex gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar eventos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={moduleFilter} onValueChange={setModuleFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Módulo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos módulos</SelectItem>
+                  {Object.entries(moduleNames).map(([key, name]) => (
+                    <SelectItem key={key} value={key}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Severidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="info">Info</SelectItem>
+                  <SelectItem value="warning">Warning</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           {Object.entries(eventsByModule).map(([module, moduleEvents]) => (
@@ -420,6 +511,120 @@ export default function HubNotifications() {
                   })}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Diagnostics Tab */}
+        <TabsContent value="diagnostics" className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Diagnóstico Global</h2>
+            <p className="text-sm text-muted-foreground">
+              Visão geral do sistema de notificações
+            </p>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Outbox</CardDescription>
+                <CardTitle className="text-2xl">
+                  {statsLoading ? <Skeleton className="h-8 w-16" /> : outboxStats?.total || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Notificações processadas
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Pendentes
+                </CardDescription>
+                <CardTitle className="text-2xl text-yellow-500">
+                  {statsLoading ? <Skeleton className="h-8 w-16" /> : outboxStats?.pending || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Aguardando processamento
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Enviadas
+                </CardDescription>
+                <CardTitle className="text-2xl text-green-500">
+                  {statsLoading ? <Skeleton className="h-8 w-16" /> : outboxStats?.sent || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Entregues com sucesso
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-2">
+                  <XCircle className="w-4 h-4" />
+                  Falhas
+                </CardDescription>
+                <CardTitle className="text-2xl text-destructive">
+                  {statsLoading ? <Skeleton className="h-8 w-16" /> : outboxStats?.failed || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Erros de entrega
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Status do Sistema</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Canais ativos</span>
+                <Badge variant="secondary">
+                  {channels.filter(c => c.status === 'active').length}/{channels.length}
+                </Badge>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Eventos cadastrados</span>
+                <Badge variant="secondary">{events.length}</Badge>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Última notificação enviada</span>
+                <span className="text-sm text-muted-foreground">
+                  {outboxStats?.lastProcessed 
+                    ? new Date(outboxStats.lastProcessed).toLocaleString('pt-BR')
+                    : 'Nenhuma'}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Taxa de sucesso</span>
+                <span className="text-sm font-medium">
+                  {outboxStats && outboxStats.total > 0
+                    ? `${Math.round((outboxStats.sent / outboxStats.total) * 100)}%`
+                    : 'N/A'}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
