@@ -25,6 +25,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -66,12 +68,13 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { UrlSearchInput } from '@/shared/filters/UrlSearchInput';
 import { UrlSelect } from '@/shared/filters/UrlSelect';
 import { UrlPagination } from '@/shared/filters/UrlPagination';
 
@@ -94,12 +97,15 @@ const moduleNames: Record<string, string> = {
 
 type TabValue = 'channels' | 'events' | 'outbox' | 'inapp' | 'test';
 
+// Channels that are configurable in Phase 3
+const CONFIGURABLE_CHANNELS = ['email', 'slack', 'webhook'];
+const ACTIVE_CHANNELS = ['in_app', 'email', 'slack', 'webhook']; // WhatsApp out of scope
+
 export default function SettingsNotifications() {
   const { currentBu } = useBu();
   
   // URL State
   const tabState = useUrlState<TabValue>({ key: 'tab', defaultValue: 'channels' });
-  const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
   const statusState = useUrlState<string>({ key: 'status', defaultValue: 'all' });
   const channelState = useUrlState<string>({ key: 'channel', defaultValue: 'all' });
   const pageState = useUrlState<number>({ key: 'page', defaultValue: 1, parse: (v) => parseInt(v) || 1 });
@@ -138,7 +144,9 @@ export default function SettingsNotifications() {
   const [configForm, setConfigForm] = useState<Record<string, string>>({});
   const [testRecipient, setTestRecipient] = useState<string>('');
   const [testChannels, setTestChannels] = useState<string[]>(['in_app', 'email']);
-  const [testResult, setTestResult] = useState<Array<{ channel: string; status: string; id: string | null }> | null>(null);
+  const [testResult, setTestResult] = useState<Array<{ channel: string; status: string; id: string | null; error?: string }> | null>(null);
+  const [testChannelDialog, setTestChannelDialog] = useState<string | null>(null);
+  const [testingChannel, setTestingChannel] = useState(false);
   
   const isLoading = channelsLoading || buChannelsLoading || eventsLoading;
   
@@ -150,8 +158,31 @@ export default function SettingsNotifications() {
     return buEventSettings.find(s => s.event_slug === eventSlug && s.channel === channel);
   };
   
+  const isChannelConfigured = (channelSlug: string): boolean => {
+    const buChannel = getBuChannelConfig(channelSlug);
+    const config = buChannel?.config as Record<string, unknown> | null;
+    if (!config) return false;
+    
+    if (channelSlug === 'slack') {
+      return Boolean(config.webhook_url || (config.bot_token && (config.default_channel_id || config.default_channel_name)));
+    }
+    if (channelSlug === 'webhook') {
+      return Boolean(config.url);
+    }
+    if (channelSlug === 'email') {
+      return true; // Email uses global config
+    }
+    return true;
+  };
+  
   const handleToggleChannel = (channelSlug: string, isEnabled: boolean) => {
     if (!currentBu?.id) return;
+    
+    // Prevent enabling unconfigured channels
+    if (isEnabled && !isChannelConfigured(channelSlug)) {
+      toast.error('Configure o canal primeiro antes de ativá-lo');
+      return;
+    }
     
     upsertChannel.mutate(
       { buId: currentBu.id, channelSlug, isEnabled },
@@ -183,7 +214,17 @@ export default function SettingsNotifications() {
   const handleOpenConfig = (channelSlug: string) => {
     const buChannel = getBuChannelConfig(channelSlug);
     setSelectedChannel(channelSlug);
-    setConfigForm((buChannel?.config as Record<string, string>) || {});
+    // Don't show secrets that were already saved - only show if present
+    const existingConfig = (buChannel?.config as Record<string, string>) || {};
+    // Clear secret fields for security
+    const safeConfig = { ...existingConfig };
+    if (channelSlug === 'slack') {
+      delete safeConfig.bot_token; // Never show saved token
+    }
+    if (channelSlug === 'webhook') {
+      delete safeConfig.secret_header_value; // Never show saved secret
+    }
+    setConfigForm(safeConfig);
     setConfigDialogOpen(true);
   };
   
@@ -191,13 +232,24 @@ export default function SettingsNotifications() {
     if (!currentBu?.id || !selectedChannel) return;
     
     const buChannel = getBuChannelConfig(selectedChannel);
+    const existingConfig = (buChannel?.config as Record<string, string>) || {};
+    
+    // Merge new config with existing (preserving secrets if not changed)
+    const mergedConfig: Record<string, unknown> = { ...existingConfig, ...configForm, configured: true };
+    
+    // Remove empty values
+    Object.keys(mergedConfig).forEach(key => {
+      if (mergedConfig[key] === '' || mergedConfig[key] === undefined) {
+        delete mergedConfig[key];
+      }
+    });
     
     upsertChannel.mutate(
       { 
         buId: currentBu.id, 
         channelSlug: selectedChannel, 
-        isEnabled: buChannel?.is_enabled ?? true,
-        config: configForm,
+        isEnabled: buChannel?.is_enabled ?? false,
+        config: mergedConfig,
       },
       {
         onSuccess: () => {
@@ -206,6 +258,37 @@ export default function SettingsNotifications() {
         },
         onError: (error) => {
           toast.error('Erro ao salvar configuração', { description: error.message });
+        },
+      }
+    );
+  };
+  
+  const handleTestChannel = (channelSlug: string) => {
+    if (!currentBu?.id) return;
+    
+    // Get current user as recipient
+    const currentUser = profiles.find(p => p.id === currentBu?.id) || profiles[0];
+    if (!currentUser) {
+      toast.error('Nenhum usuário disponível para teste');
+      return;
+    }
+    
+    setTestingChannel(true);
+    sendTest.mutate(
+      { targetUserId: currentUser.id, channels: [channelSlug] },
+      {
+        onSuccess: (data) => {
+          const result = data[0];
+          if (result?.status === 'created' || result?.status === 'queued') {
+            toast.success(`Teste ${channelSlug} enviado! Verifique o Outbox.`);
+          } else {
+            toast.info(`Teste ${channelSlug}: ${result?.status || 'enviado'}`);
+          }
+          setTestingChannel(false);
+        },
+        onError: (error) => {
+          toast.error(`Erro no teste ${channelSlug}`, { description: error.message });
+          setTestingChannel(false);
         },
       }
     );
@@ -227,6 +310,18 @@ export default function SettingsNotifications() {
       toast.error('Selecione um destinatário');
       return;
     }
+    if (testChannels.length === 0) {
+      toast.error('Selecione pelo menos um canal');
+      return;
+    }
+    
+    // Validate that selected channels are configured
+    for (const ch of testChannels) {
+      if (ch !== 'in_app' && !isChannelConfigured(ch)) {
+        toast.error(`Canal ${ch} não está configurado`);
+        return;
+      }
+    }
     
     sendTest.mutate(
       { targetUserId: testRecipient, channels: testChannels },
@@ -245,6 +340,9 @@ export default function SettingsNotifications() {
       }
     );
   };
+  
+  // Filter channels to show only active ones (exclude whatsapp)
+  const activeChannels = channels.filter(c => ACTIVE_CHANNELS.includes(c.slug));
   
   // Group events by module
   const eventsByModule = events.reduce((acc, event) => {
@@ -319,43 +417,39 @@ export default function SettingsNotifications() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {channels.map(channel => {
+                {activeChannels.map(channel => {
                   const Icon = channelIcons[channel.slug] || Bell;
                   const buChannel = getBuChannelConfig(channel.slug);
                   const isEnabled = buChannel?.is_enabled ?? (channel.slug === 'in_app');
-                  const hasConfig = Object.keys(buChannel?.config || {}).length > 0;
-                  const isPlaceholder = ['slack', 'whatsapp', 'webhook'].includes(channel.slug);
+                  const isConfigured = isChannelConfigured(channel.slug);
+                  const needsConfig = CONFIGURABLE_CHANNELS.includes(channel.slug);
+                  const isInApp = channel.slug === 'in_app';
                   
                   return (
                     <div 
                       key={channel.slug}
-                      className={cn(
-                        "flex items-center justify-between p-4 border rounded-lg",
-                        isPlaceholder && "opacity-60"
-                      )}
+                      className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div className="flex items-center gap-4">
                         <div className={cn(
                           "p-2 rounded-lg",
-                          isEnabled && !isPlaceholder ? "bg-primary/10" : "bg-muted"
+                          isEnabled ? "bg-primary/10" : "bg-muted"
                         )}>
                           <Icon className={cn(
                             "w-5 h-5",
-                            isEnabled && !isPlaceholder ? "text-primary" : "text-muted-foreground"
+                            isEnabled ? "text-primary" : "text-muted-foreground"
                           )} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{channel.name}</span>
-                            {isPlaceholder && (
-                              <Badge variant="outline" className="text-xs">TODO</Badge>
-                            )}
-                            {channel.requires_configuration && !isPlaceholder && (
-                              <Badge variant="outline" className="text-xs">
-                                Requer configuração
+                            {needsConfig && !isConfigured && (
+                              <Badge variant="outline" className="text-xs gap-1 text-yellow-600">
+                                <AlertTriangle className="w-3 h-3" />
+                                Não configurado
                               </Badge>
                             )}
-                            {hasConfig && !isPlaceholder && (
+                            {needsConfig && isConfigured && (
                               <Badge variant="secondary" className="text-xs gap-1">
                                 <Check className="w-3 h-3" />
                                 Configurado
@@ -369,7 +463,7 @@ export default function SettingsNotifications() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {channel.requires_configuration && !isPlaceholder && (
+                        {needsConfig && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -379,15 +473,56 @@ export default function SettingsNotifications() {
                             Configurar
                           </Button>
                         )}
-                        <Switch
-                          checked={isEnabled}
-                          onCheckedChange={(checked) => handleToggleChannel(channel.slug, checked)}
-                          disabled={channel.slug === 'in_app' || isPlaceholder}
-                        />
+                        {needsConfig && isConfigured && (
+                          <PermissionGuard permission="notifications.test.send:bu">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTestChannel(channel.slug)}
+                              disabled={testingChannel}
+                            >
+                              <TestTube className="w-4 h-4 mr-1" />
+                              Testar
+                            </Button>
+                          </PermissionGuard>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Switch
+                                checked={isEnabled}
+                                onCheckedChange={(checked) => handleToggleChannel(channel.slug, checked)}
+                                disabled={isInApp || (!isConfigured && needsConfig)}
+                              />
+                            </span>
+                          </TooltipTrigger>
+                          {!isConfigured && needsConfig && (
+                            <TooltipContent>
+                              Configure o canal primeiro
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
                       </div>
                     </div>
                   );
                 })}
+                
+                {/* WhatsApp placeholder */}
+                <div className="flex items-center justify-between p-4 border rounded-lg opacity-50">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <MessageCircle className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">WhatsApp</span>
+                        <Badge variant="outline" className="text-xs">Em breve</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Notificações via WhatsApp</p>
+                    </div>
+                  </div>
+                  <Switch disabled checked={false} />
+                </div>
               </CardContent>
             </Card>
           </PermissionGuard>
@@ -401,6 +536,7 @@ export default function SettingsNotifications() {
                 <CardTitle>Configurações de Eventos por Canal</CardTitle>
                 <CardDescription>
                   Ative ou desative eventos específicos por canal. Eventos obrigatórios não podem ser desativados.
+                  Canais não configurados aparecem desabilitados.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -413,16 +549,60 @@ export default function SettingsNotifications() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Evento</TableHead>
-                          <TableHead className="w-24 text-center">In-App</TableHead>
-                          <TableHead className="w-24 text-center">Email</TableHead>
+                          <TableHead className="w-20 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Bell className="w-4 h-4" />
+                              <span className="sr-only">In-App</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-20 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Mail className="w-4 h-4" />
+                              <span className="sr-only">Email</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-20 text-center">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Slack className={cn("w-4 h-4", !isChannelConfigured('slack') && "text-muted-foreground")} />
+                                  {!isChannelConfigured('slack') && <X className="w-3 h-3 text-muted-foreground" />}
+                                </div>
+                              </TooltipTrigger>
+                              {!isChannelConfigured('slack') && (
+                                <TooltipContent>Slack não configurado</TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TableHead>
+                          <TableHead className="w-20 text-center">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Globe className={cn("w-4 h-4", !isChannelConfigured('webhook') && "text-muted-foreground")} />
+                                  {!isChannelConfigured('webhook') && <X className="w-3 h-3 text-muted-foreground" />}
+                                </div>
+                              </TooltipTrigger>
+                              {!isChannelConfigured('webhook') && (
+                                <TooltipContent>Webhook não configurado</TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {moduleEvents.map(event => {
                           const inAppSetting = getEventSetting(event.slug, 'in_app');
                           const emailSetting = getEventSetting(event.slug, 'email');
+                          const slackSetting = getEventSetting(event.slug, 'slack');
+                          const webhookSetting = getEventSetting(event.slug, 'webhook');
+                          
                           const inAppEnabled = inAppSetting?.is_enabled ?? event.default_channels.includes('in_app');
                           const emailEnabled = emailSetting?.is_enabled ?? event.default_channels.includes('email');
+                          const slackEnabled = slackSetting?.is_enabled ?? false;
+                          const webhookEnabled = webhookSetting?.is_enabled ?? false;
+                          
+                          const slackConfigured = isChannelConfigured('slack');
+                          const webhookConfigured = isChannelConfigured('webhook');
                           
                           return (
                             <TableRow key={event.slug}>
@@ -430,7 +610,12 @@ export default function SettingsNotifications() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm">{event.name}</span>
                                   {event.is_mandatory && (
-                                    <Lock className="w-3 h-3 text-muted-foreground" />
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Lock className="w-3 h-3 text-muted-foreground" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>Evento obrigatório</TooltipContent>
+                                    </Tooltip>
                                   )}
                                 </div>
                                 <span className="text-xs text-muted-foreground font-mono">
@@ -459,6 +644,38 @@ export default function SettingsNotifications() {
                                   <span className="text-muted-foreground">-</span>
                                 )}
                               </TableCell>
+                              <TableCell className="text-center">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Switch
+                                        checked={slackEnabled}
+                                        onCheckedChange={(checked) => handleToggleEventSetting(event.slug, 'slack', checked)}
+                                        disabled={!slackConfigured || event.is_mandatory}
+                                      />
+                                    </span>
+                                  </TooltipTrigger>
+                                  {!slackConfigured && (
+                                    <TooltipContent>Configure Slack primeiro</TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Switch
+                                        checked={webhookEnabled}
+                                        onCheckedChange={(checked) => handleToggleEventSetting(event.slug, 'webhook', checked)}
+                                        disabled={!webhookConfigured || event.is_mandatory}
+                                      />
+                                    </span>
+                                  </TooltipTrigger>
+                                  {!webhookConfigured && (
+                                    <TooltipContent>Configure Webhook primeiro</TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -478,7 +695,7 @@ export default function SettingsNotifications() {
               <CardHeader>
                 <CardTitle>Fila de Envio (Outbox)</CardTitle>
                 <CardDescription>
-                  Monitore o status de envio das notificações externas
+                  Monitore o status de envio das notificações externas (email, slack, webhook)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -499,7 +716,11 @@ export default function SettingsNotifications() {
                   <UrlSelect
                     value={channelState.value}
                     onChange={channelState.set}
-                    options={channels.map(c => ({ value: c.slug, label: c.name }))}
+                    options={[
+                      { value: 'email', label: 'Email' },
+                      { value: 'slack', label: 'Slack' },
+                      { value: 'webhook', label: 'Webhook' },
+                    ]}
                     includeAllOption
                     allOptionLabel="Todos os canais"
                     triggerClassName="w-[180px]"
@@ -538,6 +759,7 @@ export default function SettingsNotifications() {
                             const statusColor = item.status === 'sent' ? 'text-green-500'
                               : item.status === 'failed' ? 'text-destructive'
                               : 'text-yellow-500';
+                            const ChannelIcon = channelIcons[item.channel_slug] || Globe;
                             
                             return (
                               <TableRow key={item.id}>
@@ -545,7 +767,10 @@ export default function SettingsNotifications() {
                                   {format(new Date(item.created_at), 'dd/MM HH:mm', { locale: ptBR })}
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant="outline">{item.channel_slug}</Badge>
+                                  <div className="flex items-center gap-1">
+                                    <ChannelIcon className="w-4 h-4 text-muted-foreground" />
+                                    <Badge variant="outline">{item.channel_slug}</Badge>
+                                  </div>
                                 </TableCell>
                                 <TableCell className="font-mono text-xs">
                                   {item.event_slug}
@@ -681,7 +906,8 @@ export default function SettingsNotifications() {
                   Enviar Notificação de Teste
                 </CardTitle>
                 <CardDescription>
-                  Envie uma notificação de teste para validar a configuração do sistema
+                  Envie uma notificação de teste para validar a configuração do sistema.
+                  Canais não configurados não aparecerão nas opções.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -712,40 +938,88 @@ export default function SettingsNotifications() {
                   
                   <div className="space-y-2">
                     <Label>Canais</Label>
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-4">
+                      {/* In-App - always available */}
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={testChannels.includes('in_app')}
-                          onChange={(e) => {
-                            if (e.target.checked) {
+                          onCheckedChange={(checked) => {
+                            if (checked) {
                               setTestChannels([...testChannels, 'in_app']);
                             } else {
                               setTestChannels(testChannels.filter(c => c !== 'in_app'));
                             }
                           }}
-                          className="rounded"
                         />
                         <Bell className="w-4 h-4" />
                         In-App
                       </label>
+                      
+                      {/* Email */}
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={testChannels.includes('email')}
-                          onChange={(e) => {
-                            if (e.target.checked) {
+                          onCheckedChange={(checked) => {
+                            if (checked) {
                               setTestChannels([...testChannels, 'email']);
                             } else {
                               setTestChannels(testChannels.filter(c => c !== 'email'));
                             }
                           }}
-                          className="rounded"
                         />
                         <Mail className="w-4 h-4" />
                         Email
                       </label>
+                      
+                      {/* Slack - only if configured */}
+                      {isChannelConfigured('slack') && (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={testChannels.includes('slack')}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setTestChannels([...testChannels, 'slack']);
+                              } else {
+                                setTestChannels(testChannels.filter(c => c !== 'slack'));
+                              }
+                            }}
+                          />
+                          <Slack className="w-4 h-4" />
+                          Slack
+                        </label>
+                      )}
+                      
+                      {/* Webhook - only if configured */}
+                      {isChannelConfigured('webhook') && (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={testChannels.includes('webhook')}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setTestChannels([...testChannels, 'webhook']);
+                              } else {
+                                setTestChannels(testChannels.filter(c => c !== 'webhook'));
+                              }
+                            }}
+                          />
+                          <Globe className="w-4 h-4" />
+                          Webhook
+                        </label>
+                      )}
                     </div>
+                    
+                    {/* Info about unconfigured channels */}
+                    {(!isChannelConfigured('slack') || !isChannelConfigured('webhook')) && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {!isChannelConfigured('slack') && !isChannelConfigured('webhook') 
+                          ? 'Slack e Webhook não estão configurados.'
+                          : !isChannelConfigured('slack') 
+                            ? 'Slack não está configurado.'
+                            : 'Webhook não está configurado.'
+                        }
+                        {' '}Configure na aba Canais.
+                      </p>
+                    )}
                   </div>
                   
                   <Button 
@@ -766,21 +1040,35 @@ export default function SettingsNotifications() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {testResult.map((r, i) => (
-                          <div key={i} className="flex items-center gap-3 text-sm">
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <Badge variant="outline">{r.channel}</Badge>
-                            <span>Status: {r.status}</span>
-                            {r.id && (
-                              <code className="text-xs bg-muted px-2 py-0.5 rounded">
-                                {r.id.slice(0, 8)}...
-                              </code>
-                            )}
-                          </div>
-                        ))}
+                        {testResult.map((r, i) => {
+                          const ChannelIcon = channelIcons[r.channel] || Bell;
+                          const hasError = r.error || r.status === 'error';
+                          return (
+                            <div key={i} className="flex items-center gap-3 text-sm">
+                              {hasError ? (
+                                <AlertCircle className="w-4 h-4 text-destructive" />
+                              ) : (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
+                              <ChannelIcon className="w-4 h-4 text-muted-foreground" />
+                              <Badge variant="outline">{r.channel}</Badge>
+                              <span>Status: {r.status}</span>
+                              {r.id && (
+                                <code className="text-xs bg-muted px-2 py-0.5 rounded">
+                                  {r.id.slice(0, 8)}...
+                                </code>
+                              )}
+                              {r.error && (
+                                <span className="text-xs text-destructive truncate max-w-[200px]">
+                                  {r.error}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                       <p className="text-xs text-muted-foreground mt-3">
-                        Veja a aba Outbox para acompanhar o status de envio do email.
+                        Veja a aba Outbox para acompanhar o status de envio.
                       </p>
                     </CardContent>
                   </Card>
@@ -793,13 +1081,14 @@ export default function SettingsNotifications() {
       
       {/* Channel Configuration Dialog */}
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
               Configurar {channels.find(c => c.slug === selectedChannel)?.name}
             </DialogTitle>
             <DialogDescription>
-              Configure as credenciais e opções para este canal de notificação
+              Configure as credenciais e opções para este canal de notificação.
+              Dados sensíveis são armazenados de forma segura.
             </DialogDescription>
           </DialogHeader>
           
@@ -814,6 +1103,9 @@ export default function SettingsNotifications() {
                     value={configForm.from_name || ''}
                     onChange={(e) => setConfigForm({ ...configForm, from_name: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Email usa configuração global (SendGrid/Resend).
+                  </p>
                 </div>
               </>
             )}
@@ -821,14 +1113,120 @@ export default function SettingsNotifications() {
             {selectedChannel === 'slack' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="webhook_url">Webhook URL</Label>
+                  <Label htmlFor="webhook_url">Webhook URL (Incoming Webhook)</Label>
                   <Input
                     id="webhook_url"
                     placeholder="https://hooks.slack.com/services/..."
                     value={configForm.webhook_url || ''}
                     onChange={(e) => setConfigForm({ ...configForm, webhook_url: e.target.value })}
+                    type="url"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Crie em: Slack App → Incoming Webhooks
+                  </p>
+                </div>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">ou use Bot Token</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bot_token">Bot Token (xoxb-...)</Label>
+                  <Input
+                    id="bot_token"
+                    placeholder="xoxb-..."
+                    value={configForm.bot_token || ''}
+                    onChange={(e) => setConfigForm({ ...configForm, bot_token: e.target.value })}
+                    type="password"
                   />
                 </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="default_channel_id">Canal Padrão (ID ou #nome)</Label>
+                  <Input
+                    id="default_channel_id"
+                    placeholder="#general ou C0123456789"
+                    value={configForm.default_channel_id || configForm.default_channel_name || ''}
+                    onChange={(e) => setConfigForm({ 
+                      ...configForm, 
+                      default_channel_id: e.target.value.startsWith('C') ? e.target.value : '',
+                      default_channel_name: e.target.value.startsWith('#') ? e.target.value : '',
+                    })}
+                  />
+                </div>
+              </>
+            )}
+            
+            {selectedChannel === 'webhook' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="url">URL do Webhook</Label>
+                  <Input
+                    id="url"
+                    placeholder="https://seu-sistema.com/webhook/notifications"
+                    value={configForm.url || ''}
+                    onChange={(e) => setConfigForm({ ...configForm, url: e.target.value })}
+                    type="url"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="http_method">Método HTTP</Label>
+                  <Select 
+                    value={configForm.http_method || 'POST'} 
+                    onValueChange={(v) => setConfigForm({ ...configForm, http_method: v })}
+                  >
+                    <SelectTrigger id="http_method">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="POST">POST</SelectItem>
+                      <SelectItem value="PUT">PUT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="secret_header_name">Header de Autenticação (opcional)</Label>
+                  <Input
+                    id="secret_header_name"
+                    placeholder="X-Webhook-Secret"
+                    value={configForm.secret_header_name || ''}
+                    onChange={(e) => setConfigForm({ ...configForm, secret_header_name: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="secret_header_value">Valor do Header</Label>
+                  <Input
+                    id="secret_header_value"
+                    placeholder="seu-segredo-aqui"
+                    value={configForm.secret_header_value || ''}
+                    onChange={(e) => setConfigForm({ ...configForm, secret_header_value: e.target.value })}
+                    type="password"
+                  />
+                </div>
+                
+                <Card className="bg-muted/50">
+                  <CardContent className="p-3 text-xs">
+                    <p className="font-medium mb-1">Payload enviado:</p>
+                    <pre className="text-muted-foreground overflow-x-auto">
+{`{
+  "event_slug": "...",
+  "bu_id": "...",
+  "title": "...",
+  "message": "...",
+  "context_url": "...",
+  "sent_at": "..."
+}`}
+                    </pre>
+                  </CardContent>
+                </Card>
               </>
             )}
           </div>
