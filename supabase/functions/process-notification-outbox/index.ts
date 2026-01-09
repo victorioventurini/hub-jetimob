@@ -18,6 +18,7 @@ interface OutboxItem {
   payload: Record<string, unknown>;
   status: string;
   retries: number;
+  max_retries: number;
 }
 
 interface EmailOptions {
@@ -25,6 +26,22 @@ interface EmailOptions {
   subject: string;
   html: string;
   from?: { email: string; name: string };
+}
+
+interface SlackConfig {
+  webhook_url?: string;
+  bot_token?: string;
+  default_channel_id?: string;
+  default_channel_name?: string;
+  configured?: boolean;
+}
+
+interface WebhookConfig {
+  url?: string;
+  http_method?: string;
+  secret_header_name?: string;
+  secret_header_value?: string;
+  configured?: boolean;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -53,6 +70,33 @@ async function getIntegrationApiKey(
   }
 
   return row.config_encrypted?.api_key || null;
+}
+
+// Get BU channel configuration
+async function getBuChannelConfig<T>(
+  supabase: SupabaseClient,
+  buId: string,
+  channelSlug: string
+): Promise<T | null> {
+  const { data, error } = await supabase
+    .from("bu_notification_channels")
+    .select("config, is_enabled")
+    .eq("bu_id", buId)
+    .eq("channel_slug", channelSlug)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.warn(`[Outbox] BU channel config not found for ${channelSlug}`);
+    return null;
+  }
+
+  const row = data as { config: T; is_enabled: boolean };
+  if (!row.is_enabled) {
+    console.warn(`[Outbox] Channel ${channelSlug} is disabled for BU ${buId}`);
+    return null;
+  }
+
+  return row.config;
 }
 
 // Send email via SendGrid
@@ -133,6 +177,167 @@ async function sendEmail(
   return { success: false, error: "No email provider configured" };
 }
 
+// Send via Slack
+async function sendSlack(
+  config: SlackConfig,
+  payload: Record<string, unknown>,
+  item: OutboxItem
+): Promise<{ success: boolean; error?: string }> {
+  const title = (payload.title as string) || "Nova Notificação";
+  const message = (payload.message as string) || "";
+  const contextUrl = payload.context_url as string | undefined;
+  const siteUrl = Deno.env.get("SITE_URL") || "https://hub.jetimob.com";
+  
+  console.log(`[Outbox] Sending Slack notification for outbox_id=${item.id}`);
+
+  // Slack Incoming Webhook mode
+  if (config.webhook_url) {
+    const slackPayload = {
+      text: `*${title}*\n${message}`,
+      blocks: [
+        {
+          type: "header",
+          text: { type: "plain_text", text: title, emoji: true }
+        },
+        {
+          type: "section",
+          text: { type: "mrkdwn", text: message }
+        },
+        ...(contextUrl ? [{
+          type: "section",
+          text: { type: "mrkdwn", text: `<${siteUrl}${contextUrl}|Ver no Hub>` }
+        }] : [])
+      ]
+    };
+
+    const response = await fetch(config.webhook_url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(slackPayload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // Sanitize: do not log the webhook URL
+      return { success: false, error: `Slack webhook error: ${response.status} - ${errorText.slice(0, 100)}` };
+    }
+
+    return { success: true };
+  }
+
+  // Slack Bot Token mode (chat.postMessage)
+  if (config.bot_token && (config.default_channel_id || config.default_channel_name)) {
+    const channel = config.default_channel_id || config.default_channel_name;
+    
+    const slackPayload = {
+      channel,
+      text: `*${title}*\n${message}`,
+      blocks: [
+        {
+          type: "header",
+          text: { type: "plain_text", text: title, emoji: true }
+        },
+        {
+          type: "section",
+          text: { type: "mrkdwn", text: message }
+        },
+        ...(contextUrl ? [{
+          type: "section",
+          text: { type: "mrkdwn", text: `<${siteUrl}${contextUrl}|Ver no Hub>` }
+        }] : [])
+      ]
+    };
+
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.bot_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(slackPayload),
+    });
+
+    const result = await response.json();
+    
+    if (!result.ok) {
+      // Sanitize: do not log the token
+      return { success: false, error: `Slack API error: ${result.error || "unknown"}` };
+    }
+
+    return { success: true };
+  }
+
+  return { success: false, error: "Slack not configured (missing webhook_url or bot_token+channel)" };
+}
+
+// Send via Webhook
+async function sendWebhook(
+  config: WebhookConfig,
+  payload: Record<string, unknown>,
+  item: OutboxItem
+): Promise<{ success: boolean; error?: string }> {
+  if (!config.url) {
+    return { success: false, error: "Webhook URL not configured" };
+  }
+
+  const siteUrl = Deno.env.get("SITE_URL") || "https://hub.jetimob.com";
+  const contextUrl = payload.context_url as string | undefined;
+  
+  console.log(`[Outbox] Sending webhook for outbox_id=${item.id}`);
+
+  // Build sanitized payload (no internal IDs or sensitive data)
+  const webhookPayload = {
+    event_slug: item.event_slug,
+    bu_id: item.bu_id,
+    title: payload.title,
+    message: payload.message,
+    context_type: payload.context_type,
+    context_id: payload.context_id,
+    context_url: contextUrl ? `${siteUrl}${contextUrl}` : null,
+    severity: payload.severity,
+    sent_at: new Date().toISOString(),
+    // Exclude internal metadata, user_id, etc.
+  };
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  // Add secret header if configured
+  if (config.secret_header_name && config.secret_header_value) {
+    headers[config.secret_header_name] = config.secret_header_value;
+  }
+
+  const method = config.http_method?.toUpperCase() || "POST";
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+    const response = await fetch(config.url, {
+      method,
+      headers,
+      body: JSON.stringify(webhookPayload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // Sanitize: do not log the full URL (might contain tokens)
+      return { success: false, error: `Webhook error: ${response.status} - ${errorText.slice(0, 100)}` };
+    }
+
+    return { success: true };
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return { success: false, error: "Webhook timeout (30s)" };
+    }
+    return { success: false, error: `Webhook error: ${error instanceof Error ? error.message : "unknown"}` };
+  }
+}
+
 // Build notification email HTML
 function buildNotificationEmailHtml(payload: Record<string, unknown>): string {
   const title = (payload.title as string) || "Nova Notificação";
@@ -186,9 +391,9 @@ async function processOutboxItem(
   supabase: SupabaseClient,
   item: OutboxItem
 ): Promise<{ success: boolean; error?: string }> {
-  const { channel_slug, payload, user_id } = item;
+  const { channel_slug, payload, user_id, bu_id } = item;
 
-  // Get user email
+  // Get user email for email channel
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("email, display_name")
@@ -197,12 +402,11 @@ async function processOutboxItem(
 
   const profileData = profile as { email: string; display_name: string } | null;
 
-  if (profileError || !profileData?.email) {
-    return { success: false, error: "User email not found" };
-  }
-
   switch (channel_slug) {
     case "email": {
+      if (profileError || !profileData?.email) {
+        return { success: false, error: "User email not found" };
+      }
       const html = buildNotificationEmailHtml(payload);
       const title = (payload.title as string) || "Nova Notificação";
       return await sendEmail(supabase, {
@@ -213,20 +417,36 @@ async function processOutboxItem(
     }
 
     case "slack": {
-      // TODO: Implement Slack webhook integration
-      console.log(`[Outbox] Slack channel not yet implemented`);
-      return { success: true }; // Mark as success to not retry
-    }
-
-    case "whatsapp": {
-      // TODO: Implement WhatsApp API integration
-      console.log(`[Outbox] WhatsApp channel not yet implemented`);
-      return { success: true }; // Mark as success to not retry
+      if (!bu_id) {
+        return { success: false, error: "BU ID required for Slack" };
+      }
+      const slackConfig = await getBuChannelConfig<SlackConfig>(supabase, bu_id, "slack");
+      if (!slackConfig) {
+        return { success: false, error: "Slack channel not configured or disabled" };
+      }
+      if (!slackConfig.configured && !slackConfig.webhook_url && !slackConfig.bot_token) {
+        return { success: false, error: "Slack not configured (missing credentials)" };
+      }
+      return await sendSlack(slackConfig, payload, item);
     }
 
     case "webhook": {
-      // TODO: Implement generic webhook
-      console.log(`[Outbox] Webhook channel not yet implemented`);
+      if (!bu_id) {
+        return { success: false, error: "BU ID required for Webhook" };
+      }
+      const webhookConfig = await getBuChannelConfig<WebhookConfig>(supabase, bu_id, "webhook");
+      if (!webhookConfig) {
+        return { success: false, error: "Webhook channel not configured or disabled" };
+      }
+      if (!webhookConfig.url) {
+        return { success: false, error: "Webhook URL not configured" };
+      }
+      return await sendWebhook(webhookConfig, payload, item);
+    }
+
+    case "whatsapp": {
+      // WhatsApp is explicitly out of scope for Phase 3
+      console.log(`[Outbox] WhatsApp channel not yet implemented (Phase 4+)`);
       return { success: true }; // Mark as success to not retry
     }
 
@@ -240,6 +460,17 @@ async function processOutboxItem(
   }
 }
 
+// Calculate next retry time with exponential backoff
+function calculateNextRetry(retries: number): Date {
+  // Exponential backoff: 1min, 2min, 4min, 8min, 16min, 32min, 64min, etc.
+  const delayMinutes = Math.pow(2, retries);
+  const maxDelayMinutes = 60; // Cap at 1 hour
+  const actualDelay = Math.min(delayMinutes, maxDelayMinutes);
+  const nextRetry = new Date();
+  nextRetry.setMinutes(nextRetry.getMinutes() + actualDelay);
+  return nextRetry;
+}
+
 // Main handler
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -250,11 +481,12 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Get pending outbox items (limit to 50 per batch)
+    // Only process items that are ready for retry (next_retry_at is null or in the past)
     const { data: outboxItems, error: fetchError } = await supabase
       .from("notification_outbox")
-      .select("*")
+      .select("id, bu_id, user_id, event_slug, channel_slug, payload, status, retries, max_retries")
       .eq("status", "pending")
-      .lt("retries", 3)
+      .or("next_retry_at.is.null,next_retry_at.lte.now()")
       .order("created_at", { ascending: true })
       .limit(50);
 
@@ -275,26 +507,37 @@ const handler = async (req: Request): Promise<Response> => {
     let failCount = 0;
 
     for (const item of outboxItems as OutboxItem[]) {
+      const maxRetries = item.max_retries || 10;
       const result = await processOutboxItem(supabase, item);
 
       if (result.success) {
         // Mark as sent
         await supabase
           .from("notification_outbox")
-          .update({ status: "sent" })
+          .update({ 
+            status: "sent",
+            processed_at: new Date().toISOString(),
+          })
           .eq("id", item.id);
         successCount++;
+        console.log(`[Outbox] SUCCESS outbox_id=${item.id} channel=${item.channel_slug}`);
       } else {
-        // Increment retry count and update error
+        const newRetries = item.retries + 1;
+        const isFinalFailure = newRetries >= maxRetries;
+        
+        // Update with retry info or mark as failed
         await supabase
           .from("notification_outbox")
           .update({
-            retries: item.retries + 1,
-            last_error: result.error,
-            status: item.retries + 1 >= 3 ? "failed" : "pending",
+            retries: newRetries,
+            last_error: result.error?.slice(0, 500), // Limit error length
+            status: isFinalFailure ? "failed" : "pending",
+            next_retry_at: isFinalFailure ? null : calculateNextRetry(newRetries).toISOString(),
+            processed_at: isFinalFailure ? new Date().toISOString() : null,
           })
           .eq("id", item.id);
         failCount++;
+        console.log(`[Outbox] FAIL outbox_id=${item.id} channel=${item.channel_slug} retry=${newRetries}/${maxRetries} error=${result.error?.slice(0, 100)}`);
       }
     }
 
