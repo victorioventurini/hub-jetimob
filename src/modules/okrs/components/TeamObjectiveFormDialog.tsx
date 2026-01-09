@@ -442,7 +442,7 @@ export function TeamObjectiveFormDialog({
                   <CycleSelect
                     value={cycleId}
                     onValueChange={setCycleId}
-                    cycles={cycles}
+                    cycles={cycles.filter(c => c.type === 'quarter')}
                     placeholder="Selecione o ciclo do objetivo"
                     disabled={isPending}
                     required
