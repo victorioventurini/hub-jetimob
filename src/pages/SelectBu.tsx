@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Building2, ArrowRight, Loader2, LogOut, Settings } from "lucide-react";
+import { Building2, ArrowRight, Loader2, LogOut, Settings, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +17,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
@@ -23,7 +26,36 @@ export default function SelectBu() {
   
   const navigate = useNavigate();
   const { profile, role, signOut } = useAuth();
-  const { userBus, isLoading, selectBu } = useBu();
+  const { userBus, isLoading: buLoading, selectBu } = useBu();
+
+  // Fetch all active BUs
+  const { data: allBus = [], isLoading: allBusLoading } = useQuery({
+    queryKey: ["all-bus-for-selection"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bu_units")
+        .select("id, name, description, logo_url, symbol_url, primary_color, status")
+        .eq("status", "active")
+        .order("name");
+
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = buLoading || allBusLoading;
+
+  // Create a set of BU IDs the user has access to
+  const userBuIds = new Set(userBus.map((m) => m.bu_id));
+
+  // Auto-redirect if user has access to only one BU
+  useEffect(() => {
+    if (!isLoading && userBus.length === 1) {
+      selectBu(userBus[0].bu_id);
+      navigate("/", { replace: true });
+    }
+  }, [isLoading, userBus, selectBu, navigate]);
 
   const roleLabels: Record<string, string> = {
     super_admin: "Super Admin",
@@ -48,21 +80,35 @@ export default function SelectBu() {
     toast.success("Você saiu do Hub");
   };
 
-  const handleSelectBu = (buId: string) => {
+  const handleSelectBu = (buId: string, hasAccess: boolean) => {
+    if (!hasAccess) {
+      toast.error("Você não tem acesso a esta Business Unit");
+      return;
+    }
     selectBu(buId);
     navigate("/", { replace: true });
   };
 
-  if (isLoading) {
+  // Show loader while checking, or if auto-redirecting
+  if (isLoading || (!isLoading && userBus.length === 1)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando suas Business Units...</p>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
   }
+
+  // Sort BUs: user's BUs first, then others
+  const sortedBus = [...allBus].sort((a, b) => {
+    const aHasAccess = userBuIds.has(a.id);
+    const bHasAccess = userBuIds.has(b.id);
+    if (aHasAccess && !bHasAccess) return -1;
+    if (!aHasAccess && bHasAccess) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
@@ -141,20 +187,24 @@ export default function SelectBu() {
           </motion.div>
 
           <div className="grid gap-4">
-            {userBus.map((membership, index) => {
-              const bu = membership.bu_unit;
-              if (!bu) return null;
+            {sortedBus.map((bu, index) => {
+              const hasAccess = userBuIds.has(bu.id);
+              const membership = userBus.find((m) => m.bu_id === bu.id);
 
               return (
                 <motion.div
-                  key={membership.bu_id}
+                  key={bu.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
                 >
                   <Card 
-                    className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 group"
-                    onClick={() => handleSelectBu(membership.bu_id)}
+                    className={`transition-all ${
+                      hasAccess 
+                        ? "cursor-pointer hover:shadow-lg hover:border-primary/50 group" 
+                        : "opacity-60 cursor-not-allowed"
+                    }`}
+                    onClick={() => handleSelectBu(bu.id, hasAccess)}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4">
@@ -187,21 +237,39 @@ export default function SelectBu() {
                               {bu.description}
                             </p>
                           )}
-                          {membership.is_default && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground mt-1">
-                              Padrão
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            {membership?.is_default && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground">
+                                Padrão
+                              </span>
+                            )}
+                            {!hasAccess && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                                <Lock className="w-3 h-3" />
+                                Sem acesso
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Access button */}
-                        <Button 
-                          variant="outline" 
-                          className="gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                        >
-                          Acessar
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
+                        {hasAccess ? (
+                          <Button 
+                            variant="outline" 
+                            className="gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                          >
+                            Acessar
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="ghost" 
+                            disabled
+                            className="gap-2"
+                          >
+                            <Lock className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -210,7 +278,7 @@ export default function SelectBu() {
             })}
           </div>
 
-          {userBus.length === 0 && (
+          {allBus.length === 0 && (
             <Card>
               <CardHeader className="text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -218,10 +286,20 @@ export default function SelectBu() {
                 </div>
                 <CardTitle>Nenhuma Business Unit</CardTitle>
                 <CardDescription>
-                  Você ainda não tem acesso a nenhuma Business Unit.
-                  Entre em contato com um administrador.
+                  Não há Business Units cadastradas no sistema.
                 </CardDescription>
               </CardHeader>
+            </Card>
+          )}
+
+          {allBus.length > 0 && userBus.length === 0 && (
+            <Card className="mt-6 border-warning/50 bg-warning/5">
+              <CardContent className="p-4">
+                <p className="text-sm text-center text-muted-foreground">
+                  Você ainda não tem acesso a nenhuma Business Unit. 
+                  Entre em contato com um administrador para solicitar acesso.
+                </p>
+              </CardContent>
             </Card>
           )}
         </div>

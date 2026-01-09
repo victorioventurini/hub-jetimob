@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
@@ -7,8 +7,9 @@ import { Loader2 } from "lucide-react";
 
 export default function Onboarding() {
   const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
-  const { data: profile, isLoading: profileLoading, refetch } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["onboarding-page", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -27,7 +28,7 @@ export default function Onboarding() {
   });
 
   const handleOnboardingComplete = () => {
-    refetch();
+    navigate("/select-bu", { replace: true });
   };
 
   // Loading
