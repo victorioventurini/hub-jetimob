@@ -161,6 +161,36 @@ export default function HubNotifications() {
       return { pending, sent, failed, total: data?.length || 0, lastProcessed, byChannel };
     },
   });
+
+  // Health alerts query (using any type since table was just created)
+  interface HealthAlert {
+    id: string;
+    bu_id: string;
+    alert_type: string;
+    severity: string;
+    detected_at: string;
+    resolved_at: string | null;
+    metadata: Record<string, unknown>;
+    is_active: boolean;
+  }
+
+  const { data: healthAlerts = [], isLoading: alertsLoading } = useQuery({
+    queryKey: ['notification-health-alerts-global'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notification_health_alerts' as any)
+        .select('id, bu_id, alert_type, severity, detected_at, resolved_at, metadata, is_active')
+        .order('detected_at', { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return (data as unknown as HealthAlert[]) || [];
+    },
+  });
+
+  const activeAlerts = healthAlerts.filter(a => a.is_active);
+  const recentResolvedAlerts = healthAlerts.filter(a => !a.is_active && 
+    new Date(a.resolved_at || 0) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
   
   const isLoading = eventsLoading || channelsLoading;
   
@@ -540,6 +570,48 @@ export default function HubNotifications() {
               Visão geral do sistema de notificações
             </p>
           </div>
+
+          {/* Health Alerts Card */}
+          {(activeAlerts.length > 0 || alertsLoading) && (
+            <Card className="border-destructive/50 bg-destructive/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-destructive" />
+                  Alertas de Saúde Ativos
+                </CardTitle>
+                <CardDescription>Problemas detectados que requerem atenção</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {alertsLoading ? (
+                  <Skeleton className="h-16 w-full" />
+                ) : (
+                  <div className="space-y-3">
+                    {activeAlerts.map(alert => (
+                      <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg bg-background border">
+                        <Badge variant={alert.severity === 'critical' ? 'destructive' : 'secondary'}>
+                          {alert.severity}
+                        </Badge>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">
+                            {alert.alert_type === 'outbox_backlog' && '⚠️ Fila Acumulada'}
+                            {alert.alert_type === 'high_failure_rate' && '🔴 Alta Taxa de Falhas'}
+                            {alert.alert_type === 'channel_down' && '❌ Canal Fora do Ar'}
+                            {alert.alert_type === 'event_disabled_mandatory' && '⚙️ Evento Obrigatório Desabilitado'}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {alert.metadata?.pending_count && `${alert.metadata.pending_count} pendentes`}
+                            {alert.metadata?.failure_rate_pct && `${alert.metadata.failure_rate_pct}% de falhas`}
+                            {alert.metadata?.channel_slug && ` no canal ${alert.metadata.channel_slug}`}
+                            {' • '}Detectado {new Date(alert.detected_at).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
           
           {/* Global Stats */}
           <div className="grid gap-4 md:grid-cols-4">
