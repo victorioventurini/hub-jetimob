@@ -97,7 +97,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       // Fetch org objective
       const { data: objective, error: objError } = await supabase
         .from('okr_org_objectives')
-        .select('*')
+        .select('id, title, description, year, status, bu_id')
         .eq('id', objectiveId)
         .is('deleted_at', null)
         .single();
@@ -110,7 +110,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       // Fetch org KRs
       const { data: orgKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
-        .select('*')
+        .select('id, org_objective_id, title, baseline, current_value, target, direction, unit, status')
         .eq('org_objective_id', objectiveId)
         .is('deleted_at', null)
         .order('created_at');
@@ -128,7 +128,9 @@ export function useOrgObjectiveView(objectiveId: string) {
         const { data: teamKrs, error: teamKrsError } = await supabase
           .from('okr_team_key_results')
           .select(`
-            *,
+            id, title, team_id, team_objective_id, linked_org_kr_id, type,
+            baseline, current_value, target, direction, unit, status,
+            last_checkin_at, owner_user_id,
             teams:team_id (name),
             team_objective:team_objective_id (title),
             owner:owner_user_id (display_name)
@@ -211,8 +213,9 @@ export function useAllOrgObjectivesView(year?: number) {
       // Fetch all org objectives for the year
       let query = supabase
         .from('okr_org_objectives')
-        .select('*')
+        .select('id, title, description, year, status, bu_id')
         .eq('year', currentYear)
+        .eq('status', 'active')
         .is('deleted_at', null)
         .order('created_at');
 
@@ -233,7 +236,7 @@ export function useAllOrgObjectivesView(year?: number) {
 
       const { data: allOrgKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
-        .select('*')
+        .select('id, org_objective_id, title, baseline, current_value, target, direction, unit, status')
         .in('org_objective_id', objectiveIds)
         .is('deleted_at', null);
 
@@ -250,7 +253,9 @@ export function useAllOrgObjectivesView(year?: number) {
         const { data: teamKrs, error: teamKrsError } = await supabase
           .from('okr_team_key_results')
           .select(`
-            *,
+            id, title, team_id, team_objective_id, linked_org_kr_id, type,
+            baseline, current_value, target, direction, unit, status,
+            last_checkin_at, owner_user_id,
             teams:team_id (name),
             team_objective:team_objective_id (title),
             owner:owner_user_id (display_name)
