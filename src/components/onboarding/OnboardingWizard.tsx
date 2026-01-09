@@ -369,8 +369,31 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                     <Label>Aniversário *</Label>
                     <div className="grid grid-cols-2 gap-4">
                       <Select
+                        value={formData.birth_day ? String(formData.birth_day) : ""}
+                        onValueChange={(v) => handleChange("birth_day", parseInt(v))}
+                      >
+                        <SelectTrigger className={errors.birth_day ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Dia" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                            <SelectItem key={day} value={String(day)}>
+                              {day}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
                         value={formData.birth_month ? String(formData.birth_month) : ""}
-                        onValueChange={(v) => handleChange("birth_month", parseInt(v))}
+                        onValueChange={(v) => {
+                          const newMonth = parseInt(v);
+                          handleChange("birth_month", newMonth);
+                          // Ajusta o dia se exceder o máximo do novo mês
+                          const maxDays = getDaysInMonth(newMonth);
+                          if (formData.birth_day > maxDays) {
+                            handleChange("birth_day", maxDays);
+                          }
+                        }}
                       >
                         <SelectTrigger className={errors.birth_month ? "border-destructive" : ""}>
                           <SelectValue placeholder="Mês" />
@@ -379,22 +402,6 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
                           {MONTHS.map((month) => (
                             <SelectItem key={month.value} value={String(month.value)}>
                               {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={formData.birth_day ? String(formData.birth_day) : ""}
-                        onValueChange={(v) => handleChange("birth_day", parseInt(v))}
-                        disabled={!formData.birth_month}
-                      >
-                        <SelectTrigger className={errors.birth_day ? "border-destructive" : ""}>
-                          <SelectValue placeholder="Dia" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: getDaysInMonth(formData.birth_month || 1) }, (_, i) => i + 1).map((day) => (
-                            <SelectItem key={day} value={String(day)}>
-                              {day}
                             </SelectItem>
                           ))}
                         </SelectContent>
