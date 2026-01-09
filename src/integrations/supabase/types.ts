@@ -6013,6 +6013,8 @@ export type Database = {
       }
       v_bu_active_profiles: {
         Row: {
+          birth_day: number | null
+          birth_month: number | null
           bu_id: string | null
           created_at: string | null
           display_name: string | null

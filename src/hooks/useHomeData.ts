@@ -48,12 +48,10 @@ export function useQuickStats() {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Fetch profiles count
+      // Fetch profiles count using canonical view
       let profilesQuery = supabase
-        .from("profiles")
-        .select("id, created_at", { count: "exact", head: false })
-        .is("deleted_at", null)
-        .eq("employment_status", "active");
+        .from("v_bu_active_profiles")
+        .select("id, created_at", { count: "exact", head: false });
 
       if (currentBu?.id) {
         profilesQuery = profilesQuery.eq("bu_id", currentBu.id);
@@ -143,20 +141,19 @@ export function useNewJetimobers(limit = 5) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+      // Use canonical view for user directory
       let query = supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select(
           `
           id,
           display_name,
-          job_title_rel:job_titles!job_title_id(name),
+          job_title_name,
           photo_url,
           start_date,
           team_id
         `
         )
-        .is("deleted_at", null)
-        .eq("employment_status", "active")
         .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
         .order("start_date", { ascending: false })
         .limit(limit);
@@ -180,7 +177,7 @@ export function useNewJetimobers(limit = 5) {
         return {
           id: profile.id,
           name: profile.display_name || "Sem nome",
-          jobTitle: (profile.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+          jobTitle: profile.job_title_name || "Sem cargo",
           team: teamsById[profile.team_id] || "Sem time",
           photoUrl: profile.photo_url || undefined,
           startDate: profile.start_date,
@@ -209,21 +206,20 @@ export function useBirthdays() {
   return useQuery({
     queryKey: ["birthdays", currentBu?.id, currentMonth],
     queryFn: async (): Promise<Birthday[]> => {
+      // Use canonical view for user directory
       let query = supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select(
           `
           id,
           display_name,
-          job_title_rel:job_titles!job_title_id(name),
+          job_title_name,
           photo_url,
           birth_day,
           birth_month,
           team_id
         `
         )
-        .is("deleted_at", null)
-        .eq("employment_status", "active")
         .eq("birth_month", currentMonth)
         .not("birth_day", "is", null)
         .order("birth_day", { ascending: true });
@@ -241,7 +237,7 @@ export function useBirthdays() {
       return (data || []).map((profile) => ({
         id: profile.id,
         name: profile.display_name || "Sem nome",
-        jobTitle: (profile.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+        jobTitle: profile.job_title_name || "Sem cargo",
         team: teamsById[profile.team_id] || "Sem time",
         photoUrl: profile.photo_url || undefined,
         birthDay: profile.birth_day!,
@@ -272,21 +268,19 @@ export function useWorkAnniversaries() {
   return useQuery({
     queryKey: ["work-anniversaries", currentBu?.id, currentMonth],
     queryFn: async (): Promise<WorkAnniversary[]> => {
-      // Fetch profiles with start_date in current month (any year)
+      // Use canonical view for user directory
       let query = supabase
-        .from("profiles")
+        .from("v_bu_active_profiles")
         .select(
           `
           id,
           display_name,
-          job_title_rel:job_titles!job_title_id(name),
+          job_title_name,
           photo_url,
           start_date,
           team_id
         `
         )
-        .is("deleted_at", null)
-        .eq("employment_status", "active")
         .not("start_date", "is", null);
 
       if (currentBu?.id) {
@@ -314,7 +308,7 @@ export function useWorkAnniversaries() {
           return {
             id: profile.id,
             name: profile.display_name || "Sem nome",
-            jobTitle: (profile.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+            jobTitle: profile.job_title_name || "Sem cargo",
             team: teamsById[profile.team_id] || "Sem time",
             photoUrl: profile.photo_url || undefined,
             startDate: profile.start_date,

@@ -13,7 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
-import { useProfilesList } from "@/hooks/useSharedData";
+import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
 import { useCreateInitiative, useUpdateInitiative } from "../../hooks/useInitiatives";
 import { getInitiativeStatusLabel, getInitiativePriorityLabel, type Initiative, type InitiativeStatus, type InitiativePriority } from "../../types/initiative";
 import { Loader2, Check, ChevronsUpDown, Target, Users, Info, X } from "lucide-react";
@@ -43,7 +43,7 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
   const { currentBu } = useBu();
   const createMutation = useCreateInitiative();
   const updateMutation = useUpdateInitiative();
-  const { data: profiles = [] } = useProfilesList(currentBu?.id);
+  const { data: profiles = [] } = useBuUsersDirectory({ pageSize: 200 });
   
   const isEditing = !!initiative;
   const isLoading = createMutation.isPending || updateMutation.isPending;
@@ -294,8 +294,8 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
                           </Avatar>
                           <div className="flex flex-col">
                             <span>{profile.display_name}</span>
-                            {profile.job_title && (
-                              <span className="text-xs text-muted-foreground">{profile.job_title}</span>
+                            {profile.job_title_name && (
+                              <span className="text-xs text-muted-foreground">{profile.job_title_name}</span>
                             )}
                           </div>
                         </CommandItem>

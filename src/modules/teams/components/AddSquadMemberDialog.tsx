@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAddSquadMember } from "../hooks/useSquads";
-import { useProfilesList } from "@/hooks/useSharedData";
+import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
 import { useBu } from "@/contexts/BuContext";
 import { SquadRole, SQUAD_ROLE_LABELS } from "../types/squad";
 
@@ -36,7 +36,7 @@ export function AddSquadMemberDialog({
   existingMemberIds
 }: AddSquadMemberDialogProps) {
   const { currentBu } = useBu();
-  const { data: profiles } = useProfilesList(currentBu?.id);
+  const { data: profiles } = useBuUsersDirectory({ pageSize: 200 });
   const addMember = useAddSquadMember();
 
   const [userId, setUserId] = useState("");
@@ -117,9 +117,9 @@ export function AddSquadMemberDialog({
                         </Avatar>
                         <div>
                           <span>{profile.display_name}</span>
-                          {profile.job_title && (
+                          {profile.job_title_name && (
                             <span className="text-muted-foreground ml-2 text-xs">
-                              {profile.job_title}
+                              {profile.job_title_name}
                             </span>
                           )}
                         </div>
