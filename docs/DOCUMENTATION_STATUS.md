@@ -1,7 +1,81 @@
 # Status da Documentação Técnica — Hub da Jet
 
 **Data:** 2026-01-09  
-**Versão:** 1.0.0
+**Versão:** 1.1.0
+
+---
+
+## Doc Governance
+
+### Objetivo
+
+Garantir que a documentação seja reflexo fiel do sistema real, não opinião ou estado desejado.  
+Evitar regressões conceituais (V1, práticas legadas, arquiteturas removidas).
+
+### Fonte Única de Verdade
+
+O **TECHNICAL_CONTEXT_REGISTRY.md (TCR)** é a autoridade máxima da documentação técnica.
+
+```
+⚠️ REGRA INQUEBRÁVEL: Nenhuma documentação pode contradizer o TCR.
+```
+
+| Documento | Papel |
+|-----------|-------|
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Fonte de verdade |
+| `engineering/DEVELOPMENT_STANDARDS.md` | Padrões normativos |
+| `engineering/DOCS_CONSISTENCY_RULES.md` | Regras de consistência |
+
+### PR Gate Ativo
+
+PRs que alteram `docs/**` são automaticamente auditados:
+
+| Componente | Arquivo |
+|------------|---------|
+| Script de auditoria | `scripts/audit-docs-vs-tcr.ts` |
+| Workflow CI | `.github/workflows/docs-consistency.yml` |
+| Regras | `docs/engineering/DOCS_CONSISTENCY_RULES.md` |
+
+**Comportamento:**
+- PRs são **bloqueados** se introduzirem termos, conceitos ou afirmações incompatíveis com o TCR
+- O audit verifica termos proibidos e afirmações que contradizem regras canônicas
+- Arquivos em `docs/qa/` e `*REPORT*.md` têm tratamento especial para contexto histórico
+
+### Audits Obrigatórios
+
+| Quando | Comando |
+|--------|---------|
+| PR com alteração em `docs/**` | `npx tsx scripts/audit-docs-vs-tcr.ts` |
+| Localmente | `npx tsx scripts/audit-docs-vs-tcr.ts --changed-only` |
+
+Exit codes:
+- `0` — Nenhuma contradição
+- `1` — Contradições encontradas (bloqueia PR)
+
+### Tratamento de Histórico / Legado
+
+Para documentar decisões históricas sem reativar conceitos deprecated:
+
+```markdown
+<!-- ✅ CORRETO: Marcador histórico explícito -->
+> Historical Note: O sistema V1 (removido na Wave 9) usava groups customizados.
+> O sistema atual usa templates pré-definidos.
+
+<!-- ❌ ERRADO: Sem contexto histórico -->
+O sistema V1 permite criar groups customizados.
+```
+
+**Marcadores históricos aceitos:**
+- `> Historical Note:`
+- `> Legacy:`
+- `## Histórico`
+- `### Contexto Histórico`
+- Arquivos com `*SUNSET*` ou `*REPORT*` no nome
+
+### Referências
+
+- [DOCS_CONSISTENCY_RULES.md](./engineering/DOCS_CONSISTENCY_RULES.md) — Regras detalhadas
+- [DOCS_PR_GATE_REPORT.md](./engineering/DOCS_PR_GATE_REPORT.md) — Report de implementação
 
 ---
 
