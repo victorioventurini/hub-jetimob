@@ -748,20 +748,35 @@ COMMENT ON COLUMN public.my_table.owner_user_id IS
 
 Antes de considerar qualquer mudança completa, verificar:
 
-### H.1 Audits Obrigatórios
+### H.1 Compliance Baseline (Obrigatório)
 
-| Check | Comando | Esperado |
-|-------|---------|----------|
-| BU Scope | `npx tsx scripts/audit-bu-scope.ts` | 0 críticos |
-| Query Keys | `npx tsx scripts/audit-querykeys.ts` | 0 violações |
-| Identity | `npx tsx scripts/audit-identity-usage.ts` | 0 violações |
-| RBAC | `npx tsx scripts/audit-rbac.ts` | 0 erros |
-| URL State | `npx tsx scripts/audit-url-state.ts` | 0 novas violações |
-| Overfetch | `npx tsx scripts/audit-overfetch.ts` | 0 novos select(*) |
-| Supabase Client | `npx tsx scripts/audit-supabase-client.ts` | 0 erros |
-| User Directory | `npx tsx scripts/audit-user-directory.ts` | 0 findings |
+```bash
+# Executar TODOS os audits de uma vez
+npx tsx scripts/run-compliance-checks.ts
+```
 
-> ⚠️ **PR Gate - User Directory**: PRs que toquem em `profiles`, selects de usuários, dialogs de atribuição ou contagens de usuários **devem anexar output** do `audit-user-directory.ts`. PR com findings ≠ 0 **NÃO pode ser aprovado**.
+> 📚 **Fonte de verdade:** [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md)
+
+O Compliance Baseline inclui **12 audits obrigatórios**:
+
+| # | Audit | Severidade | Descrição |
+|---|-------|------------|-----------|
+| 1 | BU Scope | BLOCKING | Valida bu_id em operações |
+| 2 | Identity Convention | BLOCKING | auth.uid() vs profile_id |
+| 3 | User Directory | BLOCKING | Listagem inclui profiles sem login |
+| 4 | RBAC V2 | BLOCKING | Sistema de permissões V2-only |
+| 5 | Supabase Client | BLOCKING | Uso correto por contexto |
+| 6 | Query Keys | BLOCKING | Keys de queryKeys.ts |
+| 7 | Data Model Registry | BLOCKING | Referências válidas no registry |
+| 8 | Docs vs TCR | BLOCKING | Documentação consistente |
+| 9 | Overfetch | WARNING | Sem select("*") |
+| 10 | URL State | WARNING | Filtros na URL |
+| 11 | Permission Keys | BLOCKING | Formato correto |
+| 12 | PRE-BU vs POST-BU | BLOCKING | Cliente por fase |
+
+```
+⚠️ REGRA INVIOLÁVEL: PR não pode ser mergeada se qualquer audit BLOCKING falhar.
+```
 
 ### H.2 Checklist Manual
 
@@ -779,17 +794,15 @@ Antes de considerar qualquer mudança completa, verificar:
 - [ ] **User Directory**: Não usa `bu_user_memberships` para listar pessoas?
 - [ ] **Documentação**: TCR/docs atualizados se necessário?
 
-### H.3 Report de Compliance
+### H.3 CI Gate
 
-Ao finalizar trabalho significativo, gerar report:
+O workflow `.github/workflows/compliance-all.yml` executa automaticamente em PRs que tocam:
+- `supabase/migrations/**`
+- `supabase/functions/**`
+- `docs/engineering/**`
+- `docs/TECHNICAL_CONTEXT_REGISTRY.md`
 
-```bash
-# Executar todos os audits e gerar report
-npx tsx scripts/audit-bu-scope.ts > /tmp/bu.txt
-npx tsx scripts/audit-querykeys.ts > /tmp/qk.txt
-npx tsx scripts/audit-identity-usage.ts > /tmp/id.txt
-# ... consolidar em docs/qa/<MODULE>_COMPLIANCE_REPORT.md
-```
+PR é **bloqueada** automaticamente se qualquer audit BLOCKING falhar.
 
 ---
 
