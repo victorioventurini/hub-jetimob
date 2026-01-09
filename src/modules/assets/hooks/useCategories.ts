@@ -83,7 +83,7 @@ export function useCategories() {
     },
   });
 
-  // Soft delete category
+  // Soft delete category with optimistic update
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -92,6 +92,25 @@ export function useCategories() {
         .eq("id", id);
 
       if (error) throw error;
+      return id;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (id) => {
+      const queryKey = queryKeys.assets.categories(buId ?? null);
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<AssetCategory[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((c) => c.id !== id));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null) });

@@ -346,7 +346,7 @@ export function useInventory() {
     },
   });
 
-  // Soft delete item
+  // Soft delete item with optimistic update
   const deleteItemMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -358,13 +358,30 @@ export function useInventory() {
         .eq("id", id);
 
       if (error) throw error;
+      return id;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (id) => {
+      const queryKey = queryKeys.assets.inventory.all(buId ?? null);
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<AssetInventory[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((item) => item.id !== id));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      toast.error("Erro ao remover item");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
       toast.success("Item removido");
-    },
-    onError: () => {
-      toast.error("Erro ao remover item");
     },
   });
 

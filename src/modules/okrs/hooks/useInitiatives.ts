@@ -235,7 +235,7 @@ export function useUpdateInitiative() {
   });
 }
 
-// Delete initiative (soft delete)
+// Delete initiative (soft delete) with optimistic update
 export function useDeleteInitiative() {
   const queryClient = useQueryClient();
   const { client: supabase } = useOptionalBuClient();
@@ -253,7 +253,26 @@ export function useDeleteInitiative() {
         .eq("id", initiativeId);
 
       if (error) throw error;
-      return { krId };
+      return { krId, initiativeId };
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async ({ initiativeId, krId }) => {
+      const queryKey = ["initiatives", "kr", krId];
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<Initiative[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((i) => i.id !== initiativeId));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      toast.error("Erro ao remover iniciativa");
     },
     onSuccess: (data) => {
       // Invalidate the specific KR initiatives list
@@ -261,9 +280,6 @@ export function useDeleteInitiative() {
       queryClient.invalidateQueries({ queryKey: ["initiatives", "user"] });
       queryClient.invalidateQueries({ queryKey: ["initiatives", "status"] });
       toast.success("Iniciativa removida");
-    },
-    onError: () => {
-      toast.error("Erro ao remover iniciativa");
     },
   });
 }
