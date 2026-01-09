@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.process-notification-outbox]
 verify_jwt = false
+
+[functions.evaluate-notification-health]
+verify_jwt = false
