@@ -85,6 +85,7 @@ const TicketsSettingsPage = lazy(() => import("./modules/tickets/pages/TicketsSe
 
 // Settings
 const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
+const HubLayout = lazy(() => import("./components/layout/HubLayout").then(m => ({ default: m.HubLayout })));
 const SettingsHome = lazy(() => import("./pages/settings/SettingsHome"));
 const SettingsBusinessUnits = lazy(() => import("./pages/settings/SettingsBusinessUnits"));
 const SettingsModules = lazy(() => import("./pages/settings/SettingsModules"));
@@ -646,7 +647,9 @@ const App = () => {
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
-                            <SettingsNotifications />
+                            <HubLayout>
+                              <SettingsNotifications />
+                            </HubLayout>
                           </BuRequiredRoute>
                         </ProtectedRoute>
                       }
