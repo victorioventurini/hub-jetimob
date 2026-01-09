@@ -15,7 +15,7 @@ export default function Onboarding() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, birth_day, birth_month, whatsapp_personal, city, state, work_mode, team_id, start_date, onboarding_completed")
+        .select("id, first_name, last_name, photo_url, birth_day, birth_month, whatsapp_personal, discord_id, instagram_id, city, state, onboarding_completed")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -71,9 +71,12 @@ export default function Onboarding() {
       initialData={{
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
+        photo_url: profile.photo_url || "",
         birth_day: profile.birth_day || 0,
         birth_month: profile.birth_month || 0,
         whatsapp_personal: profile.whatsapp_personal || "",
+        discord_id: profile.discord_id || "",
+        instagram_id: profile.instagram_id || "",
         city: profile.city || "Porto Alegre",
         state: profile.state || "RS",
       }}
