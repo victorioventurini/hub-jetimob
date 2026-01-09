@@ -35,34 +35,7 @@ const getDaysInMonth = (month: number) => {
   return daysInMonth[month - 1] || 31;
 };
 
-const formatWhatsApp = (value: string) => {
-  let digits = value.replace(/\D/g, "");
-
-  // Allow users to paste/type without DDI (DDD + number)
-  // If we have 10/11 digits, assume Brazil (+55)
-  if ((digits.length === 10 || digits.length === 11) && !digits.startsWith("55")) {
-    digits = `55${digits}`;
-  }
-
-  if (digits.length === 0) return "";
-  if (digits.length <= 2) return `+${digits}`;
-  if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
-  if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
-
-  // Brazilian landline with DDI: 55 + DDD (2) + number (8)
-  if (digits.length <= 12) {
-    const areaCode = digits.slice(2, 4);
-    const firstPart = digits.slice(4, 8);
-    const secondPart = digits.slice(8, 12);
-    return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? "-" + secondPart : ""}`;
-  }
-
-  // Brazilian mobile with DDI: 55 + DDD (2) + number (9)
-  const areaCode = digits.slice(2, 4);
-  const firstPart = digits.slice(4, 9);
-  const secondPart = digits.slice(9, 13);
-  return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? "-" + secondPart : ""}`;
-};
+import { formatPhoneInput, formatPhoneDisplay, normalizePhone, isValidPhone } from "@/lib/phone";
 
 const onboardingSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
@@ -73,10 +46,7 @@ const onboardingSchema = z.object({
   whatsapp_personal: z
     .string()
     .trim()
-    .refine((v) => {
-      const digits = v.replace(/\D/g, "");
-      return digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
-    }, "WhatsApp inválido"),
+    .refine((v) => isValidPhone(v), "WhatsApp inválido"),
   discord_id: z.string().trim().optional(),
   instagram_id: z.string().trim().optional(),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
@@ -101,9 +71,9 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
   
-  // Apply formatWhatsApp to initial value to ensure proper formatting
+  // Apply formatPhoneDisplay to initial value to ensure proper formatting for display
   const initialWhatsApp = initialData?.whatsapp_personal 
-    ? formatWhatsApp(initialData.whatsapp_personal) 
+    ? formatPhoneDisplay(initialData.whatsapp_personal) 
     : "";
   
   const [formData, setFormData] = useState<OnboardingFormData>({
@@ -168,13 +138,14 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
 
       // Build update object, only including fields that have values
       // This preserves existing data for optional fields not filled in onboarding
+      // IMPORTANT: Normalize phone to digits only for storage
       const updateData: Record<string, unknown> = {
         first_name: data.first_name,
         last_name: data.last_name,
         display_name: displayName,
         birth_day: data.birth_day,
         birth_month: data.birth_month,
-        whatsapp_personal: data.whatsapp_personal,
+        whatsapp_personal: normalizePhone(data.whatsapp_personal), // Store as digits only
         city: data.city,
         state: data.state,
         onboarding_completed: true,
@@ -225,9 +196,9 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
         break;
       case 1: // Contact & Social
         {
-          const digits = (formData.whatsapp_personal || "").replace(/\D/g, "");
-          const isValid = digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
-          if (!isValid) newErrors.whatsapp_personal = "WhatsApp inválido";
+          if (!isValidPhone(formData.whatsapp_personal)) {
+            newErrors.whatsapp_personal = "WhatsApp inválido";
+          }
         }
         break;
       case 2: // Location
@@ -303,7 +274,7 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
   };
 
   const handleWhatsAppChange = (value: string) => {
-    const formatted = formatWhatsApp(value);
+    const formatted = formatPhoneInput(value);
     handleChange("whatsapp_personal", formatted);
   };
 

@@ -1,4 +1,5 @@
 import { Phone } from "lucide-react";
+import { formatPhoneDisplay, getWhatsAppUrl } from "@/lib/phone";
 
 // Brand icon for WhatsApp
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -19,63 +20,25 @@ interface PhoneLinkProps {
 }
 
 /**
- * Formats a phone number to Brazilian standard format
- * Handles: +55 (XX) XXXXX-XXXX, (XX) XXXXX-XXXX, etc.
- */
-export function formatPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  
-  // Brazilian mobile with country code: 55 + DDD (2) + number (9)
-  if (digits.length === 13 && digits.startsWith('55')) {
-    const ddd = digits.slice(2, 4);
-    const part1 = digits.slice(4, 9);
-    const part2 = digits.slice(9);
-    return `+55 (${ddd}) ${part1}-${part2}`;
-  }
-  
-  // Brazilian landline with country code: 55 + DDD (2) + number (8)
-  if (digits.length === 12 && digits.startsWith('55')) {
-    const ddd = digits.slice(2, 4);
-    const part1 = digits.slice(4, 8);
-    const part2 = digits.slice(8);
-    return `+55 (${ddd}) ${part1}-${part2}`;
-  }
-  
-  // Mobile without country code: DDD (2) + number (9)
-  if (digits.length === 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  }
-  
-  // Landline without country code: DDD (2) + number (8)
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  
-  return phone;
-}
-
-/**
- * Creates a WhatsApp link from a phone number
- */
-export function getWhatsAppLink(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  
-  // Ensure it starts with country code
-  const fullNumber = digits.startsWith('55') ? digits : `55${digits}`;
-  
-  return `https://wa.me/${fullNumber}`;
-}
-
-/**
  * PhoneLink component - displays formatted phone with WhatsApp link
+ * Uses centralized phone utilities from @/lib/phone
  */
 export function PhoneLink({ phone, showIcon = true, className }: PhoneLinkProps) {
   if (!phone) {
     return <span className="text-muted-foreground">-</span>;
   }
 
-  const formattedPhone = formatPhoneNumber(phone);
-  const whatsappLink = getWhatsAppLink(phone);
+  const formattedPhone = formatPhoneDisplay(phone);
+  const whatsappLink = getWhatsAppUrl(phone);
+
+  if (!whatsappLink) {
+    return (
+      <span className={`inline-flex items-center gap-1.5 ${className || ''}`}>
+        {showIcon && <Phone className="h-4 w-4 text-muted-foreground shrink-0" />}
+        <span>{formattedPhone || phone}</span>
+      </span>
+    );
+  }
 
   return (
     <a
@@ -101,12 +64,15 @@ export function PhoneDisplay({ phone, showIcon = true, className }: PhoneLinkPro
     return <span className="text-muted-foreground">-</span>;
   }
 
-  const formattedPhone = formatPhoneNumber(phone);
+  const formattedPhone = formatPhoneDisplay(phone);
 
   return (
     <span className={`inline-flex items-center gap-1.5 ${className || ''}`}>
       {showIcon && <Phone className="h-4 w-4 text-muted-foreground shrink-0" />}
-      <span>{formattedPhone}</span>
+      <span>{formattedPhone || phone}</span>
     </span>
   );
 }
+
+// Re-export utilities for backward compatibility
+export { formatPhoneDisplay as formatPhoneNumber, getWhatsAppUrl as getWhatsAppLink } from "@/lib/phone";
