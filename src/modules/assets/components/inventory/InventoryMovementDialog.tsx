@@ -35,6 +35,7 @@ import { useAssetGroups } from "../../hooks/useAssetGroups";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetProfiles } from "../../hooks/useProfiles";
 import { useBuAdmins } from "../../hooks/useBuAdmins";
+import { useAuthorizers } from "../../hooks/useAuthorizers";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { useAuth } from "@/hooks/useAuth";
 import { KitCheckoutInfo } from "./KitCheckoutInfo";
@@ -99,6 +100,7 @@ export function InventoryMovementDialog({
   const { locations, defaultLocation } = useLocations();
   const { profiles } = useAssetProfiles();
   const { admins } = useBuAdmins();
+  const { authorizers } = useAuthorizers();
   const { isInventoryAdmin, canManageInventory } = useAssetPermissions();
 
   const [movementType, setMovementType] = useState<AssetMovementType>(initialType || "checkout");
@@ -406,13 +408,25 @@ export function InventoryMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
+                            {authorizers.length === 0 ? (
+                              <SelectItem value="__none__" disabled>
+                                Nenhum autorizador encontrado
                               </SelectItem>
-                            ))}
+                            ) : (
+                              authorizers.map((auth) => (
+                                <SelectItem key={auth.id} value={auth.id}>
+                                  {auth.full_name}
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({auth.role_label})
+                                  </span>
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
+                        <FormDescription>
+                          Apenas Admins e Líderes de Time podem autorizar
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -559,13 +573,25 @@ export function InventoryMovementDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem key={profile.user_id} value={profile.user_id}>
-                                {profile.full_name}
+                            {authorizers.length === 0 ? (
+                              <SelectItem value="__none__" disabled>
+                                Nenhum autorizador encontrado
                               </SelectItem>
-                            ))}
+                            ) : (
+                              authorizers.map((auth) => (
+                                <SelectItem key={auth.id} value={auth.id}>
+                                  {auth.full_name}
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({auth.role_label})
+                                  </span>
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
+                        <FormDescription>
+                          Apenas Admins e Líderes de Time podem autorizar
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
