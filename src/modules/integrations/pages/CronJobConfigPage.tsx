@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, ExternalLink, Play, RefreshCw, Check, Clock, AlertCircle, Eye, EyeOff, Key, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Play, RefreshCw, Check, Clock, AlertCircle, Eye, EyeOff, Key, Loader2, CheckCircle2, Circle, Info } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { IntegrationIcon } from '../components/IntegrationIcon';
 
@@ -34,6 +35,8 @@ interface CronLog {
 interface ConfigEncrypted {
   cron_secret?: string;
 }
+
+type SetupStep = 'secret' | 'enabled' | 'external' | 'test';
 
 export default function CronJobConfigPage() {
   const navigate = useNavigate();
@@ -177,6 +180,57 @@ export default function CronJobConfigPage() {
 
   const lastSuccessLog = logs?.find(log => log.status === 'success');
   const lastErrorLog = logs?.find(log => log.status === 'error');
+  
+  // Calculate setup status
+  const savedSecret = (config?.config_encrypted as ConfigEncrypted)?.cron_secret || '';
+  const isSecretConfigured = !!savedSecret && !hasUnsavedChanges;
+  const isEnabled = config?.is_enabled_global ?? false;
+  const hasRecentExecution = lastSuccessLog && 
+    new Date(lastSuccessLog.ran_at).getTime() > Date.now() - 5 * 60 * 1000; // 5 min
+
+  const getStepStatus = (step: SetupStep): 'complete' | 'current' | 'pending' => {
+    switch (step) {
+      case 'secret':
+        return isSecretConfigured ? 'complete' : 'current';
+      case 'enabled':
+        if (!isSecretConfigured) return 'pending';
+        return isEnabled ? 'complete' : 'current';
+      case 'external':
+        if (!isSecretConfigured || !isEnabled) return 'pending';
+        return hasRecentExecution ? 'complete' : 'current';
+      case 'test':
+        if (!isSecretConfigured || !isEnabled) return 'pending';
+        return hasRecentExecution ? 'complete' : 'pending';
+    }
+  };
+
+  const StepIndicator = ({ step, label, description }: { step: SetupStep; label: string; description: string }) => {
+    const status = getStepStatus(step);
+    return (
+      <div className="flex items-start gap-3">
+        <div className={`mt-0.5 flex-shrink-0 ${
+          status === 'complete' ? 'text-green-500' : 
+          status === 'current' ? 'text-primary' : 
+          'text-muted-foreground/50'
+        }`}>
+          {status === 'complete' ? (
+            <CheckCircle2 className="h-5 w-5" />
+          ) : (
+            <Circle className={`h-5 w-5 ${status === 'current' ? 'fill-primary/20' : ''}`} />
+          )}
+        </div>
+        <div className="flex-1">
+          <p className={`font-medium text-sm ${status === 'pending' ? 'text-muted-foreground/50' : ''}`}>
+            {label}
+          </p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+      </div>
+    );
+  };
+
+  // Overall status
+  const isFullyConfigured = isSecretConfigured && isEnabled && hasRecentExecution;
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -185,21 +239,61 @@ export default function CronJobConfigPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <IntegrationIcon icon="clock" color="#4F46E5" size="lg" />
-        <div>
-          <h1 className="text-2xl font-bold">cron-job.org</h1>
-          <p className="text-muted-foreground">Agendador externo para processamento automático</p>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Cron Job Externo</h1>
+          <p className="text-muted-foreground">Agendador para processamento automático de notificações</p>
         </div>
+        <Badge variant={isFullyConfigured ? 'default' : 'secondary'} className="text-sm">
+          {isFullyConfigured ? 'Funcionando' : 'Configuração pendente'}
+        </Badge>
       </div>
 
+      {/* Status Overview */}
+      <Card className={isFullyConfigured ? 'border-green-500/50 bg-green-500/5' : 'border-amber-500/50 bg-amber-500/5'}>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            {isFullyConfigured ? (
+              <><CheckCircle2 className="h-5 w-5 text-green-500" />Sistema Operacional</>
+            ) : (
+              <><Info className="h-5 w-5 text-amber-500" />Configuração Necessária</>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StepIndicator 
+              step="secret" 
+              label="1. Configurar Secret" 
+              description="Gerar chave de autenticação" 
+            />
+            <StepIndicator 
+              step="enabled" 
+              label="2. Ativar Integração" 
+              description="Habilitar endpoint" 
+            />
+            <StepIndicator 
+              step="external" 
+              label="3. Configurar cron-job.org" 
+              description="Agendar chamadas automáticas" 
+            />
+            <StepIndicator 
+              step="test" 
+              label="4. Verificar Execução" 
+              description="Confirmar funcionamento" 
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Secret Configuration Card */}
-      <Card>
+      <Card className={getStepStatus('secret') === 'current' ? 'ring-2 ring-primary' : ''}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            CRON_SECRET
+            Passo 1: CRON_SECRET
           </CardTitle>
           <CardDescription>
-            Chave de autenticação para validar chamadas do cron-job.org
+            Chave de autenticação para validar chamadas do serviço externo
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -211,7 +305,7 @@ export default function CronJobConfigPage() {
                   type={showSecret ? 'text' : 'password'}
                   value={cronSecret}
                   onChange={(e) => handleSecretChange(e.target.value)}
-                  placeholder="Gere ou insira um secret..."
+                  placeholder="Clique em 'Gerar' para criar um secret..."
                   className="font-mono text-sm pr-10"
                 />
                 <Button
@@ -224,8 +318,9 @@ export default function CronJobConfigPage() {
                   {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-              <Button variant="outline" size="icon" onClick={generateSecret} title="Gerar novo secret">
-                <RefreshCw className="h-4 w-4" />
+              <Button variant="outline" onClick={generateSecret} title="Gerar novo secret">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Gerar
               </Button>
               <Button 
                 variant="outline" 
@@ -239,131 +334,195 @@ export default function CronJobConfigPage() {
             </div>
             {hasUnsavedChanges && (
               <p className="text-sm text-amber-600 dark:text-amber-400">
-                ⚠️ Alterações não salvas
+                ⚠️ Clique em "Salvar" para confirmar as alterações
+              </p>
+            )}
+            {isSecretConfigured && (
+              <p className="text-sm text-green-600 dark:text-green-400">
+                ✓ Secret configurado
               </p>
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => saveSecretMutation.mutate(cronSecret)}
-              disabled={!hasUnsavedChanges || saveSecretMutation.isPending}
-            >
-              {saveSecretMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Salvar Secret
-            </Button>
-          </div>
+          <Button 
+            onClick={() => saveSecretMutation.mutate(cronSecret)}
+            disabled={!hasUnsavedChanges || saveSecretMutation.isPending || !cronSecret}
+          >
+            {saveSecretMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Salvar Secret
+          </Button>
+        </CardContent>
+      </Card>
 
-          <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
-            <p>💡 Após alterar o secret, atualize o header <code className="bg-muted px-1 rounded">x-cron-secret</code> no cron-job.org.</p>
+      {/* Enable Integration */}
+      <Card className={getStepStatus('enabled') === 'current' ? 'ring-2 ring-primary' : ''}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Passo 2: Ativar Integração
+          </CardTitle>
+          <CardDescription>Habilita o endpoint para receber chamadas externas</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Integração Ativa</Label>
+              <p className="text-sm text-muted-foreground">
+                {isEnabled ? 'O endpoint está pronto para receber chamadas' : 'Ative para permitir chamadas do cron externo'}
+              </p>
+            </div>
+            {configLoading ? <Skeleton className="h-6 w-11" /> : (
+              <Switch 
+                checked={isEnabled} 
+                onCheckedChange={(c) => toggleMutation.mutate(c)}
+                disabled={!isSecretConfigured}
+              />
+            )}
+          </div>
+          {!isSecretConfigured && (
+            <p className="text-sm text-muted-foreground mt-3">
+              Configure o secret primeiro para ativar a integração
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* External Cron Setup Instructions */}
+      <Card className={getStepStatus('external') === 'current' ? 'ring-2 ring-primary' : ''}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ExternalLink className="h-5 w-5" />
+            Passo 3: Configurar cron-job.org
+          </CardTitle>
+          <CardDescription>Configure o serviço externo para chamar o endpoint automaticamente</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Por que usar um serviço externo?</AlertTitle>
+            <AlertDescription>
+              O Lovable Cloud não suporta crons internos do PostgreSQL (pg_cron). 
+              Usamos o cron-job.org (gratuito) para chamar a edge function periodicamente.
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Dados para configuração:</Label>
+            </div>
+
+            <div className="grid gap-3">
+              <div className="space-y-1">
+                <Label className="text-sm text-muted-foreground">URL do Endpoint</Label>
+                <div className="flex gap-2">
+                  <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">{endpointUrl}</code>
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(endpointUrl, 'URL')}>
+                    {copied === 'URL' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-sm text-muted-foreground">Método HTTP</Label>
+                <code className="block p-2 bg-muted rounded text-sm font-mono">POST</code>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-sm text-muted-foreground">Header de Autenticação</Label>
+                <div className="flex gap-2">
+                  <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">
+                    x-cron-secret: {cronSecret || '<configure o secret primeiro>'}
+                  </code>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => copyToClipboard(`x-cron-secret: ${cronSecret}`, 'Header')}
+                    disabled={!cronSecret}
+                  >
+                    {copied === 'Header' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-sm text-muted-foreground">Expressão Cron (a cada 1 minuto)</Label>
+                <div className="flex gap-2">
+                  <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">*/1 * * * *</code>
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard('*/1 * * * *', 'Cron')}>
+                    {copied === 'Cron' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex gap-2">
+              <Button asChild variant="outline" className="flex-1">
+                <a href="https://cron-job.org" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Abrir cron-job.org
+                </a>
+              </Button>
+              <Button 
+                onClick={handleTestRun} 
+                disabled={isTestRunning || !cronSecret || hasUnsavedChanges || !isEnabled} 
+                className="flex-1"
+              >
+                {isTestRunning ? (
+                  <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Testando...</>
+                ) : (
+                  <><Play className="mr-2 h-4 w-4" />Testar Manualmente</>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" />Configuração</CardTitle>
-            <CardDescription>Configure a integração com o cron-job.org</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Integração Ativa</Label>
-                <p className="text-sm text-muted-foreground">Habilita o endpoint para receber chamadas</p>
-              </div>
-              {configLoading ? <Skeleton className="h-6 w-11" /> : (
-                <Switch checked={config?.is_enabled_global ?? false} onCheckedChange={(c) => toggleMutation.mutate(c)} />
-              )}
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <Label>URL do Endpoint</Label>
-              <div className="flex gap-2">
-                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">{endpointUrl}</code>
-                <Button variant="outline" size="icon" onClick={() => copyToClipboard(endpointUrl, 'URL')}>
-                  {copied === 'URL' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Header de Autenticação</Label>
-              <div className="flex gap-2">
-                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">
-                  x-cron-secret: {cronSecret ? '***' : '<configure acima>'}
-                </code>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => copyToClipboard(`x-cron-secret: ${cronSecret}`, 'Header')}
-                  disabled={!cronSecret}
-                >
-                  {copied === 'Header' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <Separator />
-            <Button 
-              onClick={handleTestRun} 
-              disabled={isTestRunning || !cronSecret || hasUnsavedChanges} 
-              className="w-full"
-            >
-              {isTestRunning ? (
-                <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Executando...</>
-              ) : (
-                <><Play className="mr-2 h-4 w-4" />Executar Teste</>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Instruções</CardTitle>
-            <CardDescription>Configure o cron-job.org</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ol className="list-decimal list-inside space-y-2 text-sm">
-              <li>Configure o <strong>CRON_SECRET</strong> acima (gere ou insira um valor)</li>
-              <li>Acesse <a href="https://cron-job.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">cron-job.org<ExternalLink className="h-3 w-3" /></a></li>
-              <li>Crie um novo cronjob</li>
-              <li><strong>URL:</strong> Cole a URL do endpoint</li>
-              <li><strong>Método:</strong> POST</li>
-              <li><strong>Header:</strong> x-cron-secret: (copie o secret)</li>
-              <li><strong>Frequência:</strong> <code className="bg-muted px-1 rounded">*/1 * * * *</code></li>
-            </ol>
-            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <p className="text-sm text-green-600 dark:text-green-400">
-                ✓ O secret é armazenado de forma segura e validado a cada chamada.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* Execution History */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Histórico de Execuções</CardTitle>
-            <CardDescription>Últimas 10 execuções</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" />
+              Passo 4: Histórico de Execuções
+            </CardTitle>
+            <CardDescription>
+              {hasRecentExecution 
+                ? `Última execução há ${formatDistanceToNow(new Date(lastSuccessLog!.ran_at), { locale: ptBR })}`
+                : 'Aguardando primeira execução do cron externo'
+              }
+            </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetchLogs()}><RefreshCw className="h-4 w-4 mr-2" />Atualizar</Button>
+          <Button variant="outline" size="sm" onClick={() => refetchLogs()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
         </CardHeader>
         <CardContent>
           {logsLoading ? <Skeleton className="h-32 w-full" /> : !logs?.length ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
               <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Nenhuma execução registrada</p>
+              <p className="font-medium">Nenhuma execução registrada</p>
+              <p className="text-sm">Configure o cron-job.org e aguarde a primeira execução automática</p>
             </div>
           ) : (
             <div className="space-y-2">
               {logs.map((log) => (
                 <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge variant={log.status === 'success' ? 'default' : 'destructive'}>{log.status === 'success' ? 'Sucesso' : 'Erro'}</Badge>
+                    <Badge variant={log.status === 'success' ? 'default' : 'destructive'}>
+                      {log.status === 'success' ? 'Sucesso' : 'Erro'}
+                    </Badge>
                     <div>
-                      <p className="text-sm font-medium">{format(new Date(log.ran_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
-                      <p className="text-xs text-muted-foreground">Outbox: {log.outbox_sent}/{log.outbox_processed} enviados</p>
+                      <p className="text-sm font-medium">
+                        {format(new Date(log.ran_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Outbox: {log.outbox_sent}/{log.outbox_processed} enviados
+                        {log.outbox_failed > 0 && ` • ${log.outbox_failed} falhas`}
+                      </p>
                     </div>
                   </div>
                   <span className="text-sm text-muted-foreground">{log.duration_ms}ms</span>
@@ -373,8 +532,14 @@ export default function CronJobConfigPage() {
           )}
           {logs && logs.length > 0 && (
             <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" />Último sucesso: {lastSuccessLog ? format(new Date(lastSuccessLog.ran_at), "dd/MM HH:mm", { locale: ptBR }) : 'N/A'}</div>
-              <div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" />Último erro: {lastErrorLog ? format(new Date(lastErrorLog.ran_at), "dd/MM HH:mm", { locale: ptBR }) : 'Nenhum'}</div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                Último sucesso: {lastSuccessLog ? format(new Date(lastSuccessLog.ran_at), "dd/MM HH:mm", { locale: ptBR }) : 'N/A'}
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                Último erro: {lastErrorLog ? format(new Date(lastErrorLog.ran_at), "dd/MM HH:mm", { locale: ptBR }) : 'Nenhum'}
+              </div>
             </div>
           )}
         </CardContent>
