@@ -6231,17 +6231,17 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "bu_user_memberships_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_profiles_team"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
           {
