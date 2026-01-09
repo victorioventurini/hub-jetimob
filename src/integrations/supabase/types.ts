@@ -2891,6 +2891,148 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_health_alert_actions: {
+        Row: {
+          action: string
+          actor_profile_id: string | null
+          alert_id: string
+          created_at: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          action: string
+          actor_profile_id?: string | null
+          alert_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          action?: string
+          actor_profile_id?: string | null
+          alert_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_health_alert_actions_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_health_alert_actions_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "notification_health_alert_actions_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_active_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_health_alert_actions_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "notification_health_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_health_alerts: {
+        Row: {
+          alert_type: string
+          bu_id: string
+          consecutive_occurrences: number
+          cooldown_minutes: number
+          created_at: string
+          detected_at: string
+          escalation_level: string
+          id: string
+          is_active: boolean
+          last_notified_at: string | null
+          metadata: Json
+          resolved_at: string | null
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          bu_id: string
+          consecutive_occurrences?: number
+          cooldown_minutes?: number
+          created_at?: string
+          detected_at?: string
+          escalation_level?: string
+          id?: string
+          is_active?: boolean
+          last_notified_at?: string | null
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          bu_id?: string
+          consecutive_occurrences?: number
+          cooldown_minutes?: number
+          created_at?: string
+          detected_at?: string
+          escalation_level?: string
+          id?: string
+          is_active?: boolean
+          last_notified_at?: string | null
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_health_alerts_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_health_runbooks: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          markdown_content: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          markdown_content: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          markdown_content?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_outbox: {
         Row: {
           bu_id: string
@@ -2905,6 +3047,7 @@ export type Database = {
           payload: Json
           processed_at: string | null
           retries: number
+          sent_at: string | null
           status: Database["public"]["Enums"]["notification_outbox_status"]
           user_id: string
         }
@@ -2921,6 +3064,7 @@ export type Database = {
           payload?: Json
           processed_at?: string | null
           retries?: number
+          sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_outbox_status"]
           user_id: string
         }
@@ -2937,6 +3081,7 @@ export type Database = {
           payload?: Json
           processed_at?: string | null
           retries?: number
+          sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_outbox_status"]
           user_id?: string
         }
@@ -6186,6 +6331,91 @@ export type Database = {
           },
         ]
       }
+      v_notification_slo_by_channel_daily: {
+        Row: {
+          avg_delivery_time_ms: number | null
+          bu_id: string | null
+          channel_slug: string | null
+          day: string | null
+          pending_count: number | null
+          success_rate: number | null
+          total: number | null
+          total_failed: number | null
+          total_success: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_channel_slug_fkey"
+            columns: ["channel_slug"]
+            isOneToOne: false
+            referencedRelation: "notification_channels"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      v_notification_slo_by_event_daily: {
+        Row: {
+          bu_id: string | null
+          day: string | null
+          event_slug: string | null
+          success_rate: number | null
+          total: number | null
+          total_failed: number | null
+          total_success: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_event_slug_fkey"
+            columns: ["event_slug"]
+            isOneToOne: false
+            referencedRelation: "notification_events"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      v_notification_slo_summary_7d: {
+        Row: {
+          avg_delivery_time_ms: number | null
+          bu_id: string | null
+          channel_slug: string | null
+          pending_count: number | null
+          slo_compliant: boolean | null
+          success_rate: number | null
+          total: number | null
+          total_failed: number | null
+          total_success: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_channel_slug_fkey"
+            columns: ["channel_slug"]
+            isOneToOne: false
+            referencedRelation: "notification_channels"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       v_objective_health: {
         Row: {
           bu_id: string | null
@@ -6544,6 +6774,10 @@ export type Database = {
       }
     }
     Functions: {
+      acknowledge_health_alert: {
+        Args: { p_alert_id: string; p_notes?: string }
+        Returns: boolean
+      }
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
       assert_profile_identity: {
         Args: { p_profile_id: string }
@@ -6625,6 +6859,14 @@ export type Database = {
       ensure_default_v2_template_for_membership: {
         Args: { p_auth_user_id: string; p_bu_id: string; p_role_in_bu?: string }
         Returns: undefined
+      }
+      evaluate_notification_health: {
+        Args: never
+        Returns: {
+          alerts_created: number
+          alerts_resolved: number
+          details: Json
+        }[]
       }
       explain_permission: {
         Args: { p_bu_id: string; p_permission_key: string; p_user_id: string }
@@ -6904,6 +7146,10 @@ export type Database = {
           asset_id: string
           bu_id: string
         }[]
+      }
+      resolve_health_alert: {
+        Args: { p_alert_id: string; p_notes?: string }
+        Returns: boolean
       }
       resolve_ticket_assignee: {
         Args: {
