@@ -88,9 +88,14 @@ export function useInventory() {
         category:asset_categories!category_id(id, name)
       `)
       .eq("id", itemId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error("[useInventory] getItem error:", error);
+      return null;
+    }
+    
+    if (!data) return null;
     
     // Fetch location and user data
     const locationIds = [data.home_location_id, data.current_location_id].filter(Boolean) as string[];
