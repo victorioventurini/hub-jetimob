@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Json } from '@/integrations/supabase/types';
 import { 
   useNotificationChannels,
   useBuNotificationChannels,
@@ -235,7 +236,7 @@ export default function SettingsNotifications() {
     const existingConfig = (buChannel?.config as Record<string, string>) || {};
     
     // Merge new config with existing (preserving secrets if not changed)
-    const mergedConfig: Record<string, unknown> = { ...existingConfig, ...configForm, configured: true };
+    const mergedConfig: { [key: string]: Json | undefined } = { ...existingConfig, ...configForm, configured: true };
     
     // Remove empty values
     Object.keys(mergedConfig).forEach(key => {
@@ -244,12 +245,15 @@ export default function SettingsNotifications() {
       }
     });
     
+    // Cast to Json for Supabase
+    const finalConfig = mergedConfig as Json;
+    
     upsertChannel.mutate(
       { 
         buId: currentBu.id, 
         channelSlug: selectedChannel, 
         isEnabled: buChannel?.is_enabled ?? false,
-        config: mergedConfig,
+        config: finalConfig,
       },
       {
         onSuccess: () => {

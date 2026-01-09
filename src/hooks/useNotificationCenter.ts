@@ -3,6 +3,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useAuth } from './useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import type { Json } from '@/integrations/supabase/types';
 
 // Types
 export interface NotificationEvent {
@@ -123,7 +124,7 @@ export function useBuNotificationChannelMutations() {
       buId: string; 
       channelSlug: string; 
       isEnabled: boolean; 
-      config?: Record<string, string>;
+      config?: Json;
     }) => {
       const { data, error } = await supabase
         .from('bu_notification_channels')
