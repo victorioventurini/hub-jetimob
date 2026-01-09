@@ -923,10 +923,12 @@ export default function SettingsNotifications() {
                         <SelectValue placeholder="Selecione um usuário" />
                       </SelectTrigger>
                       <SelectContent>
-                        {profiles.map(profile => (
+                        {profiles
+                          .filter(profile => profile.user_id) // Only show users that have logged in (have auth.users entry)
+                          .map(profile => (
                           <SelectItem 
                             key={profile.id} 
-                            value={profile.id}
+                            value={profile.user_id!}
                             textValue={profile.display_name || profile.work_email || 'Usuário'}
                           >
                             <div className="flex items-center gap-2">
