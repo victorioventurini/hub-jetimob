@@ -6758,6 +6758,10 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_manage_team_okr: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_view_ticket: {
         Args: { p_ticket_id: string; p_user_id: string }
         Returns: boolean
@@ -6939,6 +6943,10 @@ export type Database = {
         }[]
       }
       get_my_permissions: { Args: { p_bu_id: string }; Returns: string[] }
+      get_okr_manageable_team_ids: {
+        Args: { p_bu_id?: string; p_user_id?: string }
+        Returns: string[]
+      }
       get_partner_categories: {
         Args: { p_partner_company_id: string }
         Returns: {
