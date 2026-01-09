@@ -6926,6 +6926,10 @@ export type Database = {
           verified_users: number
         }[]
       }
+      get_cycle_checkins: {
+        Args: { p_cycle_id: string; p_filters?: Json }
+        Returns: Json
+      }
       get_descendant_team_ids: {
         Args: { p_team_id: string }
         Returns: string[]
