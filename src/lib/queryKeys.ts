@@ -32,6 +32,11 @@ export const queryKeys = {
     events: () => ['notifications', 'events'] as const,
     channels: () => ['notifications', 'channels'] as const,
     buChannels: (buId: string | null) => ['notifications', 'bu-channels', buId] as const,
+    buEventSettings: (buId: string | null) => ['notifications', 'bu-event-settings', buId] as const,
+    outbox: (buId: string | null, filters?: { status?: string; channel?: string }) => 
+      ['notifications', 'outbox', buId, filters] as const,
+    inAppLogs: (buId: string | null, filters?: { read?: boolean }) => 
+      ['notifications', 'in-app-logs', buId, filters] as const,
   },
 
   // ============= Teams =============
