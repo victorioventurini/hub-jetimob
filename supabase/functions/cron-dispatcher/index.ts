@@ -49,11 +49,14 @@ async function processOutbox(supabase: any): Promise<OutboxResult> {
   const result: OutboxResult = { processed: 0, sent: 0, failed: 0 };
 
   const now = new Date().toISOString();
+  
+  console.log("[cron-dispatcher] Fetching pending outbox items...");
+  
+  // Fetch all pending items - next_retry_at check is optional
   const { data: items, error } = await supabase
     .from("notification_outbox")
-    .select("id, channel_slug, event_slug, payload, bu_id, user_id, retries, max_retries")
+    .select("id, channel_slug, event_slug, payload, bu_id, user_id, retries, max_retries, next_retry_at")
     .eq("status", "pending")
-    .or(`next_retry_at.is.null,next_retry_at.lte.${now}`)
     .order("created_at", { ascending: true })
     .limit(50);
 
@@ -62,14 +65,24 @@ async function processOutbox(supabase: any): Promise<OutboxResult> {
     return result;
   }
 
-  if (!items || items.length === 0) {
-    console.log("[cron-dispatcher] No pending outbox items");
+  console.log(`[cron-dispatcher] Found ${items?.length || 0} pending items`);
+
+  // Filter items that are ready to process (null next_retry_at or past due)
+  const readyItems = (items || []).filter((item: any) => {
+    if (!item.next_retry_at) return true;
+    return new Date(item.next_retry_at) <= new Date(now);
+  });
+
+  console.log(`[cron-dispatcher] ${readyItems.length} items ready to process`);
+
+  if (readyItems.length === 0) {
+    console.log("[cron-dispatcher] No pending outbox items ready");
     return result;
   }
 
-  result.processed = items.length;
+  result.processed = readyItems.length;
 
-  for (const item of items) {
+  for (const item of readyItems) {
     try {
       const { error: updateError } = await supabase
         .from("notification_outbox")
