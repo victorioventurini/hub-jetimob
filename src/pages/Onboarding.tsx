@@ -75,11 +75,8 @@ export default function Onboarding() {
         birth_day: profile.birth_day || 0,
         birth_month: profile.birth_month || 0,
         whatsapp_personal: profile.whatsapp_personal || "",
-        job_title: "",
-        start_date: profile.start_date ? new Date(profile.start_date) : new Date(),
         city: profile.city || "Porto Alegre",
         state: profile.state || "RS",
-        work_mode: (profile.work_mode as "onsite" | "hybrid" | "remote") || "hybrid",
         team_id: profile.team_id || "",
       }}
       onComplete={handleOnboardingComplete}
