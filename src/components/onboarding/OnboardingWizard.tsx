@@ -188,9 +188,12 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
       if (profileError) throw profileError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       toast.success("Bem-vindo ao Hub Jetimob! 🚀");
+      // Chamar onComplete ANTES de invalidar queries para evitar race condition
+      // onde o componente é desmontado antes do navigate executar
       onComplete();
+      // Invalidar queries após navegação iniciada
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
     onError: (error) => {
       console.error("Onboarding error:", error);
