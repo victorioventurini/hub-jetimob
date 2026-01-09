@@ -6799,12 +6799,10 @@ export type Database = {
         }[]
       }
       get_profile_id: { Args: { p_user_id: string }; Returns: string }
-      get_team_member_ids:
-        | { Args: { p_team_id: string }; Returns: string[] }
-        | {
-            Args: { p_include_subtree?: boolean; p_team_id: string }
-            Returns: string[]
-          }
+      get_team_member_ids: {
+        Args: { p_include_subtree?: boolean; p_team_id: string }
+        Returns: string[]
+      }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
       get_user_notification_settings: {
