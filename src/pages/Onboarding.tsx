@@ -68,7 +68,6 @@ export default function Onboarding() {
   return (
     <OnboardingWizard
       profileId={profile.id}
-      userId={user.id}
       initialData={{
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
@@ -77,7 +76,6 @@ export default function Onboarding() {
         whatsapp_personal: profile.whatsapp_personal || "",
         city: profile.city || "Porto Alegre",
         state: profile.state || "RS",
-        team_id: profile.team_id || "",
       }}
       onComplete={handleOnboardingComplete}
     />
