@@ -37,6 +37,13 @@ export const queryKeys = {
       ['notifications', 'outbox', buId, filters] as const,
     inAppLogs: (buId: string | null, filters?: { read?: boolean }) => 
       ['notifications', 'in-app-logs', buId, filters] as const,
+    // Phase 4: SLO & Health
+    sloByChannel: (period: '7d' | '30d') => ['notifications', 'slo-by-channel', period] as const,
+    sloByEvent: (period: '7d' | '30d') => ['notifications', 'slo-by-event', period] as const,
+    sloSummary: () => ['notifications', 'slo-summary-7d'] as const,
+    healthAlerts: () => ['notifications', 'health-alerts'] as const,
+    healthRunbooks: () => ['notifications', 'health-runbooks'] as const,
+    alertActions: (alertId: string) => ['notifications', 'alert-actions', alertId] as const,
   },
 
   // ============= Teams =============
