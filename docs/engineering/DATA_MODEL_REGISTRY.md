@@ -1,0 +1,357 @@
+# Data Model Registry — Hub da Jet
+
+**Gerado em:** 2026-01-09T17:59:00.000Z  
+**Versão do Generator:** 1.0.0  
+**Versão do TCR:** 2.13.0  
+**Project ID:** oiwnghihyqdsinouwmga
+
+> ⚠️ **FONTE ÚNICA DE VERDADE**
+> Este arquivo é gerado automaticamente do banco de dados.
+> NÃO edite manualmente. Regenere com:
+> ```bash
+> npx tsx scripts/generate-data-model-registry.ts
+> ```
+
+---
+
+## Tabelas (public schema)
+
+Lista completa das tabelas no schema `public`:
+
+| Tabela | RLS | BU-Scoped | Descrição |
+|--------|-----|-----------|-----------|
+| `ai_agent_documents` | ✅ | ✅ | Documentos de agentes IA |
+| `ai_agent_logs` | ✅ | ✅ | Logs de execução de agentes |
+| `ai_agents` | ✅ | ✅ | Configuração de agentes IA |
+| `app_error_logs` | ✅ | ✅ | Logs de erros da aplicação |
+| `asset_categories` | ✅ | ✅ | Categorias de ativos |
+| `asset_clavicularies` | ✅ | ✅ | Claviculários (porta-chaves) |
+| `asset_gift_batches` | ✅ | ✅ | Lotes de brindes |
+| `asset_gift_items` | ✅ | ✅ | Itens de brinde |
+| `asset_gift_movements` | ✅ | ✅ | Movimentações de brindes |
+| `asset_group_items` | ✅ | ✅ | Itens de grupos de ativos |
+| `asset_groups` | ✅ | ✅ | Grupos de ativos (kits) |
+| `asset_hooks` | ✅ | ✅ | Ganchos de claviculário |
+| `asset_inventory` | ✅ | ✅ | Inventário de ativos |
+| `asset_key_movements` | ✅ | ✅ | Movimentações de chaves |
+| `asset_keyrings` | ✅ | ✅ | Chaveiros |
+| `asset_keys` | ✅ | ✅ | Chaves |
+| `asset_movements` | ✅ | ✅ | Movimentações de ativos |
+| `asset_permissions` | ✅ | ✅ | Permissões de ativos |
+| `audit_logs` | ✅ | ❌ | Logs de auditoria (global) |
+| `automation_action_catalog` | ✅ | ❌ | Catálogo de ações de automação |
+| `automation_connection_events` | ✅ | ✅ | Eventos de conexões |
+| `automation_connections` | ✅ | ✅ | Conexões de automação |
+| `automation_event_catalog` | ✅ | ❌ | Catálogo de eventos |
+| `automation_incoming_tokens` | ✅ | ✅ | Tokens de entrada |
+| `automation_logs` | ✅ | ✅ | Logs de automação |
+| `bu_agent_activations` | ✅ | ✅ | Ativações de agentes por BU |
+| `bu_ia_config` | ✅ | ✅ | Configuração IA por BU |
+| `bu_integrations_config` | ✅ | ✅ | Configuração de integrações por BU |
+| `bu_locations` | ✅ | ✅ | Localizações/sedes da BU |
+| `bu_module_configs` | ✅ | ✅ | Configuração de módulos por BU |
+| `bu_notification_channels` | ✅ | ✅ | Canais de notificação por BU |
+| `bu_notification_event_settings` | ✅ | ✅ | Configurações de eventos por BU |
+| `bu_units` | ✅ | ❌ | Business Units (global) |
+| `bu_user_memberships` | ✅ | ✅ | Memberships usuário ↔ BU |
+| `bu_user_permission_overrides` | ✅ | ✅ | Overrides de permissão |
+| `bu_user_permission_templates_v2` | ✅ | ✅ | Templates V2 por usuário |
+| `cron_execution_logs` | ✅ | ❌ | Logs de execução cron |
+| `cycles` | ✅ | ✅ | Ciclos (OKRs) |
+| `hub_integrations_catalog` | ✅ | ❌ | Catálogo de integrações |
+| `hub_integrations_global_config` | ✅ | ❌ | Config global de integrações |
+| `job_titles` | ✅ | ✅ | Cargos |
+| `kpi_metrics` | ✅ | ✅ | Métricas KPI |
+| `kpi_values` | ✅ | ✅ | Valores de KPI |
+| `mentions` | ✅ | ✅ | Menções (@) |
+| `modules` | ✅ | ❌ | Módulos do sistema |
+| `notification_channels` | ✅ | ❌ | Canais de notificação |
+| `notification_deliveries` | ✅ | ✅ | Entregas de notificação |
+| `notification_events` | ✅ | ❌ | Eventos de notificação |
+| `notification_health_alert_actions` | ✅ | ✅ | Ações em alertas de saúde |
+| `notification_health_alerts` | ✅ | ✅ | Alertas de saúde |
+| `notification_health_runbooks` | ✅ | ✅ | Runbooks de saúde |
+| `notification_outbox` | ✅ | ✅ | Outbox de notificações |
+| `notification_template_audit_log` | ✅ | ✅ | Audit log de templates |
+| `notification_template_variables` | ✅ | ✅ | Variáveis de templates |
+| `notification_template_versions` | ✅ | ✅ | Versões de templates |
+| `notification_templates` | ✅ | ✅ | Templates de notificação |
+| `notifications` | ✅ | ✅ | Notificações |
+| `okr_audit_log` | ✅ | ✅ | Audit log de OKRs |
+| `okr_cancellation_reasons` | ✅ | ✅ | Motivos de cancelamento |
+| `okr_checkins` | ✅ | ✅ | Check-ins de KRs |
+| `okr_coaching_events` | ✅ | ✅ | Eventos de coaching |
+| `okr_contributions` | ✅ | ✅ | Contribuições OKR |
+| `okr_dependencies` | ✅ | ✅ | Dependências OKR |
+| `okr_initiatives` | ✅ | ✅ | Iniciativas |
+| `okr_insights` | ✅ | ✅ | Insights de OKR |
+| `okr_kr_metrics` | ✅ | ✅ | Métricas de KR |
+| `okr_notifications_log` | ✅ | ✅ | Log de notificações OKR |
+| `okr_objective_reviews` | ✅ | ✅ | Reviews de objetivos |
+| `okr_org_key_results` | ✅ | ✅ | KRs organizacionais |
+| `okr_org_objectives` | ✅ | ✅ | Objetivos organizacionais |
+| `okr_reports_config` | ✅ | ✅ | Configuração de relatórios |
+| `okr_team_key_results` | ✅ | ✅ | KRs de time |
+| `okr_team_objectives` | ✅ | ✅ | Objetivos de time |
+| `partner_companies` | ✅ | ✅ | Empresas parceiras |
+| `partner_contact_capabilities` | ✅ | ✅ | Capacidades de contatos |
+| `partner_contacts` | ✅ | ✅ | Contatos de parceiros |
+| `partner_service_mappings` | ✅ | ✅ | Mapeamento de serviços |
+| `partner_services` | ✅ | ✅ | Serviços de parceiros |
+| `permission_audit_log` | ✅ | ✅ | Audit log de permissões |
+| `permission_catalog` | ✅ | ❌ | Catálogo de permissões |
+| `permission_migrations` | ✅ | ✅ | Migrações de permissões |
+| `permission_template_permissions_v2` | ✅ | ❌ | Permissões por template |
+| `permission_templates_v2` | ✅ | ❌ | Templates de permissão V2 |
+| `profiles` | ✅ | ✅ | Perfis de usuários |
+| `squad_memberships` | ✅ | ✅ | Membros de squads |
+| `squads` | ✅ | ✅ | Squads |
+| `teams` | ✅ | ✅ | Times |
+| `ticket_attachments` | ✅ | ✅ | Anexos de tickets |
+| `ticket_categories` | ✅ | ✅ | Categorias de tickets |
+| `ticket_mentions` | ✅ | ✅ | Menções em tickets |
+| `ticket_messages` | ✅ | ✅ | Mensagens de tickets |
+| `ticket_priority_rules` | ✅ | ✅ | Regras de prioridade |
+| `ticket_sla_configs` | ✅ | ✅ | Configurações de SLA |
+| `tickets` | ✅ | ✅ | Tickets |
+| `user_notification_preferences` | ✅ | ✅ | Preferências de notificação |
+| `user_roles` | ✅ | ❌ | Roles globais |
+| `user_team_memberships` | ✅ | ✅ | Membros de times |
+
+---
+
+## Views
+
+| View | Descrição |
+|------|-----------|
+| `identity_rls_violations` | Violações de identity em RLS |
+| `users_without_v2_permissions` | Usuários sem permissões V2 |
+| `v_bu_active_profiles` | Perfis ativos por BU |
+| `v_bu_id_null_report` | Relatório de bu_id NULL |
+| `v_notification_delivery_health` | Saúde de entregas |
+| `v_notification_failures` | Falhas de notificação |
+| `v_notification_slo_by_channel_daily` | SLO por canal (diário) |
+| `v_notification_slo_by_event_daily` | SLO por evento (diário) |
+| `v_notification_slo_summary_7d` | Resumo SLO 7 dias |
+| `v_objective_health` | Saúde de objetivos |
+| `v_okr_insights_active` | Insights ativos |
+| `v_partner_services` | Serviços de parceiros |
+| `v_pending_checkins` | Check-ins pendentes |
+| `v_perf_indexes_report` | Relatório de índices |
+| `v_permission_risk_report` | Relatório de riscos de permissão |
+| `v_permissions_without_explanation` | Permissões sem explicação |
+| `v_shared_okrs_summary` | Resumo de OKRs compartilhados |
+| `v_team_contributed_okrs` | OKRs com contribuição de times |
+| `v_user_directory_health` | Saúde do diretório de usuários |
+| `v_users_without_templates` | Usuários sem templates |
+
+---
+
+## Enums
+
+| Enum | Valores |
+|------|---------|
+| `agent_output_format` | `text`, `json` |
+| `agent_scope` | `global`, `bu` |
+| `app_role` | `super_admin`, `admin`, `collaborator` |
+| `asset_group_item_role` | `primary`, `accessory` |
+| `asset_group_status` | `active`, `inactive` |
+| `asset_group_type` | `kit`, `bundle` |
+| `asset_holder_type` | `location`, `user` |
+| `asset_inventory_status` | `available`, `loaned`, `maintenance`, `written_off` |
+| `asset_movement_type` | `checkout`, `return`, `transfer`, `maintenance_start`, `maintenance_end`, `write_off` |
+| `asset_permission_role` | `assets_admin`, `inventory_admin`, `inventory_manager`, `keys_admin`, `keys_manager`, `gifts_admin`, `gifts_manager`, `viewer` |
+| `bu_location_status` | `active`, `inactive` |
+| `bu_location_type` | `headquarters`, `office`, `warehouse`, `remote_hub`, `other`, `room` |
+| `bu_status` | `active`, `inactive` |
+| `catalog_status` | `active`, `inactive` |
+| `employment_status` | `active`, `vacation`, `terminated` |
+| `gift_destination_type` | `event`, `campaign`, `person`, `other` |
+| `gift_item_status` | `active`, `inactive` |
+| `gift_movement_type` | `in`, `out`, `adjustment` |
+| `initiative_priority` | `low`, `medium`, `high` |
+| `initiative_status` | `planned`, `in_progress`, `blocked`, `completed` |
+| `integration_config_mode` | `use_global`, `override` |
+| `integration_test_status` | `ok`, `error`, `pending` |
+| `key_access_type` | `door` |
+| `key_movement_type` | `checkout`, `return`, `transfer` |
+| `key_status` | `available`, `loaned`, `lost` |
+| `keyring_status` | `available`, `loaned` |
+| `kr_rag_status` | `not_started`, `green`, `yellow`, `red`, `completed`, `cancelled` |
+| `kr_type` | `contribution`, `enabler`, `foundational` |
+| `objective_status` | `draft`, `active`, `completed`, `cancelled` |
+| `okr_confidence_level` | `high`, `medium`, `low` |
+| `okr_contribution_type` | `objective`, `kr` |
+| `okr_insight_category` | `risk`, `progress`, `blockers`, `coaching` |
+| `okr_insight_status` | `open`, `acknowledged`, `resolved` |
+| `permission_effect` | `allow`, `deny` |
+| `squad_membership_role` | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
+| `ticket_priority` | `low`, `medium`, `high`, `urgent` |
+| `ticket_source` | `internal`, `external`, `email`, `chat` |
+| `ticket_status` | `open`, `in_progress`, `waiting`, `resolved`, `closed` |
+| `work_mode` | `remote`, `hybrid`, `onsite` |
+
+---
+
+## Identity Map
+
+### Colunas que armazenam `profiles.id` (PROFILE_ID)
+
+> ⚠️ **ATENÇÃO:** Apesar do nome `_user_id`, estas colunas referenciam `profiles.id`, NÃO `auth.users.id`.
+> Ver: [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md)
+
+| Tabela | Coluna | FK Explícita | Notas |
+|--------|--------|--------------|-------|
+| `teams` | `leader_user_id` | ✅ → `profiles.id` | Líder do time |
+| `squads` | `leader_user_id` | ✅ → `profiles.id` | Líder do squad |
+| `squad_memberships` | `user_id` | ✅ → `profiles.id` | Membro do squad |
+| `user_team_memberships` | `user_id` | ✅ → `profiles.id` | Membro do time |
+| `okr_team_objectives` | `owner_user_id` | ✅ → `profiles.id` | Owner do objetivo |
+| `okr_team_key_results` | `owner_user_id` | ✅ → `profiles.id` | Owner do KR |
+| `okr_org_objectives` | `owner_user_id` | ✅ → `profiles.id` | Owner do objetivo org |
+| `okr_org_key_results` | `owner_user_id` | ✅ → `profiles.id` | Owner do KR org |
+| `okr_initiatives` | `owner_user_id` | ✅ → `profiles.id` | Owner da iniciativa |
+| `okr_checkins` | `user_id` | ✅ → `profiles.id` | Quem fez check-in |
+| `kpi_metrics` | `owner_user_id` | ✅ → `profiles.id` | Owner do KPI |
+| `tickets` | `created_by_user_id` | ✅ → `profiles.id` | Criador do ticket |
+| `tickets` | `assigned_user_id` | ✅ → `profiles.id` | Responsável |
+| `ticket_messages` | `performed_by_user_id` | ✅ → `profiles.id` | Autor da mensagem |
+| `asset_inventory` | `current_user_id` | ✅ → `profiles.id` | Possuidor atual |
+| `asset_inventory` | `created_by` | ❌ (inferido) | Criador |
+| `asset_movements` | `from_user_id` | ✅ → `profiles.id` | Origem |
+| `asset_movements` | `to_user_id` | ✅ → `profiles.id` | Destino |
+| `asset_movements` | `performed_by_user_id` | ✅ → `profiles.id` | Executor |
+| `asset_movements` | `authorized_by_user_id` | ✅ → `profiles.id` | Autorizador |
+| `asset_keyrings` | `current_user_id` | ❌ (inferido) | Possuidor atual |
+| `asset_key_movements` | `user_id` | ❌ (inferido) | Usuário |
+| `asset_key_movements` | `performed_by_user_id` | ❌ (inferido) | Executor |
+| `asset_key_movements` | `authorized_by_user_id` | ❌ (inferido) | Autorizador |
+| `asset_gift_movements` | `performed_by_user_id` | ❌ (inferido) | Executor |
+| `mentions` | `mentioned_user_id` | ✅ → `profiles.id` | Usuário mencionado |
+| `ticket_mentions` | `mentioned_user_id` | ✅ → `profiles.id` | Usuário mencionado |
+| `profiles` | `manager_user_id` | ❌ (inferido) | Gestor direto |
+| `partner_contacts` | `profile_user_id` | ❌ (inferido) | Perfil vinculado |
+| `notification_health_alert_actions` | `actor_profile_id` | ✅ → `profiles.id` | Ator |
+| `bu_user_permission_templates_v2` | `user_id` | ✅ → `profiles.id` | Usuário |
+| `bu_user_permission_templates_v2` | `created_by` | ✅ → `profiles.id` | Criador |
+| `permission_audit_log` | `target_user_id` | ❌ (inferido) | Alvo |
+
+### Colunas que armazenam `auth.users.id` (AUTH_USER_ID)
+
+| Tabela | Coluna | Uso |
+|--------|--------|-----|
+| `profiles` | `user_id` | Link profile → auth.users |
+| `bu_user_memberships` | `user_id` | Membership usa auth id |
+| `user_roles` | `user_id` | Roles globais via auth id |
+| `audit_logs` | `user_id` | Auditoria usa auth id |
+| `notifications` | `user_id` | Notificações via auth id |
+| `notification_outbox` | `user_id` | Outbox via auth id |
+| `ai_agent_logs` | `user_id` | Logs de agente (auth id) |
+| `app_error_logs` | `user_id` | Logs de erro (auth id) |
+| `automation_logs` | `user_id` | Logs de automação (auth id) |
+| `permission_migrations` | `user_id` | Migração de permissões (auth id) |
+
+---
+
+## Funções SQL Canônicas
+
+### Identidade
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `my_profile_id()` | `uuid` | Retorna `profiles.id` do usuário logado |
+| `my_profile_id_strict()` | `uuid` | Idem, lança exceção se não existir |
+| `profile_id_from_user_id(uuid)` | `uuid` | Converte auth id → profile id |
+| `user_id_from_profile_id(uuid)` | `uuid` | Converte profile id → auth id |
+| `assert_identity(uuid)` | `boolean` | Valida que profile_id pertence ao usuário |
+
+### BU Scope
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `current_bu_id()` | `uuid` | Retorna BU do contexto (header) |
+| `is_current_bu(uuid)` | `boolean` | Verifica se bu_id = contexto |
+| `assert_bu_scope(uuid)` | `boolean` | Trigger: valida bu_id |
+| `enforce_bu_scope()` | `trigger` | Trigger function para enforcement |
+
+### Autorização
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `is_platform_admin(uuid)` | `boolean` | É super_admin ou admin global |
+| `is_super_admin(uuid)` | `boolean` | É super_admin |
+| `is_bu_admin(uuid, uuid)` | `boolean` | É admin da BU |
+| `is_bu_member(uuid, uuid)` | `boolean` | Tem membership na BU |
+| `has_role(uuid, app_role)` | `boolean` | Possui role específica |
+| `has_permission(uuid, uuid, text)` | `boolean` | Tem permission key |
+| `get_my_permissions(uuid)` | `text[]` | Lista permissions do usuário |
+
+### Hierarquia de Times
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `is_team_leader(uuid, uuid)` | `boolean` | É líder direto do time |
+| `team_is_ancestor(uuid, uuid)` | `boolean` | Time é ancestral |
+| `team_is_descendant(uuid, uuid)` | `boolean` | Time é descendente |
+| `user_can_manage_team(uuid, uuid)` | `boolean` | Pode gerenciar time |
+| `get_manageable_teams(uuid, uuid)` | `uuid[]` | Times gerenciáveis |
+| `can_manage_team_okr(uuid, uuid)` | `boolean` | Pode gerenciar OKR do time |
+
+### OKRs
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `get_cycle_checkins(uuid, uuid, uuid)` | `table` | Check-ins do ciclo |
+| `get_team_kr_history(uuid)` | `table` | Histórico de KR |
+| `emit_notification_event(...)` | `void` | Emite evento de notificação |
+| `send_test_notification_v2(uuid)` | `boolean` | Envia notificação de teste |
+
+---
+
+## Triggers Padrão
+
+| Trigger | Tabelas | Função | Descrição |
+|---------|---------|--------|-----------|
+| `update_*_updated_at` | Todas | `update_updated_at_column()` | Auto-update de `updated_at` |
+| `trg_enforce_bu_scope_*` | BU-scoped | `enforce_bu_scope()` | Valida bu_id no insert/update |
+| `trg_set_bu_id_*` | Algumas | Específica | Auto-preenche bu_id de FK |
+
+---
+
+## Regras de Uso
+
+### ❌ PROIBIDO
+
+- Inventar nomes de tabela/view/função
+- Usar nomes que não existam neste registry
+- Assumir estrutura de coluna sem verificar
+- Comparar `auth.uid()` diretamente com colunas de domínio (ex: `owner_user_id = auth.uid()`)
+- Usar `profiles.email` (não existe; usar `profiles.work_email`)
+
+### ✅ OBRIGATÓRIO
+
+- Consultar este registry antes de escrever SQL
+- Usar funções canônicas (`my_profile_id()`, `current_bu_id()`)
+- Respeitar identity map (profile_id vs auth_user_id)
+- Regenerar registry após migrations
+
+---
+
+## Como Regenerar
+
+```bash
+# Com variáveis de ambiente
+SUPABASE_URL="https://xxx.supabase.co" \
+SUPABASE_SERVICE_ROLE_KEY="eyJ..." \
+npx tsx scripts/generate-data-model-registry.ts
+```
+
+O script:
+1. Conecta ao banco via Supabase client
+2. Extrai metadados de `information_schema` e `pg_catalog`
+3. Gera `DATA_MODEL_REGISTRY.md` e `.json`
+4. Classifica colunas de identidade
+
+---
+
+*Gerado automaticamente do banco de dados. Não edite manualmente.*

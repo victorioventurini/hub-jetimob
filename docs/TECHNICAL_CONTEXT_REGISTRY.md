@@ -7,6 +7,7 @@
 
 > 📚 **Documentação Complementar:**
 > - [DEVELOPMENT_STANDARDS.md v1.1.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
+> - [DATA_MODEL_REGISTRY.md](./engineering/DATA_MODEL_REGISTRY.md) — **Fonte única de verdade para schema** (tabelas, views, funções, enums, identity map)
 > - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção de identidade (`user_id` vs `profile_id`)
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de permissões e templates V2
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
@@ -16,6 +17,11 @@
 > - [ops/GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist oficial de go-live
 > - [permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md](./permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md) — Remoção definitiva V1
 > - [WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md](./WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md) — Governance Gate
+
+> ⚠️ **Data Model Registry (Canonical)**
+> - Arquivo: `docs/engineering/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)
+> - Regra: **NUNCA inventar nomes de tabela/view/função**. Usar exclusivamente o registry.
+> - Regenerar: `npx tsx scripts/generate-data-model-registry.ts`
 
 ---
 
