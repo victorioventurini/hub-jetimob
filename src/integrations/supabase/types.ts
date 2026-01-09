@@ -6521,6 +6521,29 @@ export type Database = {
           },
         ]
       }
+      v_user_directory_health: {
+        Row: {
+          bu_id: string | null
+          bu_name: string | null
+          directory_visible_count: number | null
+          profiles_active_visible: number | null
+          profiles_deleted: number | null
+          profiles_pending_onboarding: number | null
+          profiles_terminated: number | null
+          profiles_visible_without_login: number | null
+          profiles_without_user_id: number | null
+          total_profiles: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_users_without_templates: {
         Row: {
           bu_id: string | null
