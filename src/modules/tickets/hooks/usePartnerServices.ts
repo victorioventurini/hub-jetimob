@@ -205,7 +205,7 @@ export function useCreatePartnerService() {
 }
 
 /**
- * Remove (soft delete) um mapeamento de serviço
+ * Remove (soft delete) um mapeamento de serviço com optimistic update
  */
 export function useDeletePartnerService() {
   const queryClient = useQueryClient();
@@ -226,13 +226,32 @@ export function useDeletePartnerService() {
         .eq("id", id);
 
       if (error) throw error;
+      return { id, partner_company_id };
     },
-    onSuccess: (_, variables) => {
+    // Optimistic update: remove from list immediately
+    onMutate: async ({ id, partner_company_id }) => {
+      const queryKey = ["partner-service-mappings", buId, partner_company_id];
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<PartnerService[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((s) => s.id !== id));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+    },
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["partner-services"] });
       queryClient.invalidateQueries({ queryKey: ["partner-categories"] });
       queryClient.invalidateQueries({ queryKey: ["partner-subcategories"] });
       queryClient.invalidateQueries({
-        queryKey: ["partner-service-mappings", buId, variables.partner_company_id],
+        queryKey: ["partner-service-mappings", buId, data.partner_company_id],
       });
     },
   });

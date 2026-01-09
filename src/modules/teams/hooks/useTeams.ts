@@ -337,6 +337,8 @@ export function useUpdateTeam() {
 export function useDeactivateTeam() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
 
   return useMutation({
     mutationFn: async (teamId: string) => {
@@ -346,13 +348,33 @@ export function useDeactivateTeam() {
         .eq("id", teamId);
 
       if (error) throw error;
+      return teamId;
+    },
+    // Optimistic update: remove from active list immediately
+    onMutate: async (teamId) => {
+      const activeQueryKey = queryKeys.teams.list(buId, false);
+      await queryClient.cancelQueries({ queryKey: activeQueryKey });
+      
+      const previousData = queryClient.getQueryData<TeamWithRelations[]>(activeQueryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(
+          activeQueryKey,
+          previousData.filter((team) => team.id !== teamId)
+        );
+      }
+      
+      return { previousData, queryKey: activeQueryKey };
+    },
+    onError: (_error, _teamId, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      toast.error("Erro ao desativar time");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       toast.success("Time desativado com sucesso");
-    },
-    onError: () => {
-      toast.error("Erro ao desativar time");
     },
   });
 }
@@ -360,6 +382,8 @@ export function useDeactivateTeam() {
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
 
   return useMutation({
     mutationFn: async (teamId: string) => {
@@ -373,14 +397,41 @@ export function useDeleteTeam() {
         .eq("id", teamId);
 
       if (error) throw error;
+      return teamId;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (teamId) => {
+      // Cancel both active and inactive queries
+      await queryClient.cancelQueries({ queryKey: ["teams"] });
+      
+      const activeKey = queryKeys.teams.list(buId, false);
+      const inactiveKey = queryKeys.teams.list(buId, true);
+      
+      const previousActive = queryClient.getQueryData<TeamWithRelations[]>(activeKey);
+      const previousInactive = queryClient.getQueryData<TeamWithRelations[]>(inactiveKey);
+      
+      if (previousActive) {
+        queryClient.setQueryData(activeKey, previousActive.filter((t) => t.id !== teamId));
+      }
+      if (previousInactive) {
+        queryClient.setQueryData(inactiveKey, previousInactive.filter((t) => t.id !== teamId));
+      }
+      
+      return { previousActive, previousInactive, activeKey, inactiveKey };
+    },
+    onError: (_error, _teamId, context) => {
+      if (context?.previousActive) {
+        queryClient.setQueryData(context.activeKey, context.previousActive);
+      }
+      if (context?.previousInactive) {
+        queryClient.setQueryData(context.inactiveKey, context.previousInactive);
+      }
+      toast.error("Erro ao excluir time");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       queryClient.invalidateQueries({ queryKey: ["team"] });
       toast.success("Time excluído com sucesso");
-    },
-    onError: () => {
-      toast.error("Erro ao excluir time");
     },
   });
 }

@@ -387,13 +387,33 @@ export function useDeactivateSquad() {
         .eq("id", squadId);
 
       if (error) throw error;
+      return squadId;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (squadId) => {
+      await queryClient.cancelQueries({ queryKey: ["squads"] });
+      
+      // Get all squad queries and update them
+      const queries = queryClient.getQueriesData<SquadWithRelations[]>({ queryKey: ["squads"] });
+      const previousData = new Map(queries);
+      
+      queries.forEach(([key, data]) => {
+        if (data) {
+          queryClient.setQueryData(key, data.filter((s) => s.id !== squadId));
+        }
+      });
+      
+      return { previousData };
+    },
+    onError: (_error, _squadId, context) => {
+      context?.previousData.forEach((data, key) => {
+        queryClient.setQueryData(key, data);
+      });
+      toast.error("Erro ao desativar squad");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["squads"] });
       toast.success("Squad desativado");
-    },
-    onError: () => {
-      toast.error("Erro ao desativar squad");
     },
   });
 }
@@ -414,14 +434,33 @@ export function useDeleteSquad() {
         .eq("id", squadId);
 
       if (error) throw error;
+      return squadId;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (squadId) => {
+      await queryClient.cancelQueries({ queryKey: ["squads"] });
+      
+      const queries = queryClient.getQueriesData<SquadWithRelations[]>({ queryKey: ["squads"] });
+      const previousData = new Map(queries);
+      
+      queries.forEach(([key, data]) => {
+        if (data) {
+          queryClient.setQueryData(key, data.filter((s) => s.id !== squadId));
+        }
+      });
+      
+      return { previousData };
+    },
+    onError: (_error, _squadId, context) => {
+      context?.previousData.forEach((data, key) => {
+        queryClient.setQueryData(key, data);
+      });
+      toast.error("Erro ao excluir squad");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["squads"] });
       queryClient.invalidateQueries({ queryKey: ["squad"] });
       toast.success("Squad excluído com sucesso");
-    },
-    onError: () => {
-      toast.error("Erro ao excluir squad");
     },
   });
 }

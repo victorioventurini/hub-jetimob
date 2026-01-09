@@ -176,11 +176,13 @@ export function useUpdateJobTitle() {
 }
 
 /**
- * Hook para soft delete de cargo
+ * Hook para soft delete de cargo com optimistic update
  */
 export function useDeleteJobTitle() {
   const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -204,13 +206,30 @@ export function useDeleteJobTitle() {
         .eq("id", id);
 
       if (error) throw error;
+      return id;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (id) => {
+      const queryKey = [QUERY_KEY, buId];
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<JobTitleWithUsageCount[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((jt) => jt.id !== id));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (error: Error, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      toast.error(error.message || "Erro ao remover cargo");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       toast.success("Cargo removido com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao remover cargo");
     },
   });
 }

@@ -130,7 +130,7 @@ export function useGenerateObjectiveInsights() {
 }
 
 /**
- * Hook para marcar insight como resolvido (soft delete)
+ * Hook para marcar insight como resolvido (soft delete) com optimistic update
  */
 export function useDismissInsight() {
   const queryClient = useQueryClient();
@@ -147,13 +147,30 @@ export function useDismissInsight() {
         .eq('id', insightId);
 
       if (error) throw error;
+      return insightId;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (insightId) => {
+      const queryKey = ['okr-insights', currentBuId];
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<OkrInsight[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((i) => i.id !== insightId));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (_error, _insightId, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      toast.error('Erro ao resolver insight');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['okr-insights', currentBuId] });
       toast.success('Insight marcado como resolvido');
-    },
-    onError: () => {
-      toast.error('Erro ao resolver insight');
     },
   });
 }
