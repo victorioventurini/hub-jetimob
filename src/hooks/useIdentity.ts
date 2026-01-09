@@ -44,21 +44,28 @@ export function useIdentity(): UserIdentity {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      // Wave 5: Query com retry e melhor handling de erro
       const { data, error } = await supabase
         .from("profiles")
         .select("id")
         .eq("user_id", user.id)
+        .is("deleted_at", null)
         .maybeSingle();
       
       if (error) {
-        console.error("Error fetching profile for identity:", error);
+        console.error("[useIdentity] Error fetching profile:", error);
         return null;
+      }
+      
+      if (!data) {
+        console.warn("[useIdentity] No profile found for user_id:", user.id);
       }
       
       return data;
     },
     enabled: !!user?.id,
     staleTime: 10 * 60 * 1000, // 10 minutes - profile ID rarely changes
+    retry: 2, // Retry em caso de falha temporária
   });
   
   const userId = user?.id ?? null;

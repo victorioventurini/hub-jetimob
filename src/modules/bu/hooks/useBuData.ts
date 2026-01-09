@@ -16,16 +16,34 @@ export function useUserBus() {
     queryFn: async () => {
       if (!user?.id) return [];
 
+      // Wave 5: Query memberships with bu_unit data
+      // Uses direct join for compatibility during migration
+      // (v_bu_memberships_active has profile-first columns, but lacks bu_unit details)
       const { data, error } = await supabaseClient
         .from("bu_user_memberships")
         .select(`
-          *,
-          bu_unit:bu_units(*)
+          id,
+          user_id,
+          profile_id,
+          bu_id,
+          role_in_bu,
+          is_default,
+          created_at,
+          bu_unit:bu_units(
+            id,
+            name,
+            description,
+            logo_url,
+            symbol_url,
+            primary_color,
+            status
+          )
         `)
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .is("deleted_at", null);
 
       if (error) throw error;
-      return data as UserBuMembership[];
+      return (data || []) as UserBuMembership[];
     },
   });
 }
