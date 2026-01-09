@@ -27,7 +27,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    // The most common runtime failure in SPAs after tab switching / long inactivity
+    // is a lazy-loaded chunk failing to load (stale deploy, network sleep, etc.).
+    // A full reload is the safest recovery.
+    window.location.reload();
   };
 
   render() {
