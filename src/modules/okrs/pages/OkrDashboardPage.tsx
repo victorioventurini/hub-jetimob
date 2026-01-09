@@ -361,7 +361,7 @@ export default function OkrDashboardPage() {
               }
             />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-6">
               {displayObjectives.map((objective: any) => (
                 <ObjectiveListItem
                   key={objective.id}

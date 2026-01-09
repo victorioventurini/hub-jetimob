@@ -62,7 +62,7 @@ export function TeamOkrSections({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-6">
             {primaryObjectives.map((objective) => (
               <ObjectiveListItem
                 key={objective.id}
@@ -94,7 +94,7 @@ export function TeamOkrSections({
             OKRs onde o {teamName} atua como time contribuidor.
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-6">
             {contributedObjectives.map((objective) => (
               <ContributingOkrCard
                 key={objective.id}
