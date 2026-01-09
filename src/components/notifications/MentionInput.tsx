@@ -5,7 +5,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useBu } from '@/contexts/BuContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AtSign, Users, Search } from 'lucide-react';
+import { Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Helper function to extract display text (without mention syntax)
@@ -14,7 +14,6 @@ export function getMentionDisplayText(text: string): string {
 }
 
 // Helper to parse mentions for display (convert @[Name](id) to clickable links)
-// Returns an array with a unique key for React rendering
 export function parseMentionsForDisplay(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
@@ -22,19 +21,17 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
   let match;
 
   while ((match = mentionRegex.exec(text)) !== null) {
-    // Add text before the mention
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
 
-    // Add the mention as a Link (React Router) instead of <a> to avoid full page reload
     const displayName = match[1];
     const userId = match[2];
     parts.push(
       <Link
         key={`${userId}-${match.index}`}
         to={`/users/${userId}`}
-        className="text-primary font-medium hover:underline"
+        className="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
         @{displayName}
@@ -44,7 +41,6 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
@@ -83,10 +79,9 @@ export function MentionInput({
   const supabase = useBuScopedSupabase();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [cursorPosition, setCursorPosition] = useState(0);
   const [mentionStart, setMentionStart] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Fetch users for mention suggestions
@@ -95,7 +90,6 @@ export function MentionInput({
     queryFn: async () => {
       if (!currentBu?.id) return [];
 
-      // Use canonical view - shows ALL registered users
       let query = supabase
         .from('v_bu_active_profiles')
         .select(`
@@ -140,30 +134,84 @@ export function MentionInput({
     const mentions: string[] = [];
     let match;
     while ((match = mentionRegex.exec(text)) !== null) {
-      mentions.push(match[2]); // user_id
+      mentions.push(match[2]);
     }
     return mentions;
   }, []);
 
-  // Handle text change
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newDisplayValue = e.target.value;
-    const newPosition = e.target.selectionStart;
-    setCursorPosition(newPosition);
+  // Convert raw value to HTML for contentEditable
+  const valueToHtml = useCallback((rawValue: string): string => {
+    if (!rawValue) return '';
+    
+    // Replace @[Name](id) with styled span chips
+    return rawValue.replace(
+      /@\[([^\]]+)\]\(([^)]+)\)/g,
+      '<span class="mention-chip" contenteditable="false" data-user-id="$2" data-display-name="$1">@$1</span>'
+    );
+  }, []);
 
-    // Convert display text back to raw format by preserving existing mentions
-    // This is a simple approach - just update the raw value with new display text
-    // For now, we track the actual typed text
+  // Convert HTML from contentEditable to raw value
+  const htmlToValue = useCallback((html: string): string => {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    let result = '';
+    temp.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        result += node.textContent || '';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        if (element.classList.contains('mention-chip')) {
+          const userId = element.dataset.userId;
+          const displayName = element.dataset.displayName;
+          result += `@[${displayName}](${userId})`;
+        } else if (element.tagName === 'BR') {
+          result += '\n';
+        } else {
+          result += element.textContent || '';
+        }
+      }
+    });
+    
+    return result;
+  }, []);
+
+  // Get plain text content for cursor position calculations
+  const getPlainText = useCallback((): string => {
+    if (!editorRef.current) return '';
+    return editorRef.current.innerText || '';
+  }, []);
+
+  // Get cursor position in plain text
+  const getCursorPosition = useCallback((): number => {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount || !editorRef.current) return 0;
+    
+    const range = selection.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(editorRef.current);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    
+    return preCaretRange.toString().length;
+  }, []);
+
+  // Handle input changes
+  const handleInput = useCallback(() => {
+    if (!editorRef.current) return;
+    
+    const html = editorRef.current.innerHTML;
+    const newValue = htmlToValue(html);
+    const cursorPos = getCursorPosition();
+    const plainText = getPlainText();
     
     // Check if user is typing a mention
-    const textBeforeCursor = newDisplayValue.slice(0, newPosition);
+    const textBeforeCursor = plainText.slice(0, cursorPos);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
     
     if (lastAtIndex !== -1) {
       const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
-      // Check if there's no space after @ (user is still typing the mention)
-      // Also check it's not part of an existing mention (@Name format)
-      if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+      // Check if it's not part of an existing mention chip
+      if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n') && textAfterAt.length < 30) {
         setMentionStart(lastAtIndex);
         setSearchTerm(textAfterAt);
         setShowSuggestions(true);
@@ -176,49 +224,59 @@ export function MentionInput({
       setShowSuggestions(false);
       setMentionStart(null);
     }
-
-    // For simplicity, we store the display text as the value
-    // Mentions will be added in full format when selected
-    const mentions = extractMentions(newDisplayValue);
-    onChange(newDisplayValue, mentions);
-  };
+    
+    const mentions = extractMentions(newValue);
+    onChange(newValue, mentions);
+  }, [htmlToValue, getCursorPosition, getPlainText, extractMentions, onChange]);
 
   // Handle user selection from suggestions
-  const selectUser = (user: MentionUser) => {
-    if (mentionStart === null || !textareaRef.current) return;
-
-    // Get the current displayed value
-    const displayValue = getMentionDisplayText(value);
-    const beforeMention = displayValue.slice(0, mentionStart);
-    const afterMention = displayValue.slice(cursorPosition);
+  const selectUser = useCallback((user: MentionUser) => {
+    if (mentionStart === null || !editorRef.current) return;
     
-    // Format: @[Display Name](user_id) - stored internally
-    // Display: @Display Name - shown to user
-    const mentionText = `@[${user.display_name}](${user.user_id}) `;
-    const newValue = beforeMention + mentionText + afterMention;
+    const selection = window.getSelection();
+    if (!selection) return;
     
+    // Get current HTML and convert to find the @ position
+    const plainText = getPlainText();
+    const cursorPos = getCursorPosition();
+    
+    // Find the @ in the current text
+    const textBeforeCursor = plainText.slice(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex === -1) return;
+    
+    // Calculate how many characters to remove (@ + search term)
+    const charsToRemove = cursorPos - lastAtIndex;
+    
+    // Create the mention chip HTML
+    const chipHtml = `<span class="mention-chip" contenteditable="false" data-user-id="${user.user_id}" data-display-name="${user.display_name}">@${user.display_name}</span>&nbsp;`;
+    
+    // We need to manipulate the DOM directly
+    // First, delete the @ and search term
+    for (let i = 0; i < charsToRemove; i++) {
+      document.execCommand('delete', false);
+    }
+    
+    // Insert the chip
+    document.execCommand('insertHTML', false, chipHtml);
+    
+    // Update value
+    const html = editorRef.current.innerHTML;
+    const newValue = htmlToValue(html);
     const mentions = extractMentions(newValue);
     onChange(newValue, mentions);
     
     setShowSuggestions(false);
     setMentionStart(null);
     setSearchTerm('');
-
-    // Focus back on textarea and set cursor after mention
-    setTimeout(() => {
-      if (textareaRef.current) {
-        // Calculate position in display text
-        const displayMention = `@${user.display_name} `;
-        const newCursorPos = beforeMention.length + displayMention.length;
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-      }
-    }, 0);
-  };
+  }, [mentionStart, getPlainText, getCursorPosition, htmlToValue, extractMentions, onChange]);
 
   // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!showSuggestions || users.length === 0) return;
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!showSuggestions || users.length === 0) {
+      return;
+    }
 
     switch (e.key) {
       case 'ArrowDown':
@@ -230,10 +288,8 @@ export function MentionInput({
         setSelectedIndex(prev => (prev - 1 + users.length) % users.length);
         break;
       case 'Enter':
-        if (showSuggestions) {
-          e.preventDefault();
-          selectUser(users[selectedIndex]);
-        }
+        e.preventDefault();
+        selectUser(users[selectedIndex]);
         break;
       case 'Escape':
         setShowSuggestions(false);
@@ -245,7 +301,7 @@ export function MentionInput({
         }
         break;
     }
-  };
+  }, [showSuggestions, users, selectedIndex, selectUser]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -253,8 +309,8 @@ export function MentionInput({
       if (
         suggestionsRef.current &&
         !suggestionsRef.current.contains(e.target as Node) &&
-        textareaRef.current &&
-        !textareaRef.current.contains(e.target as Node)
+        editorRef.current &&
+        !editorRef.current.contains(e.target as Node)
       ) {
         setShowSuggestions(false);
       }
@@ -264,11 +320,19 @@ export function MentionInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Render text with highlighted mentions
-  const renderDisplayText = () => {
-    // Convert @[Name](id) format to just @Name for display
-    return value.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
-  };
+  // Sync external value changes to editor
+  useEffect(() => {
+    if (!editorRef.current) return;
+    
+    const currentHtml = editorRef.current.innerHTML;
+    const currentValue = htmlToValue(currentHtml);
+    
+    // Only update if value actually changed from outside
+    if (currentValue !== value) {
+      const newHtml = valueToHtml(value);
+      editorRef.current.innerHTML = newHtml;
+    }
+  }, [value, htmlToValue, valueToHtml]);
 
   const getInitials = (name: string) => {
     return name
@@ -279,24 +343,58 @@ export function MentionInput({
       .toUpperCase();
   };
 
+  const minHeight = rows * 24 + 16; // Approximate line height + padding
+
   return (
     <div className="relative">
-      {/* Textarea with mention support */}
+      {/* Styles for mention chips */}
+      <style>{`
+        .mention-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 1px 6px;
+          margin: 0 1px;
+          border-radius: 4px;
+          background-color: hsl(var(--primary) / 0.15);
+          color: hsl(var(--primary));
+          font-weight: 500;
+          font-size: 0.875rem;
+          user-select: all;
+          cursor: default;
+        }
+        .mention-chip:hover {
+          background-color: hsl(var(--primary) / 0.25);
+        }
+        .mention-editor:empty:before {
+          content: attr(data-placeholder);
+          color: hsl(var(--muted-foreground));
+          pointer-events: none;
+        }
+        .mention-editor:focus {
+          outline: none;
+        }
+      `}</style>
+
+      {/* ContentEditable editor */}
       <div className="relative">
-        <textarea
-          ref={textareaRef}
+        <div
+          ref={editorRef}
           id={id}
-          value={renderDisplayText()}
-          onChange={handleChange}
+          contentEditable
+          role="textbox"
+          aria-required={required}
+          aria-multiline="true"
+          data-placeholder={placeholder}
+          onInput={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          rows={rows}
-          required={required}
           className={cn(
-            "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+            "mention-editor flex w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto",
             showSuggestions && "ring-2 ring-primary/50",
             className
           )}
+          style={{ minHeight }}
+          dangerouslySetInnerHTML={{ __html: valueToHtml(value) }}
+          suppressContentEditableWarning
         />
         
         {/* Mention indicator */}
@@ -319,7 +417,6 @@ export function MentionInput({
             "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           )}
         >
-          {/* Results */}
           {users.length > 0 ? (
             <div className="max-h-48 overflow-y-auto py-1">
               {users.map((user, index) => (
