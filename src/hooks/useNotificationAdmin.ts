@@ -313,9 +313,10 @@ export function useBuProfiles(buId?: string) {
       if (!buId) return [];
       
       // Use canonical view - shows ALL registered users (even without first login)
+      // Include user_id for notifications FK (auth.users.id)
       const { data: profiles, error } = await supabase
         .from('v_bu_active_profiles')
-        .select('id, display_name, work_email, photo_url')
+        .select('id, user_id, display_name, work_email, photo_url')
         .eq('bu_id', buId)
         .order('display_name');
       
@@ -323,6 +324,7 @@ export function useBuProfiles(buId?: string) {
       
       return (profiles ?? []) as Array<{
         id: string;
+        user_id: string | null;
         display_name: string | null;
         work_email: string | null;
         photo_url: string | null;
