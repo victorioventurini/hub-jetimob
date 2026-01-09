@@ -491,7 +491,7 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Cidade e Estado *</Label>
+                    <Label>Localização *</Label>
                     <CityAutocomplete
                       value={formData.city}
                       state={formData.state}
