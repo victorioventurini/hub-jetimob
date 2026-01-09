@@ -24,24 +24,30 @@ export function useBuAdmins() {
     queryKey: [...queryKeys.profiles.buProfiles(buId ?? null), 'admins'],
     enabled: !!buId,
     queryFn: async () => {
-      // Fetch memberships for admin roles
+      // Fetch memberships for admin roles using profile_id (Identity Cutover v3.0)
       const { data: memberships, error: membershipError } = await supabase
         .from("bu_user_memberships")
-        .select("user_id, role_in_bu")
+        .select("profile_id, role_in_bu")
         .eq("bu_id", buId!)
         .in("role_in_bu", ["super_admin", "admin"]);
 
       if (membershipError) throw membershipError;
       if (!memberships || memberships.length === 0) return [];
 
-      const adminUserIds = memberships.map(m => m.user_id);
-      const roleMap = new Map(memberships.map(m => [m.user_id, m.role_in_bu]));
+      const adminProfileIds = memberships
+        .map(m => m.profile_id)
+        .filter((id): id is string => !!id);
+      const roleMap = new Map(
+        memberships
+          .filter(m => m.profile_id)
+          .map(m => [m.profile_id!, m.role_in_bu])
+      );
 
-      // Fetch profiles for these admin users
+      // Fetch profiles for these admin users using profile_id
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("id, user_id, display_name, first_name, last_name, photo_url")
-        .in("user_id", adminUserIds);
+        .in("id", adminProfileIds);
 
       if (profileError) throw profileError;
 
@@ -50,7 +56,7 @@ export function useBuAdmins() {
         user_id: p.user_id!,
         full_name: p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Sem nome",
         avatar_url: p.photo_url,
-        role: roleMap.get(p.user_id!) || "admin",
+        role: roleMap.get(p.id) || "admin",
       })) as BuAdminOption[];
     },
   });

@@ -212,23 +212,15 @@ export function useUserSquads(userId?: string) {
   });
 }
 
-export function useUserBuMemberships(userId?: string) {
+export function useUserBuMemberships(profileId?: string) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["user-bu-memberships", userId],
+    queryKey: ["user-bu-memberships", profileId],
     queryFn: async () => {
-      if (!userId) return [];
+      if (!profileId) return [];
 
-      // Get profile to find user_id (auth id)
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("id", userId)
-        .single();
-
-      if (!profile?.user_id) return [];
-
+      // Query directly by profile_id (Identity Cutover v3.0)
       const { data, error } = await supabase
         .from("bu_user_memberships")
         .select(`
@@ -236,11 +228,11 @@ export function useUserBuMemberships(userId?: string) {
           role_in_bu,
           bu:bu_units!bu_user_memberships_bu_id_fkey(id, name, logo_url)
         `)
-        .eq("user_id", profile.user_id);
+        .eq("profile_id", profileId);
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!userId,
+    enabled: !!profileId,
   });
 }

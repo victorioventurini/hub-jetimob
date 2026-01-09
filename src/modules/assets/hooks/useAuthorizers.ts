@@ -31,10 +31,10 @@ export function useAuthorizers() {
     queryKey: [...queryKeys.profiles.buProfiles(buId ?? null), "authorizers"],
     enabled: !!buId,
     queryFn: async () => {
-      // 1. Fetch memberships for admin roles (super_admin, admin)
+      // 1. Fetch memberships for admin roles using profile_id (Identity Cutover v3.0)
       const { data: memberships, error: membershipError } = await supabase
         .from("bu_user_memberships")
-        .select("user_id, role_in_bu")
+        .select("profile_id, role_in_bu")
         .eq("bu_id", buId!)
         .in("role_in_bu", ["super_admin", "admin"]);
 
@@ -50,10 +50,14 @@ export function useAuthorizers() {
 
       if (teamsError) throw teamsError;
 
-      // Build maps with explicit string type for role
-      const adminUserIds = (memberships || []).map((m) => m.user_id);
-      const roleMap = new Map<string, string>(
-        (memberships || []).map((m) => [m.user_id, m.role_in_bu])
+      // Build maps with profile_id as key (Identity Cutover v3.0)
+      const adminProfileIds = (memberships || [])
+        .map((m) => m.profile_id)
+        .filter((id): id is string => !!id);
+      const roleMapByProfileId = new Map<string, string>(
+        (memberships || [])
+          .filter((m) => m.profile_id)
+          .map((m) => [m.profile_id!, m.role_in_bu])
       );
 
       // Team leaders are stored as profiles.id
@@ -61,40 +65,28 @@ export function useAuthorizers() {
         .map((t) => t.leader_user_id)
         .filter((id): id is string => !!id);
 
-      // Get unique profile IDs for team leaders (we need to fetch their user_id)
-      let teamLeaderUserIds: string[] = [];
-      if (teamLeaderProfileIds.length > 0) {
-        const { data: leaderProfiles, error: leaderError } = await supabase
-          .from("profiles")
-          .select("id, user_id")
-          .in("id", teamLeaderProfileIds);
-
-        if (leaderError) throw leaderError;
-
-        // Mark them as team leaders
-        for (const lp of leaderProfiles || []) {
-          if (lp.user_id && !roleMap.has(lp.user_id)) {
-            roleMap.set(lp.user_id, "team_leader");
-            teamLeaderUserIds.push(lp.user_id);
-          }
+      // Mark team leaders in the role map (if not already admin)
+      for (const leaderId of teamLeaderProfileIds) {
+        if (!roleMapByProfileId.has(leaderId)) {
+          roleMapByProfileId.set(leaderId, "team_leader");
         }
       }
 
-      // Combine all user IDs
-      const allUserIds = [...new Set([...adminUserIds, ...teamLeaderUserIds])];
-      if (allUserIds.length === 0) return [];
+      // Combine all profile IDs
+      const allProfileIds = [...new Set([...adminProfileIds, ...teamLeaderProfileIds])];
+      if (allProfileIds.length === 0) return [];
 
-      // 3. Fetch full profiles
+      // 3. Fetch full profiles using profile_id
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("id, user_id, display_name, first_name, last_name, photo_url")
-        .in("user_id", allUserIds);
+        .in("id", allProfileIds);
 
       if (profileError) throw profileError;
 
       return (profiles || [])
         .map((p) => {
-          const role = roleMap.get(p.user_id!) || "team_leader";
+          const role = roleMapByProfileId.get(p.id) || "team_leader";
           return {
             id: p.id,
             user_id: p.user_id!,

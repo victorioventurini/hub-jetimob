@@ -46,15 +46,17 @@ export function useBuUsers() {
         .map((p) => p.user_id)
         .filter((id): id is string => !!id);
 
-      // Fetch memberships to get role_in_bu
+      // Fetch memberships to get role_in_bu using profile_id (Identity Cutover v3.0)
       const { data: memberships } = await supabase
         .from("bu_user_memberships")
-        .select("user_id, role_in_bu")
+        .select("profile_id, role_in_bu")
         .eq("bu_id", buId);
 
-      const membershipByUserId: Record<string, string> = {};
+      const membershipByProfileId: Record<string, string> = {};
       for (const m of memberships ?? []) {
-        membershipByUserId[m.user_id] = m.role_in_bu;
+        if (m.profile_id) {
+          membershipByProfileId[m.profile_id] = m.role_in_bu;
+        }
       }
 
       // Fetch team memberships
@@ -87,7 +89,7 @@ export function useBuUsers() {
       return profiles.map((p) => ({
         user_id: p.user_id || p.id,
         profile_id: p.id,
-        role_in_bu: p.user_id ? (membershipByUserId[p.user_id] || null) : null,
+        role_in_bu: membershipByProfileId[p.id] || null,
         has_bu_membership: p.has_bu_membership,
         onboarding_completed: p.onboarding_completed,
         profiles: {

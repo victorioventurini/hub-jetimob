@@ -56,15 +56,15 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
         throw new Error("Nenhuma BU selecionada");
       }
       
-      if (!existingProfile?.user_id) {
-        throw new Error("Este Jetimober ainda não possui um usuário vinculado. Ele precisa fazer login pelo menos uma vez.");
+      if (!existingProfile?.id) {
+        throw new Error("Perfil inválido");
       }
       
-      // Criar membership na nova BU
+      // Criar membership na nova BU usando profile_id (Identity Cutover v3.0)
       const { error: membershipError } = await supabase
         .from("bu_user_memberships")
         .insert({
-          user_id: existingProfile.user_id,
+          profile_id: existingProfile.id, // Use profile_id instead of user_id
           bu_id: currentBu.id,
           role_in_bu: roleInBu as "super_admin" | "admin" | "collaborator",
           is_default: isDefault,
