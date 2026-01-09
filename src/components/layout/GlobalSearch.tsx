@@ -212,31 +212,36 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           onValueChange={setQuery}
         />
         <CommandList>
-          {isLoading && (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          )}
-
-          {isEmpty && (
-            <CommandEmpty>
-              Nenhum resultado encontrado para "{query}"
-            </CommandEmpty>
-          )}
-
+          {/* BU não selecionada - exibir primeiro pois bloqueia tudo */}
           {disabled && (
             <CommandEmpty>
               Selecione uma BU para buscar
             </CommandEmpty>
           )}
 
-          {!disabled && !isLoading && !isEmpty && query.length < 2 && (
+          {/* Query muito curta */}
+          {!disabled && query.length < 2 && (
             <CommandEmpty>
               Digite ao menos 2 caracteres para buscar
             </CommandEmpty>
           )}
 
-          {!isLoading && results.length > 0 && (
+          {/* Loading - apenas se habilitado e query válida */}
+          {!disabled && query.length >= 2 && isLoading && (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {/* Sem resultados - apenas se não carregando e query válida */}
+          {!disabled && query.length >= 2 && !isLoading && isEmpty && (
+            <CommandEmpty>
+              Nenhum resultado encontrado para "{query}"
+            </CommandEmpty>
+          )}
+
+          {/* Resultados - apenas se não carregando e tem resultados */}
+          {!disabled && !isLoading && results.length > 0 && (
             <>
               {results.map((group, index) => (
                 <div key={group.type}>
