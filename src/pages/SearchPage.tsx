@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Input } from "@/components/ui/input";
@@ -90,7 +90,6 @@ export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
 
   const initialQuery = searchParams.get("q") || "";
   const initialType = searchParams.get("type") || "all";
