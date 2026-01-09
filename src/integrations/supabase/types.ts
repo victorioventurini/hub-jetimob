@@ -7107,6 +7107,9 @@ export type Database = {
         | "checkin_overdue"
         | "kr_status_changed"
         | "shared_okr_update"
+        | "info"
+        | "system"
+        | "alert"
       okr_channel: "email" | "slack" | "both"
       okr_confidence: "high" | "medium" | "low"
       okr_contribution_entity_type: "objective" | "kr"
@@ -7354,6 +7357,9 @@ export const Constants = {
         "checkin_overdue",
         "kr_status_changed",
         "shared_okr_update",
+        "info",
+        "system",
+        "alert",
       ],
       okr_channel: ["email", "slack", "both"],
       okr_confidence: ["high", "medium", "low"],
