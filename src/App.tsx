@@ -166,7 +166,7 @@ const App = () => {
                     <Route
                       path="/onboarding"
                       element={
-                        <ProtectedRoute skipBuCheck>
+                        <ProtectedRoute skipBuCheck skipOnboardingCheck>
                           <Onboarding />
                         </ProtectedRoute>
                       }
