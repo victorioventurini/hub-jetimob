@@ -315,86 +315,43 @@ export function MentionInput({
         <div
           ref={suggestionsRef}
           className={cn(
-            "absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-xl overflow-hidden",
+            "absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden",
             "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           )}
         >
-          {/* Header */}
-          <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              {searchTerm ? `Buscando "${searchTerm}"...` : 'Digite para buscar'}
-            </span>
-            {isLoadingUsers && (
-              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground ml-auto" />
-            )}
-          </div>
-
           {/* Results */}
           {users.length > 0 ? (
-            <div className="max-h-52 overflow-y-auto py-1">
+            <div className="max-h-48 overflow-y-auto py-1">
               {users.map((user, index) => (
                 <button
                   key={user.id}
                   type="button"
                   onClick={() => selectUser(user)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
-                    "hover:bg-accent/80",
+                    "w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors",
+                    "hover:bg-accent",
                     index === selectedIndex && "bg-accent"
                   )}
                 >
-                  <div className="relative">
-                    <Avatar className="h-9 w-9 ring-2 ring-background">
-                      <AvatarImage src={user.photo_url || undefined} />
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                        {getInitials(user.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{user.display_name}</p>
-                    {user.team_name && (
-                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        {user.team_name}
-                      </p>
-                    )}
-                  </div>
-                  <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                    {index === selectedIndex ? '↵' : index + 1}
-                  </kbd>
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={user.photo_url || undefined} />
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {getInitials(user.display_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium truncate flex-1">{user.display_name}</span>
                 </button>
               ))}
             </div>
           ) : !isLoadingUsers && searchTerm ? (
-            <div className="px-3 py-6 text-center">
-              <AtSign className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <div className="px-3 py-4 text-center">
               <p className="text-sm text-muted-foreground">Nenhum usuário encontrado</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
-                Tente outro nome
-              </p>
             </div>
           ) : isLoadingUsers ? (
-            <div className="px-3 py-6 text-center">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Buscando usuários...</p>
+            <div className="px-3 py-4 text-center">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
             </div>
           ) : null}
-
-          {/* Footer hint */}
-          {users.length > 0 && (
-            <div className="px-3 py-1.5 bg-muted/30 border-t">
-              <p className="text-[10px] text-muted-foreground text-center">
-                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">↑↓</kbd> navegar
-                <span className="mx-2">•</span>
-                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">Enter</kbd> selecionar
-                <span className="mx-2">•</span>
-                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">Esc</kbd> fechar
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>
