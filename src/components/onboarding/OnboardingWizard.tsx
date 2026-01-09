@@ -36,19 +36,32 @@ const getDaysInMonth = (month: number) => {
 };
 
 const formatWhatsApp = (value: string) => {
-  const digits = value.replace(/\D/g, '');
-  
-  if (digits.length === 0) return '';
+  let digits = value.replace(/\D/g, "");
+
+  // Allow users to paste/type without DDI (DDD + number)
+  // If we have 10/11 digits, assume Brazil (+55)
+  if ((digits.length === 10 || digits.length === 11) && !digits.startsWith("55")) {
+    digits = `55${digits}`;
+  }
+
+  if (digits.length === 0) return "";
   if (digits.length <= 2) return `+${digits}`;
   if (digits.length <= 4) return `+${digits.slice(0, 2)} (${digits.slice(2)}`;
   if (digits.length <= 9) return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4)}`;
-  if (digits.length <= 13) {
+
+  // Brazilian landline with DDI: 55 + DDD (2) + number (8)
+  if (digits.length <= 12) {
     const areaCode = digits.slice(2, 4);
-    const firstPart = digits.slice(4, 9);
-    const secondPart = digits.slice(9, 13);
-    return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? '-' + secondPart : ''}`;
+    const firstPart = digits.slice(4, 8);
+    const secondPart = digits.slice(8, 12);
+    return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? "-" + secondPart : ""}`;
   }
-  return `+${digits.slice(0, 2)} (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
+
+  // Brazilian mobile with DDI: 55 + DDD (2) + number (9)
+  const areaCode = digits.slice(2, 4);
+  const firstPart = digits.slice(4, 9);
+  const secondPart = digits.slice(9, 13);
+  return `+${digits.slice(0, 2)} (${areaCode}) ${firstPart}${secondPart ? "-" + secondPart : ""}`;
 };
 
 const onboardingSchema = z.object({
@@ -57,7 +70,13 @@ const onboardingSchema = z.object({
   photo_url: z.string().optional(),
   birth_day: z.number().min(1, "Dia é obrigatório").max(31),
   birth_month: z.number().min(1, "Mês é obrigatório").max(12),
-  whatsapp_personal: z.string().trim().min(18, "WhatsApp inválido").max(19),
+  whatsapp_personal: z
+    .string()
+    .trim()
+    .refine((v) => {
+      const digits = v.replace(/\D/g, "");
+      return digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
+    }, "WhatsApp inválido"),
   discord_id: z.string().trim().optional(),
   instagram_id: z.string().trim().optional(),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
@@ -196,8 +215,10 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
         }
         break;
       case 1: // Contact & Social
-        if (!formData.whatsapp_personal || formData.whatsapp_personal.replace(/\D/g, "").length < 11) {
-          newErrors.whatsapp_personal = "WhatsApp inválido";
+        {
+          const digits = (formData.whatsapp_personal || "").replace(/\D/g, "");
+          const isValid = digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
+          if (!isValid) newErrors.whatsapp_personal = "WhatsApp inválido";
         }
         break;
       case 2: // Location
@@ -235,6 +256,29 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
         fieldErrors[field] = err.message;
       });
       setErrors(fieldErrors);
+
+      // Levar o usuário até o primeiro passo com erro (ex.: WhatsApp no passo 2)
+      const stepByField: Partial<Record<keyof OnboardingFormData, number>> = {
+        first_name: 0,
+        last_name: 0,
+        photo_url: 0,
+        birth_day: 0,
+        birth_month: 0,
+        whatsapp_personal: 1,
+        discord_id: 1,
+        instagram_id: 1,
+        city: 2,
+        state: 2,
+      };
+
+      const stepsWithError = Object.keys(fieldErrors)
+        .map((k) => stepByField[k as keyof OnboardingFormData])
+        .filter((v): v is number => typeof v === "number");
+
+      if (stepsWithError.length > 0) {
+        setCurrentStep(Math.min(...stepsWithError));
+      }
+
       toast.error("Por favor, corrija os erros.");
       return;
     }
