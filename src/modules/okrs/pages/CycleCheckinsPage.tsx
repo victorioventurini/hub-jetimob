@@ -5,13 +5,14 @@
  * com tabs: Feed, Pendências, Resumo
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -19,6 +20,7 @@ import {
   ListChecks,
   Users,
   Activity,
+  Rocket,
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, useUrlStates, useUrlTab, parsers } from '@/shared/url';
@@ -29,11 +31,14 @@ import { CycleCheckinsFeed } from '../components/cycle-checkins/CycleCheckinsFee
 import { CycleCheckinsOverdue } from '../components/cycle-checkins/CycleCheckinsOverdue';
 import { CycleCheckinsSummary } from '../components/cycle-checkins/CycleCheckinsSummary';
 import { CycleCheckinsFilters as FiltersBar } from '../components/cycle-checkins/CycleCheckinsFilters';
+import { CheckinWizard } from '../components/CheckinWizard';
+import { useManageableTeamsFlat } from '../hooks/useManageableTeams';
 import { cn } from '@/lib/utils';
 
 type CheckinsTab = 'feed' | 'pending' | 'summary';
 
 export default function CycleCheckinsPage() {
+  const [wizardOpen, setWizardOpen] = useState(false);
   usePageTitle("Check-ins do Ciclo");
   
   // Cycles data
@@ -144,34 +149,43 @@ export default function CycleCheckinsPage() {
             </p>
           </div>
           
-          {/* Cycle Selector */}
-          <div className="w-full sm:w-64">
-            {cyclesLoading ? (
-              <Skeleton className="h-10 w-full" />
-            ) : (
-              <Select 
-                value={selectedCycleId} 
-                onValueChange={handleCycleChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um ciclo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allCycles?.map((cycle) => (
-                    <SelectItem key={cycle.id} value={cycle.id}>
-                      <div className="flex items-center gap-2">
-                        {cycle.name}
-                        {activeCycles?.some(ac => ac.id === cycle.id) && (
-                          <Badge variant="secondary" className="text-xs">
-                            Ativo
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+          <div className="flex items-center gap-3">
+            {/* Wizard Button */}
+            <Button onClick={() => setWizardOpen(true)} className="gap-2">
+              <Rocket className="h-4 w-4" />
+              <span className="hidden sm:inline">Iniciar Check-in do Time</span>
+              <span className="sm:hidden">Check-in</span>
+            </Button>
+            
+            {/* Cycle Selector */}
+            <div className="w-full sm:w-64">
+              {cyclesLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Select 
+                  value={selectedCycleId} 
+                  onValueChange={handleCycleChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um ciclo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allCycles?.map((cycle) => (
+                      <SelectItem key={cycle.id} value={cycle.id}>
+                        <div className="flex items-center gap-2">
+                          {cycle.name}
+                          {activeCycles?.some(ac => ac.id === cycle.id) && (
+                            <Badge variant="secondary" className="text-xs">
+                              Ativo
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         </div>
         
@@ -259,6 +273,13 @@ export default function CycleCheckinsPage() {
             />
           </TabsContent>
         </Tabs>
+        
+        {/* Checkin Wizard */}
+        <CheckinWizard
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+          initialCycleId={selectedCycleId}
+        />
       </div>
     </HubLayout>
   );
