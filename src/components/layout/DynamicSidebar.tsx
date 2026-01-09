@@ -75,11 +75,8 @@ const globalBuItems = [
   { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
 ];
 
-// Itens de admin da BU (apenas para bu_admin ou superior)
-const buAdminItems = [
-  { name: "Permissões", href: "/settings/permissions", icon: Shield },
-  { name: "Notificações", href: "/settings/notifications", icon: Bell },
-];
+// Itens de admin da BU foram movidos para o menu do usuário no Header
+const buAdminItems: { name: string; href: string; icon: LucideIcon }[] = [];
 
 // Links externos
 const externalLinks = [

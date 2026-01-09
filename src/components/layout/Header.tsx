@@ -124,9 +124,9 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
               </DropdownMenuItem>
               {canAccessSettings && (
                 <DropdownMenuItem asChild>
-                  <Link to="/hub" className="cursor-pointer">
+                  <Link to="/settings" className="cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />
-                    Configurações
+                    Configurações da BU
                   </Link>
                 </DropdownMenuItem>
               )}
