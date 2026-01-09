@@ -442,6 +442,53 @@ violates foreign key constraint "bu_user_permission_groups_user_id_fkey"
 - Campos de auditoria (`created_by`, `updated_by`) mantêm `auth.users.id` (uso de auditoria)
 
 ### 10.4 KPIs ✅ (já estava correto)
+
+---
+
+## 11. Identity Unification v2.2 (2026-01-09)
+
+A v2.2 implementou arquitetura profile-first completa:
+
+### 11.1 Novas Colunas
+- `profiles.email` (canônico, substitui `work_email`)
+- `profiles.deleted_at` (soft delete)
+- `bu_user_memberships.profile_id` (FK → profiles.id)
+- `bu_user_memberships.deleted_at` (soft delete)
+
+### 11.2 Novas Views
+| View | Propósito |
+|------|-----------|
+| `v_profiles_directory` | Diretório global de perfis |
+| `v_bu_memberships_active` | Memberships ativos por BU |
+| `v_bu_all_profiles_admin` | Admin view completa |
+| `v_bu_active_profiles` | Compatibilidade |
+
+### 11.3 Novas Funções
+| Função | Uso |
+|--------|-----|
+| `my_profile_id()` | Retorna profile_id do usuário autenticado |
+| `is_profile_bu_member(profile_id, bu_id)` | Verifica membership |
+| `is_profile_bu_admin(profile_id, bu_id)` | Verifica admin |
+| `get_profile_bus(profile_id)` | Lista BUs do profile |
+
+### 11.4 Padrão de Uso (Pós v2.2)
+
+```sql
+-- ✅ CORRETO: Usar my_profile_id() em RLS
+WHERE owner_user_id = my_profile_id()
+
+-- ✅ CORRETO: Usar funções profile-first
+WHERE is_profile_bu_member(my_profile_id(), bu_id)
+
+-- ⚠️ LEGADO (funciona até 2026-02-15): Funções com user_id
+WHERE is_bu_member(auth.uid(), bu_id)
+```
+
+### 11.5 Deadline
+
+- **Dual-mode deadline:** 2026-02-15
+- Após essa data, funções com `user_id` emitirão warnings
+- Migração de RLS policies será obrigatória
 - `owner_user_id` já referenciava `profiles.id`
 - RLS usa hierarquia de times para gestão
 
