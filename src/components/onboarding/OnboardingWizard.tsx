@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { cn } from "@/lib/utils";
-import { User, MapPin, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, Phone } from "lucide-react";
-
+import { User, MapPin, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, Phone, Camera } from "lucide-react";
 
 const MONTHS = [
   { value: 1, label: "Janeiro" },
@@ -31,7 +31,6 @@ const MONTHS = [
 ];
 
 const getDaysInMonth = (month: number) => {
-  // Use a non-leap year to get standard days per month
   const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   return daysInMonth[month - 1] || 31;
 };
@@ -47,9 +46,12 @@ const formatWhatsApp = (value: string) => {
 const onboardingSchema = z.object({
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
+  photo_url: z.string().optional(),
   birth_day: z.number().min(1, "Dia é obrigatório").max(31),
   birth_month: z.number().min(1, "Mês é obrigatório").max(12),
   whatsapp_personal: z.string().trim().min(14, "WhatsApp inválido").max(15),
+  discord_id: z.string().trim().optional(),
+  instagram_id: z.string().trim().optional(),
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
 });
@@ -64,6 +66,7 @@ interface OnboardingWizardProps {
 
 const STEPS = [
   { id: "personal", title: "Dados Pessoais", icon: User },
+  { id: "contact", title: "Contato & Redes", icon: Phone },
   { id: "location", title: "Localização", icon: MapPin },
 ];
 
@@ -73,29 +76,75 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
   const [formData, setFormData] = useState<OnboardingFormData>({
     first_name: initialData?.first_name || "",
     last_name: initialData?.last_name || "",
+    photo_url: initialData?.photo_url || "",
     birth_day: initialData?.birth_day || 0,
     birth_month: initialData?.birth_month || 0,
     whatsapp_personal: initialData?.whatsapp_personal || "",
+    discord_id: initialData?.discord_id || "",
+    instagram_id: initialData?.instagram_id || "",
     city: initialData?.city || "Porto Alegre",
     state: initialData?.state || "RS",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof OnboardingFormData, string>>>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${profileId}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("profiles")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("profiles")
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, photo_url: publicUrl });
+      toast.success("Foto carregada!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Erro ao enviar foto.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const completeMutation = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
       const displayName = `${data.first_name} ${data.last_name}`.trim();
 
-      // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
           first_name: data.first_name,
           last_name: data.last_name,
           display_name: displayName,
+          photo_url: data.photo_url || null,
           birth_day: data.birth_day,
           birth_month: data.birth_month,
           whatsapp_personal: data.whatsapp_personal,
+          discord_id: data.discord_id || null,
+          instagram_id: data.instagram_id || null,
           city: data.city,
           state: data.state,
           onboarding_completed: true,
@@ -120,7 +169,7 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
     const newErrors: Partial<Record<keyof OnboardingFormData, string>> = {};
 
     switch (step) {
-      case 0: // Personal
+      case 0: // Personal + Photo
         if (!formData.first_name.trim()) newErrors.first_name = "Nome é obrigatório";
         if (!formData.last_name.trim()) newErrors.last_name = "Sobrenome é obrigatório";
         if (!formData.birth_month) newErrors.birth_month = "Mês é obrigatório";
@@ -131,11 +180,13 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
             newErrors.birth_day = `Dia inválido para ${MONTHS[formData.birth_month - 1]?.label}`;
           }
         }
+        break;
+      case 1: // Contact & Social
         if (!formData.whatsapp_personal || formData.whatsapp_personal.replace(/\D/g, "").length < 11) {
           newErrors.whatsapp_personal = "WhatsApp inválido";
         }
         break;
-      case 1: // Location
+      case 2: // Location
         if (!formData.city.trim()) newErrors.city = "Cidade é obrigatória";
         if (!formData.state.trim()) newErrors.state = "Estado é obrigatório";
         break;
@@ -187,6 +238,12 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
   const handleWhatsAppChange = (value: string) => {
     const formatted = formatWhatsApp(value);
     handleChange("whatsapp_personal", formatted);
+  };
+
+  const getInitials = () => {
+    const first = formData.first_name?.[0] || "";
+    const last = formData.last_name?.[0] || "";
+    return (first + last).toUpperCase() || "?";
   };
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
@@ -252,10 +309,42 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="space-y-4 min-h-[280px]"
+              className="space-y-4 min-h-[320px]"
             >
               {currentStep === 0 && (
                 <>
+                  {/* Photo Upload */}
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="relative group">
+                      <Avatar className="h-24 w-24 border-2 border-primary/20">
+                        <AvatarImage src={formData.photo_url} alt="Foto" />
+                        <AvatarFallback className="text-xl bg-primary/10">
+                          {getInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        ) : (
+                          <Camera className="w-6 h-6 text-primary" />
+                        )}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Clique para adicionar foto</span>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="first_name">Nome *</Label>
@@ -265,7 +354,6 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
                         onChange={(e) => handleChange("first_name", e.target.value)}
                         placeholder="Seu nome"
                         className={errors.first_name ? "border-destructive" : ""}
-                        autoFocus
                       />
                       {errors.first_name && (
                         <p className="text-xs text-destructive">{errors.first_name}</p>
@@ -309,7 +397,6 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
                         onValueChange={(v) => {
                           const newMonth = parseInt(v);
                           handleChange("birth_month", newMonth);
-                          // Ajusta o dia se exceder o máximo do novo mês
                           const maxDays = getDaysInMonth(newMonth);
                           if (formData.birth_day > maxDays) {
                             handleChange("birth_day", maxDays);
@@ -332,7 +419,11 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
                       <p className="text-xs text-destructive">{errors.birth_month || errors.birth_day}</p>
                     )}
                   </div>
+                </>
+              )}
 
+              {currentStep === 1 && (
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="whatsapp">WhatsApp *</Label>
                     <div className="relative">
@@ -344,16 +435,42 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
                         placeholder="(00) 00000-0000"
                         className={cn("pl-10", errors.whatsapp_personal ? "border-destructive" : "")}
                         maxLength={15}
+                        autoFocus
                       />
                     </div>
                     {errors.whatsapp_personal && (
                       <p className="text-xs text-destructive">{errors.whatsapp_personal}</p>
                     )}
                   </div>
-                </>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="discord_id">Discord</Label>
+                    <Input
+                      id="discord_id"
+                      value={formData.discord_id || ""}
+                      onChange={(e) => handleChange("discord_id", e.target.value)}
+                      placeholder="usuario#1234 ou username"
+                    />
+                    <p className="text-xs text-muted-foreground">Seu nome de usuário do Discord</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram_id">Instagram</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                      <Input
+                        id="instagram_id"
+                        value={formData.instagram_id || ""}
+                        onChange={(e) => handleChange("instagram_id", e.target.value.replace("@", ""))}
+                        placeholder="seu.usuario"
+                        className="pl-8"
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
 
-              {currentStep === 1 && (
+              {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Cidade e Estado *</Label>
@@ -372,7 +489,6 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
                   </div>
                 </div>
               )}
-
             </motion.div>
           </AnimatePresence>
 
@@ -389,7 +505,7 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
             </Button>
             <Button
               onClick={handleNext}
-              disabled={completeMutation.isPending}
+              disabled={completeMutation.isPending || isUploading}
               className="gap-2"
             >
               {completeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
