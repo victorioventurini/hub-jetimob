@@ -6978,6 +6978,20 @@ export type Database = {
           status: string
         }[]
       }
+      send_test_notification_v2: {
+        Args: {
+          p_bu_id: string
+          p_channels?: string[]
+          p_target_profile_id: string
+        }
+        Returns: {
+          channel: string
+          error_message: string
+          notification_id: string
+          outbox_id: string
+          status: string
+        }[]
+      }
       set_user_notification_preference: {
         Args: {
           p_bu_id: string

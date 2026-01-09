@@ -269,6 +269,7 @@ export function useEmitNotificationEvent() {
 }
 
 // Hook for sending test notifications (admin)
+// Uses v2 RPC that accepts profile_id and resolves auth_user_id internally
 export function useSendTestNotification() {
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
@@ -276,34 +277,51 @@ export function useSendTestNotification() {
   
   return useMutation({
     mutationFn: async ({
-      targetUserId,
+      targetProfileId,
       channels = ['in_app', 'email'],
     }: {
-      targetUserId: string;
+      targetProfileId: string; // profiles.id (NOT auth.users.id)
       channels?: string[];
     }) => {
       if (!currentBu?.id) {
         throw new Error('BU not available');
       }
       
-      const { data, error } = await supabase.rpc('send_test_notification', {
+      // Use v2 RPC that accepts profile_id and resolves auth_user_id internally
+      const { data, error } = await supabase.rpc('send_test_notification_v2', {
         p_bu_id: currentBu.id,
-        p_target_user_id: targetUserId,
+        p_target_profile_id: targetProfileId,
         p_channels: channels,
       });
       
       if (error) throw error;
       
+      const results = data as Array<{ 
+        notification_id: string | null; 
+        outbox_id: string | null; 
+        channel: string; 
+        status: string;
+        error_message: string | null;
+      }>;
+      
+      // Check for errors in results
+      const errors = results.filter(r => r.status === 'error');
+      if (errors.length > 0 && errors.length === results.length) {
+        // All channels failed
+        throw new Error(errors[0].error_message || 'Failed to send notification');
+      }
+      
       // If email or other outbox channels were included, trigger the outbox processor
       const hasOutboxChannels = channels.some(ch => ['email', 'slack', 'webhook'].includes(ch));
-      if (hasOutboxChannels) {
+      const hasSuccessfulOutbox = results.some(r => r.status === 'queued');
+      if (hasOutboxChannels && hasSuccessfulOutbox) {
         // Trigger outbox processing (fire and forget)
         supabase.functions.invoke('process-notification-outbox').catch((err: unknown) => {
           console.warn('[useSendTestNotification] Failed to trigger outbox processor:', err);
         });
       }
       
-      return data as Array<{ notification_id: string | null; outbox_id: string | null; channel: string; status: string }>;
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
