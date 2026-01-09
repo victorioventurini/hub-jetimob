@@ -61,7 +61,7 @@ export default function CronJobConfigPage() {
         .order('ran_at', { ascending: false })
         .limit(10);
       if (error) throw error;
-      return (data || []) as CronLog[];
+      return (data || []) as unknown as CronLog[];
     },
   });
 

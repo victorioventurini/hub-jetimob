@@ -65,6 +65,7 @@ const BuManagementPage = lazy(() => import("./modules/bu/pages/BuManagementPage"
 // Módulo Integrações (Settings)
 const GlobalIntegrationsPage = lazy(() => import("./modules/integrations/pages/GlobalIntegrationsPage"));
 const GlobalIntegrationDetailPage = lazy(() => import("./modules/integrations/pages/GlobalIntegrationDetailPage"));
+const CronJobConfigPage = lazy(() => import("./modules/integrations/pages/CronJobConfigPage"));
 const AgentsListPage = lazy(() => import("./modules/integrations/pages/AgentsListPage"));
 const AgentFormPage = lazy(() => import("./modules/integrations/pages/AgentFormPage"));
 const AgentLogsPage = lazy(() => import("./modules/integrations/pages/AgentLogsPage"));
@@ -273,6 +274,18 @@ const App = () => {
                           <AdminRoute>
                             <SettingsLayout>
                               <SettingsIntegrations />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/hub/integrations/cron-job"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <CronJobConfigPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>
