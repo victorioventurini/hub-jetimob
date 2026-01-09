@@ -152,3 +152,65 @@ npx tsx scripts/audit-auth-vs-profile-id.ts
 - [ ] UI passa `profile.id`, nunca `user.id`
 - [ ] Branded types `ProfileId`/`AuthUserId` usados em hooks
 - [ ] Audit script passa com exit code 0
+
+---
+
+## Convenção de Email: work_email (NUNCA profiles.email)
+
+### Regra Canônica (OBRIGATÓRIA)
+
+❌ **PROIBIDO**: `profiles.email` — **ESTE CAMPO NÃO EXISTE**
+
+✅ **OBRIGATÓRIO**: `profiles.work_email`
+
+### Por quê?
+
+A tabela `profiles` usa `work_email`, não `email`. Usar `profiles.email` causa:
+- Queries falhando silenciosamente
+- Notificações não enviadas
+- Erros de "User email not found"
+
+### Resolver Canônico
+
+```sql
+-- Usar sempre a função canônica para resolver email
+SELECT public.resolve_work_email('auth-user-id-here');
+
+-- Ou para info completa do destinatário
+SELECT public.resolve_notification_recipient('auth-user-id-here');
+-- Retorna: { profile_id, display_name, work_email, has_profile }
+```
+
+### Em Edge Functions
+
+```typescript
+// ❌ PROIBIDO
+const { data } = await supabase
+  .from("profiles")
+  .select("email")  // CAMPO NÃO EXISTE
+  .eq("user_id", userId);
+
+// ✅ CORRETO — usar resolver canônico
+const { data } = await supabase.rpc("resolve_notification_recipient", {
+  p_auth_user_id: userId
+});
+const email = data?.work_email;
+```
+
+### Auditoria Obrigatória
+
+**Script:** `scripts/audit-profiles-email.ts`
+
+```bash
+npx tsx scripts/audit-profiles-email.ts
+```
+
+**Exit codes:**
+- `0`: Nenhum problema
+- `1`: Uso de `profiles.email` detectado (build deve falhar)
+
+### Checklist para PRs com Email
+
+- [ ] Nenhum uso de `profiles.email`
+- [ ] Usar `profiles.work_email` ou resolver RPC
+- [ ] Audit script `audit-profiles-email.ts` passa
