@@ -1,3 +1,13 @@
+/**
+ * MultiUserSelect - Multi-select component for users
+ * 
+ * @deprecated Use BuUserMultiSelect from @/components/selects/BuUserMultiSelect instead.
+ * This component is maintained for backward compatibility only.
+ * 
+ * The new BuUserMultiSelect uses the canonical useBuUsersDirectory hook
+ * which correctly shows ALL registered users (even without first login).
+ */
+
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,8 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useProfilesList } from "@/hooks/useSharedData";
-import { useBu } from "@/contexts/BuContext";
+import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
 import { cn } from "@/lib/utils";
 import { ChevronDown, X, Search, Lock } from "lucide-react";
 
@@ -30,12 +39,12 @@ interface UserOption {
   id: string;
   display_name: string | null;
   photo_url: string | null;
-  job_title: string | null;
-  user_id: string;
+  job_title_name: string | null;
+  user_id: string | null;
 }
 
 /**
- * Multi-select component for users with search and locked users.
+ * @deprecated Use BuUserMultiSelect instead
  */
 export function MultiUserSelect({
   value,
@@ -48,8 +57,21 @@ export function MultiUserSelect({
 }: MultiUserSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const { currentBu } = useBu();
-  const { data: users = [], isLoading } = useProfilesList(currentBu?.id);
+  
+  // Use canonical hook - shows ALL registered users
+  const { data: profiles = [], isLoading } = useBuUsersDirectory({ pageSize: 200 });
+  
+  // Map to legacy format for backward compatibility
+  const users = useMemo(() => {
+    return profiles.map((p) => ({
+      id: p.id,
+      display_name: p.display_name,
+      photo_url: p.photo_url,
+      job_title_name: p.job_title_name,
+      job_title: p.job_title_name,
+      user_id: p.user_id,
+    }));
+  }, [profiles]);
 
   const filteredUsers = useMemo(() => {
     let result = users.filter((u: UserOption) => !excludeUserIds.includes(u.id));
@@ -58,7 +80,7 @@ export function MultiUserSelect({
       const searchLower = search.toLowerCase();
       result = result.filter((u: UserOption) => 
         u.display_name?.toLowerCase().includes(searchLower) ||
-        u.job_title?.toLowerCase().includes(searchLower)
+        u.job_title_name?.toLowerCase().includes(searchLower)
       );
     }
     
@@ -210,9 +232,9 @@ export function MultiUserSelect({
                       {user.display_name || "Sem nome"}
                       {isLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                     </span>
-                    {user.job_title && (
+                    {user.job_title_name && (
                       <span className="text-xs text-muted-foreground truncate">
-                        {user.job_title}
+                        {user.job_title_name}
                       </span>
                     )}
                   </div>
