@@ -27,13 +27,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { useBu } from "@/contexts/BuContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useQuery } from "@tanstack/react-query";
 import { PERMISSION_ROLE_LABELS, type AssetPermissionRole } from "../../types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Profile {
-  user_id: string;
+  id: string;
+  user_id: string | null;
   first_name: string | null;
   last_name: string | null;
   display_name: string | null;
@@ -42,7 +43,7 @@ interface Profile {
 }
 
 const schema = z.object({
-  user_id: z.string().min(1, "Selecione um usuário"),
+  profile_id: z.string().min(1, "Selecione um usuário"),
   role: z.string().min(1, "Selecione uma permissão"),
 });
 
@@ -56,30 +57,30 @@ interface AddPermissionDialogProps {
 export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogProps) {
   const { addPermission, isAddingPermission, allPermissions } = useAssetPermissions();
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const [search, setSearch] = useState("");
 
-  // Fetch profiles for the current BU
+  // Fetch profiles for the current BU using v_bu_active_profiles
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
-    queryKey: ["profiles-for-assets", currentBu?.id],
+    queryKey: ["profiles-for-assets-permissions", currentBu?.id],
     enabled: !!currentBu?.id,
     queryFn: async () => {
       if (!currentBu?.id) return [];
       const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, first_name, last_name, display_name, photo_url, work_email")
+        .from("v_bu_active_profiles" as any)
+        .select("id, user_id, first_name, last_name, display_name, photo_url, work_email")
         .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .order("first_name");
+        .order("display_name");
 
       if (error) throw error;
-      return data as Profile[];
+      return (data as unknown as Profile[]) || [];
     },
   });
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      user_id: "",
+      profile_id: "",
       role: "",
     },
   });
@@ -102,14 +103,21 @@ export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogP
   );
 
   const onSubmit = (data: FormData) => {
+    // Find the profile to get the user_id
+    const profile = profiles.find(p => p.id === data.profile_id);
+    if (!profile?.user_id) {
+      // User hasn't logged in yet - can't assign permissions
+      return;
+    }
     addPermission({
-      userId: data.user_id,
+      userId: profile.user_id,
       role: data.role as AssetPermissionRole,
     });
     onOpenChange(false);
   };
 
-  const selectedProfile = profiles.find((p) => p.user_id === form.watch("user_id"));
+  const selectedProfileId = form.watch("profile_id");
+  const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
   const getProfileName = (profile: Profile) =>
     profile.display_name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Sem nome";
@@ -134,7 +142,7 @@ export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogP
 
             <FormField
               control={form.control}
-              name="user_id"
+              name="profile_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Usuário *</FormLabel>
@@ -158,12 +166,12 @@ export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogP
                     </FormControl>
                     <SelectContent>
                       {availableProfiles
-                        .filter((profile) => profile.user_id)
+                        .filter((profile) => profile.user_id) // Only users who have logged in can receive permissions
                         .slice(0, 20)
                         .map((profile) => (
                           <SelectItem 
-                            key={profile.user_id!} 
-                            value={profile.user_id!}
+                            key={profile.id} 
+                            value={profile.id}
                             textValue={getProfileName(profile)}
                           >
                             <div className="flex items-center gap-2">
