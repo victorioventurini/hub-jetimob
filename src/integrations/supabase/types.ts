@@ -2078,29 +2078,35 @@ export type Database = {
         Row: {
           bu_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           is_default: boolean
+          profile_id: string | null
           role_in_bu: Database["public"]["Enums"]["app_role"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           bu_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_default?: boolean
+          profile_id?: string | null
           role_in_bu?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           bu_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_default?: boolean
+          profile_id?: string | null
           role_in_bu?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2109,6 +2115,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bu_units"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_user_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_without_v2_permissions"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
