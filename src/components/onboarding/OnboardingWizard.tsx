@@ -262,7 +262,11 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
               <Sparkles className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Bem-vindo ao Hub!</CardTitle>
+          <CardTitle className="text-2xl">
+            {initialData?.first_name 
+              ? `Olá, ${initialData.first_name}! 👋` 
+              : "Bem-vindo ao Hub!"}
+          </CardTitle>
           <CardDescription>
             Complete seu perfil para começar
           </CardDescription>
