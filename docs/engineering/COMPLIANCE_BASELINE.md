@@ -36,6 +36,8 @@ Este documento define **TODOS** os audits obrigatórios do Hub da Jet. É a font
 | 10 | [URL State](#10-url-state) | `audit-url-state.ts` | DX/UX | WARNING |
 | 11 | [Permission Keys](#11-permission-keys) | `audit-permission-keys.ts` | Segurança | BLOCKING |
 | 12 | [PRE-BU vs POST-BU](#12-pre-bu-vs-post-bu) | `audit-prebu-buscoped.ts` | Segurança | BLOCKING |
+| 13 | [Shared Components](#13-shared-components) | `audit-shared-components.ts` | Consistência | BLOCKING |
+| 14 | [Shared Utilities](#14-shared-utilities) | `audit-shared-utils.ts` | Consistência | BLOCKING |
 
 ---
 
@@ -392,6 +394,7 @@ Para adicionar um novo audit ao Baseline:
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.1.0 | 2026-01-09 | Adicionados audits 13-14: Shared Components e Shared Utilities |
 | 1.0.0 | 2026-01-09 | Versão inicial com 12 audits |
 
 ---

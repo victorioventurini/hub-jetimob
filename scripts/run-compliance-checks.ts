@@ -120,6 +120,20 @@ const AUDITS: AuditConfig[] = [
     severity: 'blocking',
     description: 'Validates client usage by lifecycle phase',
   },
+  {
+    id: 'shared-components',
+    name: 'Shared Components',
+    script: 'audit-shared-components.ts',
+    severity: 'blocking',
+    description: 'Detects duplicated component patterns',
+  },
+  {
+    id: 'shared-utils',
+    name: 'Shared Utilities',
+    script: 'audit-shared-utils.ts',
+    severity: 'blocking',
+    description: 'Detects non-canonical utility usage',
+  },
 ];
 
 // ==========================
