@@ -3,6 +3,7 @@ export * from './hooks/useOkrData';
 export * from './hooks/useOkrStatus';
 export * from './hooks/useOkrMutations';
 export * from './hooks/usePendingCheckins';
+export * from './hooks/useCycleCheckins';
 export * from './hooks/useSharedOkrData';
 export * from './hooks/useTeamContributedOkrs';
 export * from './hooks/useInitiatives';
@@ -31,3 +32,4 @@ export * from './components/initiatives';
 // Pages
 export { default as OkrDashboardPage } from './pages/OkrsPage';
 export { default as ExecutiveDashboardPage } from './pages/ExecutiveDashboardPage';
+export { default as CycleCheckinsPage } from './pages/CycleCheckinsPage';

@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, AlertCircle, Info, Users, Target, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, AlertCircle, Info, Users, Target, Clock, ArrowRight } from 'lucide-react';
 import { usePendingCheckins, useTeamPendingCheckins } from '../hooks/usePendingCheckins';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -132,6 +134,21 @@ export function OkrAlertsCard({ teamId, isLeader = false, className }: OkrAlerts
             </div>
           </div>
         ))}
+        
+        {/* Link to Check-ins Page */}
+        {isLeader && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2 text-muted-foreground hover:text-foreground"
+            asChild
+          >
+            <Link to="/okrs/checkins">
+              Ver todos os check-ins
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
