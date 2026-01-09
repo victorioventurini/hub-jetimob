@@ -18,6 +18,8 @@ import {
 import { useBu } from '@/contexts/BuContext';
 import { useUrlState } from '@/shared/url/useUrlState';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
+import { usePermissions } from '@/hooks/usePermissions';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -106,7 +108,10 @@ const ACTIVE_CHANNELS = ['in_app', 'email', 'slack', 'webhook']; // WhatsApp out
 
 export default function SettingsNotifications() {
   const { currentBu } = useBu();
-  
+  const { has: hasPermission } = usePermissions();
+
+  const canManageBuNotifications = hasPermission('notifications.bu.manage:bu');
+
   // URL State
   const tabState = useUrlState<TabValue>({ key: 'tab', defaultValue: 'channels' });
   const statusState = useUrlState<string>({ key: 'status', defaultValue: 'all' });
@@ -441,7 +446,17 @@ export default function SettingsNotifications() {
         
         {/* Tab: Channels */}
         <TabsContent value="channels">
-          <PermissionGuard permission="notifications.bu.manage:bu">
+          <PermissionGuard
+            anyOf={['notifications.bu.manage:bu', 'notifications.bu.view:bu']}
+            fallback={
+              <EmptyState
+                icon={AlertCircle}
+                title="Sem acesso"
+                description="Você não tem permissão para visualizar as configurações de notificações desta BU."
+                compact
+              />
+            }
+          >
             <Card>
               <CardHeader>
                 <CardTitle>Canais de Notificação</CardTitle>
@@ -496,7 +511,7 @@ export default function SettingsNotifications() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {needsConfig && (
+                        {needsConfig && canManageBuNotifications && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -512,7 +527,7 @@ export default function SettingsNotifications() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleTestChannel(channel.slug)}
-                              disabled={testingChannel}
+                              disabled={testingChannel || !canManageBuNotifications}
                             >
                               <TestTube className="w-4 h-4 mr-1" />
                               Testar
@@ -525,7 +540,7 @@ export default function SettingsNotifications() {
                               <Switch
                                 checked={isEnabled}
                                 onCheckedChange={(checked) => handleToggleChannel(channel.slug, checked)}
-                                disabled={isInApp || (!isConfigured && needsConfig)}
+                                disabled={isInApp || (!isConfigured && needsConfig) || !canManageBuNotifications}
                               />
                             </span>
                           </TooltipTrigger>
@@ -570,7 +585,17 @@ export default function SettingsNotifications() {
         
         {/* Tab: Event Settings */}
         <TabsContent value="events">
-          <PermissionGuard permission="notifications.bu.manage:bu">
+          <PermissionGuard
+            anyOf={['notifications.bu.manage:bu', 'notifications.bu.view:bu']}
+            fallback={
+              <EmptyState
+                icon={AlertCircle}
+                title="Sem acesso"
+                description="Você não tem permissão para visualizar as configurações de eventos desta BU."
+                compact
+              />
+            }
+          >
             <Card>
               <CardHeader>
                 <CardTitle>Configurações de Eventos por Canal</CardTitle>
@@ -667,7 +692,7 @@ export default function SettingsNotifications() {
                                   <Switch
                                     checked={inAppEnabled}
                                     onCheckedChange={(checked) => handleToggleEventSetting(event.slug, 'in_app', checked)}
-                                    disabled={event.is_mandatory}
+                                    disabled={event.is_mandatory || !canManageBuNotifications}
                                   />
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
@@ -678,7 +703,7 @@ export default function SettingsNotifications() {
                                   <Switch
                                     checked={emailEnabled}
                                     onCheckedChange={(checked) => handleToggleEventSetting(event.slug, 'email', checked)}
-                                    disabled={event.is_mandatory}
+                                    disabled={event.is_mandatory || !canManageBuNotifications}
                                   />
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
@@ -691,7 +716,7 @@ export default function SettingsNotifications() {
                                       <Switch
                                         checked={slackEnabled}
                                         onCheckedChange={(checked) => handleToggleEventSetting(event.slug, 'slack', checked)}
-                                        disabled={!slackConfigured || event.is_mandatory}
+                                        disabled={!slackConfigured || event.is_mandatory || !canManageBuNotifications}
                                       />
                                     </span>
                                   </TooltipTrigger>
@@ -707,7 +732,7 @@ export default function SettingsNotifications() {
                                       <Switch
                                         checked={webhookEnabled}
                                         onCheckedChange={(checked) => handleToggleEventSetting(event.slug, 'webhook', checked)}
-                                        disabled={!webhookConfigured || event.is_mandatory}
+                                        disabled={!webhookConfigured || event.is_mandatory || !canManageBuNotifications}
                                       />
                                     </span>
                                   </TooltipTrigger>
