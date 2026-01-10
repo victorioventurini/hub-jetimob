@@ -87,6 +87,7 @@ interface InvokeVicRequest {
     additionalData?: Record<string, unknown>;
   };
   userQuestion?: string;
+  stream?: boolean;
 }
 
 interface ToolCall {
@@ -145,9 +146,9 @@ serve(async (req) => {
     }
 
     const body: InvokeVicRequest = await req.json();
-    const { agentSlug, actionContext, context: aiContext, userQuestion } = body;
+    const { agentSlug, actionContext, context: aiContext, userQuestion, stream = false } = body;
 
-    console.log(`[${requestId}] Invoke VIC: agent=${agentSlug}, user=${userId}, bu=${buId}`);
+    console.log(`[${requestId}] Invoke VIC: agent=${agentSlug}, user=${userId}, bu=${buId}, stream=${stream}`);
 
     if (!agentSlug || !actionContext) {
       return errorResponse("agentSlug and actionContext are required", 400, {
@@ -312,18 +313,19 @@ serve(async (req) => {
       { role: "user", content: userPrompt },
     ];
 
-    const requestPayload: any = {
+    // Tools (only when BU context is available)
+    const allowedTools = Array.isArray(agent.allowed_tools)
+      ? (agent.allowed_tools as string[])
+      : null;
+
+    let requestPayload: any = {
       model: modelName,
       messages,
       max_tokens: agent.max_tokens || 800,
       temperature: agent.temperature ?? 0.7,
     };
 
-    // Tools (only when BU context is available)
-    const allowedTools = Array.isArray(agent.allowed_tools)
-      ? (agent.allowed_tools as string[])
-      : null;
-
+    // Tools configuration
     if (allowedTools?.length) {
       const hubToolNames = HUB_TOOL_DEFINITIONS.map((t) => t.function.name);
       const agentTools = allowedTools.filter((t) => hubToolNames.includes(t));
@@ -337,7 +339,147 @@ serve(async (req) => {
       }
     }
 
-    // First API call
+    // =========================================================================
+    // STREAMING MODE
+    // =========================================================================
+    if (stream && !allowedTools?.length) {
+      // Stream mode (only when no tools - tool calls require non-streaming)
+      requestPayload.stream = true;
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestPayload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[${requestId}] AI API error:`, response.status, errorText);
+
+        await serviceClient.from("ai_agent_logs").insert({
+          agent_id: agentId,
+          agent_name: agentName,
+          scope: agent.scope,
+          bu_id: buId,
+          user_id: userId,
+          integration_key: agent.integration_key,
+          action_context: actionContext,
+          status: "error",
+          error_message: `AI API error: ${response.status}`,
+          latency_ms: Date.now() - startTime,
+        });
+
+        if (response.status === 429) {
+          return errorResponse("Rate limit exceeded", 429, { requestId, error: "RATE_LIMIT", code: "RATE_LIMIT" });
+        }
+        if (response.status === 402) {
+          return errorResponse("AI credits depleted", 402, { requestId, error: "NO_CREDITS", code: "NO_CREDITS" });
+        }
+
+        return errorResponse("AI API error", 502, { requestId, error: "AI_API_ERROR" });
+      }
+
+      // Create a transform stream to inject metadata at the end
+      const encoder = new TextEncoder();
+      const reader = response.body!.getReader();
+      let totalTokens = 0;
+      let accumulatedContent = "";
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Send metadata event first
+          const metadataEvent = `data: ${JSON.stringify({
+            type: "metadata",
+            agentName,
+            agentSlug,
+          })}\n\n`;
+          controller.enqueue(encoder.encode(metadataEvent));
+        },
+        async pull(controller) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            // Log completion
+            const latencyMs = Date.now() - startTime;
+            await serviceClient.from("ai_agent_logs").insert({
+              agent_id: agentId,
+              agent_name: agentName,
+              scope: agent.scope,
+              bu_id: buId,
+              user_id: userId,
+              integration_key: agent.integration_key,
+              action_context: actionContext,
+              status: "success",
+              model_used: modelName,
+              total_tokens: totalTokens,
+              latency_ms: latencyMs,
+            });
+
+            // Send final metadata with latency
+            const finalEvent = `data: ${JSON.stringify({
+              type: "metadata",
+              agentName,
+              agentSlug,
+              latencyMs,
+              tokensUsed: totalTokens,
+            })}\n\n`;
+            controller.enqueue(encoder.encode(finalEvent));
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+            
+            console.log(`[${requestId}] Stream completed in ${latencyMs}ms`);
+            logRequestCompletion(ctx, "success");
+            return;
+          }
+
+          // Pass through the chunk
+          controller.enqueue(value);
+
+          // Try to extract usage info from chunks (for logging)
+          try {
+            const text = new TextDecoder().decode(value);
+            const lines = text.split("\n");
+            for (const line of lines) {
+              if (line.startsWith("data: ") && !line.includes("[DONE]")) {
+                const jsonStr = line.slice(6);
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  if (parsed.usage?.total_tokens) {
+                    totalTokens = parsed.usage.total_tokens;
+                  }
+                  if (parsed.choices?.[0]?.delta?.content) {
+                    accumulatedContent += parsed.choices[0].delta.content;
+                  }
+                } catch {
+                  // Ignore parse errors
+                }
+              }
+            }
+          } catch {
+            // Ignore
+          }
+        },
+        cancel() {
+          reader.cancel();
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // =========================================================================
+    // NON-STREAMING MODE (with tool support)
+    // =========================================================================
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {

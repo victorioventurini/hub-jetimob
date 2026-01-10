@@ -18,15 +18,16 @@ import {
   Loader2,
   X,
   ArrowRight,
+  StopCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVic } from "../contexts/VicContext";
-import { useVicAgent } from "../hooks/useVicAgent";
+import { useVicStream } from "../hooks/useVicStream";
 import { toast } from "sonner";
 
 export function VicSidepanel() {
   const { panelState, closePanel, setResponse, setLoading, getAgentInfo } = useVic();
-  const { invoke, isLoading, response, reset } = useVicAgent();
+  const { stream, cancel, reset, isStreaming, response, metadata } = useVicStream();
   const [userQuestion, setUserQuestion] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -42,15 +43,21 @@ export function VicSidepanel() {
 
   // Sync loading state
   useEffect(() => {
-    setLoading(isLoading);
-  }, [isLoading, setLoading]);
+    setLoading(isStreaming);
+  }, [isStreaming, setLoading]);
 
-  // Sync response
+  // Sync response to context
   useEffect(() => {
-    if (response) {
-      setResponse(response);
+    if (response && metadata) {
+      setResponse({
+        response,
+        agentName: metadata.agentName,
+        agentSlug: metadata.agentSlug,
+        tokensUsed: metadata.tokensUsed,
+        latencyMs: metadata.latencyMs,
+      });
     }
-  }, [response, setResponse]);
+  }, [response, metadata, setResponse]);
 
   const handleGenerate = useCallback(async () => {
     if (!panelState.agentSlug || !panelState.actionContext || !panelState.context) {
@@ -58,7 +65,7 @@ export function VicSidepanel() {
     }
 
     try {
-      await invoke(
+      await stream(
         panelState.agentSlug,
         panelState.actionContext,
         panelState.context,
@@ -67,7 +74,11 @@ export function VicSidepanel() {
     } catch {
       // Error handled in hook
     }
-  }, [panelState, userQuestion, invoke]);
+  }, [panelState, userQuestion, stream]);
+
+  const handleStop = () => {
+    cancel();
+  };
 
   const handleRegenerate = () => {
     reset();
@@ -75,8 +86,8 @@ export function VicSidepanel() {
   };
 
   const handleCopy = async () => {
-    if (response?.response) {
-      await navigator.clipboard.writeText(response.response);
+    if (response) {
+      await navigator.clipboard.writeText(response);
       setCopied(true);
       toast.success("Copiado!");
       setTimeout(() => setCopied(false), 2000);
@@ -84,8 +95,8 @@ export function VicSidepanel() {
   };
 
   const handleApply = () => {
-    if (response?.response && panelState.onApply) {
-      panelState.onApply(response.response);
+    if (response && panelState.onApply) {
+      panelState.onApply(response);
       toast.success("Aplicado!");
       closePanel();
     }
@@ -159,25 +170,26 @@ export function VicSidepanel() {
               value={userQuestion}
               onChange={(e) => setUserQuestion(e.target.value)}
               className="resize-none h-20"
-              disabled={isLoading}
+              disabled={isStreaming}
             />
-            {!response && (
+            {!response && !isStreaming && (
               <Button
                 onClick={handleGenerate}
-                disabled={isLoading}
+                disabled={isStreaming}
                 className="w-full mt-2 gap-2"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Gerando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Gerar
-                  </>
-                )}
+                <Sparkles className="h-4 w-4" />
+                Gerar
+              </Button>
+            )}
+            {isStreaming && (
+              <Button
+                onClick={handleStop}
+                variant="destructive"
+                className="w-full mt-2 gap-2"
+              >
+                <StopCircle className="h-4 w-4" />
+                Parar
               </Button>
             )}
           </div>
@@ -186,7 +198,7 @@ export function VicSidepanel() {
 
           {/* Response Area */}
           <div className="flex-1 min-h-0 mt-4">
-            {isLoading ? (
+            {isStreaming && !response ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin mb-2" />
                 <p className="text-sm">Vic está pensando...</p>
@@ -195,7 +207,10 @@ export function VicSidepanel() {
               <ScrollArea className="h-full">
                 <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {response.response}
+                    {response}
+                    {isStreaming && (
+                      <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5 align-middle" />
+                    )}
                   </div>
                 </div>
               </ScrollArea>
@@ -208,7 +223,7 @@ export function VicSidepanel() {
           </div>
 
           {/* Action Buttons */}
-          {response && (
+          {response && !isStreaming && (
             <div className="flex-shrink-0 mt-4 pt-4 border-t">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex gap-2">
@@ -229,10 +244,10 @@ export function VicSidepanel() {
                     variant="outline"
                     size="sm"
                     onClick={handleRegenerate}
-                    disabled={isLoading}
+                    disabled={isStreaming}
                     className="gap-1.5"
                   >
-                    <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+                    <RefreshCw className={cn("h-3.5 w-3.5", isStreaming && "animate-spin")} />
                     Refazer
                   </Button>
                 </div>
@@ -247,9 +262,9 @@ export function VicSidepanel() {
                   </Button>
                 )}
               </div>
-              {response.tokensUsed && (
+              {metadata?.tokensUsed && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  {response.tokensUsed} tokens • {response.latencyMs}ms
+                  {metadata.tokensUsed} tokens • {metadata.latencyMs}ms
                 </p>
               )}
             </div>

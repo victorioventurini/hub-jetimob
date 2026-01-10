@@ -8,6 +8,7 @@ export { VicProvider, useVic } from "./contexts/VicContext";
 
 // Hooks
 export { useVicAgent, useVicEnabled, useVicConfig, useVicAgentActivations } from "./hooks/useVicAgent";
+export { useVicStream } from "./hooks/useVicStream";
 export { useAskToVic } from "./hooks/useAskToVic";
 
 // Components
