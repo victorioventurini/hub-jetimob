@@ -7,12 +7,21 @@ import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
 import type { AssetInventory, AssetMovement, AssetCategory, AssetMovementType } from "../types";
 
-export function useInventory() {
+export interface UseInventoryOptions {
+  search?: string;
+  statusFilter?: string;
+  categoryFilter?: string;
+  holderFilter?: string;
+  locationFilter?: string;
+}
+
+export function useInventory(options: UseInventoryOptions = {}) {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
+  const { search, statusFilter, categoryFilter, holderFilter, locationFilter } = options;
 
   // Buscar categorias
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
@@ -34,11 +43,13 @@ export function useInventory() {
 
   // Buscar itens de inventário
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
-    queryKey: queryKeys.assets.inventory.all(buId ?? null),
+    queryKey: queryKeys.assets.inventory.list(buId ?? null, { 
+      search, statusFilter, categoryFilter, holderFilter, locationFilter 
+    }),
     enabled: !!supabase && !!buId,
     queryFn: async () => {
       if (!supabase) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("asset_inventory")
         .select(`
           *,
@@ -47,6 +58,34 @@ export function useInventory() {
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");
+
+      // Server-side text search
+      if (search && search.trim()) {
+        const term = `%${search.trim()}%`;
+        query = query.or(`name.ilike.${term},internal_code.ilike.${term}`);
+      }
+
+      // Server-side status filter
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter as 'available' | 'loaned' | 'maintenance' | 'written_off');
+      }
+
+      // Server-side category filter
+      if (categoryFilter && categoryFilter !== 'all') {
+        query = query.eq('category_id', categoryFilter);
+      }
+
+      // Server-side holder filter
+      if (holderFilter && holderFilter !== 'all') {
+        query = query.eq('current_user_id', holderFilter);
+      }
+
+      // Server-side location filter
+      if (locationFilter && locationFilter !== 'all') {
+        query = query.or(`home_location_id.eq.${locationFilter},current_location_id.eq.${locationFilter}`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

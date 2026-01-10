@@ -11,12 +11,17 @@ import type { AssetClaviculary, AssetHook, AssetKeyring, AssetKey, AssetKeyMovem
 const formatProfileName = (p: { first_name: string | null; last_name: string | null; display_name: string | null }) => 
   p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome';
 
-export function useKeys() {
+export interface UseKeysOptions {
+  search?: string;
+}
+
+export function useKeys(options: UseKeysOptions = {}) {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
+  const { search } = options;
 
   // Buscar claviculários
   const { data: clavicularies = [], isLoading: isLoadingClavicularies, refetch: refetchClavicularies } = useQuery({
@@ -63,11 +68,11 @@ export function useKeys() {
 
   // Buscar chaveiros
   const { data: keyrings = [], isLoading: isLoadingKeyrings, refetch: refetchKeyrings } = useQuery({
-    queryKey: ["asset-keyrings", buId],
+    queryKey: ["asset-keyrings", buId, { search }],
     enabled: !!buId && !!supabase,
     queryFn: async () => {
       if (!supabase) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("asset_keyrings")
         .select(`
           *,
@@ -77,6 +82,14 @@ export function useKeys() {
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("tag_number");
+
+      // Server-side text search
+      if (search && search.trim()) {
+        const term = `%${search.trim()}%`;
+        query = query.or(`name.ilike.${term},tag_number.ilike.${term}`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

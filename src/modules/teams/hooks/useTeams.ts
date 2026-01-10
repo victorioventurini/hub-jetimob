@@ -6,7 +6,20 @@ import { toast } from "sonner";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 
-export function useTeams(includeInactive = false) {
+export interface UseTeamsOptions {
+  includeInactive?: boolean;
+  search?: string;
+  parentTeamId?: string | null;
+  leaderId?: string | null;
+}
+
+export function useTeams(optionsOrIncludeInactive: UseTeamsOptions | boolean = false) {
+  // Support legacy boolean API and new options object API
+  const options: UseTeamsOptions = typeof optionsOrIncludeInactive === 'boolean' 
+    ? { includeInactive: optionsOrIncludeInactive }
+    : optionsOrIncludeInactive;
+  
+  const { includeInactive = false, search, parentTeamId, leaderId } = options;
   const { currentBu } = useBu();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
@@ -31,6 +44,22 @@ export function useTeams(includeInactive = false) {
 
       if (!includeInactive) {
         query = query.eq("status", "active");
+      }
+
+      // Server-side text search
+      if (search && search.trim()) {
+        const term = `%${search.trim()}%`;
+        query = query.ilike("name", term);
+      }
+
+      // Server-side parent team filter
+      if (parentTeamId) {
+        query = query.eq("parent_team_id", parentTeamId);
+      }
+
+      // Server-side leader filter
+      if (leaderId) {
+        query = query.eq("leader_user_id", leaderId);
       }
 
       const { data, error } = await query;

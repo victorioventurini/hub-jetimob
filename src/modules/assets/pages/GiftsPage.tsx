@@ -10,21 +10,20 @@ import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { GiftItemCard } from "../components/gifts/GiftItemCard";
 import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
 import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
+import { useUrlSearch } from "@/shared/url";
 
 export default function GiftsPage() {
-  const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts();
+  // URL State for server-side filtering
+  const { value: search, set: setSearch } = useUrlSearch("q");
+  
+  const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts({
+    search: search || undefined,
+  });
   const { canManageGifts, isGiftsAdmin, isLoading: isLoadingPermissions } = useAssetPermissions();
-  const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 
   const isLoading = isLoadingGifts || isLoadingPermissions;
-
-  const filteredItems = items.filter(
-    (item) =>
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      (item.category?.toLowerCase().includes(search.toLowerCase()) ?? false)
-  );
 
   // Itens com estoque baixo (menos de 10)
   const lowStockItems = items.filter((item) => {
@@ -78,37 +77,33 @@ export default function GiftsPage() {
               <ArrowUp className="h-4 w-4 mr-2" />
               Registrar Saída
             </Button>
-            {isGiftsAdmin && (
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Brinde
-              </Button>
-            )}
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Brinde
+            </Button>
           </>
         )}
       </div>
 
-      {/* Lista de itens */}
-      {filteredItems.length === 0 ? (
+      {/* Grid de brindes */}
+      {items.length === 0 ? (
         <EmptyState
           icon={Gift}
-          title="Nenhum brinde encontrado"
-          description={
-            search
-              ? "Tente ajustar a busca"
-              : "Cadastre o primeiro item de brinde"
-          }
+          title="Nenhum brinde cadastrado"
+          description={search 
+            ? "Tente ajustar a busca" 
+            : "Cadastre o primeiro item de brinde"}
           actionLabel={canManageGifts && !search ? "Novo Brinde" : undefined}
           onAction={canManageGifts && !search ? () => setDialogOpen(true) : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredItems.map((item) => (
+          {items.map((item) => (
             <GiftItemCard
               key={item.id}
               item={item}
-              batches={batches.filter((b) => b.gift_item_id === item.id)}
               totals={getItemTotals(item.id)}
+              batches={batches.filter((b) => b.gift_item_id === item.id)}
             />
           ))}
         </div>
