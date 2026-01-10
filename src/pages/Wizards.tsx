@@ -10,6 +10,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { HubLayout } from '@/components/layout/HubLayout';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -167,6 +169,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
 // ============================================================
 
 export default function WizardsPage() {
+  const navigate = useNavigate();
   // SEO
   usePageTitle('Wizards', {
     customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Hub.',
@@ -253,6 +256,24 @@ export default function WizardsPage() {
 
   // Handle wizard open
   const handleWizardOpen = useCallback((wizardId: string, wizard?: WizardDefinition) => {
+    // For team-okr-creation, navigate to full-page wizard
+    if (wizardId === 'team-okr-creation') {
+      const firstLeaderTeam = leaderTeams?.[0];
+      const firstAnyTeam = allTeams?.[0];
+      const teamToUse = firstLeaderTeam 
+        ? firstLeaderTeam.team_id 
+        : ((isSuperAdmin || isAdmin) && firstAnyTeam) 
+          ? firstAnyTeam.id 
+          : null;
+      
+      if (teamToUse) {
+        navigate(`/okrs/create?team=${teamToUse}`);
+      } else {
+        toast.error('Selecione um time para criar OKRs');
+      }
+      return;
+    }
+
     // Reset collaborator impersonation when (re)opening collaborator wizard
     if (wizardId === 'collaborator-checkin') {
       setCollaboratorUserId(null);
@@ -272,7 +293,7 @@ export default function WizardsPage() {
 
     // Update URL state (only wizard ID)
     wizardState.set(wizardId);
-  }, [selectedTeam, leaderTeams, allTeams, wizardState, isSuperAdmin, isAdmin]);
+  }, [selectedTeam, leaderTeams, allTeams, wizardState, isSuperAdmin, isAdmin, navigate]);
 
 
   // Handle wizard close
@@ -419,17 +440,7 @@ export default function WizardsPage() {
           />
         )}
 
-        {teamOkrCreationWizardOpen && selectedTeam && (
-          <TeamOkrCreationWizard
-            open={teamOkrCreationWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose()}
-            teamId={selectedTeam.id}
-            teamName={selectedTeam.name}
-            onTeamChange={(teamId, teamName) => {
-              setSelectedTeam({ id: teamId, name: teamName });
-            }}
-          />
-        )}
+        {/* TeamOkrCreationWizard now uses full-page at /okrs/create */}
       </div>
     </HubLayout>
   );
