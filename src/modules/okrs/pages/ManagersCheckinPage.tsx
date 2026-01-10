@@ -172,11 +172,6 @@ export default function ManagersCheckinPage() {
         return (
           <ManagersCrossIssuesStep
             dependencies={MOCK_DEPENDENCIES}
-            resolvedIds={new Set(draft.data.resolvedDependencies)}
-            onResolve={(id) => {
-              const updated = [...draft.data.resolvedDependencies, id];
-              updateDraft({ resolvedDependencies: updated });
-            }}
             onContinue={goNext}
             onBack={goBack}
           />

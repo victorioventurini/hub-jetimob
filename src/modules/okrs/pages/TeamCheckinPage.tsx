@@ -102,8 +102,8 @@ export default function TeamCheckinPage() {
   
   // Fetch team KRs
   const { data: pendingKrs, isLoading: isLoadingKrs } = useTeamPendingKrs(
-    teamIdParam || '',
-    quarterlyCycle?.id
+    quarterlyCycle?.id,
+    teamIdParam ? [teamIdParam] : []
   );
   
   // Navigation
@@ -194,6 +194,7 @@ export default function TeamCheckinPage() {
             teamName={selectedTeam.name}
             cycleName={quarterlyCycle?.name || ''}
             krs={krs}
+            markedForDiscussion={draft.data.reviewedKrs}
             isLoading={isLoadingKrs}
             onContinue={goNext}
           />
@@ -203,6 +204,7 @@ export default function TeamCheckinPage() {
         return (
           <TeamKrReviewStep
             krs={krs}
+            markedForDiscussion={[]}
             reviewedKrs={new Set(draft.data.reviewedKrs)}
             onMarkReviewed={(krId) => {
               const updated = [...draft.data.reviewedKrs, krId];
@@ -216,7 +218,7 @@ export default function TeamCheckinPage() {
       case 'initiatives':
         return (
           <TeamInitiativesStep
-            krs={krs}
+            initiatives={[]}
             onContinue={goNext}
             onBack={goBack}
           />

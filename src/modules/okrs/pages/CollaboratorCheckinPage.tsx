@@ -92,8 +92,8 @@ export default function CollaboratorCheckinPage() {
   // Fetch user KRs
   const { data: userKrs, isLoading: isLoadingKrs } = useUserKrsForWizard(
     quarterlyCycle?.id || null,
-    profile?.id || null,
-    'all'
+    'all',
+    profile?.id || null
   );
   
   // Navigation
@@ -175,21 +175,45 @@ export default function CollaboratorCheckinPage() {
         );
         
       case 'checkin':
+        const currentKr = krs[draft.data.currentKrIndex];
+        if (!currentKr) {
+          goNext();
+          return null;
+        }
         return (
           <CollaboratorCheckinStep
-            krs={krs}
-            currentKrIndex={draft.data.currentKrIndex}
-            results={draft.data.results}
-            onKrComplete={(result) => {
+            kr={currentKr}
+            currentIndex={draft.data.currentKrIndex}
+            totalCount={krs.length}
+            onComplete={(result) => {
               const newResults = [...draft.data.results];
               newResults[draft.data.currentKrIndex] = result;
-              updateDraft({ 
-                results: newResults,
-                currentKrIndex: draft.data.currentKrIndex + 1 
-              });
+              const nextIndex = draft.data.currentKrIndex + 1;
+              if (nextIndex >= krs.length) {
+                updateDraft({ results: newResults });
+                goNext();
+              } else {
+                updateDraft({ 
+                  results: newResults,
+                  currentKrIndex: nextIndex 
+                });
+              }
             }}
-            onBack={goBack}
-            onComplete={goNext}
+            onSkip={() => {
+              const nextIndex = draft.data.currentKrIndex + 1;
+              if (nextIndex >= krs.length) {
+                goNext();
+              } else {
+                updateDraft({ currentKrIndex: nextIndex });
+              }
+            }}
+            onBack={() => {
+              if (draft.data.currentKrIndex > 0) {
+                updateDraft({ currentKrIndex: draft.data.currentKrIndex - 1 });
+              } else {
+                goBack();
+              }
+            }}
           />
         );
         
@@ -197,9 +221,10 @@ export default function CollaboratorCheckinPage() {
         return (
           <CollaboratorInitiativesStep
             krs={krs}
-            markedAtRisk={draft.data.initiativesMarkedAtRisk}
-            onMarkAtRisk={(ids) => updateDraft({ initiativesMarkedAtRisk: ids })}
-            onContinue={goNext}
+            onContinue={(markedAtRisk) => {
+              updateDraft({ initiativesMarkedAtRisk: markedAtRisk });
+              goNext();
+            }}
             onBack={goBack}
             onSkip={goNext}
           />
@@ -208,9 +233,11 @@ export default function CollaboratorCheckinPage() {
       case 'reflection':
         return (
           <CollaboratorReflectionStep
-            reflection={draft.data.reflection}
-            onReflectionChange={(reflection) => updateDraft({ reflection })}
-            onContinue={goNext}
+            results={draft.data.results}
+            onComplete={(reflection) => {
+              updateDraft({ reflection });
+              goNext();
+            }}
             onBack={goBack}
           />
         );
@@ -218,12 +245,11 @@ export default function CollaboratorCheckinPage() {
       case 'summary':
         return (
           <CollaboratorSummary
-            krs={krs}
             results={draft.data.results}
             reflection={draft.data.reflection}
-            initiativesAtRisk={draft.data.initiativesMarkedAtRisk}
-            onComplete={handleComplete}
-            onBack={goBack}
+            initiativesMarkedAtRisk={draft.data.initiativesMarkedAtRisk}
+            onViewOkrs={() => navigate('/okrs')}
+            onClose={handleComplete}
           />
         );
         
