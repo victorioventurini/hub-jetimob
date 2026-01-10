@@ -120,6 +120,33 @@ export interface TicketRoutingRule {
   watcher_contacts?: PartnerContact[];
 }
 
+// Regra de Roteamento Interno
+export interface TicketInternalRoutingRule {
+  id: string;
+  bu_id: string;
+  category_id: string | null;
+  subcategory_id: string | null;
+  assignee_user_ids: string[];
+  assignee_team_ids: string[];
+  assignee_squad_ids: string[];
+  watcher_user_ids: string[];
+  watcher_team_ids: string[];
+  watcher_squad_ids: string[];
+  priority: number;
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  category?: { id: string; name: string; scope: TicketCategoryScope } | null;
+  subcategory?: { 
+    id: string; 
+    name: string; 
+    category?: { id: string; name: string; scope: TicketCategoryScope } 
+  } | null;
+}
+
 // Ticket (Entidade Principal)
 export interface Ticket {
   id: string;

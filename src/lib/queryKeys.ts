@@ -202,6 +202,7 @@ export const queryKeys = {
     partners: (buId: string | null) => ['tickets', 'partners', buId] as const,
     partnerCompany: (id: string | null) => ['tickets', 'partner-company', id] as const,
     routingRules: (buId: string | null) => ['tickets', 'routing-rules', buId] as const,
+    internalRoutingRules: (buId: string | null) => ['tickets', 'internal-routing-rules', buId] as const,
     contactCapabilities: (buId: string | null, contactId?: string) => 
       ['tickets', 'contact-capabilities', buId, contactId] as const,
     companyContactCapabilities: (buId: string | null, companyId?: string) => 
