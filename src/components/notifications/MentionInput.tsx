@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { queryKeys } from '@/lib/queryKeys';
 import { UserHoverCard } from '@/components/user/UserHoverCard';
 
 // Helper function to extract display text (without mention syntax)
