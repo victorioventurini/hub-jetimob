@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useCallback, useState } from 'react';
-import { useNavigate, useBlocker } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -86,18 +86,19 @@ export function FullPageWizardShell({
   const navigate = useNavigate();
   const [showExitDialog, setShowExitDialog] = useState(false);
   
-  // Block navigation if dirty
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty && currentLocation.pathname !== nextLocation.pathname
-  );
-  
-  // Handle blocker
+  // Warn before closing tab/window if dirty
   useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setShowExitDialog(true);
-    }
-  }, [blocker.state]);
+    if (!isDirty) return;
+    
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
   
   // Handle close with dirty check
   const handleClose = useCallback(() => {
@@ -113,21 +114,13 @@ export function FullPageWizardShell({
   const handleConfirmExit = useCallback(() => {
     setShowExitDialog(false);
     onClose();
-    
-    if (blocker.state === 'blocked') {
-      blocker.proceed();
-    } else {
-      navigate(backUrl);
-    }
-  }, [blocker, onClose, navigate, backUrl]);
+    navigate(backUrl);
+  }, [onClose, navigate, backUrl]);
   
   // Cancel exit
   const handleCancelExit = useCallback(() => {
     setShowExitDialog(false);
-    if (blocker.state === 'blocked') {
-      blocker.reset();
-    }
-  }, [blocker]);
+  }, []);
   
   return (
     <div className={cn('min-h-screen bg-background flex flex-col', className)}>
