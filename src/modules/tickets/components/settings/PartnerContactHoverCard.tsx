@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -107,7 +108,10 @@ export function PartnerContactHoverCard({
             </div>
           </div>
         ) : contact ? (
-          <div className="p-4">
+          <Link 
+            to={`/tickets/contacts/${contact.id}`}
+            className="block p-4 hover:bg-muted/50 transition-colors"
+          >
             <div className="flex items-start gap-3">
               <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
@@ -167,7 +171,7 @@ export function PartnerContactHoverCard({
                 </div>
               )}
             </div>
-          </div>
+          </Link>
         ) : (
           <div className="p-4 text-center text-sm text-muted-foreground">
             Contato não encontrado
