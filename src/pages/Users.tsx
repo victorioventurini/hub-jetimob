@@ -161,8 +161,7 @@ export default function UsersPage() {
           employment_status,
           team_id,
           team:teams!fk_profiles_team(id, name),
-          manager_user_id,
-          manager:profiles!profiles_manager_user_id_fkey(id, display_name, photo_url)
+          manager_user_id
         `)
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
@@ -177,27 +176,39 @@ export default function UsersPage() {
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map((p) => {
-        // Manager pode vir como array (self-join) - pegar primeiro elemento
-        const managerData = Array.isArray(p.manager) ? p.manager[0] : p.manager;
-        return {
-          id: p.id,
-          user_id: p.user_id,
-          first_name: p.first_name,
-          last_name: p.last_name,
-          display_name: p.display_name,
-          work_email: p.work_email,
-          job_title_name: (p.job_title_rel as { name: string } | null)?.name || "Sem cargo",
-          job_title_id: p.job_title_id,
-          photo_url: p.photo_url,
-          city: p.city,
-          state: p.state,
-          work_mode: p.work_mode,
-          employment_status: p.employment_status,
-          team: p.team as { id: string; name: string } | null,
-          manager: managerData as { id: string; display_name: string; photo_url: string | null } | null,
-        };
-      }) as ProfileWithTeam[];
+      // Coletar manager_user_ids únicos para buscar em lote
+      const managerIds = [...new Set((data || []).map(p => p.manager_user_id).filter(Boolean))] as string[];
+      
+      // Buscar managers em uma query separada (evita problema de self-join do PostgREST)
+      let managersMap: Record<string, { id: string; display_name: string | null; photo_url: string | null }> = {};
+      if (managerIds.length > 0) {
+        const { data: managersData } = await supabase
+          .from("profiles")
+          .select("id, display_name, photo_url")
+          .in("id", managerIds);
+        
+        if (managersData) {
+          managersMap = Object.fromEntries(managersData.map(m => [m.id, m]));
+        }
+      }
+
+      return (data || []).map((p) => ({
+        id: p.id,
+        user_id: p.user_id,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        display_name: p.display_name,
+        work_email: p.work_email,
+        job_title_name: (p.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+        job_title_id: p.job_title_id,
+        photo_url: p.photo_url,
+        city: p.city,
+        state: p.state,
+        work_mode: p.work_mode,
+        employment_status: p.employment_status,
+        team: p.team as { id: string; name: string } | null,
+        manager: p.manager_user_id ? managersMap[p.manager_user_id] ?? null : null,
+      })) as ProfileWithTeam[];
     },
     enabled: !!currentBu?.id,
   });
