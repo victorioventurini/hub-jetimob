@@ -805,6 +805,7 @@ export default function SettingsNotifications() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Data</TableHead>
+                          <TableHead>Destinatário</TableHead>
                           <TableHead>Canal</TableHead>
                           <TableHead>Evento</TableHead>
                           <TableHead>Status</TableHead>
@@ -816,7 +817,7 @@ export default function SettingsNotifications() {
                       <TableBody>
                         {outboxData?.data.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                               Nenhum item no outbox
                             </TableCell>
                           </TableRow>
@@ -834,6 +835,18 @@ export default function SettingsNotifications() {
                               <TableRow key={item.id}>
                                 <TableCell className="text-sm">
                                   {format(new Date(item.created_at), 'dd/MM HH:mm', { locale: ptBR })}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium truncate max-w-[150px]">
+                                      {item.recipient?.display_name || '-'}
+                                    </span>
+                                    {item.recipient?.email && (
+                                      <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                        {item.recipient.email}
+                                      </span>
+                                    )}
+                                  </div>
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1">
@@ -910,6 +923,7 @@ export default function SettingsNotifications() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Data</TableHead>
+                          <TableHead>Destinatário</TableHead>
                           <TableHead>Título</TableHead>
                           <TableHead>Evento</TableHead>
                           <TableHead>Tipo</TableHead>
@@ -919,7 +933,7 @@ export default function SettingsNotifications() {
                       <TableBody>
                         {inappData?.data.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                               Nenhuma notificação in-app
                             </TableCell>
                           </TableRow>
@@ -928,6 +942,9 @@ export default function SettingsNotifications() {
                             <TableRow key={item.id}>
                               <TableCell className="text-sm">
                                 {format(new Date(item.created_at), 'dd/MM HH:mm', { locale: ptBR })}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium truncate max-w-[150px]">
+                                {item.recipient?.display_name || '-'}
                               </TableCell>
                               <TableCell>{item.title}</TableCell>
                               <TableCell className="font-mono text-xs">
