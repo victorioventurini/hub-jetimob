@@ -4,6 +4,12 @@ import { toast } from 'sonner';
 import { queryKeys } from '@/lib/queryKeys';
 import type { OkrKrMetric, OkrMetricRole } from '../types';
 
+// Explicit fields for okr_kr_metrics - avoid select('*')
+const KR_METRIC_FIELDS = `
+  id, kr_id, kr_type, kpi_id, role, created_at, deleted_at,
+  kpi:kpi_metrics(id, name, unit, target_value, direction)
+` as const;
+
 export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
   const { client: supabase, isReady } = useOptionalBuClient();
 
@@ -14,10 +20,7 @@ export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
       
       const { data, error } = await supabase
         .from('okr_kr_metrics')
-        .select(`
-          *,
-          kpi:kpi_metrics(id, name, unit, target_value, direction)
-        `)
+        .select(KR_METRIC_FIELDS)
         .eq('kr_id', krId)
         .eq('kr_type', krType)
         .is('deleted_at', null);
@@ -26,6 +29,7 @@ export function useOkrKrMetrics(krId: string, krType: 'org' | 'team') {
       return data as OkrKrMetric[];
     },
     enabled: !!krId && isReady && !!supabase,
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 }
 
@@ -33,16 +37,13 @@ export function usePrimaryKrMetric(krId: string, krType: 'org' | 'team') {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-kr-metrics', 'primary', krId, krType],
+    queryKey: queryKeys.okrs.krMetricsRole('primary', krId, krType),
     queryFn: async () => {
       if (!supabase) return null;
       
       const { data, error } = await supabase
         .from('okr_kr_metrics')
-        .select(`
-          *,
-          kpi:kpi_metrics(id, name, unit, target_value, direction)
-        `)
+        .select(KR_METRIC_FIELDS)
         .eq('kr_id', krId)
         .eq('kr_type', krType)
         .eq('role', 'primary')
@@ -53,6 +54,7 @@ export function usePrimaryKrMetric(krId: string, krType: 'org' | 'team') {
       return data as OkrKrMetric | null;
     },
     enabled: !!krId && isReady && !!supabase,
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 }
 
@@ -60,16 +62,13 @@ export function useGuardrailKrMetrics(krId: string, krType: 'org' | 'team') {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-kr-metrics', 'guardrails', krId, krType],
+    queryKey: queryKeys.okrs.krMetricsRole('guardrails', krId, krType),
     queryFn: async () => {
       if (!supabase) return [];
       
       const { data, error } = await supabase
         .from('okr_kr_metrics')
-        .select(`
-          *,
-          kpi:kpi_metrics(id, name, unit, target_value, direction)
-        `)
+        .select(KR_METRIC_FIELDS)
         .eq('kr_id', krId)
         .eq('kr_type', krType)
         .eq('role', 'guardrail')
@@ -79,6 +78,7 @@ export function useGuardrailKrMetrics(krId: string, krType: 'org' | 'team') {
       return data as OkrKrMetric[];
     },
     enabled: !!krId && isReady && !!supabase,
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 }
 
@@ -98,7 +98,7 @@ export function useCreateKrMetric() {
       const { data, error } = await supabase
         .from('okr_kr_metrics')
         .insert(metric)
-        .select()
+        .select(KR_METRIC_FIELDS)
         .single();
 
       if (error) throw error;
@@ -137,6 +137,7 @@ export function useUpdateKrMetric() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all KR metrics queries
       queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics'] });
       toast.success('KPI atualizado');
     },
@@ -167,6 +168,7 @@ export function useDeleteKrMetric() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all KR metrics queries
       queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics'] });
       toast.success('KPI desvinculado');
     },

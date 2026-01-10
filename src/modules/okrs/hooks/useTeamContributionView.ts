@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface TeamOkrContribution {
   id: string;
@@ -78,27 +79,34 @@ const calculateAggregatedStatus = (items: { status: string }[]): 'on_track' | 'a
   return 'on_track';
 };
 
+// Explicit fields - avoid select('*')
+const TEAM_FIELDS = `
+  id, name, description,
+  leader:profiles!teams_leader_user_id_fkey(display_name, photo_url)
+` as const;
+
+const TEAM_KR_FIELDS = `
+  id, title, status, current_value, baseline, target, unit, direction, last_checkin_at, linked_org_kr_id,
+  team_objective:okr_team_objectives(id, title)
+` as const;
+
+const ORG_KR_FIELDS = `id, title, status, current_value, baseline, target, unit, direction, org_objective_id` as const;
+
+const ORG_OBJECTIVE_FIELDS = `id, title, description, status` as const;
+
 export const useTeamContributionView = (teamId: string | undefined) => {
   const { currentBu } = useBu();
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['team-contribution-view', teamId, currentBu?.id],
+    queryKey: queryKeys.okrs.teamContributionView(teamId ?? null, currentBu?.id ?? null),
     queryFn: async (): Promise<TeamContributionData | null> => {
       if (!teamId || !currentBu?.id || !supabase) return null;
 
       // Fetch team info
       const { data: team, error: teamError } = await supabase
         .from('teams')
-        .select(`
-          id,
-          name,
-          description,
-          leader:profiles!teams_leader_user_id_fkey(
-            display_name,
-            photo_url
-          )
-        `)
+        .select(TEAM_FIELDS)
         .eq('id', teamId)
         .single();
 
@@ -110,22 +118,7 @@ export const useTeamContributionView = (teamId: string | undefined) => {
       // Fetch all team KRs that are linked to org KRs
       const { data: teamKrs, error: krsError } = await supabase
         .from('okr_team_key_results')
-        .select(`
-          id,
-          title,
-          status,
-          current_value,
-          baseline,
-          target,
-          unit,
-          direction,
-          last_checkin_at,
-          linked_org_kr_id,
-          team_objective:okr_team_objectives(
-            id,
-            title
-          )
-        `)
+        .select(TEAM_KR_FIELDS)
         .eq('team_id', teamId)
         .eq('bu_id', currentBu.id)
         .is('deleted_at', null)
@@ -160,17 +153,7 @@ export const useTeamContributionView = (teamId: string | undefined) => {
       // Fetch org KRs
       const { data: orgKrs, error: orgKrsError } = await supabase
         .from('okr_org_key_results')
-        .select(`
-          id,
-          title,
-          status,
-          current_value,
-          baseline,
-          target,
-          unit,
-          direction,
-          org_objective_id
-        `)
+        .select(ORG_KR_FIELDS)
         .in('id', orgKrIds)
         .is('deleted_at', null);
 
@@ -185,7 +168,7 @@ export const useTeamContributionView = (teamId: string | undefined) => {
       // Fetch org objectives
       const { data: orgObjectives, error: objError } = await supabase
         .from('okr_org_objectives')
-        .select('id, title, description, status')
+        .select(ORG_OBJECTIVE_FIELDS)
         .in('id', orgObjectiveIds)
         .is('deleted_at', null);
 
@@ -274,5 +257,6 @@ export const useTeamContributionView = (teamId: string | undefined) => {
       };
     },
     enabled: !!teamId && !!currentBu?.id && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };

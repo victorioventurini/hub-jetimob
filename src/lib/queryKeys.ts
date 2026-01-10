@@ -78,12 +78,14 @@ export const queryKeys = {
     orgObjectivesWithKrs: (buId: string | null, year?: number) => 
       ['okr-org-objectives-with-krs', buId, year] as const,
     orgObjective: (id: string) => ['okr-org-objective', id] as const,
+    orgObjectiveView: (objectiveId: string, buId: string | null) => 
+      ['org-objective-view', objectiveId, buId] as const,
     orgKeyResults: (buId: string | null, objectiveId?: string) => 
       ['okr-org-key-results', buId, objectiveId] as const,
     orgKeyResultsAll: (buId: string | null) => 
       ['okr-all-org-key-results', buId] as const,
-    allOrgObjectivesView: (buId: string | null) => 
-      ['all-org-objectives-view', buId] as const,
+    allOrgObjectivesView: (year: number, buId: string | null) => 
+      ['all-org-objectives-view', year, buId] as const,
     
     // Team level
     teamObjectives: (buId: string | null, teamId?: string) => 
@@ -112,6 +114,12 @@ export const queryKeys = {
         : ['okr-contributions'] as const,
     teamContributions: (teamId: string) => 
       ['okr-team-contributions', teamId] as const,
+    teamContributedOkrs: (teamId: string | null) => 
+      ['team-contributed-okrs', teamId] as const,
+    teamContributionView: (teamId: string | null, buId: string | null) => 
+      ['team-contribution-view', teamId, buId] as const,
+    sharedSummary: () => 
+      ['shared-okrs-summary'] as const,
     
     // KR Metrics
     krMetrics: (krId: string, krType: string) => 

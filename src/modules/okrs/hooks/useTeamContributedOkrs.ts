@@ -1,5 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
+
+// Explicit fields for v_team_contributed_okrs view (based on actual schema)
+const CONTRIBUTED_VIEW_FIELDS = `
+  objective_id, title, description, status, primary_team_id, primary_team_name,
+  contributor_team_id, contributor_team_name, is_shared, responsibility_model,
+  org_objective_id, cycle_id, bu_id
+` as const;
+
+// Explicit fields for team objectives with KRs
+const TEAM_OBJECTIVE_FIELDS = `
+  id, title, description, status, team_id, created_at, updated_at,
+  team:teams!okr_team_objectives_team_id_fkey(id, name),
+  key_results:okr_team_key_results(
+    id, title, baseline, current_value, target, direction, unit, status, last_checkin_at
+  )
+` as const;
+
+// Explicit fields for shared OKRs summary view
+const SHARED_SUMMARY_FIELDS = `
+  objective_id, title, primary_team_id, primary_team_name,
+  contributor_count
+` as const;
 
 /**
  * Fetch shared OKRs where a team is a contributor (but not primary).
@@ -9,14 +32,14 @@ export function useTeamContributedOkrs(teamId?: string) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['team-contributed-okrs', teamId],
+    queryKey: queryKeys.okrs.teamContributedOkrs(teamId ?? null),
     queryFn: async () => {
       if (!teamId || !supabase) return [];
 
       // First get the contributed objective IDs from the view
       const { data: contributions, error: contribError } = await supabase
         .from('v_team_contributed_okrs')
-        .select('*')
+        .select(CONTRIBUTED_VIEW_FIELDS)
         .eq('contributor_team_id', teamId);
 
       if (contribError) {
@@ -32,21 +55,7 @@ export function useTeamContributedOkrs(teamId?: string) {
       // Fetch full objective data with KRs
       const { data: objectives, error: objError } = await supabase
         .from('okr_team_objectives')
-        .select(`
-          *,
-          team:teams!okr_team_objectives_team_id_fkey(id, name),
-          key_results:okr_team_key_results(
-            id,
-            title,
-            baseline,
-            current_value,
-            target,
-            direction,
-            unit,
-            status,
-            last_checkin_at
-          )
-        `)
+        .select(TEAM_OBJECTIVE_FIELDS)
         .in('id', objectiveIds)
         .is('deleted_at', null);
 
@@ -58,6 +67,7 @@ export function useTeamContributedOkrs(teamId?: string) {
       return objectives || [];
     },
     enabled: !!teamId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -68,13 +78,13 @@ export function useSharedOkrsSummary() {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['shared-okrs-summary'],
+    queryKey: queryKeys.okrs.sharedSummary(),
     queryFn: async () => {
       if (!supabase) return [];
       
       const { data, error } = await supabase
         .from('v_shared_okrs_summary')
-        .select('*');
+        .select(SHARED_SUMMARY_FIELDS);
 
       if (error) {
         console.error('Error fetching shared OKRs summary:', error);
@@ -84,6 +94,7 @@ export function useSharedOkrsSummary() {
       return data || [];
     },
     enabled: isReady && !!supabase,
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 }
 

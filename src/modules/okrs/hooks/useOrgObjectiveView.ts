@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
+import { queryKeys } from '@/lib/queryKeys';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
 export interface TeamKrLinked {
@@ -48,6 +49,18 @@ export interface OrgObjectiveWithKrs {
   orgKrs: OrgKrWithTeamKrs[];
 }
 
+// Explicit fields - avoid select('*')
+const ORG_OBJECTIVE_FIELDS = `id, title, description, year, status, bu_id` as const;
+const ORG_KR_FIELDS = `id, org_objective_id, title, baseline, current_value, target, direction, unit, status` as const;
+const TEAM_KR_FIELDS = `
+  id, title, team_id, team_objective_id, linked_org_kr_id, type,
+  baseline, current_value, target, direction, unit, status,
+  last_checkin_at, owner_user_id,
+  teams:team_id (name),
+  team_objective:team_objective_id (title),
+  owner:owner_user_id (display_name)
+` as const;
+
 function calculateProgress(baseline: number, current: number, target: number, direction: OkrDirection): number {
   if (direction === 'up') {
     if (target === baseline) return current >= target ? 100 : 0;
@@ -90,14 +103,14 @@ export function useOrgObjectiveView(objectiveId: string) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['org-objective-view', objectiveId, currentBu?.id],
+    queryKey: queryKeys.okrs.orgObjectiveView(objectiveId, currentBu?.id ?? null),
     queryFn: async (): Promise<OrgObjectiveWithKrs | null> => {
       if (!supabase) return null;
       
       // Fetch org objective
       const { data: objective, error: objError } = await supabase
         .from('okr_org_objectives')
-        .select('id, title, description, year, status, bu_id')
+        .select(ORG_OBJECTIVE_FIELDS)
         .eq('id', objectiveId)
         .is('deleted_at', null)
         .single();
@@ -110,7 +123,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       // Fetch org KRs
       const { data: orgKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
-        .select('id, org_objective_id, title, baseline, current_value, target, direction, unit, status')
+        .select(ORG_KR_FIELDS)
         .eq('org_objective_id', objectiveId)
         .is('deleted_at', null)
         .order('created_at');
@@ -127,14 +140,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       if (orgKrIds.length > 0) {
         const { data: teamKrs, error: teamKrsError } = await supabase
           .from('okr_team_key_results')
-          .select(`
-            id, title, team_id, team_objective_id, linked_org_kr_id, type,
-            baseline, current_value, target, direction, unit, status,
-            last_checkin_at, owner_user_id,
-            teams:team_id (name),
-            team_objective:team_objective_id (title),
-            owner:owner_user_id (display_name)
-          `)
+          .select(TEAM_KR_FIELDS)
           .in('linked_org_kr_id', orgKrIds)
           .is('deleted_at', null);
 
@@ -197,6 +203,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       };
     },
     enabled: !!objectiveId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -206,14 +213,14 @@ export function useAllOrgObjectivesView(year?: number) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['all-org-objectives-view', currentYear, currentBu?.id],
+    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, currentBu?.id ?? null),
     queryFn: async (): Promise<OrgObjectiveWithKrs[]> => {
       if (!supabase) return [];
       
       // Fetch all org objectives for the year
       let query = supabase
         .from('okr_org_objectives')
-        .select('id, title, description, year, status, bu_id')
+        .select(ORG_OBJECTIVE_FIELDS)
         .eq('year', currentYear)
         .eq('status', 'active')
         .is('deleted_at', null)
@@ -236,7 +243,7 @@ export function useAllOrgObjectivesView(year?: number) {
 
       const { data: allOrgKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
-        .select('id, org_objective_id, title, baseline, current_value, target, direction, unit, status')
+        .select(ORG_KR_FIELDS)
         .in('org_objective_id', objectiveIds)
         .is('deleted_at', null);
 
@@ -252,14 +259,7 @@ export function useAllOrgObjectivesView(year?: number) {
       if (orgKrIds.length > 0) {
         const { data: teamKrs, error: teamKrsError } = await supabase
           .from('okr_team_key_results')
-          .select(`
-            id, title, team_id, team_objective_id, linked_org_kr_id, type,
-            baseline, current_value, target, direction, unit, status,
-            last_checkin_at, owner_user_id,
-            teams:team_id (name),
-            team_objective:team_objective_id (title),
-            owner:owner_user_id (display_name)
-          `)
+          .select(TEAM_KR_FIELDS)
           .in('linked_org_kr_id', orgKrIds)
           .is('deleted_at', null);
 
@@ -324,5 +324,6 @@ export function useAllOrgObjectivesView(year?: number) {
       });
     },
     enabled: isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
