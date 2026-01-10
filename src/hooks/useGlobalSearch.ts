@@ -33,6 +33,8 @@ export interface SearchResponse {
  * The bu_id is passed in the request body, not via headers.
  */
 export function useGlobalSearch(initialQuery = "") {
+  console.warn("🔍 [useGlobalSearch] Hook mounted");
+  
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
