@@ -88,6 +88,58 @@ export interface AiAgentLog {
   created_at: string;
 }
 
+// Instruction Source Types
+export type InstructionSourceType = 'api' | 'document' | 'hub_context' | 'template';
+
+export interface InstructionSource {
+  id: string;
+  agent_id: string;
+  source_type: InstructionSourceType;
+  name: string;
+  description: string | null;
+  priority: number;
+  is_enabled: boolean;
+  config: ApiSourceConfig | DocumentSourceConfig | HubContextConfig | TemplateSourceConfig;
+  last_fetch_at: string | null;
+  last_fetch_status: 'success' | 'error' | 'pending' | null;
+  last_fetch_error: string | null;
+  cached_content: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiSourceConfig {
+  url: string;
+  method?: 'GET' | 'POST' | 'PUT';
+  headers?: Record<string, string>;
+  body_template?: Record<string, unknown>;
+  refresh_interval_seconds?: number;
+  auth_type?: 'none' | 'bearer' | 'api_key';
+}
+
+export interface DocumentSourceConfig {
+  document_ids: string[];
+}
+
+export interface HubContextConfig {
+  tables: ('okrs' | 'kpis' | 'teams')[];
+  filters?: {
+    okrs?: { teamId?: string; status?: string[]; ragStatus?: string[] };
+    kpis?: { category?: string; teamId?: string };
+    teams?: { status?: string[] };
+  };
+  max_rows?: number;
+}
+
+export interface TemplateSourceConfig {
+  template_content: string;
+}
+
+// Hub Tool Names (for allowed_tools field)
+export const HUB_TOOLS = ['query_okrs', 'query_kpis', 'query_teams'] as const;
+export type HubToolName = typeof HUB_TOOLS[number];
+
 // Icon mapping
 export const integrationIconMap: Record<string, string> = {
   bot: 'Bot',
