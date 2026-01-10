@@ -8,7 +8,7 @@
  * - Suporte a fechamento
  */
 
-import { ReactNode, useMemo } from 'react';
+import { ReactNode } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   X,
   CheckCircle2,
   Rocket,
@@ -33,6 +33,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardContextSelector } from './WizardContextSelector';
 import type { WizardPersona, WizardStepConfig } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -131,9 +132,6 @@ export function WizardShell({
     onClose?.();
     onOpenChange(false);
   };
-
-  // Dynamically import WizardContextSelector to avoid circular deps
-  const { WizardContextSelector } = require('./WizardContextSelector');
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
