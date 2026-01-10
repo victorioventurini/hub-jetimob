@@ -27,15 +27,13 @@
  */
 
 import { useMemo } from 'react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { useBu } from '@/contexts/BuContext';
 import type { Database } from './types';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+import { getOptionalBuScopedClient } from './buScopedClient';
 
 export interface OptionalBuClientResult {
-  /** BU-scoped Supabase client, or null if BU not selected */
+  /** BU-scoped client, or null if BU not selected */
   client: SupabaseClient<Database> | null;
   /** True if BU is selected and client is ready */
   isReady: boolean;
@@ -52,17 +50,7 @@ export function useOptionalBuClient(): OptionalBuClientResult {
   const { currentBuId } = useBu();
 
   const client = useMemo(() => {
-    if (!currentBuId) return null;
-    
-    return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: { 'x-current-bu-id': currentBuId },
-      },
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-    });
+    return getOptionalBuScopedClient(currentBuId);
   }, [currentBuId]);
 
   return {
@@ -77,15 +65,6 @@ export function useOptionalBuClient(): OptionalBuClientResult {
  * Returns null if buId is null.
  */
 export function createOptionalBuClient(buId: string | null): SupabaseClient<Database> | null {
-  if (!buId) return null;
-  
-  return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: {
-      headers: { 'x-current-bu-id': buId },
-    },
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  });
+  return getOptionalBuScopedClient(buId);
 }
+
