@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
-import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/queryKeys";
 
 export interface SearchResult {
@@ -39,11 +39,6 @@ export function useGlobalSearch(initialQuery = "") {
   const { currentBuId, isLoading: buLoading } = useBu();
   const { session, isLoading: authLoading } = useAuth();
 
-  const buClient = useMemo(() => {
-    if (!currentBuId) return null;
-    return createBuScopedClient(currentBuId);
-  }, [currentBuId]);
-
   // Debounce query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -58,7 +53,7 @@ export function useGlobalSearch(initialQuery = "") {
   const { data, isLoading, isFetching, error, refetch } = useQuery<SearchResponse>({
     queryKey: queryKeys.search.global(currentBuId ?? null, debouncedQuery),
     queryFn: async () => {
-      if (!isReady || !buClient || debouncedQuery.length < 2) {
+      if (!isReady || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
@@ -66,7 +61,7 @@ export function useGlobalSearch(initialQuery = "") {
         (globalThis.crypto?.randomUUID?.() as string | undefined) ||
         `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-      const { data, error } = await buClient.functions.invoke("global-search", {
+      const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
           bu_id: currentBuId,
           q: debouncedQuery,
