@@ -41,7 +41,7 @@ export default function VicTestPage() {
 
   // Fetch all active agents from DB
   const { data: dbAgents = [], isLoading: isLoadingAgents } = useQuery({
-    queryKey: ["vic-test", "agents"],
+    queryKey: queryKeys.vic.globalAgents(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_agents")
