@@ -2,7 +2,7 @@
  * InitiativesSummary - Resumo de iniciativas vinculadas a KRs
  * 
  * Exibe iniciativas linkadas com destaque para:
- * - Iniciativas paradas
+ * - Iniciativas bloqueadas
  * - Iniciativas atrasadas
  * - Iniciativas recém-iniciadas
  */
@@ -23,7 +23,7 @@ import {
   AlertTriangle,
   Clock,
   Play,
-  Pause,
+  Ban,
   CheckCircle2,
   ClipboardList,
 } from 'lucide-react';
@@ -63,10 +63,10 @@ const STATUS_CONFIG: Record<InitiativeStatus, {
     icon: Play,
     className: 'bg-primary/10 text-primary',
   },
-  on_hold: {
-    label: 'Pausada',
-    icon: Pause,
-    className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  blocked: {
+    label: 'Bloqueada',
+    icon: Ban,
+    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     highlight: true,
   },
   completed: {
@@ -74,16 +74,11 @@ const STATUS_CONFIG: Record<InitiativeStatus, {
     icon: CheckCircle2,
     className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   },
-  cancelled: {
-    label: 'Cancelada',
-    icon: AlertTriangle,
-    className: 'bg-muted text-muted-foreground line-through',
-  },
 };
 
 function isOverdue(initiative: Initiative): boolean {
   if (!initiative.expected_end_date) return false;
-  if (initiative.status === 'completed' || initiative.status === 'cancelled') return false;
+  if (initiative.status === 'completed') return false;
   return new Date(initiative.expected_end_date) < new Date();
 }
 
@@ -124,10 +119,10 @@ export function InitiativesSummary({
   }
 
   // Categorize initiatives
-  const pausedOrBlocked = initiatives.filter(i => i.status === 'on_hold');
+  const blockedInitiatives = initiatives.filter(i => i.status === 'blocked');
   const overdue = initiatives.filter(i => isOverdue(i));
   const recentlyStarted = initiatives.filter(i => isRecentlyStarted(i));
-  const needsAttention = [...new Set([...pausedOrBlocked, ...overdue])];
+  const needsAttention = [...new Set([...blockedInitiatives, ...overdue])];
 
   const handleCommentChange = (id: string, comment: string) => {
     setComments(prev => ({ ...prev, [id]: comment }));
@@ -171,9 +166,9 @@ export function InitiativesSummary({
                   {needsAttention.map(init => (
                     <li key={init.id} className="text-xs">
                       <span className="font-medium">{init.name}</span>
-                      {init.status === 'on_hold' && (
-                        <span className="text-yellow-600 dark:text-yellow-400 ml-1">
-                          (pausada)
+                      {init.status === 'blocked' && (
+                        <span className="text-red-600 dark:text-red-400 ml-1">
+                          (bloqueada)
                         </span>
                       )}
                       {isOverdue(init) && (
@@ -205,14 +200,14 @@ export function InitiativesSummary({
                 const config = STATUS_CONFIG[init.status];
                 const StatusIcon = config.icon;
                 const isAtRisk = markedAtRisk.includes(init.id);
-                const isExpanded = expandedInitiative === init.id;
+                const isItemExpanded = expandedInitiative === init.id;
 
                 return (
                   <div 
                     key={init.id}
                     className={cn(
                       "rounded-md border p-3 transition-colors",
-                      config.highlight && "border-yellow-300 bg-yellow-50/30 dark:bg-yellow-950/10",
+                      config.highlight && "border-red-300 bg-red-50/30 dark:bg-red-950/10",
                       isAtRisk && "border-destructive/50 bg-destructive/5"
                     )}
                   >
@@ -253,7 +248,7 @@ export function InitiativesSummary({
                         )}
 
                         {/* Progress */}
-                        {init.progress !== undefined && init.progress > 0 && (
+                        {init.progress !== undefined && init.progress !== null && init.progress > 0 && (
                           <div className="flex items-center gap-2 mt-2">
                             <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                               <div 
@@ -273,15 +268,15 @@ export function InitiativesSummary({
                           variant="ghost"
                           size="sm"
                           className="h-7 text-xs"
-                          onClick={() => setExpandedInitiative(isExpanded ? null : init.id)}
+                          onClick={() => setExpandedInitiative(isItemExpanded ? null : init.id)}
                         >
-                          {isExpanded ? 'Menos' : 'Comentar'}
+                          {isItemExpanded ? 'Menos' : 'Comentar'}
                         </Button>
                       )}
                     </div>
 
                     {/* Comment section */}
-                    {editable && isExpanded && (
+                    {editable && isItemExpanded && (
                       <div className="mt-3 pt-3 border-t">
                         <Textarea
                           value={comments[init.id] || ''}
