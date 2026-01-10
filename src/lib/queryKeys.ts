@@ -385,7 +385,7 @@ export const queryKeys = {
 
   // ============= User Directory =============
   users: {
-    directory: (buId: string | null, filters?: { q?: string; teamId?: string; includeTerminated?: boolean }) => 
+    directory: (buId: string | null, filters?: { q?: string; teamId?: string; status?: string; includeTerminated?: boolean; page?: number; pageSize?: number }) => 
       ['users', 'directory', buId, filters] as const,
     selectOptions: (buId: string | null) => 
       ['users', 'select-options', buId] as const,

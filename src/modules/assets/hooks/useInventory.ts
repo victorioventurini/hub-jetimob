@@ -535,6 +535,8 @@ export function useInventory(options: UseInventoryOptions = {}) {
   return {
     categories,
     items,
+    total,
+    totalPages,
     isLoading: isLoadingCategories || isLoadingItems,
     getItem,
     getItemByCode,
