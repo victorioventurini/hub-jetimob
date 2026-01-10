@@ -2,20 +2,24 @@
  * Hook to fetch teams where the current user is a leader
  */
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
 import type { LeaderTeam } from "../types";
 
 export function useLeaderTeams() {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const { currentBuId } = useBu();
   const { user } = useAuth();
 
   const { data: teams = [], isLoading, error } = useQuery({
     queryKey: queryKeys.home.leaderTeams(currentBuId ?? null, user?.id ?? null),
     queryFn: async () => {
+      if (!supabase) {
+        return [];
+      }
+      
       const { data, error } = await supabase.rpc("get_leader_teams");
 
       if (error) {
@@ -25,7 +29,7 @@ export function useLeaderTeams() {
 
       return (data || []) as LeaderTeam[];
     },
-    enabled: !!currentBuId && !!user?.id,
+    enabled: !!supabase && !!currentBuId && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

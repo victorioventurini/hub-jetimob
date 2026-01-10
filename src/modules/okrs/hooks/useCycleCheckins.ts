@@ -8,7 +8,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -91,7 +91,7 @@ export function useCycleCheckins(
   cycleId: string | null | undefined,
   filters: CycleCheckinsFilters = {}
 ) {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const { currentBuId } = useBu();
 
   // Build filters object for RPC
@@ -111,7 +111,7 @@ export function useCycleCheckins(
   return useQuery({
     queryKey: queryKeys.okrs.cycleCheckins(currentBuId, cycleId || undefined, rpcFilters),
     queryFn: async (): Promise<CycleCheckinsResponse> => {
-      if (!cycleId) {
+      if (!supabase || !cycleId) {
         return {
           checkins: [],
           aggregates: {
@@ -137,7 +137,7 @@ export function useCycleCheckins(
       // The RPC returns JSONB, so data is already parsed
       return data as unknown as CycleCheckinsResponse;
     },
-    enabled: !!cycleId && !!currentBuId,
+    enabled: !!supabase && !!cycleId && !!currentBuId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }

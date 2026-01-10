@@ -7,7 +7,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -18,13 +18,13 @@ import { queryKeys } from "@/lib/queryKeys";
  */
 export function useTeamsList() {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   
   return useQuery({
     // Default: do not include inactive teams in dropdowns
     queryKey: queryKeys.teams.list(currentBu?.id ?? null, false),
     queryFn: async () => {
-      if (!currentBu?.id) return [];
+      if (!supabase || !currentBu?.id) return [];
       
       const { data, error } = await supabase
         .from("teams")
@@ -37,7 +37,7 @@ export function useTeamsList() {
       if (error) throw error;
       return data;
     },
-    enabled: !!currentBu?.id,
+    enabled: !!supabase && !!currentBu?.id,
   });
 }
 
@@ -45,11 +45,12 @@ export function useTeamsList() {
  * Lista de ciclos de OKR ordenados por data.
  */
 export function useCyclesList() {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   
   return useQuery({
     queryKey: ['cycles-list'] as const,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("cycles")
         .select("id, name, start_date, end_date, type")
@@ -58,6 +59,7 @@ export function useCyclesList() {
       if (error) throw error;
       return data;
     },
+    enabled: !!supabase,
   });
 }
 
@@ -65,12 +67,12 @@ export function useCyclesList() {
  * Perfil de um usuário específico (para exibição).
  */
 export function useUserProfile(userId?: string) {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   
   return useQuery({
     queryKey: queryKeys.profiles.detail(userId ?? ""),
     queryFn: async () => {
-      if (!userId) return null;
+      if (!supabase || !userId) return null;
 
       const { data, error } = await supabase
         .from("profiles")
@@ -84,7 +86,7 @@ export function useUserProfile(userId?: string) {
         job_title: (data.job_title_rel as { name: string } | null)?.name || null,
       } : null;
     },
-    enabled: !!userId,
+    enabled: !!supabase && !!userId,
   });
 }
 
@@ -96,11 +98,12 @@ export function useUserProfile(userId?: string) {
  * haven't completed onboarding. The new hook shows ALL registered users.
  */
 export function useProfilesList(buId?: string) {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   
   return useQuery({
     queryKey: queryKeys.profiles.list(buId ?? null),
     queryFn: async () => {
+      if (!supabase) return [];
       // Use canonical view that includes ALL registered users (not just active)
       let query = supabase
         .from("v_bu_active_profiles")
@@ -120,6 +123,6 @@ export function useProfilesList(buId?: string) {
         job_title_rel: p.job_title_name ? { name: p.job_title_name } : null,
       }));
     },
-    enabled: buId ? !!buId : true,
+    enabled: !!supabase && (buId ? !!buId : true),
   });
 }

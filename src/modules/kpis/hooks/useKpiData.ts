@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { KpiCategory, KpiWithValues, KpiValue, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
@@ -53,13 +53,15 @@ interface DbKpiValue {
 export function useKpiData(options: UseKpiDataOptions = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const { category, teamId, ownerId } = options;
 
   // Fetch all KPIs with their latest values
   const { data: kpis, isLoading, error } = useQuery({
     queryKey: queryKeys.kpis.list(null, { category, teamId, ownerId }),
+    enabled: !!supabase,
     queryFn: async () => {
+      if (!supabase) return [];
       let query = supabase
         .from("kpi_metrics")
         .select(`
@@ -269,11 +271,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
 // Hook for fetching a single KPI with full history
 export function useKpiDetail(kpiId: string) {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   
   const { data: kpi, isLoading } = useQuery({
     queryKey: queryKeys.kpis.detail(kpiId),
     queryFn: async () => {
+      if (!supabase) return null;
       const { data, error } = await supabase
         .from("kpi_metrics")
         .select(`
@@ -287,12 +290,13 @@ export function useKpiDetail(kpiId: string) {
       if (error) throw error;
       return data as DbKpiMetric | null;
     },
-    enabled: !!kpiId,
+    enabled: !!supabase && !!kpiId,
   });
 
   const { data: values } = useQuery({
     queryKey: queryKeys.kpis.values(kpiId),
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("kpi_values")
         .select("*")
@@ -302,7 +306,7 @@ export function useKpiDetail(kpiId: string) {
       if (error) throw error;
       return data as DbKpiValue[];
     },
-    enabled: !!kpiId,
+    enabled: !!supabase && !!kpiId,
   });
 
   // Map to extended type
