@@ -111,6 +111,8 @@ export default function BuPermissionsPage() {
         <PageHeader
           title="Permissões da BU"
           description="Gerencie templates e permissões de usuários nesta Business Unit"
+          backTo="/settings"
+          backLabel="Voltar para Configurações"
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
