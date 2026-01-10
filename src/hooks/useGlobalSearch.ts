@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface SearchResult {
   id: string;
@@ -51,7 +52,7 @@ export function useGlobalSearch(initialQuery = "") {
     error,
     refetch,
   } = useQuery<SearchResponse>({
-    queryKey: ["global-search", currentBuId, debouncedQuery],
+    queryKey: queryKeys.search.global(currentBuId ?? null, debouncedQuery),
     queryFn: async () => {
       if (!currentBuId || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
