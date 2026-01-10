@@ -21,7 +21,8 @@ export type WizardPersona =
   | 'leader-prep' 
   | 'team-checkin' 
   | 'managers-checkin' 
-  | 'clevel-checkin';
+  | 'clevel-checkin'
+  | 'team-okr-creation';
 
 // ============================================================
 // STEP CONFIG
@@ -216,6 +217,75 @@ export interface CLevelWizardState {
 }
 
 // ============================================================
+// TEAM OKR CREATION WIZARD
+// ============================================================
+
+export type OkrKrType = 'foundational' | 'contribution' | 'enabler';
+export type OkrDirection = 'up' | 'down';
+
+export interface DraftTeamKr {
+  id: string; // client-side temp id
+  type: OkrKrType;
+  title: string;
+  baseline: number;
+  target: number;
+  unit: string;
+  direction: OkrDirection;
+  owner_user_id: string | null;
+  linked_org_kr_id: string | null;
+}
+
+export interface DraftTeamDependency {
+  krIndex: number;
+  dependsOnTeamId?: string;
+  dependsOnKrId?: string;
+  description?: string;
+  resolution?: 'adjust_target' | 'create_joint' | 'register_risk';
+}
+
+export interface DraftTeamInitiative {
+  krIndex: number;
+  name: string;
+  owner_user_id: string | null;
+  start_date?: string;
+  expected_end_date?: string;
+}
+
+export interface TeamOkrCreationWizardState {
+  // Step 1 - Context
+  impactReflection: string;
+  
+  // Step 2 - Retrospective
+  acknowledgedPastLearnings: boolean;
+  
+  // Step 3 - Objective
+  objective: {
+    title: string;
+    description: string;
+    org_objective_id: string | null;
+    cycle_id: string | null;
+  };
+  
+  // Step 4/5 - KRs
+  krPlan: {
+    foundational: number;
+    contribution: number;
+    enabler: number;
+  };
+  draftKrs: DraftTeamKr[];
+  
+  // Step 6 - Dependencies
+  dependencies: DraftTeamDependency[];
+  
+  // Step 7 - Initiatives
+  initiatives: DraftTeamInitiative[];
+  
+  // Step 8 - Share
+  generatedSummary: string | null;
+  reflectionQuestions: string[];
+}
+
+// ============================================================
 // WIZARD SESSION (PERSISTÊNCIA)
 // ============================================================
 
@@ -238,7 +308,7 @@ export interface WizardSession {
 // ============================================================
 
 export interface WizardVicContext extends VicContext {
-  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel';
+  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation';
   wizardStep?: string;
   krContext?: {
     krId: string;
@@ -268,6 +338,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'team-checkin': 'okr-review-quality',
   'managers-checkin': 'okr-check-alignment',
   'clevel-checkin': 'okr-check-alignment',
+  'team-okr-creation': 'okr-check-alignment',
 };
 
 // ============================================================
@@ -333,5 +404,22 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
       { id: 'directives', label: 'Direcionamentos', shortLabel: 'Direcionamentos' },
     ],
     aiAgents: ['alinhamento-estrategico', 'analista-kpis'],
+  },
+  'team-okr-creation': {
+    persona: 'team-okr-creation',
+    title: 'Criação de OKRs do Time',
+    description: 'Defina os objetivos e resultados-chave do seu time com alinhamento estratégico',
+    steps: [
+      { id: 'intro', label: 'Alinhamento Inicial', shortLabel: 'Intro' },
+      { id: 'context', label: 'Contexto Organizacional', shortLabel: 'Contexto' },
+      { id: 'retrospective', label: 'Aprendendo com o Passado', shortLabel: 'Retro' },
+      { id: 'objective', label: 'Definindo o Objetivo', shortLabel: 'Objetivo' },
+      { id: 'kr-type', label: 'Escolhendo KRs', shortLabel: 'KRs' },
+      { id: 'kr-detail', label: 'Detalhando KRs', shortLabel: 'Detalhe' },
+      { id: 'dependencies', label: 'Dependências e Riscos', shortLabel: 'Deps', optional: true },
+      { id: 'initiatives', label: 'Iniciativas', shortLabel: 'Iniciativas', optional: true },
+      { id: 'share', label: 'Compartilhar', shortLabel: 'Compartilhar' },
+    ],
+    aiAgents: ['cultura', 'coach-okrs', 'analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes', 'revisor-comunicacao'],
   },
 };
