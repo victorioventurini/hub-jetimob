@@ -41,7 +41,7 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
     return buId ? createBuScopedClient(buId) : null;
   }, [currentBu?.id]);
 
-  const { data: modules = [], isLoading } = useQuery({
+  const { data: modules = [], isLoading, isFetching } = useQuery({
     // IMPORTANTE: incluir user?.id no cache key para evitar "cache" com resposta anônima
     // (sem sessão) que acontece no primeiro load e só resolve após refresh.
     queryKey: queryKeys.identity.modules(user?.id ?? null, currentBu?.id ?? null),
@@ -95,7 +95,14 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
       })) as HubModule[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
+    // CRITICAL: Evitar re-fetch ao voltar para aba (causa flickering no menu)
+    refetchOnWindowFocus: false,
+    // Manter dados anteriores durante refetch para evitar flash de loading
+    placeholderData: (previous) => previous,
   });
+
+  // Para UI: só mostrar loading se não temos dados ainda (primeiro load)
+  const isInitialLoading = isLoading && modules.length === 0;
 
   const globalModules = useMemo(
     () => modules.filter((m) => m.type === "global"),
@@ -132,7 +139,7 @@ export function ModuleProvider({ children }: { children: ReactNode }) {
         globalModules,
         operationalModules,
         enabledOperationalModules,
-        isLoading,
+        isLoading: isInitialLoading, // Só true no primeiro load, não em refetches
         isModuleEnabled,
         getModuleBySlug,
       }}
