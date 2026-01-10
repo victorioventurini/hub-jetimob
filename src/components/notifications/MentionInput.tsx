@@ -487,7 +487,7 @@ export function MentionInput({
           onKeyDown={handleKeyDown}
           data-placeholder={placeholder}
           className={cn(
-            "mention-editor flex w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto whitespace-pre-wrap",
+            "mention-editor block w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm leading-5 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto whitespace-pre-wrap",
             showSuggestions && "ring-2 ring-primary/50",
             className
           )}
