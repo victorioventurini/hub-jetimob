@@ -16,9 +16,8 @@ import {
   Target,
   Quote,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-
+import { useVicEnabled } from '@/modules/vic/hooks/useVicAgent';
 // ============================================================
 // TYPES
 // ============================================================
@@ -38,13 +37,29 @@ export function TeamOkrIntroStep({
   userName,
   onContinue,
 }: TeamOkrIntroStepProps) {
-  const { invokeVic, isVicLoading } = useWizardAI();
+  const { invokeVic } = useWizardAI();
+  const { isEnabled: isIaEnabled, isLoading: isIaConfigLoading } = useVicEnabled();
   const [greeting, setGreeting] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fallback messages
+  const fallbackGreeting = userName ? `Olá, ${userName}!` : 'Olá!';
+  const fallbackMessage = 'Antes de definir metas, vamos alinhar direção. OKRs não servem para fazer mais coisas — servem para fazer as coisas certas.';
+
   // Generate greeting and message on mount
   useEffect(() => {
+    // Wait for IA config to load
+    if (isIaConfigLoading) return;
+
+    // If IA is not enabled, use fallback immediately
+    if (!isIaEnabled) {
+      setGreeting(fallbackGreeting);
+      setMessage(fallbackMessage);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
@@ -66,16 +81,17 @@ export function TeamOkrIntroStep({
         );
         setMessage(messageResponse.response);
       } catch (error) {
-        // Fallback messages
-        setGreeting(userName ? `Olá, ${userName}!` : 'Olá!');
-        setMessage('Antes de definir metas, vamos alinhar direção. OKRs não servem para fazer mais coisas — servem para fazer as coisas certas.');
+        // Fallback messages - silently use fallback without propagating error
+        console.warn('[TeamOkrIntroStep] IA call failed, using fallback:', error);
+        setGreeting(fallbackGreeting);
+        setMessage(fallbackMessage);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchMessages();
-  }, [invokeVic, userName, teamName]);
+  }, [invokeVic, userName, teamName, isIaEnabled, isIaConfigLoading, fallbackGreeting, fallbackMessage]);
 
   return (
     <div className="flex flex-col h-full">
