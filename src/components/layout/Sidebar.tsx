@@ -120,7 +120,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto [scrollbar-gutter:stable] p-3 space-y-1">
           <div className="space-y-1">
             {navigation.map((item) => (
               <NavItem key={item.href} item={item} />
