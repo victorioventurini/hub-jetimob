@@ -1,24 +1,25 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Clock, User, Building2, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, Building2 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { useTicket, useUpdateTicketStatus } from "../hooks/useTickets";
-import { useTicketMessages, useCreateMessage } from "../hooks/useTicketMessages";
-import { useAuth } from "@/hooks/useAuth";
+import { useTicketMessages, useTicketAttachments, useCreateMessage } from "../hooks/useTicketMessages";
 import { useIdentity } from "@/hooks/useIdentity";
+import { TicketMessageBubble } from "../components/TicketMessageBubble";
+import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import type { TicketStatus } from "../types";
+import type { ParsedMention } from "@/components/mentions/TicketMentionInput";
 
 const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   waiting: { label: "Aguardando", variant: "secondary" },
@@ -30,28 +31,56 @@ const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const { profileId } = useIdentity();
-  const [newMessage, setNewMessage] = useState("");
 
   const { data: ticket, isLoading: isLoadingTicket } = useTicket(id!);
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
+  const { data: attachments = [] } = useTicketAttachments(id!);
   const updateStatus = useUpdateTicketStatus();
   const createMessage = useCreateMessage(profileId);
+
+  // Group attachments by message_id
+  const attachmentsByMessage = useMemo(() => {
+    const map = new Map<string, typeof attachments>();
+    attachments.forEach((att) => {
+      if (att.message_id) {
+        const existing = map.get(att.message_id) || [];
+        existing.push(att);
+        map.set(att.message_id, existing);
+      }
+    });
+    return map;
+  }, [attachments]);
 
   const handleStatusChange = async (newStatus: TicketStatus) => {
     if (!ticket) return;
     await updateStatus.mutateAsync({ id: ticket.id, status: newStatus });
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !ticket) return;
+  const handleSendMessage = async (data: {
+    content: string;
+    mentions: ParsedMention[];
+    files: File[];
+  }) => {
+    if (!ticket) return;
     
-    await createMessage.mutateAsync({
-      ticketId: ticket.id,
-      data: { body_richtext: { type: "text", content: newMessage } },
-    });
-    setNewMessage("");
+    try {
+      await createMessage.mutateAsync({
+        ticketId: ticket.id,
+        data: {
+          body_richtext: { type: "text", content: data.content },
+          attachments: data.files.length > 0 ? data.files : undefined,
+          mentions: data.mentions.map((m) => ({
+            user_id: m.userId || undefined,
+            contact_id: m.contactId || undefined,
+          })),
+        },
+      });
+      toast.success("Mensagem enviada");
+    } catch (error) {
+      toast.error("Erro ao enviar mensagem");
+      throw error;
+    }
   };
 
   if (isLoadingTicket) {
@@ -152,47 +181,15 @@ export default function TicketDetailPage() {
                   <div className="space-y-4">
                     {messages.map((message) => {
                       const isOwnMessage = message.author_user_id === profileId;
-                      const authorProfile = (message as any).author;
+                      const messageAttachments = attachmentsByMessage.get(message.id) || [];
                       
                       return (
-                        <div key={message.id} className={cn(
-                          "flex gap-3",
-                          isOwnMessage && "flex-row-reverse"
-                        )}>
-                          <Avatar className="h-8 w-8 shrink-0">
-                            <AvatarImage src={authorProfile?.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {authorProfile?.full_name?.slice(0, 2).toUpperCase() || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className={cn(
-                            "flex-1 max-w-[80%]",
-                            isOwnMessage && "text-right"
-                          )}>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-medium">
-                                {authorProfile?.full_name || "Usuário"}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(message.created_at), { 
-                                  addSuffix: true, 
-                                  locale: ptBR 
-                                })}
-                              </span>
-                            </div>
-                            <div className={cn(
-                              "rounded-lg px-4 py-2 text-sm",
-                              isOwnMessage 
-                                ? "bg-primary text-primary-foreground" 
-                                : "bg-muted"
-                            )}>
-                              {typeof message.body_richtext === "object" && message.body_richtext !== null
-                                ? (message.body_richtext as any).content || JSON.stringify(message.body_richtext)
-                                : String(message.body_richtext)
-                              }
-                            </div>
-                          </div>
-                        </div>
+                        <TicketMessageBubble
+                          key={message.id}
+                          message={message}
+                          isOwnMessage={isOwnMessage}
+                          attachments={messageAttachments}
+                        />
                       );
                     })}
                   </div>
@@ -201,31 +198,13 @@ export default function TicketDetailPage() {
 
               <Separator className="my-4" />
 
-              {/* Message input */}
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Digite sua mensagem..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  className="min-h-[80px]"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.metaKey) {
-                      handleSendMessage();
-                    }
-                  }}
-                />
-                <Button 
-                  onClick={handleSendMessage} 
-                  disabled={!newMessage.trim() || createMessage.isPending}
-                  className="shrink-0"
-                >
-                  {createMessage.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+              {/* Message composer with mentions and file upload */}
+              <TicketMessageComposer
+                onSend={handleSendMessage}
+                isSubmitting={createMessage.isPending}
+                partnerCompanyId={ticket.type === "external" ? ticket.partner_company_id : null}
+                placeholder="Digite sua mensagem... Use @ para mencionar"
+              />
             </CardContent>
           </Card>
         </div>
