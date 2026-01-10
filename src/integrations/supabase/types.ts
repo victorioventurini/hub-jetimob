@@ -5768,6 +5768,106 @@ export type Database = {
           },
         ]
       }
+      ticket_internal_routing_rules: {
+        Row: {
+          assignee_squad_ids: string[] | null
+          assignee_team_ids: string[] | null
+          assignee_user_ids: string[] | null
+          bu_id: string
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          notes: string | null
+          priority: number
+          subcategory_id: string | null
+          updated_at: string
+          watcher_squad_ids: string[] | null
+          watcher_team_ids: string[] | null
+          watcher_user_ids: string[] | null
+        }
+        Insert: {
+          assignee_squad_ids?: string[] | null
+          assignee_team_ids?: string[] | null
+          assignee_user_ids?: string[] | null
+          bu_id: string
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: number
+          subcategory_id?: string | null
+          updated_at?: string
+          watcher_squad_ids?: string[] | null
+          watcher_team_ids?: string[] | null
+          watcher_user_ids?: string[] | null
+        }
+        Update: {
+          assignee_squad_ids?: string[] | null
+          assignee_team_ids?: string[] | null
+          assignee_user_ids?: string[] | null
+          bu_id?: string
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: number
+          subcategory_id?: string | null
+          updated_at?: string
+          watcher_squad_ids?: string[] | null
+          watcher_team_ids?: string[] | null
+          watcher_user_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_internal_routing_rules_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_internal_routing_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_internal_routing_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_internal_routing_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_internal_routing_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_internal_routing_rules_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_mentions: {
         Row: {
           bu_id: string
