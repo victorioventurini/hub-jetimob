@@ -13,6 +13,7 @@ import { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
 import { useWizardDraft, type WizardStep } from '@/modules/okrs/hooks/useWizardDraft';
 import { useUrlState } from '@/shared/url';
 import { useAuth } from '@/hooks/useAuth';
@@ -67,9 +68,13 @@ const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map(s => s.id);
 
 export default function OkrCreationPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { profile, isAdmin, role } = useAuth();
   const { profileId } = useIdentity();
+  
+  // Check if user is admin
+  const isSuperAdmin = role === 'super_admin';
+  const canSwitchTeam = isSuperAdmin || isAdmin;
   
   // URL params
   const teamIdParam = searchParams.get('team');
@@ -115,6 +120,25 @@ export default function OkrCreationPage() {
     cycleId: quarterlyCycle?.id || null,
     enabled: !!teamIdParam && !!quarterlyCycle,
   });
+  
+  // Handle team change (admin only)
+  const handleTeamChange = useCallback((newTeamId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('team', newTeamId);
+    newParams.set('step', 'intro'); // Reset to first step
+    setSearchParams(newParams, { replace: true });
+    // Clear draft when changing team
+    discardDraft();
+  }, [searchParams, setSearchParams, discardDraft]);
+  
+  // Prepare team options for admin switcher
+  const teamOptions = useMemo(() => {
+    if (!teams) return [];
+    return teams.map(t => ({
+      id: t.id,
+      name: t.name,
+    }));
+  }, [teams]);
   
   // Session tracking
   const { createSession, completeSession } = useWizardSession();
@@ -458,7 +482,19 @@ export default function OkrCreationPage() {
       isLoading={createBundle.isPending}
       onClose={handleClose}
       backUrl="/wizards"
-      contextLabel={selectedTeam.name}
+      contextLabel={!canSwitchTeam ? selectedTeam.name : undefined}
+      adminContextSwitcher={
+        canSwitchTeam ? (
+          <AdminContextSwitcher
+            type="team"
+            currentLabel={selectedTeam.name}
+            teams={teamOptions}
+            selectedId={teamIdParam}
+            onSelect={handleTeamChange}
+            isLoading={isLoadingTeams}
+          />
+        ) : undefined
+      }
     >
       {renderStepContent()}
     </FullPageWizardShell>
