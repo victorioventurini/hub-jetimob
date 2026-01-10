@@ -251,7 +251,7 @@ export function TeamOkrObjectiveStep({
                 {aiFeedback.type === 'suggestion' && <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />}
                 {aiFeedback.type === 'success' && <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />}
                 <div className="space-y-2">
-                  <p><VicTypewriterText text={aiFeedback.message} speed={15} /></p>
+                  <p><VicTypewriterText text={aiFeedback.message} speed={18} priority={0} /></p>
                   {aiFeedback.alternatives && aiFeedback.alternatives.length > 0 && (
                     <div className="space-y-1">
                       <p className="text-xs font-medium">Sugestões:</p>

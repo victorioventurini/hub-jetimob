@@ -143,8 +143,9 @@ export function VicInsightCard({
             <p className="text-sm leading-relaxed">
               <VicTypewriterText 
                 text={insight.content} 
-                speed={15}
+                speed={18}
                 cursorHeight="h-3"
+                priority={0}
               />
             </p>
             

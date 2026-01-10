@@ -83,7 +83,7 @@ export function CultureCard() {
             transition={{ duration: 0.3 }}
           >
             <p className="font-handwriting text-3xl md:text-4xl lg:text-5xl leading-snug text-foreground">
-              <VicTypewriterText text={displayMessage} speed={35} cursorHeight="h-8" />
+              <VicTypewriterText text={displayMessage} speed={42} cursorHeight="h-8" />
             </p>
           </motion.div>
         )}
