@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, FolderTree, Route, Users, Zap } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { PartnerCompaniesTab } from "../components/settings/PartnerCompaniesTab";
 import { PartnerContactsTab } from "../components/settings/PartnerContactsTab";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
@@ -8,6 +9,9 @@ import { ContactCapabilitiesTab } from "../components/settings/ContactCapabiliti
 import { useUrlTab } from "@/shared/url";
 
 export default function TicketsSettingsPage() {
+  usePageTitle("Configurações de Tickets", {
+    customDescription: "Configure empresas parceiras, categorias e regras de roteamento de tickets."
+  });
   const [activeTab, setActiveTab] = useUrlTab("partners");
 
   return (

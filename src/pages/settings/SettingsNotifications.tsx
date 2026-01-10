@@ -16,6 +16,7 @@ import {
   useBuProfiles,
 } from '@/hooks/useNotificationAdmin';
 import { useBu } from '@/contexts/BuContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState } from '@/shared/url/useUrlState';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -108,6 +109,9 @@ const ACTIVE_CHANNELS = ['in_app', 'email', 'slack', 'webhook']; // WhatsApp out
 
 export default function SettingsNotifications() {
   const { currentBu } = useBu();
+  usePageTitle("Notificações", {
+    customDescription: "Configure canais, eventos e templates de notificação da BU."
+  });
   const { has: hasPermission } = usePermissions();
 
   const canManageBuNotifications = hasPermission('notifications.bu.manage:bu');

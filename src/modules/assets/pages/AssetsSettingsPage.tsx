@@ -1,5 +1,6 @@
 import { Settings, FolderTree, Key, Package } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
@@ -9,6 +10,9 @@ import { InventoryTab } from "../components/settings/InventoryTab";
 import { useUrlTab } from "@/shared/url";
 
 export default function AssetsSettingsPage() {
+  usePageTitle("Configurações de Ativos", {
+    customDescription: "Configure categorias, inventário e claviculários de ativos."
+  });
   const { isAssetsAdmin, isLoading } = useAssetPermissions();
   const [activeTab, setActiveTab] = useUrlTab("categories");
 
