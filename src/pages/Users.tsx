@@ -140,7 +140,11 @@ export default function UsersPage() {
   }, [deletingProfile, deps.isLoading, deps.hasMandatoryDependencies]);
 
   const { data: profiles, isLoading, error: profilesError } = useQuery({
-    queryKey: queryKeys.profiles.list(currentBu?.id ?? null, { status: statusFilter }),
+    queryKey: queryKeys.users.directory(currentBu?.id ?? null, { 
+      q: searchQuery || undefined, 
+      teamId: teamFilter !== 'all' ? teamFilter : undefined,
+      includeTerminated: statusFilter === 'all' || statusFilter === 'terminated'
+    }),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       
@@ -168,6 +172,18 @@ export default function UsersPage() {
         .is("deleted_at", null)
         .order("display_name");
 
+      // Server-side search filter
+      if (searchQuery && searchQuery.trim().length > 0) {
+        const term = `%${searchQuery.trim()}%`;
+        query = query.or(`display_name.ilike.${term},work_email.ilike.${term}`);
+      }
+
+      // Server-side team filter
+      if (teamFilter && teamFilter !== 'all') {
+        query = query.eq("team_id", teamFilter);
+      }
+
+      // Status filter
       if (statusFilter === "active") {
         query = query.neq("employment_status", "terminated" as const);
       } else if (statusFilter !== "all") {
@@ -224,16 +240,14 @@ export default function UsersPage() {
       .toUpperCase()
       .slice(0, 2);
 
+  // Filtering is now done server-side, but we keep job_title filter client-side 
+  // (not indexed in DB and less common search)
   const filteredProfiles = profiles?.filter((profile) => {
-    const matchesSearch =
+    if (!searchQuery) return true;
+    // Only filter by job_title client-side (not indexed in DB query)
+    return profile.job_title_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       profile.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      profile.work_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      profile.job_title_name.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesTeam =
-      teamFilter === "all" || profile.team?.id === teamFilter;
-
-    return matchesSearch && matchesTeam;
+      profile.work_email.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const handleEdit = (profile: ProfileWithTeam) => {
