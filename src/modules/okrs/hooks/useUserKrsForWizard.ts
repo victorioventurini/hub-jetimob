@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/lib/queryKeys";
 import { differenceInDays, parseISO } from "date-fns";
 import type { WizardKr, WizardKrFilter } from "./useTeamPendingKrs";
 
@@ -20,17 +21,20 @@ import type { WizardKr, WizardKrFilter } from "./useTeamPendingKrs";
 
 export function useUserKrsForWizard(
   cycleId: string | null | undefined,
-  filter: WizardKrFilter = 'all'
+  filter: WizardKrFilter = 'all',
+  userProfileId?: string | null
 ) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
   const { profile } = useAuth();
-  const userId = profile?.id;
+
+  // Domain IDs here are profile IDs (profiles.id)
+  const effectiveUserId = userProfileId ?? profile?.id ?? null;
 
   return useQuery({
-    queryKey: ['okr-wizard-user-krs', currentBuId, cycleId, userId, filter],
+    queryKey: queryKeys.okrs.wizardUserKrs(currentBuId, cycleId ?? null, effectiveUserId, filter),
     queryFn: async (): Promise<WizardKr[]> => {
-      if (!cycleId || !userId) return [];
+      if (!cycleId || !effectiveUserId) return [];
 
       // Fetch KRs where user is owner or co-responsible
       const { data, error } = await supabase
@@ -61,9 +65,10 @@ export function useUserKrsForWizard(
         .eq('team_objective.cycle_id', cycleId)
         .is('cancelled_at', null)
         .is('deleted_at', null)
-        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`)
+        .or(`owner_user_id.eq.${effectiveUserId},co_responsibles.cs.{${effectiveUserId}}`)
         .order('status', { ascending: false })
         .order('last_checkin_at', { ascending: true, nullsFirst: true });
+
 
       if (error) throw error;
 
@@ -137,7 +142,8 @@ export function useUserKrsForWizard(
       }
       return krs;
     },
-    enabled: !!cycleId && !!currentBuId && !!userId,
+    enabled: !!cycleId && !!currentBuId && !!effectiveUserId,
     staleTime: 1 * 60 * 1000,
   });
 }
+
