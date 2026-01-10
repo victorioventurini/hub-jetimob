@@ -97,7 +97,10 @@ export function BuUserSelect({
           )}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        onEscapeKeyDown={(e) => e.stopPropagation()}
+        onPointerDownOutside={(e) => e.stopPropagation()}
+      >
         <div className="p-2 border-b sticky top-0 bg-popover z-10">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -105,6 +108,7 @@ export function BuUserSelect({
               placeholder="Buscar usuário..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               className="pl-8 h-9"
             />
           </div>
