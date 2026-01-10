@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory } from "../../hooks/useInventory";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { InventoryFormDialog } from "./InventoryFormDialog";
@@ -196,7 +197,16 @@ export function InventoryDetailView() {
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [movementType, setMovementType] = useState<AssetMovementType | undefined>();
-  
+
+  // Dynamic page title with item code
+  usePageTitle(
+    item ? `Detalhes do item ${item.internal_code}` : "Detalhes do Item",
+    {
+      customDescription: item 
+        ? `Visualize informações detalhadas do item ${item.name} (${item.internal_code}), incluindo status, localização, histórico de movimentações e dados do ativo.`
+        : undefined
+    }
+  );
 
   // Try to get from cache first, then fetch if needed
   useEffect(() => {
