@@ -331,7 +331,7 @@ export function NotificationCenter() {
         </div>
 
         {/* Footer - Ver todas */}
-        <div className="border-t p-3">
+        <div className="border-t p-4 pt-3">
           <Button
             variant="ghost"
             className="w-full text-sm text-primary hover:text-primary"
