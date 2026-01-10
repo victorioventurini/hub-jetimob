@@ -58,6 +58,7 @@ const PERSONA_ICONS: Record<WizardPersona, typeof Rocket> = {
   'team-checkin': Users,
   'managers-checkin': TrendingUp,
   'clevel-checkin': Lightbulb,
+  'team-okr-creation': Target,
 };
 
 // Icon mapping for step IDs
@@ -84,6 +85,14 @@ const STEP_ICONS: Record<string, typeof Rocket> = {
   'company-okrs': Target,
   'insights': Lightbulb,
   'directives': MessageSquare,
+  // Team OKR Creation
+  'intro': Rocket,
+  'retrospective': BarChart3,
+  'objective': Target,
+  'kr-type': ClipboardList,
+  'kr-detail': Target,
+  'dependencies': Users,
+  'share': MessageSquare,
 };
 
 // ============================================================
