@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { queryKeys } from "@/lib/queryKeys";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Input } from "@/components/ui/input";
@@ -93,6 +93,7 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const { currentBu, currentBuId, isLoading: buLoading } = useBu();
   const { session, isLoading: authLoading } = useAuth();
+  const supabase = useOptionalBuScopedSupabase();
 
   const initialQuery = searchParams.get("q") || "";
   const initialType = searchParams.get("type") || "all";
@@ -122,7 +123,7 @@ export default function SearchPage() {
   const { data, isLoading, error } = useQuery<{ query: string; groups: SearchGroup[] }>({
     queryKey: queryKeys.search.page(currentBuId ?? null, debouncedQuery, selectedType),
     queryFn: async () => {
-      if (!isReady || debouncedQuery.length < 2) {
+      if (!isReady || !supabase || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
@@ -137,6 +138,7 @@ export default function SearchPage() {
           limit_per_type: 50, // More results for full page
         },
         headers: {
+          Authorization: `Bearer ${session!.access_token}`,
           "x-correlation-id": correlationId,
         },
       });

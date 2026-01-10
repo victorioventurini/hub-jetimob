@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { queryKeys } from "@/lib/queryKeys";
 
 export interface SearchResult {
@@ -38,6 +38,7 @@ export function useGlobalSearch(initialQuery = "") {
 
   const { currentBuId, isLoading: buLoading } = useBu();
   const { session, isLoading: authLoading } = useAuth();
+  const supabase = useOptionalBuScopedSupabase();
 
   // Debounce query
   useEffect(() => {
@@ -53,7 +54,7 @@ export function useGlobalSearch(initialQuery = "") {
   const { data, isLoading, isFetching, error, refetch } = useQuery<SearchResponse>({
     queryKey: queryKeys.search.global(currentBuId ?? null, debouncedQuery),
     queryFn: async () => {
-      if (!isReady || debouncedQuery.length < 2) {
+      if (!isReady || !supabase || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
@@ -68,6 +69,7 @@ export function useGlobalSearch(initialQuery = "") {
           limit_per_type: 5,
         },
         headers: {
+          Authorization: `Bearer ${session!.access_token}`,
           "x-correlation-id": correlationId,
         },
       });
