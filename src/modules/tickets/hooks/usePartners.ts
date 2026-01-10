@@ -99,6 +99,8 @@ export function useCreatePartnerCompany() {
 
 export function useUpdatePartnerCompany() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -124,14 +126,16 @@ export function useUpdatePartnerCompany() {
       return company as PartnerCompany;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["partner-companies"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-company", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCompany(variables.id) });
     },
   });
 }
 
 export function useDeletePartnerCompany() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -144,7 +148,7 @@ export function useDeletePartnerCompany() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partner-companies"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(buId ?? null) });
     },
   });
 }
@@ -249,13 +253,18 @@ export function useCreatePartnerContact() {
       return contact as PartnerContact;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partner-contacts"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['partner-contacts', buId],
+        exact: false 
+      });
     },
   });
 }
 
 export function useUpdatePartnerContact() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -285,7 +294,10 @@ export function useUpdatePartnerContact() {
       return contact as PartnerContact;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["partner-contacts"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['partner-contacts', buId],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: ["partner-contact", variables.id] });
     },
   });
@@ -293,6 +305,8 @@ export function useUpdatePartnerContact() {
 
 export function useDeletePartnerContact() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -305,7 +319,10 @@ export function useDeletePartnerContact() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partner-contacts"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['partner-contacts', buId],
+        exact: false 
+      });
     },
   });
 }

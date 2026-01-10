@@ -82,13 +82,19 @@ export function useCreateTicketCategory() {
       return category as TicketCategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
+      // Invalidate all category queries for this BU (any scope)
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'categories', buId],
+        exact: false 
+      });
     },
   });
 }
 
 export function useUpdateTicketCategory() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -113,13 +119,18 @@ export function useUpdateTicketCategory() {
       return category as TicketCategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'categories', buId],
+        exact: false 
+      });
     },
   });
 }
 
 export function useDeleteTicketCategory() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -132,7 +143,10 @@ export function useDeleteTicketCategory() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'categories', buId],
+        exact: false 
+      });
     },
   });
 }
@@ -204,14 +218,24 @@ export function useCreateTicketSubcategory() {
       return subcategory as TicketSubcategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.categories(null, undefined) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.subcategories(null, undefined) });
+      // Invalidate categories (which include subcategories in nested query)
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'categories', buId],
+        exact: false 
+      });
+      // Invalidate subcategories
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'subcategories', buId],
+        exact: false 
+      });
     },
   });
 }
 
 export function useUpdateTicketSubcategory() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -234,14 +258,22 @@ export function useUpdateTicketSubcategory() {
       return subcategory as TicketSubcategory;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket-subcategories"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'categories', buId],
+        exact: false 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'subcategories', buId],
+        exact: false 
+      });
     },
   });
 }
 
 export function useDeleteTicketSubcategory() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -254,8 +286,14 @@ export function useDeleteTicketSubcategory() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket-subcategories"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'categories', buId],
+        exact: false 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tickets', 'subcategories', buId],
+        exact: false 
+      });
     },
   });
 }
