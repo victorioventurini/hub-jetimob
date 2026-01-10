@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/queryKeys";
 
 export interface SearchResult {
@@ -38,7 +38,6 @@ export function useGlobalSearch(initialQuery = "") {
 
   const { currentBuId, isLoading: buLoading } = useBu();
   const { session, isLoading: authLoading } = useAuth();
-  const supabase = useOptionalBuScopedSupabase();
 
   // Debounce query
   useEffect(() => {
@@ -54,7 +53,7 @@ export function useGlobalSearch(initialQuery = "") {
   const { data, isLoading, isFetching, error, refetch } = useQuery<SearchResponse>({
     queryKey: queryKeys.search.global(currentBuId ?? null, debouncedQuery),
     queryFn: async () => {
-      if (!isReady || !supabase || debouncedQuery.length < 2) {
+      if (!isReady || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
@@ -62,20 +61,7 @@ export function useGlobalSearch(initialQuery = "") {
         (globalThis.crypto?.randomUUID?.() as string | undefined) ||
         `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-      // Ensure this client has a hydrated session before invoking functions.
-      // Without this, supabase-js may fall back to anon key and the gateway will reject it as "Invalid JWT".
-      const {
-        data: { session: clientSession },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !clientSession?.access_token) {
-        console.warn("[useGlobalSearch] No client session available for functions.invoke", {
-          sessionError,
-        });
-        return { query: debouncedQuery, groups: [] };
-      }
-
+      // Use global client for edge function invocation - it has the hydrated session
       const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
           bu_id: currentBuId,
