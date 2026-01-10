@@ -73,6 +73,7 @@ export default function SelectBu() {
     admin: "Administrador",
     team_leader: "Líder de Time",
     collaborator: "Colaborador",
+    external: "Parceiro Externo",
   };
 
   const displayName = profile?.display_name || "Jetimober";
