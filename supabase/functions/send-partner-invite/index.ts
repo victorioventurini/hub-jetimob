@@ -1,0 +1,208 @@
+/**
+ * send-partner-invite
+ * 
+ * Sends an invitation email to a newly created partner contact.
+ * Uses the notification template system (partner.invite) for customization.
+ */
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { sendEmail } from "../_shared/email-sender.ts";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface PartnerInviteRequest {
+  contact_id: string;
+  bu_id: string;
+}
+
+interface TemplateResolution {
+  template_id: string;
+  version_id: string;
+  subject: string | null;
+  body: string;
+  variables_used: string[];
+  is_bu_override: boolean;
+}
+
+function renderTemplate(template: string, variables: Record<string, unknown>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const placeholder = `{{${key}}}`;
+    result = result.split(placeholder).join(String(value ?? ""));
+  }
+  // Remove any unresolved placeholders
+  result = result.replace(/\{\{\w+\}\}/g, "");
+  return result;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Validate JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Validate the user's JWT
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { contact_id, bu_id }: PartnerInviteRequest = await req.json();
+
+    if (!contact_id || !bu_id) {
+      return new Response(
+        JSON.stringify({ error: "Missing contact_id or bu_id" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log(`[send-partner-invite] Processing invite for contact ${contact_id}`);
+
+    // Fetch contact details with company
+    const { data: contact, error: contactError } = await supabase
+      .from("partner_contacts")
+      .select(`
+        id,
+        name,
+        email,
+        partner_companies(id, name),
+        bu_units(id, name)
+      `)
+      .eq("id", contact_id)
+      .eq("bu_id", bu_id)
+      .single();
+
+    if (contactError || !contact) {
+      console.error("[send-partner-invite] Contact not found:", contactError);
+      return new Response(
+        JSON.stringify({ error: "Contact not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // deno-lint-ignore no-explicit-any
+    const contactData = contact as any;
+    const buName = contactData.bu_units?.name || "Hub";
+    const companyName = contactData.partner_companies?.name || "Empresa Parceira";
+
+    // Fetch inviter profile
+    const { data: inviterProfile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("user_id", user.id)
+      .single();
+
+    const inviterName = inviterProfile 
+      ? `${inviterProfile.first_name || ""} ${inviterProfile.last_name || ""}`.trim() || "Equipe"
+      : "Equipe";
+
+    // Get the template (with BU override support)
+    const { data: templateData, error: templateError } = await supabase
+      .rpc("resolve_notification_template", {
+        p_event_slug: "partner.invite",
+        p_channel: "email",
+        p_bu_id: bu_id,
+      });
+
+    let subject = "Você foi convidado para acessar o Hub";
+    let body = "";
+
+    // Build base URL for access
+    const accessUrl = `${SUPABASE_URL.replace(".supabase.co", "")}/auth`;
+
+    if (templateError || !templateData || templateData.length === 0) {
+      console.warn("[send-partner-invite] No template found, using fallback");
+      
+      subject = `Você foi convidado para acessar o Hub ${buName}`;
+      body = `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: sans-serif; padding: 20px;">
+          <h2>Olá, ${contactData.name}!</h2>
+          <p>Você foi convidado(a) por <strong>${inviterName}</strong> para acessar o Hub como parceiro externo da empresa <strong>${companyName}</strong>.</p>
+          <p>Acesse: <a href="${accessUrl}">${accessUrl}</a></p>
+          <p>Use o e-mail <strong>${contactData.email}</strong> para fazer login.</p>
+        </body>
+        </html>
+      `;
+    } else {
+      const template = templateData[0] as TemplateResolution;
+      
+      const variables: Record<string, unknown> = {
+        contact_name: contactData.name,
+        contact_email: contactData.email,
+        company_name: companyName,
+        bu_name: buName,
+        invited_by: inviterName,
+        access_url: accessUrl,
+      };
+
+      subject = renderTemplate(template.subject || subject, variables);
+      body = renderTemplate(template.body, variables);
+    }
+
+    // Send email
+    const result = await sendEmail({
+      to: contactData.email,
+      subject,
+      html: body,
+      from: {
+        email: "no-reply@hub.jetimob.com",
+        name: `Hub ${buName}`,
+      },
+    });
+
+    if (!result.success) {
+      console.error("[send-partner-invite] Email failed:", result.error);
+      return new Response(
+        JSON.stringify({ error: result.error || "Failed to send email" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log(`[send-partner-invite] Email sent successfully to ${contactData.email} via ${result.provider}`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        provider: result.provider,
+        email: contactData.email,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[send-partner-invite] Error:", message);
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+};
+
+serve(handler);
