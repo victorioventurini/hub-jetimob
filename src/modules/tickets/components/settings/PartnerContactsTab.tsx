@@ -25,6 +25,7 @@ import {
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { usePartnerCompanies, usePartnerContacts, useDeletePartnerContact } from "../../hooks/usePartners";
 import { PartnerContactDialog } from "./PartnerContactDialog";
+import { PartnerContactHoverCard } from "./PartnerContactHoverCard";
 import { PartnerContact } from "../../types";
 
 export function PartnerContactsTab() {
@@ -128,19 +129,27 @@ export function PartnerContactsTab() {
                 {contacts.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {contact.name.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{contact.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {contact.email}
-                          </p>
-                        </div>
-                      </div>
+                      <PartnerContactHoverCard contactId={contact.id}>
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity cursor-pointer"
+                          onClick={() => handleEdit(contact)}
+                        >
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback>
+                              {contact.name.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-primary hover:underline">
+                              {contact.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {contact.email}
+                            </p>
+                          </div>
+                        </button>
+                      </PartnerContactHoverCard>
                     </TableCell>
                     <TableCell>
                       {companies.find((c) => c.id === contact.partner_company_id)?.name || "-"}
