@@ -53,6 +53,8 @@ export interface TeamOkrCreationWizardProps {
   onOpenChange: (open: boolean) => void;
   teamId: string;
   teamName: string;
+  /** Callback when team changes via context selector */
+  onTeamChange?: (teamId: string, teamName: string) => void;
 }
 
 type WizardStep = 
@@ -75,7 +77,8 @@ export function TeamOkrCreationWizard({
   open, 
   onOpenChange, 
   teamId,
-  teamName 
+  teamName,
+  onTeamChange,
 }: TeamOkrCreationWizardProps) {
   const navigate = useNavigate();
   const config = WIZARD_CONFIGS['team-okr-creation'];
@@ -409,6 +412,12 @@ export function TeamOkrCreationWizard({
       steps={config.steps}
       currentStepIndex={stepIndex}
       onClose={handleClose}
+      context={{
+        mode: 'team',
+        teamId,
+        teamName,
+        onTeamChange,
+      }}
     >
       {renderStepContent()}
     </WizardShell>

@@ -32,3 +32,6 @@ export type { KrContextCardProps } from './KrContextCard';
 
 export { InitiativesSummary } from './InitiativesSummary';
 export type { InitiativesSummaryProps } from './InitiativesSummary';
+
+export { WizardContextSelector } from './WizardContextSelector';
+export type { WizardContextSelectorProps, WizardContextMode } from './WizardContextSelector';

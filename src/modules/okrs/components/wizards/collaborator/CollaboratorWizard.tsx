@@ -21,6 +21,7 @@ import { CollaboratorSummary } from './CollaboratorSummary';
 import { useUserKrsForWizard } from '@/modules/okrs/hooks/useUserKrsForWizard';
 import { useActiveCycles, useCycle } from '@/modules/okrs/hooks/useCycleData';
 import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
+import { useAuth } from '@/hooks/useAuth';
 import { WIZARD_CONFIGS, type CollaboratorCheckinResult, type CollaboratorReflection } from '@/modules/okrs/types/wizard';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 
@@ -31,6 +32,10 @@ import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 export interface CollaboratorWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Override user ID for admin impersonation */
+  userId?: string;
+  /** Callback when user changes via context selector (admin only) */
+  onUserChange?: (userId: string) => void;
 }
 
 type WizardStep = 'context' | 'checkin' | 'initiatives' | 'reflection' | 'summary';
@@ -39,8 +44,9 @@ type WizardStep = 'context' | 'checkin' | 'initiatives' | 'reflection' | 'summar
 // COMPONENT
 // ============================================================
 
-export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardProps) {
+export function CollaboratorWizard({ open, onOpenChange, userId: overrideUserId, onUserChange }: CollaboratorWizardProps) {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const config = WIZARD_CONFIGS['collaborator'];
   
   // Session persistence
@@ -311,6 +317,9 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
     }
   };
 
+  // Effective user ID for data fetching
+  const effectiveUserId = overrideUserId || profile?.id;
+
   return (
     <WizardShell
       open={open}
@@ -321,6 +330,11 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
       steps={config.steps}
       currentStepIndex={stepIndex}
       onClose={handleClose}
+      context={{
+        mode: 'user',
+        userId: effectiveUserId,
+        onUserChange,
+      }}
     >
       {renderStepContent()}
     </WizardShell>

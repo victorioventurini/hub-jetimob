@@ -31,6 +31,8 @@ export interface LeaderPrepWizardProps {
   onOpenChange: (open: boolean) => void;
   teamId: string;
   teamName: string;
+  /** Callback when team changes via context selector */
+  onTeamChange?: (teamId: string, teamName: string) => void;
 }
 
 type WizardStep = 'overview' | 'highlights' | 'prep' | 'alignment';
@@ -43,7 +45,8 @@ export function LeaderPrepWizard({
   open, 
   onOpenChange, 
   teamId,
-  teamName 
+  teamName,
+  onTeamChange,
 }: LeaderPrepWizardProps) {
   const navigate = useNavigate();
   const config = WIZARD_CONFIGS['leader-prep'];
@@ -291,6 +294,12 @@ export function LeaderPrepWizard({
       steps={config.steps}
       currentStepIndex={stepIndex}
       onClose={handleClose}
+      context={{
+        mode: 'team',
+        teamId,
+        teamName,
+        onTeamChange,
+      }}
     >
       {renderStepContent()}
     </WizardShell>
