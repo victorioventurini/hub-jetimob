@@ -20,18 +20,21 @@ import type { LeaderOverviewMetrics, LeaderHighlight } from "@/modules/okrs/type
 
 export function useTeamOverviewMetrics(
   cycleId: string | null | undefined,
-  teamIds: string[]
+  teamIds: string | string[]
 ) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
 
+  // Normalize to array
+  const normalizedTeamIds = Array.isArray(teamIds) ? teamIds : teamIds ? [teamIds] : [];
+
   return useQuery({
-    queryKey: ['okr-team-overview-metrics', currentBuId, cycleId, teamIds],
+    queryKey: ['okr-team-overview-metrics', currentBuId, cycleId, normalizedTeamIds],
     queryFn: async (): Promise<{
       metrics: LeaderOverviewMetrics;
       highlights: LeaderHighlight[];
     }> => {
-      if (!cycleId || teamIds.length === 0) {
+      if (!cycleId || normalizedTeamIds.length === 0) {
         return {
           metrics: {
             totalKrs: 0,
@@ -67,7 +70,7 @@ export function useTeamOverviewMetrics(
             team:teams (id, name)
           )
         `)
-        .in('team_objective.team_id', teamIds)
+        .in('team_objective.team_id', normalizedTeamIds)
         .eq('team_objective.cycle_id', cycleId)
         .is('cancelled_at', null)
         .is('deleted_at', null);
@@ -183,7 +186,7 @@ export function useTeamOverviewMetrics(
         highlights,
       };
     },
-    enabled: !!cycleId && !!currentBuId && teamIds.length > 0,
+    enabled: !!cycleId && !!currentBuId && normalizedTeamIds.length > 0,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
