@@ -258,15 +258,9 @@ export default function UsersPage() {
       .toUpperCase()
       .slice(0, 2);
 
-  // Filtering is now done server-side, but we keep job_title filter client-side 
-  // (not indexed in DB and less common search)
-  const filteredProfiles = profiles?.filter((profile) => {
-    if (!searchQuery) return true;
-    // Only filter by job_title client-side (not indexed in DB query)
-    return profile.job_title_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      profile.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      profile.work_email.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  // Filtering is now fully server-side via RPC
+  // No client-side filter needed - this was causing search to break
+  const filteredProfiles = profiles;
 
   const handleEdit = (profile: ProfileWithTeam) => {
     setEditingProfile(profile);
@@ -412,16 +406,6 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalProfiles > 0 && (
-          <UrlPagination
-            page={page}
-            pageSize={pageSize}
-            totalItems={totalProfiles}
-            onPageChange={setPage}
-            onPageSizeChange={handlePageSizeChange}
-          />
-        )}
 
         {/* Table */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -610,6 +594,17 @@ export default function UsersPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination - no final da lista */}
+        {totalProfiles > 0 && (
+          <UrlPagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalProfiles}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
       </div>
 
       <JetimoberDialog
