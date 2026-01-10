@@ -128,7 +128,7 @@ export default function HubNotifications() {
   const [eventForm, setEventForm] = useState<EventFormData>(defaultEventForm);
   
   // URL State
-  const [tab, setTab] = useUrlTab<'events' | 'channels' | 'diagnostics'>('events');
+  const [tab, setTab] = useUrlTab<'events' | 'channels' | 'diagnostics' | 'outbox'>('events');
   const { value: searchQuery, set: setSearchQuery } = useUrlSearch('q', 300);
   const { value: moduleFilter, set: setModuleFilter } = useUrlState<string>({ key: 'module', defaultValue: 'all' });
   const { value: severityFilter, set: setSeverityFilter } = useUrlState<string>({ key: 'severity', defaultValue: 'all' });
@@ -139,7 +139,7 @@ export default function HubNotifications() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_outbox')
-        .select('status, channel_slug, created_at')
+        .select('status, channel_slug, created_at, provider')
         .order('created_at', { ascending: false })
         .limit(1000);
       
@@ -157,6 +157,9 @@ export default function HubNotifications() {
         webhook: { pending: 0, sent: 0, failed: 0 },
       };
       
+      // Per-provider stats
+      const byProvider: Record<string, number> = {};
+      
       data?.forEach(r => {
         const ch = r.channel_slug as string;
         if (byChannel[ch]) {
@@ -164,10 +167,30 @@ export default function HubNotifications() {
           else if (r.status === 'sent') byChannel[ch].sent++;
           else if (r.status === 'failed') byChannel[ch].failed++;
         }
+        // Count by provider
+        if (r.provider && r.status === 'sent') {
+          byProvider[r.provider] = (byProvider[r.provider] || 0) + 1;
+        }
       });
       
-      return { pending, sent, failed, total: data?.length || 0, lastProcessed, byChannel };
+      return { pending, sent, failed, total: data?.length || 0, lastProcessed, byChannel, byProvider };
     },
+  });
+  
+  // Outbox items for table view
+  const { data: outboxItems = [], isLoading: outboxLoading } = useQuery({
+    queryKey: ['notification-outbox-items'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notification_outbox')
+        .select('id, event_slug, channel_slug, status, provider, created_at, sent_at, processed_at, retries, last_error, user_id')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: tab === 'outbox',
   });
 
   // Health alerts query (using any type since table was just created)
@@ -354,6 +377,10 @@ export default function HubNotifications() {
           <TabsTrigger value="diagnostics">
             <Activity className="w-4 h-4 mr-2" />
             Diagnóstico
+          </TabsTrigger>
+          <TabsTrigger value="outbox">
+            <Mail className="w-4 h-4 mr-2" />
+            Outbox
           </TabsTrigger>
         </TabsList>
         
@@ -688,6 +715,151 @@ export default function HubNotifications() {
                     : 'N/A'}
                 </span>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Outbox Tab */}
+        <TabsContent value="outbox" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Histórico de Envios</h2>
+              <p className="text-sm text-muted-foreground">
+                Últimas 100 notificações processadas
+              </p>
+            </div>
+            {outboxStats?.byProvider && Object.keys(outboxStats.byProvider).length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Provedores:</span>
+                {Object.entries(outboxStats.byProvider).map(([provider, count]) => (
+                  <Badge key={provider} variant="outline" className="capitalize">
+                    {provider}: {count}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Evento</TableHead>
+                    <TableHead>Canal</TableHead>
+                    <TableHead>Provider</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Retries</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead>Processado em</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {outboxLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : outboxItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        Nenhuma notificação no outbox
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    outboxItems.map((item) => {
+                      const ChannelIcon = channelIcons[item.channel_slug] || Bell;
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono text-xs">
+                            {item.event_slug}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <ChannelIcon className="h-4 w-4 text-muted-foreground" />
+                              <span className="capitalize">{item.channel_slug}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {item.provider ? (
+                              <Badge 
+                                variant="secondary" 
+                                className={cn(
+                                  "capitalize text-xs",
+                                  item.provider === 'sendgrid' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                                  item.provider === 'resend' && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                                  item.provider === 'slack' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                                  item.provider === 'webhook' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                                )}
+                              >
+                                {item.provider}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={
+                                item.status === 'sent' ? 'default' : 
+                                item.status === 'pending' ? 'secondary' : 
+                                'destructive'
+                              }
+                              className={cn(
+                                item.status === 'sent' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              )}
+                            >
+                              {item.status === 'sent' && <CheckCircle className="h-3 w-3 mr-1" />}
+                              {item.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                              {item.status === 'failed' && <XCircle className="h-3 w-3 mr-1" />}
+                              {item.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {item.retries > 0 ? (
+                              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                {item.retries}
+                              </span>
+                            ) : '0'}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(item.created_at).toLocaleString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {item.processed_at 
+                              ? new Date(item.processed_at).toLocaleString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : item.sent_at
+                              ? new Date(item.sent_at).toLocaleString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : '—'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
