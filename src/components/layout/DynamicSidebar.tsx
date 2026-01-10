@@ -23,6 +23,7 @@ import {
   BookOpen,
   ExternalLink,
   Bell,
+  Sparkles,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -54,11 +55,13 @@ const iconMap: Record<string, LucideIcon> = {
   settings: Settings,
   assets: Briefcase,
   tickets: FileText,
+  wizards: Sparkles,
 };
 
 // Itens fixos (sempre aparecem)
 const fixedItems = [
   { name: "Home", href: "/", icon: Home },
+  { name: "Wizards", href: "/wizards", icon: Sparkles },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)

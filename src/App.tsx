@@ -32,6 +32,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Modules = lazy(() => import("./pages/Modules"));
 const SelectBu = lazy(() => import("./pages/SelectBu"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+const WizardsPage = lazy(() => import("./pages/Wizards"));
 
 
 // Módulo Teams
@@ -439,7 +440,17 @@ const App = () => {
                       }
                     />
 
-
+                    {/* Wizards - All OKR Wizards */}
+                    <Route
+                      path="/wizards"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <WizardsPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
                     {/* ===== LEGACY REDIRECTS (backwards compatibility) ===== */}
                     {/* Context Resolver - resolves BU from resource and redirects */}
                     <Route
