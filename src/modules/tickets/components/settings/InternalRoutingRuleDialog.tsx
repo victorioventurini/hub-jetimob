@@ -48,7 +48,8 @@ import {
 import { TicketCategory, TicketInternalRoutingRule, TicketSubcategory } from "../../types";
 import { useTeams } from "@/modules/teams/hooks/useTeams";
 import { useSquads } from "@/modules/teams/hooks/useSquads";
-import { useBuProfiles } from "@/hooks/useBuProfiles";
+import { useBuProfiles } from "@/hooks/useNotificationAdmin";
+import { useBu } from "@/contexts/BuContext";
 
 // ============================================================
 // SCHEMA
@@ -103,9 +104,10 @@ export function InternalRoutingRuleDialog({
   const { mutate: update, isPending: isUpdating } = useUpdateInternalRoutingRule();
   const isPending = isCreating || isUpdating;
 
+  const { currentBu } = useBu();
   const { data: teams = [], isLoading: loadingTeams } = useTeams();
   const { data: squads = [], isLoading: loadingSquads } = useSquads();
-  const { data: profiles = [], isLoading: loadingProfiles } = useBuProfiles();
+  const { data: profiles = [], isLoading: loadingProfiles } = useBuProfiles(currentBu?.id);
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
@@ -390,7 +392,7 @@ export function InternalRoutingRuleDialog({
                                   htmlFor={`assignee-user-${profile.id}`}
                                   className="text-sm cursor-pointer"
                                 >
-                                  {profile.full_name}
+                                  {profile.display_name || profile.work_email || 'Usuário'}
                                 </label>
                               </div>
                             ))}
@@ -549,7 +551,7 @@ export function InternalRoutingRuleDialog({
                                   htmlFor={`watcher-user-${profile.id}`}
                                   className="text-sm cursor-pointer"
                                 >
-                                  {profile.full_name}
+                                  {profile.display_name || profile.work_email || 'Usuário'}
                                 </label>
                               </div>
                             ))}

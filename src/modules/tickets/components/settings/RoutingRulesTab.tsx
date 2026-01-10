@@ -18,6 +18,7 @@ import { useRoutingRules, useDeleteRoutingRule } from "../../hooks/useRoutingRul
 import { usePartnerCompanies } from "../../hooks/usePartners";
 import { useTicketCategories } from "../../hooks/useTicketCategories";
 import { RoutingRuleDialog } from "./RoutingRuleDialog";
+import { InternalRoutingSection } from "./InternalRoutingSection";
 import { TicketRoutingRule } from "../../types";
 
 export function RoutingRulesTab() {
@@ -68,13 +69,14 @@ export function RoutingRulesTab() {
   }
 
   return (
-    <>
+    <div className="space-y-6">
+      {/* External Routing Section */}
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Regras de Roteamento</CardTitle>
+            <CardTitle>Roteamento de Tickets Externos</CardTitle>
             <CardDescription>
-              Configure atribuição automática de tickets externos por subcategoria
+              Configure atribuição automática de tickets externos por empresa e subcategoria
             </CardDescription>
           </div>
           <Button onClick={handleCreate} disabled={companies.length === 0}>
@@ -93,7 +95,7 @@ export function RoutingRulesTab() {
           ) : rules.length === 0 ? (
             <EmptyState
               icon={Route}
-              title="Nenhuma regra de roteamento"
+              title="Nenhuma regra de roteamento externo"
               description="Crie regras para atribuir automaticamente tickets externos a responsáveis."
               compact
             />
@@ -159,6 +161,9 @@ export function RoutingRulesTab() {
         </CardContent>
       </Card>
 
+      {/* Internal Routing Section */}
+      <InternalRoutingSection />
+
       <RoutingRuleDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -174,6 +179,6 @@ export function RoutingRulesTab() {
         title="Remover regra de roteamento?"
         description="Novos tickets não serão mais automaticamente atribuídos por esta regra."
       />
-    </>
+    </div>
   );
 }
