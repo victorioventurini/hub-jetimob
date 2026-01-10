@@ -362,6 +362,8 @@ export const queryKeys = {
       ['users', 'directory', buId, filters] as const,
     selectOptions: (buId: string | null) => 
       ['users', 'select-options', buId] as const,
+    mentionCandidates: (buId: string | null, q: string) =>
+      ['users', 'mention-candidates', buId, { q }] as const,
     globalList: (filters?: { q?: string; buId?: string; onboardingStatus?: string }) =>
       ['users', 'global-list', filters] as const,
     globalDetail: (profileId: string) =>
