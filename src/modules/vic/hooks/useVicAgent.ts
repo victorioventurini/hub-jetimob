@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase as authSupabase } from "@/integrations/supabase/client";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
@@ -27,8 +28,7 @@ export interface VicInvokeOptions {
 }
 
 export function useVicAgent(options?: UseVicAgentOptions) {
-  const { currentBu } = useBu();
-  const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const { currentBu, currentBuId } = useBu();
   const [lastResponse, setLastResponse] = useState<VicInvokeResponse | null>(null);
 
   const mutation = useMutation({
@@ -45,14 +45,16 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       userQuestion?: string;
       silent?: boolean;
     }) => {
-      if (!supabase || !isReady || !buId) {
+      const buId = currentBu?.id ?? currentBuId;
+      if (!buId) {
         throw new Error("No BU selected");
       }
 
-      const { data, error } = await supabase.functions.invoke<VicInvokeResponse>("invoke-vic", {
+      const { data, error } = await authSupabase.functions.invoke<VicInvokeResponse>("invoke-vic", {
+        headers: { "x-current-bu-id": buId },
         body: {
           agentSlug,
-          buId: currentBu?.id ?? buId,
+          buId,
           actionContext,
           context,
           userQuestion,
