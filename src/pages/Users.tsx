@@ -47,7 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
-import { UrlPagination } from "@/shared/filters";
+import { UrlPagination, UrlSearchInput } from "@/shared/filters";
 import { useUrlState, parsers } from "@/shared/url";
 import { UserHoverCard } from "@/components/user/UserHoverCard";
 
@@ -348,15 +348,13 @@ export default function UsersPage() {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, e-mail ou cargo..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <UrlSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Buscar por nome, e-mail ou cargo..."
+            className="flex-1 max-w-md"
+            debounceMs={300}
+          />
           <TeamSelect
             value={teamFilter === "all" ? undefined : teamFilter}
             onValueChange={(v) => setTeamFilter(v ?? "all")}
