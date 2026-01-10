@@ -1,5 +1,4 @@
 import { useEffect, useCallback, useState } from "react";
-import { motion } from "framer-motion";
 import {
   Sheet,
   SheetContent,
@@ -23,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useVic } from "../contexts/VicContext";
 import { useVicStream } from "../hooks/useVicStream";
 import { VicLoadingState } from "./VicLoadingState";
+import { VicStreamingText } from "./VicTypewriterText";
 import { toast } from "sonner";
 
 export function VicSidepanel() {
@@ -208,15 +208,10 @@ export function VicSidepanel() {
               <ScrollArea className="h-full">
                 <div className="prose prose-sm dark:prose-invert max-w-none pr-4">
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {response}
-                    {isStreaming && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: [0, 1, 0] }}
-                        transition={{ duration: 0.6, repeat: Infinity }}
-                        className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-middle rounded-full"
-                      />
-                    )}
+                    <VicStreamingText 
+                      text={response} 
+                      isStreaming={isStreaming} 
+                    />
                   </div>
                 </div>
               </ScrollArea>

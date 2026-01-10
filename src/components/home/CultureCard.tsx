@@ -4,6 +4,7 @@ import { useCultureMessage } from "@/hooks/useCultureMessage";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { VicTypewriterText } from "@/modules/vic";
 
 const FALLBACK_MESSAGES = [
   "Cultura não é o que dizemos, é o que fazemos no dia a dia.",
@@ -11,43 +12,6 @@ const FALLBACK_MESSAGES = [
   "Simplicidade é a sofisticação máxima. Menos ruído, mais resultado.",
   "Compromisso não é cumprir tarefas, é entregar impacto.",
 ];
-
-function TypewriterText({ text }: { text: string }) {
-  const [displayedText, setDisplayedText] = useState("");
-  const [isTyping, setIsTyping] = useState(true);
-
-  useEffect(() => {
-    setDisplayedText("");
-    setIsTyping(true);
-    let currentIndex = 0;
-
-    const typingInterval = setInterval(() => {
-      if (currentIndex < text.length) {
-        setDisplayedText(text.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        setIsTyping(false);
-        clearInterval(typingInterval);
-      }
-    }, 35); // Velocidade de digitação
-
-    return () => clearInterval(typingInterval);
-  }, [text]);
-
-  return (
-    <span>
-      {displayedText}
-      {isTyping && (
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 0.8, repeat: Infinity }}
-          className="inline-block ml-0.5 w-0.5 h-8 bg-primary align-middle"
-        />
-      )}
-    </span>
-  );
-}
 
 export function CultureCard() {
   const { message, isLoading, error, refresh } = useCultureMessage();
@@ -119,7 +83,7 @@ export function CultureCard() {
             transition={{ duration: 0.3 }}
           >
             <p className="font-handwriting text-3xl md:text-4xl lg:text-5xl leading-snug text-foreground">
-              <TypewriterText text={displayMessage} />
+              <VicTypewriterText text={displayMessage} speed={35} cursorHeight="h-8" />
             </p>
           </motion.div>
         )}
