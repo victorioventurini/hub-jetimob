@@ -13,7 +13,7 @@ import { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
+import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { useWizardDraft, type WizardStep } from '@/modules/okrs/hooks/useWizardDraft';
 import { useUrlState } from '@/shared/url';
 import { useAuth } from '@/hooks/useAuth';
@@ -69,12 +69,8 @@ const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map(s => s.id);
 export default function OkrCreationPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { profile, isAdmin, role } = useAuth();
+  const { profile } = useAuth();
   const { profileId } = useIdentity();
-  
-  // Check if user is admin
-  const isSuperAdmin = role === 'super_admin';
-  const canSwitchTeam = isSuperAdmin || isAdmin;
   
   // URL params
   const teamIdParam = searchParams.get('team');
@@ -474,17 +470,14 @@ export default function OkrCreationPage() {
       isLoading={createBundle.isPending}
       onClose={handleClose}
       backUrl="/wizards"
-      contextLabel={!canSwitchTeam ? selectedTeam.name : undefined}
       adminContextSwitcher={
-        canSwitchTeam ? (
-          <AdminContextSwitcher
-            type="team"
-            currentLabel={selectedTeam.name}
-            selectedId={teamIdParam}
-            onSelect={handleTeamChange}
-            isLoading={isLoadingTeams}
-          />
-        ) : undefined
+        <HierarchyContextSwitcher
+          type="team"
+          currentLabel={selectedTeam.name}
+          selectedId={teamIdParam}
+          onSelect={handleTeamChange}
+          isLoading={isLoadingTeams}
+        />
       }
     >
       {renderStepContent()}

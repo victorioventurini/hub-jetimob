@@ -6,13 +6,13 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
+import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useTeamOverviewMetrics } from '@/modules/okrs/hooks/useTeamOverviewMetrics';
 import { useTeamPendingKrs } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
-import { useAuth } from '@/hooks/useAuth';
+
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -61,12 +61,6 @@ export default function LeaderPrepPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const teamIdParam = searchParams.get('team');
-  const { isAdmin, role } = useAuth();
-  
-  // Check if user can switch team
-  const isSuperAdmin = role === 'super_admin';
-  const canSwitchTeam = isSuperAdmin || isAdmin;
-  
   // Get teams
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
   const selectedTeam = useMemo(() => {
@@ -289,15 +283,13 @@ export default function LeaderPrepPage() {
       onClose={handleClose}
       backUrl="/wizards"
       adminContextSwitcher={
-        canSwitchTeam ? (
-          <AdminContextSwitcher
-            type="team"
-            currentLabel={selectedTeam?.name || 'Selecionar time'}
-            selectedId={teamIdParam}
-            onSelect={handleTeamChange}
-            isLoading={isLoadingTeams}
-          />
-        ) : undefined
+        <HierarchyContextSwitcher
+          type="team"
+          currentLabel={selectedTeam?.name || 'Selecionar time'}
+          selectedId={teamIdParam}
+          onSelect={handleTeamChange}
+          isLoading={isLoadingTeams}
+        />
       }
     >
       {renderStepContent()}
