@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,6 @@ import {
   Mail,
   Phone,
   Zap,
-  Calendar,
   Ticket,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -131,44 +131,49 @@ export default function PartnerContactProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10" />
-          <Skeleton className="h-20 w-20 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-32" />
+      <HubLayout>
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10" />
+            <Skeleton className="h-20 w-20 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <Skeleton className="h-48 w-full" />
+            </div>
+            <Skeleton className="h-64 w-full" />
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <Skeleton className="h-48 w-full" />
-          </div>
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
+      </HubLayout>
     );
   }
 
   if (!profile) {
     return (
-      <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col items-center justify-center py-12">
-          <User className="h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Contato não encontrado</h2>
-          <p className="text-muted-foreground mb-4">
-            O contato que você está procurando não existe ou você não tem acesso.
-          </p>
-          <Button asChild>
-            <Link to="/tickets/settings?tab=contacts">Voltar para Contatos</Link>
-          </Button>
+      <HubLayout>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col items-center justify-center py-12">
+            <User className="h-12 w-12 text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Contato não encontrado</h2>
+            <p className="text-muted-foreground mb-4">
+              O contato que você está procurando não existe ou você não tem acesso.
+            </p>
+            <Button asChild>
+              <Link to="/tickets/settings?tab=contacts">Voltar para Contatos</Link>
+            </Button>
+          </div>
         </div>
-      </div>
+      </HubLayout>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <HubLayout>
+      <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start gap-4">
         <Button
@@ -359,6 +364,7 @@ export default function PartnerContactProfilePage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </HubLayout>
   );
 }
