@@ -62,6 +62,20 @@ export function useGlobalSearch(initialQuery = "") {
         (globalThis.crypto?.randomUUID?.() as string | undefined) ||
         `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+      // Ensure this client has a hydrated session before invoking functions.
+      // Without this, supabase-js may fall back to anon key and the gateway will reject it as "Invalid JWT".
+      const {
+        data: { session: clientSession },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !clientSession?.access_token) {
+        console.warn("[useGlobalSearch] No client session available for functions.invoke", {
+          sessionError,
+        });
+        return { query: debouncedQuery, groups: [] };
+      }
+
       const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
           bu_id: currentBuId,
@@ -69,7 +83,6 @@ export function useGlobalSearch(initialQuery = "") {
           limit_per_type: 5,
         },
         headers: {
-          Authorization: `Bearer ${session!.access_token}`,
           "x-correlation-id": correlationId,
         },
       });
