@@ -27,8 +27,8 @@ export function AssetsLayout() {
   return (
     <div className="space-y-6">
       {/* Sub-navigation tabs */}
-      <nav className="border-b border-border">
-        <div className="flex gap-6 overflow-x-auto">
+      <nav className="border-b border-border -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex gap-1 sm:gap-6 overflow-x-auto scrollbar-hide">
           {visibleTabs.map((tab) => {
             const isActive =
               location.pathname === tab.href ||
@@ -40,14 +40,15 @@ export function AssetsLayout() {
                 key={tab.href}
                 to={tab.href}
                 className={cn(
-                  "flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                  "flex items-center gap-2 py-3 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                  "min-h-[44px]", // Touch target
                   isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {tab.name}
+                <span className="hidden sm:inline">{tab.name}</span>
               </Link>
             );
           })}
