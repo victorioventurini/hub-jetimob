@@ -62,6 +62,35 @@ export default function PublicAsset() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Dynamic page title and meta description for public page
+  useEffect(() => {
+    if (data?.asset) {
+      const { asset, bu } = data;
+      document.title = `Item ${asset.internal_code} - ${asset.name} | Hub`;
+      
+      // Update meta description
+      let metaDescriptionTag = document.querySelector('meta[name="description"]');
+      if (!metaDescriptionTag) {
+        metaDescriptionTag = document.createElement("meta");
+        metaDescriptionTag.setAttribute("name", "description");
+        document.head.appendChild(metaDescriptionTag);
+      }
+      const statusLabel = statusLabels[asset.status] || asset.status;
+      metaDescriptionTag.setAttribute(
+        "content", 
+        `Visualize informações do item ${asset.internal_code} (${asset.name}) da ${bu.name}. Status: ${statusLabel}.`
+      );
+    } else if (error) {
+      document.title = `Item ${code || ''} não encontrado | Hub`;
+    } else {
+      document.title = `Carregando item... | Hub`;
+    }
+
+    return () => {
+      document.title = "Hub";
+    };
+  }, [data, error, code]);
+
   useEffect(() => {
     async function fetchAsset() {
       if (!code) {
