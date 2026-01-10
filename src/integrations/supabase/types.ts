@@ -3229,6 +3229,7 @@ export type Database = {
           next_retry_at: string | null
           payload: Json
           processed_at: string | null
+          provider: string | null
           retries: number
           sent_at: string | null
           status: Database["public"]["Enums"]["notification_outbox_status"]
@@ -3246,6 +3247,7 @@ export type Database = {
           next_retry_at?: string | null
           payload?: Json
           processed_at?: string | null
+          provider?: string | null
           retries?: number
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_outbox_status"]
@@ -3263,6 +3265,7 @@ export type Database = {
           next_retry_at?: string | null
           payload?: Json
           processed_at?: string | null
+          provider?: string | null
           retries?: number
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_outbox_status"]

@@ -652,17 +652,28 @@ const handler = async (req: Request): Promise<Response> => {
       const result = await processOutboxItem(supabase, item);
 
       if (result.success) {
-        // Mark as sent
+        // Mark as sent with provider info
+        const updateData: Record<string, unknown> = { 
+          status: "sent",
+          processed_at: new Date().toISOString(),
+        };
+        
+        // Add provider info if available (for email channel)
+        const providerInfo = (result as { provider?: string }).provider;
+        if (providerInfo) {
+          updateData.provider = providerInfo;
+        } else if (item.channel_slug !== "email") {
+          // For non-email channels, use channel_slug as provider
+          updateData.provider = item.channel_slug;
+        }
+        
         await supabase
           .from("notification_outbox")
-          .update({ 
-            status: "sent",
-            processed_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("id", item.id);
         successCount++;
-        const providerInfo = (result as { provider?: string }).provider ? ` provider=${(result as { provider?: string }).provider}` : "";
-        console.log(`[Outbox] ✅ SUCCESS outbox_id=${item.id} channel=${item.channel_slug}${providerInfo}`);
+        const providerLog = providerInfo ? ` provider=${providerInfo}` : "";
+        console.log(`[Outbox] ✅ SUCCESS outbox_id=${item.id} channel=${item.channel_slug}${providerLog}`);
       } else {
         const newRetries = item.retries + 1;
         const isFinalFailure = newRetries >= maxRetries;
