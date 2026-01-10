@@ -61,6 +61,12 @@ export function useGlobalSearch(initialQuery = "") {
         (globalThis.crypto?.randomUUID?.() as string | undefined) ||
         `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+      console.log("[useGlobalSearch] Invoking edge function", {
+        correlationId,
+        currentBuId,
+        query: debouncedQuery,
+      });
+
       // Use global client for edge function invocation - it has the hydrated session
       const { data, error } = await supabase.functions.invoke("global-search", {
         body: {
@@ -72,6 +78,8 @@ export function useGlobalSearch(initialQuery = "") {
           "x-correlation-id": correlationId,
         },
       });
+
+      console.log("[useGlobalSearch] Edge function response", { data, error });
 
       if (error) {
         const status = (error as any)?.status ?? (error as any)?.context?.status;
