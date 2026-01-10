@@ -88,6 +88,25 @@ export function createAuthenticatedClient(authHeader: string): SupabaseClient {
   });
 }
 
+/**
+ * Creates a BU-scoped authenticated client.
+ * This propagates the x-current-bu-id header so that PostgreSQL functions
+ * like current_bu_id() and is_current_bu() work correctly.
+ */
+export function createBuScopedAuthenticatedClient(authHeader: string, buId: string): SupabaseClient {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: { 
+      headers: { 
+        Authorization: authHeader,
+        'x-current-bu-id': buId,
+      } 
+    },
+  });
+}
+
 export function createServiceClient(): SupabaseClient {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -253,6 +272,17 @@ export async function withMiddleware(
     
     if (accessResult instanceof Response) {
       return { success: false, error: accessResult };
+    }
+  }
+
+  // CRITICAL: Replace client with BU-scoped version when BU context is available
+  // This ensures current_bu_id() and RLS policies work correctly in Edge Functions
+  if (context.buId && requireAuth) {
+    const authHeader = req.headers.get("Authorization")!;
+    context.supabase = createBuScopedAuthenticatedClient(authHeader, context.buId);
+    
+    if (logRequest) {
+      console.log(`[${requestId}] Created BU-scoped client for bu_id: ${context.buId}`);
     }
   }
 
