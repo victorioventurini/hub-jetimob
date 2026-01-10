@@ -174,17 +174,25 @@ export default function UsersPage() {
       page,
       pageSize,
     }),
-    queryFn: async (): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
+    queryFn: async ({ queryKey }): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
       if (!currentBu?.id) return { profiles: [], total: 0 };
+      
+      // Extract filters from queryKey to ensure fresh values
+      const filters = queryKey[3] as { q?: string; teamId?: string; status?: string; page?: number; pageSize?: number } | undefined;
+      const qSearch = filters?.q?.trim() || null;
+      const qTeamId = filters?.teamId || null;
+      const qStatus = filters?.status || 'active';
+      const qPageSize = filters?.pageSize || 25;
+      const qOffset = ((filters?.page || 1) - 1) * qPageSize;
       
       // Use RPC that filters by bu_user_memberships (consistent with /hub/users)
       const { data, error } = await supabase.rpc("get_bu_users_by_membership", {
         p_bu_id: currentBu.id,
-        p_search: searchQuery?.trim() || null,
-        p_team_id: teamFilter !== 'all' ? teamFilter : null,
-        p_status: statusFilter || 'active',
-        p_limit: pageSize,
-        p_offset: from,
+        p_search: qSearch,
+        p_team_id: qTeamId,
+        p_status: qStatus,
+        p_limit: qPageSize,
+        p_offset: qOffset,
       });
 
       if (error) throw error;
