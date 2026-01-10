@@ -139,6 +139,10 @@ export const queryKeys = {
     wizardSession: (userId: string | null) =>
       ['okr-wizard-session', userId] as const,
 
+    // Wizard drafts (for team OKR creation persistence)
+    wizardDraft: (teamId: string, cycleId: string) =>
+      ['okr-wizard-draft', teamId, cycleId] as const,
+
     // Wizard data
     wizardUserKrs: (
       buId: string | null,

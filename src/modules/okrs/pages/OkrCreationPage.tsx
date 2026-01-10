@@ -102,9 +102,12 @@ export default function OkrCreationPage() {
     draft, 
     updateDraft, 
     setStep, 
-    clearDraft, 
+    clearDraft,
+    saveDraft,
     isDirty,
-    hasSavedDraft 
+    isSaving,
+    hasSavedDraft,
+    lastSavedAt,
   } = useWizardDraft({
     teamId: teamIdParam || '',
     cycleId: quarterlyCycle?.id || null,
@@ -188,6 +191,17 @@ export default function OkrCreationPage() {
   const handleClose = useCallback(() => {
     clearDraft();
   }, [clearDraft]);
+  
+  // Handle save draft
+  const handleSaveDraft = useCallback(async () => {
+    try {
+      await saveDraft();
+      toast.success('Rascunho salvo! Você pode continuar depois.');
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+      toast.error('Erro ao salvar rascunho');
+    }
+  }, [saveDraft]);
   
   // Handle submit
   const handleSubmit = useCallback(async () => {
@@ -423,6 +437,9 @@ export default function OkrCreationPage() {
       completedSteps={completedSteps}
       onStepChange={goToStep}
       isDirty={isDirty}
+      isSavingDraft={isSaving}
+      onSaveDraft={handleSaveDraft}
+      lastSavedAt={lastSavedAt}
       isLoading={createBundle.isPending}
       onClose={handleClose}
       backUrl="/wizards"
