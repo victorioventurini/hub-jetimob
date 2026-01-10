@@ -30,29 +30,39 @@ export function UrlSearchInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const [localValue, setLocalValue] = useState(value);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const isTypingRef = useRef(false);
 
-  // Sync local value when external value changes
+  // Sync local value when external value changes, but NOT while user is typing
   useEffect(() => {
-    setLocalValue(value);
+    if (!isTypingRef.current) {
+      setLocalValue(value);
+    }
   }, [value]);
 
   const handleChange = (newValue: string) => {
     setLocalValue(newValue);
+    isTypingRef.current = true;
     
-    if (debounceMs) {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        onChange(newValue);
-      }, debounceMs);
-    } else {
-      onChange(newValue);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
+    
+    const delay = debounceMs || 0;
+    timeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+      // Allow sync again after debounce completes
+      setTimeout(() => {
+        isTypingRef.current = false;
+      }, 50);
+    }, delay);
   };
 
   const handleClear = () => {
     setLocalValue("");
+    isTypingRef.current = false;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     onChange("");
     inputRef.current?.focus();
   };

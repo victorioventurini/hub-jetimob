@@ -14,8 +14,10 @@ import { useUrlState, useUrlSearch, parsers } from "@/shared/url";
 import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
-  // URL State for server-side filtering
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  // URL State for server-side filtering - NO debounce here, UrlSearchInput handles it
+  const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const search = searchState.value;
+  const setSearch = searchState.set;
   const statusState = useUrlState<string>({ key: "status", defaultValue: "all" });
   const categoryState = useUrlState<string>({ key: "category", defaultValue: "all" });
   const holderState = useUrlState<string>({ key: "holder", defaultValue: "all" });
