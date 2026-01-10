@@ -269,13 +269,11 @@ export default function WizardsPage() {
   }, [selectedTeam, leaderTeams, wizardState, teamIdState, teamNameState]);
 
   // Handle wizard close
-  const handleWizardClose = useCallback((wizardId: string) => {
-    // Only clear if this wizard is currently in URL
-    if (wizardState.value === wizardId) {
-      wizardState.set(null);
-      teamIdState.set(null);
-      teamNameState.set(null);
-    }
+  const handleWizardClose = useCallback((_wizardId: string) => {
+    // Always clear URL state on close (guards here can lead to stuck modals)
+    wizardState.set(null);
+    teamIdState.set(null);
+    teamNameState.set(null);
   }, [wizardState, teamIdState, teamNameState]);
 
   // Derived wizard open states from URL
