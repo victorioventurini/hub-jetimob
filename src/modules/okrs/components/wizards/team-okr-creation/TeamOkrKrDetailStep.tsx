@@ -1,0 +1,395 @@
+/**
+ * TeamOkrKrDetailStep - Step 5: Detalhando KRs
+ * 
+ * Cap. 5 cont. do storytelling:
+ * - Formulário contextual por tipo de KR
+ * - Perguntas específicas por tipo
+ * - Feedback em tempo real
+ */
+
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
+  ArrowRight,
+  ArrowLeft,
+  Target,
+  Link2,
+  Wrench,
+  TrendingUp,
+  TrendingDown,
+  User,
+  Loader2,
+  CheckCircle2,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import { useDebounce } from '@/hooks/useDebounce';
+import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
+import type { KrPlan } from './TeamOkrKrTypeStep';
+
+// ============================================================
+// TYPES
+// ============================================================
+
+export interface TeamMember {
+  id: string;
+  fullName: string;
+  avatarUrl?: string;
+}
+
+export interface TeamOkrKrDetailStepProps {
+  objectiveTitle: string;
+  krPlan: KrPlan;
+  draftKrs: DraftTeamKr[];
+  teamMembers: TeamMember[];
+  onDraftKrsChange: (krs: DraftTeamKr[]) => void;
+  onContinue: () => void;
+  onBack: () => void;
+}
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+const TYPE_CONFIG = {
+  foundational: {
+    icon: Target,
+    color: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    title: 'Fundacional',
+    questions: [
+      'Que número prova que esse objetivo foi atingido?',
+      'Se esse KR bater, você diria que o objetivo foi um sucesso?',
+    ],
+  },
+  contribution: {
+    icon: Link2,
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    title: 'Contribuição',
+    questions: [
+      'Qual KR organizacional esse resultado alimenta?',
+      'Qual a meta que deixa claro que você contribuiu?',
+    ],
+  },
+  enabler: {
+    icon: Wrench,
+    color: 'text-orange-600 dark:text-orange-400',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    title: 'Habilitador',
+    questions: [
+      'O que precisa estar entregue para o resultado ser possível?',
+      'Esse KR depende só do seu time?',
+    ],
+  },
+};
+
+const UNITS = ['%', 'un', 'R$', 'pontos', 'dias', 'horas', 'NPS', 'CSAT'];
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
+export function TeamOkrKrDetailStep({
+  objectiveTitle,
+  krPlan,
+  draftKrs,
+  teamMembers,
+  onDraftKrsChange,
+  onContinue,
+  onBack,
+}: TeamOkrKrDetailStepProps) {
+  const { invokeVic } = useWizardAI();
+  const [currentKrIndex, setCurrentKrIndex] = useState(0);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Generate list of KRs to fill based on plan
+  const krSlots = useMemo(() => {
+    const slots: { type: OkrKrType; index: number }[] = [];
+    let idx = 0;
+    
+    for (let i = 0; i < krPlan.foundational; i++) {
+      slots.push({ type: 'foundational', index: idx++ });
+    }
+    for (let i = 0; i < krPlan.contribution; i++) {
+      slots.push({ type: 'contribution', index: idx++ });
+    }
+    for (let i = 0; i < krPlan.enabler; i++) {
+      slots.push({ type: 'enabler', index: idx++ });
+    }
+    
+    return slots;
+  }, [krPlan]);
+
+  // Initialize draft KRs if needed
+  useEffect(() => {
+    if (draftKrs.length !== krSlots.length) {
+      const newDrafts: DraftTeamKr[] = krSlots.map((slot, i) => ({
+        type: slot.type,
+        title: draftKrs[i]?.title || '',
+        baseline: draftKrs[i]?.baseline ?? 0,
+        target: draftKrs[i]?.target ?? 0,
+        unit: draftKrs[i]?.unit || '%',
+        direction: draftKrs[i]?.direction || 'up',
+        ownerUserId: draftKrs[i]?.ownerUserId || '',
+      }));
+      onDraftKrsChange(newDrafts);
+    }
+  }, [krSlots, draftKrs, onDraftKrsChange]);
+
+  const currentSlot = krSlots[currentKrIndex];
+  const currentKr = draftKrs[currentKrIndex];
+  const config = currentSlot ? TYPE_CONFIG[currentSlot.type] : null;
+
+  // Update a specific KR field
+  const updateKrField = useCallback(<K extends keyof DraftTeamKr>(
+    field: K,
+    value: DraftTeamKr[K]
+  ) => {
+    const updated = [...draftKrs];
+    updated[currentKrIndex] = {
+      ...updated[currentKrIndex],
+      [field]: value,
+    };
+    onDraftKrsChange(updated);
+  }, [draftKrs, currentKrIndex, onDraftKrsChange]);
+
+  // Navigation
+  const handleNext = useCallback(() => {
+    if (currentKrIndex < krSlots.length - 1) {
+      setCurrentKrIndex(prev => prev + 1);
+    } else {
+      onContinue();
+    }
+  }, [currentKrIndex, krSlots.length, onContinue]);
+
+  const handlePrev = useCallback(() => {
+    if (currentKrIndex > 0) {
+      setCurrentKrIndex(prev => prev - 1);
+    } else {
+      onBack();
+    }
+  }, [currentKrIndex, onBack]);
+
+  // Validation
+  const isKrValid = useMemo(() => {
+    if (!currentKr) return false;
+    return (
+      currentKr.title.trim().length >= 5 &&
+      currentKr.ownerUserId &&
+      (currentKr.target !== currentKr.baseline)
+    );
+  }, [currentKr]);
+
+  const allKrsValid = useMemo(() => {
+    return draftKrs.every(kr => 
+      kr.title.trim().length >= 5 &&
+      kr.ownerUserId &&
+      kr.target !== kr.baseline
+    );
+  }, [draftKrs]);
+
+  if (!currentSlot || !currentKr || !config) {
+    return null;
+  }
+
+  const Icon = config.icon;
+  const isLastKr = currentKrIndex === krSlots.length - 1;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Progress indicator */}
+      <div className="px-6 py-3 border-b bg-muted/30">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            KR {currentKrIndex + 1} de {krSlots.length}
+          </span>
+          <div className="flex gap-1">
+            {krSlots.map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-2 w-8 rounded-full transition-colors",
+                  i < currentKrIndex && "bg-green-500",
+                  i === currentKrIndex && "bg-primary",
+                  i > currentKrIndex && "bg-muted"
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <ScrollArea className="flex-1">
+        <div className="p-6 space-y-6">
+          {/* KR Type Header */}
+          <div className="flex items-center gap-3">
+            <div className={cn("p-2 rounded-lg", config.bgColor)}>
+              <Icon className={cn("h-5 w-5", config.color)} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">KR {config.title}</h2>
+              <p className="text-sm text-muted-foreground">
+                Para o objetivo: {objectiveTitle}
+              </p>
+            </div>
+          </div>
+
+          {/* Guiding Question */}
+          <div className="p-4 border rounded-lg bg-muted/50">
+            <p className="text-sm font-medium">{config.questions[0]}</p>
+          </div>
+
+          {/* KR Title */}
+          <div className="space-y-2">
+            <Label htmlFor="kr-title">Título do KR</Label>
+            <Input
+              id="kr-title"
+              placeholder="Ex: Aumentar NPS de 65 para 72 pontos"
+              value={currentKr.title}
+              onChange={(e) => updateKrField('title', e.target.value)}
+            />
+          </div>
+
+          {/* Metrics Row */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="kr-baseline">Baseline</Label>
+              <Input
+                id="kr-baseline"
+                type="number"
+                placeholder="0"
+                value={currentKr.baseline || ''}
+                onChange={(e) => updateKrField('baseline', parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="kr-target">Meta</Label>
+              <Input
+                id="kr-target"
+                type="number"
+                placeholder="100"
+                value={currentKr.target || ''}
+                onChange={(e) => updateKrField('target', parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="kr-unit">Unidade</Label>
+              <Select
+                value={currentKr.unit}
+                onValueChange={(value) => updateKrField('unit', value)}
+              >
+                <SelectTrigger id="kr-unit">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNITS.map(unit => (
+                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Direction */}
+          <div className="space-y-2">
+            <Label>Direção</Label>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant={currentKr.direction === 'up' ? 'default' : 'outline'}
+                className="flex-1 gap-2"
+                onClick={() => updateKrField('direction', 'up')}
+              >
+                <TrendingUp className="h-4 w-4" />
+                Aumentar
+              </Button>
+              <Button
+                type="button"
+                variant={currentKr.direction === 'down' ? 'default' : 'outline'}
+                className="flex-1 gap-2"
+                onClick={() => updateKrField('direction', 'down')}
+              >
+                <TrendingDown className="h-4 w-4" />
+                Diminuir
+              </Button>
+            </div>
+          </div>
+
+          {/* Owner */}
+          <div className="space-y-2">
+            <Label htmlFor="kr-owner">Responsável</Label>
+            <Select
+              value={currentKr.ownerUserId}
+              onValueChange={(value) => updateKrField('ownerUserId', value)}
+            >
+              <SelectTrigger id="kr-owner">
+                <SelectValue placeholder="Selecione o responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {member.fullName}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Preview */}
+          {isKrValid && (
+            <Card className="border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-950/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 mb-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Preview do KR</span>
+                </div>
+                <p className="text-sm font-medium">{currentKr.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {currentKr.direction === 'up' ? 'Aumentar' : 'Diminuir'} de {currentKr.baseline} para {currentKr.target} {currentKr.unit}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t p-4 bg-muted/30 flex gap-3">
+        <Button variant="outline" onClick={handlePrev} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          {currentKrIndex === 0 ? 'Voltar' : 'KR Anterior'}
+        </Button>
+        <Button 
+          onClick={handleNext} 
+          className="flex-1 gap-2"
+          disabled={!isKrValid}
+        >
+          {isLastKr ? (
+            allKrsValid ? 'Revisar dependências' : 'Completar KRs restantes'
+          ) : (
+            'Próximo KR'
+          )}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}

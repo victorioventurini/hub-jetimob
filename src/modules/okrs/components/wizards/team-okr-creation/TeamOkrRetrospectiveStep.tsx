@@ -1,0 +1,320 @@
+/**
+ * TeamOkrRetrospectiveStep - Step 2: Aprendendo com o Passado
+ * 
+ * Cap. 3 do storytelling:
+ * - Mostra OKRs do ciclo anterior
+ * - Taxa de atingimento
+ * - KRs abandonados
+ * - Insights sem julgamento
+ */
+
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  ArrowRight,
+  ArrowLeft,
+  History,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { VicInsightCard } from '../shared/VicInsightCard';
+import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import type { VicInsight } from '@/modules/okrs/types/wizard';
+import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
+
+// ============================================================
+// TYPES
+// ============================================================
+
+export interface TeamOkrRetrospectiveStepProps {
+  teamName: string;
+  analysis: PreviousCycleAnalysis | null;
+  isLoading?: boolean;
+  onContinue: () => void;
+  onBack: () => void;
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
+export function TeamOkrRetrospectiveStep({
+  teamName,
+  analysis,
+  isLoading = false,
+  onContinue,
+  onBack,
+}: TeamOkrRetrospectiveStepProps) {
+  const { invokeVic } = useWizardAI();
+  const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+
+  // Generate retrospective insight
+  useEffect(() => {
+    const generateInsight = async () => {
+      if (!analysis) return;
+      
+      setIsGeneratingInsight(true);
+      try {
+        const response = await invokeVic(
+          'analista-kpis',
+          'retrospective_analysis',
+          {
+            type: 'retrospective',
+            additionalData: {
+              objectivesCount: analysis.objectives.length,
+              avgCompletion: analysis.avgCompletion,
+              abandonedCount: analysis.abandonedKrs.length,
+              kpiTrends: analysis.kpiTrends,
+            },
+          },
+          'Analise o ciclo anterior e forneça 2-3 aprendizados sem julgar, focando em padrões observados e oportunidades de melhoria.'
+        );
+
+        setAiInsight({
+          id: 'retro-insight',
+          type: 'insight',
+          content: response.response,
+          priority: 'medium',
+          source: 'analista-kpis',
+        });
+      } catch {
+        // Fallback insight
+        if (analysis.abandonedKrs.length > 0) {
+          setAiInsight({
+            id: 'retro-insight-fallback',
+            type: 'insight',
+            content: `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com 3 KRs ativos tiveram 28% mais foco.`,
+            priority: 'medium',
+            source: 'analista-kpis',
+          });
+        }
+      } finally {
+        setIsGeneratingInsight(false);
+      }
+    };
+
+    generateInsight();
+  }, [invokeVic, analysis]);
+
+  const hasData = analysis && (analysis.objectives.length > 0 || analysis.kpiTrends.length > 0);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Content */}
+      <ScrollArea className="flex-1">
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div>
+            <h2 className="text-lg font-semibold mb-1">Aprendendo com o Passado</h2>
+            <p className="text-sm text-muted-foreground">
+              Antes de olhar para frente, vamos entender o que o ciclo anterior nos ensinou.
+            </p>
+          </div>
+
+          {!hasData ? (
+            /* No Previous Data */
+            <Card className="border-dashed">
+              <CardContent className="p-8 text-center">
+                <History className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="font-medium mb-2">Primeiro ciclo do time</h3>
+                <p className="text-sm text-muted-foreground">
+                  Não há dados de ciclos anteriores. Isso é uma oportunidade para 
+                  começar com boas práticas desde o início!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">
+                      {analysis.objectives.length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Objetivo{analysis.objectives.length !== 1 ? 's' : ''}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">
+                      {analysis.avgCompletion}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Atingimento médio
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className={cn(
+                      "text-2xl font-bold",
+                      analysis.abandonedKrs.length > 0 ? "text-orange-500" : "text-green-500"
+                    )}>
+                      {analysis.abandonedKrs.length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      KR{analysis.abandonedKrs.length !== 1 ? 's' : ''} sem update
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Previous Objectives */}
+              {analysis.objectives.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      Objetivos do Ciclo Anterior
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {analysis.objectives.slice(0, 3).map(obj => (
+                      <div key={obj.id} className="p-3 border rounded-lg space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium">{obj.title}</p>
+                          <Badge className={cn(
+                            "shrink-0 text-xs",
+                            obj.progress >= 70 && "bg-green-100 text-green-700",
+                            obj.progress >= 40 && obj.progress < 70 && "bg-yellow-100 text-yellow-700",
+                            obj.progress < 40 && "bg-red-100 text-red-700"
+                          )}>
+                            {obj.progress}%
+                          </Badge>
+                        </div>
+                        <Progress value={obj.progress} className="h-1.5" />
+                      </div>
+                    ))}
+                    {analysis.objectives.length > 3 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{analysis.objectives.length - 3} outros objetivos
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Abandoned KRs (if any) */}
+              {analysis.abandonedKrs.length > 0 && (
+                <Card className="border-orange-200 dark:border-orange-800/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                      <AlertCircle className="h-4 w-4" />
+                      KRs sem Atualização
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.abandonedKrs.slice(0, 3).map(kr => (
+                      <div key={kr.id} className="flex items-center gap-2 text-sm p-2 bg-orange-50 dark:bg-orange-950/20 rounded">
+                        <XCircle className="h-4 w-4 text-orange-500 shrink-0" />
+                        <span className="line-clamp-1">{kr.title}</span>
+                      </div>
+                    ))}
+                    {analysis.abandonedKrs.length > 3 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{analysis.abandonedKrs.length - 3} outros
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* KPI Trends */}
+              {analysis.kpiTrends.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Evolução dos KPIs
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {analysis.kpiTrends.map(kpi => (
+                        <div key={kpi.id} className="flex items-center justify-between p-2 border rounded">
+                          <span className="text-sm">{kpi.name}</span>
+                          <div className={cn(
+                            "flex items-center gap-1 text-sm",
+                            kpi.trend === 'up' && "text-green-600",
+                            kpi.trend === 'down' && "text-red-600",
+                            kpi.trend === 'flat' && "text-muted-foreground"
+                          )}>
+                            {kpi.trend === 'up' && <TrendingUp className="h-4 w-4" />}
+                            {kpi.trend === 'down' && <TrendingDown className="h-4 w-4" />}
+                            {kpi.trend === 'flat' && <span>→</span>}
+                            <span className="capitalize">{kpi.trend === 'up' ? 'Melhorou' : kpi.trend === 'down' ? 'Piorou' : 'Estável'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {/* AI Insight */}
+          {isGeneratingInsight ? (
+            <div className="p-4 border rounded-lg bg-primary/5 animate-pulse">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                Analisando ciclo anterior...
+              </div>
+            </div>
+          ) : aiInsight ? (
+            <VicInsightCard insight={aiInsight} showSource />
+          ) : null}
+
+          {/* Vic Quote */}
+          <div className="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+            <p className="text-sm italic">
+              "OKRs não são sobre intenção. São sobre compromisso consciente."
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              Vic
+            </p>
+          </div>
+        </div>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t p-4 bg-muted/30 flex gap-3">
+        <Button variant="outline" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        <Button onClick={onContinue} className="flex-1 gap-2">
+          Definir o foco do ciclo
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
