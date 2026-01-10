@@ -5,7 +5,7 @@
  * Blocos se registram na fila e aguardam sua vez.
  */
 
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useRef, useMemo, type ReactNode } from 'react';
 
 // ============================================================
 // TYPES
@@ -35,69 +35,82 @@ const VicTypewriterQueueContext = createContext<VicTypewriterQueueContextType | 
 export function VicTypewriterQueueProvider({ children }: { children: ReactNode }) {
   const queueRef = useRef<QueueItem[]>([]);
   const activeIdRef = useRef<string | null>(null);
-  const [, forceUpdate] = useState(0);
-  
+
   const processQueue = useCallback(() => {
     // Se já tem um ativo, não faz nada
     if (activeIdRef.current) return;
-    
+
     // Pega o próximo da fila (menor priority = primeiro)
     if (queueRef.current.length === 0) return;
-    
+
     // Sort by priority
     queueRef.current.sort((a, b) => a.priority - b.priority);
-    
+
     const next = queueRef.current[0];
     if (next) {
       activeIdRef.current = next.id;
       next.startCallback();
     }
   }, []);
-  
-  const register = useCallback((id: string, priority: number, onStart: () => void) => {
-    // Evita duplicatas
-    const exists = queueRef.current.some(item => item.id === id);
-    if (!exists) {
-      queueRef.current.push({ id, priority, startCallback: onStart });
-    }
-    
-    // Tenta processar imediatamente
-    setTimeout(processQueue, 0);
-    
-    // Retorna a função para notificar conclusão
-    return () => {
-      // Cleanup
-      queueRef.current = queueRef.current.filter(item => item.id !== id);
+
+  const register = useCallback(
+    (id: string, priority: number, onStart: () => void) => {
+      // Evita duplicatas
+      const exists = queueRef.current.some((item) => item.id === id);
+      if (!exists) {
+        queueRef.current.push({ id, priority, startCallback: onStart });
+      }
+
+      // Tenta processar imediatamente
+      setTimeout(processQueue, 0);
+
+      // Retorna a função de cleanup
+      return () => {
+        queueRef.current = queueRef.current.filter((item) => item.id !== id);
+        if (activeIdRef.current === id) {
+          activeIdRef.current = null;
+          setTimeout(processQueue, 0);
+        }
+      };
+    },
+    [processQueue]
+  );
+
+  const notifyComplete = useCallback(
+    (id: string) => {
+      // Remove da fila
+      queueRef.current = queueRef.current.filter((item) => item.id !== id);
+
+      // Libera o slot ativo
       if (activeIdRef.current === id) {
         activeIdRef.current = null;
       }
-    };
-  }, [processQueue]);
-  
-  const notifyComplete = useCallback((id: string) => {
-    // Remove da fila
-    queueRef.current = queueRef.current.filter(item => item.id !== id);
-    
-    // Libera o slot ativo
-    if (activeIdRef.current === id) {
-      activeIdRef.current = null;
-    }
-    
-    // Processa próximo
-    setTimeout(processQueue, 50); // Pequeno delay entre blocos
-    forceUpdate(n => n + 1);
-  }, [processQueue]);
-  
-  const unregister = useCallback((id: string) => {
-    queueRef.current = queueRef.current.filter(item => item.id !== id);
-    if (activeIdRef.current === id) {
-      activeIdRef.current = null;
-      setTimeout(processQueue, 0);
-    }
-  }, [processQueue]);
-  
+
+      // Processa próximo
+      setTimeout(processQueue, 50); // Pequeno delay entre blocos
+    },
+    [processQueue]
+  );
+
+  const unregister = useCallback(
+    (id: string) => {
+      queueRef.current = queueRef.current.filter((item) => item.id !== id);
+      if (activeIdRef.current === id) {
+        activeIdRef.current = null;
+        setTimeout(processQueue, 0);
+      }
+    },
+    [processQueue]
+  );
+
+  // IMPORTANT: memoize context value to avoid re-register loops in consumers
+  const value = useMemo(
+    () => ({ register, notifyComplete, unregister }),
+    [register, notifyComplete, unregister]
+  );
+
   return (
-    <VicTypewriterQueueContext.Provider value={{ register, notifyComplete, unregister }}>
+    <VicTypewriterQueueContext.Provider value={value}>
       {children}
     </VicTypewriterQueueContext.Provider>
   );
