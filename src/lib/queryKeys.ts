@@ -228,6 +228,8 @@ export const queryKeys = {
       ['tickets', 'contact-capabilities', buId, contactId] as const,
     companyContactCapabilities: (buId: string | null, companyId?: string) => 
       ['tickets', 'company-contact-capabilities', buId, companyId] as const,
+    partnerContactProfile: (contactId: string) => 
+      ['tickets', 'partner-contact-profile', contactId] as const,
   },
 
   // ============= Integrations =============
