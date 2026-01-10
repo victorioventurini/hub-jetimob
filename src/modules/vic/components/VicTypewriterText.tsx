@@ -204,3 +204,44 @@ export function VicTypewriterBlock({
     </div>
   );
 }
+
+// ============================================================
+// VIC STREAMING TEXT - Para textos que vêm de streaming
+// ============================================================
+
+export interface VicStreamingTextProps {
+  /** Texto atual (pode ser parcial durante streaming) */
+  text: string;
+  /** Se está em streaming */
+  isStreaming: boolean;
+  /** Classes CSS adicionais */
+  className?: string;
+}
+
+/**
+ * VicStreamingText - Exibe texto de streaming com cursor pulsante
+ * Durante o streaming, mostra o texto conforme chega com cursor
+ * Após terminar, mantém o texto completo
+ */
+export function VicStreamingText({
+  text,
+  isStreaming,
+  className,
+}: VicStreamingTextProps) {
+  return (
+    <span className={cn('inline', className)}>
+      {text}
+      <AnimatePresence>
+        {isStreaming && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, repeat: Infinity }}
+            className="inline-block ml-0.5 w-0.5 h-4 bg-primary align-middle rounded-full"
+          />
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}

@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebounce } from '@/hooks/useDebounce';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
+import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
 
 // ============================================================
@@ -232,7 +233,9 @@ export function TeamOkrObjectiveStep({
                 )}
               />
               {isAnalyzing && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
               )}
             </div>
             
@@ -248,7 +251,7 @@ export function TeamOkrObjectiveStep({
                 {aiFeedback.type === 'suggestion' && <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />}
                 {aiFeedback.type === 'success' && <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />}
                 <div className="space-y-2">
-                  <p>{aiFeedback.message}</p>
+                  <p><VicTypewriterText text={aiFeedback.message} speed={15} /></p>
                   {aiFeedback.alternatives && aiFeedback.alternatives.length > 0 && (
                     <div className="space-y-1">
                       <p className="text-xs font-medium">Sugestões:</p>
