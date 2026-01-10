@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createBuScopedClient } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useUserNotificationSettings,
   useUserNotificationPreferenceMutation,
@@ -21,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import {
   Accordion,
   AccordionContent,
@@ -51,11 +53,14 @@ import {
   CheckCheck,
   Inbox,
   Settings2,
+  Search,
+  Loader2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 // Types
 interface Notification {
@@ -110,33 +115,50 @@ const severityConfig: Record<string, { icon: React.ComponentType<{ className?: s
 };
 
 // Notification List Component
+const PAGE_SIZE = 20;
+
 function NotificationList() {
   const { user } = useAuth();
   const { currentBuId } = useBu();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
   const supabaseBu = useMemo(() => {
     return currentBuId ? createBuScopedClient(currentBuId) : null;
   }, [currentBuId]);
 
-  // Fetch all notifications
-  const { data: notifications = [], isLoading } = useQuery({
-    queryKey: [...queryKeys.notifications.all(user?.id ?? ''), 'full-list'],
-    queryFn: async () => {
-      if (!user?.id || !supabaseBu) return [];
+  // Fetch notifications with infinite scroll pagination
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: [...queryKeys.notifications.all(user?.id ?? ''), 'paginated', debouncedSearch],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!user?.id || !supabaseBu) return { notifications: [], nextPage: null };
 
-      const { data, error } = await supabaseBu
+      let query = supabaseBu
         .from('notifications')
         .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+
+      // Apply search filter if present
+      if (debouncedSearch.trim()) {
+        query = query.or(`title.ilike.%${debouncedSearch}%,message.ilike.%${debouncedSearch}%`);
+      }
+
+      const { data: rawData, error } = await query;
 
       if (error) throw error;
 
       // Fetch actor info
-      const actorIds = [...new Set((data || []).map(n => n.actor_id).filter(Boolean))];
+      const actorIds = [...new Set((rawData || []).map(n => n.actor_id).filter(Boolean))];
       let actorMap: Record<string, { display_name: string; photo_url: string | null }> = {};
 
       if (actorIds.length > 0) {
@@ -158,13 +180,22 @@ function NotificationList() {
         }
       }
 
-      return (data || []).map(n => ({
+      const notifications = (rawData || []).map(n => ({
         ...n,
         actor: n.actor_id ? actorMap[n.actor_id] || null : null,
       })) as Notification[];
+
+      return {
+        notifications,
+        nextPage: notifications.length === PAGE_SIZE ? pageParam + 1 : null,
+      };
     },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
     enabled: !!user?.id && !!currentBuId,
   });
+
+  const notifications = data?.pages.flatMap(page => page.notifications) ?? [];
 
   // Mark single notification as read
   const markAsRead = useMutation({
@@ -244,6 +275,17 @@ function NotificationList() {
 
   return (
     <div className="space-y-4">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar notificações..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {/* Actions header */}
       {unreadCount > 0 && (
         <div className="flex items-center justify-between">
@@ -275,7 +317,7 @@ function NotificationList() {
                 onClick={() => handleNotificationClick(notification)}
                 className={cn(
                   "w-full flex items-start gap-4 p-4 text-left transition-colors",
-                  "hover:bg-accent",
+                  "hover:bg-primary/10",
                   !notification.is_read && "bg-primary/5",
                   notification.context_url && "cursor-pointer",
                   !notification.context_url && "cursor-default"
@@ -328,6 +370,38 @@ function NotificationList() {
           })}
         </CardContent>
       </Card>
+
+      {/* Load More */}
+      {hasNextPage && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Carregando...
+              </>
+            ) : (
+              'Carregar mais'
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Empty search result */}
+      {notifications.length === 0 && debouncedSearch && !isLoading && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Search className="w-10 h-10 text-muted-foreground/50 mb-4" />
+            <p className="text-sm text-muted-foreground">
+              Nenhuma notificação encontrada para "{debouncedSearch}"
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -510,6 +584,10 @@ function NotificationSettings() {
 
 // Main Page Component
 export default function NotificationsPage() {
+  usePageTitle("Notificações", {
+    customDescription: "Visualize suas notificações e configure como deseja recebê-las no Hub.",
+  });
+
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'all';
 
