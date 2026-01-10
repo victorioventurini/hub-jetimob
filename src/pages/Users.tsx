@@ -177,58 +177,24 @@ export default function UsersPage() {
     queryFn: async (): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
       if (!currentBu?.id) return { profiles: [], total: 0 };
       
-      let query = supabase
-        .from("profiles")
-        .select(`
-          id,
-          user_id,
-          first_name,
-          last_name,
-          display_name,
-          work_email,
-          job_title_id,
-          job_title_rel:job_titles!job_title_id(name),
-          photo_url,
-          city,
-          state,
-          work_mode,
-          employment_status,
-          team_id,
-          team:teams!fk_profiles_team(id, name),
-          manager_user_id
-        `, { count: 'exact' })
-        .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .order("display_name");
+      // Use RPC that filters by bu_user_memberships (consistent with /hub/users)
+      const { data, error } = await supabase.rpc("get_bu_users_by_membership", {
+        p_bu_id: currentBu.id,
+        p_search: searchQuery?.trim() || null,
+        p_team_id: teamFilter !== 'all' ? teamFilter : null,
+        p_status: statusFilter || 'active',
+        p_limit: pageSize,
+        p_offset: from,
+      });
 
-      // Server-side search filter
-      if (searchQuery && searchQuery.trim().length > 0) {
-        const term = `%${searchQuery.trim()}%`;
-        query = query.or(`display_name.ilike.${term},work_email.ilike.${term}`);
-      }
-
-      // Server-side team filter
-      if (teamFilter && teamFilter !== 'all') {
-        query = query.eq("team_id", teamFilter);
-      }
-
-      // Status filter
-      if (statusFilter === "active") {
-        query = query.neq("employment_status", "terminated" as const);
-      } else if (statusFilter !== "all") {
-        query = query.eq("employment_status", statusFilter as "active" | "vacation" | "terminated" | "external");
-      }
-
-      // Apply pagination
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
       if (error) throw error;
 
+      const totalCount = (data && data.length > 0) ? Number(data[0].total_count) : 0;
+
       // Coletar manager_user_ids únicos para buscar em lote
-      const managerIds = [...new Set((data || []).map(p => p.manager_user_id).filter(Boolean))] as string[];
+      const managerIds = [...new Set((data || []).map((p: { manager_user_id: string | null }) => p.manager_user_id).filter(Boolean))] as string[];
       
-      // Buscar managers em uma query separada (evita problema de self-join do PostgREST)
+      // Buscar managers em uma query separada
       let managersMap: Record<string, { id: string; display_name: string | null; photo_url: string | null }> = {};
       if (managerIds.length > 0) {
         const { data: managersData } = await supabase
@@ -241,25 +207,42 @@ export default function UsersPage() {
         }
       }
 
-      const profiles = (data || []).map((p) => ({
-        id: p.id,
+      const profiles = (data || []).map((p: {
+        profile_id: string;
+        user_id: string | null;
+        first_name: string;
+        last_name: string;
+        display_name: string;
+        work_email: string;
+        job_title_name: string | null;
+        job_title_id: string | null;
+        photo_url: string | null;
+        city: string;
+        state: string;
+        work_mode: string;
+        employment_status: string;
+        team_id: string | null;
+        team_name: string | null;
+        manager_user_id: string | null;
+      }) => ({
+        id: p.profile_id,
         user_id: p.user_id,
         first_name: p.first_name,
         last_name: p.last_name,
         display_name: p.display_name,
         work_email: p.work_email,
-        job_title_name: (p.job_title_rel as { name: string } | null)?.name || "Sem cargo",
+        job_title_name: p.job_title_name || "Sem cargo",
         job_title_id: p.job_title_id,
         photo_url: p.photo_url,
         city: p.city,
         state: p.state,
         work_mode: p.work_mode,
         employment_status: p.employment_status,
-        team: p.team as { id: string; name: string } | null,
+        team: p.team_id && p.team_name ? { id: p.team_id, name: p.team_name } : null,
         manager: p.manager_user_id ? managersMap[p.manager_user_id] ?? null : null,
       })) as ProfileWithTeam[];
 
-      return { profiles, total: count ?? 0 };
+      return { profiles, total: totalCount };
     },
     enabled: !!currentBu?.id,
   });
