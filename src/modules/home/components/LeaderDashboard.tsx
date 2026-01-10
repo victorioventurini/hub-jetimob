@@ -14,6 +14,7 @@ import {
   AssetsTeamLoansCard,
   VicLeaderInsightsCard,
 } from "./leader";
+import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard";
 import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
@@ -73,6 +74,19 @@ export function LeaderDashboard() {
           isLoading={isScopeLoading}
         />
       </section>
+
+      {/* Leader Prep Wizard Entry Point */}
+      {selectedTeam && (
+        <section>
+          <LeaderPrepWizardCard
+            teamId={selectedTeamId || ''}
+            teamName={selectedTeam.team_name}
+            atRiskCount={summary?.okrs?.red || 0}
+            pendingCount={summary?.okrs?.pending_checkins || 0}
+            isLoading={isDashboardLoading}
+          />
+        </section>
+      )}
 
       {/* Critical Alerts - Full width, only if there are items */}
       {criticalAlerts.length > 0 && (
