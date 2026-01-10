@@ -60,35 +60,49 @@ function VicTypewriterTextComponent({
   
   const queue = useVicTypewriterQueue();
   const instanceId = useId();
-  const hasRegistered = useRef(false);
-  const textRef = useRef(text);
-  
-  // Update text ref
-  useEffect(() => {
-    textRef.current = text;
-  }, [text]);
+  const registeredTextRef = useRef<string | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const startTyping = useCallback(() => {
-    if (!textRef.current || isTyping) return;
+    if (!text || isTyping) return;
     
     setDisplayedText('');
     setIsTyping(true);
     setIsComplete(false);
-  }, [isTyping]);
+  }, [isTyping, text]);
   
   // Register with queue if available
   useEffect(() => {
-    if (!autoStart || !text || hasRegistered.current) return;
+    if (!autoStart || !text) return;
+    
+    // Already registered for this text
+    if (registeredTextRef.current === text) return;
+    
+    // Cleanup previous registration
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+    
+    // Reset state for new text
+    setDisplayedText('');
+    setIsTyping(false);
+    setIsComplete(false);
+    setCanStart(false);
+    
+    registeredTextRef.current = text;
     
     if (queue) {
-      hasRegistered.current = true;
-      const cleanup = queue.register(instanceId, priority, () => {
+      cleanupRef.current = queue.register(instanceId, priority, () => {
         setCanStart(true);
       });
       
       return () => {
-        cleanup();
-        hasRegistered.current = false;
+        if (cleanupRef.current) {
+          cleanupRef.current();
+          cleanupRef.current = null;
+        }
+        registeredTextRef.current = null;
       };
     } else {
       // No queue provider - start immediately
@@ -128,15 +142,6 @@ function VicTypewriterTextComponent({
 
     return () => clearInterval(typingInterval);
   }, [text, speed, isTyping, onComplete, queue, instanceId]);
-
-  // Reset when text changes
-  useEffect(() => {
-    setDisplayedText('');
-    setIsTyping(false);
-    setIsComplete(false);
-    setCanStart(false);
-    hasRegistered.current = false;
-  }, [text]);
 
   return (
     <span className={cn('inline', className)}>
