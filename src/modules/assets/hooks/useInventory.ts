@@ -83,6 +83,11 @@ export function useInventory() {
 
   // Buscar item específico por ID
   const getItem = async (itemId: string): Promise<AssetInventory | null> => {
+    if (!supabase) {
+      console.warn("[useInventory] getItem: supabase client not available");
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from("asset_inventory")
       .select(`
@@ -129,7 +134,7 @@ export function useInventory() {
 
   // Buscar item específico por código interno
   const getItemByCode = async (internalCode: string): Promise<AssetInventory | null> => {
-    if (!buId) return null;
+    if (!buId || !supabase) return null;
     
     const { data, error } = await supabase
       .from("asset_inventory")
@@ -174,6 +179,8 @@ export function useInventory() {
 
   // Buscar movimentações de um item
   const getMovements = async (assetId: string): Promise<AssetMovement[]> => {
+    if (!supabase) return [];
+    
     const { data, error } = await supabase
       .from("asset_movements")
       .select("*")
