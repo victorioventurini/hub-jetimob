@@ -470,15 +470,14 @@ export function MentionInput({
       <style>{`
         .mention-chip {
           display: inline;
-          padding: 0 4px;
-          margin: 0 1px;
-          border-radius: 3px;
-          background-color: hsl(var(--primary) / 0.1);
+          padding: 1px 4px;
+          margin: 0 2px;
+          border-radius: 4px;
+          background-color: hsl(var(--primary) / 0.12);
           color: hsl(var(--primary));
-          font-size: inherit;
+          font-size: 0.875em;
           font-weight: 500;
-          vertical-align: baseline;
-          line-height: inherit;
+          white-space: nowrap;
         }
         .mention-chip:hover {
           background-color: hsl(var(--primary) / 0.2);
