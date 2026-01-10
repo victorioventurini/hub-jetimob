@@ -185,6 +185,9 @@ export default function WizardsPage() {
   // Selected team for leader wizards (local state only, not in URL)
   const [selectedTeam, setSelectedTeam] = useState<{ id: string; name: string } | null>(null);
 
+  // Selected user for admin impersonation in collaborator wizard (local state only, not in URL)
+  const [collaboratorUserId, setCollaboratorUserId] = useState<string | null>(null);
+
   // Auto-select first team when wizard opens if none selected
   useEffect(() => {
     if (wizardState.value && !selectedTeam && leaderTeams?.length) {
@@ -239,6 +242,11 @@ export default function WizardsPage() {
 
   // Handle wizard open
   const handleWizardOpen = useCallback((wizardId: string, wizard?: WizardDefinition) => {
+    // Reset collaborator impersonation when (re)opening collaborator wizard
+    if (wizardId === 'collaborator-checkin') {
+      setCollaboratorUserId(null);
+    }
+
     // For leader wizards, use first team if available and none selected
     if (wizard?.requiresTeam && !selectedTeam) {
       const firstTeam = leaderTeams?.[0];
@@ -251,11 +259,14 @@ export default function WizardsPage() {
     wizardState.set(wizardId);
   }, [selectedTeam, leaderTeams, wizardState]);
 
+
   // Handle wizard close
   const handleWizardClose = useCallback(() => {
     wizardState.set(null);
     setSelectedTeam(null);
+    setCollaboratorUserId(null);
   }, [wizardState]);
+
 
   // Derived wizard open states from URL
   const collaboratorWizardOpen = wizardState.value === 'collaborator-checkin';
@@ -346,11 +357,14 @@ export default function WizardsPage() {
         {collaboratorWizardOpen && (
           <CollaboratorWizard
             open={collaboratorWizardOpen}
+            userId={collaboratorUserId ?? undefined}
+            onUserChange={(newUserId) => setCollaboratorUserId(newUserId)}
             onOpenChange={(open) => {
               if (!open) handleWizardClose();
             }}
           />
         )}
+
 
         {leaderPrepWizardOpen && selectedTeam && (
           <LeaderPrepWizard

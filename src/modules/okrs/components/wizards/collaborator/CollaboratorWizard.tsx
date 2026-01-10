@@ -48,6 +48,9 @@ export function CollaboratorWizard({ open, onOpenChange, userId: overrideUserId,
   const navigate = useNavigate();
   const { profile } = useAuth();
   const config = WIZARD_CONFIGS['collaborator'];
+
+  // Effective user (profile_id) for data fetching (supports admin impersonation)
+  const effectiveUserId = overrideUserId ?? profile?.id ?? null;
   
   // Session persistence
   const { 
@@ -66,6 +69,17 @@ export function CollaboratorWizard({ open, onOpenChange, userId: overrideUserId,
   const [reflection, setReflection] = useState<CollaboratorReflection>({});
   const [initiativesMarkedAtRisk, setInitiativesMarkedAtRisk] = useState<string[]>([]);
 
+  // Reset wizard when impersonated user changes (admin only)
+  useEffect(() => {
+    if (!open) return;
+    setCurrentStep('context');
+    setCurrentKrIndex(0);
+    setResults([]);
+    setReflection({});
+    setInitiativesMarkedAtRisk([]);
+    setSessionId(null);
+  }, [effectiveUserId, open]);
+
   // Get active quarterly cycle
   const { data: activeCycles } = useActiveCycles();
   const quarterlyCycle = useMemo(() => 
@@ -78,8 +92,10 @@ export function CollaboratorWizard({ open, onOpenChange, userId: overrideUserId,
   // Fetch user's KRs for the active cycle
   const { data: allKrs = [], isLoading: krsLoading } = useUserKrsForWizard(
     quarterlyCycle?.id,
-    'all'
+    'all',
+    effectiveUserId
   );
+
 
   // Get KRs that need check-in (pending or at risk, prioritized)
   const krsToCheckin = useMemo(() => {
@@ -317,9 +333,6 @@ export function CollaboratorWizard({ open, onOpenChange, userId: overrideUserId,
     }
   };
 
-  // Effective user ID for data fetching
-  const effectiveUserId = overrideUserId || profile?.id;
-
   return (
     <WizardShell
       open={open}
@@ -332,9 +345,10 @@ export function CollaboratorWizard({ open, onOpenChange, userId: overrideUserId,
       onClose={handleClose}
       context={{
         mode: 'user',
-        userId: effectiveUserId,
+        userId: effectiveUserId ?? undefined,
         onUserChange,
       }}
+
     >
       {renderStepContent()}
     </WizardShell>
