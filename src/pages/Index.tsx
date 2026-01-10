@@ -11,6 +11,8 @@ import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
+import { ManagersCheckinWizardCard } from "@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard";
+import { CLevelCheckinWizardCard } from "@/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useAuth } from "@/hooks/useAuth";
@@ -108,8 +110,26 @@ const Index = () => {
         {/* Culture Card - Full Width with Typewriter */}
         <CultureCard />
 
-        {/* Collaborator Wizard Entry Point */}
-        <CollaboratorWizardCard />
+        {/* Wizard Entry Points */}
+        {isExecutive ? (
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ManagersCheckinWizardCard isLoading={dashboardData.isLoading} />
+            <CLevelCheckinWizardCard 
+              overallProgress={
+                dashboardData.okrSummary.onTrack + 
+                dashboardData.okrSummary.atRisk + 
+                dashboardData.okrSummary.offTrack > 0 
+                  ? (dashboardData.okrSummary.onTrack / 
+                    (dashboardData.okrSummary.onTrack + dashboardData.okrSummary.atRisk + dashboardData.okrSummary.offTrack)) * 100 
+                  : 0
+              }
+              atRiskCount={dashboardData.okrSummary.offTrack}
+              isLoading={dashboardData.isLoading}
+            />
+          </section>
+        ) : (
+          <CollaboratorWizardCard />
+        )}
 
         {/* My OKRs Card - Shows pending check-ins for the user */}
         <MyOkrsCard />

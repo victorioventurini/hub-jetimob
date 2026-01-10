@@ -3,4 +3,5 @@
  */
 
 export { CLevelCheckinWizard } from './CLevelCheckinWizard';
+export { CLevelCheckinWizardCard } from './CLevelCheckinWizardCard';
 export type { CLevelCheckinWizardProps } from './CLevelCheckinWizard';
