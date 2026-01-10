@@ -9,33 +9,45 @@ import { Briefcase, Users } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
 
 interface UserHoverCardProps {
-  userId: string;
+  /** Auth user_id - use this when you have the auth user id */
+  userId?: string;
+  /** Profile id - use this when you have the profile.id */
+  profileId?: string;
   children: ReactNode;
   asChild?: boolean;
 }
 
 interface UserProfileData {
   id: string;
+  user_id: string;
   display_name: string;
   photo_url: string | null;
   job_title: string | null;
   teams: string[];
 }
 
-export function UserHoverCard({ userId, children, asChild = true }: UserHoverCardProps) {
+export function UserHoverCard({ userId, profileId, children, asChild = true }: UserHoverCardProps) {
   const supabase = useBuScopedSupabase();
+  
+  // Determine which ID to use for the query
+  const lookupId = userId || profileId;
+  const lookupType = userId ? 'user_id' : 'profile_id';
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: queryKeys.profiles.hoverCard(userId),
+    queryKey: queryKeys.profiles.hoverCard(lookupId || ''),
     queryFn: async (): Promise<UserProfileData | null> => {
-      if (!userId) return null;
+      if (!lookupId) return null;
 
-      // Fetch profile with job title
-      const { data: profileData, error: profileError } = await supabase
+      // Fetch profile with job title - use appropriate filter
+      const query = supabase
         .from('profiles')
-        .select('id, display_name, photo_url, job_title_id')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .select('id, user_id, display_name, photo_url, job_title_id');
+      
+      const { data: profileData, error: profileError } = await (
+        lookupType === 'user_id' 
+          ? query.eq('user_id', lookupId) 
+          : query.eq('id', lookupId)
+      ).maybeSingle();
 
       if (profileError || !profileData) return null;
 
@@ -50,12 +62,12 @@ export function UserHoverCard({ userId, children, asChild = true }: UserHoverCar
         jobTitle = jobTitleData?.name || null;
       }
 
-      // Fetch team memberships - workaround for TS type recursion issue
+      // Fetch team memberships using user_id (always use user_id for memberships)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const membershipsResult = await (supabase as any)
         .from('user_team_memberships')
         .select('team_id')
-        .eq('user_id', userId)
+        .eq('user_id', profileData.user_id)
         .eq('is_active', true);
       
       const teamMemberships = membershipsResult.data as Array<{ team_id: string }> | null;
@@ -76,13 +88,14 @@ export function UserHoverCard({ userId, children, asChild = true }: UserHoverCar
 
       return {
         id: profileData.id,
+        user_id: profileData.user_id,
         display_name: profileData.display_name,
         photo_url: profileData.photo_url,
         job_title: jobTitle,
         teams,
       };
     },
-    enabled: !!userId,
+    enabled: !!lookupId,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
@@ -113,7 +126,7 @@ export function UserHoverCard({ userId, children, asChild = true }: UserHoverCar
           </div>
         ) : profile ? (
           <Link 
-            to={`/users/${userId}`} 
+            to={`/users/${profile.user_id}`} 
             className="block p-4 hover:bg-accent/50 transition-colors rounded-md"
           >
             <div className="flex items-start gap-3">
