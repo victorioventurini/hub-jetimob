@@ -109,7 +109,7 @@ export function PartnerContactHoverCard({
           </div>
         ) : contact ? (
           <Link 
-            to={`/tickets/contacts/${contact.id}`}
+            to={`/contacts/${contact.id}`}
             className="block p-4 hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-start gap-3">

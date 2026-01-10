@@ -242,6 +242,18 @@ const App = () => {
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/contacts/:contactId"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="tickets">
+                              <PartnerContactProfilePage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* ===== HUB (Admin Global) ===== */}
                     <Route
@@ -770,7 +782,6 @@ const App = () => {
                       <Route index element={<TicketsListPage />} />
                       <Route path="new" element={<CreateTicketPage />} />
                       <Route path="settings" element={<TicketsSettingsPage />} />
-                      <Route path="contacts/:contactId" element={<PartnerContactProfilePage />} />
                       <Route path=":id" element={<TicketDetailPage />} />
                     </Route>
 
