@@ -83,8 +83,10 @@ export function useVicAgent(options?: UseVicAgentOptions) {
 
       // Helpers
       const normalizeUnknownError = (e: unknown): VicError => {
-        const errorMessage = e instanceof Error ? e.message : "Erro desconhecido";
-        return { error: errorMessage };
+        const status = (e as any)?.context?.status;
+        const baseMessage = e instanceof Error ? e.message : "Erro desconhecido";
+        const errorMessage = status ? `${baseMessage} (HTTP ${status})` : baseMessage;
+        return { error: errorMessage, code: status ? `HTTP_${status}` : undefined };
       };
 
       // Silent mode: don't toast; still propagate via options?.onError for callers that care.
@@ -124,7 +126,8 @@ export function useVicAgent(options?: UseVicAgentOptions) {
         }
         options?.onError?.(vicError);
       } else {
-        toast.error("Erro ao consultar Vic");
+        const status = (error as any)?.context?.status;
+        toast.error(status ? `Erro ao consultar Vic (HTTP ${status})` : "Erro ao consultar Vic");
         options?.onError?.(normalizeUnknownError(error));
       }
     },

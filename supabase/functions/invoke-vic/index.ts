@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { 
-  corsHeaders, 
-  jsonResponse, 
+import {
+  corsHeaders,
+  jsonResponse,
   errorResponse,
   logRequestCompletion,
   checkRateLimits,
   createServiceClient,
+  withMiddleware,
   type RequestContext,
 } from "../_shared/middleware.ts";
 import {
@@ -19,8 +19,11 @@ import {
 } from "../_shared/hub-tools.ts";
 
 // Get integration API key from hub_integrations_global_config
-async function getIntegrationApiKey(supabase: any, integrationKey: string): Promise<string | null> {
-  const { data, error } = await supabase
+async function getIntegrationApiKey(
+  serviceClient: any,
+  integrationKey: string
+): Promise<string | null> {
+  const { data, error } = await serviceClient
     .from("hub_integrations_global_config")
     .select("config_encrypted, is_enabled_global")
     .eq("integration_key", integrationKey)
@@ -41,7 +44,7 @@ async function getIntegrationApiKey(supabase: any, integrationKey: string): Prom
 
 // Mapeamento de slugs para nomes de agentes
 const AGENT_SLUGS: Record<string, string> = {
-  "cultura": "Guardião da Cultura",
+  cultura: "Guardião da Cultura",
   "coach-okrs": "Coach de OKRs",
   "analista-kpis": "Analista de KPIs",
   "facilitador-decisoes": "Facilitador de Decisões",
@@ -95,166 +98,174 @@ interface ToolCall {
   };
 }
 
+type AgentRow = {
+  id: string;
+  name: string;
+  slug: string | null;
+  scope: string;
+  model_name: string | null;
+  integration_key: string;
+  system_prompt: string;
+  temperature: number | null;
+  max_tokens: number | null;
+  allowed_tools: unknown | null;
+  is_active: boolean;
+};
+
+const AGENT_SELECT =
+  "id, name, slug, scope, model_name, integration_key, system_prompt, temperature, max_tokens, allowed_tools, is_active";
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  // NOTE: verify_jwt is disabled for this function in config.toml.
+  // We validate JWT (signing keys) + BU access + correlation-id via middleware.
+  const mw = await withMiddleware(req, {
+    requireAuth: true,
+    requireBu: true,
+    validateBuAccess: true,
+    logRequest: true,
+  });
+
+  if (!mw.success) {
+    return mw.error!;
   }
 
-  const requestId = crypto.randomUUID().slice(0, 8);
-  const startTime = Date.now();
+  const ctx = mw.context as RequestContext;
+  const requestId = ctx.requestId;
+  const startTime = ctx.startTime;
+  const userId = ctx.user!.id;
+  const buId = ctx.buId!;
+  const serviceClient = ctx.serviceClient;
+
   let agentId: string | null = null;
-  let agentName: string = "unknown";
-  let reqUserId: string | null = null;
-  let reqBuId: string | null = null;
+  let agentName = "unknown";
 
   try {
-    const supabase = createServiceClient();
-
-    // First, try to get ChatGPT/OpenAI key from integrations config (PRIMARY)
-    let useOpenAI = false;
-    let openAIApiKey: string | null = await getIntegrationApiKey(supabase, "chatgpt");
-    
-    if (openAIApiKey) {
-      useOpenAI = true;
-      console.log("Using OpenAI API from integrations config (primary)");
-    }
-    
-    // Fallback to Lovable API key if ChatGPT is not configured
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!openAIApiKey && lovableApiKey) {
-      console.log("ChatGPT not configured, using Lovable AI as fallback");
-    }
-
-    if (!openAIApiKey && !lovableApiKey) {
-      console.error("No AI API key configured (ChatGPT integration or LOVABLE_API_KEY fallback)");
-      return new Response(
-        JSON.stringify({ error: "AI service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get user from auth header
-    const authHeader = req.headers.get("Authorization");
-    
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user } } = await supabase.auth.getUser(token);
-      reqUserId = user?.id || null;
+    if (req.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
 
     const body: InvokeVicRequest = await req.json();
-    const { agentSlug, buId, actionContext, context: aiContext, userQuestion } = body;
-    reqBuId = buId || null;
+    const { agentSlug, actionContext, context: aiContext, userQuestion } = body;
 
-    console.log(`[${requestId}] Invoke VIC: agent=${agentSlug}, user=${reqUserId}, bu=${buId}`);
+    console.log(`[${requestId}] Invoke VIC: agent=${agentSlug}, user=${userId}, bu=${buId}`);
 
     if (!agentSlug || !actionContext) {
-      return errorResponse("agentSlug and actionContext are required", 400, { requestId, error: "MISSING_PARAMS" });
+      return errorResponse("agentSlug and actionContext are required", 400, {
+        requestId,
+        error: "MISSING_PARAMS",
+      });
     }
 
-    // Check rate limits using middleware helper
-    if (buId) {
-      const rateLimitError = await checkRateLimits(supabase, reqUserId, buId, {}, requestId);
-      if (rateLimitError) return rateLimitError;
+    // Rate limits (BU-scoped)
+    const rateLimitError = await checkRateLimits(serviceClient, userId, buId, {}, requestId);
+    if (rateLimitError) return rateLimitError;
+
+    // AI provider selection
+    const openAIApiKey = await getIntegrationApiKey(serviceClient, "chatgpt");
+    const useOpenAI = !!openAIApiKey;
+
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!openAIApiKey && !lovableApiKey) {
+      console.error(`[${requestId}] No AI API key configured (ChatGPT integration or LOVABLE_API_KEY fallback)`);
+      return errorResponse("AI service not configured", 500, { requestId, error: "AI_NOT_CONFIGURED" });
     }
 
-    // Get the agent by slug
-    let agent: any = null;
-    const { data: agentData, error: agentError } = await supabase
+    // Fetch agent by slug (no select('*'))
+    let agent: AgentRow | null = null;
+    const { data: agentBySlug, error: agentSlugError } = await serviceClient
       .from("ai_agents")
-      .select("*")
+      .select(AGENT_SELECT)
       .eq("slug", agentSlug)
       .eq("is_active", true)
-      .single();
+      .maybeSingle();
 
-    if (!agentError && agentData) {
-      agent = agentData;
+    if (!agentSlugError && agentBySlug) {
+      agent = agentBySlug as AgentRow;
     } else {
-      // Try by name as fallback
+      // Fallback by name
       const agentNameFromSlug = AGENT_SLUGS[agentSlug];
       if (agentNameFromSlug) {
-        const { data: agentByName } = await supabase
+        const { data: agentByName } = await serviceClient
           .from("ai_agents")
-          .select("*")
+          .select(AGENT_SELECT)
           .eq("name", agentNameFromSlug)
           .eq("is_active", true)
-          .single();
-        
-        if (agentByName) {
-          agent = agentByName;
-        }
+          .maybeSingle();
+        if (agentByName) agent = agentByName as AgentRow;
       }
     }
-      
+
     if (!agent) {
-      console.error("Agent not found:", agentSlug, agentError);
-      return new Response(
-        JSON.stringify({ error: "Agent not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error(`[${requestId}] Agent not found:`, agentSlug);
+      return errorResponse("Agent not found", 404, { requestId, error: "AGENT_NOT_FOUND" });
     }
 
     agentId = agent.id;
     agentName = agent.name;
 
-    // Check if agent is enabled for this BU
-    if (buId) {
-      const { data: activation } = await supabase
-        .from("bu_agent_activations")
-        .select("is_enabled, custom_system_prompt")
-        .eq("bu_id", buId)
-        .eq("agent_id", agent.id)
-        .single();
+    // Check activation for this BU
+    const { data: activation, error: activationError } = await serviceClient
+      .from("bu_agent_activations")
+      .select("is_enabled, custom_system_prompt")
+      .eq("bu_id", buId)
+      .eq("agent_id", agent.id)
+      .maybeSingle();
 
-      if (activation && !activation.is_enabled) {
-        return new Response(
-          JSON.stringify({ error: "Agent is disabled for this BU", code: "AGENT_DISABLED" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Use custom prompt if available
-      if (activation?.custom_system_prompt) {
-        agent.system_prompt = activation.custom_system_prompt;
-      }
+    if (activationError) {
+      console.error(`[${requestId}] Error fetching agent activation:`, activationError.message);
+      return errorResponse("Internal error", 500, { requestId, error: "AGENT_ACTIVATION_FETCH_FAILED" });
     }
 
+    if (activation?.is_enabled === false) {
+      return errorResponse("Agent is disabled for this BU", 403, {
+        requestId,
+        error: "AGENT_DISABLED",
+        code: "AGENT_DISABLED",
+      });
+    }
+
+    const effectiveSystemPrompt = activation?.custom_system_prompt || agent.system_prompt;
+
     // =========================================================================
-    // LOAD INSTRUCTION SOURCES (NEW!)
+    // LOAD INSTRUCTION SOURCES
     // =========================================================================
     console.log(`[${requestId}] Loading instruction sources for agent ${agentId}`);
-    
-    const instructionSources = await loadInstructionSources(supabase, agent.id);
+
+    const instructionSources = await loadInstructionSources(serviceClient, agent.id);
     let instructionContent = "";
-    
+
     if (instructionSources.length > 0) {
       console.log(`[${requestId}] Found ${instructionSources.length} instruction sources`);
-      instructionContent = await assembleInstructionContent(supabase, instructionSources, buId);
+      instructionContent = await assembleInstructionContent(serviceClient, instructionSources, buId);
     }
 
-    // Get agent documents for knowledge base (legacy - now also handled by instruction sources)
-    const { data: documents } = await supabase
+    // Knowledge base documents
+    const { data: documents, error: documentsError } = await serviceClient
       .from("ai_agent_documents")
       .select("name, extracted_content")
       .eq("agent_id", agent.id)
       .eq("status", "ready");
 
+    if (documentsError) {
+      console.error(`[${requestId}] Error fetching agent documents:`, documentsError.message);
+    }
+
     let knowledgeBase = "";
     if (documents && documents.length > 0) {
-      knowledgeBase = documents
-        .filter((doc: any) => doc.extracted_content)
-        .map((doc: any) => `=== ${doc.name} ===\n${doc.extracted_content}`)
+      knowledgeBase = (documents as any[])
+        .filter((doc) => doc.extracted_content)
+        .map((doc) => `=== ${doc.name} ===\n${doc.extracted_content}`)
         .join("\n\n");
     }
 
-    // Build system prompt with Vic persona + agent prompt + knowledge + instruction sources
-    let systemPrompt = VIC_PERSONA_INTRO + agent.system_prompt;
-    
+    // Build system prompt
+    let systemPrompt = VIC_PERSONA_INTRO + effectiveSystemPrompt;
+
     if (knowledgeBase) {
       systemPrompt += `\n\n=== BASE DE CONHECIMENTO (Documentos) ===\n${knowledgeBase}`;
     }
-    
+
     if (instructionContent) {
       systemPrompt += instructionContent;
     }
@@ -263,9 +274,12 @@ serve(async (req) => {
     let contextDescription = `Contexto: ${aiContext.type}`;
     if (aiContext.title) contextDescription += `\nTítulo: ${aiContext.title}`;
     if (aiContext.description) contextDescription += `\nDescrição: ${aiContext.description}`;
-    if (aiContext.currentValue !== undefined) contextDescription += `\nValor atual: ${aiContext.currentValue}${aiContext.unit || ''}`;
-    if (aiContext.targetValue !== undefined) contextDescription += `\nMeta: ${aiContext.targetValue}${aiContext.unit || ''}`;
-    if (aiContext.baselineValue !== undefined) contextDescription += `\nBaseline: ${aiContext.baselineValue}${aiContext.unit || ''}`;
+    if (aiContext.currentValue !== undefined)
+      contextDescription += `\nValor atual: ${aiContext.currentValue}${aiContext.unit || ""}`;
+    if (aiContext.targetValue !== undefined)
+      contextDescription += `\nMeta: ${aiContext.targetValue}${aiContext.unit || ""}`;
+    if (aiContext.baselineValue !== undefined)
+      contextDescription += `\nBaseline: ${aiContext.baselineValue}${aiContext.unit || ""}`;
     if (aiContext.status) contextDescription += `\nStatus: ${aiContext.status}`;
     if (aiContext.additionalData) {
       contextDescription += `\nDados adicionais: ${JSON.stringify(aiContext.additionalData, null, 2)}`;
@@ -279,21 +293,20 @@ serve(async (req) => {
       userPrompt += `\n\nAnalise o contexto acima e forneça suas recomendações.`;
     }
 
-    console.log(`Invoking agent: ${agentName} (${agentSlug}) for context: ${actionContext}`);
+    console.log(`[${requestId}] Invoking agent: ${agentName} (${agentSlug}) for context: ${actionContext}`);
 
-    // Choose API endpoint and format based on available key
-    const apiUrl = useOpenAI 
+    const apiUrl = useOpenAI
       ? "https://api.openai.com/v1/chat/completions"
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    
-    const apiKey = useOpenAI ? openAIApiKey : lovableApiKey;
-    const modelName = useOpenAI 
-      ? (agent.model_name?.startsWith("gpt") ? agent.model_name : "gpt-4o-mini")
-      : (agent.model_name || "google/gemini-2.5-flash");
 
-    // =========================================================================
-    // BUILD REQUEST PAYLOAD WITH OPTIONAL TOOLS
-    // =========================================================================
+    const apiKey = useOpenAI ? openAIApiKey : lovableApiKey;
+
+    const modelName = useOpenAI
+      ? agent.model_name && agent.model_name.startsWith("gpt")
+        ? agent.model_name
+        : "gpt-4o-mini"
+      : agent.model_name || "google/gemini-2.5-flash";
+
     const messages = [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
@@ -306,16 +319,18 @@ serve(async (req) => {
       temperature: agent.temperature ?? 0.7,
     };
 
-    // Add tools if agent has allowed_tools configured and we have BU context
-    const allowedTools = agent.allowed_tools as string[] | null;
-    if (allowedTools?.length && buId) {
-      // Filter to only HUB tools that are allowed
-      const hubToolNames = HUB_TOOL_DEFINITIONS.map(t => t.function.name);
-      const agentTools = allowedTools.filter(t => hubToolNames.includes(t));
-      
+    // Tools (only when BU context is available)
+    const allowedTools = Array.isArray(agent.allowed_tools)
+      ? (agent.allowed_tools as string[])
+      : null;
+
+    if (allowedTools?.length) {
+      const hubToolNames = HUB_TOOL_DEFINITIONS.map((t) => t.function.name);
+      const agentTools = allowedTools.filter((t) => hubToolNames.includes(t));
+
       if (agentTools.length > 0) {
-        requestPayload.tools = HUB_TOOL_DEFINITIONS.filter(
-          t => agentTools.includes(t.function.name)
+        requestPayload.tools = HUB_TOOL_DEFINITIONS.filter((t) =>
+          agentTools.includes(t.function.name)
         );
         requestPayload.tool_choice = "auto";
         console.log(`[${requestId}] Agent has ${agentTools.length} tools enabled: ${agentTools.join(", ")}`);
@@ -326,7 +341,7 @@ serve(async (req) => {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestPayload),
@@ -334,15 +349,14 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI API error:", response.status, errorText);
+      console.error(`[${requestId}] AI API error:`, response.status, errorText);
 
-      // Log the error
-      await supabase.from("ai_agent_logs").insert({
+      await serviceClient.from("ai_agent_logs").insert({
         agent_id: agentId,
         agent_name: agentName,
         scope: agent.scope,
-        bu_id: buId || null,
-        user_id: reqUserId,
+        bu_id: buId,
+        user_id: userId,
         integration_key: agent.integration_key,
         action_context: actionContext,
         status: "error",
@@ -351,45 +365,36 @@ serve(async (req) => {
       });
 
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded", code: "RATE_LIMIT" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse("Rate limit exceeded", 429, { requestId, error: "RATE_LIMIT", code: "RATE_LIMIT" });
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits depleted", code: "NO_CREDITS" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse("AI credits depleted", 402, { requestId, error: "NO_CREDITS", code: "NO_CREDITS" });
       }
 
-      throw new Error(`AI API error: ${response.status}`);
+      return errorResponse("AI API error", 502, { requestId, error: "AI_API_ERROR" });
     }
 
     let data = await response.json();
     let content = data.choices?.[0]?.message?.content;
     const toolCalls = data.choices?.[0]?.message?.tool_calls as ToolCall[] | undefined;
 
-    // =========================================================================
-    // HANDLE TOOL CALLS (if any)
-    // =========================================================================
-    if (toolCalls?.length && buId) {
+    // Handle tool calls
+    if (toolCalls?.length) {
       console.log(`[${requestId}] Processing ${toolCalls.length} tool calls`);
-      
-      // Execute each tool call
+
       const toolResults: { role: string; tool_call_id: string; content: string }[] = [];
-      
+
       for (const toolCall of toolCalls) {
         try {
           const args = JSON.parse(toolCall.function.arguments);
-          const result = await executeHubTool(supabase, toolCall.function.name, args, buId);
-          
+          const result = await executeHubTool(serviceClient, toolCall.function.name, args, buId);
+
           toolResults.push({
             role: "tool",
             tool_call_id: toolCall.id,
             content: result,
           });
-          
+
           console.log(`[${requestId}] Tool ${toolCall.function.name} executed successfully`);
         } catch (toolError) {
           console.error(`[${requestId}] Tool ${toolCall.function.name} failed:`, toolError);
@@ -401,17 +406,16 @@ serve(async (req) => {
         }
       }
 
-      // Make second API call with tool results
       const secondMessages = [
         ...messages,
-        data.choices[0].message, // Assistant message with tool_calls
+        data.choices[0].message,
         ...toolResults,
       ];
 
       const secondResponse = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -425,11 +429,12 @@ serve(async (req) => {
       if (secondResponse.ok) {
         const secondData = await secondResponse.json();
         content = secondData.choices?.[0]?.message?.content || content;
-        // Update usage stats
+
         if (secondData.usage) {
           data.usage = {
             prompt_tokens: (data.usage?.prompt_tokens || 0) + (secondData.usage?.prompt_tokens || 0),
-            completion_tokens: (data.usage?.completion_tokens || 0) + (secondData.usage?.completion_tokens || 0),
+            completion_tokens:
+              (data.usage?.completion_tokens || 0) + (secondData.usage?.completion_tokens || 0),
             total_tokens: (data.usage?.total_tokens || 0) + (secondData.usage?.total_tokens || 0),
           };
         }
@@ -437,18 +442,17 @@ serve(async (req) => {
     }
 
     if (!content) {
-      throw new Error("Empty response from AI");
+      return errorResponse("Empty response from AI", 502, { requestId, error: "EMPTY_AI_RESPONSE" });
     }
 
     const latencyMs = Date.now() - startTime;
 
-    // Log the successful call
-    await supabase.from("ai_agent_logs").insert({
+    await serviceClient.from("ai_agent_logs").insert({
       agent_id: agentId,
       agent_name: agentName,
       scope: agent.scope,
-      bu_id: buId || null,
-      user_id: reqUserId,
+      bu_id: buId,
+      user_id: userId,
       integration_key: agent.integration_key,
       action_context: actionContext,
       status: "success",
@@ -459,46 +463,44 @@ serve(async (req) => {
       latency_ms: latencyMs,
     });
 
-    console.log(`Agent ${agentName} responded successfully in ${latencyMs}ms`);
+    console.log(`[${requestId}] Agent ${agentName} responded successfully in ${latencyMs}ms`);
 
-    return new Response(
-      JSON.stringify({
-        response: content,
-        agentName: agentName,
-        agentSlug: agentSlug,
-        tokensUsed: data.usage?.total_tokens,
-        latencyMs: latencyMs,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    logRequestCompletion(ctx, "success");
+
+    return jsonResponse({
+      response: content,
+      agentName,
+      agentSlug,
+      tokensUsed: data.usage?.total_tokens,
+      latencyMs,
+    });
   } catch (error) {
-    console.error("Error in invoke-vic function:", error);
-    
+    console.error(`[${requestId}] Error in invoke-vic function:`, error);
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    
-    // Try to log the error
+
     try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      await supabase.from("ai_agent_logs").insert({
+      // Best-effort log
+      const serviceClientFallback = createServiceClient();
+      await serviceClientFallback.from("ai_agent_logs").insert({
         agent_id: agentId,
         agent_name: agentName,
         scope: "global",
-        integration_key: "lovable-ai",
+        integration_key: "invoke-vic",
         action_context: "error",
         status: "error",
         error_message: errorMessage,
         latency_ms: Date.now() - startTime,
       });
     } catch (logError) {
-      console.error("Failed to log error:", logError);
+      console.error(`[${requestId}] Failed to log error:`, logError);
     }
 
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    logRequestCompletion(ctx, "error", errorMessage);
+
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
