@@ -122,26 +122,35 @@ async function validateAuth(
   requestId: string
 ): Promise<{ user: AuthenticatedUser; supabase: SupabaseClient } | Response> {
   const authHeader = req.headers.get("Authorization");
-  
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     console.error(`[${requestId}] Missing or invalid authorization header`);
-    return errorResponse("Missing authorization header", 401, { requestId, error: "UNAUTHORIZED" });
+    return errorResponse("Missing authorization header", 401, {
+      requestId,
+      error: "UNAUTHORIZED",
+    });
   }
 
+  const token = authHeader.replace("Bearer ", "");
   const supabase = createAuthenticatedClient(authHeader);
-  
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !user) {
-    console.error(`[${requestId}] Auth error:`, userError?.message);
-    return errorResponse("Unauthorized", 401, { requestId, error: "INVALID_TOKEN" });
+
+  // Validate JWT using signing keys (preferred over getUser())
+  const { data, error: claimsError } = await supabase.auth.getClaims(token);
+  const claims: any = (data as any)?.claims;
+
+  if (claimsError || !claims?.sub) {
+    console.error(`[${requestId}] Auth claims error:`, claimsError?.message);
+    return errorResponse("Unauthorized", 401, {
+      requestId,
+      error: "INVALID_TOKEN",
+    });
   }
 
   return {
     user: {
-      id: user.id,
-      email: user.email || "",
-      role: user.role,
+      id: String(claims.sub),
+      email: String(claims.email ?? ""),
+      role: claims.role ? String(claims.role) : undefined,
     },
     supabase,
   };
@@ -209,7 +218,7 @@ export async function withMiddleware(
     logRequest = true,
   } = options;
 
-  const requestId = crypto.randomUUID().slice(0, 8);
+  const requestId = req.headers.get("x-correlation-id") || crypto.randomUUID();
   const startTime = Date.now();
 
   // Handle CORS preflight
