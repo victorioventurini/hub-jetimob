@@ -5025,6 +5025,7 @@ export type Database = {
           profile_user_id: string | null
           status: Database["public"]["Enums"]["partner_contact_status"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           bu_id: string
@@ -5039,6 +5040,7 @@ export type Database = {
           profile_user_id?: string | null
           status?: Database["public"]["Enums"]["partner_contact_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           bu_id?: string
@@ -5053,6 +5055,7 @@ export type Database = {
           profile_user_id?: string | null
           status?: Database["public"]["Enums"]["partner_contact_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -8240,7 +8243,7 @@ export type Database = {
     Enums: {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
-      app_role: "super_admin" | "admin" | "collaborator"
+      app_role: "super_admin" | "admin" | "collaborator" | "external"
       asset_group_item_role: "primary" | "accessory"
       asset_group_status: "active" | "inactive"
       asset_group_type: "kit" | "bundle"
@@ -8485,7 +8488,7 @@ export const Constants = {
     Enums: {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
-      app_role: ["super_admin", "admin", "collaborator"],
+      app_role: ["super_admin", "admin", "collaborator", "external"],
       asset_group_item_role: ["primary", "accessory"],
       asset_group_status: ["active", "inactive"],
       asset_group_type: ["kit", "bundle"],

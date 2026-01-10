@@ -42,7 +42,7 @@ interface Profile {
 }
 
 interface UserRole {
-  role: 'super_admin' | 'admin' | 'collaborator';
+  role: 'super_admin' | 'admin' | 'collaborator' | 'external';
 }
 
 interface AuthContextType {
