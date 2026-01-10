@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 /**
  * Profile from the canonical user directory view
@@ -63,8 +64,11 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
 
+  // Debounce search query to avoid hammering the API on every keystroke
+  const debouncedQ = useDebouncedValue(q, 250);
+
   return useQuery({
-    queryKey: queryKeys.users.directory(buId ?? null, { q, teamId, includeTerminated }),
+    queryKey: queryKeys.users.directory(buId ?? null, { q: debouncedQ, teamId, includeTerminated }),
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
@@ -103,9 +107,9 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
         query = query.eq("team_id", teamId);
       }
 
-      // Search filter
-      if (q && q.trim()) {
-        const searchTerm = `%${q.trim()}%`;
+      // Search filter (use debouncedQ)
+      if (debouncedQ && debouncedQ.trim()) {
+        const searchTerm = `%${debouncedQ.trim()}%`;
         query = query.or(`display_name.ilike.${searchTerm},work_email.ilike.${searchTerm}`);
       }
 
