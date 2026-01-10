@@ -27,8 +27,6 @@ verify_jwt = true
 [functions.invoke-vic]
 verify_jwt = true
 
-[functions.global-search]
-verify_jwt = false
 
 [functions.get-public-asset]
 verify_jwt = false

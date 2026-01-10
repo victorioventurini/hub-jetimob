@@ -16,7 +16,7 @@ import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
-import { GlobalSearch } from "@/components/layout/GlobalSearch";
+
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -65,10 +65,8 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Search */}
-        <div className="hidden md:flex flex-1 max-w-md">
-          <GlobalSearch />
-        </div>
+        {/* Spacer */}
+        <div className="flex-1" />
 
         {/* Right section */}
         <div className="flex items-center gap-2">
