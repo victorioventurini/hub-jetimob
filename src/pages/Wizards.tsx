@@ -252,8 +252,12 @@ export default function WizardsPage() {
       const firstTeam = leaderTeams?.[0];
       if (firstTeam) {
         teamToUse = { id: firstTeam.team_id, name: firstTeam.team_name };
-        setSelectedTeam(teamToUse);
       }
+    }
+
+    // Update local state FIRST so wizard can render with the team
+    if (teamToUse) {
+      setSelectedTeam(teamToUse);
     }
 
     // Update URL state
