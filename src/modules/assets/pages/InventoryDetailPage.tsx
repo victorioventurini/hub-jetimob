@@ -1,9 +1,8 @@
 import { HubLayout } from "@/components/layout/HubLayout";
-import { usePageTitle } from "@/hooks/usePageTitle";
 import { InventoryDetailView } from "../components/inventory/InventoryDetailView";
 
 export default function InventoryDetailPage() {
-  usePageTitle("Detalhes do Item");
+  // usePageTitle é chamado dentro de InventoryDetailView para ter acesso ao item
 
   return (
     <HubLayout>
