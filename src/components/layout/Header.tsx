@@ -20,9 +20,10 @@ import { NotificationCenter } from "@/components/notifications";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
+  onMobileMenuToggle?: () => void;
 }
 
-export function Header({ sidebarCollapsed }: HeaderProps) {
+export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const { profile, role, signOut } = useAuth();
   const { userRole, hasMultipleBus } = useBu();
   const location = useLocation();
@@ -59,9 +60,15 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
           : cn("left-0 lg:left-64", sidebarCollapsed && "lg:left-20")
       )}
     >
-      <div className="flex items-center justify-between h-full px-4 lg:px-8">
+      <div className="flex items-center justify-between h-full px-3 sm:px-4 lg:px-8">
         {/* Mobile menu button */}
-        <Button variant="ghost" size="icon" className="lg:hidden">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="lg:hidden min-w-[44px] min-h-[44px]"
+          onClick={onMobileMenuToggle}
+          aria-label="Abrir menu"
+        >
           <Menu className="h-5 w-5" />
         </Button>
 
@@ -69,19 +76,21 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
         <div className="flex-1" />
 
         {/* Right section */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* BU Selector - Show button on hub (if multiple BUs), dropdown elsewhere */}
           {isHubPage ? (
             hasMultipleBus && (
-              <Button asChild variant="outline" size="sm" className="gap-2">
+              <Button asChild variant="outline" size="sm" className="gap-2 hidden sm:flex">
                 <Link to="/select-bu">
                   <Building2 className="h-4 w-4" />
-                  Selecionar BU
+                  <span className="hidden md:inline">Selecionar BU</span>
                 </Link>
               </Button>
             )
           ) : (
-            <BuSelector />
+            <div className="hidden sm:block">
+              <BuSelector />
+            </div>
           )}
 
           {/* Notifications */}
@@ -90,7 +99,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 px-2">
+              <Button variant="ghost" className="flex items-center gap-2 sm:gap-3 px-2 min-h-[44px]">
                 <OptimizedAvatar
                   src={profile?.photo_url}
                   fallback={initials}
@@ -114,6 +123,20 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              
+              {/* Mobile-only: BU Selection */}
+              {hasMultipleBus && (
+                <>
+                  <DropdownMenuItem asChild className="sm:hidden">
+                    <Link to="/select-bu" className="cursor-pointer">
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Selecionar BU
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="sm:hidden" />
+                </>
+              )}
+              
               <DropdownMenuItem asChild>
                 <Link to="/profile" className="cursor-pointer">
                   <User className="h-4 w-4 mr-2" />
