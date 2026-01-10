@@ -131,14 +131,6 @@ export default function OkrCreationPage() {
     discardDraft();
   }, [searchParams, setSearchParams, discardDraft]);
   
-  // Prepare team options for admin switcher
-  const teamOptions = useMemo(() => {
-    if (!teams) return [];
-    return teams.map(t => ({
-      id: t.id,
-      name: t.name,
-    }));
-  }, [teams]);
   
   // Session tracking
   const { createSession, completeSession } = useWizardSession();
@@ -488,7 +480,6 @@ export default function OkrCreationPage() {
           <AdminContextSwitcher
             type="team"
             currentLabel={selectedTeam.name}
-            teams={teamOptions}
             selectedId={teamIdParam}
             onSelect={handleTeamChange}
             isLoading={isLoadingTeams}

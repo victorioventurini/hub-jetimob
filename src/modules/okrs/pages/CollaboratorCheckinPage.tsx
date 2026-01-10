@@ -88,16 +88,6 @@ export default function CollaboratorCheckinPage() {
     return user?.display_name || 'Usuário';
   }, [canSwitchUser, userIdParam, allUsers, profile]);
   
-  // Prepare user options for admin switcher
-  const userOptions = useMemo(() => {
-    return allUsers.map(u => ({
-      id: u.id,
-      name: u.display_name,
-      email: u.work_email,
-      avatarUrl: u.photo_url || undefined,
-      teamName: u.team_name || undefined,
-    }));
-  }, [allUsers]);
   
   // Handle user change (admin only)
   const handleUserChange = useCallback((newUserId: string) => {
@@ -328,7 +318,6 @@ export default function CollaboratorCheckinPage() {
           <AdminContextSwitcher
             type="user"
             currentLabel={effectiveUserName}
-            users={userOptions}
             selectedId={effectiveUserId}
             onSelect={handleUserChange}
             isLoading={isLoadingUsers}

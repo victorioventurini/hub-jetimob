@@ -179,11 +179,6 @@ export default function LeaderPrepPage() {
     setSearchParams({ team: newTeamId });
   }, [discardDraft, setSearchParams]);
   
-  // Teams for admin switcher
-  const teamOptions = useMemo(() => 
-    teams?.map(t => ({ id: t.id, name: t.name })) || [],
-    [teams]
-  );
   
   // Loading
   if (isLoadingTeams || isLoadingCycles) {
@@ -298,7 +293,6 @@ export default function LeaderPrepPage() {
           <AdminContextSwitcher
             type="team"
             currentLabel={selectedTeam?.name || 'Selecionar time'}
-            teams={teamOptions}
             selectedId={teamIdParam}
             onSelect={handleTeamChange}
             isLoading={isLoadingTeams}
