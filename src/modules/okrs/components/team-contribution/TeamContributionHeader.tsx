@@ -11,9 +11,9 @@ interface TeamContributionHeaderProps {
 }
 
 const statusConfig = {
-  on_track: { label: 'On Track', variant: 'default' as const, className: 'bg-green-500 hover:bg-green-600' },
+  on_track: { label: 'No Caminho', variant: 'default' as const, className: 'bg-green-500 hover:bg-green-600' },
   at_risk: { label: 'Em Risco', variant: 'secondary' as const, className: 'bg-yellow-500 hover:bg-yellow-600 text-black' },
-  off_track: { label: 'Off Track', variant: 'destructive' as const, className: '' },
+  off_track: { label: 'Fora do Caminho', variant: 'destructive' as const, className: '' },
 };
 
 export function TeamContributionHeader({ data, buName }: TeamContributionHeaderProps) {

@@ -11,15 +11,15 @@ interface StatusOption {
 
 const OKR_STATUS_OPTIONS: StatusOption[] = [
   { value: "all", label: "Todos os status" },
-  { value: "on_track", label: "On Track", color: "bg-emerald-500" },
+  { value: "on_track", label: "No Caminho", color: "bg-emerald-500" },
   { value: "at_risk", label: "Em Risco", color: "bg-amber-500" },
-  { value: "off_track", label: "Off Track", color: "bg-red-500" },
+  { value: "off_track", label: "Fora do Caminho", color: "bg-red-500" },
   { value: "not_started", label: "Não Iniciado", color: "bg-slate-400" },
 ];
 
 const RAG_STATUS_OPTIONS: StatusOption[] = [
   { value: "all", label: "Todos os status" },
-  { value: "green", label: "On Track", color: "bg-emerald-500" },
+  { value: "green", label: "No Caminho", color: "bg-emerald-500" },
   { value: "yellow", label: "Atenção", color: "bg-amber-500" },
   { value: "red", label: "Em Risco", color: "bg-red-500" },
   { value: "not_started", label: "Não Iniciado", color: "bg-slate-400" },

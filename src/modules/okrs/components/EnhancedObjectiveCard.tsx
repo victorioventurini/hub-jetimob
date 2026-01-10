@@ -402,14 +402,14 @@ function EnhancedKrRow({ kr, index, type, onEdit, onCheckin }: EnhancedKrRowProp
                 </Button>
               )}
               
-              {/* Check-in button (team KRs only) */}
+              {/* Botão de Check-in (apenas KRs de time) */}
               {type === 'team' && onCheckin && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
                   onClick={(e) => { e.stopPropagation(); onCheckin(); }}
-                  title="Check-in"
+                  title="Atualizar progresso"
                 >
                   <RefreshCw className="w-3 h-3" />
                 </Button>

@@ -15,9 +15,9 @@ export function OkrViewSelector({ activeView, onViewChange, showMyOkrs = true }:
   const { currentBu } = useBu();
   
   const views = [
-    { id: 'company' as const, label: `${currentBu?.name || 'Company'} OKRs`, icon: Building2 },
-    { id: 'team' as const, label: 'Team OKRs', icon: Users },
-    { id: 'my' as const, label: 'My OKRs', icon: User },
+    { id: 'company' as const, label: `OKRs ${currentBu?.name || 'da Empresa'}`, icon: Building2 },
+    { id: 'team' as const, label: 'OKRs do Time', icon: Users },
+    { id: 'my' as const, label: 'Meus OKRs', icon: User },
   ];
   
   const filteredViews = showMyOkrs ? views : views.filter(v => v.id !== 'my');

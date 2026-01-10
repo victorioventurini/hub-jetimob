@@ -51,7 +51,7 @@ export function TeamStatusCard({
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-foreground">{onTrackPercent}%</span>
               </div>
-              <p className="text-muted-foreground">On track</p>
+              <p className="text-muted-foreground">No caminho</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-center gap-1">
@@ -65,7 +65,7 @@ export function TeamStatusCard({
                 <span className="h-2 w-2 rounded-full bg-red-500" />
                 <span className="font-semibold text-foreground">{offTrackPercent}%</span>
               </div>
-              <p className="text-muted-foreground">Off track</p>
+              <p className="text-muted-foreground">Fora do caminho</p>
             </div>
           </div>
         </div>

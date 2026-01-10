@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  usePageTitle("Home");
+  usePageTitle("Início");
   const { profile } = useAuth();
   const { currentBu } = useBu();
   const dashboardData = useHomeDashboard();

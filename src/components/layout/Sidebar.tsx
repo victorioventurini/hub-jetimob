@@ -27,7 +27,7 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Início", href: "/", icon: Home },
   { name: "Jetimobers", href: "/users", icon: Users },
   { name: "Times", href: "/teams", icon: Building2 },
   { name: "Módulos", href: "/modules", icon: LayoutGrid },
@@ -38,7 +38,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
-  { name: "Business Units", href: "/business-units", icon: Briefcase },
+  { name: "Unidades de Negócio", href: "/business-units", icon: Briefcase },
   { name: "Configurações", href: "/hub", icon: Settings },
   { name: "Auditoria", href: "/audit", icon: Shield },
 ];

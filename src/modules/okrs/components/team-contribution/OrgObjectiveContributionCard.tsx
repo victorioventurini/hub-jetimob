@@ -13,9 +13,9 @@ interface OrgObjectiveContributionCardProps {
 }
 
 const statusConfig = {
-  on_track: { label: 'On Track', className: 'bg-green-500/10 text-green-700 border-green-200' },
+  on_track: { label: 'No Caminho', className: 'bg-green-500/10 text-green-700 border-green-200' },
   at_risk: { label: 'Em Risco', className: 'bg-yellow-500/10 text-yellow-700 border-yellow-200' },
-  off_track: { label: 'Off Track', className: 'bg-red-500/10 text-red-700 border-red-200' },
+  off_track: { label: 'Fora do Caminho', className: 'bg-red-500/10 text-red-700 border-red-200' },
 };
 
 export function OrgObjectiveContributionCard({ 
