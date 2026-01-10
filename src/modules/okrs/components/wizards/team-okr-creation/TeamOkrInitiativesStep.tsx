@@ -37,6 +37,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
+import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
 import type { TeamMember } from './TeamOkrKrDetailStep';
 
@@ -146,8 +148,19 @@ export function TeamOkrInitiativesStep({
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-lg font-semibold mb-1">Iniciativas</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Iniciativas</h2>
+              <WizardTooltipInline tooltipKey="initiatives-intro" />
+              <AskToVicInline
+                context={{
+                  module: 'okrs',
+                  wizard: 'creation',
+                  step: 'initiatives',
+                  additionalData: { krsCount: draftKrs.length },
+                }}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
               Iniciativas são ações que podem ajudar a atingir os KRs. São opcionais.
             </p>
           </div>

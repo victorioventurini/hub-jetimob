@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicInsightCard } from '../shared/VicInsightCard';
+import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
+import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
 
@@ -162,8 +164,22 @@ export function TeamOkrContextStep({
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-lg font-semibold mb-1">Contexto Estratégico</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Contexto Estratégico</h2>
+              <WizardTooltipInline tooltipKey="context-intro" />
+              <AskToVicInline
+                context={{
+                  module: 'okrs',
+                  wizard: 'creation',
+                  step: 'overview',
+                  additionalData: {
+                    orgObjectivesCount: orgObjectives.length,
+                    kpisCount: strategicKpis.length,
+                  },
+                }}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
               Antes de criar OKRs, veja o que a organização está priorizando.
             </p>
           </div>

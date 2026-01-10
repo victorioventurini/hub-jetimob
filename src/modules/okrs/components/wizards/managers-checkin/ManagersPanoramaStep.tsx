@@ -22,6 +22,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { AreaOkrSummary } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -89,7 +91,24 @@ export function ManagersPanoramaStep({
             <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-lg">Panorama Geral</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">Panorama Geral</h3>
+              <WizardTooltipInline tooltipKey="managers-panorama" />
+              <AskToVicStepHelper
+                context={{
+                  module: 'okrs',
+                  wizard: 'managers-checkin',
+                  step: 'panorama',
+                  userRole: 'gestor',
+                  additionalData: {
+                    areasCount: areas.length,
+                    totalAtRisk,
+                    avgProgress,
+                    companyProgress,
+                  },
+                }}
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
               {areas.length} áreas em análise
             </p>
