@@ -132,7 +132,7 @@ export function PartnerContactsTab() {
                     <TableCell>
                       <PartnerContactHoverCard contactId={contact.id}>
                         <Link
-                          to={`/tickets/contacts/${contact.id}`}
+                          to={`/contacts/${contact.id}`}
                           className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                         >
                           <Avatar className="h-8 w-8">
