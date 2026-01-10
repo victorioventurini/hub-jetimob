@@ -350,6 +350,10 @@ export interface CreateTicketData {
   visibility_user_ids?: string[];
   expected_due_at?: string;
   initial_message?: RichTextContent;
+  initial_message_mentions?: {
+    user_id?: string | null;
+    contact_id?: string | null;
+  }[];
   attachments?: File[];
   participants?: {
     type: TicketParticipantType;

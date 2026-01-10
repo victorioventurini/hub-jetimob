@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -32,6 +31,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
 import { MultiUserSelect } from "@/components/selects/MultiUserSelect";
+import { TicketMentionInput, type ParsedMention } from "@/components/mentions/TicketMentionInput";
 import type { TicketType, TicketVisibility } from "../types";
 
 const createTicketSchema = z.object({
@@ -70,6 +70,7 @@ export default function CreateTicketPage() {
   const { data: partners = [] } = usePartnerCompanies();
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [initialMessageMentions, setInitialMessageMentions] = useState<ParsedMention[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // State for visibility selections
@@ -307,6 +308,10 @@ export default function CreateTicketPage() {
         visibility_user_ids: data.visibility === "users" ? selectedUserIds : [],
         expected_due_at: data.expected_due_at?.toISOString() || null,
         initial_message: data.initial_message ? { type: "text", content: data.initial_message } : undefined,
+        initial_message_mentions: initialMessageMentions.map(m => ({
+          user_id: m.userId,
+          contact_id: m.contactId,
+        })),
       });
       
       // Upload attachments if any
@@ -673,10 +678,16 @@ export default function CreateTicketPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Descreva os detalhes da demanda..."
+                      <TicketMentionInput
+                        value={field.value || ''}
+                        onChange={(value, mentions) => {
+                          field.onChange(value);
+                          setInitialMessageMentions(mentions);
+                        }}
+                        partnerCompanyId={selectedType === "external" ? selectedPartnerId : null}
+                        placeholder="Descreva os detalhes da demanda... Use @ para mencionar usuários"
+                        rows={6}
                         className="min-h-[150px]"
-                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
