@@ -156,7 +156,8 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
         .select(`
           id, bu_id, user_id, event_slug, channel_slug, 
           status, retries, max_retries, last_error, 
-          processed_at, created_at, dedupe_key
+          processed_at, created_at, dedupe_key,
+          recipient:profiles!notification_outbox_user_id_fkey(display_name, work_email)
         `, { count: 'exact' })
         .eq('bu_id', buId)
         .order('created_at', { ascending: false });
@@ -180,8 +181,20 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
       const { data, error, count } = await query;
       
       if (error) throw error;
+      
+      // Map recipient data
+      const mappedData = (data ?? []).map(item => ({
+        ...item,
+        recipient: item.recipient 
+          ? { 
+              display_name: (item.recipient as any)?.display_name ?? null, 
+              email: (item.recipient as any)?.work_email ?? null 
+            }
+          : undefined,
+      })) as OutboxItem[];
+      
       return { 
-        data: (data ?? []) as OutboxItem[], 
+        data: mappedData, 
         count: count ?? 0,
         page,
         pageSize,
@@ -189,7 +202,7 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
       };
     },
     enabled: !!buId,
-  });
+  })
 }
 
 // Hook for retrying failed outbox items
@@ -236,7 +249,9 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
         .select(`
           id, user_id, bu_id, type, title, message,
           context_type, context_url, actor_id,
-          is_read, read_at, created_at, event_slug
+          is_read, read_at, created_at, event_slug,
+          recipient:profiles!notifications_user_id_fkey(display_name),
+          actor:profiles!notifications_actor_id_fkey(display_name)
         `, { count: 'exact' })
         .eq('bu_id', buId)
         .order('created_at', { ascending: false });
@@ -255,8 +270,20 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
       const { data, error, count } = await query;
       
       if (error) throw error;
+      
+      // Map recipient/actor data
+      const mappedData = (data ?? []).map(item => ({
+        ...item,
+        recipient: item.recipient 
+          ? { display_name: (item.recipient as any)?.display_name ?? null }
+          : undefined,
+        actor: item.actor 
+          ? { display_name: (item.actor as any)?.display_name ?? null }
+          : undefined,
+      })) as InAppNotification[];
+      
       return { 
-        data: (data ?? []) as InAppNotification[], 
+        data: mappedData, 
         count: count ?? 0,
         page,
         pageSize,
