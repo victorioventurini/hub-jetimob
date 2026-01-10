@@ -27,6 +27,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebounce } from '@/hooks/useDebounce';
+import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
 
 // ============================================================
@@ -160,8 +161,19 @@ export function TeamOkrObjectiveStep({
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-lg font-semibold mb-1">Definindo o Objetivo</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Definindo o Objetivo</h2>
+              <AskToVicInline
+                context={{
+                  module: 'okrs',
+                  wizard: 'creation',
+                  step: 'objective',
+                  teamName,
+                  objectiveTitle,
+                }}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
               Um bom objetivo descreve o <strong>porquê</strong>, não o como.
             </p>
           </div>

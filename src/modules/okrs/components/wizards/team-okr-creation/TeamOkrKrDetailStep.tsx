@@ -37,6 +37,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebounce } from '@/hooks/useDebounce';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
 import type { KrPlan } from './TeamOkrKrTypeStep';
 
@@ -243,8 +244,22 @@ export function TeamOkrKrDetailStep({
             <div className={cn("p-2 rounded-lg", config.bgColor)}>
               <Icon className={cn("h-5 w-5", config.color)} />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold">KR {config.title}</h2>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">KR {config.title}</h2>
+                <AskToVicStepHelper
+                  context={{
+                    module: 'okrs',
+                    wizard: 'creation',
+                    step: 'kr-detail',
+                    objectiveTitle,
+                    krType: currentSlot.type === 'foundational' ? 'fundacional' 
+                      : currentSlot.type === 'contribution' ? 'contribuicao' 
+                      : 'habilitador',
+                    krTitle: currentKr.title,
+                  }}
+                />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Para o objetivo: {objectiveTitle}
               </p>

@@ -21,6 +21,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 
 // ============================================================
@@ -105,11 +106,25 @@ export function TeamKrReviewStep({
       {/* Header */}
       <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">Revisão dos KRs</h3>
-            <p className="text-sm text-muted-foreground">
-              {reviewedCount} de {totalCount} revisados
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h3 className="font-semibold text-lg">Revisão dos KRs</h3>
+              <p className="text-sm text-muted-foreground">
+                {reviewedCount} de {totalCount} revisados
+              </p>
+            </div>
+            <AskToVicStepHelper
+              context={{
+                module: 'okrs',
+                wizard: 'team-checkin',
+                step: 'kr-review',
+                userRole: 'lider',
+                krTitle: currentKr?.title,
+                objectiveTitle: currentKr?.objective_title,
+                progress: currentKr?.progress,
+                teamName: currentKr?.team_name,
+              }}
+            />
           </div>
           <div className="flex items-center gap-2">
             <Button
