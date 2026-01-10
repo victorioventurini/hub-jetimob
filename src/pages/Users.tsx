@@ -508,7 +508,7 @@ export default function UsersPage() {
                               {getInitials(profile.manager.display_name)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm hover:text-accent hover:underline transition-colors">
+                          <span className="text-sm text-foreground hover:text-accent transition-colors">
                             {profile.manager.display_name}
                           </span>
                         </Link>
