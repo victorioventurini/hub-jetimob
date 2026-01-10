@@ -86,7 +86,7 @@ export function useVicAgent(options?: UseVicAgentOptions) {
         const status = (e as any)?.context?.status;
         const baseMessage = e instanceof Error ? e.message : "Erro desconhecido";
         const errorMessage = status ? `${baseMessage} (HTTP ${status})` : baseMessage;
-        return { error: errorMessage, code: status ? `HTTP_${status}` : undefined };
+        return { error: errorMessage };
       };
 
       // Silent mode: don't toast; still propagate via options?.onError for callers that care.
