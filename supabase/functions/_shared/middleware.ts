@@ -137,11 +137,30 @@ async function validateBuAccess(
   buId: string,
   requestId: string
 ): Promise<boolean | Response> {
+  // Identity convention: BU membership is anchored on profiles.id (domain), not auth.users.id
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error(`[${requestId}] Profile lookup error:`, profileError.message);
+    return errorResponse("Internal error", 500, { requestId, error: "PROFILE_LOOKUP_FAILED" });
+  }
+
+  if (!profile?.id) {
+    console.error(`[${requestId}] No profile found for user ${userId}`);
+    return errorResponse("Access denied", 403, { requestId, error: "PROFILE_NOT_FOUND" });
+  }
+
   const { data: membership, error: membershipError } = await supabase
     .from("bu_user_memberships")
     .select("id")
-    .eq("user_id", userId)
+    .eq("profile_id", profile.id)
     .eq("bu_id", buId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (membershipError) {
