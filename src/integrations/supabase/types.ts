@@ -7750,6 +7750,7 @@ export type Database = {
           source_type: string
         }[]
       }
+      f_unaccent: { Args: { "": string }; Returns: string }
       generate_okr_insights_for_objective: {
         Args: {
           p_bu_id: string
@@ -8115,6 +8116,17 @@ export type Database = {
         Args: { p_team_id: string }
         Returns: Json
       }
+      search_bu_users_for_mention: {
+        Args: { p_bu_id: string; p_limit?: number; p_search_term?: string }
+        Returns: {
+          display_name: string
+          email: string
+          id: string
+          photo_url: string
+          team_name: string
+          user_id: string
+        }[]
+      }
       send_test_notification: {
         Args: {
           p_bu_id: string
@@ -8164,6 +8176,7 @@ export type Database = {
         Args: { p_ancestor_team_id: string; p_team_id: string }
         Returns: boolean
       }
+      unaccent: { Args: { "": string }; Returns: string }
       update_user_global_role: {
         Args: { new_role: string; target_user_id: string }
         Returns: undefined
