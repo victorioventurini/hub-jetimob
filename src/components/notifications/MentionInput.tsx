@@ -99,32 +99,18 @@ export function MentionInput({
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<string>(value);
 
-  // Fetch users for mention suggestions
+  // Fetch users for mention suggestions (accent-insensitive search)
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['mention-users', currentBu?.id, searchTerm],
     queryFn: async () => {
       if (!currentBu?.id) return [];
 
-      let query = supabase
-        .from('v_bu_active_profiles')
-        .select(`
-          id,
-          user_id,
-          display_name,
-          email,
-          photo_url,
-          team_name
-        `)
-        .eq('bu_id', currentBu.id)
-        .order('display_name');
+      const { data, error } = await supabase.rpc('search_bu_users_for_mention', {
+        p_bu_id: currentBu.id,
+        p_search_term: searchTerm || null,
+        p_limit: 8,
+      });
 
-      if (searchTerm) {
-        query = query.ilike('display_name', `%${searchTerm}%`);
-      }
-
-      query = query.limit(8);
-
-      const { data, error } = await query;
       if (error) throw error;
 
       return (data || []).map(u => ({
