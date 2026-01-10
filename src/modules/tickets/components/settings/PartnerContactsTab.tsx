@@ -130,26 +130,24 @@ export function PartnerContactsTab() {
                 {contacts.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell>
-                      <PartnerContactHoverCard contactId={contact.id}>
-                        <Link
-                          to={`/contacts/${contact.id}`}
-                          className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {contact.name.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-primary hover:underline">
-                              {contact.name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {contact.email}
-                            </p>
-                          </div>
-                        </Link>
-                      </PartnerContactHoverCard>
+                      <Link
+                        to={`/contacts/${contact.id}`}
+                        className="flex items-center gap-3 text-left"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>
+                            {contact.name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground hover:text-primary transition-colors">
+                            {contact.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {contact.email}
+                          </p>
+                        </div>
+                      </Link>
                     </TableCell>
                     <TableCell>
                       {companies.find((c) => c.id === contact.partner_company_id)?.name || "-"}
