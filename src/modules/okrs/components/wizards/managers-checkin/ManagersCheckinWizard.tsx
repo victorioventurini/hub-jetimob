@@ -7,12 +7,13 @@
  * 3. Adjustments - Ajustes de foco
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { WizardShell } from '../shared/WizardShell';
 import { ManagersPanoramaStep } from './ManagersPanoramaStep';
 import { ManagersCrossIssuesStep } from './ManagersCrossIssuesStep';
 import { ManagersAdjustmentsStep } from './ManagersAdjustmentsStep';
+import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { WIZARD_CONFIGS, type AreaOkrSummary, type CrossDependency } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -35,6 +36,10 @@ export function ManagersCheckinWizard({
   onOpenChange,
 }: ManagersCheckinWizardProps) {
   const config = WIZARD_CONFIGS['managers-checkin'];
+  
+  // Session persistence
+  const { createSession, completeSession, isCreating } = useWizardSession();
+  const [sessionId, setSessionId] = useState<string | null>(null);
   
   // State
   const [currentStep, setCurrentStep] = useState<WizardStep>('panorama');
@@ -80,17 +85,39 @@ export function ManagersCheckinWizard({
     }
   }, [currentStep]);
 
+  // Create session when wizard opens
+  useEffect(() => {
+    if (open && !sessionId && !isCreating) {
+      createSession({
+        wizardType: 'managers-checkin',
+      }).then(session => {
+        setSessionId(session.id);
+      }).catch(err => {
+        console.error('Failed to create wizard session:', err);
+      });
+    }
+  }, [open, sessionId, isCreating, createSession]);
+
   // Handlers
   const handleClose = useCallback(() => {
     setCurrentStep('panorama');
     setAdjustments([]);
+    setSessionId(null);
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback(async () => {
+    // Complete session with adjustments
+    if (sessionId) {
+      await completeSession({
+        sessionId,
+        actionItems: adjustments.map(a => ({ task: a, ownerId: '' })),
+      }).catch(err => console.error('Failed to complete session:', err));
+    }
+    
     toast.success('Check-in de gestores concluído!');
     handleClose();
-  }, [handleClose]);
+  }, [sessionId, completeSession, adjustments, handleClose]);
 
   // Render step content
   const renderStepContent = () => {

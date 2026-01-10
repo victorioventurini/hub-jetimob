@@ -8,7 +8,7 @@
  * 4. Decisions - Decisões e próximos passos
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { WizardShell } from '../shared/WizardShell';
 import { TeamOpeningStep } from './TeamOpeningStep';
@@ -17,6 +17,7 @@ import { TeamInitiativesStep } from './TeamInitiativesStep';
 import { TeamDecisionsStep } from './TeamDecisionsStep';
 import { useTeamPendingKrs } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import { useActiveCycles, useCycle } from '@/modules/okrs/hooks/useCycleData';
+import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { WIZARD_CONFIGS, type TeamCheckinDecision, type TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -45,6 +46,15 @@ export function TeamCheckinWizard({
   markedForDiscussion = [],
 }: TeamCheckinWizardProps) {
   const config = WIZARD_CONFIGS['team-checkin'];
+  
+  // Session persistence
+  const { 
+    createSession, 
+    completeSession, 
+    saveKrAction,
+    isCreating 
+  } = useWizardSession();
+  const [sessionId, setSessionId] = useState<string | null>(null);
   
   // State
   const [currentStep, setCurrentStep] = useState<WizardStep>('opening');
@@ -94,6 +104,21 @@ export function TeamCheckinWizard({
     }
   }, [currentStep]);
 
+  // Create session when wizard opens
+  useEffect(() => {
+    if (open && !sessionId && !isCreating) {
+      createSession({
+        wizardType: 'team-checkin',
+        teamId,
+        cycleId: quarterlyCycle?.id || null,
+      }).then(session => {
+        setSessionId(session.id);
+      }).catch(err => {
+        console.error('Failed to create wizard session:', err);
+      });
+    }
+  }, [open, sessionId, isCreating, createSession, teamId, quarterlyCycle?.id]);
+
   // Handlers
   const handleClose = useCallback(() => {
     setCurrentStep('opening');
@@ -104,17 +129,35 @@ export function TeamCheckinWizard({
       knowWhatNotToDo: false,
       knowWhoIsResponsible: false,
     });
+    setSessionId(null);
     onOpenChange(false);
   }, [onOpenChange]);
 
   const handleMarkReviewed = useCallback((krId: string) => {
     setReviewedKrs(prev => new Set(prev).add(krId));
-  }, []);
+    
+    // Save KR action
+    if (sessionId) {
+      saveKrAction({
+        sessionId,
+        krId,
+        actionType: 'checked_in',
+      }).catch(err => console.error('Failed to save KR action:', err));
+    }
+  }, [sessionId, saveKrAction]);
 
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback(async () => {
+    // Complete session with decisions
+    if (sessionId) {
+      await completeSession({
+        sessionId,
+        decisions,
+      }).catch(err => console.error('Failed to complete session:', err));
+    }
+    
     toast.success('Check-in do time concluído!');
     handleClose();
-  }, [handleClose]);
+  }, [sessionId, completeSession, decisions, handleClose]);
 
   // Render step content
   const renderStepContent = () => {
