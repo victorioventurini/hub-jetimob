@@ -100,7 +100,7 @@ const JobTitlesPage = lazy(() => import("./modules/settings/pages/JobTitlesPage"
 
 // Páginas de Notificações
 const HubNotifications = lazy(() => import("./pages/hub/HubNotifications"));
-const NotificationPreferences = lazy(() => import("./pages/me/NotificationPreferences"));
+const NotificationsPage = lazy(() => import("./pages/me/NotificationsPage"));
 
 // Fallback de loading otimizado
 function PageLoader() {
@@ -720,13 +720,13 @@ const App = () => {
                       }
                     />
 
-                    {/* User Notification Preferences */}
+                    {/* User Notifications */}
                     <Route
                       path="/me/notifications"
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
-                            <NotificationPreferences />
+                            <NotificationsPage />
                           </BuRequiredRoute>
                         </ProtectedRoute>
                       }
