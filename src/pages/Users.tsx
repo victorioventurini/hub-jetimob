@@ -487,10 +487,10 @@ export default function UsersPage() {
                       {profile.team ? (
                         <Link
                           to={`/teams/${profile.team.id}`}
-                          className="flex items-center gap-1.5 text-sm hover:text-accent transition-colors"
+                          className="flex items-center gap-1.5 text-sm hover:opacity-80 transition-opacity"
                         >
                           <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="hover:underline">{profile.team.name}</span>
+                          <span className="text-foreground hover:text-accent transition-colors">{profile.team.name}</span>
                         </Link>
                       ) : (
                         <span className="text-muted-foreground text-sm">—</span>
