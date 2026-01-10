@@ -129,7 +129,14 @@ export function BuUserSelect({
               <SelectItem
                 key={profile.id}
                 value={profile.id}
-                className="cursor-pointer"
+                className={cn(
+                  "cursor-pointer py-2",
+                  // Match NotificationCenter hover
+                  "focus:bg-primary/10 focus:text-foreground",
+                  "data-[highlighted]:bg-primary/10 data-[highlighted]:text-foreground",
+                  // Keep selected state consistent with hover
+                  "data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground"
+                )}
               >
                 <div className="flex items-center gap-2 w-full">
                   <OptimizedAvatar
