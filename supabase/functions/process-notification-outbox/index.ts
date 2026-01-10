@@ -453,6 +453,34 @@ function buildFallbackEmailHtml(payload: Record<string, unknown>): string {
   return buildNotificationEmailHtmlFromTemplate(title, message, contextUrl);
 }
 
+// Helper to format date/time for templates
+function formatDateForTemplate(date: Date): { date: string; time: string; datetime: string } {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return {
+    date: `${day}/${month}/${year}`,
+    time: `${hours}:${minutes}`,
+    datetime: `${day}/${month}/${year} ${hours}:${minutes}`,
+  };
+}
+
+// Get BU name for template variables
+async function getBuName(supabase: SupabaseClient, buId: string | null): Promise<string> {
+  if (!buId) return "Hub";
+  
+  const { data } = await supabase
+    .from("bu_units")
+    .select("name")
+    .eq("id", buId)
+    .maybeSingle();
+  
+  return data?.name || "Hub";
+}
+
 // Process a single outbox item
 async function processOutboxItem(
   supabase: SupabaseClient,
@@ -483,10 +511,23 @@ async function processOutboxItem(
         };
       }
       
-      // Build variables for template rendering
+      // Get BU name for global variables
+      const buName = await getBuName(supabase, bu_id);
+      
+      // Build global date/time variables
+      const now = new Date();
+      const dateVars = formatDateForTemplate(now);
+      
+      // Build variables for template rendering (global + payload)
       const templateVars: Record<string, unknown> = {
-        ...payload,
+        // Global variables (available to all templates)
+        bu_name: buName,
         user_name: recipient.display_name || "Usuário",
+        current_date: dateVars.date,
+        current_time: dateVars.time,
+        current_datetime: dateVars.datetime,
+        // Payload variables (event-specific)
+        ...payload,
         context_url: payload.context_url,
       };
       
