@@ -11,18 +11,16 @@ import { KeyringDialog } from "../components/keys/KeyringDialog";
 import { useUrlSearch } from "@/shared/url";
 
 export default function KeysPage() {
-  const { keyrings, isLoading: isLoadingKeys } = useKeys();
-  const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissions();
+  // URL State for server-side filtering
   const { value: search, set: setSearch } = useUrlSearch("q");
+  
+  const { keyrings, isLoading: isLoadingKeys } = useKeys({
+    search: search || undefined,
+  });
+  const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissions();
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
 
   const isLoading = isLoadingKeys || isLoadingPermissions;
-
-  const filteredKeyrings = keyrings.filter(
-    (k) =>
-      k.name.toLowerCase().includes(search.toLowerCase()) ||
-      k.tag_number.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (isLoading) {
     return (
@@ -62,20 +60,18 @@ export default function KeysPage() {
       </div>
 
       {/* Lista de chaveiros */}
-      {filteredKeyrings.length === 0 ? (
+      {keyrings.length === 0 ? (
         <EmptyState
           icon={Key}
-          title="Nenhum chaveiro encontrado"
-          description={
-            search
-              ? "Tente ajustar a busca"
-              : "Cadastre o primeiro chaveiro"
-          }
+          title="Nenhum chaveiro cadastrado"
+          description={search 
+            ? "Tente ajustar a busca" 
+            : "Cadastre o primeiro chaveiro"}
           actionLabel={canManageKeys && !search ? "Novo Chaveiro" : undefined}
           onAction={canManageKeys && !search ? () => setKeyringDialogOpen(true) : undefined}
         />
       ) : (
-        <KeyringsList keyrings={filteredKeyrings} />
+        <KeyringsList keyrings={keyrings} />
       )}
 
       {/* Dialog */}

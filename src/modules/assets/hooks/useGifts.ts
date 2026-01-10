@@ -10,26 +10,38 @@ import type { AssetGiftItem, AssetGiftBatch, AssetGiftMovement, GiftMovementType
 const formatProfileName = (p: { first_name: string | null; last_name: string | null; display_name: string | null }) => 
   p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome';
 
-export function useGifts() {
+export interface UseGiftsOptions {
+  search?: string;
+}
+
+export function useGifts(options: UseGiftsOptions = {}) {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
+  const { search } = options;
 
   // Buscar itens de brinde
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
-    queryKey: ["asset-gift-items", buId],
+    queryKey: ["asset-gift-items", buId, { search }],
     enabled: !!buId && !!supabase,
     queryFn: async () => {
       if (!supabase) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("asset_gift_items")
         .select("*")
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");
 
+      // Server-side text search
+      if (search && search.trim()) {
+        const term = `%${search.trim()}%`;
+        query = query.or(`name.ilike.${term},category.ilike.${term}`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as AssetGiftItem[];
     },

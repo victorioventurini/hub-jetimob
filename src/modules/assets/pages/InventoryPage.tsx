@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Package, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,82 +10,85 @@ import { useLocations } from "../hooks/useLocations";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
+import { useUrlState, useUrlSearch } from "@/shared/url";
 import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
-  const { items, categories, isLoading } = useInventory();
+  // URL State for server-side filtering
+  const { value: search, set: setSearch } = useUrlSearch("q");
+  const statusState = useUrlState<string>({ key: "status", defaultValue: "all" });
+  const categoryState = useUrlState<string>({ key: "category", defaultValue: "all" });
+  const holderState = useUrlState<string>({ key: "holder", defaultValue: "all" });
+  const locationState = useUrlState<string>({ key: "location", defaultValue: "all" });
+  
+  const statusFilter = statusState.value as "all" | AssetInventoryStatus;
+  const setStatusFilter = (v: "all" | AssetInventoryStatus) => statusState.set(v);
+  const categoryFilter = categoryState.value;
+  const setCategoryFilter = categoryState.set;
+  const holderFilter = holderState.value;
+  const setHolderFilter = holderState.set;
+  const locationFilter = locationState.value;
+  const setLocationFilter = locationState.set;
+
+  // Pass filters to hook for server-side filtering
+  const { items, categories, isLoading } = useInventory({
+    search: search || undefined,
+    statusFilter: statusFilter !== "all" ? statusFilter : undefined,
+    categoryFilter: categoryFilter !== "all" ? categoryFilter : undefined,
+    holderFilter: holderFilter !== "all" ? holderFilter : undefined,
+    locationFilter: locationFilter !== "all" ? locationFilter : undefined,
+  });
   const { locations } = useLocations();
   
   // Allow any authenticated user to add items for now (permissions will be enforced on backend)
   const canAddItem = true;
-  const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<"all" | AssetInventoryStatus>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [holderFilter, setHolderFilter] = useState<string>("all");
-  const [locationFilter, setLocationFilter] = useState<string>("all");
 
-  // Get unique holders from items for the filter
-  const holders = items
-    .filter(item => item.current_user)
-    .map(item => item.current_user!)
-    .filter((holder, index, self) => 
-      self.findIndex(h => h.id === holder.id) === index
-    )
-    .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  // Get unique holders from items for the filter (client-side - small list)
+  const holders = useMemo(() => 
+    items
+      .filter(item => item.current_user)
+      .map(item => item.current_user!)
+      .filter((holder, index, self) => 
+        self.findIndex(h => h.id === holder.id) === index
+      )
+      .sort((a, b) => a.full_name.localeCompare(b.full_name)),
+    [items]
+  );
 
-  const filteredItems = items.filter((item) => {
-    // Text search
-    const matchesSearch =
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.internal_code.toLowerCase().includes(search.toLowerCase());
-
-    // Status filter
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-
-    // Category filter - supports both category and subcategory
-    let matchesCategory = categoryFilter === "all";
-    if (!matchesCategory && item.category_id) {
-      if (item.category_id === categoryFilter) {
-        matchesCategory = true;
-      } else {
+  // Client-side filter for hierarchical category/location (parent includes children)
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      // Category filter - supports parent category matching children
+      if (categoryFilter !== "all" && item.category_id) {
         const selectedCategory = categories.find(c => c.id === categoryFilter);
         if (selectedCategory && !selectedCategory.parent_id) {
+          // Parent category selected - check if item's category is a child
           const itemCategory = categories.find(c => c.id === item.category_id);
-          if (itemCategory?.parent_id === categoryFilter) {
-            matchesCategory = true;
+          if (itemCategory?.parent_id !== categoryFilter && item.category_id !== categoryFilter) {
+            return false;
           }
         }
       }
-    }
 
-    // Holder filter
-    const matchesHolder = holderFilter === "all" || item.current_user_id === holderFilter;
-
-    // Location filter - supports both headquarters and rooms
-    let matchesLocation = locationFilter === "all";
-    if (!matchesLocation) {
-      // Check home_location or current_location
-      const itemLocationId = item.home_location_id || item.current_location_id;
-      if (itemLocationId) {
-        if (itemLocationId === locationFilter) {
-          matchesLocation = true;
-        } else {
-          // Check if filter is a parent location (headquarters)
+      // Location filter - supports parent location matching children
+      if (locationFilter !== "all") {
+        const itemLocationId = item.home_location_id || item.current_location_id;
+        if (itemLocationId) {
           const selectedLocation = locations.find(l => l.id === locationFilter);
           if (selectedLocation && !selectedLocation.parent_location_id) {
-            // It's a headquarters, check if item's location is a room within it
+            // Headquarters selected - check if item's location is a room within it
             const itemLocation = locations.find(l => l.id === itemLocationId);
-            if (itemLocation?.parent_location_id === locationFilter) {
-              matchesLocation = true;
+            if (itemLocation?.parent_location_id !== locationFilter && itemLocationId !== locationFilter) {
+              return false;
             }
           }
         }
       }
-    }
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesHolder && matchesLocation;
-  });
+      return true;
+    });
+  }, [items, categoryFilter, locationFilter, categories, locations]);
 
   const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" || locationFilter !== "all";
 
