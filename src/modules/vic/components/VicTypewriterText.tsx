@@ -5,7 +5,7 @@
  * simulando a digitação letra por letra.
  */
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -219,20 +219,75 @@ export interface VicStreamingTextProps {
 }
 
 /**
- * VicStreamingText - Exibe texto de streaming com cursor pulsante
- * Durante o streaming, mostra o texto conforme chega com cursor
- * Após terminar, mantém o texto completo
+ * VicStreamingText - Exibe texto com efeito de digitação progressivo
+ * - Em streaming: acompanha o texto conforme chega (sem “pular” para o final)
+ * - Em modo estático: garante que mesmo texto vindo inteiro apareça “digitando”
  */
 export function VicStreamingText({
   text,
   isStreaming,
   className,
 }: VicStreamingTextProps) {
+  const [displayedText, setDisplayedText] = useState('');
+  const intervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Reset hard quando não tem texto
+    if (!text) {
+      setDisplayedText('');
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // Se o texto mudou “por completo” (ex: regenerate), reinicia
+    if (displayedText && !text.startsWith(displayedText)) {
+      setDisplayedText('');
+    }
+
+    // Já está completo
+    if (displayedText.length >= text.length) return;
+
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    intervalRef.current = window.setInterval(() => {
+      setDisplayedText((current) => {
+        // Se o texto mudou “por completo” durante o intervalo
+        if (current && !text.startsWith(current)) return '';
+
+        const remaining = text.length - current.length;
+        if (remaining <= 0) return current;
+
+        // Alvo: completar rápido quando veio tudo de uma vez,
+        // e acompanhar suave quando está em streaming.
+        const targetTicks = isStreaming ? 12 : 80;
+        const step = Math.max(1, Math.ceil(remaining / targetTicks));
+
+        const nextLen = Math.min(text.length, current.length + step);
+        return text.slice(0, nextLen);
+      });
+    }, 12);
+
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [text, isStreaming, displayedText]);
+
+  const showCursor = isStreaming || displayedText.length < text.length;
+
   return (
     <span className={cn('inline', className)}>
-      {text}
+      {displayedText}
       <AnimatePresence>
-        {isStreaming && (
+        {showCursor && (
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 1, 0] }}
