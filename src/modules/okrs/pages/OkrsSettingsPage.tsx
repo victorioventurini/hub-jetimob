@@ -2,6 +2,7 @@ import { Settings, Calendar, Scale, BookOpen, AlertTriangle } from "lucide-react
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab } from "@/hooks/useUrlState";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { PageHeader } from "@/components/ui/page-header";
 import { CyclesTab } from "../components/settings/CyclesTab";
 import { LimitsTab } from "../components/settings/LimitsTab";
 import { RulesInfoTab } from "../components/settings/RulesInfoTab";
@@ -14,16 +15,13 @@ export default function OkrsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Settings className="h-6 w-6" />
-          Configurações de OKRs
-        </h1>
-        <p className="text-muted-foreground">
-          Configure ciclos, limites e regras de vínculo da metodologia OKR
-        </p>
-      </div>
+      <PageHeader
+        title="Configurações de OKRs"
+        description="Configure ciclos, limites e regras de vínculo da metodologia OKR"
+        icon={<Settings className="h-6 w-6 text-primary" />}
+        backTo="/okrs"
+        backLabel="Voltar para OKRs"
+      />
 
       {/* Info Banner */}
       <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/30">
