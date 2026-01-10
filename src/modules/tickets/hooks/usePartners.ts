@@ -228,6 +228,7 @@ export function useCreatePartnerContact() {
       email: string;
       phone?: string | null;
       status?: PartnerContactStatus;
+      sendInvite?: boolean;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
 
@@ -250,6 +251,33 @@ export function useCreatePartnerContact() {
         .single();
 
       if (error) throw error;
+
+      // Send invitation email if requested (default: true)
+      const shouldSendInvite = data.sendInvite !== false;
+      if (shouldSendInvite && contact) {
+        try {
+          const { data: session } = await supabase.auth.getSession();
+          const response = await supabase.functions.invoke("send-partner-invite", {
+            body: {
+              contact_id: contact.id,
+              bu_id: buId,
+            },
+            headers: {
+              Authorization: `Bearer ${session.session?.access_token}`,
+            },
+          });
+
+          if (response.error) {
+            console.warn("[useCreatePartnerContact] Failed to send invite:", response.error);
+          } else {
+            console.log("[useCreatePartnerContact] Invite sent successfully");
+          }
+        } catch (inviteError) {
+          // Don't fail the mutation if invite fails
+          console.warn("[useCreatePartnerContact] Invite error:", inviteError);
+        }
+      }
+
       return contact as PartnerContact;
     },
     onSuccess: () => {
