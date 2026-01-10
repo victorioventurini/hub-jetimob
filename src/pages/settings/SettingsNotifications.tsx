@@ -76,6 +76,7 @@ import {
   X,
   FileText,
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 import { TemplatesList } from '@/components/notifications/templates';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -390,10 +391,12 @@ export default function SettingsNotifications() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Configurações de Notificações</h1>
-          <p className="text-muted-foreground">Configure os canais de notificação para esta BU</p>
-        </div>
+        <PageHeader
+          title="Configurações de Notificações"
+          description="Configure os canais de notificação para esta BU"
+          backTo="/settings"
+          backLabel="Voltar para Configurações"
+        />
         <Card>
           <CardContent className="p-6 space-y-4">
             {[1, 2, 3].map(i => (
@@ -407,10 +410,12 @@ export default function SettingsNotifications() {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Configurações de Notificações</h1>
-        <p className="text-muted-foreground">Configure os canais de notificação para esta BU</p>
-      </div>
+      <PageHeader
+        title="Configurações de Notificações"
+        description="Configure os canais de notificação para esta BU"
+        backTo="/settings"
+        backLabel="Voltar para Configurações"
+      />
       
       <Tabs value={tabState.value} onValueChange={(v) => tabState.set(v as TabValue)}>
         <TabsList className="flex w-full">
