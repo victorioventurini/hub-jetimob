@@ -28,6 +28,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { clearBuClientCache } from '@/integrations/supabase/buScopedClient';
 
 interface Profile {
   id: string;
@@ -68,6 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Keep BU-scoped clients in sync with the global auth session.
+        // Otherwise, a BU client created pre-login can stay "unauth" forever due to caching.
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          clearBuClientCache();
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         

@@ -3,8 +3,16 @@ import type { Database } from "./types";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+
+// Must match the default storageKey used by the global client to share sessions.
+const AUTH_STORAGE_KEY = `sb-${SUPABASE_PROJECT_ID}-auth-token`;
 
 const buClientCache = new Map<string, SupabaseClient<Database>>();
+
+export function clearBuClientCache() {
+  buClientCache.clear();
+}
 
 /**
  * Returns a singleton BU-scoped client for the given BU.
@@ -20,10 +28,14 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
     },
     auth: {
       storage: localStorage, // CRITICAL: Share storage with global client
+      storageKey: AUTH_STORAGE_KEY,
       persistSession: true,
       autoRefreshToken: true,
     },
   });
+
+  // Hydrate auth state ASAP (avoid first-query unauth race).
+  void client.auth.getSession();
 
   buClientCache.set(buId, client);
   return client;
