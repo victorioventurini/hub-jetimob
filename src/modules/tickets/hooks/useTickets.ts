@@ -290,8 +290,8 @@ export function useCreateTicket(profileId: string | null) {
       return ticket;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
+      // Invalida todas as queries de tickets (list, all, my)
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
     },
   });
 }
