@@ -250,8 +250,7 @@ export function NotificationCenter() {
         </div>
 
         {/* Notifications List */}
-        {/* Notifications List */}
-        <div className="max-h-[320px]">
+        <div className="max-h-[280px] overflow-y-auto">
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
               Carregando...
@@ -331,10 +330,10 @@ export function NotificationCenter() {
         </div>
 
         {/* Footer - Ver todas */}
-        <div className="border-t p-4 pt-3">
+        <div className="border-t p-4">
           <Button
             variant="ghost"
-            className="w-full text-sm text-primary hover:text-primary"
+            className="w-full text-sm text-primary hover:text-primary hover:bg-primary/10"
             onClick={() => {
               navigate('/me/notifications');
               setOpen(false);
