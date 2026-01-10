@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { MultiTeamSelect } from '@/components/selects/MultiTeamSelect';
-import { VicActionButton } from '@/modules/vic';
+import { VicActionButton, VicLoadingState, VicTypewriterText } from '@/modules/vic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { 
   ChevronLeft, 
@@ -178,13 +178,18 @@ export function TeamOkrSharingStep({
           </CardHeader>
           <CardContent>
             {isGeneratingInsight ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                Analisando contexto...
-              </div>
+              <VicLoadingState 
+                text="Analisando contexto..." 
+                variant="inline" 
+                size="sm" 
+              />
+            ) : aiInsight ? (
+              <p className="text-sm text-foreground/80">
+                <VicTypewriterText text={aiInsight} speed={20} />
+              </p>
             ) : (
               <p className="text-sm text-foreground/80">
-                {aiInsight || 'Objetivos como este raramente são alcançados por um único time.'}
+                Objetivos como este raramente são alcançados por um único time.
               </p>
             )}
           </CardContent>

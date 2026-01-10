@@ -22,10 +22,10 @@ import {
   Target,
   TrendingUp,
   Building2,
-  Sparkles,
   AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VicGeneratingCard } from '@/modules/vic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
@@ -257,12 +257,7 @@ export function TeamOkrContextStep({
 
           {/* AI Insight */}
           {isGeneratingInsight ? (
-            <div className="p-4 border rounded-lg bg-primary/5 animate-pulse">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Sparkles className="h-4 w-4" />
-                Analisando contexto estratégico...
-              </div>
-            </div>
+            <VicGeneratingCard text="Analisando contexto estratégico..." />
           ) : aiInsight ? (
             <VicInsightCard insight={aiInsight} showSource />
           ) : null}

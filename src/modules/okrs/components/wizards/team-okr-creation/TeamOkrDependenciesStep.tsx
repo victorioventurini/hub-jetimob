@@ -29,9 +29,9 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VicLoadingState } from '@/modules/vic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
@@ -204,10 +204,10 @@ export function TeamOkrDependenciesStep({
           {/* Loading State */}
           {isAnalyzing && (
             <div className="p-8 border rounded-lg border-dashed flex flex-col items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p className="text-sm text-muted-foreground">
-                Analisando dependências potenciais...
-              </p>
+              <VicLoadingState 
+                text="Analisando dependências potenciais..." 
+                size="lg"
+              />
             </div>
           )}
 

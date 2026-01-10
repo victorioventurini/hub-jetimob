@@ -28,6 +28,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VicGeneratingCard } from '@/modules/vic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
@@ -298,12 +299,7 @@ export function TeamOkrRetrospectiveStep({
 
           {/* AI Insight */}
           {isGeneratingInsight ? (
-            <div className="p-4 border rounded-lg bg-primary/5 animate-pulse">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Sparkles className="h-4 w-4" />
-                Analisando ciclo anterior...
-              </div>
-            </div>
+            <VicGeneratingCard text="Analisando ciclo anterior..." />
           ) : aiInsight ? (
             <VicInsightCard insight={aiInsight} showSource />
           ) : null}
