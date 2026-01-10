@@ -1,7 +1,7 @@
 # Status da Documentação Técnica — Hub da Jet
 
-**Data:** 2026-01-09  
-**Versão:** 1.1.0
+**Data:** 2026-01-10  
+**Versão:** 1.2.0
 
 ---
 

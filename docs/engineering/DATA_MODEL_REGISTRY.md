@@ -1,8 +1,8 @@
 # Data Model Registry — Hub da Jet
 
-**Gerado em:** 2026-01-09T17:59:00.000Z  
-**Versão do Generator:** 1.0.0  
-**Versão do TCR:** 2.13.0  
+**Gerado em:** 2026-01-10T21:40:00.000Z  
+**Versão do Generator:** 1.1.0  
+**Versão do TCR:** 2.14.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
 > ⚠️ **FONTE ÚNICA DE VERDADE**
@@ -21,6 +21,7 @@ Lista completa das tabelas no schema `public`:
 | Tabela | RLS | BU-Scoped | Descrição |
 |--------|-----|-----------|-----------|
 | `ai_agent_documents` | ✅ | ✅ | Documentos de agentes IA |
+| `ai_agent_instruction_sources` | ✅ | ✅ | Fontes de instrução de agentes |
 | `ai_agent_logs` | ✅ | ✅ | Logs de execução de agentes |
 | `ai_agents` | ✅ | ✅ | Configuração de agentes IA |
 | `app_error_logs` | ✅ | ✅ | Logs de erros da aplicação |
@@ -92,12 +93,14 @@ Lista completa das tabelas no schema `public`:
 | `okr_org_objectives` | ✅ | ✅ | Objetivos organizacionais |
 | `okr_reports_config` | ✅ | ✅ | Configuração de relatórios |
 | `okr_team_key_results` | ✅ | ✅ | KRs de time |
+| `okr_team_objective_contributors` | ✅ | ✅ | Contribuidores de objetivos |
 | `okr_team_objectives` | ✅ | ✅ | Objetivos de time |
+| `okr_wizard_kr_actions` | ✅ | ✅ | Ações do wizard de KR |
+| `okr_wizard_sessions` | ✅ | ✅ | Sessões do wizard de OKR |
 | `partner_companies` | ✅ | ✅ | Empresas parceiras |
 | `partner_contact_capabilities` | ✅ | ✅ | Capacidades de contatos |
 | `partner_contacts` | ✅ | ✅ | Contatos de parceiros |
 | `partner_service_mappings` | ✅ | ✅ | Mapeamento de serviços |
-| `partner_services` | ✅ | ✅ | Serviços de parceiros |
 | `permission_audit_log` | ✅ | ✅ | Audit log de permissões |
 | `permission_catalog` | ✅ | ❌ | Catálogo de permissões |
 | `permission_migrations` | ✅ | ✅ | Migrações de permissões |
@@ -118,6 +121,8 @@ Lista completa das tabelas no schema `public`:
 | `user_roles` | ✅ | ❌ | Roles globais |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
+**Total:** 100 tabelas
+
 ---
 
 ## Views
@@ -126,8 +131,11 @@ Lista completa das tabelas no schema `public`:
 |------|-----------|
 | `identity_rls_violations` | Violações de identity em RLS |
 | `users_without_v2_permissions` | Usuários sem permissões V2 |
-| `v_bu_active_profiles` | Perfis ativos por BU |
+| `v_ai_agents_public` | Agentes IA públicos |
+| `v_bu_active_profiles` | Perfis ativos por BU (view canônica para User Directory) |
+| `v_bu_all_profiles_admin` | Todos os perfis da BU (admin) |
 | `v_bu_id_null_report` | Relatório de bu_id NULL |
+| `v_bu_memberships_active` | Memberships ativas |
 | `v_notification_delivery_health` | Saúde de entregas |
 | `v_notification_failures` | Falhas de notificação |
 | `v_notification_slo_by_channel_daily` | SLO por canal (diário) |
@@ -140,10 +148,12 @@ Lista completa das tabelas no schema `public`:
 | `v_perf_indexes_report` | Relatório de índices |
 | `v_permission_risk_report` | Relatório de riscos de permissão |
 | `v_permissions_without_explanation` | Permissões sem explicação |
+| `v_profiles_directory` | Diretório de perfis |
 | `v_shared_okrs_summary` | Resumo de OKRs compartilhados |
 | `v_team_contributed_okrs` | OKRs com contribuição de times |
-| `v_user_directory_health` | Saúde do diretório de usuários |
 | `v_users_without_templates` | Usuários sem templates |
+
+**Total:** 23 views
 
 ---
 
@@ -153,7 +163,7 @@ Lista completa das tabelas no schema `public`:
 |------|---------|
 | `agent_output_format` | `text`, `json` |
 | `agent_scope` | `global`, `bu` |
-| `app_role` | `super_admin`, `admin`, `collaborator` |
+| `app_role` | `super_admin`, `admin`, `collaborator`, `external` |
 | `asset_group_item_role` | `primary`, `accessory` |
 | `asset_group_status` | `active`, `inactive` |
 | `asset_group_type` | `kit`, `bundle` |
@@ -171,6 +181,7 @@ Lista completa das tabelas no schema `public`:
 | `gift_movement_type` | `in`, `out`, `adjustment` |
 | `initiative_priority` | `low`, `medium`, `high` |
 | `initiative_status` | `planned`, `in_progress`, `blocked`, `completed` |
+| `instruction_source_type` | `api`, `document`, `hub_context`, `template` |
 | `integration_config_mode` | `use_global`, `override` |
 | `integration_test_status` | `ok`, `error`, `pending` |
 | `key_access_type` | `door` |
@@ -182,14 +193,18 @@ Lista completa das tabelas no schema `public`:
 | `objective_status` | `draft`, `active`, `completed`, `cancelled` |
 | `okr_confidence_level` | `high`, `medium`, `low` |
 | `okr_contribution_type` | `objective`, `kr` |
+| `okr_direction` | `up`, `down` |
 | `okr_insight_category` | `risk`, `progress`, `blockers`, `coaching` |
 | `okr_insight_status` | `open`, `acknowledged`, `resolved` |
+| `partner_service_scope` | `all`, `team`, `location` |
 | `permission_effect` | `allow`, `deny` |
 | `squad_membership_role` | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
 | `ticket_priority` | `low`, `medium`, `high`, `urgent` |
 | `ticket_source` | `internal`, `external`, `email`, `chat` |
 | `ticket_status` | `open`, `in_progress`, `waiting`, `resolved`, `closed` |
 | `work_mode` | `remote`, `hybrid`, `onsite` |
+
+**Total:** 42 enums
 
 ---
 
@@ -218,6 +233,7 @@ Lista completa das tabelas no schema `public`:
 | `ticket_messages` | `performed_by_user_id` | ✅ → `profiles.id` | Autor da mensagem |
 | `asset_inventory` | `current_user_id` | ✅ → `profiles.id` | Possuidor atual |
 | `asset_inventory` | `created_by` | ❌ (inferido) | Criador |
+| `asset_inventory` | `updated_by` | ❌ (inferido) | Atualizador |
 | `asset_movements` | `from_user_id` | ✅ → `profiles.id` | Origem |
 | `asset_movements` | `to_user_id` | ✅ → `profiles.id` | Destino |
 | `asset_movements` | `performed_by_user_id` | ✅ → `profiles.id` | Executor |
@@ -242,6 +258,7 @@ Lista completa das tabelas no schema `public`:
 |--------|--------|-----|
 | `profiles` | `user_id` | Link profile → auth.users |
 | `bu_user_memberships` | `user_id` | Membership usa auth id |
+| `bu_user_memberships` | `profile_id` | Referência ao profile |
 | `user_roles` | `user_id` | Roles globais via auth id |
 | `audit_logs` | `user_id` | Auditoria usa auth id |
 | `notifications` | `user_id` | Notificações via auth id |
@@ -263,7 +280,8 @@ Lista completa das tabelas no schema `public`:
 | `my_profile_id_strict()` | `uuid` | Idem, lança exceção se não existir |
 | `profile_id_from_user_id(uuid)` | `uuid` | Converte auth id → profile id |
 | `user_id_from_profile_id(uuid)` | `uuid` | Converte profile id → auth id |
-| `assert_identity(uuid)` | `boolean` | Valida que profile_id pertence ao usuário |
+| `assert_profile_identity(uuid)` | `boolean` | Valida que profile_id pertence ao usuário |
+| `current_profile_id()` | `uuid` | Alias para my_profile_id() |
 
 ### BU Scope
 
@@ -285,6 +303,7 @@ Lista completa das tabelas no schema `public`:
 | `has_role(uuid, app_role)` | `boolean` | Possui role específica |
 | `has_permission(uuid, uuid, text)` | `boolean` | Tem permission key |
 | `get_my_permissions(uuid)` | `text[]` | Lista permissions do usuário |
+| `check_scope_access(uuid, text, jsonb)` | `boolean` | Verifica acesso por scope |
 
 ### Hierarquia de Times
 
@@ -303,8 +322,33 @@ Lista completa das tabelas no schema `public`:
 |--------|---------|-----------|
 | `get_cycle_checkins(uuid, uuid, uuid)` | `table` | Check-ins do ciclo |
 | `get_team_kr_history(uuid)` | `table` | Histórico de KR |
-| `emit_notification_event(...)` | `void` | Emite evento de notificação |
+| `calculate_kr_progress(...)` | `numeric` | Calcula progresso do KR |
+| `calculate_objective_health(...)` | `jsonb` | Calcula saúde do objetivo |
+
+### Notificações
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `emit_notification_event(...)` | `SETOF uuid` | Emite evento de notificação |
 | `send_test_notification_v2(uuid)` | `boolean` | Envia notificação de teste |
+| `resolve_work_email(uuid)` | `text` | Resolve email de trabalho |
+| `resolve_notification_recipient(uuid)` | `jsonb` | Resolve destinatário completo |
+
+### Assets
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `can_manage_asset_inventory(uuid, uuid)` | `boolean` | Pode gerenciar inventário |
+| `can_manage_inventory(uuid, uuid)` | `boolean` | Pode movimentar inventário |
+| `can_manage_keys(uuid, uuid)` | `boolean` | Pode gerenciar chaves |
+| `can_manage_gifts(uuid, uuid)` | `boolean` | Pode gerenciar brindes |
+| `has_asset_permission(uuid, uuid, text[])` | `boolean` | Verifica permissão de assets |
+
+### Tickets
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `can_view_ticket(uuid, uuid)` | `boolean` | Pode ver ticket |
 
 ---
 
