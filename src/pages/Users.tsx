@@ -47,8 +47,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
-import { UrlPagination, UrlSearchInput } from "@/shared/filters";
-import { useUrlState, parsers } from "@/shared/url";
+import { UrlSearchInput } from "@/shared/filters";
+import { useUrlState } from "@/shared/url";
 import { UserHoverCard } from "@/components/user/UserHoverCard";
 
 import { useDeleteProfile, useTransferDependencies } from "@/hooks/useProfiles";
@@ -111,29 +111,16 @@ export default function UsersPage() {
   const statusFilterState = useUrlState<string>({ key: 'status', defaultValue: 'active' });
   const statusFilter = statusFilterState.value;
   
-  // Pagination URL state
-  const pageState = useUrlState<number>({ key: "page", defaultValue: 1, parse: parsers.number });
-  const pageSizeState = useUrlState<number>({ key: "pageSize", defaultValue: 25, parse: parsers.number });
-  const page = pageState.value;
-  const pageSize = pageSizeState.value;
   
-  // Handlers that reset page
+  // Handlers
   const setSearchQuery = (v: string) => {
     searchState.set(v);
-    pageState.set(1);
   };
   const setTeamFilter = (v: string) => {
     teamFilterState.set(v);
-    pageState.set(1);
   };
   const setStatusFilter = (v: string) => {
     statusFilterState.set(v);
-    pageState.set(1);
-  };
-  const setPage = pageState.set;
-  const handlePageSizeChange = (newSize: number) => {
-    pageSizeState.set(newSize);
-    pageState.set(1);
   };
   
   // Local state
@@ -162,37 +149,30 @@ export default function UsersPage() {
     }
   }, [deletingProfile, deps.isLoading, deps.hasMandatoryDependencies]);
 
-  // Pagination calc
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
   const { data: profilesData, isLoading, error: profilesError } = useQuery({
     queryKey: queryKeys.users.directory(currentBu?.id ?? null, { 
       q: searchQuery || undefined, 
       teamId: teamFilter !== 'all' ? teamFilter : undefined,
       status: statusFilter,
-      page,
-      pageSize,
     }),
     queryFn: async ({ queryKey }): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
       if (!currentBu?.id) return { profiles: [], total: 0 };
       
       // Extract filters from queryKey to ensure fresh values
-      const filters = queryKey[3] as { q?: string; teamId?: string; status?: string; page?: number; pageSize?: number } | undefined;
+      const filters = queryKey[3] as { q?: string; teamId?: string; status?: string } | undefined;
       const qSearch = filters?.q?.trim() || null;
       const qTeamId = filters?.teamId || null;
       const qStatus = filters?.status || 'active';
-      const qPageSize = filters?.pageSize || 25;
-      const qOffset = ((filters?.page || 1) - 1) * qPageSize;
       
-      // Use RPC that filters by bu_user_memberships (consistent with /hub/users)
+      // Use RPC that filters by bu_user_memberships - no pagination, fetch all
       const { data, error } = await supabase.rpc("get_bu_users_by_membership", {
         p_bu_id: currentBu.id,
         p_search: qSearch,
         p_team_id: qTeamId,
         p_status: qStatus,
-        p_limit: qPageSize,
-        p_offset: qOffset,
+        p_limit: 1000, // Fetch all users
+        p_offset: 0,
       });
 
       if (error) throw error;
@@ -601,16 +581,6 @@ export default function UsersPage() {
           </Table>
         </div>
 
-        {/* Pagination - no final da lista */}
-        {totalProfiles > 0 && (
-          <UrlPagination
-            page={page}
-            pageSize={pageSize}
-            totalItems={totalProfiles}
-            onPageChange={setPage}
-            onPageSizeChange={handlePageSizeChange}
-          />
-        )}
       </div>
 
       <JetimoberDialog
