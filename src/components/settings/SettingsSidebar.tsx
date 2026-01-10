@@ -65,9 +65,9 @@ function NavItem({ to, icon: Icon, label, external }: NavItemProps) {
 export function SettingsSidebar() {
   return (
     <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-      {/* Home */}
+      {/* Início */}
       <div>
-        <NavItem to="/hub" icon={Home} label="Home" />
+        <NavItem to="/hub" icon={Home} label="Início" />
       </div>
 
       {/* Plataforma Section */}
@@ -75,7 +75,7 @@ export function SettingsSidebar() {
         <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Plataforma
         </p>
-        <NavItem to="/hub/business-units" icon={Building2} label="Business Units" />
+        <NavItem to="/hub/business-units" icon={Building2} label="Unidades de Negócio" />
         <NavItem to="/hub/modules" icon={Blocks} label="Módulos" />
         <NavItem to="/hub/integrations" icon={Puzzle} label="Integrações" />
         <NavItem to="/hub/automations" icon={Workflow} label="Automações" />

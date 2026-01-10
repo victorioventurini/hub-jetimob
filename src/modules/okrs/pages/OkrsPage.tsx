@@ -95,7 +95,7 @@ export default function OkrsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                On Track
+                No Caminho
               </CardTitle>
               <TrendingUp className="w-4 h-4 text-green-500" />
             </CardHeader>

@@ -553,7 +553,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, o
                       e.stopPropagation();
                       onCheckin();
                     }}
-                    title="Check-in"
+                    title="Atualizar progresso"
                   >
                     <RefreshCw className="w-3 h-3" />
                   </Button>

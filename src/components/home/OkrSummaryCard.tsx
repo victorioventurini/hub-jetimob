@@ -46,7 +46,7 @@ export function OkrSummaryCard({
           <div className="flex justify-between text-sm">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-muted-foreground">On track</span>
+              <span className="text-muted-foreground">No caminho</span>
               <span className="font-semibold text-foreground">{onTrack}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -56,7 +56,7 @@ export function OkrSummaryCard({
             </div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-red-500" />
-              <span className="text-muted-foreground">Off track</span>
+              <span className="text-muted-foreground">Fora do caminho</span>
               <span className="font-semibold text-foreground">{offTrack}</span>
             </div>
           </div>
