@@ -12,8 +12,14 @@ import { IntegrationIcon } from "@/modules/integrations/components/IntegrationIc
 import { toast } from "sonner";
 import { useUrlSearch } from "@/shared/url";
 import { queryKeys } from "@/lib/queryKeys";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function SettingsIntegrations() {
+  usePageTitle("Integrações", { 
+    skipBu: true, 
+    customDescription: "Configure as integrações globais do Hub com APIs e serviços externos." 
+  });
+
   // URL State
   const { value: search, set: setSearch } = useUrlSearch("q");
   const navigate = useNavigate();

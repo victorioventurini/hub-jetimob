@@ -91,7 +91,10 @@ function StatCard({ title, value, subtitle, icon: Icon, subtitleIcon: SubIcon, s
 }
 
 export default function SettingsHome() {
-  usePageTitle("Configurações do Hub", { skipBu: true });
+  usePageTitle("Configurações do Hub", { 
+    skipBu: true, 
+    customDescription: "Painel central de configurações globais do Hub." 
+  });
   const { currentBu } = useBu();
 
   // Fetch Business Units count

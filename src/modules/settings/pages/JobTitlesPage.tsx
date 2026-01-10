@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useUrlSearch } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,9 +47,13 @@ import { JobTitleDialog } from "../components/JobTitleDialog";
 import type { JobTitleWithUsageCount } from "../types";
 
 export default function JobTitlesPage() {
-  usePageTitle("Cargos");
+  usePageTitle("Cargos", { 
+    skipBu: true, 
+    customDescription: "Gerencie a lista de cargos padronizados da plataforma." 
+  });
 
-  const [search, setSearch] = useState("");
+  // URL State for search
+  const { value: search, set: setSearch } = useUrlSearch("q");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJobTitle, setEditingJobTitle] = useState<JobTitleWithUsageCount | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);

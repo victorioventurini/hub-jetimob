@@ -70,7 +70,10 @@ export default function AgentFormPage() {
     isEditing 
       ? `Editar Agent - ${integration?.name || 'Integrações'}` 
       : `Novo Agent - ${integration?.name || 'Integrações'}`, 
-    { skipBu: true }
+    { 
+      skipBu: true, 
+      customDescription: "Configure o prompt, ferramentas e parâmetros do agente de IA." 
+    }
   );
   
   const { data: existingAgents } = useGlobalAgents(integrationKey);

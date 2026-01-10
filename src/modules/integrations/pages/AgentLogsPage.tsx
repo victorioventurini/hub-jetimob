@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useUrlSearch, useUrlState } from '@/shared/url';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,13 +48,17 @@ export default function AgentLogsPage() {
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
   
-  usePageTitle(integration?.name ? `Logs - ${integration.name}` : "Logs", { skipBu: true });
+  usePageTitle(integration?.name ? `Logs - ${integration.name}` : "Logs", { 
+    skipBu: true, 
+    customDescription: "Histórico de execuções e métricas dos agentes de IA." 
+  });
   
   const { data: agents } = useGlobalAgents(integrationKey);
   
-  const [selectedAgent, setSelectedAgent] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  // URL State for filters
+  const { value: searchQuery, set: setSearchQuery } = useUrlSearch("q");
+  const { value: selectedAgent, set: setSelectedAgent } = useUrlState<string>({ key: "agent", defaultValue: "all" });
+  const { value: selectedStatus, set: setSelectedStatus } = useUrlState<string>({ key: "status", defaultValue: "all" });
   
   const { data: logs, isLoading: loadingLogs, refetch } = useAgentLogs({
     integration_key: integrationKey,

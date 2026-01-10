@@ -17,9 +17,16 @@ import { CreateBuDialog } from "@/modules/bu/components/CreateBuDialog";
 import { EditBuDialog } from "@/modules/bu/components/EditBuDialog";
 import { BuDetailDialog } from "@/modules/bu/components/BuDetailDialog";
 import { BuUnit } from "@/modules/bu/types";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useUrlSearch } from "@/shared/url";
 
 export default function SettingsBusinessUnits() {
-  const [search, setSearch] = useState("");
+  usePageTitle("Business Units", { 
+    skipBu: true, 
+    customDescription: "Gerencie as unidades de negócio cadastradas no Hub." 
+  });
+
+  const { value: search, set: setSearch } = useUrlSearch("q");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);

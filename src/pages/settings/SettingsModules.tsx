@@ -33,6 +33,7 @@ import {
 import { icons, LucideIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab, useUrlState } from "@/shared/url";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Module {
   id: string;
@@ -71,6 +72,10 @@ function getIconComponent(iconName: string | null): LucideIcon {
 const MODULES_WITH_SETTINGS = ["okrs"];
 
 export default function SettingsModules() {
+  usePageTitle("Módulos", { 
+    skipBu: true, 
+    customDescription: "Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit." 
+  });
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const search = searchState.value;
   const setSearch = searchState.set;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Copy, ExternalLink, Play, RefreshCw, Check, Clock, AlertCircle, Eye, EyeOff, Key, Loader2, CheckCircle2, Circle, Info } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -39,6 +40,11 @@ interface ConfigEncrypted {
 type SetupStep = 'secret' | 'enabled' | 'external' | 'test';
 
 export default function CronJobConfigPage() {
+  usePageTitle("Cron Job Externo", { 
+    skipBu: true, 
+    customDescription: "Configure o agendador externo para processamento automático de notificações." 
+  });
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState<string | null>(null);

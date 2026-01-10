@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { 
   useNotificationEvents,
   useNotificationChannels,
@@ -113,6 +114,11 @@ const defaultEventForm: EventFormData = {
 };
 
 export default function HubNotifications() {
+  usePageTitle("Central de Notificações", { 
+    skipBu: true, 
+    customDescription: "Gerencie canais, eventos e diagnóstico de notificações do Hub." 
+  });
+
   const queryClient = useQueryClient();
   const { data: events = [], isLoading: eventsLoading } = useNotificationEvents();
   const { data: channels = [], isLoading: channelsLoading } = useNotificationChannels();

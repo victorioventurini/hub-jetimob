@@ -137,7 +137,10 @@ export default function AgentsListPage() {
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
   
-  usePageTitle(integration?.name ? `Agents - ${integration.name}` : "Agents", { skipBu: true });
+  usePageTitle(integration?.name ? `Agents - ${integration.name}` : "Agents", { 
+    skipBu: true, 
+    customDescription: "Gerencie os agentes de IA disponíveis para esta integração." 
+  });
   
   const { data: agents, isLoading: loadingAgents } = useGlobalAgents(integrationKey);
   

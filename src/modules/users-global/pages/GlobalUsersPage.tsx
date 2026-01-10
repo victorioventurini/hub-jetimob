@@ -41,7 +41,10 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function GlobalUsersPage() {
-  usePageTitle("Usuários do Hub");
+  usePageTitle("Usuários do Hub", { 
+    skipBu: true, 
+    customDescription: "Gerencie todos os usuários da plataforma, acessos e configurações." 
+  });
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { value: search, set: setSearch } = useUrlSearch("q");

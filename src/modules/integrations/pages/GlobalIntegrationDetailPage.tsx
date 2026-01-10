@@ -40,7 +40,10 @@ export default function GlobalIntegrationDetailPage() {
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
   
-  usePageTitle(integration?.name ? `${integration.name} - Integrações` : "Integrações", { skipBu: true });
+  usePageTitle(integration?.name ? `${integration.name} - Integrações` : "Integrações", { 
+    skipBu: true, 
+    customDescription: "Configure credenciais e parâmetros desta integração." 
+  });
   
   const { data: globalConfig, isLoading: loadingConfig } = useGlobalConfig(integrationKey || '');
   const { data: globalAgents } = useGlobalAgents(integrationKey);
