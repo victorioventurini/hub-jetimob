@@ -25,8 +25,8 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     return { allowed: false, buName: null, isPartnerContact: false };
   }
 
-  // First, check if email is in partner_contacts allowlist (Modo B - external users)
-  const { data: partnerContact, error: partnerError } = await supabase
+  // 1. Check if email is a registered partner contact (Modo B - external users)
+  const { data: partnerContacts, error: partnerError } = await supabase
     .from("partner_contacts")
     .select(`
       id,
@@ -37,14 +37,14 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     .eq("email", emailLower)
     .eq("status", "active")
     .is("deleted_at", null)
-    .maybeSingle();
+    .limit(1);
 
   if (partnerError) {
     console.error("Error checking partner contact:", partnerError);
   }
 
-  if (partnerContact) {
-    // Handle the join result - it returns the first matching record due to !inner
+  if (partnerContacts && partnerContacts.length > 0) {
+    const partnerContact = partnerContacts[0];
     const company = partnerContact.partner_company as unknown as { id: string; name: string; status: string } | null;
     const bu = partnerContact.bu as unknown as { id: string; name: string; status: string } | null;
     
@@ -54,7 +54,36 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     }
   }
 
-  // Second, check if domain is allowed in any BU (internal users)
+  // 2. Check if domain is in partner_companies.allowed_domains (any email from authorized partner domain)
+  const { data: partnerCompanies, error: partnerCompanyError } = await supabase
+    .from("partner_companies")
+    .select(`
+      id,
+      name,
+      allowed_domains,
+      status,
+      bu:bu_units!inner(id, name, status)
+    `)
+    .eq("status", "active")
+    .is("deleted_at", null);
+
+  if (partnerCompanyError) {
+    console.error("Error checking partner company domains:", partnerCompanyError);
+  }
+
+  if (partnerCompanies) {
+    for (const company of partnerCompanies) {
+      const allowedDomains = (company.allowed_domains as string[]) || [];
+      const bu = company.bu as unknown as { id: string; name: string; status: string } | null;
+      
+      if (bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+        console.log(`Partner company domain authorized: ${domain} from ${company.name}`);
+        return { allowed: true, buName: bu.name, isPartnerContact: true };
+      }
+    }
+  }
+
+  // 3. Check if domain is allowed in any BU (internal users)
   const { data, error } = await supabase
     .from("bu_units")
     .select("id, name, allowed_email_domains")
@@ -65,7 +94,6 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     return { allowed: false, buName: null, isPartnerContact: false };
   }
 
-  // Check if domain exists in any BU's allowed_email_domains
   for (const bu of (data as { id: string; name: string; allowed_email_domains: string[] }[]) || []) {
     const allowedDomains = bu.allowed_email_domains || [];
     if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
