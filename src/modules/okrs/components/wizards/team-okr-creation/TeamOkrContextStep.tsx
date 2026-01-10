@@ -7,7 +7,7 @@
  * - Pergunta sobre impacto potencial
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,13 +90,28 @@ export function TeamOkrContextStep({
   const { invokeVic } = useWizardAI();
   const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+  
+  // Guard to prevent multiple invocations
+  const hasInvokedRef = useRef(false);
+  const contextIdRef = useRef<string | null>(null);
 
-  // Generate strategic insight
+  // Generate strategic insight - only once per context
   useEffect(() => {
+    if (orgObjectives.length === 0) return;
+    
+    // Create a stable ID for the context
+    const contextId = orgObjectives.map(o => o.id).sort().join('-');
+    
+    // Skip if already invoked for this exact context
+    if (hasInvokedRef.current && contextIdRef.current === contextId) {
+      return;
+    }
+    
     const generateInsight = async () => {
-      if (orgObjectives.length === 0) return;
-      
+      hasInvokedRef.current = true;
+      contextIdRef.current = contextId;
       setIsGeneratingInsight(true);
+      
       try {
         const response = await invokeVic(
           'alinhamento-estrategico',
@@ -108,7 +123,8 @@ export function TeamOkrContextStep({
               kpis: strategicKpis.map(k => k.name),
             },
           },
-          'Resuma em 2-3 frases as prioridades estratégicas deste ciclo e como o time pode impactá-las.'
+          'Resuma em 2-3 frases as prioridades estratégicas deste ciclo e como o time pode impactá-las.',
+          { silent: true }
         );
 
         setAiInsight({
@@ -126,7 +142,7 @@ export function TeamOkrContextStep({
     };
 
     generateInsight();
-  }, [invokeVic, orgObjectives, strategicKpis]);
+  }, [orgObjectives, strategicKpis]); // Remove invokeVic from deps - it changes every render
 
   if (isLoading) {
     return (
