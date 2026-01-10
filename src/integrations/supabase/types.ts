@@ -68,6 +68,13 @@ export type Database = {
             referencedRelation: "ai_agents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_agent_documents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "v_ai_agents_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ai_agent_instruction_sources: {
@@ -128,6 +135,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_instruction_sources_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "v_ai_agents_public"
             referencedColumns: ["id"]
           },
           {
@@ -214,6 +228,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "v_ai_agents_public"
             referencedColumns: ["id"]
           },
           {
@@ -1790,6 +1811,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bu_agent_activations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "v_ai_agents_public"
             referencedColumns: ["id"]
           },
           {
@@ -6808,6 +6836,59 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_ai_agents_public: {
+        Row: {
+          bu_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          output_format:
+            | Database["public"]["Enums"]["agent_output_format"]
+            | null
+          scope: Database["public"]["Enums"]["agent_scope"] | null
+          slug: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bu_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          output_format?:
+            | Database["public"]["Enums"]["agent_output_format"]
+            | null
+          scope?: Database["public"]["Enums"]["agent_scope"] | null
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bu_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          output_format?:
+            | Database["public"]["Enums"]["agent_output_format"]
+            | null
+          scope?: Database["public"]["Enums"]["agent_scope"] | null
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
         ]
