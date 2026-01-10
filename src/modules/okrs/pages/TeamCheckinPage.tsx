@@ -14,6 +14,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AlertCircle } from 'lucide-react';
+import { handleError } from '@/lib/errorMessages';
 
 // Step components
 import { TeamOpeningStep } from '@/modules/okrs/components/wizards/team-checkin/TeamOpeningStep';
@@ -144,8 +145,7 @@ export default function TeamCheckinPage() {
       await saveDraft();
       toast.success('Rascunho salvo!');
     } catch (error) {
-      console.error('Failed to save draft:', error);
-      toast.error('Erro ao salvar rascunho');
+      handleError(error, { context: 'OKR Draft Save' });
     }
   }, [saveDraft]);
   

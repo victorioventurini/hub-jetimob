@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { handleError } from '@/lib/errorMessages';
 
 // Step components
 import { ManagersPanoramaStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersPanoramaStep';
@@ -135,8 +136,7 @@ export default function ManagersCheckinPage() {
       await saveDraft();
       toast.success('Rascunho salvo!');
     } catch (error) {
-      console.error('Failed to save draft:', error);
-      toast.error('Erro ao salvar rascunho');
+      handleError(error, { context: 'OKR Draft Save' });
     }
   }, [saveDraft]);
   

@@ -11,10 +11,12 @@ import { OrgObjectiveContributionCard } from "../components/team-contribution/Or
 import { TeamContributionInsights } from "../components/team-contribution/TeamContributionInsights";
 import { TeamContributionFilters } from "../components/team-contribution/TeamContributionFilters";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useSafeBack } from "@/hooks/useSafeBack";
 
 export default function TeamContributionPage() {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
+  const goBack = useSafeBack({ moduleRoot: '/teams' });
   const { currentBu } = useBu();
   const { data, isLoading, error } = useTeamContributionView(teamId);
   
@@ -38,7 +40,7 @@ export default function TeamContributionPage() {
         <ErrorState
           title="Erro ao carregar dados"
           description="Não foi possível carregar a visão de contribuição do time."
-          onBack={() => navigate(-1)}
+          onBack={goBack}
         />
       </div>
     );

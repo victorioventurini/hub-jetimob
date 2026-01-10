@@ -34,6 +34,8 @@ import { useAssetPermissions } from "../../hooks/useAssetPermissions";
 import { InventoryFormDialog } from "./InventoryFormDialog";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import { KitSection } from "./KitSection";
+import { ResourceNotFoundState } from "@/components/ui/resource-not-found-state";
+import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import type { AssetInventory, AssetMovement, AssetMovementType } from "../../types";
 import { INVENTORY_STATUS_LABELS, MOVEMENT_TYPE_LABELS } from "../../types";
 
@@ -276,13 +278,13 @@ export function InventoryDetailView() {
 
   if (!item) {
     return (
-      <div className="text-center py-12">
-        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-lg font-medium">Item não encontrado</h2>
-        <Button asChild variant="link">
-          <Link to="/assets/inventory">Voltar para lista</Link>
-        </Button>
-      </div>
+      <ResourceNotFoundState
+        resourceType="item"
+        resourceId={id}
+        showResourceId={true}
+        moduleRoot="/assets/inventory"
+        viewAllLabel="Ver inventário"
+      />
     );
   }
 
@@ -295,6 +297,12 @@ export function InventoryDetailView() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <AssetsBreadcrumb 
+        assetCode={item.internal_code}
+        assetName={item.name}
+      />
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
