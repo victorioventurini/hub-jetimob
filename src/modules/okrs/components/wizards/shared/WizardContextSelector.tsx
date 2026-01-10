@@ -166,6 +166,7 @@ export function WizardContextSelector({
               placeholder="Selecione um usuário"
               teamId={teamId}
               showBadges={false}
+              showSearch={false}
               className={cn(
                 "w-[200px] h-8 border-dashed",
                 compact && "text-xs h-7 w-[160px]"

@@ -36,6 +36,8 @@ export interface BuUserSelectProps {
   showBadges?: boolean;
   /** Filter by team ID */
   teamId?: string;
+  /** Show search input in dropdown (default: true) */
+  showSearch?: boolean;
 }
 
 function getInitials(name: string | null | undefined): string {
@@ -56,12 +58,13 @@ export function BuUserSelect({
   className,
   showBadges = true,
   teamId,
+  showSearch = true,
 }: BuUserSelectProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
-    q: search,
+    q: showSearch ? search : undefined,
     teamId,
     pageSize: 200,
   });
@@ -104,18 +107,20 @@ export function BuUserSelect({
         </SelectValue>
       </SelectTrigger>
       <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
-        <div className="p-2 border-b sticky top-0 bg-popover z-10">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar usuário..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
-              className="pl-8 h-9"
-            />
+        {showSearch && (
+          <div className="p-2 border-b sticky top-0 bg-popover z-10">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar usuário..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                className="pl-8 h-9"
+              />
+            </div>
           </div>
-        </div>
+        )}
         <ScrollArea className="h-[250px]">
           {filteredProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
