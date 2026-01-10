@@ -319,8 +319,10 @@ export const queryKeys = {
 
   // ============= Global Search =============
   search: {
-    global: (buId: string | null, query: string) => 
+    global: (buId: string | null, query: string) =>
       ['search', 'global', buId, query] as const,
+    page: (buId: string | null, query: string, type: string) =>
+      ['search', 'page', buId, query, type] as const,
   },
 
   // ============= External =============
