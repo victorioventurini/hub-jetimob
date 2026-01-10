@@ -492,11 +492,13 @@ export default function TeamsPage() {
       </div>
 
       {/* Edit Team Dialog */}
-      <TeamFormDialog
-        team={editingTeam}
-        open={!!editingTeam}
-        onOpenChange={(open) => !open && setEditingTeam(null)}
-      />
+      {editingTeam && (
+        <TeamFormDialog
+          team={editingTeam}
+          open={true}
+          onOpenChange={(open) => !open && setEditingTeam(null)}
+        />
+      )}
 
       {/* Squad Detail Dialog */}
       <SquadDetailDialog
