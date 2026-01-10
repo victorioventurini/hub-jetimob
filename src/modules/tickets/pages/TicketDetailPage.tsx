@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Clock, Building2 } from "lucide-react";
+import { Clock, Building2 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { useTicket, useUpdateTicketStatus } from "../hooks/useTickets";
 import { useTicketMessages, useTicketAttachments, useCreateMessage } from "../hooks/useTicketMessages";
 import { useIdentity } from "@/hooks/useIdentity";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import type { TicketStatus } from "../types";
@@ -38,6 +40,17 @@ export default function TicketDetailPage() {
   const { data: attachments = [] } = useTicketAttachments(id!);
   const updateStatus = useUpdateTicketStatus();
   const createMessage = useCreateMessage(profileId);
+
+  // SEO - Meta title e description
+  usePageTitle(
+    ticket ? `Ticket: ${ticket.title}` : "Ticket",
+    {
+      pageType: "subpage",
+      customDescription: ticket 
+        ? `Visualize e acompanhe o ticket "${ticket.title}" - ${statusConfig[ticket.status]?.label || ticket.status}`
+        : "Visualize detalhes do ticket",
+    }
+  );
 
   // Group attachments by message_id
   const attachmentsByMessage = useMemo(() => {
@@ -107,39 +120,35 @@ export default function TicketDetailPage() {
   const isExternal = ticket.type === "external";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Breadcrumb */}
+      <TicketsBreadcrumb ticketTitle={ticket.title} />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link to="/tickets">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={cn(
-                "px-2 py-0.5 rounded text-xs font-medium",
-                isExternal 
-                  ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                  : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-              )}>
-                {isExternal ? "Externo" : "Interno"}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className={cn(
+              "px-2 py-0.5 rounded text-xs font-medium",
+              isExternal 
+                ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+            )}>
+              {isExternal ? "Externo" : "Interno"}
+            </span>
+            <Badge variant={status.variant}>{status.label}</Badge>
+          </div>
+          <h1 className="text-xl font-bold">{ticket.title}</h1>
+          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              Criado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: ptBR })}
+            </span>
+            {ticket.expected_due_at && (
+              <span>
+                Prazo: {format(new Date(ticket.expected_due_at), "dd/MM/yyyy")}
               </span>
-              <Badge variant={status.variant}>{status.label}</Badge>
-            </div>
-            <h1 className="text-xl font-bold">{ticket.title}</h1>
-            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                Criado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: ptBR })}
-              </span>
-              {ticket.expected_due_at && (
-                <span>
-                  Prazo: {format(new Date(ticket.expected_due_at), "dd/MM/yyyy")}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
