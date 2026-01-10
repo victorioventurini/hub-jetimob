@@ -16,6 +16,7 @@ import {
   Target,
   Quote,
 } from 'lucide-react';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useVicEnabled } from '@/modules/vic/hooks/useVicAgent';
 // ============================================================
@@ -38,6 +39,7 @@ export function TeamOkrIntroStep({
   onContinue,
 }: TeamOkrIntroStepProps) {
   const { invokeVic } = useWizardAI();
+  const { isReady, buId } = useOptionalBuClient();
   const { isEnabled: isIaEnabled, isLoading: isIaConfigLoading } = useVicEnabled();
   const [greeting, setGreeting] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -49,6 +51,17 @@ export function TeamOkrIntroStep({
 
   // Generate greeting and message on mount
   useEffect(() => {
+    // Wait for auth/client readiness
+    if (!isReady) return;
+
+    // If no BU selected yet (or user is pre-BU), do not call IA.
+    if (!buId) {
+      setGreeting(fallbackGreeting);
+      setMessage(fallbackMessage);
+      setIsLoading(false);
+      return;
+    }
+
     // Wait for IA config to load
     if (isIaConfigLoading) return;
 
@@ -68,7 +81,8 @@ export function TeamOkrIntroStep({
           'coach-okrs',
           'okr-create-objective',
           { type: 'wizard-intro', additionalData: { userName, teamName } },
-          'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.'
+          'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
+          { silent: true }
         );
         setGreeting(greetingResponse.response);
 
@@ -77,7 +91,8 @@ export function TeamOkrIntroStep({
           'cultura',
           'dashboard-culture',
           { type: 'wizard-intro', additionalData: { teamName } },
-          'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.'
+          'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.',
+          { silent: true }
         );
         setMessage(messageResponse.response);
       } catch (error) {
@@ -91,7 +106,7 @@ export function TeamOkrIntroStep({
     };
 
     fetchMessages();
-  }, [invokeVic, userName, teamName, isIaEnabled, isIaConfigLoading, fallbackGreeting, fallbackMessage]);
+  }, [invokeVic, userName, teamName, isIaEnabled, isIaConfigLoading, fallbackGreeting, fallbackMessage, isReady, buId]);
 
   return (
     <div className="flex flex-col h-full">

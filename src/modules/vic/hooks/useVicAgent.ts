@@ -18,6 +18,14 @@ interface UseVicAgentOptions {
   onError?: (error: VicError) => void;
 }
 
+export interface VicInvokeOptions {
+  /**
+   * When true, suppress user-facing toasts for this invocation.
+   * Useful for optional/"nice-to-have" AI enrichments where fallback exists.
+   */
+  silent?: boolean;
+}
+
 export function useVicAgent(options?: UseVicAgentOptions) {
   const { currentBu } = useBu();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
@@ -29,11 +37,13 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       actionContext,
       context,
       userQuestion,
+      silent,
     }: {
       agentSlug: VicAgentSlug;
       actionContext: VicActionContext;
       context: VicContext;
       userQuestion?: string;
+      silent?: boolean;
     }) => {
       if (!supabase || !isReady || !buId) {
         throw new Error("No BU selected");
@@ -65,11 +75,28 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       setLastResponse(data);
       options?.onSuccess?.(data);
     },
-    onError: (error: VicError | Error) => {
+    onError: (error: VicError | Error, variables) => {
+      const isSilent = !!variables?.silent;
       console.error("Vic agent error:", error);
 
+      // Helpers
+      const normalizeUnknownError = (e: unknown): VicError => {
+        const errorMessage = e instanceof Error ? e.message : "Erro desconhecido";
+        return { error: errorMessage };
+      };
+
+      // Silent mode: don't toast; still propagate via options?.onError for callers that care.
+      if (isSilent) {
+        if (error && typeof error === "object" && "code" in (error as any)) {
+          options?.onError?.(error as VicError);
+        } else {
+          options?.onError?.(normalizeUnknownError(error));
+        }
+        return;
+      }
+
       // Handle specific error codes
-      if ("code" in error) {
+      if (error && typeof error === "object" && "code" in (error as any)) {
         const vicError = error as VicError;
         switch (vicError.code) {
           case "IA_DISABLED":
@@ -95,9 +122,8 @@ export function useVicAgent(options?: UseVicAgentOptions) {
         }
         options?.onError?.(vicError);
       } else {
-        const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
         toast.error("Erro ao consultar Vic");
-        options?.onError?.({ error: errorMessage });
+        options?.onError?.(normalizeUnknownError(error));
       }
     },
   });
@@ -107,9 +133,16 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       agentSlug: VicAgentSlug,
       actionContext: VicActionContext,
       context: VicContext,
-      userQuestion?: string
+      userQuestion?: string,
+      invokeOptions?: VicInvokeOptions
     ) => {
-      return mutation.mutateAsync({ agentSlug, actionContext, context, userQuestion });
+      return mutation.mutateAsync({
+        agentSlug,
+        actionContext,
+        context,
+        userQuestion,
+        silent: invokeOptions?.silent,
+      });
     },
     [mutation]
   );

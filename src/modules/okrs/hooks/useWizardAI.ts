@@ -147,7 +147,8 @@ export function useWizardAI() {
         agentSlug,
         'okr-review-quality',
         context,
-        `Analise este contexto e forneça 1-2 insights breves e acionáveis para o check-in.`
+        `Analise este contexto e forneça 1-2 insights breves e acionáveis para o check-in.`,
+        { silent: true }
       );
 
       // Parse response into insights
@@ -188,7 +189,8 @@ export function useWizardAI() {
           'coach-okrs',
           'okr-review-quality',
           context,
-          `Sugira 1 pergunta reflexiva específica para este KR.`
+          `Sugira 1 pergunta reflexiva específica para este KR.`,
+          { silent: true }
         ).then(response => {
           const aiQuestion: VicGuidingQuestion = {
             id: `ai-q-${Date.now()}`,
