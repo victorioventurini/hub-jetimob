@@ -4,6 +4,12 @@ import { toast } from 'sonner';
 import { queryKeys } from '@/lib/queryKeys';
 import type { OkrContribution, OkrContributionEntityType } from '../types';
 
+// Explicit fields for okr_contributions - avoid select('*')
+const CONTRIBUTION_FIELDS = `
+  id, bu_id, from_type, from_id, to_type, to_id,
+  description, created_by, created_at, deleted_at
+` as const;
+
 export function useOkrContributions(entityType: OkrContributionEntityType, entityId: string) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
@@ -15,7 +21,7 @@ export function useOkrContributions(entityType: OkrContributionEntityType, entit
       // Get contributions FROM this entity
       const { data: fromContributions, error: fromError } = await supabase
         .from('okr_contributions')
-        .select('*')
+        .select(CONTRIBUTION_FIELDS)
         .eq('from_type', entityType)
         .eq('from_id', entityId)
         .is('deleted_at', null);
@@ -25,7 +31,7 @@ export function useOkrContributions(entityType: OkrContributionEntityType, entit
       // Get contributions TO this entity
       const { data: toContributions, error: toError } = await supabase
         .from('okr_contributions')
-        .select('*')
+        .select(CONTRIBUTION_FIELDS)
         .eq('to_type', entityType)
         .eq('to_id', entityId)
         .is('deleted_at', null);
@@ -38,6 +44,7 @@ export function useOkrContributions(entityType: OkrContributionEntityType, entit
       };
     },
     enabled: !!entityId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -60,7 +67,7 @@ export function useCreateOkrContribution() {
       const { data, error } = await supabase
         .from('okr_contributions')
         .insert(contribution as any)
-        .select()
+        .select(CONTRIBUTION_FIELDS)
         .single();
 
       if (error) throw error;

@@ -134,7 +134,7 @@ export function CancelOkrDialog({
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResults(null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.allOrgObjectivesView(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.allOrgObjectivesView(new Date().getFullYear(), null) });
 
       toast({
         title: finalStatus === "cancelled" ? "Cancelado" : "Descartado",
