@@ -5,7 +5,8 @@
  * x-current-bu-id header in all requests for RLS enforcement.
  * 
  * USAGE RULES:
- * - useBuScopedSupabase(): REQUIRED for all operational data
+ * - useBuScopedSupabase(): REQUIRED for all operational data (throws if no BU)
+ * - useOptionalBuScopedSupabase(): Returns null if no BU (safe for transitional states)
  * - Global supabase client: ONLY allowed for:
  *   - Auth operations
  *   - Membership bootstrap (useUserBus, useExternalUser)
@@ -45,6 +46,29 @@ export function useBuScopedSupabase(): SupabaseClient<Database> {
   }
 
   const client = useMemo(() => {
+    return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: { 'x-current-bu-id': currentBuId },
+      },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    });
+  }, [currentBuId]);
+
+  return client;
+}
+
+/**
+ * Safe version that returns null instead of throwing when BU is not available.
+ * Use this for components that may render during transitional states (tab switching, etc.)
+ */
+export function useOptionalBuScopedSupabase(): SupabaseClient<Database> | null {
+  const { currentBuId } = useBu();
+
+  const client = useMemo(() => {
+    if (!currentBuId) return null;
     return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: {
         headers: { 'x-current-bu-id': currentBuId },

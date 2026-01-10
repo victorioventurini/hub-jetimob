@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
@@ -10,14 +10,15 @@ export function useInventory() {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
 
   // Buscar categorias
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: queryKeys.assets.categories(buId ?? null),
-    enabled: !!buId,
+    enabled: !!supabase && !!buId,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_categories")
         .select("*")
@@ -33,8 +34,9 @@ export function useInventory() {
   // Buscar itens de inventário
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
     queryKey: queryKeys.assets.inventory.all(buId ?? null),
-    enabled: !!buId,
+    enabled: !!supabase && !!buId,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_inventory")
         .select(`

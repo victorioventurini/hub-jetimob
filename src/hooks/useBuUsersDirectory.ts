@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -59,14 +59,14 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
     enabled = true 
   } = options;
   
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
 
   return useQuery({
     queryKey: queryKeys.users.directory(buId ?? null, { q, teamId, includeTerminated }),
     queryFn: async () => {
-      if (!buId) return [];
+      if (!supabase || !buId) return [];
 
       // Query the canonical view
       let query = supabase
@@ -114,7 +114,7 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
 
       return (data || []) as DirectoryProfile[];
     },
-    enabled: enabled && !!buId,
+    enabled: enabled && !!supabase && !!buId,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 }
