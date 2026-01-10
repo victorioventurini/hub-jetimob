@@ -1,11 +1,15 @@
 import { Settings, Calendar, Scale, BookOpen, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab } from "@/hooks/useUrlState";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { CyclesTab } from "../components/settings/CyclesTab";
 import { LimitsTab } from "../components/settings/LimitsTab";
 import { RulesInfoTab } from "../components/settings/RulesInfoTab";
 
 export default function OkrsSettingsPage() {
+  usePageTitle("Configurações de OKRs", {
+    customDescription: "Configure ciclos, limites e regras de vínculo de OKRs."
+  });
   const [activeTab, setActiveTab] = useUrlTab("cycles");
 
   return (

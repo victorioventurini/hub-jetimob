@@ -37,7 +37,9 @@ function SettingsCard({ to, icon: Icon, iconBgColor, title, description }: Setti
 
 export default function BuSettingsPage() {
   const { currentBu } = useBu();
-  usePageTitle("Configurações da BU");
+  usePageTitle("Configurações da BU", {
+    customDescription: "Gerencie as configurações específicas desta unidade de negócio."
+  });
 
   return (
     <HubLayout>

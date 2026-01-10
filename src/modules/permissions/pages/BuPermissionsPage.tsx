@@ -28,7 +28,9 @@ type PermissionTab = "users";
  * BuPermissionsPage - Gerenciamento de permissões de usuários por BU
  */
 export default function BuPermissionsPage() {
-  usePageTitle("Permissões da BU");
+  usePageTitle("Permissões da BU", {
+    customDescription: "Gerencie as permissões de usuários desta unidade de negócio."
+  });
 
   const [activeTab, setActiveTab] = useUrlTab<PermissionTab>("users");
   const { value: urlSearch, set: setUrlSearch } = useUrlSearch("q", 300);
