@@ -8360,7 +8360,7 @@ export type Database = {
         | "room"
       bu_status: "active" | "inactive"
       catalog_status: "active" | "inactive"
-      employment_status: "active" | "vacation" | "terminated"
+      employment_status: "active" | "vacation" | "terminated" | "external"
       gift_destination_type: "event" | "campaign" | "person" | "other"
       gift_item_status: "active" | "inactive"
       gift_movement_type: "in" | "out" | "adjustment"
@@ -8609,7 +8609,7 @@ export const Constants = {
       ],
       bu_status: ["active", "inactive"],
       catalog_status: ["active", "inactive"],
-      employment_status: ["active", "vacation", "terminated"],
+      employment_status: ["active", "vacation", "terminated", "external"],
       gift_destination_type: ["event", "campaign", "person", "other"],
       gift_item_status: ["active", "inactive"],
       gift_movement_type: ["in", "out", "adjustment"],

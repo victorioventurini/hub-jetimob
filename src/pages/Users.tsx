@@ -68,7 +68,7 @@ interface ProfileWithTeam {
   city: string;
   state: string;
   work_mode: "onsite" | "hybrid" | "remote";
-  employment_status: "active" | "vacation" | "terminated";
+  employment_status: "active" | "vacation" | "terminated" | "external";
   team: { id: string; name: string } | null;
   manager: { id: string; display_name: string; photo_url: string | null } | null;
 }

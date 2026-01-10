@@ -14,7 +14,7 @@ export interface PublicProfile {
   city: string;
   state: string;
   work_mode: "onsite" | "hybrid" | "remote";
-  employment_status: "active" | "vacation" | "terminated";
+  employment_status: "active" | "vacation" | "terminated" | "external";
   start_date: string;
   team_id: string | null;
   team: { id: string; name: string } | null;
