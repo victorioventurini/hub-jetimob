@@ -15,6 +15,7 @@ import {
   VicLeaderInsightsCard,
 } from "./leader";
 import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard";
+import { TeamCheckinWizardCard } from "@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard";
 import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
@@ -75,14 +76,20 @@ export function LeaderDashboard() {
         />
       </section>
 
-      {/* Leader Prep Wizard Entry Point */}
+      {/* Wizard Entry Points */}
       {selectedTeam && (
-        <section>
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <LeaderPrepWizardCard
             teamId={selectedTeamId || ''}
             teamName={selectedTeam.team_name}
             atRiskCount={summary?.okrs?.red || 0}
             pendingCount={summary?.okrs?.pending_checkins || 0}
+            isLoading={isDashboardLoading}
+          />
+          <TeamCheckinWizardCard
+            teamId={selectedTeamId || ''}
+            teamName={selectedTeam.team_name}
+            pendingKrsCount={summary?.okrs?.pending_checkins || 0}
             isLoading={isDashboardLoading}
           />
         </section>

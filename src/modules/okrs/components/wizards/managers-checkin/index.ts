@@ -13,3 +13,5 @@ export type { ManagersAdjustmentsStepProps } from './ManagersAdjustmentsStep';
 
 export { ManagersCheckinWizard } from './ManagersCheckinWizard';
 export type { ManagersCheckinWizardProps } from './ManagersCheckinWizard';
+
+export { ManagersCheckinWizardCard } from './ManagersCheckinWizardCard';
