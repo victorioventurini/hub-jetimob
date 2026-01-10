@@ -42,7 +42,8 @@ export const CULTURE_MESSAGES: string[] = [
   // Colaboração & Time
   "Sozinhos vamos rápido. Juntos vamos longe.",
   "Feedback é presente, não ofensa. Dê e receba com gratidão.",
-  "Discorde, comprometa-se, execute. Nessa ordem.",
+  "Questione com respeito, alinhe com clareza, execute com atitude.",
+  "Pense diferente. Construa junto. Execute com protagonismo.",
   "Transparência radical constrói times fortes.",
   "Ajudar o colega é ajudar a empresa. Ajudar a empresa é ajudar a si mesmo.",
   "Conflito saudável gera melhores decisões.",
