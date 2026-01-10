@@ -9,12 +9,12 @@ import { useLocations } from "../hooks/useLocations";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
-import { UrlPagination, UrlSearchInput } from "@/shared/filters";
-import { useUrlState, useUrlSearch, parsers } from "@/shared/url";
+import { UrlSearchInput } from "@/shared/filters";
+import { useUrlState } from "@/shared/url";
 import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
-  // URL State for server-side filtering - NO debounce here, UrlSearchInput handles it
+  // URL State for filtering - NO debounce here, UrlSearchInput handles it
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const search = searchState.value;
   const setSearch = searchState.set;
@@ -23,62 +23,28 @@ export default function InventoryPage() {
   const holderState = useUrlState<string>({ key: "holder", defaultValue: "all" });
   const locationState = useUrlState<string>({ key: "location", defaultValue: "all" });
   
-  // Pagination URL state
-  const pageState = useUrlState<number>({ key: "page", defaultValue: 1, parse: parsers.number });
-  const pageSizeState = useUrlState<number>({ key: "pageSize", defaultValue: 25, parse: parsers.number });
-  const page = pageState.value;
-  const setPage = pageState.set;
-  const pageSize = pageSizeState.value;
-  const setPageSize = pageSizeState.set;
-  
   const statusFilter = statusState.value as "all" | AssetInventoryStatus;
-  const setStatusFilter = (v: "all" | AssetInventoryStatus) => {
-    statusState.set(v);
-    setPage(1); // Reset page on filter change
-  };
+  const setStatusFilter = statusState.set;
   const categoryFilter = categoryState.value;
-  const setCategoryFilter = (v: string) => {
-    categoryState.set(v);
-    setPage(1);
-  };
+  const setCategoryFilter = categoryState.set;
   const holderFilter = holderState.value;
-  const setHolderFilter = (v: string) => {
-    holderState.set(v);
-    setPage(1);
-  };
+  const setHolderFilter = holderState.set;
   const locationFilter = locationState.value;
-  const setLocationFilter = (v: string) => {
-    locationState.set(v);
-    setPage(1);
-  };
+  const setLocationFilter = locationState.set;
 
-  // Pass filters to hook for server-side filtering with pagination
-  const { items, categories, total, totalPages, isLoading } = useInventory({
+  // Pass filters to hook - no pagination
+  const { items, categories, isLoading } = useInventory({
     search: search || undefined,
     statusFilter: statusFilter !== "all" ? statusFilter : undefined,
     categoryFilter: categoryFilter !== "all" ? categoryFilter : undefined,
     holderFilter: holderFilter !== "all" ? holderFilter : undefined,
     locationFilter: locationFilter !== "all" ? locationFilter : undefined,
-    page,
-    pageSize,
   });
   const { locations } = useLocations();
   
   // Allow any authenticated user to add items for now (permissions will be enforced on backend)
   const canAddItem = true;
   const [dialogOpen, setDialogOpen] = useState(false);
-  
-  // Handle search with page reset
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
-  
-  // Handle page size change
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
-    setPage(1);
-  };
 
   // Get unique holders from items for the filter (client-side - small list)
   const holders = useMemo(() => 
@@ -156,7 +122,7 @@ export default function InventoryPage() {
       <div className="flex flex-col sm:flex-row gap-4">
         <UrlSearchInput
           value={search}
-          onChange={handleSearchChange}
+          onChange={setSearch}
           placeholder="Buscar por nome ou código..."
           className="flex-1"
           debounceMs={300}
@@ -203,17 +169,6 @@ export default function InventoryPage() {
             </Link>
           ))}
         </div>
-      )}
-
-      {/* Pagination */}
-      {total > 0 && (
-        <UrlPagination
-          page={page}
-          pageSize={pageSize}
-          totalItems={total}
-          onPageChange={setPage}
-          onPageSizeChange={handlePageSizeChange}
-        />
       )}
 
       {/* Create dialog */}
