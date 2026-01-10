@@ -128,20 +128,20 @@ export function WizardShell({
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
   const currentStep = steps[currentStepIndex];
 
-  const handleClose = () => {
-    onClose?.();
-    onOpenChange(false);
-  };
-
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      handleClose();
+      onClose?.();
     }
+    onOpenChange(isOpen);
+  };
+
+  const handleClose = () => {
+    handleOpenChange(false);
   };
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent 
+      <SheetContent
         side="right" 
         className="w-full sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl p-0 flex flex-col [&>button]:hidden"
       >
