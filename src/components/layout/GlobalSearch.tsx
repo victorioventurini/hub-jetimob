@@ -30,9 +30,11 @@ import {
   PackageOpen,
   Loader2,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import { useGlobalSearch, SearchGroup, SearchResult } from "@/hooks/useGlobalSearch";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const iconMap: Record<string, React.ElementType> = {
   user: User,
@@ -75,7 +77,16 @@ interface GlobalSearchProps {
 export function GlobalSearch({ className }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { query, setQuery, results, isLoading, isEmpty, disabled } = useGlobalSearch();
+  const { query, setQuery, results, isLoading, isEmpty, disabled, error } = useGlobalSearch();
+
+  // Show toast on error
+  useEffect(() => {
+    if (error) {
+      toast.error("Erro na busca", {
+        description: (error as Error).message || "Não foi possível realizar a busca",
+      });
+    }
+  }, [error]);
 
   // Keyboard shortcut
   useEffect(() => {
