@@ -6,11 +6,13 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useTeamOverviewMetrics } from '@/modules/okrs/hooks/useTeamOverviewMetrics';
 import { useTeamPendingKrs } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -57,8 +59,13 @@ const DEFAULT_DATA: LeaderPrepDraftData = {
 
 export default function LeaderPrepPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const teamIdParam = searchParams.get('team');
+  const { isAdmin, role } = useAuth();
+  
+  // Check if user can switch team
+  const isSuperAdmin = role === 'super_admin';
+  const canSwitchTeam = isSuperAdmin || isAdmin;
   
   // Get teams
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
@@ -165,6 +172,18 @@ export default function LeaderPrepPage() {
     toast.success('Preparação concluída! Pronto para o check-in do time.');
     navigate(`/wizards?wizard=team-checkin`);
   }, [clearDraft, navigate]);
+  
+  // Handle team change (admin only)
+  const handleTeamChange = useCallback((newTeamId: string) => {
+    discardDraft();
+    setSearchParams({ team: newTeamId });
+  }, [discardDraft, setSearchParams]);
+  
+  // Teams for admin switcher
+  const teamOptions = useMemo(() => 
+    teams?.map(t => ({ id: t.id, name: t.name })) || [],
+    [teams]
+  );
   
   // Loading
   if (isLoadingTeams || isLoadingCycles) {
@@ -274,7 +293,18 @@ export default function LeaderPrepPage() {
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
       backUrl="/wizards"
-      contextLabel={selectedTeam.name}
+      adminContextSwitcher={
+        canSwitchTeam ? (
+          <AdminContextSwitcher
+            type="team"
+            currentLabel={selectedTeam?.name || 'Selecionar time'}
+            teams={teamOptions}
+            selectedId={teamIdParam}
+            onSelect={handleTeamChange}
+            isLoading={isLoadingTeams}
+          />
+        ) : undefined
+      }
     >
       {renderStepContent()}
     </FullPageWizardShell>
