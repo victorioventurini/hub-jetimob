@@ -83,16 +83,17 @@ export function TeamSelect({
             key={team.id}
             value={team.id}
             className={cn(
+              "relative",
               team.level === 0 && "font-medium",
-              team.level > 0 && "text-[13px] text-muted-foreground"
+              team.level > 0 && "text-muted-foreground"
             )}
           >
             <span 
-              className="flex items-center"
-              style={{ paddingLeft: `${team.level * 16}px` }}
+              className="flex items-center gap-1.5"
+              style={{ paddingLeft: `${team.level * 12}px` }}
             >
               {team.level > 0 && (
-                <span className="mr-1.5 text-muted-foreground/50">└</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
               )}
               {team.name}
             </span>
