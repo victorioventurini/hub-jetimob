@@ -222,6 +222,8 @@ export interface CLevelWizardState {
 
 export type OkrKrType = 'foundational' | 'contribution' | 'enabler';
 export type OkrDirection = 'up' | 'down';
+export type ResponsibilityModel = 'collaborative' | 'primary_led';
+export type OwnerType = 'my_team' | 'other_team' | 'co_ownership';
 
 export interface DraftTeamKr {
   id: string; // client-side temp id
@@ -251,6 +253,23 @@ export interface DraftTeamInitiative {
   expected_end_date?: string;
 }
 
+/**
+ * Sharing configuration for Team OKRs
+ * Captures whether an objective is shared across teams and the responsibility model
+ */
+export interface TeamOkrSharingConfig {
+  /** Whether the objective is shared with other teams */
+  isShared: boolean;
+  /** Model of responsibility: collaborative (equal) or primary_led (one leads) */
+  responsibilityModel: ResponsibilityModel;
+  /** Type of ownership selected by user */
+  ownerType: OwnerType;
+  /** Team ID of the primary owner (can be different from creating team) */
+  primaryTeamId: string;
+  /** IDs of teams that contribute to this objective */
+  contributingTeamIds: string[];
+}
+
 export interface TeamOkrCreationWizardState {
   // Step 1 - Context
   impactReflection: string;
@@ -266,7 +285,10 @@ export interface TeamOkrCreationWizardState {
     cycle_id: string | null;
   };
   
-  // Step 4/5 - KRs
+  // Step 4 - Sharing (NEW - Chapter 4.5)
+  sharing: TeamOkrSharingConfig;
+  
+  // Step 5/6 - KRs
   krPlan: {
     foundational: number;
     contribution: number;
@@ -274,13 +296,13 @@ export interface TeamOkrCreationWizardState {
   };
   draftKrs: DraftTeamKr[];
   
-  // Step 6 - Dependencies
+  // Step 7 - Dependencies
   dependencies: DraftTeamDependency[];
   
-  // Step 7 - Initiatives
+  // Step 8 - Initiatives
   initiatives: DraftTeamInitiative[];
   
-  // Step 8 - Share
+  // Step 9 - Share
   generatedSummary: string | null;
   reflectionQuestions: string[];
 }
@@ -414,6 +436,7 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
       { id: 'context', label: 'Contexto Organizacional', shortLabel: 'Contexto' },
       { id: 'retrospective', label: 'Aprendendo com o Passado', shortLabel: 'Retro' },
       { id: 'objective', label: 'Definindo o Objetivo', shortLabel: 'Objetivo' },
+      { id: 'sharing', label: 'Responsabilidade', shortLabel: 'Times' },
       { id: 'kr-type', label: 'Escolhendo KRs', shortLabel: 'KRs' },
       { id: 'kr-detail', label: 'Detalhando KRs', shortLabel: 'Detalhe' },
       { id: 'dependencies', label: 'Dependências e Riscos', shortLabel: 'Deps', optional: true },

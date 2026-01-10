@@ -26,6 +26,7 @@ import { TeamOkrKrDetailStep, type TeamMember } from './TeamOkrKrDetailStep';
 import { TeamOkrDependenciesStep } from './TeamOkrDependenciesStep';
 import { TeamOkrInitiativesStep } from './TeamOkrInitiativesStep';
 import { TeamOkrShareStep } from './TeamOkrShareStep';
+import { TeamOkrSharingStep } from './TeamOkrSharingStep';
 import { useTeamPreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
 import { useOrgOkrsForContext } from '@/modules/okrs/hooks/useOrgOkrsForContext';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
@@ -33,11 +34,14 @@ import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { useCreateTeamOkrBundle } from '@/modules/okrs/hooks/useCreateTeamOkrBundle';
 import { useAuth } from '@/hooks/useAuth';
 import { useIdentity } from '@/hooks/useIdentity';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
 import {
   WIZARD_CONFIGS, 
   type DraftTeamKr, 
   type DraftTeamDependency, 
-  type DraftTeamInitiative 
+  type DraftTeamInitiative,
+  type ResponsibilityModel,
+  type OwnerType,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -56,6 +60,7 @@ type WizardStep =
   | 'context' 
   | 'retrospective' 
   | 'objective' 
+  | 'sharing'
   | 'kr-type' 
   | 'kr-detail' 
   | 'dependencies' 
@@ -102,6 +107,16 @@ export function TeamOkrCreationWizard({
   // Step 7 - Initiatives
   const [initiatives, setInitiatives] = useState<DraftTeamInitiative[]>([]);
   
+  // Step 5 - Sharing (NEW)
+  const [isShared, setIsShared] = useState(false);
+  const [responsibilityModel, setResponsibilityModel] = useState<ResponsibilityModel>('primary_led');
+  const [ownerType, setOwnerType] = useState<OwnerType>('my_team');
+  const [primaryTeamId, setPrimaryTeamId] = useState(teamId);
+  const [contributingTeamIds, setContributingTeamIds] = useState<string[]>([]);
+  
+  // Fetch teams for sharing step
+  const { teams: availableTeams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
+  
   // Get active quarterly cycle
   const { data: activeCycles } = useActiveCycles();
   const quarterlyCycle = useMemo(() => 
@@ -140,7 +155,7 @@ export function TeamOkrCreationWizard({
 
   // Step index for progress
   const stepIndex = useMemo(() => {
-    const steps: WizardStep[] = ['intro', 'context', 'retrospective', 'objective', 'kr-type', 'kr-detail', 'dependencies', 'initiatives', 'share'];
+    const steps: WizardStep[] = ['intro', 'context', 'retrospective', 'objective', 'sharing', 'kr-type', 'kr-detail', 'dependencies', 'initiatives', 'share'];
     return steps.indexOf(currentStep);
   }, [currentStep]);
 
@@ -170,9 +185,14 @@ export function TeamOkrCreationWizard({
     setDraftKrs([]);
     setDependencies([]);
     setInitiatives([]);
+    setIsShared(false);
+    setResponsibilityModel('primary_led');
+    setOwnerType('my_team');
+    setPrimaryTeamId(teamId);
+    setContributingTeamIds([]);
     setSessionId(null);
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [onOpenChange, teamId]);
 
   // Final submission
   const handleSubmit = useCallback(async () => {
@@ -190,7 +210,10 @@ export function TeamOkrCreationWizard({
           org_objective_id: selectedOrgObjectiveId,
           cycle_id: quarterlyCycle.id,
           status: 'active',
+          is_shared: isShared,
+          responsibility_model: isShared ? responsibilityModel : null,
         },
+        contributingTeamIds: isShared ? contributingTeamIds : [],
         keyResults: draftKrs.map(kr => ({
           title: kr.title,
           type: kr.type,
@@ -229,7 +252,7 @@ export function TeamOkrCreationWizard({
   }, [
     quarterlyCycle, selectedOrgObjectiveId, objectiveTitle, objectiveDescription,
     teamId, draftKrs, initiatives, profileId, createBundle, sessionId, 
-    completeSession, handleClose, navigate
+    completeSession, handleClose, navigate, isShared, responsibilityModel, contributingTeamIds
   ]);
 
   // Render step content
@@ -281,8 +304,31 @@ export function TeamOkrCreationWizard({
             onObjectiveTitleChange={setObjectiveTitle}
             onObjectiveDescriptionChange={setObjectiveDescription}
             onOrgObjectiveSelect={setSelectedOrgObjectiveId}
-            onContinue={() => setCurrentStep('kr-type')}
+            onContinue={() => setCurrentStep('sharing')}
             onBack={() => setCurrentStep('retrospective')}
+          />
+        );
+
+      case 'sharing':
+        return (
+          <TeamOkrSharingStep
+            objectiveTitle={objectiveTitle}
+            teamId={teamId}
+            teamName={teamName}
+            isShared={isShared}
+            responsibilityModel={responsibilityModel}
+            ownerType={ownerType}
+            primaryTeamId={primaryTeamId}
+            contributingTeamIds={contributingTeamIds}
+            availableTeams={availableTeams}
+            isLoadingTeams={isLoadingTeams}
+            onIsSharedChange={setIsShared}
+            onResponsibilityModelChange={setResponsibilityModel}
+            onOwnerTypeChange={setOwnerType}
+            onPrimaryTeamChange={setPrimaryTeamId}
+            onContributingTeamsChange={setContributingTeamIds}
+            onContinue={() => setCurrentStep('kr-type')}
+            onBack={() => setCurrentStep('objective')}
           />
         );
 
@@ -293,7 +339,7 @@ export function TeamOkrCreationWizard({
             krPlan={krPlan}
             onKrPlanChange={setKrPlan}
             onContinue={() => setCurrentStep('kr-detail')}
-            onBack={() => setCurrentStep('objective')}
+            onBack={() => setCurrentStep('sharing')}
           />
         );
 

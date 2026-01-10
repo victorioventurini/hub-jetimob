@@ -1,8 +1,8 @@
 /**
  * Team OKR Creation Wizard - Barrel Export
  * 
- * Wizard guiado em 9 passos para criação de OKRs de time
- * com alinhamento estratégico e educação contextual.
+ * Wizard guiado em 10 passos para criação de OKRs de time
+ * com alinhamento estratégico, OKRs compartilhadas e educação contextual.
  */
 
 export { TeamOkrCreationWizard } from './TeamOkrCreationWizard';
@@ -13,6 +13,7 @@ export { TeamOkrIntroStep } from './TeamOkrIntroStep';
 export { TeamOkrContextStep } from './TeamOkrContextStep';
 export { TeamOkrRetrospectiveStep } from './TeamOkrRetrospectiveStep';
 export { TeamOkrObjectiveStep } from './TeamOkrObjectiveStep';
+export { TeamOkrSharingStep } from './TeamOkrSharingStep';
 export { TeamOkrKrTypeStep } from './TeamOkrKrTypeStep';
 export { TeamOkrKrDetailStep } from './TeamOkrKrDetailStep';
 export { TeamOkrDependenciesStep } from './TeamOkrDependenciesStep';
