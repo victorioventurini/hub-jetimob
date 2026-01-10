@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation, type Location } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Building2, ArrowRight, Loader2, LogOut, Settings, Lock } from "lucide-react";
@@ -17,20 +17,31 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { queryKeys } from "@/lib/queryKeys";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 export default function SelectBu() {
   usePageTitle("", { hubOnly: true });
-  
+
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile, role, signOut } = useAuth();
   const { userBus, isLoading: buLoading, selectBu } = useBu();
 
+  const from = (location.state as { from?: Location } | null)?.from;
+  const returnTo = (() => {
+    if (!from) return "/";
+    const path = `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
+    // Avoid loops back to auth/selection screens.
+    if (path === "/auth" || path === "/select-bu") return "/";
+    return path;
+  })();
+
   // Fetch all active BUs
   const { data: allBus = [], isLoading: allBusLoading } = useQuery({
-    queryKey: ["all-bus-for-selection"],
+    queryKey: queryKeys.bu.allList(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
@@ -53,9 +64,9 @@ export default function SelectBu() {
   useEffect(() => {
     if (!isLoading && userBus.length === 1) {
       selectBu(userBus[0].bu_id);
-      navigate("/", { replace: true });
+      navigate(returnTo, { replace: true });
     }
-  }, [isLoading, userBus, selectBu, navigate]);
+  }, [isLoading, userBus, selectBu, navigate, returnTo]);
 
   const roleLabels: Record<string, string> = {
     super_admin: "Super Admin",
@@ -86,7 +97,7 @@ export default function SelectBu() {
       return;
     }
     selectBu(buId);
-    navigate("/", { replace: true });
+    navigate(returnTo, { replace: true });
   };
 
   // Show loader while checking, or if auto-redirecting

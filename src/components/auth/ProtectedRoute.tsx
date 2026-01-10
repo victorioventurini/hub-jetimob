@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, type Location } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
@@ -17,6 +17,9 @@ export function ProtectedRoute({ children, skipBuCheck = false, skipOnboardingCh
   const { userBus, buSelected, isLoading: buLoading } = useBu();
   const location = useLocation();
 
+  // Preserve the original intended destination across multiple redirects.
+  const fromLocation = (location.state as { from?: Location } | null)?.from ?? location;
+
   const isLoading = authLoading || buLoading;
 
   if (isLoading) {
@@ -24,13 +27,13 @@ export function ProtectedRoute({ children, skipBuCheck = false, skipOnboardingCh
   }
 
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/auth" state={{ from: fromLocation }} replace />;
   }
 
   // Check if user needs to select a BU (only for non-global routes)
   // Skip this check for the select-bu page itself and global routes
   if (!skipBuCheck && userBus.length > 1 && !buSelected) {
-    return <Navigate to="/select-bu" replace />;
+    return <Navigate to="/select-bu" state={{ from: fromLocation }} replace />;
   }
 
   // Skip onboarding guard for onboarding page itself
