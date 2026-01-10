@@ -8,7 +8,7 @@
  * - Insights sem julgamento
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -59,13 +59,29 @@ export function TeamOkrRetrospectiveStep({
   const { invokeVic } = useWizardAI();
   const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+  
+  // Guard to prevent multiple invocations
+  const hasInvokedRef = useRef(false);
+  const analysisIdRef = useRef<string | null>(null);
 
-  // Generate retrospective insight
+  // Generate retrospective insight - only once per analysis
   useEffect(() => {
+    // Skip if no analysis or already invoked for this analysis
+    if (!analysis) return;
+    
+    // Create a stable ID for the analysis
+    const analysisId = `${analysis.objectives.length}-${analysis.avgCompletion}-${analysis.abandonedKrs.length}`;
+    
+    // Skip if already invoked for this exact analysis
+    if (hasInvokedRef.current && analysisIdRef.current === analysisId) {
+      return;
+    }
+    
     const generateInsight = async () => {
-      if (!analysis) return;
-      
+      hasInvokedRef.current = true;
+      analysisIdRef.current = analysisId;
       setIsGeneratingInsight(true);
+      
       try {
         const response = await invokeVic(
           'analista-kpis',
@@ -79,7 +95,8 @@ export function TeamOkrRetrospectiveStep({
               kpiTrends: analysis.kpiTrends,
             },
           },
-          'Analise o ciclo anterior e forneça 2-3 aprendizados sem julgar, focando em padrões observados e oportunidades de melhoria.'
+          'Analise o ciclo anterior e forneça 2-3 aprendizados sem julgar, focando em padrões observados e oportunidades de melhoria.',
+          { silent: true }
         );
 
         setAiInsight({
@@ -90,7 +107,7 @@ export function TeamOkrRetrospectiveStep({
           source: 'analista-kpis',
         });
       } catch {
-        // Fallback insight
+        // Fallback insight - don't flood with toasts since we use silent mode
         if (analysis.abandonedKrs.length > 0) {
           setAiInsight({
             id: 'retro-insight-fallback',
@@ -106,7 +123,7 @@ export function TeamOkrRetrospectiveStep({
     };
 
     generateInsight();
-  }, [invokeVic, analysis]);
+  }, [analysis]); // Remove invokeVic from deps - it changes every render
 
   const hasData = analysis && (analysis.objectives.length > 0 || analysis.kpiTrends.length > 0);
 
