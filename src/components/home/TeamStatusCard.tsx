@@ -45,27 +45,27 @@ export function TeamStatusCard({
           </div>
 
           {/* Percentages */}
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="space-y-1">
+          <div className="grid grid-cols-3 gap-1 text-center text-xs">
+            <div className="space-y-0.5 min-w-0">
               <div className="flex items-center justify-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-foreground">{onTrackPercent}%</span>
               </div>
-              <p className="text-muted-foreground">No caminho</p>
+              <p className="text-muted-foreground truncate">No caminho</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5 min-w-0">
               <div className="flex items-center justify-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
                 <span className="font-semibold text-foreground">{atRiskPercent}%</span>
               </div>
-              <p className="text-muted-foreground">Em risco</p>
+              <p className="text-muted-foreground truncate">Em risco</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5 min-w-0">
               <div className="flex items-center justify-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-red-500" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
                 <span className="font-semibold text-foreground">{offTrackPercent}%</span>
               </div>
-              <p className="text-muted-foreground">Fora do caminho</p>
+              <p className="text-muted-foreground truncate">Fora do caminho</p>
             </div>
           </div>
         </div>

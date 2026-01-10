@@ -43,15 +43,15 @@ export function KpiSummaryCard({ kpis, title = "KPIs Principais" }: KpiSummaryCa
         <CardTitle className="text-base font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
           {kpis.map((kpi) => (
-            <div key={kpi.label} className="space-y-1">
-              <p className="text-xs text-muted-foreground">{kpi.label}</p>
-              <p className="text-xl font-bold text-foreground">{kpi.value}</p>
+            <div key={kpi.label} className="space-y-1 min-w-0">
+              <p className="text-xs text-muted-foreground truncate">{kpi.label}</p>
+              <p className="text-lg font-bold text-foreground truncate">{kpi.value}</p>
               {kpi.change && (
                 <div className={cn("flex items-center gap-1 text-xs", getChangeColor(kpi.changeType))}>
                   {getChangeIcon(kpi.changeType)}
-                  <span>{kpi.change}</span>
+                  <span className="truncate">{kpi.change}</span>
                 </div>
               )}
             </div>

@@ -43,21 +43,21 @@ export function OkrSummaryCard({
           </div>
 
           {/* Legend */}
-          <div className="flex justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-muted-foreground">No caminho</span>
-              <span className="font-semibold text-foreground">{onTrack}</span>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+              <span className="text-muted-foreground truncate">No caminho</span>
+              <span className="font-semibold text-foreground shrink-0">{onTrack}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">Em risco</span>
-              <span className="font-semibold text-foreground">{atRisk}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+              <span className="text-muted-foreground truncate">Em risco</span>
+              <span className="font-semibold text-foreground shrink-0">{atRisk}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-500" />
-              <span className="text-muted-foreground">Fora do caminho</span>
-              <span className="font-semibold text-foreground">{offTrack}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+              <span className="text-muted-foreground truncate">Fora</span>
+              <span className="font-semibold text-foreground shrink-0">{offTrack}</span>
             </div>
           </div>
         </div>
