@@ -48,6 +48,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
 import { useUrlState } from "@/shared/url";
+import { UserHoverCard } from "@/components/user/UserHoverCard";
 
 import { useDeleteProfile, useTransferDependencies } from "@/hooks/useProfiles";
 import { useUserDependencies } from "@/hooks/useUserDependencies";
@@ -498,20 +499,19 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell>
                       {profile.manager ? (
-                        <Link
-                          to={`/users/${profile.manager.id}`}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={profile.manager.photo_url || undefined} />
-                            <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
-                              {getInitials(profile.manager.display_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-foreground hover:text-accent transition-colors">
-                            {profile.manager.display_name}
-                          </span>
-                        </Link>
+                        <UserHoverCard profileId={profile.manager.id}>
+                          <Link
+                            to={`/users/${profile.manager.id}`}
+                            className="inline-block hover:opacity-80 transition-opacity"
+                          >
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={profile.manager.photo_url || undefined} />
+                              <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                                {getInitials(profile.manager.display_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Link>
+                        </UserHoverCard>
                       ) : (
                         <span className="text-muted-foreground text-sm">—</span>
                       )}
