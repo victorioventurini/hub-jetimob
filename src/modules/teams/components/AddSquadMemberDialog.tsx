@@ -16,10 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAddSquadMember } from "../hooks/useSquads";
-import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
-import { useBu } from "@/contexts/BuContext";
+import { BuUserSelect } from "@/components/selects/BuUserSelect";
 import { SquadRole, SQUAD_ROLE_LABELS } from "../types/squad";
 
 interface AddSquadMemberDialogProps {
@@ -35,24 +33,10 @@ export function AddSquadMemberDialog({
   onOpenChange,
   existingMemberIds
 }: AddSquadMemberDialogProps) {
-  const { currentBu } = useBu();
-  const { data: profiles } = useBuUsersDirectory({ pageSize: 200 });
   const addMember = useAddSquadMember();
 
-  const [userId, setUserId] = useState("");
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [role, setRole] = useState<SquadRole>("member");
-
-  const availableProfiles = profiles?.filter(
-    (p) => !existingMemberIds.includes(p.id)
-  ) || [];
-
-  const getInitials = (name: string) =>
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +48,10 @@ export function AddSquadMemberDialog({
       data: { user_id: userId, role },
     });
 
-    setUserId("");
+    setUserId(undefined);
     setRole("member");
     onOpenChange(false);
   };
-
-  const selectedProfile = profiles?.find((p) => p.id === userId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -85,49 +67,14 @@ export function AddSquadMemberDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="user">Usuário *</Label>
-              <Select value={userId} onValueChange={setUserId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um usuário">
-                    {selectedProfile && (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={selectedProfile.photo_url || undefined} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(selectedProfile.display_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{selectedProfile.display_name}</span>
-                      </div>
-                    )}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {availableProfiles.map((profile) => (
-                    <SelectItem 
-                      key={profile.id} 
-                      value={profile.id}
-                      textValue={profile.display_name || undefined}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={profile.photo_url || undefined} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(profile.display_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <span>{profile.display_name}</span>
-                          {profile.job_title_name && (
-                            <span className="text-muted-foreground ml-2 text-xs">
-                              {profile.job_title_name}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <BuUserSelect
+                value={userId}
+                onValueChange={(val) => setUserId(val ?? undefined)}
+                placeholder="Selecione um usuário"
+                excludeUserIds={existingMemberIds}
+                showSearch={false}
+                showBadges={false}
+              />
             </div>
 
             <div className="grid gap-2">

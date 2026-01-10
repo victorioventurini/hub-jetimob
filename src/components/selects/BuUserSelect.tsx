@@ -27,7 +27,7 @@ import { Search, User, Clock, AlertCircle } from "lucide-react";
 
 export interface BuUserSelectProps {
   value: string | undefined;
-  onValueChange: (value: string) => void;
+  onValueChange: (value: string | null) => void;
   placeholder?: string;
   excludeUserIds?: string[];
   disabled?: boolean;
@@ -38,6 +38,10 @@ export interface BuUserSelectProps {
   teamId?: string;
   /** Show search input in dropdown (default: true) */
   showSearch?: boolean;
+  /** Allow selecting "none" option */
+  allowNone?: boolean;
+  /** Label for "none" option (default: "Nenhum") */
+  noneLabel?: string;
 }
 
 function getInitials(name: string | null | undefined): string {
@@ -59,9 +63,14 @@ export function BuUserSelect({
   showBadges = true,
   teamId,
   showSearch = true,
+  allowNone = false,
+  noneLabel = "Nenhum",
 }: BuUserSelectProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  
+  // Special value for "none" option
+  const NONE_VALUE = "__none__";
   
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
     q: showSearch ? search : undefined,
@@ -76,21 +85,32 @@ export function BuUserSelect({
   const selectedProfile = useMemo(() => {
     return profiles.find((p) => p.id === value);
   }, [profiles, value]);
+  
+  // Handle value for Select (convert null/undefined to NONE_VALUE if allowNone)
+  const selectValue = allowNone && !value ? NONE_VALUE : value;
+  
+  const handleValueChange = (val: string) => {
+    if (val === NONE_VALUE) {
+      onValueChange(null);
+    } else {
+      onValueChange(val);
+    }
+    setOpen(false);
+  };
 
   return (
     <Select
-      value={value}
-      onValueChange={(val) => {
-        onValueChange(val);
-        setOpen(false);
-      }}
+      value={selectValue}
+      onValueChange={handleValueChange}
       disabled={disabled || isLoading}
       open={open}
       onOpenChange={setOpen}
     >
       <SelectTrigger className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder}>
-          {selectedProfile && (
+          {selectValue === NONE_VALUE ? (
+            <span className="text-muted-foreground">{noneLabel}</span>
+          ) : selectedProfile ? (
             <div className="flex items-center gap-2">
               <OptimizedAvatar
                 src={selectedProfile.photo_url}
@@ -103,7 +123,7 @@ export function BuUserSelect({
                 {selectedProfile.display_name || "Sem nome"}
               </span>
             </div>
-          )}
+          ) : null}
         </SelectValue>
       </SelectTrigger>
       <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -122,7 +142,21 @@ export function BuUserSelect({
           </div>
         )}
         <ScrollArea className="h-[250px]">
-          {filteredProfiles.length === 0 ? (
+          {/* None option */}
+          {allowNone && (
+            <SelectItem
+              value={NONE_VALUE}
+              className={cn(
+                "cursor-pointer py-2",
+                "focus:bg-primary/10 focus:text-foreground",
+                "data-[highlighted]:bg-primary/10 data-[highlighted]:text-foreground",
+                "data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground"
+              )}
+            >
+              <span className="text-muted-foreground">{noneLabel}</span>
+            </SelectItem>
+          )}
+          {filteredProfiles.length === 0 && !allowNone ? (
             <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
               <User className="h-8 w-8 mb-2" />
               <span className="text-sm">

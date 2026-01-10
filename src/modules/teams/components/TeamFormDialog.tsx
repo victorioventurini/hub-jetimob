@@ -19,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, AlertTriangle, Trash2 } from "lucide-react";
-import { useCreateTeam, useUpdateTeam, useTeams, useAvailableLeaders, useDeleteTeam } from "../hooks/useTeams";
+import { useCreateTeam, useUpdateTeam, useTeams, useDeleteTeam } from "../hooks/useTeams";
 import { TeamWithRelations, TeamFormData } from "../types";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamSelect } from "@/components/selects/TeamSelect";
+import { BuUserSelect } from "@/components/selects/BuUserSelect";
 
 interface TeamFormDialogProps {
   /** Team to edit. If null/undefined, dialog is in create mode */
@@ -69,7 +69,6 @@ export function TeamFormDialog({
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
   const { data: teams } = useTeams(true);
-  const { data: leaders } = useAvailableLeaders();
 
   // Calculate IDs to exclude from parent team selection (self + descendants)
   const excludedTeamIds = useMemo(() => {
@@ -192,35 +191,20 @@ export function TeamFormDialog({
         {/* Leader */}
         <div className="space-y-2">
           <Label htmlFor="leader">Líder</Label>
-          <Select
-            value={formData.leader_user_id || "none"}
+          <BuUserSelect
+            value={formData.leader_user_id ?? undefined}
             onValueChange={(value) =>
               setFormData({
                 ...formData,
-                leader_user_id: value === "none" ? null : value,
+                leader_user_id: value,
               })
             }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um líder" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Sem líder definido</SelectItem>
-              {leaders?.map((leader) => (
-                <SelectItem key={leader.id} value={leader.id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={leader.photo_url || undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {getInitials(leader.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{leader.display_name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Selecione um líder"
+            showSearch={false}
+            showBadges={false}
+            allowNone
+            noneLabel="Sem líder definido"
+          />
         </div>
 
         {/* Parent Team */}
