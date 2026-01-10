@@ -70,6 +70,89 @@ export type Database = {
           },
         ]
       }
+      ai_agent_instruction_sources: {
+        Row: {
+          agent_id: string
+          cached_content: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_enabled: boolean
+          last_fetch_at: string | null
+          last_fetch_error: string | null
+          last_fetch_status: string | null
+          name: string
+          priority: number
+          source_type: Database["public"]["Enums"]["instruction_source_type"]
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          cached_content?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_fetch_at?: string | null
+          last_fetch_error?: string | null
+          last_fetch_status?: string | null
+          name: string
+          priority?: number
+          source_type: Database["public"]["Enums"]["instruction_source_type"]
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          cached_content?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_fetch_at?: string | null
+          last_fetch_error?: string | null
+          last_fetch_status?: string | null
+          name?: string
+          priority?: number
+          source_type?: Database["public"]["Enums"]["instruction_source_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_instruction_sources_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_instruction_sources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_instruction_sources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_instruction_sources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_logs: {
         Row: {
           action_context: string | null
@@ -8168,6 +8251,7 @@ export type Database = {
       gift_movement_type: "in" | "out" | "adjustment"
       initiative_priority: "low" | "medium" | "high"
       initiative_status: "planned" | "in_progress" | "blocked" | "completed"
+      instruction_source_type: "api" | "document" | "hub_context" | "template"
       integration_config_mode: "use_global" | "override"
       integration_test_status: "ok" | "error" | "pending"
       key_access_type: "door" | "padlock" | "gate" | "other"
@@ -8416,6 +8500,7 @@ export const Constants = {
       gift_movement_type: ["in", "out", "adjustment"],
       initiative_priority: ["low", "medium", "high"],
       initiative_status: ["planned", "in_progress", "blocked", "completed"],
+      instruction_source_type: ["api", "document", "hub_context", "template"],
       integration_config_mode: ["use_global", "override"],
       integration_test_status: ["ok", "error", "pending"],
       key_access_type: ["door", "padlock", "gate", "other"],

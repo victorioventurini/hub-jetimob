@@ -9,6 +9,14 @@ import {
   createServiceClient,
   type RequestContext,
 } from "../_shared/middleware.ts";
+import {
+  loadInstructionSources,
+  assembleInstructionContent,
+} from "../_shared/instruction-sources.ts";
+import {
+  HUB_TOOL_DEFINITIONS,
+  executeHubTool,
+} from "../_shared/hub-tools.ts";
 
 // Get integration API key from hub_integrations_global_config
 async function getIntegrationApiKey(supabase: any, integrationKey: string): Promise<string | null> {
@@ -76,6 +84,15 @@ interface InvokeVicRequest {
     additionalData?: Record<string, unknown>;
   };
   userQuestion?: string;
+}
+
+interface ToolCall {
+  id: string;
+  type: string;
+  function: {
+    name: string;
+    arguments: string;
+  };
 }
 
 serve(async (req) => {
@@ -203,7 +220,20 @@ serve(async (req) => {
       }
     }
 
-    // Get agent documents for knowledge base
+    // =========================================================================
+    // LOAD INSTRUCTION SOURCES (NEW!)
+    // =========================================================================
+    console.log(`[${requestId}] Loading instruction sources for agent ${agentId}`);
+    
+    const instructionSources = await loadInstructionSources(supabase, agent.id);
+    let instructionContent = "";
+    
+    if (instructionSources.length > 0) {
+      console.log(`[${requestId}] Found ${instructionSources.length} instruction sources`);
+      instructionContent = await assembleInstructionContent(supabase, instructionSources, buId);
+    }
+
+    // Get agent documents for knowledge base (legacy - now also handled by instruction sources)
     const { data: documents } = await supabase
       .from("ai_agent_documents")
       .select("name, extracted_content")
@@ -218,10 +248,15 @@ serve(async (req) => {
         .join("\n\n");
     }
 
-    // Build system prompt with Vic persona + agent prompt + knowledge
+    // Build system prompt with Vic persona + agent prompt + knowledge + instruction sources
     let systemPrompt = VIC_PERSONA_INTRO + agent.system_prompt;
+    
     if (knowledgeBase) {
-      systemPrompt += `\n\n=== BASE DE CONHECIMENTO ===\n${knowledgeBase}`;
+      systemPrompt += `\n\n=== BASE DE CONHECIMENTO (Documentos) ===\n${knowledgeBase}`;
+    }
+    
+    if (instructionContent) {
+      systemPrompt += instructionContent;
     }
 
     // Build context description
@@ -256,21 +291,45 @@ serve(async (req) => {
       ? (agent.model_name?.startsWith("gpt") ? agent.model_name : "gpt-4o-mini")
       : (agent.model_name || "google/gemini-2.5-flash");
 
+    // =========================================================================
+    // BUILD REQUEST PAYLOAD WITH OPTIONAL TOOLS
+    // =========================================================================
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ];
+
+    const requestPayload: any = {
+      model: modelName,
+      messages,
+      max_tokens: agent.max_tokens || 800,
+      temperature: agent.temperature ?? 0.7,
+    };
+
+    // Add tools if agent has allowed_tools configured and we have BU context
+    const allowedTools = agent.allowed_tools as string[] | null;
+    if (allowedTools?.length && buId) {
+      // Filter to only HUB tools that are allowed
+      const hubToolNames = HUB_TOOL_DEFINITIONS.map(t => t.function.name);
+      const agentTools = allowedTools.filter(t => hubToolNames.includes(t));
+      
+      if (agentTools.length > 0) {
+        requestPayload.tools = HUB_TOOL_DEFINITIONS.filter(
+          t => agentTools.includes(t.function.name)
+        );
+        requestPayload.tool_choice = "auto";
+        console.log(`[${requestId}] Agent has ${agentTools.length} tools enabled: ${agentTools.join(", ")}`);
+      }
+    }
+
+    // First API call
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: agent.max_tokens || 800,
-        temperature: agent.temperature ?? 0.7,
-      }),
+      body: JSON.stringify(requestPayload),
     });
 
     if (!response.ok) {
@@ -307,8 +366,75 @@ serve(async (req) => {
       throw new Error(`AI API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    let data = await response.json();
+    let content = data.choices?.[0]?.message?.content;
+    const toolCalls = data.choices?.[0]?.message?.tool_calls as ToolCall[] | undefined;
+
+    // =========================================================================
+    // HANDLE TOOL CALLS (if any)
+    // =========================================================================
+    if (toolCalls?.length && buId) {
+      console.log(`[${requestId}] Processing ${toolCalls.length} tool calls`);
+      
+      // Execute each tool call
+      const toolResults: { role: string; tool_call_id: string; content: string }[] = [];
+      
+      for (const toolCall of toolCalls) {
+        try {
+          const args = JSON.parse(toolCall.function.arguments);
+          const result = await executeHubTool(supabase, toolCall.function.name, args, buId);
+          
+          toolResults.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: result,
+          });
+          
+          console.log(`[${requestId}] Tool ${toolCall.function.name} executed successfully`);
+        } catch (toolError) {
+          console.error(`[${requestId}] Tool ${toolCall.function.name} failed:`, toolError);
+          toolResults.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: `Erro ao executar ${toolCall.function.name}: ${toolError instanceof Error ? toolError.message : "Unknown error"}`,
+          });
+        }
+      }
+
+      // Make second API call with tool results
+      const secondMessages = [
+        ...messages,
+        data.choices[0].message, // Assistant message with tool_calls
+        ...toolResults,
+      ];
+
+      const secondResponse = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: secondMessages,
+          max_tokens: agent.max_tokens || 800,
+          temperature: agent.temperature ?? 0.7,
+        }),
+      });
+
+      if (secondResponse.ok) {
+        const secondData = await secondResponse.json();
+        content = secondData.choices?.[0]?.message?.content || content;
+        // Update usage stats
+        if (secondData.usage) {
+          data.usage = {
+            prompt_tokens: (data.usage?.prompt_tokens || 0) + (secondData.usage?.prompt_tokens || 0),
+            completion_tokens: (data.usage?.completion_tokens || 0) + (secondData.usage?.completion_tokens || 0),
+            total_tokens: (data.usage?.total_tokens || 0) + (secondData.usage?.total_tokens || 0),
+          };
+        }
+      }
+    }
 
     if (!content) {
       throw new Error("Empty response from AI");
