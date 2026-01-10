@@ -19,3 +19,6 @@ export * from './managers-checkin';
 
 // Wizard 5: C-Level Check-in
 export * from './clevel-checkin';
+
+// Wizard 6: Team OKR Creation
+export * from './team-okr-creation';

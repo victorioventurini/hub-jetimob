@@ -110,7 +110,7 @@ export function TeamOkrObjectiveStep({
       try {
         const response = await invokeVic(
           'coach-okrs',
-          'objective_review',
+          'okr-review-quality',
           {
             type: 'objective-creation',
             title: debouncedTitle,

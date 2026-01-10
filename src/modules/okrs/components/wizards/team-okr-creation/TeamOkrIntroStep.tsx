@@ -48,19 +48,19 @@ export function TeamOkrIntroStep({
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
-        // Get greeting
+        // Get greeting using coach-okrs agent
         const greetingResponse = await invokeVic(
-          'vic-greeting',
-          'greeting',
+          'coach-okrs',
+          'okr-create-objective',
           { type: 'wizard-intro', additionalData: { userName, teamName } },
           'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.'
         );
         setGreeting(greetingResponse.response);
 
-        // Get motivational message
+        // Get motivational message using cultura agent
         const messageResponse = await invokeVic(
-          'vic-persona',
-          'team_okr_creation_intro',
+          'cultura',
+          'dashboard-culture',
           { type: 'wizard-intro', additionalData: { teamName } },
           'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.'
         );
