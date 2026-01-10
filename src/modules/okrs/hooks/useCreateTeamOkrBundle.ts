@@ -23,7 +23,12 @@ export interface CreateTeamOkrBundleInput {
     org_objective_id: string | null;
     cycle_id: string;
     status: 'draft' | 'active';
+    // Shared OKR fields
+    is_shared?: boolean;
+    responsibility_model?: 'collaborative' | 'primary_led' | null;
   };
+  // Contributing team IDs for shared OKRs
+  contributingTeamIds?: string[];
   keyResults: Array<{
     title: string;
     type: OkrKrType;
@@ -83,6 +88,9 @@ export function useCreateTeamOkrBundle() {
           cycle_id: input.objective.cycle_id,
           year: new Date().getFullYear(),
           status: input.objective.status,
+          // Shared OKR fields
+          is_shared: input.objective.is_shared || false,
+          responsibility_model: input.objective.responsibility_model || null,
         })
         .select('id')
         .single();
@@ -119,7 +127,24 @@ export function useCreateTeamOkrBundle() {
         krIds.push(krData.id);
       }
 
-      // 3. Create dependencies (if table exists)
+      // 3. Create contributors for shared OKRs
+      if (input.objective.is_shared && input.contributingTeamIds && input.contributingTeamIds.length > 0) {
+        const contributors = input.contributingTeamIds.map(teamId => ({
+          objective_id: objectiveId,
+          team_id: teamId,
+        }));
+
+        const { error: contribError } = await supabase
+          .from('okr_team_objective_contributors')
+          .insert(contributors);
+
+        if (contribError) {
+          console.error('Error creating contributors:', contribError);
+          // Don't throw - objective was created, contributors are secondary
+        }
+      }
+
+      // 4. Create dependencies (if table exists)
       if (input.dependencies && input.dependencies.length > 0) {
         for (const dep of input.dependencies) {
           const krId = krIds[dep.kr_index];
@@ -131,7 +156,7 @@ export function useCreateTeamOkrBundle() {
         }
       }
 
-      // 4. Create initiatives
+      // 5. Create initiatives
       if (input.initiatives && input.initiatives.length > 0) {
         for (const init of input.initiatives) {
           const krId = krIds[init.kr_index];

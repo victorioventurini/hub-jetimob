@@ -89,6 +89,7 @@ const STEP_ICONS: Record<string, typeof Rocket> = {
   'intro': Rocket,
   'retrospective': BarChart3,
   'objective': Target,
+  'sharing': Users, // NEW - Sharing step icon
   'kr-type': ClipboardList,
   'kr-detail': Target,
   'dependencies': Users,
