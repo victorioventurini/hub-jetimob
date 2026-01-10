@@ -366,8 +366,10 @@ export default function WizardsPage() {
         {/* Wizard Modals */}
         {collaboratorWizardOpen && (
           <CollaboratorWizard
-            open={true}
-            onOpenChange={() => handleWizardClose('collaborator-checkin')}
+            open={collaboratorWizardOpen}
+            onOpenChange={(open) => {
+              if (!open) handleWizardClose('collaborator-checkin');
+            }}
           />
         )}
 
