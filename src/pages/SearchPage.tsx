@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { useAuth } from "@/hooks/useAuth";
+import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -89,7 +91,8 @@ const statusColors: Record<string, string> = {
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { currentBu } = useBu();
+  const { currentBu, currentBuId, isLoading: buLoading } = useBu();
+  const { session, isLoading: authLoading } = useAuth();
 
   const initialQuery = searchParams.get("q") || "";
   const initialType = searchParams.get("type") || "all";
@@ -97,6 +100,11 @@ export default function SearchPage() {
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [selectedType, setSelectedType] = useState(initialType);
+
+  const buClient = useMemo(() => {
+    if (!currentBuId) return null;
+    return createBuScopedClient(currentBuId);
+  }, [currentBuId]);
 
   // Debounce query
   useEffect(() => {
@@ -114,25 +122,42 @@ export default function SearchPage() {
     setSearchParams(params, { replace: true });
   }, [debouncedQuery, selectedType, setSearchParams]);
 
+  const isReady = !!session && !!currentBuId && !authLoading && !buLoading;
+
   const { data, isLoading, error } = useQuery<{ query: string; groups: SearchGroup[] }>({
-    queryKey: ["search-page", currentBu?.id, debouncedQuery],
+    queryKey: queryKeys.search.page(currentBuId ?? null, debouncedQuery, selectedType),
     queryFn: async () => {
-      if (!currentBu?.id || debouncedQuery.length < 2) {
+      if (!isReady || !buClient || debouncedQuery.length < 2) {
         return { query: debouncedQuery, groups: [] };
       }
 
-      const { data, error } = await supabase.functions.invoke("global-search", {
+      const correlationId =
+        (globalThis.crypto?.randomUUID?.() as string | undefined) ||
+        `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      const { data, error } = await buClient.functions.invoke("global-search", {
         body: {
-          bu_id: currentBu.id,
+          bu_id: currentBuId,
           q: debouncedQuery,
           limit_per_type: 50, // More results for full page
         },
+        headers: {
+          "x-correlation-id": correlationId,
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        const status = (error as any)?.status;
+        if (status === 401) {
+          console.warn("[SearchPage] Unauthorized - session missing/expired");
+          return { query: debouncedQuery, groups: [] };
+        }
+        throw error;
+      }
+
       return data;
     },
-    enabled: !!currentBu?.id && debouncedQuery.length >= 2,
+    enabled: isReady && debouncedQuery.length >= 2,
     staleTime: 30000,
   });
 
