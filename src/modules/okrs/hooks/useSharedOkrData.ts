@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface OkrContributor {
   id: string;
@@ -63,10 +64,12 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
 
       const objectiveIds = contributions.map(c => c.objective_id);
 
+      // Use explicit fields instead of select('*')
       const { data: objectives, error: objError } = await supabase
         .from('okr_team_objectives')
         .select(`
-          *,
+          id, bu_id, team_id, title, description, year, status, org_objective_id,
+          is_shared, responsibility_model, created_at, updated_at, deleted_at,
           team:teams!okr_team_objectives_team_id_fkey(id, name)
         `)
         .in('id', objectiveIds)
@@ -77,6 +80,7 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
       return objectives;
     },
     enabled: !!teamId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -144,14 +148,16 @@ export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: s
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-team-objectives-with-shared', buId, teamId],
+    queryKey: queryKeys.okrs.teamObjectivesWithShared(buId, teamId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
+      // Use explicit fields instead of select('*')
       let query = supabase
         .from('okr_team_objectives')
         .select(`
-          *,
+          id, bu_id, team_id, title, description, year, status, org_objective_id,
+          is_shared, responsibility_model, created_at, updated_at, deleted_at,
           team:teams!okr_team_objectives_team_id_fkey(id, name)
         `)
         .eq('bu_id', buId)
@@ -200,5 +206,6 @@ export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: s
       }));
     },
     enabled: !!buId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }

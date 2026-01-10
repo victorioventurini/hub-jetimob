@@ -1,5 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
+
+// ============================================================
+// Performance-optimized OKR data hooks
+// - Uses explicit field selection (no select('*'))
+// - Uses centralized queryKeys
+// - Applies proper staleTime for caching
+// ============================================================
+
+// Fields used in most org objectives queries
+const ORG_OBJECTIVE_FIELDS = `
+  id, bu_id, title, description, year, status, 
+  created_at, updated_at, deleted_at
+` as const;
+
+// Fields used in most org KR queries
+const ORG_KR_FIELDS = `
+  id, bu_id, org_objective_id, title, baseline, current_value, target,
+  direction, unit, status, created_at, updated_at, deleted_at, cancelled_at
+` as const;
+
+// Fields used in most team objectives queries
+const TEAM_OBJECTIVE_FIELDS = `
+  id, bu_id, team_id, title, description, year, status, org_objective_id,
+  is_shared, responsibility_model, created_at, updated_at, deleted_at
+` as const;
+
+// Fields used in most team KR queries
+const TEAM_KR_FIELDS = `
+  id, bu_id, team_id, team_objective_id, linked_org_kr_id, parent_kr_id, metric_id,
+  title, type, baseline, current_value, target, direction, unit, status,
+  owner_user_id, co_responsibles, last_checkin_at, evidence_url,
+  created_at, updated_at, deleted_at, cancelled_at
+` as const;
 
 // ========================
 // ORG OBJECTIVES
@@ -8,13 +42,13 @@ export function useOrgObjectives(buId?: string | null, year?: number, includeAll
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-org-objectives', buId, year, includeAllStatuses],
+    queryKey: queryKeys.okrs.orgObjectives(buId, year),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_org_objectives')
-        .select('*')
+        .select(ORG_OBJECTIVE_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -33,6 +67,7 @@ export function useOrgObjectives(buId?: string | null, year?: number, includeAll
       return data;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -40,14 +75,14 @@ export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, inc
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-org-objectives-with-krs', buId, year, includeAllStatuses],
+    queryKey: queryKeys.okrs.orgObjectivesWithKrs(buId, year),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
-      // First get objectives
+      // First get objectives with explicit fields
       let objQuery = supabase
         .from('okr_org_objectives')
-        .select('*')
+        .select(ORG_OBJECTIVE_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -63,19 +98,23 @@ export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, inc
 
       const { data: objectives, error: objError } = await objQuery;
       if (objError) throw objError;
+      if (!objectives?.length) return [];
 
-      // Then get org key results for this BU (non-cancelled)
+      // Get objective IDs for IN clause (more efficient than fetching all)
+      const objectiveIds = objectives.map(o => o.id);
+
+      // Fetch KRs for these objectives only (server-side filter)
       const { data: allKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
-        .select('*')
-        .eq('bu_id', buId)
+        .select(ORG_KR_FIELDS)
+        .in('org_objective_id', objectiveIds)
         .is('deleted_at', null)
         .is('cancelled_at', null);
       
       if (krsError) throw krsError;
 
       // Map KRs to objectives
-      const objectivesWithKrs = objectives?.map(obj => ({
+      const objectivesWithKrs = objectives.map(obj => ({
         ...obj,
         key_results: allKrs?.filter(kr => kr.org_objective_id === obj.id) || []
       }));
@@ -83,6 +122,7 @@ export function useOrgObjectivesWithKrs(buId?: string | null, year?: number, inc
       return objectivesWithKrs;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -90,13 +130,13 @@ export function useOrgObjective(id: string) {
   const { client: supabase, buId } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-org-objective', buId, id],
+    queryKey: queryKeys.okrs.orgObjective(id),
     queryFn: async () => {
       if (!supabase || !buId) return null;
       
       const { data, error } = await supabase
         .from('okr_org_objectives')
-        .select('*')
+        .select(ORG_OBJECTIVE_FIELDS)
         .eq('id', id)
         .maybeSingle();
 
@@ -104,6 +144,7 @@ export function useOrgObjective(id: string) {
       return data;
     },
     enabled: !!id && !!buId && !!supabase,
+    staleTime: 5 * 60 * 1000, // 5 minutes for single item
   });
 }
 
@@ -111,13 +152,13 @@ export function useOrgKeyResults(buId?: string | null, objectiveId?: string, inc
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-org-key-results', buId, objectiveId, includeCancelled],
+    queryKey: queryKeys.okrs.orgKeyResults(buId, objectiveId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_org_key_results')
-        .select('*')
+        .select(ORG_KR_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null);
         
@@ -135,6 +176,7 @@ export function useOrgKeyResults(buId?: string | null, objectiveId?: string, inc
       return data;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -142,13 +184,13 @@ export function useAllOrgKeyResults(buId?: string | null, includeCancelled: bool
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-org-key-results-all', buId, includeCancelled],
+    queryKey: queryKeys.okrs.orgKeyResultsAll(buId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_org_key_results')
-        .select('*')
+        .select(ORG_KR_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null);
 
@@ -162,6 +204,7 @@ export function useAllOrgKeyResults(buId?: string | null, includeCancelled: bool
       return data;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -172,13 +215,13 @@ export function useTeamObjectives(buId?: string | null, teamId?: string, include
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-team-objectives', buId, teamId, includeAllStatuses],
+    queryKey: queryKeys.okrs.teamObjectives(buId, teamId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_team_objectives')
-        .select('*')
+        .select(TEAM_OBJECTIVE_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -197,6 +240,7 @@ export function useTeamObjectives(buId?: string | null, teamId?: string, include
       return data;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -204,27 +248,15 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-team-objectives-with-krs', buId, teamId, includeAllStatuses],
+    queryKey: queryKeys.okrs.teamObjectivesWithKrs(buId, teamId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
-      // First get objectives with team info
+      // First get objectives with team info (using join for team name)
       let objQuery = supabase
         .from('okr_team_objectives')
         .select(`
-          id,
-          bu_id,
-          team_id,
-          title,
-          description,
-          year,
-          status,
-          org_objective_id,
-          is_shared,
-          responsibility_model,
-          created_at,
-          updated_at,
-          deleted_at,
+          ${TEAM_OBJECTIVE_FIELDS},
           team:teams!okr_team_objectives_team_id_fkey(id, name)
         `)
         .eq('bu_id', buId)
@@ -242,12 +274,16 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
 
       const { data: objectives, error: objError } = await objQuery;
       if (objError) throw objError;
+      if (!objectives?.length) return [];
 
-      // Then get team key results for this BU (non-cancelled)
+      // Get objective IDs for IN clause
+      const objectiveIds = objectives.map(o => o.id);
+
+      // Fetch KRs for these objectives only (server-side filter)
       let krsQuery = supabase
         .from('okr_team_key_results')
-        .select('*')
-        .eq('bu_id', buId)
+        .select(TEAM_KR_FIELDS)
+        .in('team_objective_id', objectiveIds)
         .is('deleted_at', null)
         .is('cancelled_at', null);
       
@@ -259,7 +295,7 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
       if (krsError) throw krsError;
 
       // Map KRs to objectives
-      const objectivesWithKrs = objectives?.map(obj => ({
+      const objectivesWithKrs = objectives.map(obj => ({
         ...obj,
         key_results: allKrs?.filter(kr => kr.team_objective_id === obj.id) || []
       }));
@@ -267,6 +303,7 @@ export function useTeamObjectivesWithKrs(buId?: string | null, teamId?: string, 
       return objectivesWithKrs;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -274,13 +311,13 @@ export function useTeamKeyResults(buId?: string | null, teamId?: string, include
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-team-key-results', buId, teamId, includeCancelled],
+    queryKey: queryKeys.okrs.teamKeyResults(buId, teamId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
       let query = supabase
         .from('okr_team_key_results')
-        .select('*')
+        .select(TEAM_KR_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -299,6 +336,7 @@ export function useTeamKeyResults(buId?: string | null, teamId?: string, include
       return data;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -306,13 +344,13 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-my-team-key-results', buId, userId],
+    queryKey: queryKeys.okrs.myTeamKeyResults(buId, userId),
     queryFn: async () => {
       if (!buId || !userId || !supabase) return [];
       
       const { data, error } = await supabase
         .from('okr_team_key_results')
-        .select('*')
+        .select(TEAM_KR_FIELDS)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .is('cancelled_at', null)
@@ -323,30 +361,40 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
       return data;
     },
     enabled: !!buId && !!userId && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
 // ========================
 // CHECK-INS
 // ========================
+
+// Fields for check-in queries
+const CHECKIN_FIELDS = `
+  id, kr_id, kr_type, user_id, date, previous_value, current_value,
+  confidence, comments, blockers, created_at
+` as const;
+
 export function useKrCheckins(krId: string) {
   const { client: supabase, buId } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-checkins', buId, krId],
+    queryKey: queryKeys.okrs.checkins(krId),
     queryFn: async () => {
       if (!supabase || !buId) return [];
       
       const { data, error } = await supabase
         .from('okr_checkins')
-        .select('*')
+        .select(CHECKIN_FIELDS)
         .eq('kr_id', krId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .limit(100); // Limit to prevent over-fetching
 
       if (error) throw error;
       return data;
     },
     enabled: !!krId && !!buId && !!supabase,
+    staleTime: 1 * 60 * 1000, // 1 minute for frequently updated data
   });
 }
 
@@ -354,7 +402,7 @@ export function useLatestCheckinDate() {
   const { client: supabase, buId } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['okr-latest-checkin', buId],
+    queryKey: queryKeys.okrs.latestCheckin(),
     queryFn: async () => {
       if (!supabase || !buId) return null;
       
@@ -369,6 +417,7 @@ export function useLatestCheckinDate() {
       return data?.created_at;
     },
     enabled: !!buId && !!supabase,
+    staleTime: 1 * 60 * 1000,
   });
 }
 

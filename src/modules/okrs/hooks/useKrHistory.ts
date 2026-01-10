@@ -3,6 +3,7 @@ import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient
 import { useMemo } from "react";
 import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface KrCheckinHistory {
   id: string;
@@ -40,19 +41,12 @@ export function useKrHistory(krId: string | null | undefined) {
     queryFn: async (): Promise<KrHistoryData | null> => {
       if (!krId || !supabase) return null;
 
-      // Fetch checkins with user info
+      // Fetch checkins with explicit fields and limit
       const { data: checkins, error } = await supabase
         .from('okr_checkins')
         .select(`
-          id,
-          date,
-          previous_value,
-          current_value,
-          confidence,
-          comments,
-          blockers,
-          created_at,
-          user_id
+          id, date, previous_value, current_value, confidence,
+          comments, blockers, created_at, user_id
         `)
         .eq('kr_id', krId)
         .order('date', { ascending: false })

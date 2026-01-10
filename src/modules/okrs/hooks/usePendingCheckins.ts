@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useAuth } from '@/hooks/useAuth';
+import { queryKeys } from '@/lib/queryKeys';
 
 export interface PendingCheckin {
   kr_id: string;
@@ -69,11 +70,11 @@ export function usePendingCheckins() {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['pending-checkins', user?.id, buId],
+    queryKey: queryKeys.okrs.pendingCheckins(buId, undefined),
     queryFn: async () => {
       if (!user?.id || !supabase) return [];
 
-      // Query the view for pending check-ins
+      // Query the view for pending check-ins with explicit fields
       const { data, error } = await supabase
         .from('v_pending_checkins')
         .select('kr_id, kr_title, owner_user_id, co_responsibles, team_id, current_value, target, baseline, direction, unit, status, last_checkin_at, team_name, checkin_frequency, checkin_day, checkin_deadline_hour, objective_title, objective_id, is_overdue, days_since_checkin')
@@ -87,6 +88,7 @@ export function usePendingCheckins() {
       return (data || []) as PendingCheckin[];
     },
     enabled: !!user?.id && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -94,10 +96,10 @@ export function usePendingCheckins() {
  * Hook to fetch all pending check-ins for a team (for team leaders)
  */
 export function useTeamPendingCheckins(teamId?: string) {
-  const { client: supabase, isReady } = useOptionalBuClient();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['team-pending-checkins', teamId],
+    queryKey: queryKeys.okrs.pendingCheckins(buId, teamId),
     queryFn: async () => {
       if (!teamId || !supabase) return [];
 
@@ -114,6 +116,7 @@ export function useTeamPendingCheckins(teamId?: string) {
       return (data || []) as PendingCheckin[];
     },
     enabled: !!teamId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
