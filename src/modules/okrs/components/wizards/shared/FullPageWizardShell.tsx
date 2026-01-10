@@ -18,16 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
-} from '@/components/ui/alert-dialog';
+import { DiscardChangesDialog } from '@/components/ui/discard-changes-dialog';
 import { ArrowLeft, X, Save, Loader2 } from 'lucide-react';
 import { WizardStepper, WizardStepperCompact, type WizardStepDefinition } from './WizardStepper';
 
@@ -341,24 +332,12 @@ export function FullPageWizardShell({
       </div>
       
       {/* Exit confirmation dialog */}
-      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você tem alterações não salvas. Se sair agora, todo o progresso será perdido.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelExit}>
-              Continuar editando
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmExit} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Descartar e sair
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DiscardChangesDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+        onContinueEditing={handleCancelExit}
+        onDiscardAndExit={handleConfirmExit}
+      />
     </div>
   );
 }
