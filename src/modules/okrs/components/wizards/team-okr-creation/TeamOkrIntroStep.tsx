@@ -6,7 +6,7 @@
  * - Prepara mentalidade antes de criar
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,6 +50,9 @@ export function TeamOkrIntroStep({
   const fallbackMessage = 'Antes de definir metas, vamos alinhar direção. OKRs não servem para fazer mais coisas — servem para fazer as coisas certas.';
 
   // Generate greeting and message on mount
+  // Use ref to prevent multiple invocations due to callback changes
+  const hasFetched = useRef(false);
+  
   useEffect(() => {
     // Wait for auth/client readiness
     if (!isReady) return;
@@ -72,6 +75,10 @@ export function TeamOkrIntroStep({
       setIsLoading(false);
       return;
     }
+
+    // Prevent multiple invocations
+    if (hasFetched.current) return;
+    hasFetched.current = true;
 
     const fetchMessages = async () => {
       setIsLoading(true);
@@ -106,7 +113,8 @@ export function TeamOkrIntroStep({
     };
 
     fetchMessages();
-  }, [invokeVic, userName, teamName, isIaEnabled, isIaConfigLoading, fallbackGreeting, fallbackMessage, isReady, buId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, buId, isIaConfigLoading, isIaEnabled]);
 
   return (
     <div className="flex flex-col h-full">
