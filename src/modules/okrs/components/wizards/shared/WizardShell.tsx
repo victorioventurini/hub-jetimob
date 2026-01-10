@@ -124,7 +124,7 @@ export function WizardShell({
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
         side="right" 
-        className="w-full sm:max-w-2xl lg:max-w-3xl p-0 flex flex-col [&>button]:hidden"
+        className="w-full sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl p-0 flex flex-col [&>button]:hidden"
       >
         {/* Header */}
         <SheetHeader className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
