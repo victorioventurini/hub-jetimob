@@ -17,7 +17,7 @@ export function useCategories() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_categories")
-        .select("*")
+        .select("id, bu_id, name, parent_id, description, status, created_at, updated_at, deleted_at")
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");

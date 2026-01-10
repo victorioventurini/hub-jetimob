@@ -68,7 +68,7 @@ export function usePartnerServices(partnerCompanyId?: string) {
 
       let query = supabase
         .from("v_partner_services")
-        .select("*")
+        .select("id, bu_id, partner_company_id, partner_company_name, category_id, category_name, category_scope, subcategory_id, subcategory_name, is_generalist, status, notes, created_at, updated_at")
         .eq("bu_id", buId)
         .eq("status", "active");
 
@@ -143,7 +143,7 @@ export function usePartnerServiceMappings(partnerCompanyId: string | undefined) 
 
       const { data, error } = await supabase
         .from("partner_service_mappings")
-        .select("*")
+        .select("id, bu_id, partner_company_id, category_id, subcategory_id, status, notes, created_at, updated_at")
         .eq("bu_id", buId)
         .eq("partner_company_id", partnerCompanyId)
         .is("deleted_at", null);

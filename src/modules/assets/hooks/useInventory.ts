@@ -31,7 +31,7 @@ export function useInventory(options: UseInventoryOptions = {}) {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_categories")
-        .select("*")
+        .select("id, bu_id, name, parent_id, description, status, created_at, updated_at, deleted_at")
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");
@@ -223,7 +223,7 @@ export function useInventory(options: UseInventoryOptions = {}) {
     
     const { data, error } = await supabase
       .from("asset_movements")
-      .select("*")
+      .select("id, bu_id, asset_id, movement_type, from_holder_type, from_location_id, from_user_id, to_holder_type, to_location_id, to_user_id, authorized_by_user_id, performed_by_user_id, occurred_at, due_at, returned_at, notes, created_at")
       .eq("asset_id", assetId)
       .order("occurred_at", { ascending: false });
 

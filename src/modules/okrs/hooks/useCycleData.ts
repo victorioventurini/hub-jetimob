@@ -29,7 +29,7 @@ export function useCycles() {
       
       const { data, error } = await supabase
         .from("cycles")
-        .select("*")
+        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id")
         .order("start_date", { ascending: false });
 
       if (error) throw error;
@@ -72,7 +72,7 @@ export function useCycle(cycleId: string | null | undefined) {
       
       const { data, error } = await supabase
         .from("cycles")
-        .select("*")
+        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id")
         .eq("id", cycleId)
         .maybeSingle();
 

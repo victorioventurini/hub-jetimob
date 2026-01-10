@@ -75,7 +75,7 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
 
       const { data, error } = await supabase
         .from('okr_insights')
-        .select('*')
+        .select('id, bu_id, scope_type, scope_id, severity, code, title, message, suggested_actions, source, created_at, created_by, deleted_at')
         .eq('bu_id', currentBuId)
         .eq('scope_type', scopeType)
         .eq('scope_id', scopeId)
@@ -189,7 +189,7 @@ export function useRiskObjectives(limit = 5) {
 
       const { data, error } = await supabase
         .from('v_objective_health')
-        .select('*')
+        .select('id, objective_type, title, team_id, team_name, health_score, health_status, last_checkin_at, kr_count, kr_at_risk')
         .eq('bu_id', currentBuId)
         .eq('health_status', 'risk')
         .order('health_score', { ascending: true })
@@ -216,7 +216,7 @@ export function useDashboardInsights(limit = 10) {
 
       const { data, error } = await supabase
         .from('okr_insights')
-        .select('*')
+        .select('id, bu_id, scope_type, scope_id, severity, code, title, message, suggested_actions, source, created_at')
         .eq('bu_id', currentBuId)
         .is('deleted_at', null)
         .in('severity', ['critical', 'warning'])

@@ -26,7 +26,7 @@ export function useAssetPermissions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_permissions")
-        .select("*")
+        .select("id, bu_id, user_id, role, created_at, created_by, updated_at")
         .eq("bu_id", buId!)
         .eq("user_id", user!.id);
 
@@ -42,7 +42,7 @@ export function useAssetPermissions() {
     queryFn: async () => {
       const { data: permissions, error } = await supabase
         .from("asset_permissions")
-        .select("*")
+        .select("id, bu_id, user_id, role, created_at")
         .eq("bu_id", buId!);
 
       if (error) throw error;

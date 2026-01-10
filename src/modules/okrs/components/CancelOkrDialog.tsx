@@ -81,7 +81,7 @@ export function CancelOkrDialog({
 
       const { data, error } = await supabase
         .from("okr_cancellation_reasons")
-        .select("*")
+        .select("id, code, label, description, applies_to, display_order")
         .eq("is_active", true)
         .order("display_order");
 
