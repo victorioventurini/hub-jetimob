@@ -1,15 +1,19 @@
 /**
  * CollaboratorCheckinPage - Full-page wizard para check-in do colaborador
+ * 
+ * Admins podem selecionar outro usuário para visualizar/executar o check-in.
  */
 
 import { useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useUserKrsForWizard } from '@/modules/okrs/hooks/useUserKrsForWizard';
+import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
@@ -59,9 +63,54 @@ const DEFAULT_DATA: CollaboratorDraftData = {
 
 export default function CollaboratorCheckinPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { profile, isAdmin, role } = useAuth();
   
-  usePageTitle('Check-in Semanal');
+  // Check if user is admin
+  const isSuperAdmin = role === 'super_admin';
+  const canSwitchUser = isSuperAdmin || isAdmin;
+  
+  // URL param for user impersonation (admin only)
+  const userIdParam = searchParams.get('user');
+  const effectiveUserId = userIdParam || profile?.id || null;
+  
+  // Find effective user name
+  const { data: allUsers = [], isLoading: isLoadingUsers } = useBuUsersDirectory({ 
+    pageSize: 200,
+    enabled: canSwitchUser,
+  });
+  
+  const effectiveUserName = useMemo(() => {
+    if (!canSwitchUser || !userIdParam) {
+      return profile?.display_name || profile?.first_name || 'Você';
+    }
+    const user = allUsers.find(u => u.id === userIdParam);
+    return user?.display_name || 'Usuário';
+  }, [canSwitchUser, userIdParam, allUsers, profile]);
+  
+  // Prepare user options for admin switcher
+  const userOptions = useMemo(() => {
+    return allUsers.map(u => ({
+      id: u.id,
+      name: u.display_name,
+      email: u.work_email,
+      avatarUrl: u.photo_url || undefined,
+      teamName: u.team_name || undefined,
+    }));
+  }, [allUsers]);
+  
+  // Handle user change (admin only)
+  const handleUserChange = useCallback((newUserId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newUserId === profile?.id) {
+      newParams.delete('user');
+    } else {
+      newParams.set('user', newUserId);
+    }
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams, profile?.id]);
+  
+  usePageTitle(canSwitchUser && userIdParam ? `Check-in - ${effectiveUserName}` : 'Check-in Semanal');
   
   // Get cycle
   const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
@@ -90,11 +139,11 @@ export default function CollaboratorCheckinPage() {
     enabled: !!quarterlyCycle,
   });
   
-  // Fetch user KRs
+  // Fetch user KRs (for effective user)
   const { data: userKrs, isLoading: isLoadingKrs } = useUserKrsForWizard(
     quarterlyCycle?.id || null,
     'all',
-    profile?.id || null
+    effectiveUserId
   );
   
   // Navigation
@@ -274,6 +323,18 @@ export default function CollaboratorCheckinPage() {
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
       backUrl="/wizards"
+      adminContextSwitcher={
+        canSwitchUser ? (
+          <AdminContextSwitcher
+            type="user"
+            currentLabel={effectiveUserName}
+            users={userOptions}
+            selectedId={effectiveUserId}
+            onSelect={handleUserChange}
+            isLoading={isLoadingUsers}
+          />
+        ) : undefined
+      }
     >
       {renderStepContent()}
     </FullPageWizardShell>

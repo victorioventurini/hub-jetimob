@@ -70,6 +70,8 @@ export interface FullPageWizardShellProps {
   children: React.ReactNode;
   /** Contexto adicional (nome do time, etc) */
   contextLabel?: string;
+  /** Componente de seletor de contexto para admin (time/usuário) */
+  adminContextSwitcher?: React.ReactNode;
   /** Classe extra para o container */
   className?: string;
 }
@@ -96,6 +98,7 @@ export function FullPageWizardShell({
   backUrl = '/wizards',
   children,
   contextLabel,
+  adminContextSwitcher,
   className,
 }: FullPageWizardShellProps) {
   const navigate = useNavigate();
@@ -209,7 +212,10 @@ export function FullPageWizardShell({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold truncate">{title}</h1>
-              {contextLabel && (
+              {/* Admin context switcher (team/user selector) */}
+              {adminContextSwitcher}
+              {/* Fallback to contextLabel if no switcher */}
+              {!adminContextSwitcher && contextLabel && (
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   — {contextLabel}
                 </span>
