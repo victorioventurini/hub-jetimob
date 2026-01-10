@@ -20,6 +20,8 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { CrossDependency } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -83,7 +85,23 @@ export function ManagersCrossIssuesStep({
             <ArrowLeftRight className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-lg">Dependências entre Áreas</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">Dependências entre Áreas</h3>
+              <WizardTooltipInline tooltipKey="managers-cross-issues" />
+              <AskToVicStepHelper
+                context={{
+                  module: 'okrs',
+                  wizard: 'managers-checkin',
+                  step: 'cross-issues',
+                  userRole: 'gestor',
+                  additionalData: {
+                    dependenciesCount: dependencies.length,
+                    blockedCount,
+                    atRiskCount,
+                  },
+                }}
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
               {dependencies.length} dependências mapeadas
             </p>

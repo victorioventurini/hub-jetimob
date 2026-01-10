@@ -25,6 +25,8 @@ import {
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { LeaderOverviewMetrics } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -101,11 +103,28 @@ export function LeaderOverviewStep({
       {/* Header */}
       <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">Visão Geral: {teamName}</h3>
-            {cycleName && (
-              <p className="text-sm text-muted-foreground mt-1">{cycleName}</p>
-            )}
+          <div className="flex items-center gap-2">
+            <div>
+              <h3 className="font-semibold text-lg">Visão Geral: {teamName}</h3>
+              {cycleName && (
+                <p className="text-sm text-muted-foreground mt-1">{cycleName}</p>
+              )}
+            </div>
+            <WizardTooltipInline tooltipKey="leader-overview" />
+            <AskToVicStepHelper
+              context={{
+                module: 'okrs',
+                wizard: 'leader-prep',
+                step: 'overview',
+                userRole: 'lider',
+                teamName,
+                additionalData: metrics ? {
+                  totalKrs: metrics.totalKrs,
+                  krsAtRisk: metrics.krsAtRisk,
+                  krsStagnant: metrics.krsStagnant,
+                } : undefined,
+              }}
+            />
           </div>
           {metrics && (
             <div className="text-right">

@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicInsightCard } from '../shared/VicInsightCard';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
 import type { DraftTeamKr, DraftTeamDependency } from '@/modules/okrs/types/wizard';
@@ -182,8 +184,19 @@ export function TeamOkrDependenciesStep({
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-lg font-semibold mb-1">Dependências e Riscos</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Dependências e Riscos</h2>
+              <WizardTooltipInline tooltipKey="dependencies-intro" />
+              <AskToVicInline
+                context={{
+                  module: 'okrs',
+                  wizard: 'creation',
+                  step: 'dependencies',
+                  additionalData: { krsCount: draftKrs.length },
+                }}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
               Analisando seus KRs para identificar dependências com outros times.
             </p>
           </div>
