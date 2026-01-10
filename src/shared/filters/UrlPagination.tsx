@@ -97,7 +97,7 @@ export function UrlPagination({
   }
 
   return (
-    <div className={cn("flex items-center justify-between gap-4 flex-wrap", className)}>
+    <div className={cn("flex items-center justify-center gap-4 flex-wrap", className)}>
       {/* Info */}
       {showInfo && (
         <div className="text-sm text-muted-foreground">
