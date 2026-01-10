@@ -168,20 +168,26 @@ WHERE deleted_at IS NULL AND employment_status != 'terminated';
 
 ## 6. Plano de Execução
 
-### P2.1 - Paginação (Prioridade Alta)
+### P2.1 - Paginação (Prioridade Alta) — ✅ DONE
 1. ✅ Criar documento de plano
-2. [ ] Implementar paginação em `useTickets` + `TicketsListPage`
-3. [ ] Implementar paginação em `useInventory` + `InventoryPage`
-4. [ ] Implementar paginação em `UsersPage`
-5. [ ] Documentar QA
+2. ✅ Implementar paginação em `useTickets` + `TicketsListPage`
+3. ✅ Implementar paginação em `useInventory` + `InventoryPage`
+4. ✅ Implementar paginação em `UsersPage`
+5. ✅ Documentar QA
 
-### P2.2 - Índices (Prioridade Média)
-1. [ ] Gerar queries EXPLAIN ANALYZE
-2. [ ] Criar migration com índices
-3. [ ] Validar ganho de performance
-4. [ ] Documentar
+### P2.2 - Paginação Inventory + Users — ✅ DONE
+1. ✅ Integrar UrlPagination end-to-end em Inventory
+2. ✅ Migrar Users para paginação server-side
+3. ✅ URL state completo (page/pageSize + filtros)
+4. ✅ Documentar (ver PERFORMANCE_WAVE_P2_2_REPORT.md)
 
-### P2.3 - RPCs Agregadoras (Prioridade Média)
+### P2.3 - Índices DB — ✅ DONE
+1. ✅ Gerar queries EXPLAIN ANALYZE
+2. ✅ Criar migration com índices (3 índices criados)
+3. ✅ Validar ganho de performance (20x em Inventory)
+4. ✅ Documentar (ver PERFORMANCE_WAVE_P2_3_DB_INDEXES_REPORT.md)
+
+### P2.4 - RPCs Agregadoras (Prioridade Média) — PENDENTE
 1. [ ] Criar `rpc_home_dashboard_data`
 2. [ ] Migrar `useHomeDashboard` para usar RPC
 3. [ ] Criar RPCs de summary adicionais
@@ -215,3 +221,5 @@ WHERE deleted_at IS NULL AND employment_status != 'terminated';
 | Data | Versão | Mudança |
 |------|--------|---------|
 | 2026-01-10 | 1.0.0 | Documento inicial |
+| 2026-01-10 | 1.1.0 | P2.1/P2.2 DONE - Paginação Tickets/Inventory/Users |
+| 2026-01-10 | 1.2.0 | P2.3 DONE - Índices DB com evidência EXPLAIN ANALYZE |
