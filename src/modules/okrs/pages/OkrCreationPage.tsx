@@ -103,9 +103,11 @@ export default function OkrCreationPage() {
     updateDraft, 
     setStep, 
     clearDraft,
+    discardDraft,
     saveDraft,
     isDirty,
     isSaving,
+    isResumingDraft,
     hasSavedDraft,
     lastSavedAt,
   } = useWizardDraft({
@@ -202,6 +204,17 @@ export default function OkrCreationPage() {
       toast.error('Erro ao salvar rascunho');
     }
   }, [saveDraft]);
+  
+  // Handle discard draft
+  const handleDiscardDraft = useCallback(async () => {
+    try {
+      await discardDraft();
+      toast.success('Rascunho descartado. Começando do zero.');
+    } catch (error) {
+      console.error('Failed to discard draft:', error);
+      toast.error('Erro ao descartar rascunho');
+    }
+  }, [discardDraft]);
   
   // Handle submit
   const handleSubmit = useCallback(async () => {
@@ -440,6 +453,8 @@ export default function OkrCreationPage() {
       isSavingDraft={isSaving}
       onSaveDraft={handleSaveDraft}
       lastSavedAt={lastSavedAt}
+      isResumingDraft={isResumingDraft}
+      onDiscardDraft={handleDiscardDraft}
       isLoading={createBundle.isPending}
       onClose={handleClose}
       backUrl="/wizards"
