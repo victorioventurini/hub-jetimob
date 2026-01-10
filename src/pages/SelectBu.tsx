@@ -23,7 +23,10 @@ import { toast } from "sonner";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 export default function SelectBu() {
-  usePageTitle("", { hubOnly: true });
+  usePageTitle("Selecionar Business Unit", { 
+    skipBu: true, 
+    customDescription: "Escolha a Business Unit que deseja acessar no Hub." 
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
