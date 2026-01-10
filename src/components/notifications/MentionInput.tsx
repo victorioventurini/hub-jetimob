@@ -379,8 +379,8 @@ export function MentionInput({
                   onClick={() => selectUser(user)}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors",
-                    "hover:bg-accent",
-                    index === selectedIndex && "bg-accent"
+                    "hover:bg-primary/10",
+                    index === selectedIndex && "bg-primary/10"
                   )}
                 >
                   <Avatar className="h-7 w-7">
