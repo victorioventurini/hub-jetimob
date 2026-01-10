@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Users, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,10 +131,9 @@ export function PartnerContactsTab() {
                   <TableRow key={contact.id}>
                     <TableCell>
                       <PartnerContactHoverCard contactId={contact.id}>
-                        <button
-                          type="button"
-                          className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity cursor-pointer"
-                          onClick={() => handleEdit(contact)}
+                        <Link
+                          to={`/tickets/contacts/${contact.id}`}
+                          className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                         >
                           <Avatar className="h-8 w-8">
                             <AvatarFallback>
@@ -148,7 +148,7 @@ export function PartnerContactsTab() {
                               {contact.email}
                             </p>
                           </div>
-                        </button>
+                        </Link>
                       </PartnerContactHoverCard>
                     </TableCell>
                     <TableCell>

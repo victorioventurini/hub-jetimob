@@ -94,6 +94,7 @@ const TicketsListPage = lazy(() => import("./modules/tickets/pages/TicketsListPa
 const CreateTicketPage = lazy(() => import("./modules/tickets/pages/CreateTicketPage"));
 const TicketDetailPage = lazy(() => import("./modules/tickets/pages/TicketDetailPage"));
 const TicketsSettingsPage = lazy(() => import("./modules/tickets/pages/TicketsSettingsPage"));
+const PartnerContactProfilePage = lazy(() => import("./modules/tickets/pages/PartnerContactProfilePage"));
 
 // Settings
 const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
@@ -769,6 +770,7 @@ const App = () => {
                       <Route index element={<TicketsListPage />} />
                       <Route path="new" element={<CreateTicketPage />} />
                       <Route path="settings" element={<TicketsSettingsPage />} />
+                      <Route path="contacts/:contactId" element={<PartnerContactProfilePage />} />
                       <Route path=":id" element={<TicketDetailPage />} />
                     </Route>
 
