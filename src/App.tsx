@@ -51,6 +51,11 @@ const TeamContributionPage = lazy(() => import("./modules/okrs/pages/TeamContrib
 const CycleCheckinsPage = lazy(() => import("./modules/okrs/pages/CycleCheckinsPage"));
 const OkrsSettingsPage = lazy(() => import("./modules/okrs/pages/OkrsSettingsPage"));
 const OkrCreationPage = lazy(() => import("./modules/okrs/pages/OkrCreationPage"));
+const CollaboratorCheckinPage = lazy(() => import("./modules/okrs/pages/CollaboratorCheckinPage"));
+const LeaderPrepPage = lazy(() => import("./modules/okrs/pages/LeaderPrepPage"));
+const TeamCheckinPage = lazy(() => import("./modules/okrs/pages/TeamCheckinPage"));
+const ManagersCheckinPage = lazy(() => import("./modules/okrs/pages/ManagersCheckinPage"));
+const CLevelCheckinPage = lazy(() => import("./modules/okrs/pages/CLevelCheckinPage"));
 
 // Módulo KPIs
 const KpiDashboardPage = lazy(() => import("./modules/kpis/pages/KpiDashboardPage"));
@@ -583,6 +588,66 @@ const App = () => {
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="okrs">
                               <OkrCreationPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/okrs/collaborator-checkin"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <CollaboratorCheckinPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/okrs/leader-prep"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <LeaderPrepPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/okrs/team-checkin"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <TeamCheckinPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/okrs/managers-checkin"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <ManagersCheckinPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/okrs/clevel-checkin"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <CLevelCheckinPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>

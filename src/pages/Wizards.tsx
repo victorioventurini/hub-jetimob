@@ -1,14 +1,12 @@
 /**
- * WizardsPage - Central hub for all OKR wizards
+ * WizardsPage - Central hub for all OKR rituals (wizards)
  * 
- * Lists all available wizards organized by module and user role.
+ * Lists all available rituals organized by module and user role.
  * Visibility is controlled by user permissions and role context.
- * 
- * URL State: ?wizard=<id>&team=<teamId>&step=<stepIndex>
- * Shareable links allow reopening a wizard directly.
+ * All wizards now navigate to full-page routes with draft support.
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -25,7 +23,7 @@ import {
   Crown,
   User,
   ArrowRight,
-  Sparkles,
+  Rocket,
   BarChart3,
   Settings2,
 } from 'lucide-react';
@@ -33,17 +31,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
-import { useIdentity } from '@/hooks/useIdentity';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useUrlState, parsers } from '@/shared/url';
-
-// Wizard imports
-import { CollaboratorWizard } from '@/modules/okrs/components/wizards/collaborator/CollaboratorWizard';
-import { LeaderPrepWizard } from '@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizard';
-import { TeamCheckinWizard } from '@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizard';
-import { ManagersCheckinWizard } from '@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizard';
-import { CLevelCheckinWizard } from '@/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizard';
-import { TeamOkrCreationWizard } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizard';
 
 // ============================================================
 // TYPES
@@ -60,6 +48,7 @@ interface WizardDefinition {
   badge?: string;
   badgeVariant?: 'default' | 'secondary' | 'outline';
   requiresTeam?: boolean;
+  route: string;
 }
 
 interface WizardSection {
@@ -76,7 +65,7 @@ interface WizardSection {
 const WIZARD_SECTIONS: WizardSection[] = [
   {
     title: 'OKRs - Colaboradores',
-    description: 'Wizards para check-in e atualização individual',
+    description: 'Rituais para check-in e atualização individual',
     icon: User,
     wizards: [
       {
@@ -89,12 +78,13 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Sexta-feira',
         badgeVariant: 'outline',
         requiresTeam: false,
+        route: '/okrs/collaborator-checkin',
       },
     ],
   },
   {
     title: 'OKRs - Líderes de Time',
-    description: 'Wizards para gestão de OKRs do time',
+    description: 'Rituais para gestão de OKRs do time',
     icon: Users,
     wizards: [
       {
@@ -108,6 +98,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Início de Ciclo',
         badgeVariant: 'default',
         requiresTeam: true,
+        route: '/okrs/create',
       },
       {
         id: 'leader-prep',
@@ -119,6 +110,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Segunda-feira',
         badgeVariant: 'outline',
         requiresTeam: true,
+        route: '/okrs/leader-prep',
       },
       {
         id: 'team-checkin',
@@ -130,12 +122,13 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Durante reunião',
         badgeVariant: 'outline',
         requiresTeam: true,
+        route: '/okrs/team-checkin',
       },
     ],
   },
   {
     title: 'OKRs - Gestores e Executivos',
-    description: 'Wizards para alinhamento estratégico e cross-functional',
+    description: 'Rituais para alinhamento estratégico e cross-functional',
     icon: Crown,
     wizards: [
       {
@@ -148,6 +141,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Cross-team',
         badgeVariant: 'secondary',
         requiresTeam: false,
+        route: '/okrs/managers-checkin',
       },
       {
         id: 'clevel-checkin',
@@ -159,6 +153,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'C-Level',
         badgeVariant: 'secondary',
         requiresTeam: false,
+        route: '/okrs/clevel-checkin',
       },
     ],
   },
@@ -170,45 +165,19 @@ const WIZARD_SECTIONS: WizardSection[] = [
 
 export default function WizardsPage() {
   const navigate = useNavigate();
+  
   // SEO
-  usePageTitle('Wizards', {
+  usePageTitle('Rituais', {
     customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Hub.',
   });
 
-  const { profile, isAdmin, role } = useAuth();
+  const { isAdmin, role } = useAuth();
   const { has } = usePermissions();
-  const { isLeader, teams: leaderTeams, isLoading: isLoadingLeaderTeams } = useLeaderTeams();
-  const { teams: allTeams, isLoading: isLoadingAllTeams } = useHierarchicalTeamList();
-  const { profileId } = useIdentity();
+  const { isLeader, teams: leaderTeams } = useLeaderTeams();
+  const { teams: allTeams } = useHierarchicalTeamList();
   
   // Check if user is super_admin
   const isSuperAdmin = role === 'super_admin';
-  
-  // URL State - only tracks which wizard is open
-  const wizardState = useUrlState<string | null>({ key: 'wizard', defaultValue: null }, { navigationMode: 'replace' });
-
-  // Selected team for leader wizards (local state only, not in URL)
-  const [selectedTeam, setSelectedTeam] = useState<{ id: string; name: string } | null>(null);
-
-  // Selected user for admin impersonation in collaborator wizard (local state only, not in URL)
-  const [collaboratorUserId, setCollaboratorUserId] = useState<string | null>(null);
-
-  // Auto-select first team when wizard opens if none selected
-  // For admins: use allTeams if not a leader
-  useEffect(() => {
-    if (wizardState.value && !selectedTeam) {
-      // First try leader teams
-      if (leaderTeams?.length) {
-        const firstTeam = leaderTeams[0];
-        setSelectedTeam({ id: firstTeam.team_id, name: firstTeam.team_name });
-      } 
-      // For admins, fallback to all teams
-      else if ((isSuperAdmin || isAdmin) && allTeams?.length) {
-        const firstTeam = allTeams[0];
-        setSelectedTeam({ id: firstTeam.id, name: firstTeam.name });
-      }
-    }
-  }, [wizardState.value, selectedTeam, leaderTeams, allTeams, isSuperAdmin, isAdmin]);
 
   // Determine user role hierarchy
   const userRoles = useMemo(() => {
@@ -254,10 +223,10 @@ export default function WizardsPage() {
     })).filter(section => section.wizards.length > 0);
   }, [canAccessWizard]);
 
-  // Handle wizard open
-  const handleWizardOpen = useCallback((wizardId: string, wizard?: WizardDefinition) => {
-    // For team-okr-creation, navigate to full-page wizard
-    if (wizardId === 'team-okr-creation') {
+  // Handle wizard open - navigate to full-page route
+  const handleWizardOpen = useCallback((wizard: WizardDefinition) => {
+    // For wizards that require team, add team param
+    if (wizard.requiresTeam) {
       const firstLeaderTeam = leaderTeams?.[0];
       const firstAnyTeam = allTeams?.[0];
       const teamToUse = firstLeaderTeam 
@@ -267,50 +236,16 @@ export default function WizardsPage() {
           : null;
       
       if (teamToUse) {
-        navigate(`/okrs/create?team=${teamToUse}`);
+        navigate(`${wizard.route}?team=${teamToUse}`);
       } else {
-        toast.error('Selecione um time para criar OKRs');
+        toast.error('Selecione um time para iniciar este ritual');
       }
       return;
     }
 
-    // Reset collaborator impersonation when (re)opening collaborator wizard
-    if (wizardId === 'collaborator-checkin') {
-      setCollaboratorUserId(null);
-    }
-
-    // For leader wizards, use first team if available and none selected
-    if (wizard?.requiresTeam && !selectedTeam) {
-      const firstLeaderTeam = leaderTeams?.[0];
-      const firstAnyTeam = allTeams?.[0];
-      
-      if (firstLeaderTeam) {
-        setSelectedTeam({ id: firstLeaderTeam.team_id, name: firstLeaderTeam.team_name });
-      } else if ((isSuperAdmin || isAdmin) && firstAnyTeam) {
-        setSelectedTeam({ id: firstAnyTeam.id, name: firstAnyTeam.name });
-      }
-    }
-
-    // Update URL state (only wizard ID)
-    wizardState.set(wizardId);
-  }, [selectedTeam, leaderTeams, allTeams, wizardState, isSuperAdmin, isAdmin, navigate]);
-
-
-  // Handle wizard close
-  const handleWizardClose = useCallback(() => {
-    wizardState.set(null);
-    setSelectedTeam(null);
-    setCollaboratorUserId(null);
-  }, [wizardState]);
-
-
-  // Derived wizard open states from URL
-  const collaboratorWizardOpen = wizardState.value === 'collaborator-checkin';
-  const leaderPrepWizardOpen = wizardState.value === 'leader-prep';
-  const teamCheckinWizardOpen = wizardState.value === 'team-checkin';
-  const managersWizardOpen = wizardState.value === 'managers-checkin';
-  const clevelWizardOpen = wizardState.value === 'clevel-checkin';
-  const teamOkrCreationWizardOpen = wizardState.value === 'team-okr-creation';
+    // Navigate to the wizard's full-page route
+    navigate(wizard.route);
+  }, [leaderTeams, allTeams, isSuperAdmin, isAdmin, navigate]);
 
   return (
     <HubLayout>
@@ -323,10 +258,10 @@ export default function WizardsPage() {
         {visibleSections.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Sparkles className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum wizard disponível</h3>
+              <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Nenhum ritual disponível</h3>
               <p className="text-muted-foreground">
-                Você não tem permissão para acessar nenhum wizard no momento.
+                Você não tem permissão para acessar nenhum ritual no momento.
               </p>
             </CardContent>
           </Card>
@@ -351,7 +286,7 @@ export default function WizardsPage() {
                     <Card 
                       key={wizard.id}
                       className="group hover:shadow-md transition-all cursor-pointer border-muted hover:border-primary/30"
-                      onClick={() => handleWizardOpen(wizard.id, wizard)}
+                      onClick={() => handleWizardOpen(wizard)}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -375,7 +310,7 @@ export default function WizardsPage() {
                           size="sm" 
                           className="w-full justify-between group-hover:bg-primary/5"
                         >
-                          Iniciar wizard
+                          Iniciar ritual
                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Button>
                       </CardContent>
@@ -388,59 +323,6 @@ export default function WizardsPage() {
             ))}
           </div>
         )}
-
-        {/* Wizard Modals */}
-        {collaboratorWizardOpen && (
-          <CollaboratorWizard
-            open={collaboratorWizardOpen}
-            userId={collaboratorUserId ?? undefined}
-            onUserChange={(newUserId) => setCollaboratorUserId(newUserId)}
-            onOpenChange={(open) => {
-              if (!open) handleWizardClose();
-            }}
-          />
-        )}
-
-
-        {leaderPrepWizardOpen && selectedTeam && (
-          <LeaderPrepWizard
-            open={leaderPrepWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose()}
-            teamId={selectedTeam.id}
-            teamName={selectedTeam.name}
-            onTeamChange={(teamId, teamName) => {
-              setSelectedTeam({ id: teamId, name: teamName });
-            }}
-          />
-        )}
-
-        {teamCheckinWizardOpen && selectedTeam && (
-          <TeamCheckinWizard
-            open={teamCheckinWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose()}
-            teamId={selectedTeam.id}
-            teamName={selectedTeam.name}
-            onTeamChange={(teamId, teamName) => {
-              setSelectedTeam({ id: teamId, name: teamName });
-            }}
-          />
-        )}
-
-        {managersWizardOpen && (
-          <ManagersCheckinWizard
-            open={managersWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose()}
-          />
-        )}
-
-        {clevelWizardOpen && (
-          <CLevelCheckinWizard
-            open={clevelWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose()}
-          />
-        )}
-
-        {/* TeamOkrCreationWizard now uses full-page at /okrs/create */}
       </div>
     </HubLayout>
   );
