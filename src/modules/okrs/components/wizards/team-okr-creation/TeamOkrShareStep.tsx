@@ -73,7 +73,7 @@ export function TeamOkrShareStep({
         // Generate summary
         const summaryResponse = await invokeVic(
           'revisor-comunicacao',
-          'okr_summary',
+          'comms-review',
           {
             type: 'okr-summary',
             title: objectiveTitle,
@@ -97,7 +97,7 @@ export function TeamOkrShareStep({
         // Generate reflection questions
         const questionsResponse = await invokeVic(
           'coach-okrs',
-          'reflection_questions',
+          'okr-review-quality',
           {
             type: 'reflection',
             title: objectiveTitle,
@@ -115,7 +115,7 @@ export function TeamOkrShareStep({
         // Generate closing message
         const closingResponse = await invokeVic(
           'cultura',
-          'closing_message',
+          'dashboard-culture',
           { type: 'closing' },
           `Gere uma mensagem cultural curta (1-2 frases) sobre foco e priorização para encerrar a criação de OKRs.`
         );

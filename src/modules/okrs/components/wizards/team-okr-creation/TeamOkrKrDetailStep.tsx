@@ -138,13 +138,15 @@ export function TeamOkrKrDetailStep({
   useEffect(() => {
     if (draftKrs.length !== krSlots.length) {
       const newDrafts: DraftTeamKr[] = krSlots.map((slot, i) => ({
+        id: draftKrs[i]?.id || `draft-${i}-${Date.now()}`,
         type: slot.type,
         title: draftKrs[i]?.title || '',
         baseline: draftKrs[i]?.baseline ?? 0,
         target: draftKrs[i]?.target ?? 0,
         unit: draftKrs[i]?.unit || '%',
         direction: draftKrs[i]?.direction || 'up',
-        ownerUserId: draftKrs[i]?.ownerUserId || '',
+        owner_user_id: draftKrs[i]?.owner_user_id || null,
+        linked_org_kr_id: draftKrs[i]?.linked_org_kr_id || null,
       }));
       onDraftKrsChange(newDrafts);
     }
@@ -189,7 +191,7 @@ export function TeamOkrKrDetailStep({
     if (!currentKr) return false;
     return (
       currentKr.title.trim().length >= 5 &&
-      currentKr.ownerUserId &&
+      currentKr.owner_user_id &&
       (currentKr.target !== currentKr.baseline)
     );
   }, [currentKr]);
@@ -197,7 +199,7 @@ export function TeamOkrKrDetailStep({
   const allKrsValid = useMemo(() => {
     return draftKrs.every(kr => 
       kr.title.trim().length >= 5 &&
-      kr.ownerUserId &&
+      kr.owner_user_id &&
       kr.target !== kr.baseline
     );
   }, [draftKrs]);
@@ -334,8 +336,8 @@ export function TeamOkrKrDetailStep({
           <div className="space-y-2">
             <Label htmlFor="kr-owner">Responsável</Label>
             <Select
-              value={currentKr.ownerUserId}
-              onValueChange={(value) => updateKrField('ownerUserId', value)}
+              value={currentKr.owner_user_id || ''}
+              onValueChange={(value) => updateKrField('owner_user_id', value)}
             >
               <SelectTrigger id="kr-owner">
                 <SelectValue placeholder="Selecione o responsável" />

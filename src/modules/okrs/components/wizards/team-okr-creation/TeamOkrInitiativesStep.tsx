@@ -102,7 +102,7 @@ export function TeamOkrInitiativesStep({
     const newInit: DraftTeamInitiative = {
       krIndex,
       name: '',
-      ownerUserId: '',
+      owner_user_id: null,
     };
     onInitiativesChange([...initiatives, newInit]);
   };
@@ -241,8 +241,8 @@ export function TeamOkrInitiativesStep({
                                   <div className="space-y-1">
                                     <Label className="text-xs">Responsável</Label>
                                     <Select
-                                      value={init.ownerUserId}
-                                      onValueChange={(value) => handleUpdateInitiative(globalIndex, 'ownerUserId', value)}
+                                      value={init.owner_user_id || ''}
+                                      onValueChange={(value) => handleUpdateInitiative(globalIndex, 'owner_user_id', value)}
                                     >
                                       <SelectTrigger>
                                         <SelectValue placeholder="Selecione" />
@@ -264,8 +264,8 @@ export function TeamOkrInitiativesStep({
                                     <Label className="text-xs">Prazo (opcional)</Label>
                                     <Input
                                       type="date"
-                                      value={init.expectedEndDate || ''}
-                                      onChange={(e) => handleUpdateInitiative(globalIndex, 'expectedEndDate', e.target.value)}
+                                      value={init.expected_end_date || ''}
+                                      onChange={(e) => handleUpdateInitiative(globalIndex, 'expected_end_date', e.target.value)}
                                     />
                                   </div>
                                 </div>

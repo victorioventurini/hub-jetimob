@@ -103,7 +103,7 @@ export function TeamOkrDependenciesStep({
 
         const response = await invokeVic(
           'alinhamento-estrategico',
-          'dependency_analysis',
+          'okr-check-alignment',
           {
             type: 'dependency-analysis',
             additionalData: { krs: krContext },
@@ -159,7 +159,7 @@ export function TeamOkrDependenciesStep({
       const newDep: DraftTeamDependency = {
         krIndex: dep.krIndex,
         description: dep.description,
-        dependsOnTeamName: dep.dependsOnTeamName,
+        resolution: 'register_risk',
       };
       
       // Check if already exists

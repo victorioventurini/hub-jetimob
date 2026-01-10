@@ -100,7 +100,7 @@ export function TeamOkrContextStep({
       try {
         const response = await invokeVic(
           'alinhamento-estrategico',
-          'strategic_context',
+          'okr-check-alignment',
           {
             type: 'org-context',
             additionalData: {

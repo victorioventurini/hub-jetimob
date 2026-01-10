@@ -69,7 +69,7 @@ export function TeamOkrRetrospectiveStep({
       try {
         const response = await invokeVic(
           'analista-kpis',
-          'retrospective_analysis',
+          'kpi-monthly-summary',
           {
             type: 'retrospective',
             additionalData: {
