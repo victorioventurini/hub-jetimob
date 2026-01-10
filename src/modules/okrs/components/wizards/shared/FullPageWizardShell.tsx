@@ -56,6 +56,10 @@ export interface FullPageWizardShellProps {
   onSaveDraft?: () => Promise<void>;
   /** Última vez que foi salvo */
   lastSavedAt?: string | null;
+  /** Se está continuando um rascunho */
+  isResumingDraft?: boolean;
+  /** Callback para descartar rascunho e começar novo */
+  onDiscardDraft?: () => Promise<void>;
   /** Se está carregando algo */
   isLoading?: boolean;
   /** Callback ao fechar/cancelar */
@@ -85,6 +89,8 @@ export function FullPageWizardShell({
   isSavingDraft = false,
   onSaveDraft,
   lastSavedAt,
+  isResumingDraft = false,
+  onDiscardDraft,
   isLoading = false,
   onClose,
   backUrl = '/wizards',
@@ -95,12 +101,30 @@ export function FullPageWizardShell({
   const navigate = useNavigate();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
+  const [showDraftBanner, setShowDraftBanner] = useState(isResumingDraft);
+  
+  // Update banner visibility when isResumingDraft changes
+  useEffect(() => {
+    if (isResumingDraft) {
+      setShowDraftBanner(true);
+    }
+  }, [isResumingDraft]);
   
   // Format last saved time
   const formatLastSaved = (date: string | null | undefined) => {
     if (!date) return null;
     const d = new Date(date);
     return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Format date for banner
+  const formatDraftDate = (date: string | null | undefined) => {
+    if (!date) return null;
+    const d = new Date(date);
+    const day = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return `${day} às ${time}`;
   };
   
   // Warn before closing tab/window if dirty
@@ -144,6 +168,23 @@ export function FullPageWizardShell({
       setIsSaving(false);
     }
   }, [onSaveDraft]);
+  
+  // Handle discard draft
+  const handleDiscardDraft = useCallback(async () => {
+    if (!onDiscardDraft) return;
+    setIsDiscarding(true);
+    try {
+      await onDiscardDraft();
+      setShowDraftBanner(false);
+    } finally {
+      setIsDiscarding(false);
+    }
+  }, [onDiscardDraft]);
+  
+  // Dismiss banner (just hides it, doesn't discard)
+  const handleDismissBanner = useCallback(() => {
+    setShowDraftBanner(false);
+  }, []);
   
   // Cancel exit
   const handleCancelExit = useCallback(() => {
@@ -226,6 +267,47 @@ export function FullPageWizardShell({
           />
         </div>
       </header>
+      
+      {/* Draft resuming banner */}
+      {showDraftBanner && isResumingDraft && (
+        <div className="bg-muted border-b">
+          <div className="container py-2 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">📝</span>
+              <span>
+                Continuando rascunho salvo
+                {lastSavedAt && (
+                  <span className="text-muted-foreground"> em {formatDraftDate(lastSavedAt)}</span>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {onDiscardDraft && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDiscardDraft}
+                  disabled={isDiscarding}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2 text-xs"
+                >
+                  {isDiscarding ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : null}
+                  Descartar e começar novo
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDismissBanner}
+                className="h-6 w-6"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Main content */}
       <div className="flex-1 container py-6">
