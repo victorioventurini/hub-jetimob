@@ -335,6 +335,18 @@ export interface TicketFilters {
   created_by_user_id?: string;
   overdue?: boolean;
   search?: string;
+  // Pagination
+  page?: number;
+  pageSize?: number;
+}
+
+// Response type for paginated ticket queries
+export interface PaginatedTicketsResponse {
+  data: Ticket[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 // Dados para criar ticket
