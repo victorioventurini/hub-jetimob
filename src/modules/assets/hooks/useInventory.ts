@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
+import { assertSupabaseClient } from "@/lib/supabaseGuard";
 import type { AssetInventory, AssetMovement, AssetCategory, AssetMovementType } from "../types";
 
 export function useInventory() {
@@ -225,7 +226,8 @@ export function useInventory() {
   // Criar categoria
   const createCategoryMutation = useMutation({
     mutationFn: async (data: { name: string; parent_id?: string; description?: string }) => {
-      const { data: category, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createCategory");
+      const { data: category, error } = await client
         .from("asset_categories")
         .insert({
           bu_id: buId!,
@@ -264,6 +266,7 @@ export function useInventory() {
       authorized_by_user_id?: string;
       due_at?: string;
     }) => {
+      const client = assertSupabaseClient(supabase, "createItem");
       const { assigned_to_user_id, authorized_by_user_id, due_at, ...itemData } = data;
 
       // Create the item
@@ -287,13 +290,13 @@ export function useInventory() {
         insertData.current_location_id = itemData.home_location_id;
       }
 
-      const { data: item, error } = await supabase.from("asset_inventory").insert(insertData).select().single();
+      const { data: item, error } = await client.from("asset_inventory").insert(insertData).select().single();
 
       if (error) throw error;
 
       // If assigned to user, create checkout movement
       if (assigned_to_user_id && item) {
-        await supabase.from("asset_movements").insert({
+        await client.from("asset_movements").insert({
           bu_id: buId!,
           asset_id: item.id,
           movement_type: "checkout",
@@ -333,7 +336,8 @@ export function useInventory() {
   // Atualizar item
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<AssetInventory> & { id: string }) => {
-      const { data: item, error } = await supabase
+      const client = assertSupabaseClient(supabase, "updateItem");
+      const { data: item, error } = await client
         .from("asset_inventory")
         .update({
           ...data,
@@ -363,7 +367,8 @@ export function useInventory() {
   // Soft delete item with optimistic update
   const deleteItemMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const client = assertSupabaseClient(supabase, "deleteItem");
+      const { error } = await client
         .from("asset_inventory")
         .update({
           deleted_at: new Date().toISOString(),
@@ -414,7 +419,8 @@ export function useInventory() {
       due_at?: string;
       notes?: string;
     }) => {
-      const { data: movement, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createMovement");
+      const { data: movement, error } = await client
         .from("asset_movements")
         .insert({
           bu_id: buId!,

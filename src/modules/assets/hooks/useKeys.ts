@@ -1,9 +1,10 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { assertSupabaseClient } from "@/lib/supabaseGuard";
 import type { AssetClaviculary, AssetHook, AssetKeyring, AssetKey, AssetKeyMovement, KeyMovementType } from "../types";
 
 // Helper to format profile name
@@ -14,14 +15,15 @@ export function useKeys() {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
 
   // Buscar claviculários
   const { data: clavicularies = [], isLoading: isLoadingClavicularies, refetch: refetchClavicularies } = useQuery({
     queryKey: ["asset-clavicularies", buId],
-    enabled: !!buId,
+    enabled: !!buId && !!supabase,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_clavicularies")
         .select("*")
@@ -48,6 +50,7 @@ export function useKeys() {
 
   // Buscar ganchos de um claviculário
   const getHooks = useCallback(async (clavicularyId: string): Promise<AssetHook[]> => {
+    if (!supabase) return [];
     const { data, error } = await supabase
       .from("asset_hooks")
       .select("*")
@@ -61,8 +64,9 @@ export function useKeys() {
   // Buscar chaveiros
   const { data: keyrings = [], isLoading: isLoadingKeyrings, refetch: refetchKeyrings } = useQuery({
     queryKey: ["asset-keyrings", buId],
-    enabled: !!buId,
+    enabled: !!buId && !!supabase,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_keyrings")
         .select(`
@@ -98,8 +102,9 @@ export function useKeys() {
   // Buscar chaves
   const { data: keys = [], isLoading: isLoadingKeys, refetch: refetchKeys } = useQuery({
     queryKey: ["asset-keys", buId],
-    enabled: !!buId,
+    enabled: !!buId && !!supabase,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_keys")
         .select(`
@@ -117,6 +122,7 @@ export function useKeys() {
 
   // Buscar movimentações de um chaveiro
   const getKeyMovements = async (keyringId: string): Promise<AssetKeyMovement[]> => {
+    if (!supabase) return [];
     const { data, error } = await supabase
       .from("asset_key_movements")
       .select(`
@@ -152,7 +158,8 @@ export function useKeys() {
   // Criar claviculário
   const createClavicularyMutation = useMutation({
     mutationFn: async (data: { name: string; location_id?: string; notes?: string }) => {
-      const { data: claviculary, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createClaviculary");
+      const { data: claviculary, error } = await client
         .from("asset_clavicularies")
         .insert({
           bu_id: buId!,
@@ -177,7 +184,8 @@ export function useKeys() {
   // Criar gancho
   const createHookMutation = useMutation({
     mutationFn: async (data: { claviculary_id: string; hook_number: number; notes?: string }) => {
-      const { data: hook, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createHook");
+      const { data: hook, error } = await client
         .from("asset_hooks")
         .insert(data)
         .select()
@@ -202,12 +210,13 @@ export function useKeys() {
   // Criar múltiplos ganchos
   const createHooksMutation = useMutation({
     mutationFn: async ({ clavicularyId, count }: { clavicularyId: string; count: number }) => {
+      const client = assertSupabaseClient(supabase, "createHooks");
       const hooks = Array.from({ length: count }, (_, i) => ({
         claviculary_id: clavicularyId,
         hook_number: i + 1,
       }));
 
-      const { error } = await supabase
+      const { error } = await client
         .from("asset_hooks")
         .insert(hooks);
 
@@ -225,7 +234,8 @@ export function useKeys() {
   // Criar chaveiro
   const createKeyringMutation = useMutation({
     mutationFn: async (data: { tag_number: string; claviculary_id: string; hook_id: string; notes?: string }) => {
-      const { data: keyring, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createKeyring");
+      const { data: keyring, error } = await client
         .from("asset_keyrings")
         .insert({
           bu_id: buId!,
@@ -240,7 +250,7 @@ export function useKeys() {
 
       // Se vinculado a um hook, marcar como ocupado
       if (data.hook_id) {
-        await supabase
+        await client
           .from("asset_hooks")
           .update({ occupied: true })
           .eq("id", data.hook_id);
@@ -265,7 +275,8 @@ export function useKeys() {
   // Criar chave
   const createKeyMutation = useMutation({
     mutationFn: async (data: { tag_number: string; description?: string; access_type?: 'door' | 'padlock' | 'gate' | 'other'; keyring_id?: string; notes?: string }) => {
-      const { data: key, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createKey");
+      const { data: key, error } = await client
         .from("asset_keys")
         .insert({
           bu_id: buId!,
@@ -305,10 +316,12 @@ export function useKeys() {
       due_at?: string;
       notes?: string;
     }) => {
+      const client = assertSupabaseClient(supabase, "createKeyMovement");
+      
       // Validar retorno: hook_number deve bater com tag_number
       if (data.movement_type === 'return' && data.to_hook_id) {
         const keyring = keyrings.find(k => k.id === data.keyring_id);
-        const { data: hook } = await supabase
+        const { data: hook } = await client
           .from("asset_hooks")
           .select("hook_number")
           .eq("id", data.to_hook_id)
@@ -319,7 +332,7 @@ export function useKeys() {
         }
       }
 
-      const { data: movement, error } = await supabase
+      const { data: movement, error } = await client
         .from("asset_key_movements")
         .insert({
           bu_id: buId!,
