@@ -194,7 +194,7 @@ export default function LeaderPrepPage() {
           <LeaderOverviewStep
             teamName={selectedTeam.name}
             cycleName={quarterlyCycle?.name || ''}
-            metrics={metrics || null}
+            metrics={metrics?.metrics || null}
             isLoading={isLoadingMetrics}
             onContinue={goNext}
           />
