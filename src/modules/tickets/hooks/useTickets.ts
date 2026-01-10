@@ -200,13 +200,34 @@ export function useCreateTicket(profileId: string | null) {
 
       // Add initial message if provided with profileId
       if (data.initial_message && Object.keys(data.initial_message).length > 0) {
-        await supabase.from("ticket_messages").insert({
-          bu_id: buId,
-          ticket_id: ticket.id,
-          author_type: "internal_user" as const,
-          author_user_id: profileId,
-          body_richtext: data.initial_message,
-        } as any);
+        const { data: message, error: messageError } = await supabase
+          .from("ticket_messages")
+          .insert({
+            bu_id: buId,
+            ticket_id: ticket.id,
+            author_type: "internal_user" as const,
+            author_user_id: profileId,
+            body_richtext: data.initial_message,
+          } as any)
+          .select("id")
+          .single();
+
+        // Insert mentions for initial message
+        if (!messageError && message && data.initial_message_mentions && data.initial_message_mentions.length > 0) {
+          const mentionInserts = data.initial_message_mentions
+            .filter((m) => m.user_id || m.contact_id)
+            .map((m) => ({
+              bu_id: buId,
+              ticket_id: ticket.id,
+              message_id: message.id,
+              mentioned_user_id: m.user_id || null,
+              mentioned_contact_id: m.contact_id || null,
+            }));
+
+          if (mentionInserts.length > 0) {
+            await supabase.from("ticket_mentions").insert(mentionInserts);
+          }
+        }
       }
 
       // Add additional participants

@@ -8127,6 +8127,24 @@ export type Database = {
           user_id: string
         }[]
       }
+      search_mention_candidates: {
+        Args: {
+          p_bu_id: string
+          p_limit?: number
+          p_partner_company_id?: string
+          p_search_term?: string
+        }
+        Returns: {
+          display_name: string
+          email: string
+          entity_id: string
+          entity_type: string
+          id: string
+          partner_company_name: string
+          photo_url: string
+          team_name: string
+        }[]
+      }
       send_test_notification: {
         Args: {
           p_bu_id: string

@@ -381,6 +381,8 @@ export const queryKeys = {
       ['users', 'select-options', buId] as const,
     mentionCandidates: (buId: string | null, q: string) =>
       ['users', 'mention-candidates', buId, { q }] as const,
+    ticketMentionCandidates: (buId: string | null, partnerCompanyId: string | null, q: string) =>
+      ['users', 'ticket-mention-candidates', buId, partnerCompanyId, { q }] as const,
     globalList: (filters?: { q?: string; buId?: string; onboardingStatus?: string }) =>
       ['users', 'global-list', filters] as const,
     globalDetail: (profileId: string) =>
