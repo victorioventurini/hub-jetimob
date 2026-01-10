@@ -18,6 +18,7 @@
 - [H. Checklist de PR](#h-checklist-de-pr)
 - [I. Anti-patterns (Proibidos)](#i-anti-patterns-proibidos)
 - [J. User Directory Global](#j-user-directory-global)
+- [L. Layout e Estados de Página](#l-layout-e-estados-de-página)
 
 ---
 
@@ -922,6 +923,136 @@ Todos os agentes de IA que geram saudações devem:
 2. Se não, extrair primeiro token de `user.full_name` ou `user.display_name`
 3. Nunca usar nome completo em saudações
 4. Usar saudação neutra se nome não estiver disponível
+
+---
+
+## L. Layout e Estados de Página
+
+### L.1 Regra de Ouro: HubLayout Obrigatório
+
+**Toda página top-level DEVE renderizar `HubLayout` em TODOS os estados possíveis:**
+
+- Estado de loading
+- Estado de erro
+- Estado de "não encontrado"
+- Estado de sucesso
+
+Isso garante que o menu lateral e header estejam sempre visíveis, proporcionando UX consistente.
+
+### L.2 Padrão para Páginas Top-Level
+
+```typescript
+// ✅ CORRETO: HubLayout em todos os estados
+export default function MyDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const { data, isLoading, error } = useMyData(id);
+
+  // Loading state - COM HubLayout
+  if (isLoading) {
+    return (
+      <HubLayout>
+        <LoadingState text="Carregando..." />
+      </HubLayout>
+    );
+  }
+
+  // Error state - COM HubLayout
+  if (error) {
+    return (
+      <HubLayout>
+        <ErrorState 
+          title="Erro ao carregar"
+          description="Não foi possível carregar os dados."
+        />
+      </HubLayout>
+    );
+  }
+
+  // Not found state - COM HubLayout
+  if (!data) {
+    return (
+      <HubLayout>
+        <ResourceNotFoundState
+          resourceType="item"
+          resourceId={id}
+          moduleRoot="/my-module"
+        />
+      </HubLayout>
+    );
+  }
+
+  // Success state - COM HubLayout
+  return (
+    <HubLayout>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* conteúdo da página */}
+      </div>
+    </HubLayout>
+  );
+}
+```
+
+### L.3 Anti-pattern: Estados sem Layout
+
+```typescript
+// ❌ PROIBIDO: Retornar estado sem HubLayout
+if (isLoading) {
+  return <LoadingState text="Carregando..." />; // Perde menu e header!
+}
+
+if (!data) {
+  return (
+    <div className="p-6">
+      <ErrorState title="Erro" /> {/* Perde menu e header! */}
+    </div>
+  );
+}
+```
+
+### L.4 Exceções Permitidas
+
+Componentes que são **filhos** de páginas já com layout podem retornar estados diretamente:
+
+```typescript
+// ✅ OK para componentes internos (ex: tabs, views dentro de páginas)
+function MyTabContent() {
+  if (isLoading) {
+    return <LoadingState text="Carregando..." />; // OK - pai já tem layout
+  }
+  // ...
+}
+
+// Usado em:
+function MySettingsPage() {
+  return (
+    <HubLayout> {/* Layout está no nível de página */}
+      <Tabs>
+        <TabsContent value="tab1">
+          <MyTabContent /> {/* Componente interno, pode retornar direto */}
+        </TabsContent>
+      </Tabs>
+    </HubLayout>
+  );
+}
+```
+
+### L.5 Componentes de Estado Disponíveis
+
+| Componente | Uso | Arquivo |
+|------------|-----|---------|
+| `LoadingState` | Carregamento de dados | `src/components/ui/loading-state.tsx` |
+| `ErrorState` | Erros genéricos com retry | `src/components/ui/error-state.tsx` |
+| `ResourceNotFoundState` | Recurso não encontrado (404) | `src/components/ui/resource-not-found-state.tsx` |
+| `EmptyState` | Lista vazia (não é erro) | `src/components/ui/empty-state.tsx` |
+
+### L.6 Checklist para Novas Páginas
+
+- [ ] `HubLayout` envolve estado de loading
+- [ ] `HubLayout` envolve estado de erro
+- [ ] `HubLayout` envolve estado de "não encontrado"
+- [ ] `HubLayout` envolve estado de sucesso
+- [ ] Componente usa `usePageTitle()` para título dinâmico
+- [ ] Botão "Voltar" usa `useSafeBack()` ou link apropriado
 
 ---
 

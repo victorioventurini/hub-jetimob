@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { useBu } from "@/contexts/BuContext";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -31,23 +32,30 @@ export default function TeamContributionPage() {
   }, [data?.contributions, statusFilter]);
 
   if (isLoading) {
-    return <LoadingState text="Carregando contribuições..." className="min-h-[400px]" />;
+    return (
+      <HubLayout>
+        <LoadingState text="Carregando contribuições..." className="min-h-[400px]" />
+      </HubLayout>
+    );
   }
 
   if (error || !data) {
     return (
-      <div className="p-6">
-        <ErrorState
-          title="Erro ao carregar dados"
-          description="Não foi possível carregar a visão de contribuição do time."
-          onBack={goBack}
-        />
-      </div>
+      <HubLayout>
+        <div className="p-6">
+          <ErrorState
+            title="Erro ao carregar dados"
+            description="Não foi possível carregar a visão de contribuição do time."
+            onBack={goBack}
+          />
+        </div>
+      </HubLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <HubLayout>
+      <div className="p-6 space-y-6">
       {/* Back Button */}
       <Button 
         variant="ghost" 
@@ -106,6 +114,7 @@ export default function TeamContributionPage() {
           <TeamContributionInsights data={data} />
         </div>
       </div>
-    </div>
+      </div>
+    </HubLayout>
   );
 }
