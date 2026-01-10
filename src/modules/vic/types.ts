@@ -28,7 +28,8 @@ export type VicActionContext =
   | "comms-pre-publish"
   | "onboarding-welcome"
   | "onboarding-questions"
-  | "decision-structure";
+  | "decision-structure"
+  | "vic-test-page";
 
 export interface VicContext {
   type: string;
