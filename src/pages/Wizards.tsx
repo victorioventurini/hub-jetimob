@@ -30,6 +30,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
 import { useIdentity } from '@/hooks/useIdentity';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
@@ -173,7 +174,8 @@ export default function WizardsPage() {
 
   const { profile, isAdmin, role } = useAuth();
   const { has } = usePermissions();
-  const { isLeader, teams: leaderTeams } = useLeaderTeams();
+  const { isLeader, teams: leaderTeams, isLoading: isLoadingLeaderTeams } = useLeaderTeams();
+  const { teams: allTeams, isLoading: isLoadingAllTeams } = useHierarchicalTeamList();
   const { profileId } = useIdentity();
   
   // Check if user is super_admin
@@ -189,12 +191,21 @@ export default function WizardsPage() {
   const [collaboratorUserId, setCollaboratorUserId] = useState<string | null>(null);
 
   // Auto-select first team when wizard opens if none selected
+  // For admins: use allTeams if not a leader
   useEffect(() => {
-    if (wizardState.value && !selectedTeam && leaderTeams?.length) {
-      const firstTeam = leaderTeams[0];
-      setSelectedTeam({ id: firstTeam.team_id, name: firstTeam.team_name });
+    if (wizardState.value && !selectedTeam) {
+      // First try leader teams
+      if (leaderTeams?.length) {
+        const firstTeam = leaderTeams[0];
+        setSelectedTeam({ id: firstTeam.team_id, name: firstTeam.team_name });
+      } 
+      // For admins, fallback to all teams
+      else if ((isSuperAdmin || isAdmin) && allTeams?.length) {
+        const firstTeam = allTeams[0];
+        setSelectedTeam({ id: firstTeam.id, name: firstTeam.name });
+      }
     }
-  }, [wizardState.value, selectedTeam, leaderTeams]);
+  }, [wizardState.value, selectedTeam, leaderTeams, allTeams, isSuperAdmin, isAdmin]);
 
   // Determine user role hierarchy
   const userRoles = useMemo(() => {
@@ -249,15 +260,19 @@ export default function WizardsPage() {
 
     // For leader wizards, use first team if available and none selected
     if (wizard?.requiresTeam && !selectedTeam) {
-      const firstTeam = leaderTeams?.[0];
-      if (firstTeam) {
-        setSelectedTeam({ id: firstTeam.team_id, name: firstTeam.team_name });
+      const firstLeaderTeam = leaderTeams?.[0];
+      const firstAnyTeam = allTeams?.[0];
+      
+      if (firstLeaderTeam) {
+        setSelectedTeam({ id: firstLeaderTeam.team_id, name: firstLeaderTeam.team_name });
+      } else if ((isSuperAdmin || isAdmin) && firstAnyTeam) {
+        setSelectedTeam({ id: firstAnyTeam.id, name: firstAnyTeam.name });
       }
     }
 
     // Update URL state (only wizard ID)
     wizardState.set(wizardId);
-  }, [selectedTeam, leaderTeams, wizardState]);
+  }, [selectedTeam, leaderTeams, allTeams, wizardState, isSuperAdmin, isAdmin]);
 
 
   // Handle wizard close
