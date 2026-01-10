@@ -179,26 +179,19 @@ export default function WizardsPage() {
   // Check if user is super_admin
   const isSuperAdmin = role === 'super_admin';
   
-  // URL State - shareable wizard links
+  // URL State - only tracks which wizard is open
   const wizardState = useUrlState<string | null>({ key: 'wizard', defaultValue: null }, { navigationMode: 'replace' });
-  const teamIdState = useUrlState<string | null>({ key: 'team', defaultValue: null }, { navigationMode: 'replace' });
-  const teamNameState = useUrlState<string | null>({ key: 'teamName', defaultValue: null }, { navigationMode: 'replace' });
 
-  // Selected team for leader wizards
+  // Selected team for leader wizards (local state only, not in URL)
   const [selectedTeam, setSelectedTeam] = useState<{ id: string; name: string } | null>(null);
 
-  // Sync selectedTeam from URL on mount
+  // Auto-select first team when wizard opens if none selected
   useEffect(() => {
-    if (teamIdState.value && teamNameState.value) {
-      setSelectedTeam({ id: teamIdState.value, name: decodeURIComponent(teamNameState.value) });
-    } else if (teamIdState.value && leaderTeams?.length) {
-      // Try to find team name from leaderTeams
-      const foundTeam = leaderTeams.find(t => t.team_id === teamIdState.value);
-      if (foundTeam) {
-        setSelectedTeam({ id: foundTeam.team_id, name: foundTeam.team_name });
-      }
+    if (wizardState.value && !selectedTeam && leaderTeams?.length) {
+      const firstTeam = leaderTeams[0];
+      setSelectedTeam({ id: firstTeam.team_id, name: firstTeam.team_name });
     }
-  }, [teamIdState.value, teamNameState.value, leaderTeams]);
+  }, [wizardState.value, selectedTeam, leaderTeams]);
 
   // Determine user role hierarchy
   const userRoles = useMemo(() => {
@@ -247,34 +240,22 @@ export default function WizardsPage() {
   // Handle wizard open
   const handleWizardOpen = useCallback((wizardId: string, wizard?: WizardDefinition) => {
     // For leader wizards, use first team if available and none selected
-    let teamToUse = selectedTeam;
     if (wizard?.requiresTeam && !selectedTeam) {
       const firstTeam = leaderTeams?.[0];
       if (firstTeam) {
-        teamToUse = { id: firstTeam.team_id, name: firstTeam.team_name };
+        setSelectedTeam({ id: firstTeam.team_id, name: firstTeam.team_name });
       }
     }
 
-    // Update local state FIRST so wizard can render with the team
-    if (teamToUse) {
-      setSelectedTeam(teamToUse);
-    }
-
-    // Update URL state
+    // Update URL state (only wizard ID)
     wizardState.set(wizardId);
-    if (teamToUse) {
-      teamIdState.set(teamToUse.id);
-      teamNameState.set(encodeURIComponent(teamToUse.name));
-    }
-  }, [selectedTeam, leaderTeams, wizardState, teamIdState, teamNameState]);
+  }, [selectedTeam, leaderTeams, wizardState]);
 
   // Handle wizard close
-  const handleWizardClose = useCallback((_wizardId: string) => {
-    // Always clear URL state on close (guards here can lead to stuck modals)
+  const handleWizardClose = useCallback(() => {
     wizardState.set(null);
-    teamIdState.set(null);
-    teamNameState.set(null);
-  }, [wizardState, teamIdState, teamNameState]);
+    setSelectedTeam(null);
+  }, [wizardState]);
 
   // Derived wizard open states from URL
   const collaboratorWizardOpen = wizardState.value === 'collaborator-checkin';
@@ -366,7 +347,7 @@ export default function WizardsPage() {
           <CollaboratorWizard
             open={collaboratorWizardOpen}
             onOpenChange={(open) => {
-              if (!open) handleWizardClose('collaborator-checkin');
+              if (!open) handleWizardClose();
             }}
           />
         )}
@@ -374,13 +355,11 @@ export default function WizardsPage() {
         {leaderPrepWizardOpen && selectedTeam && (
           <LeaderPrepWizard
             open={leaderPrepWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose('leader-prep')}
+            onOpenChange={(open) => !open && handleWizardClose()}
             teamId={selectedTeam.id}
             teamName={selectedTeam.name}
             onTeamChange={(teamId, teamName) => {
               setSelectedTeam({ id: teamId, name: teamName });
-              teamIdState.set(teamId);
-              teamNameState.set(encodeURIComponent(teamName));
             }}
           />
         )}
@@ -388,13 +367,11 @@ export default function WizardsPage() {
         {teamCheckinWizardOpen && selectedTeam && (
           <TeamCheckinWizard
             open={teamCheckinWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose('team-checkin')}
+            onOpenChange={(open) => !open && handleWizardClose()}
             teamId={selectedTeam.id}
             teamName={selectedTeam.name}
             onTeamChange={(teamId, teamName) => {
               setSelectedTeam({ id: teamId, name: teamName });
-              teamIdState.set(teamId);
-              teamNameState.set(encodeURIComponent(teamName));
             }}
           />
         )}
@@ -402,27 +379,25 @@ export default function WizardsPage() {
         {managersWizardOpen && (
           <ManagersCheckinWizard
             open={managersWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose('managers-checkin')}
+            onOpenChange={(open) => !open && handleWizardClose()}
           />
         )}
 
         {clevelWizardOpen && (
           <CLevelCheckinWizard
             open={clevelWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose('clevel-checkin')}
+            onOpenChange={(open) => !open && handleWizardClose()}
           />
         )}
 
         {teamOkrCreationWizardOpen && selectedTeam && (
           <TeamOkrCreationWizard
             open={teamOkrCreationWizardOpen}
-            onOpenChange={(open) => !open && handleWizardClose('team-okr-creation')}
+            onOpenChange={(open) => !open && handleWizardClose()}
             teamId={selectedTeam.id}
             teamName={selectedTeam.name}
             onTeamChange={(teamId, teamName) => {
               setSelectedTeam({ id: teamId, name: teamName });
-              teamIdState.set(teamId);
-              teamNameState.set(encodeURIComponent(teamName));
             }}
           />
         )}
