@@ -26,6 +26,7 @@ import {
   Cake,
   Instagram,
   MessageCircle,
+  MessageSquare,
 } from "lucide-react";
 import { PhoneLink } from "@/components/ui/phone-link";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -523,6 +524,19 @@ export default function UserProfile() {
                     className="text-primary hover:underline truncate"
                   >
                     {profile.work_email}
+                  </a>
+                </div>
+
+                {/* Google Chat */}
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <a 
+                    href={`https://chat.google.com/dm/${profile.work_email}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Abrir no Google Chat
                   </a>
                 </div>
 
