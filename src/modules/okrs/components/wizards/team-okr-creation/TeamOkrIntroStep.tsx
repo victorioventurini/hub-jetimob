@@ -134,7 +134,7 @@ export function TeamOkrIntroStep({
           ) : (
             <>
               <h2 className="text-2xl font-bold mb-2">
-                <VicTypewriterText text={greeting} speed={30} />
+                <VicTypewriterText text={greeting} speed={36} priority={0} />
               </h2>
               <p className="text-lg text-muted-foreground max-w-md">
                 Vamos definir os OKRs do <span className="font-medium text-foreground">{teamName}</span>
@@ -162,7 +162,7 @@ export function TeamOkrIntroStep({
                 ) : (
                   <>
                     <p className="text-base leading-relaxed">
-                      <VicTypewriterText text={message} speed={20} />
+                      <VicTypewriterText text={message} speed={24} priority={1} />
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />

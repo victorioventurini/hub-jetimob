@@ -3,11 +3,15 @@
  * 
  * Usado para todos os textos gerados por IA,
  * simulando a digitação letra por letra.
+ * 
+ * Suporta sequenciamento via VicTypewriterQueueProvider para evitar
+ * múltiplos blocos animando simultaneamente.
  */
 
-import { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { useState, useEffect, useCallback, memo, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useVicTypewriterQueue } from '../contexts/VicTypewriterQueue';
 
 // ============================================================
 // TYPES
@@ -20,7 +24,7 @@ export interface VicTypewriterTextProps {
   speed?: number;
   /** Callback quando a digitação termina */
   onComplete?: () => void;
-  /** Se deve iniciar a digitação imediatamente */
+  /** Se deve iniciar a digitação imediatamente (ou aguardar fila) */
   autoStart?: boolean;
   /** Classes CSS adicionais */
   className?: string;
@@ -30,6 +34,8 @@ export interface VicTypewriterTextProps {
   cursorHeight?: string;
   /** Se deve mostrar a assinatura "— Vic" ao final */
   showSignature?: boolean;
+  /** Prioridade na fila (menor = primeiro). Default: 0 */
+  priority?: number;
 }
 
 // ============================================================
@@ -38,32 +44,64 @@ export interface VicTypewriterTextProps {
 
 function VicTypewriterTextComponent({
   text,
-  speed = 25,
+  speed = 30, // Aumentado de 25 para 30 (~20% mais lento)
   onComplete,
   autoStart = true,
   className,
   cursorClassName,
   cursorHeight = 'h-4',
   showSignature = false,
+  priority = 0,
 }: VicTypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [canStart, setCanStart] = useState(false);
+  
+  const queue = useVicTypewriterQueue();
+  const instanceId = useId();
+  const hasRegistered = useRef(false);
+  const textRef = useRef(text);
+  
+  // Update text ref
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
 
   const startTyping = useCallback(() => {
-    if (!text || isTyping) return;
+    if (!textRef.current || isTyping) return;
     
     setDisplayedText('');
     setIsTyping(true);
     setIsComplete(false);
-  }, [text, isTyping]);
-
-  // Auto-start if enabled
+  }, [isTyping]);
+  
+  // Register with queue if available
   useEffect(() => {
-    if (autoStart && text && !isTyping && !isComplete) {
+    if (!autoStart || !text || hasRegistered.current) return;
+    
+    if (queue) {
+      hasRegistered.current = true;
+      const cleanup = queue.register(instanceId, priority, () => {
+        setCanStart(true);
+      });
+      
+      return () => {
+        cleanup();
+        hasRegistered.current = false;
+      };
+    } else {
+      // No queue provider - start immediately
+      setCanStart(true);
+    }
+  }, [autoStart, text, queue, instanceId, priority]);
+  
+  // Start typing when canStart becomes true
+  useEffect(() => {
+    if (canStart && text && !isTyping && !isComplete) {
       startTyping();
     }
-  }, [autoStart, text, isTyping, isComplete, startTyping]);
+  }, [canStart, text, isTyping, isComplete, startTyping]);
 
   // Typing effect
   useEffect(() => {
@@ -78,22 +116,27 @@ function VicTypewriterTextComponent({
         setIsTyping(false);
         setIsComplete(true);
         clearInterval(typingInterval);
+        
+        // Notify queue that we're done
+        if (queue) {
+          queue.notifyComplete(instanceId);
+        }
+        
         onComplete?.();
       }
     }, speed);
 
     return () => clearInterval(typingInterval);
-  }, [text, speed, isTyping, onComplete]);
+  }, [text, speed, isTyping, onComplete, queue, instanceId]);
 
   // Reset when text changes
   useEffect(() => {
     setDisplayedText('');
     setIsTyping(false);
     setIsComplete(false);
-    if (autoStart) {
-      startTyping();
-    }
-  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+    setCanStart(false);
+    hasRegistered.current = false;
+  }, [text]);
 
   return (
     <span className={cn('inline', className)}>
@@ -148,7 +191,7 @@ export interface VicTypewriterBlockProps {
 
 export function VicTypewriterBlock({
   text,
-  speed = 20,
+  speed = 24, // Aumentado de 20 para 24 (~20% mais lento)
   onComplete,
   className,
   showSignature = true,
@@ -265,13 +308,13 @@ export function VicStreamingText({
 
         // Alvo: completar rápido quando veio tudo de uma vez,
         // e acompanhar suave quando está em streaming.
-        const targetTicks = isStreaming ? 12 : 80;
+        const targetTicks = isStreaming ? 15 : 100; // Aumentado para ~20% mais lento
         const step = Math.max(1, Math.ceil(remaining / targetTicks));
 
         const nextLen = Math.min(text.length, current.length + step);
         return text.slice(0, nextLen);
       });
-    }, 12);
+    }, 15); // Aumentado de 12 para 15 (~20% mais lento)
 
     return () => {
       if (intervalRef.current) {

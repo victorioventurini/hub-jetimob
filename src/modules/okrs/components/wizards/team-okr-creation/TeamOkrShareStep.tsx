@@ -259,7 +259,7 @@ export function TeamOkrShareStep({
                   {reflectionQuestions.map((q, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <span className="text-primary font-medium">{i + 1}.</span>
-                      <VicTypewriterText text={q} speed={15} />
+                      <VicTypewriterText text={q} speed={18} priority={i} />
                     </li>
                   ))}
                 </ul>
@@ -274,7 +274,7 @@ export function TeamOkrShareStep({
                 <Quote className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm italic">
-                    <VicTypewriterText text={closingMessage} speed={20} />
+                    <VicTypewriterText text={closingMessage} speed={24} priority={reflectionQuestions.length} />
                   </p>
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />

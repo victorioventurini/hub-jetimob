@@ -38,6 +38,9 @@ import { TeamOkrDependenciesStep } from '@/modules/okrs/components/wizards/team-
 import { TeamOkrInitiativesStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrInitiativesStep';
 import { TeamOkrShareStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrShareStep';
 
+// Typewriter queue for sequential AI text animations
+import { VicTypewriterQueueProvider } from '@/modules/vic';
+
 // Loading/Error states
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -454,33 +457,35 @@ export default function OkrCreationPage() {
   };
   
   return (
-    <FullPageWizardShell
-      title="Criar OKRs do Time"
-      subtitle="Defina objetivos e resultados-chave com alinhamento estratégico"
-      steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
-      currentStepId={draft.currentStep}
-      completedSteps={completedSteps}
-      onStepChange={goToStep}
-      isDirty={isDirty}
-      isSavingDraft={isSaving}
-      onSaveDraft={handleSaveDraft}
-      lastSavedAt={lastSavedAt}
-      isResumingDraft={isResumingDraft}
-      onDiscardDraft={handleDiscardDraft}
-      isLoading={createBundle.isPending}
-      onClose={handleClose}
-      backUrl="/wizards"
-      adminContextSwitcher={
-        <HierarchyContextSwitcher
-          type="team"
-          currentLabel={selectedTeam.name}
-          selectedId={teamIdParam}
-          onSelect={handleTeamChange}
-          isLoading={isLoadingTeams}
-        />
-      }
-    >
-      {renderStepContent()}
-    </FullPageWizardShell>
+    <VicTypewriterQueueProvider>
+      <FullPageWizardShell
+        title="Criar OKRs do Time"
+        subtitle="Defina objetivos e resultados-chave com alinhamento estratégico"
+        steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
+        currentStepId={draft.currentStep}
+        completedSteps={completedSteps}
+        onStepChange={goToStep}
+        isDirty={isDirty}
+        isSavingDraft={isSaving}
+        onSaveDraft={handleSaveDraft}
+        lastSavedAt={lastSavedAt}
+        isResumingDraft={isResumingDraft}
+        onDiscardDraft={handleDiscardDraft}
+        isLoading={createBundle.isPending}
+        onClose={handleClose}
+        backUrl="/wizards"
+        adminContextSwitcher={
+          <HierarchyContextSwitcher
+            type="team"
+            currentLabel={selectedTeam.name}
+            selectedId={teamIdParam}
+            onSelect={handleTeamChange}
+            isLoading={isLoadingTeams}
+          />
+        }
+      >
+        {renderStepContent()}
+      </FullPageWizardShell>
+    </VicTypewriterQueueProvider>
   );
 }

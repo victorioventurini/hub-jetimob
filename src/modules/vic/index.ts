@@ -5,6 +5,7 @@ export * from "./types";
 
 // Context
 export { VicProvider, useVic } from "./contexts/VicContext";
+export { VicTypewriterQueueProvider, useVicTypewriterQueue } from "./contexts/VicTypewriterQueue";
 
 // Hooks
 export { useVicAgent, useVicEnabled, useVicConfig, useVicAgentActivations } from "./hooks/useVicAgent";

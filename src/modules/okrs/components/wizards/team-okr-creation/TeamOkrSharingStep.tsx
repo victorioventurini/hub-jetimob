@@ -185,7 +185,7 @@ export function TeamOkrSharingStep({
               />
             ) : aiInsight ? (
               <p className="text-sm text-foreground/80">
-                <VicTypewriterText text={aiInsight} speed={20} />
+                <VicTypewriterText text={aiInsight} speed={24} priority={0} />
               </p>
             ) : (
               <p className="text-sm text-foreground/80">
