@@ -1,4 +1,4 @@
-// Users page with BU filtering
+// Users page with BU filtering and server-side pagination
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -47,7 +47,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
-import { useUrlState } from "@/shared/url";
+import { UrlPagination } from "@/shared/filters";
+import { useUrlState, parsers } from "@/shared/url";
 import { UserHoverCard } from "@/components/user/UserHoverCard";
 
 import { useDeleteProfile, useTransferDependencies } from "@/hooks/useProfiles";
@@ -100,18 +101,40 @@ export default function UsersPage() {
   // Admin de BU ou super_admin podem gerenciar usuários via permission key
   const canManageUsers = isWildcard || has("users.profile.manage:bu");
   
-  // URL State - object API
+  // URL State - object API with pagination
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
   const searchQuery = searchState.value;
-  const setSearchQuery = searchState.set;
   
   const teamFilterState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   const teamFilter = teamFilterState.value;
-  const setTeamFilter = teamFilterState.set;
   
   const statusFilterState = useUrlState<string>({ key: 'status', defaultValue: 'active' });
   const statusFilter = statusFilterState.value;
-  const setStatusFilter = statusFilterState.set;
+  
+  // Pagination URL state
+  const pageState = useUrlState<number>({ key: "page", defaultValue: 1, parse: parsers.number });
+  const pageSizeState = useUrlState<number>({ key: "pageSize", defaultValue: 25, parse: parsers.number });
+  const page = pageState.value;
+  const pageSize = pageSizeState.value;
+  
+  // Handlers that reset page
+  const setSearchQuery = (v: string) => {
+    searchState.set(v);
+    pageState.set(1);
+  };
+  const setTeamFilter = (v: string) => {
+    teamFilterState.set(v);
+    pageState.set(1);
+  };
+  const setStatusFilter = (v: string) => {
+    statusFilterState.set(v);
+    pageState.set(1);
+  };
+  const setPage = pageState.set;
+  const handlePageSizeChange = (newSize: number) => {
+    pageSizeState.set(newSize);
+    pageState.set(1);
+  };
   
   // Local state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -139,14 +162,20 @@ export default function UsersPage() {
     }
   }, [deletingProfile, deps.isLoading, deps.hasMandatoryDependencies]);
 
-  const { data: profiles, isLoading, error: profilesError } = useQuery({
+  // Pagination calc
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: profilesData, isLoading, error: profilesError } = useQuery({
     queryKey: queryKeys.users.directory(currentBu?.id ?? null, { 
       q: searchQuery || undefined, 
       teamId: teamFilter !== 'all' ? teamFilter : undefined,
-      includeTerminated: statusFilter === 'all' || statusFilter === 'terminated'
+      status: statusFilter,
+      page,
+      pageSize,
     }),
-    queryFn: async () => {
-      if (!currentBu?.id) return [];
+    queryFn: async (): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
+      if (!currentBu?.id) return { profiles: [], total: 0 };
       
       let query = supabase
         .from("profiles")
@@ -167,7 +196,7 @@ export default function UsersPage() {
           team_id,
           team:teams!fk_profiles_team(id, name),
           manager_user_id
-        `)
+        `, { count: 'exact' })
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .order("display_name");
@@ -187,10 +216,13 @@ export default function UsersPage() {
       if (statusFilter === "active") {
         query = query.neq("employment_status", "terminated" as const);
       } else if (statusFilter !== "all") {
-        query = query.eq("employment_status", statusFilter as "active" | "vacation" | "terminated");
+        query = query.eq("employment_status", statusFilter as "active" | "vacation" | "terminated" | "external");
       }
 
-      const { data, error } = await query;
+      // Apply pagination
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
       if (error) throw error;
 
       // Coletar manager_user_ids únicos para buscar em lote
@@ -209,7 +241,7 @@ export default function UsersPage() {
         }
       }
 
-      return (data || []).map((p) => ({
+      const profiles = (data || []).map((p) => ({
         id: p.id,
         user_id: p.user_id,
         first_name: p.first_name,
@@ -226,11 +258,14 @@ export default function UsersPage() {
         team: p.team as { id: string; name: string } | null,
         manager: p.manager_user_id ? managersMap[p.manager_user_id] ?? null : null,
       })) as ProfileWithTeam[];
+
+      return { profiles, total: count ?? 0 };
     },
     enabled: !!currentBu?.id,
   });
 
-  
+  const profiles = profilesData?.profiles ?? [];
+  const totalProfiles = profilesData?.total ?? 0;
 
   const getInitials = (name: string) =>
     name
@@ -394,19 +429,16 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Results count */}
-        <p className="text-sm text-muted-foreground">
-          {isLoading ? (
-            <Skeleton className="h-4 w-32 inline-block" />
-          ) : (
-            <>
-              {filteredProfiles?.length || 0}{" "}
-              {filteredProfiles?.length === 1
-                ? "jetimober encontrado"
-                : "jetimobers encontrados"}
-            </>
-          )}
-        </p>
+        {/* Pagination */}
+        {totalProfiles > 0 && (
+          <UrlPagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalProfiles}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
 
         {/* Table */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
