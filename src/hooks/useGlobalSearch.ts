@@ -50,6 +50,18 @@ export function useGlobalSearch(initialQuery = "") {
 
   const isReady = !!session && !!currentBuId && !authLoading && !buLoading;
 
+  // Debug: log query conditions
+  console.log("[useGlobalSearch] Query conditions:", {
+    isReady,
+    hasSession: !!session,
+    currentBuId,
+    authLoading,
+    buLoading,
+    debouncedQuery,
+    queryLength: debouncedQuery.length,
+    willBeEnabled: isReady && debouncedQuery.length >= 2,
+  });
+
   const { data, isLoading, isFetching, error, refetch } = useQuery<SearchResponse>({
     queryKey: queryKeys.search.global(currentBuId ?? null, debouncedQuery),
     queryFn: async () => {
