@@ -4,7 +4,7 @@
  * Simplificado para MVP - 4 etapas de direção estratégica
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { WizardShell } from '../shared/WizardShell';
 import { ArrowRight, ArrowLeft, Target, Lightbulb, CheckCircle2, TrendingUp } from 'lucide-react';
+import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { WIZARD_CONFIGS } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -34,6 +35,10 @@ type WizardStep = 'company-okrs' | 'insights' | 'decisions' | 'directives';
 export function CLevelCheckinWizard({ open, onOpenChange }: CLevelCheckinWizardProps) {
   const config = WIZARD_CONFIGS['clevel-checkin'];
   
+  // Session persistence
+  const { createSession, completeSession, isCreating } = useWizardSession();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  
   const [currentStep, setCurrentStep] = useState<WizardStep>('company-okrs');
   const [strategicDecisions, setStrategicDecisions] = useState('');
   const [directives, setDirectives] = useState('');
@@ -50,17 +55,39 @@ export function CLevelCheckinWizard({ open, onOpenChange }: CLevelCheckinWizardP
     return steps.indexOf(currentStep);
   }, [currentStep]);
 
+  // Create session when wizard opens
+  useEffect(() => {
+    if (open && !sessionId && !isCreating) {
+      createSession({
+        wizardType: 'clevel-checkin',
+      }).then(session => {
+        setSessionId(session.id);
+      }).catch(err => {
+        console.error('Failed to create wizard session:', err);
+      });
+    }
+  }, [open, sessionId, isCreating, createSession]);
+
   const handleClose = useCallback(() => {
     setCurrentStep('company-okrs');
     setStrategicDecisions('');
     setDirectives('');
+    setSessionId(null);
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback(async () => {
+    // Complete session with decisions and directives
+    if (sessionId) {
+      await completeSession({
+        sessionId,
+        meetingNotes: `Decisões: ${strategicDecisions}\n\nDirecionamentos: ${directives}`,
+      }).catch(err => console.error('Failed to complete session:', err));
+    }
+    
     toast.success('Check-in estratégico concluído!');
     handleClose();
-  }, [handleClose]);
+  }, [sessionId, completeSession, strategicDecisions, directives, handleClose]);
 
   const renderStepContent = () => {
     switch (currentStep) {

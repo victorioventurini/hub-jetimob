@@ -134,6 +134,10 @@ export const queryKeys = {
     // Cycle Check-ins Page
     cycleCheckins: (buId: string | null, cycleId?: string, filters?: Record<string, unknown>) => 
       ['okr-cycle-checkins', buId, cycleId, filters] as const,
+    
+    // Wizard sessions
+    wizardSession: (userId: string | null) => 
+      ['okr-wizard-session', userId] as const,
   },
 
   // ============= KPIs =============

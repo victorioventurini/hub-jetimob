@@ -4651,6 +4651,155 @@ export type Database = {
           },
         ]
       }
+      okr_wizard_kr_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          kr_id: string
+          notes: string | null
+          session_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          kr_id: string
+          notes?: string | null
+          session_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          kr_id?: string
+          notes?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_wizard_kr_actions_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "okr_team_key_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_kr_actions_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_kr_actions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "okr_wizard_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      okr_wizard_sessions: {
+        Row: {
+          action_items: Json | null
+          ai_insights_shown: Json | null
+          bu_id: string
+          completed_at: string | null
+          created_at: string
+          cycle_id: string | null
+          decisions: Json | null
+          id: string
+          meeting_notes: string | null
+          reflection_data: Json | null
+          started_at: string
+          started_by: string
+          status: string
+          team_id: string | null
+          updated_at: string
+          wizard_type: string
+        }
+        Insert: {
+          action_items?: Json | null
+          ai_insights_shown?: Json | null
+          bu_id: string
+          completed_at?: string | null
+          created_at?: string
+          cycle_id?: string | null
+          decisions?: Json | null
+          id?: string
+          meeting_notes?: string | null
+          reflection_data?: Json | null
+          started_at?: string
+          started_by: string
+          status?: string
+          team_id?: string | null
+          updated_at?: string
+          wizard_type: string
+        }
+        Update: {
+          action_items?: Json | null
+          ai_insights_shown?: Json | null
+          bu_id?: string
+          completed_at?: string | null
+          created_at?: string
+          cycle_id?: string | null
+          decisions?: Json | null
+          id?: string
+          meeting_notes?: string | null
+          reflection_data?: Json | null
+          started_at?: string
+          started_by?: string
+          status?: string
+          team_id?: string | null
+          updated_at?: string
+          wizard_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_wizard_sessions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_started_by_fkey"
+            columns: ["started_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_started_by_fkey"
+            columns: ["started_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_started_by_fkey"
+            columns: ["started_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_companies: {
         Row: {
           allowed_domains: string[] | null

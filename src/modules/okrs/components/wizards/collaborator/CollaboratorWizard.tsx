@@ -9,7 +9,7 @@
  * 5. Resumo - Visão consolidada
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { WizardShell } from '../shared/WizardShell';
@@ -20,6 +20,7 @@ import { CollaboratorReflectionStep } from './CollaboratorReflectionStep';
 import { CollaboratorSummary } from './CollaboratorSummary';
 import { useUserKrsForWizard } from '@/modules/okrs/hooks/useUserKrsForWizard';
 import { useActiveCycles, useCycle } from '@/modules/okrs/hooks/useCycleData';
+import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { WIZARD_CONFIGS, type CollaboratorCheckinResult, type CollaboratorReflection } from '@/modules/okrs/types/wizard';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 
@@ -41,6 +42,16 @@ type WizardStep = 'context' | 'checkin' | 'initiatives' | 'reflection' | 'summar
 export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardProps) {
   const navigate = useNavigate();
   const config = WIZARD_CONFIGS['collaborator'];
+  
+  // Session persistence
+  const { 
+    createSession, 
+    updateSession, 
+    completeSession, 
+    saveKrAction,
+    isCreating 
+  } = useWizardSession();
+  const [sessionId, setSessionId] = useState<string | null>(null);
   
   // State
   const [currentStep, setCurrentStep] = useState<WizardStep>('context');
@@ -96,6 +107,20 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
     }
   }, [currentStep]);
 
+  // Create session when wizard opens
+  useEffect(() => {
+    if (open && !sessionId && !isCreating) {
+      createSession({
+        wizardType: 'collaborator',
+        cycleId: quarterlyCycle?.id || null,
+      }).then(session => {
+        setSessionId(session.id);
+      }).catch(err => {
+        console.error('Failed to create wizard session:', err);
+      });
+    }
+  }, [open, sessionId, isCreating, createSession, quarterlyCycle?.id]);
+
   // Handlers
   const handleClose = useCallback(() => {
     // Reset state
@@ -104,6 +129,7 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
     setResults([]);
     setReflection({});
     setInitiativesMarkedAtRisk([]);
+    setSessionId(null);
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -118,13 +144,23 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
   const handleCheckinComplete = useCallback((result: CollaboratorCheckinResult) => {
     setResults(prev => [...prev, result]);
     
+    // Save KR action to session
+    if (sessionId) {
+      saveKrAction({
+        sessionId,
+        krId: result.krId,
+        actionType: result.skipped ? 'skipped' : 'checked_in',
+        notes: result.comment,
+      }).catch(err => console.error('Failed to save KR action:', err));
+    }
+    
     if (currentKrIndex < krsToCheckin.length - 1) {
       setCurrentKrIndex(prev => prev + 1);
     } else {
       // All KRs done, move to initiatives
       setCurrentStep('initiatives');
     }
-  }, [currentKrIndex, krsToCheckin.length]);
+  }, [currentKrIndex, krsToCheckin.length, sessionId, saveKrAction]);
 
   const handleCheckinSkip = useCallback(() => {
     // Add skipped result
@@ -139,6 +175,15 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
         skipped: true,
       };
       setResults(prev => [...prev, result]);
+      
+      // Save skipped action
+      if (sessionId) {
+        saveKrAction({
+          sessionId,
+          krId: currentKr.id,
+          actionType: 'skipped',
+        }).catch(err => console.error('Failed to save KR action:', err));
+      }
     }
     
     if (currentKrIndex < krsToCheckin.length - 1) {
@@ -146,7 +191,7 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
     } else {
       setCurrentStep('initiatives');
     }
-  }, [currentKr, currentKrIndex, krsToCheckin.length]);
+  }, [currentKr, currentKrIndex, krsToCheckin.length, sessionId, saveKrAction]);
 
   const handleCheckinBack = useCallback(() => {
     if (currentKrIndex > 0) {
@@ -180,8 +225,17 @@ export function CollaboratorWizard({ open, onOpenChange }: CollaboratorWizardPro
   const handleReflectionComplete = useCallback((ref: CollaboratorReflection) => {
     setReflection(ref);
     setCurrentStep('summary');
+    
+    // Complete session with reflection data
+    if (sessionId) {
+      completeSession({
+        sessionId,
+        reflectionData: ref as unknown as Record<string, unknown>,
+      }).catch(err => console.error('Failed to complete session:', err));
+    }
+    
     toast.success('Check-in semanal concluído!');
-  }, []);
+  }, [sessionId, completeSession]);
 
   const handleReflectionBack = useCallback(() => {
     setCurrentStep('initiatives');
