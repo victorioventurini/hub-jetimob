@@ -46,7 +46,7 @@ export function TeamOkrIntroStep({
   const [isLoading, setIsLoading] = useState(true);
 
   // Fallback messages
-  const fallbackGreeting = userName ? `Olá, ${userName}!` : 'Olá!';
+  const fallbackGreeting = userName ? `Olá, ${userName.split(' ')[0]}!` : 'Olá!';
   const fallbackMessage = 'Antes de definir metas, vamos alinhar direção. OKRs não servem para fazer mais coisas — servem para fazer as coisas certas.';
 
   // Generate greeting and message on mount
