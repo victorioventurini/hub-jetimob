@@ -33,7 +33,10 @@ import { useUrlTab, useUrlSearch } from '@/shared/url';
 import type { AutomationEventCatalog, AutomationActionCatalog } from '../types';
 
 export default function AutomationsPage() {
-  usePageTitle('Automações');
+  usePageTitle("Automações", { 
+    skipBu: true, 
+    customDescription: "Catálogo de eventos e ações disponíveis para automações do Hub." 
+  });
 
   const { currentBu } = useBu();
   const [activeTab, setActiveTab] = useUrlTab('events');

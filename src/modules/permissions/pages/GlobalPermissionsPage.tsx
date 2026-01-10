@@ -34,7 +34,10 @@ type GlobalPermissionTab = "catalog" | "templates-v2" | "presets" | "governance"
  * GlobalPermissionsPage - Gerenciamento do catálogo global de permissões do Hub
  */
 export default function GlobalPermissionsPage() {
-  usePageTitle("Permissões Globais");
+  usePageTitle("Permissões Globais", { 
+    skipBu: true, 
+    customDescription: "Gerencie o catálogo de permissões, templates e governança do Hub." 
+  });
 
   const [activeTab, setActiveTab] = useUrlTab<GlobalPermissionTab>("catalog");
   const { value: search, set: setSearch } = useUrlSearch("q");
