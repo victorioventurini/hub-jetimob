@@ -102,7 +102,7 @@ export function MentionInput({
 
   // Fetch users for mention suggestions (accent-insensitive search)
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['mention-users', currentBu?.id, searchTerm],
+    queryKey: queryKeys.users.mentionCandidates(currentBu?.id ?? null, searchTerm),
     queryFn: async () => {
       if (!currentBu?.id) return [];
 
@@ -307,12 +307,17 @@ export function MentionInput({
     onChange(newValue, mentions);
   };
 
-  // Handle user selection from suggestions
+  // Handle user selection from suggestions using DOM-based insertion
   const selectUser = (user: MentionUser) => {
-    if (!editorRef.current || mentionStartOffset === null) return;
+    if (!editorRef.current) return;
 
-    // Get current value and find the @ trigger position
-    const currentValue = htmlToValue(editorRef.current.innerHTML);
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    if (!editorRef.current.contains(range.startContainer)) return;
+
+    // Find the @ trigger in current text node and delete it along with search term
     const cursorInfo = getTextBeforeCursor();
     if (!cursorInfo) return;
 
@@ -320,32 +325,56 @@ export function MentionInput({
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
     if (lastAtIndex === -1) return;
 
-    // Calculate the part of current text being typed as mention
-    const beforeMention = currentValue.slice(0, lastAtIndex);
-    const afterMentionText = textBeforeCursor.slice(lastAtIndex + 1);
+    const searchLength = textBeforeCursor.length - lastAtIndex; // includes @ + typed chars
+
+    // Delete the "@searchTerm" by moving range back and deleting
+    const deleteRange = document.createRange();
+    let charsToDelete = searchLength;
+    let currentNode = range.startContainer;
+    let currentOffset = range.startOffset;
+
+    // Walk backwards to find where @ starts
+    const deleteStart = { node: currentNode, offset: currentOffset };
     
-    // Find where the cursor is in the full value
-    let fullTextLength = 0;
-    const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
-    let tempValue = currentValue;
-    let match;
-    while ((match = mentionRegex.exec(currentValue)) !== null) {
-      // This is complex, let's simplify
+    // Simple approach: work within current text node if possible
+    if (currentNode.nodeType === Node.TEXT_NODE && currentOffset >= charsToDelete) {
+      deleteStart.offset = currentOffset - charsToDelete;
+    } else {
+      // Fallback: just delete from current position (may not be perfect but safer)
+      charsToDelete = Math.min(charsToDelete, currentOffset);
+      deleteStart.offset = currentOffset - charsToDelete;
     }
 
-    // Simpler approach: rebuild from scratch
-    const mentionDisplayName = getEmailPrefix(user.email) || user.display_name;
-    const mentionFormat = `@[${mentionDisplayName}](${user.user_id})`;
-    
-    // Get text after what user was typing
-    const afterCursor = currentValue.slice(lastAtIndex + afterMentionText.length + 1);
-    
-    const newValue = beforeMention + mentionFormat + ' ' + afterCursor;
+    deleteRange.setStart(deleteStart.node, deleteStart.offset);
+    deleteRange.setEnd(range.startContainer, range.startOffset);
+    deleteRange.deleteContents();
 
+    // Create mention chip element
+    const mentionDisplayName = getEmailPrefix(user.email) || user.display_name;
+    const chip = document.createElement('span');
+    chip.contentEditable = 'false';
+    chip.setAttribute('data-mention-id', user.user_id);
+    chip.className = 'mention-chip';
+    chip.textContent = `@${mentionDisplayName}`;
+
+    // Insert chip at cursor
+    const insertRange = selection.getRangeAt(0);
+    insertRange.insertNode(chip);
+
+    // Add space after chip for continued typing
+    const spaceNode = document.createTextNode('\u00A0'); // non-breaking space
+    chip.after(spaceNode);
+
+    // Move cursor after the space
+    const newRange = document.createRange();
+    newRange.setStartAfter(spaceNode);
+    newRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+
+    // Sync internal value
+    const newValue = htmlToValue(editorRef.current.innerHTML);
     lastValueRef.current = newValue;
-    editorRef.current.innerHTML = valueToHtml(newValue);
-    
-    // Move cursor after the inserted mention
     const mentions = extractMentions(newValue);
     onChange(newValue, mentions);
 
@@ -353,44 +382,7 @@ export function MentionInput({
     setMentionStartOffset(null);
     setSearchTerm('');
 
-    // Set cursor position after mention - ensure it's in an editable text node
-    requestAnimationFrame(() => {
-      if (editorRef.current) {
-        editorRef.current.focus();
-        const selection = window.getSelection();
-        if (selection) {
-          // Find the last text node in the editor (after the mention chip)
-          const walker = document.createTreeWalker(
-            editorRef.current,
-            NodeFilter.SHOW_TEXT,
-            null
-          );
-          
-          let lastTextNode: Text | null = null;
-          let node: Node | null;
-          while ((node = walker.nextNode())) {
-            lastTextNode = node as Text;
-          }
-          
-          if (lastTextNode) {
-            const range = document.createRange();
-            range.setStart(lastTextNode, lastTextNode.length);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-          } else {
-            // Create a text node at the end if none exists
-            const textNode = document.createTextNode('\u200B');
-            editorRef.current.appendChild(textNode);
-            const range = document.createRange();
-            range.setStart(textNode, 1);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-          }
-        }
-      }
-    });
+    editorRef.current.focus();
   };
 
   // Handle keyboard navigation
