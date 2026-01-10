@@ -1,20 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/queryKeys";
 import type { Initiative, CreateInitiativeInput, UpdateInitiativeInput, InitiativeStatus, InitiativePriority } from "../types/initiative";
+
+// Fields for initiative queries (explicit, no select('*'))
+const INITIATIVE_FIELDS = `
+  id, bu_id, kr_id, name, description, status, priority, progress,
+  owner_user_id, contributors, start_date, expected_end_date,
+  notes, created_at, updated_at, deleted_at
+` as const;
 
 // Fetch initiatives for a specific KR
 export function useKrInitiatives(krId: string | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["initiatives", "kr", krId],
+    queryKey: queryKeys.okrs.initiatives(krId || ''),
     queryFn: async () => {
       if (!krId || !supabase) return [];
       
       const { data, error } = await supabase
         .from("okr_initiatives")
-        .select("*")
+        .select(INITIATIVE_FIELDS)
         .eq("kr_id", krId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
@@ -40,6 +48,7 @@ export function useKrInitiatives(krId: string | undefined) {
       })) as Initiative[];
     },
     enabled: !!krId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -62,6 +71,7 @@ export function useKrInitiativesCount(krId: string | undefined) {
       return count || 0;
     },
     enabled: !!krId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -76,10 +86,11 @@ export function useUserInitiatives(profileId: string | undefined) {
       
       const { data, error } = await supabase
         .from("okr_initiatives")
-        .select("*")
+        .select(INITIATIVE_FIELDS)
         .eq("owner_user_id", profileId)
         .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
+        .order("updated_at", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       
@@ -102,6 +113,7 @@ export function useUserInitiatives(profileId: string | undefined) {
       })) as Initiative[];
     },
     enabled: !!profileId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -116,7 +128,7 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
       
       let query = supabase
         .from("okr_initiatives")
-        .select("*")
+        .select(INITIATIVE_FIELDS)
         .is("deleted_at", null);
 
       if (buId) {
@@ -127,7 +139,9 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
         query = query.eq("status", status);
       }
 
-      const { data, error } = await query.order("updated_at", { ascending: false });
+      const { data, error } = await query
+        .order("updated_at", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       
@@ -150,6 +164,7 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
       })) as Initiative[];
     },
     enabled: !!buId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
