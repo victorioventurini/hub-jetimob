@@ -59,7 +59,7 @@ export function GlobalBreadcrumb({
     : items;
 
   return (
-    <Breadcrumb className={cn(compact ? 'mb-2' : 'mb-4', className)}>
+    <Breadcrumb className={cn(compact ? 'mb-1' : 'mb-2', className)}>
       <BreadcrumbList>
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;

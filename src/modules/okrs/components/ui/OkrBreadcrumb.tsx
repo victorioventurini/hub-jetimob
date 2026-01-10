@@ -31,7 +31,7 @@ export function OkrBreadcrumb({ items, className }: OkrBreadcrumbProps) {
   ];
 
   return (
-    <Breadcrumb className={cn('mb-4', className)}>
+    <Breadcrumb className={cn('mb-2', className)}>
       <BreadcrumbList>
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;
