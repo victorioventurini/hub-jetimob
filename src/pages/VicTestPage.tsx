@@ -134,35 +134,49 @@ export default function VicTestPage() {
             <CardDescription>Configuração de IA para esta BU</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <Badge variant={isEnabled ? "default" : "destructive"} className="gap-1">
-                {isEnabled ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                IA {isEnabled ? "Habilitada" : "Desabilitada"}
-              </Badge>
-              <Badge variant="outline">
-                Modo: {iaMode}
-              </Badge>
-              <Badge variant="secondary">
-                BU: {currentBuId?.slice(0, 8)}...
-              </Badge>
-              <Badge variant="secondary">
-                {dbAgents.length} agentes ativos
-              </Badge>
-            </div>
-
-            {/* Agents from DB */}
-            <div className="pt-4 border-t">
-              <h4 className="text-sm font-medium mb-2">Agentes no Banco de Dados:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {dbAgents.map(agent => (
-                  <div key={agent.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{agent.name}</span>
-                    <span className="text-muted-foreground">({agent.slug})</span>
-                  </div>
-                ))}
+            {!currentBuId ? (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="flex items-center gap-2 text-destructive">
+                  <XCircle className="h-5 w-5" />
+                  <span className="font-medium">Nenhuma BU selecionada</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Você precisa estar logado e ter uma BU selecionada para testar os agentes.
+                </p>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-3">
+                  <Badge variant={isEnabled ? "default" : "destructive"} className="gap-1">
+                    {isEnabled ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                    IA {isEnabled ? "Habilitada" : "Desabilitada"}
+                  </Badge>
+                  <Badge variant="outline">
+                    Modo: {iaMode}
+                  </Badge>
+                  <Badge variant="secondary">
+                    BU: {currentBuId?.slice(0, 8)}...
+                  </Badge>
+                  <Badge variant="secondary">
+                    {dbAgents.length} agentes ativos
+                  </Badge>
+                </div>
+
+                {/* Agents from DB */}
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-medium mb-2">Agentes no Banco de Dados:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {dbAgents.map(agent => (
+                      <div key={agent.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <span className="font-medium">{agent.name}</span>
+                        <span className="text-muted-foreground">({agent.slug})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -204,7 +218,7 @@ export default function VicTestPage() {
             <div className="flex gap-2">
               <Button 
                 onClick={handleTestSingle} 
-                disabled={vicAgent.isLoading || isTestingAll}
+                disabled={!currentBuId || vicAgent.isLoading || isTestingAll}
                 className="gap-2"
               >
                 {vicAgent.isLoading ? (
@@ -218,7 +232,7 @@ export default function VicTestPage() {
               <Button 
                 variant="outline"
                 onClick={handleTestAll} 
-                disabled={vicAgent.isLoading || isTestingAll}
+                disabled={!currentBuId || vicAgent.isLoading || isTestingAll}
                 className="gap-2"
               >
                 {isTestingAll ? (
@@ -228,7 +242,6 @@ export default function VicTestPage() {
                 )}
                 Testar Todos ({Object.keys(VIC_AGENTS).length})
               </Button>
-
               {testResults.length > 0 && (
                 <Button 
                   variant="ghost"
