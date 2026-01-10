@@ -28,7 +28,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Save, Loader2 } from 'lucide-react';
 import { WizardStepper, WizardStepperCompact, type WizardStepDefinition } from './WizardStepper';
 
 // ============================================================
@@ -50,6 +50,12 @@ export interface FullPageWizardShellProps {
   onStepChange?: (stepId: string) => void;
   /** Se há alterações não salvas */
   isDirty?: boolean;
+  /** Se está salvando rascunho */
+  isSavingDraft?: boolean;
+  /** Callback para salvar rascunho */
+  onSaveDraft?: () => Promise<void>;
+  /** Última vez que foi salvo */
+  lastSavedAt?: string | null;
   /** Se está carregando algo */
   isLoading?: boolean;
   /** Callback ao fechar/cancelar */
@@ -76,6 +82,9 @@ export function FullPageWizardShell({
   completedSteps,
   onStepChange,
   isDirty = false,
+  isSavingDraft = false,
+  onSaveDraft,
+  lastSavedAt,
   isLoading = false,
   onClose,
   backUrl = '/wizards',
@@ -85,6 +94,14 @@ export function FullPageWizardShell({
 }: FullPageWizardShellProps) {
   const navigate = useNavigate();
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Format last saved time
+  const formatLastSaved = (date: string | null | undefined) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
   
   // Warn before closing tab/window if dirty
   useEffect(() => {
@@ -116,6 +133,17 @@ export function FullPageWizardShell({
     onClose();
     navigate(backUrl);
   }, [onClose, navigate, backUrl]);
+  
+  // Handle save draft
+  const handleSaveDraft = useCallback(async () => {
+    if (!onSaveDraft) return;
+    setIsSaving(true);
+    try {
+      await onSaveDraft();
+    } finally {
+      setIsSaving(false);
+    }
+  }, [onSaveDraft]);
   
   // Cancel exit
   const handleCancelExit = useCallback(() => {
@@ -152,6 +180,31 @@ export function FullPageWizardShell({
               </p>
             )}
           </div>
+          
+          {/* Save draft button */}
+          {onSaveDraft && (
+            <div className="flex items-center gap-2">
+              {lastSavedAt && !isDirty && (
+                <span className="text-xs text-muted-foreground hidden sm:inline">
+                  Salvo às {formatLastSaved(lastSavedAt)}
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveDraft}
+                disabled={isSaving || isSavingDraft || !isDirty}
+                className="gap-2"
+              >
+                {(isSaving || isSavingDraft) ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Salvar rascunho</span>
+              </Button>
+            </div>
+          )}
           
           <Button
             variant="ghost"

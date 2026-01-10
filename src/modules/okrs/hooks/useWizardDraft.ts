@@ -3,15 +3,21 @@
  * 
  * Persiste o estado do wizard em:
  * 1. localStorage (imediato, offline-first)
- * 2. wizard_sessions (sync periódico para backup)
+ * 2. okr_wizard_sessions (sync explícito ao clicar "Salvar rascunho")
  * 
  * Isso previne perda de dados ao:
  * - Trocar de aba e voltar
  * - Refresh da página
  * - Navegação acidental
+ * - Continuar depois em outro dispositivo
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useBu } from '@/contexts/BuContext';
+import { queryKeys } from '@/lib/queryKeys';
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import type { 
   DraftTeamKr, 
@@ -118,8 +124,11 @@ export interface UseWizardDraftReturn {
   updateDraft: (updates: Partial<TeamOkrDraft>) => void;
   setStep: (step: WizardStep) => void;
   clearDraft: () => void;
+  saveDraft: () => Promise<void>;
   isDirty: boolean;
+  isSaving: boolean;
   hasSavedDraft: boolean;
+  lastSavedAt: string | null;
 }
 
 export function useWizardDraft({
@@ -127,9 +136,41 @@ export function useWizardDraft({
   cycleId,
   enabled = true,
 }: UseWizardDraftOptions): UseWizardDraftReturn {
+  const { profile } = useAuth();
+  const { currentBu } = useBu();
+  const queryClient = useQueryClient();
+  
   const storageKey = cycleId ? getDraftKey(teamId, cycleId) : null;
   
-  // Initialize state
+  // Session ID for database sync
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  
+  // Check for existing draft session in DB
+  const existingSessionQuery = useQuery({
+    queryKey: queryKeys.okrs.wizardDraft(teamId, cycleId || ''),
+    queryFn: async () => {
+      if (!profile?.id || !cycleId) return null;
+      
+      const { data, error } = await supabase
+        .from('okr_wizard_sessions')
+        .select('id, reflection_data, updated_at')
+        .eq('started_by', profile.id)
+        .eq('team_id', teamId)
+        .eq('cycle_id', cycleId)
+        .eq('wizard_type', 'team-okr-creation')
+        .eq('status', 'in_progress')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.id && !!cycleId && enabled,
+  });
+  
+  // Initialize state from localStorage OR database
   const [draft, setDraft] = useState<TeamOkrDraft>(() => {
     if (!storageKey || !enabled) return createEmptyDraft(teamId);
     
@@ -137,7 +178,6 @@ export function useWizardDraft({
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved) as TeamOkrDraft;
-        // Version check
         if (parsed.version === DRAFT_VERSION) {
           return parsed;
         }
@@ -148,6 +188,18 @@ export function useWizardDraft({
     
     return createEmptyDraft(teamId);
   });
+  
+  // Load from DB if localStorage is empty but DB has data
+  useEffect(() => {
+    if (existingSessionQuery.data && !localStorage.getItem(storageKey || '')) {
+      const dbData = existingSessionQuery.data.reflection_data as unknown;
+      if (dbData && typeof dbData === 'object' && 'version' in dbData && (dbData as TeamOkrDraft).version === DRAFT_VERSION) {
+        setDraft(dbData as TeamOkrDraft);
+        setSessionId(existingSessionQuery.data.id);
+        setLastSavedAt(existingSessionQuery.data.updated_at);
+      }
+    }
+  }, [existingSessionQuery.data, storageKey]);
   
   const [isDirty, setIsDirty] = useState(false);
   const [hasSavedDraft] = useState(() => {
@@ -177,6 +229,60 @@ export function useWizardDraft({
     }
   }, 500);
   
+  // Save draft to database mutation
+  const saveDraftMutation = useMutation({
+    mutationFn: async (draftToSave: TeamOkrDraft): Promise<string> => {
+      if (!profile?.id || !currentBu?.id || !cycleId) {
+        throw new Error('User, BU or cycle not available');
+      }
+      
+      // Convert to JSON-compatible format
+      const reflectionData = JSON.parse(JSON.stringify({
+        ...draftToSave,
+        updatedAt: new Date().toISOString(),
+      }));
+      
+      if (sessionId) {
+        // Update existing session
+        const { error } = await supabase
+          .from('okr_wizard_sessions')
+          .update({
+            reflection_data: reflectionData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', sessionId);
+        
+        if (error) throw error;
+        return sessionId;
+      } else {
+        // Create new session
+        const { data, error } = await supabase
+          .from('okr_wizard_sessions')
+          .insert([{
+            bu_id: currentBu.id,
+            wizard_type: 'team-okr-creation' as const,
+            team_id: teamId,
+            cycle_id: cycleId,
+            started_by: profile.id,
+            reflection_data: reflectionData,
+          }])
+          .select('id')
+          .single();
+        
+        if (error) throw error;
+        return data.id;
+      }
+    },
+    onSuccess: (newSessionId) => {
+      setSessionId(newSessionId);
+      setLastSavedAt(new Date().toISOString());
+      setIsDirty(false);
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.okrs.wizardDraft(teamId, cycleId || '') 
+      });
+    },
+  });
+  
   // Update draft
   const updateDraft = useCallback((updates: Partial<TeamOkrDraft>) => {
     setDraft(prev => {
@@ -191,8 +297,14 @@ export function useWizardDraft({
     updateDraft({ currentStep: step });
   }, [updateDraft]);
   
+  // Save draft explicitly
+  const saveDraft = useCallback(async () => {
+    await saveDraftMutation.mutateAsync(draft);
+  }, [saveDraftMutation, draft]);
+  
   // Clear draft
-  const clearDraft = useCallback(() => {
+  const clearDraft = useCallback(async () => {
+    // Clear localStorage
     if (storageKey) {
       try {
         localStorage.removeItem(storageKey);
@@ -200,11 +312,26 @@ export function useWizardDraft({
         console.error('Failed to clear wizard draft:', e);
       }
     }
+    
+    // Mark session as abandoned in DB
+    if (sessionId) {
+      try {
+        await supabase
+          .from('okr_wizard_sessions')
+          .update({ status: 'abandoned' })
+          .eq('id', sessionId);
+      } catch (e) {
+        console.error('Failed to abandon wizard session:', e);
+      }
+    }
+    
     setDraft(createEmptyDraft(teamId));
+    setSessionId(null);
+    setLastSavedAt(null);
     setIsDirty(false);
-  }, [storageKey, teamId]);
+  }, [storageKey, teamId, sessionId]);
   
-  // Persist changes
+  // Persist changes to localStorage
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -228,7 +355,10 @@ export function useWizardDraft({
     updateDraft,
     setStep,
     clearDraft,
+    saveDraft,
     isDirty,
-    hasSavedDraft,
+    isSaving: saveDraftMutation.isPending,
+    hasSavedDraft: hasSavedDraft || !!existingSessionQuery.data,
+    lastSavedAt,
   };
 }
