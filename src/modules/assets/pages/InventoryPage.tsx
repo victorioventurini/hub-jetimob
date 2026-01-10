@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Package, Plus, Search } from "lucide-react";
+import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useInventory } from "../hooks/useInventory";
@@ -10,7 +9,7 @@ import { useLocations } from "../hooks/useLocations";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
-import { UrlPagination } from "@/shared/filters";
+import { UrlPagination, UrlSearchInput } from "@/shared/filters";
 import { useUrlState, useUrlSearch, parsers } from "@/shared/url";
 import type { AssetInventoryStatus } from "../types";
 
@@ -153,15 +152,13 @@ export default function InventoryPage() {
     <div className="space-y-4">
       {/* Header with search and actions */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou código..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <UrlSearchInput
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Buscar por nome ou código..."
+          className="flex-1"
+          debounceMs={300}
+        />
         {canAddItem && (
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
