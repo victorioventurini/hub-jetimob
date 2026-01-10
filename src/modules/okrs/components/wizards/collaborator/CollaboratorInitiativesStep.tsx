@@ -61,7 +61,7 @@ export function CollaboratorInitiativesStep({
 
       const { data, error } = await supabase
         .from('okr_initiatives')
-        .select('*')
+        .select('id, name, description, kr_id, owner_user_id, status, priority, start_date, expected_end_date, progress, notes, updated_at')
         .in('kr_id', krIds)
         .is('deleted_at', null)
         .order('updated_at', { ascending: false });

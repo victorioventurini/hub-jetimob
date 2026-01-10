@@ -35,7 +35,7 @@ serve(async (req) => {
     // Get document info
     const { data: doc, error: docError } = await supabase
       .from("ai_agent_documents")
-      .select("*")
+      .select("id, agent_id, name, file_url, file_type, file_size, status")
       .eq("id", documentId)
       .single();
 

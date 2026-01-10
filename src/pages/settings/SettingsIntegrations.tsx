@@ -30,14 +30,14 @@ export default function SettingsIntegrations() {
     queryFn: async () => {
       const { data: catalog, error: catalogError } = await supabase
         .from("hub_integrations_catalog")
-        .select("*")
+        .select("id, integration_key, name, description, icon, color, supports_global_config, supports_bu_override, supports_agents, status, display_order, documentation_url")
         .order("display_order")
         .order("name");
       if (catalogError) throw catalogError;
 
       const { data: globalConfig, error: globalError } = await supabase
         .from("hub_integrations_global_config")
-        .select("*");
+        .select("id, integration_key, is_enabled_global, config_encrypted, last_test_status, last_test_at, last_test_message");
       if (globalError) throw globalError;
 
       // Merge catalog with global config

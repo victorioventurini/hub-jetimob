@@ -35,7 +35,7 @@ serve(async (req) => {
     // Get the Guardião da Cultura agent
     const { data: agent, error: agentError } = await supabase
       .from("ai_agents")
-      .select("*")
+      .select("id, scope, bu_id, integration_key, name, system_prompt, output_format, model_name, max_tokens, temperature")
       .eq("name", AGENT_NAME)
       .eq("is_active", true)
       .single();

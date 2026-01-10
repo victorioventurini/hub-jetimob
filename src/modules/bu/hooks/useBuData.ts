@@ -59,7 +59,7 @@ export function useBuUnit(buId: string | null) {
 
       const { data, error } = await supabase
         .from("bu_units")
-        .select("*")
+        .select("id, name, description, legal_entity, cnpj, allowed_email_domains, logo_url, symbol_url, primary_color, secondary_color, status, created_at, updated_at")
         .eq("id", buId)
         .single();
 
@@ -79,7 +79,7 @@ export function useAllBus() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
-        .select("*")
+        .select("id, name, description, legal_entity, cnpj, allowed_email_domains, logo_url, symbol_url, primary_color, secondary_color, status, created_at, updated_at")
         .order("name");
 
       if (error) throw error;

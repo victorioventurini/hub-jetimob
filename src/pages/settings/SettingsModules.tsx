@@ -97,7 +97,7 @@ export default function SettingsModules() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("modules")
-        .select("*")
+        .select("id, slug, name, description, type, status, route, display_order, icon")
         .order("display_order")
         .order("name");
       if (error) throw error;

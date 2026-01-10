@@ -103,7 +103,7 @@ export function usePermissionPresets() {
 
       const { data, error } = await supabase
         .from("permission_presets")
-        .select("*")
+        .select("id, slug, name, description, module, surface, icon, sort_order, is_active, created_at")
         .eq("is_active", true)
         .order("module")
         .order("sort_order");
@@ -249,7 +249,7 @@ export function usePermissionRiskReport() {
 
       const { data, error } = await supabase
         .from("v_permission_risk_report")
-        .select("*")
+        .select("user_id, bu_id, user_name, user_email, template_count, permission_count, risk_level, risk_reasons")
         .eq("bu_id", buId)
         .order("risk_level", { ascending: false });
 
@@ -284,7 +284,7 @@ export function usePermissionAuditLogs(limit = 50) {
 
       const { data, error } = await supabase
         .from("permission_audit_log")
-        .select("*")
+        .select("id, bu_id, target_user_id, actor_id, action, entity_type, entity_id, entity_name, before_state, after_state, reason, created_at")
         .eq("bu_id", buId)
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -358,7 +358,7 @@ export function useUsersWithoutTemplates() {
 
       const { data, error } = await supabase
         .from("v_users_without_templates")
-        .select("*")
+        .select("profile_id, bu_id, display_name, work_email, role_in_bu, membership_created_at")
         .eq("bu_id", buId);
 
       if (error) throw error;
