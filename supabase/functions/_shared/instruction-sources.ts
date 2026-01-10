@@ -64,7 +64,7 @@ export async function loadInstructionSources(
 ): Promise<InstructionSource[]> {
   const { data, error } = await supabase
     .from("ai_agent_instruction_sources")
-    .select("*")
+    .select("id, agent_id, source_type, name, description, priority, is_enabled, config, last_fetch_at, last_fetch_status, last_fetch_error, cached_content")
     .eq("agent_id", agentId)
     .eq("is_enabled", true)
     .order("priority", { ascending: true });

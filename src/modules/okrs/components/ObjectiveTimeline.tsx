@@ -73,7 +73,7 @@ export function ObjectiveTimeline({
       // Fetch objective data
       const { data: objective, error: objError } = await supabase
         .from(tableName)
-        .select("*")
+        .select("id, title, status, created_at")
         .eq("id", objectiveId)
         .single();
 
@@ -91,10 +91,11 @@ export function ObjectiveTimeline({
       // Check for status changes via audit log
       const { data: auditLogs } = await supabase
         .from("okr_audit_log")
-        .select("*")
+        .select("id, entity, entity_id, action, old_value, new_value, user_id, created_at")
         .eq("entity_id", objectiveId)
         .eq("entity", tableName.replace("public.", ""))
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(100);
 
       if (auditLogs) {
         for (const log of auditLogs) {
@@ -138,10 +139,11 @@ export function ObjectiveTimeline({
       // Fetch reviews
       const { data: reviews } = await supabase
         .from("okr_objective_reviews")
-        .select("*")
+        .select("id, objective_id, objective_type, review_type, reviewed_by, reviewed_at, changes_summary, notes")
         .eq("objective_id", objectiveId)
         .eq("objective_type", objectiveType)
-        .order("reviewed_at", { ascending: true });
+        .order("reviewed_at", { ascending: true })
+        .limit(50);
 
       if (reviews) {
         for (const review of reviews) {
