@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.13.0  
-**Última atualização:** 2026-01-09
+**Versão:** 2.14.0  
+**Última atualização:** 2026-01-10
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo (V1 removido definitivamente)
+**Status:** V2-only mode ativo (V1 removido definitivamente) | Identity Cutover v3.0 completo
 
 > 📚 **Documentação Complementar:**
 > - [DEVELOPMENT_STANDARDS.md v1.1.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
@@ -13,10 +13,11 @@
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
 > - [engineering/QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys
 > - [engineering/BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase
+> - [engineering/PERMISSIONS_AND_RBAC_MODEL.md](./engineering/PERMISSIONS_AND_RBAC_MODEL.md) — Modelo de permissões e RBAC
+> - [engineering/SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Relatório final do estado do sistema
+> - [engineering/FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
 > - [ops/BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook oficial de backup e restore
 > - [ops/GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist oficial de go-live
-> - [permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md](./permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md) — Remoção definitiva V1
-> - [WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md](./WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md) — Governance Gate
 
 > ⚠️ **Data Model Registry (Canonical)**
 > - Arquivo: `docs/engineering/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)

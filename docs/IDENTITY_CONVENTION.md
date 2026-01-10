@@ -525,6 +525,7 @@ chmod +x scripts/check-identity-convention.sh
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 2.0.0 | 2026-01-10 | Identity Cutover v3.0 completo, canary gates, strict mode |
 | 1.2.0 | 2026-01-08 | Corrigidas 7 RLS policies de OKRs que comparavam auth.uid() com profile_id |
 | 1.1.0 | 2026-01-07 | Adicionada dívida técnica de Tickets e script de validação |
 | 1.0.0 | 2026-01-07 | Documento inicial com convenções estabelecidas |
