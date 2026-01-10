@@ -39,6 +39,15 @@ import type { WizardPersona, WizardStepConfig } from '@/modules/okrs/types/wizar
 // TYPES
 // ============================================================
 
+export interface WizardContextData {
+  mode: 'team' | 'user' | 'both';
+  teamId?: string;
+  teamName?: string;
+  userId?: string;
+  onTeamChange?: (teamId: string, teamName: string) => void;
+  onUserChange?: (userId: string) => void;
+}
+
 export interface WizardShellProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,6 +58,8 @@ export interface WizardShellProps {
   currentStepIndex: number;
   children: ReactNode;
   onClose?: () => void;
+  /** Context selector configuration */
+  context?: WizardContextData;
 }
 
 // Icon mapping for wizard personas
@@ -110,6 +121,7 @@ export function WizardShell({
   currentStepIndex,
   children,
   onClose,
+  context,
 }: WizardShellProps) {
   const PersonaIcon = PERSONA_ICONS[persona];
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
@@ -119,6 +131,9 @@ export function WizardShell({
     onClose?.();
     onOpenChange(false);
   };
+
+  // Dynamically import WizardContextSelector to avoid circular deps
+  const { WizardContextSelector } = require('./WizardContextSelector');
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
@@ -146,6 +161,21 @@ export function WizardShell({
               <X className="h-4 w-4" />
             </Button>
           </div>
+          
+          {/* Context selector (team/user) */}
+          {context && (
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <WizardContextSelector
+                mode={context.mode}
+                teamId={context.teamId}
+                teamName={context.teamName}
+                userId={context.userId}
+                onTeamChange={context.onTeamChange}
+                onUserChange={context.onUserChange}
+                compact
+              />
+            </div>
+          )}
           
           {/* Progress bar */}
           <div className="mt-4 space-y-2">

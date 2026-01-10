@@ -30,6 +30,8 @@ export interface TeamCheckinWizardProps {
   teamId: string;
   teamName: string;
   markedForDiscussion?: string[];
+  /** Callback when team changes via context selector */
+  onTeamChange?: (teamId: string, teamName: string) => void;
 }
 
 type WizardStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions';
@@ -44,6 +46,7 @@ export function TeamCheckinWizard({
   teamId,
   teamName,
   markedForDiscussion = [],
+  onTeamChange,
 }: TeamCheckinWizardProps) {
   const config = WIZARD_CONFIGS['team-checkin'];
   
@@ -222,6 +225,12 @@ export function TeamCheckinWizard({
       steps={config.steps}
       currentStepIndex={stepIndex}
       onClose={handleClose}
+      context={{
+        mode: 'team',
+        teamId,
+        teamName,
+        onTeamChange,
+      }}
     >
       {renderStepContent()}
     </WizardShell>

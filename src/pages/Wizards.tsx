@@ -377,6 +377,11 @@ export default function WizardsPage() {
             onOpenChange={(open) => !open && handleWizardClose('leader-prep')}
             teamId={selectedTeam.id}
             teamName={selectedTeam.name}
+            onTeamChange={(teamId, teamName) => {
+              setSelectedTeam({ id: teamId, name: teamName });
+              teamIdState.set(teamId);
+              teamNameState.set(encodeURIComponent(teamName));
+            }}
           />
         )}
 
@@ -386,6 +391,11 @@ export default function WizardsPage() {
             onOpenChange={(open) => !open && handleWizardClose('team-checkin')}
             teamId={selectedTeam.id}
             teamName={selectedTeam.name}
+            onTeamChange={(teamId, teamName) => {
+              setSelectedTeam({ id: teamId, name: teamName });
+              teamIdState.set(teamId);
+              teamNameState.set(encodeURIComponent(teamName));
+            }}
           />
         )}
 
@@ -409,6 +419,11 @@ export default function WizardsPage() {
             onOpenChange={(open) => !open && handleWizardClose('team-okr-creation')}
             teamId={selectedTeam.id}
             teamName={selectedTeam.name}
+            onTeamChange={(teamId, teamName) => {
+              setSelectedTeam({ id: teamId, name: teamName });
+              teamIdState.set(teamId);
+              teamNameState.set(encodeURIComponent(teamName));
+            }}
           />
         )}
       </div>
