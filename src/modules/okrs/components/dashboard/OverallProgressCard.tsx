@@ -40,7 +40,7 @@ export function OverallProgressCard({
       )} />
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-          <span>Overall Progress</span>
+          <span>Progresso Geral</span>
           <div className={cn("flex items-center gap-1 text-xs", trendColor)}>
             <TrendIcon className="w-3 h-3" />
             {delta !== 0 && (
