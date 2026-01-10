@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Gift, Plus, Search, AlertTriangle, ArrowDown, ArrowUp } from "lucide-react";
+import { Gift, Plus, AlertTriangle, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,11 +9,14 @@ import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { GiftItemCard } from "../components/gifts/GiftItemCard";
 import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
 import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
-import { useUrlSearch } from "@/shared/url";
+import { UrlSearchInput } from "@/shared/filters";
+import { useUrlState } from "@/shared/url";
 
 export default function GiftsPage() {
-  // URL State for server-side filtering
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  // URL State for filtering
+  const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const search = searchState.value;
+  const setSearch = searchState.set;
   
   const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts({
     search: search || undefined,
@@ -62,15 +64,13 @@ export default function GiftsPage() {
 
       {/* Header com busca e ações */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou categoria..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <UrlSearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por nome ou categoria..."
+          className="flex-1"
+          debounceMs={300}
+        />
         {canManageGifts && (
           <>
             <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>

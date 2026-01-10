@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { Key, Plus, Search } from "lucide-react";
+import { Key, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeys } from "../hooks/useKeys";
 import { useAssetPermissions } from "../hooks/useAssetPermissions";
 import { KeyringsList } from "../components/keys/KeyringsList";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
-import { useUrlSearch } from "@/shared/url";
+import { UrlSearchInput } from "@/shared/filters";
+import { useUrlState } from "@/shared/url";
 
 export default function KeysPage() {
-  // URL State for server-side filtering
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  // URL State for filtering
+  const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const search = searchState.value;
+  const setSearch = searchState.set;
   
   const { keyrings, isLoading: isLoadingKeys } = useKeys({
     search: search || undefined,
@@ -42,15 +44,13 @@ export default function KeysPage() {
     <div className="space-y-4">
       {/* Header com busca */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar chaveiro..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <UrlSearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar chaveiro..."
+          className="flex-1"
+          debounceMs={300}
+        />
         {canManageKeys && (
           <Button onClick={() => setKeyringDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
