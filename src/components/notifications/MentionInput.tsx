@@ -54,8 +54,16 @@ interface MentionUser {
   id: string;
   user_id: string;
   display_name: string;
+  email: string | null;
   photo_url: string | null;
   team_name: string | null;
+}
+
+// Helper to extract email prefix (before @)
+function getEmailPrefix(email: string | null): string | null {
+  if (!email) return null;
+  const atIndex = email.indexOf('@');
+  return atIndex > 0 ? email.slice(0, atIndex) : null;
 }
 
 interface MentionInputProps {
@@ -99,6 +107,7 @@ export function MentionInput({
           id,
           user_id,
           display_name,
+          email,
           photo_url,
           team_name
         `)
@@ -118,6 +127,7 @@ export function MentionInput({
         id: u.id,
         user_id: u.user_id,
         display_name: u.display_name,
+        email: u.email || null,
         photo_url: u.photo_url,
         team_name: u.team_name || null,
       })) as MentionUser[];
@@ -233,8 +243,11 @@ export function MentionInput({
     const beforeMention = displayValue.slice(0, mentionStart);
     const afterMention = displayValue.slice(cursorPosition);
 
+    // Use email prefix for display, fallback to display_name
+    const mentionDisplayName = getEmailPrefix(user.email) || user.display_name;
+    
     // Create the mention in internal format
-    const mentionText = `@[${user.display_name}](${user.user_id})`;
+    const mentionText = `@[${mentionDisplayName}](${user.user_id})`;
     
     // Rebuild the full value
     let newValue = beforeMention + mentionText + ' ' + afterMention;
@@ -267,7 +280,7 @@ export function MentionInput({
     // Focus back on textarea
     setTimeout(() => {
       if (textareaRef.current) {
-        const newCursorPos = mentionStart + `@${user.display_name}`.length + 1;
+        const newCursorPos = mentionStart + `@${mentionDisplayName}`.length + 1;
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
       }
