@@ -79,11 +79,18 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   const navigate = useNavigate();
   const { query, setQuery, results, isLoading, isEmpty, disabled, error } = useGlobalSearch();
 
-  // Show toast on error
+  // Show toast on error with detailed info
   useEffect(() => {
     if (error) {
+      const err = error as Error & { status?: number; code?: string };
+      const status = err.status;
+      const code = err.code;
+      
+      console.error("[GlobalSearch] Displaying error toast:", { status, code, message: err.message });
+      
       toast.error("Erro na busca", {
-        description: (error as Error).message || "Não foi possível realizar a busca",
+        description: err.message || "Não foi possível realizar a busca",
+        duration: 6000,
       });
     }
   }, [error]);

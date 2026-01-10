@@ -75,21 +75,34 @@ export function useGlobalSearch(initialQuery = "") {
       });
 
       if (error) {
+        const status = (error as any)?.status ?? (error as any)?.context?.status;
+        const code = (error as any)?.code ?? "UNKNOWN";
+        const msg = (error as any)?.message ?? String(error);
+        
         // Evita spam de erro quando o usuário está deslogado / sessão expirada
-        const status = (error as any)?.status;
         if (status === 401) {
           console.warn("[useGlobalSearch] Unauthorized (401) - session missing/expired");
           return { query: debouncedQuery, groups: [] };
         }
 
-        console.error("[useGlobalSearch] Error:", error);
-        throw error;
+        console.error("[useGlobalSearch] Edge function error:", { status, code, msg, error });
+        
+        // Create descriptive error
+        const detailedError = new Error(`[${status ?? "?"}] ${code}: ${msg}`);
+        (detailedError as any).status = status;
+        (detailedError as any).code = code;
+        throw detailedError;
       }
 
-      // Handle edge function error response
+      // Handle edge function error response embedded in data
       if ((data as any)?.error) {
-        console.error("[useGlobalSearch] Function error:", (data as any).error);
-        throw new Error((data as any).error);
+        const embeddedError = (data as any).error;
+        const embeddedCode = (data as any).code ?? "FUNCTION_ERROR";
+        console.error("[useGlobalSearch] Function returned error:", { embeddedCode, embeddedError });
+        
+        const detailedError = new Error(`${embeddedCode}: ${embeddedError}`);
+        (detailedError as any).code = embeddedCode;
+        throw detailedError;
       }
 
       return data as SearchResponse;
