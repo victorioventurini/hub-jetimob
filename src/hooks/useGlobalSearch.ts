@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,17 +33,23 @@ export interface SearchResponse {
  * The bu_id is passed in the request body, not via headers.
  */
 export function useGlobalSearch(initialQuery = "") {
-  console.warn("🔍 [useGlobalSearch] Hook mounted");
-  
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQueryInternal] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
   const { currentBuId, isLoading: buLoading } = useBu();
   const { session, isLoading: authLoading } = useAuth();
 
+  // Wrap setQuery to log when it's called
+  const setQuery = useCallback((newQuery: string) => {
+    console.warn("🔍 [useGlobalSearch] setQuery:", newQuery);
+    setQueryInternal(newQuery);
+  }, []);
+
   // Debounce query
   useEffect(() => {
+    console.warn("🔍 [useGlobalSearch] Debounce effect, query:", query);
     const timer = setTimeout(() => {
+      console.warn("🔍 [useGlobalSearch] Setting debouncedQuery:", query.trim());
       setDebouncedQuery(query.trim());
     }, 300);
 
