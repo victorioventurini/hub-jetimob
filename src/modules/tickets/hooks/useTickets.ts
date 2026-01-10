@@ -9,30 +9,62 @@ import type {
   CreateTicketData,
   UpdateTicketData,
   TicketStatus,
+  PaginatedTicketsResponse,
 } from "../types";
+
+// ===========================================
+// CONSTANTS
+// ===========================================
+
+const DEFAULT_PAGE_SIZE = 25;
 
 // ===========================================
 // QUERIES
 // ===========================================
 
+/**
+ * Hook para buscar tickets com paginação server-side
+ * @param filters - Filtros incluindo page e pageSize
+ * @returns Dados paginados com total count
+ */
 export function useTickets(filters?: TicketFilters) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
+  // Pagination defaults
+  const page = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? DEFAULT_PAGE_SIZE;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   return useQuery({
     queryKey: queryKeys.tickets.list(buId ?? null, filters as Record<string, unknown>),
-    queryFn: async () => {
-      if (!buId) return [];
+    queryFn: async (): Promise<PaginatedTicketsResponse> => {
+      if (!buId) return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
 
+      // Build base query with explicit fields (no select('*'))
       let query = supabase
         .from("tickets")
         .select(`
-          *,
+          id,
+          bu_id,
+          type,
+          title,
+          status,
+          expected_due_at,
+          created_by_user_id,
+          owner_user_id,
+          visibility,
+          partner_company_id,
+          category_id,
+          subcategory_id,
+          created_at,
+          updated_at,
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name)
-        `)
+        `, { count: 'exact' })
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
@@ -80,11 +112,22 @@ export function useTickets(filters?: TicketFilters) {
         query = query.ilike("title", `%${filters.search}%`);
       }
 
-      const { data, error } = await query;
+      // Apply pagination
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
-      return data as Ticket[];
+      const total = count ?? 0;
+
+      return {
+        data: data as Ticket[],
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      };
     },
     enabled: !!buId,
   });

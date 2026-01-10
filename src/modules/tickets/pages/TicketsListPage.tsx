@@ -8,8 +8,9 @@ import { useTickets, useMyTickets } from "../hooks/useTickets";
 import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
+import { UrlPagination } from "@/shared/filters";
 import { useUrlState, useUrlTab, useUrlSearch, parsers } from "@/shared/url";
-import type { TicketStatus, TicketType } from "../types";
+import type { TicketStatus, TicketType, Ticket } from "../types";
 
 type TicketTab = "mine" | "waiting" | "in_progress" | "done" | "discarded";
 
@@ -44,53 +45,99 @@ export default function TicketsListPage() {
   const showOverdue = overdueState.value;
   const setShowOverdue = overdueState.set;
 
-  const { data: allTickets = [], isLoading: isLoadingAll } = useTickets();
+  // Pagination URL state
+  const pageState = useUrlState<number>({ 
+    key: "page", 
+    defaultValue: 1, 
+    parse: parsers.number 
+  });
+  const page = pageState.value;
+  const setPage = pageState.set;
+
+  const pageSizeState = useUrlState<number>({ 
+    key: "pageSize", 
+    defaultValue: 25, 
+    parse: parsers.number 
+  });
+  const pageSize = pageSizeState.value;
+  const setPageSize = pageSizeState.set;
+  const tabStatusFilter = useMemo((): TicketStatus | TicketStatus[] | undefined => {
+    switch (activeTab) {
+      case "waiting":
+        return "waiting";
+      case "in_progress":
+        return "in_progress";
+      case "done":
+        return "done";
+      case "discarded":
+        return "discarded";
+      default:
+        return statusFilter !== "all" ? statusFilter : undefined;
+    }
+  }, [activeTab, statusFilter]);
+
+  // Use paginated query for "all" tabs, my tickets for "mine" tab
+  const queryFilters = useMemo(() => ({
+    type: typeFilter !== "all" ? typeFilter : undefined,
+    status: tabStatusFilter,
+    category_id: categoryId !== "all" ? categoryId : undefined,
+    partner_company_id: partnerId !== "all" ? partnerId : undefined,
+    search: search || undefined,
+    overdue: showOverdue || undefined,
+    page,
+    pageSize,
+  }), [typeFilter, tabStatusFilter, categoryId, partnerId, search, showOverdue, page, pageSize]);
+
+  const { 
+    data: ticketsResponse, 
+    isLoading: isLoadingAll 
+  } = useTickets(activeTab !== "mine" ? queryFilters : undefined);
+  
   const { data: myTickets = [], isLoading: isLoadingMy } = useMyTickets();
 
-  const filterTickets = (tickets: typeof allTickets) => {
-    return tickets.filter((ticket) => {
-      // Search filter
+  // Filter my tickets client-side (small dataset)
+  const filteredMyTickets = useMemo(() => {
+    return myTickets.filter((ticket: Ticket) => {
       if (search && !ticket.title.toLowerCase().includes(search.toLowerCase())) {
         return false;
       }
-      // Type filter
       if (typeFilter !== "all" && ticket.type !== typeFilter) {
         return false;
       }
-      // Status filter
       if (statusFilter !== "all" && ticket.status !== statusFilter) {
         return false;
       }
-      // Category filter
       if (categoryId !== "all" && ticket.category_id !== categoryId) {
         return false;
       }
-      // Partner filter
       if (partnerId !== "all" && ticket.partner_company_id !== partnerId) {
         return false;
       }
       return true;
     });
+  }, [myTickets, search, typeFilter, statusFilter, categoryId, partnerId]);
+
+  // Get the right data based on active tab
+  const displayTickets = activeTab === "mine" 
+    ? filteredMyTickets 
+    : (ticketsResponse?.data ?? []);
+  
+  const totalItems = activeTab === "mine" 
+    ? filteredMyTickets.length 
+    : (ticketsResponse?.total ?? 0);
+
+  const isLoading = activeTab === "mine" ? isLoadingMy : isLoadingAll;
+
+  // Reset page when changing tabs or filters
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as TicketTab);
+    setPage(1);
   };
 
-  const tabTickets = useMemo(() => {
-    switch (activeTab) {
-      case "mine":
-        return filterTickets(myTickets);
-      case "waiting":
-        return filterTickets(allTickets.filter(t => t.status === "waiting"));
-      case "in_progress":
-        return filterTickets(allTickets.filter(t => t.status === "in_progress"));
-      case "done":
-        return filterTickets(allTickets.filter(t => t.status === "done"));
-      case "discarded":
-        return filterTickets(allTickets.filter(t => t.status === "discarded"));
-      default:
-        return filterTickets(allTickets);
-    }
-  }, [activeTab, myTickets, allTickets, search, typeFilter, statusFilter, categoryId, partnerId]);
-
-  const isLoading = isLoadingAll || isLoadingMy;
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // Reset to first page when changing page size
+  };
 
   return (
     <div className="space-y-6">
@@ -99,7 +146,7 @@ export default function TicketsListPage() {
         <div>
           <h2 className="text-lg font-semibold">Lista de Tickets</h2>
           <p className="text-sm text-muted-foreground">
-            {tabTickets.length} ticket{tabTickets.length !== 1 ? "s" : ""} encontrado{tabTickets.length !== 1 ? "s" : ""}
+            {totalItems} ticket{totalItems !== 1 ? "s" : ""} encontrado{totalItems !== 1 ? "s" : ""}
           </p>
         </div>
         <Button asChild>
@@ -113,21 +160,21 @@ export default function TicketsListPage() {
       {/* Filters */}
       <TicketFilters
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
         type={typeFilter}
-        onTypeChange={setTypeFilter}
+        onTypeChange={(v) => { setTypeFilter(v); setPage(1); }}
         status={statusFilter}
-        onStatusChange={setStatusFilter}
+        onStatusChange={(v) => { setStatusFilter(v); setPage(1); }}
         categoryId={categoryId}
-        onCategoryChange={setCategoryId}
+        onCategoryChange={(v) => { setCategoryId(v); setPage(1); }}
         partnerId={partnerId}
-        onPartnerChange={setPartnerId}
+        onPartnerChange={(v) => { setPartnerId(v); setPage(1); }}
         showOverdueOnly={showOverdue}
-        onOverdueChange={setShowOverdue}
+        onOverdueChange={(v) => { setShowOverdue(v); setPage(1); }}
       />
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="mine">Meus</TabsTrigger>
           <TabsTrigger value="waiting">Aguardando</TabsTrigger>
@@ -143,7 +190,7 @@ export default function TicketsListPage() {
                 <Skeleton key={i} className="h-24 w-full" />
               ))}
             </div>
-          ) : tabTickets.length === 0 ? (
+          ) : displayTickets.length === 0 ? (
             <EmptyState
               icon={Inbox}
               title="Nenhum ticket encontrado"
@@ -153,13 +200,25 @@ export default function TicketsListPage() {
             />
           ) : (
             <div className="space-y-4">
-              {tabTickets.map((ticket) => (
+              {displayTickets.map((ticket) => (
                 <TicketCard key={ticket.id} ticket={ticket} />
               ))}
             </div>
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Pagination - only show for non-mine tabs or when there are items */}
+      {totalItems > 0 && (
+        <UrlPagination
+          page={page}
+          pageSize={pageSize}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+          showPageSize={activeTab !== "mine"}
+        />
+      )}
     </div>
   );
 }

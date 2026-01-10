@@ -13,7 +13,20 @@ export interface UseInventoryOptions {
   categoryFilter?: string;
   holderFilter?: string;
   locationFilter?: string;
+  page?: number;
+  pageSize?: number;
 }
+
+export interface PaginatedInventoryResponse {
+  items: AssetInventory[];
+  categories: AssetCategory[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+const DEFAULT_PAGE_SIZE = 25;
 
 export function useInventory(options: UseInventoryOptions = {}) {
   const { user } = useAuth();
@@ -21,7 +34,11 @@ export function useInventory(options: UseInventoryOptions = {}) {
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
-  const { search, statusFilter, categoryFilter, holderFilter, locationFilter } = options;
+  const { search, statusFilter, categoryFilter, holderFilter, locationFilter, page = 1, pageSize = DEFAULT_PAGE_SIZE } = options;
+
+  // Pagination calc
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
 
   // Buscar categorias
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
@@ -41,20 +58,45 @@ export function useInventory(options: UseInventoryOptions = {}) {
     },
   });
 
-  // Buscar itens de inventário
-  const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
+  // Buscar itens de inventário com paginação
+  const { data: inventoryData, isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
     queryKey: queryKeys.assets.inventory.list(buId ?? null, { 
-      search, statusFilter, categoryFilter, holderFilter, locationFilter 
+      search, statusFilter, categoryFilter, holderFilter, locationFilter, page, pageSize 
     }),
     enabled: !!supabase && !!buId,
-    queryFn: async () => {
-      if (!supabase) return [];
+    queryFn: async (): Promise<{ items: AssetInventory[]; total: number }> => {
+      if (!supabase) return { items: [], total: 0 };
+      
       let query = supabase
         .from("asset_inventory")
         .select(`
-          *,
+          id,
+          bu_id,
+          internal_code,
+          name,
+          category_id,
+          description,
+          status,
+          home_location_id,
+          current_holder_type,
+          current_location_id,
+          current_user_id,
+          assigned_at,
+          last_moved_at,
+          acquired_at,
+          acquisition_value,
+          serial_number,
+          brand,
+          model,
+          quantity_total,
+          quantity_available,
+          photos,
+          documents,
+          notes,
+          created_at,
+          updated_at,
           category:asset_categories!category_id(id, name)
-        `)
+        `, { count: 'exact' })
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");
@@ -85,7 +127,10 @@ export function useInventory(options: UseInventoryOptions = {}) {
         query = query.or(`home_location_id.eq.${locationFilter},current_location_id.eq.${locationFilter}`);
       }
 
-      const { data, error } = await query;
+      // Apply pagination
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
@@ -112,14 +157,20 @@ export function useInventory(options: UseInventoryOptions = {}) {
         avatar_url: p.photo_url,
       }]));
 
-      return items.map(i => ({
+      const enrichedItems = items.map(i => ({
         ...i,
         home_location: i.home_location_id ? locationMap.get(i.home_location_id) || null : null,
         current_location: i.current_location_id ? locationMap.get(i.current_location_id) || null : null,
         current_user: i.current_user_id ? profileMap.get(i.current_user_id) || null : null,
       })) as AssetInventory[];
+
+      return { items: enrichedItems, total: count ?? 0 };
     },
   });
+
+  const items = inventoryData?.items ?? [];
+  const total = inventoryData?.total ?? 0;
+  const totalPages = Math.ceil(total / pageSize);
 
   // Buscar item específico por ID
   const getItem = async (itemId: string): Promise<AssetInventory | null> => {
