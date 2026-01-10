@@ -36,6 +36,7 @@ import { KrContextCard } from '../shared/KrContextCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { AlertBanner } from '../shared/AlertBanner';
 import { VicInsightCard } from '../shared/VicInsightCard';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useCreateCheckin } from '@/modules/okrs/hooks/useCreateCheckin';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
@@ -240,21 +241,39 @@ export function CollaboratorCheckinStep({
         )}
 
         {/* KR Context */}
-        <KrContextCard
-          title={kr.title}
-          objectiveTitle={kr.objective_title}
-          baseline={kr.baseline}
-          currentValue={kr.current_value}
-          target={kr.target}
-          unit={kr.unit}
-          direction={kr.direction}
-          status={kr.status}
-          progress={kr.progress}
-          lastCheckinAt={kr.last_checkin_at}
-          ownerName={kr.owner_name}
-          ownerPhoto={kr.owner_photo}
-          teamName={kr.team_name}
-        />
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <KrContextCard
+              title={kr.title}
+              objectiveTitle={kr.objective_title}
+              baseline={kr.baseline}
+              currentValue={kr.current_value}
+              target={kr.target}
+              unit={kr.unit}
+              direction={kr.direction}
+              status={kr.status}
+              progress={kr.progress}
+              lastCheckinAt={kr.last_checkin_at}
+              ownerName={kr.owner_name}
+              ownerPhoto={kr.owner_photo}
+              teamName={kr.team_name}
+            />
+          </div>
+          <AskToVicStepHelper
+            context={{
+              module: 'okrs',
+              wizard: 'collaborator',
+              step: 'kr-review',
+              userRole: 'colaborador',
+              krTitle: kr.title,
+              objectiveTitle: kr.objective_title,
+              currentValue: kr.current_value,
+              targetValue: kr.target,
+              progress: kr.progress,
+              teamName: kr.team_name,
+            }}
+          />
+        </div>
 
         {/* AI Insights */}
         {insights.length > 0 && (

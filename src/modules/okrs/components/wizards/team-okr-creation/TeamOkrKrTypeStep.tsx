@@ -23,6 +23,7 @@ import {
   Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import type { OkrKrType, TeamOkrCreationWizardState } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -131,8 +132,18 @@ export function TeamOkrKrTypeStep({
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-lg font-semibold mb-1">Escolhendo os KRs</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Escolhendo os KRs</h2>
+              <AskToVicInline
+                context={{
+                  module: 'okrs',
+                  wizard: 'creation',
+                  step: 'kr-type',
+                  objectiveTitle,
+                }}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
               Como o objetivo <span className="font-medium">"{objectiveTitle}"</span> se sustenta?
             </p>
           </div>
