@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
 
 // ============================================================
 // TYPES
@@ -106,8 +108,18 @@ export function CollaboratorContextStep({
           <div className="p-2 rounded-lg bg-primary/10">
             <Calendar className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h3 className="font-semibold text-lg">Esta é sua atualização semanal de OKRs</h3>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">Esta é sua atualização semanal de OKRs</h3>
+              <AskToVicStepHelper
+                context={{
+                  module: 'okrs',
+                  wizard: 'collaborator',
+                  step: 'collaborator-context',
+                  userRole: 'colaborador',
+                }}
+              />
+            </div>
             <p className="text-sm text-muted-foreground mt-1">
               Ela ajuda você, seu líder e seu time a manter foco no que realmente importa.
             </p>

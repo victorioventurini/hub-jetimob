@@ -27,6 +27,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KrAction, KrActionType } from '@/modules/okrs/types/wizard';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
 
 // ============================================================
 // TYPES
@@ -116,8 +118,19 @@ export function LeaderPrepStep({
           <div className="p-2 rounded-lg bg-primary/10">
             <ClipboardList className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h3 className="font-semibold text-lg">Preparar pauta da reunião</h3>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">Preparar pauta da reunião</h3>
+              <WizardTooltipInline tooltipKey="leader-prep" />
+              <AskToVicStepHelper
+                context={{
+                  module: 'okrs',
+                  wizard: 'leader-prep',
+                  step: 'prep',
+                  userRole: 'lider',
+                }}
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
               Defina o que discutir em grupo e o que tratar em 1:1
             </p>
@@ -269,6 +282,7 @@ export function LeaderPrepStep({
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
               <Label className="font-medium">Notas pré-reunião</Label>
+              <WizardTooltipInline tooltipKey="leader-notes" />
             </div>
             <Textarea
               value={meetingNotes}

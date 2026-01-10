@@ -20,7 +20,9 @@ import { cn } from '@/lib/utils';
 // ============================================================
 
 export const WIZARD_TOOLTIPS = {
-  // Criação de OKRs - Contexto
+  // ============================================================
+  // CRIAÇÃO DE OKRs - Contexto
+  // ============================================================
   'context-intro': {
     content: 'Você não começa do zero. Todo OKR nasce de um contexto.',
     icon: 'info',
@@ -34,17 +36,25 @@ export const WIZARD_TOOLTIPS = {
     icon: 'info',
   },
   
-  // Retrospectiva
+  // ============================================================
+  // RETROSPECTIVA
+  // ============================================================
   'retrospective-intro': {
     content: 'Aprender com o passado ajuda a definir metas mais realistas.',
     icon: 'lightbulb',
   },
   'abandoned-krs': {
-    content: 'KRs abandonados podem indicar sobrecarga ou falta de alinhamento.',
+    content: 'KRs abandonadas podem indicar sobrecarga ou falta de alinhamento.',
     icon: 'help',
   },
+  'past-success': {
+    content: 'O que funcionou no passado pode indicar padrões a replicar.',
+    icon: 'lightbulb',
+  },
   
-  // Objetivo
+  // ============================================================
+  // OBJETIVO
+  // ============================================================
   'objective-definition': {
     content: 'Objetivo não descreve tarefa. Descreve mudança.',
     icon: 'info',
@@ -53,28 +63,40 @@ export const WIZARD_TOOLTIPS = {
     content: 'Um bom objetivo motiva o time a ir além do básico.',
     icon: 'lightbulb',
   },
+  'objective-ownership': {
+    content: 'Todo objetivo precisa de um time responsável.',
+    icon: 'help',
+  },
   
-  // OKRs Compartilhados
+  // ============================================================
+  // OKRs COMPARTILHADOS
+  // ============================================================
   'shared-okr': {
-    content: 'OKRs compartilhados envolvem mais de um time trabalhando juntos pelo mesmo resultado.',
+    content: 'Mais de um time é responsável por este resultado.',
     icon: 'info',
   },
   'responsibility-model': {
     content: 'Escolha quem lidera e quem contribui para evitar dispersão de responsabilidade.',
     icon: 'help',
   },
+  'shared-ownership': {
+    content: 'Se der errado, quem decide? Defina isso antes de começar.',
+    icon: 'lightbulb',
+  },
   
-  // Tipos de KR
+  // ============================================================
+  // TIPOS DE KR (OBRIGATÓRIOS)
+  // ============================================================
   'kr-foundational': {
-    content: 'KR Fundacional: Prova que o objetivo aconteceu. É o resultado principal.',
+    content: 'Prova se o objetivo realmente aconteceu.',
     icon: 'info',
   },
   'kr-contribution': {
-    content: 'KR Contribuição: Resultado do time que alimenta um objetivo maior.',
+    content: 'Resultado do seu time que ajuda um objetivo maior.',
     icon: 'info',
   },
   'kr-enabler': {
-    content: 'KR Habilitador: Entrega necessária para viabilizar os outros resultados.',
+    content: 'Entrega necessária, mas que sozinha não prova sucesso.',
     icon: 'info',
   },
   'kr-limit': {
@@ -82,7 +104,9 @@ export const WIZARD_TOOLTIPS = {
     icon: 'lightbulb',
   },
   
-  // Detalhamento de KR
+  // ============================================================
+  // DETALHAMENTO DE KR
+  // ============================================================
   'kr-baseline': {
     content: 'Baseline é o ponto de partida. De onde você está saindo?',
     icon: 'help',
@@ -95,10 +119,16 @@ export const WIZARD_TOOLTIPS = {
     content: 'Responsável é quem acompanha e atualiza, não quem faz tudo sozinho.',
     icon: 'help',
   },
+  'kr-metric': {
+    content: 'Escolha uma métrica que o time consegue medir com frequência.',
+    icon: 'info',
+  },
   
-  // Dependências
+  // ============================================================
+  // DEPENDÊNCIAS
+  // ============================================================
   'dependencies-intro': {
-    content: 'Dependências não são ruíns, mas precisam ser gerenciadas.',
+    content: 'Dependências não são ruins, mas precisam ser gerenciadas.',
     icon: 'info',
   },
   'dependency-action': {
@@ -106,7 +136,9 @@ export const WIZARD_TOOLTIPS = {
     icon: 'lightbulb',
   },
   
-  // Iniciativas
+  // ============================================================
+  // INICIATIVAS
+  // ============================================================
   'initiatives-intro': {
     content: 'Iniciativas ajudam o KR, mas não substituem resultado.',
     icon: 'info',
@@ -115,28 +147,50 @@ export const WIZARD_TOOLTIPS = {
     content: 'Iniciativas podem mudar durante o ciclo. KRs, não.',
     icon: 'help',
   },
+  'initiatives-optional': {
+    content: 'Iniciativas não são obrigatórias. Crie apenas quando o caminho não for óbvio.',
+    icon: 'lightbulb',
+  },
   
-  // Comunicação
+  // ============================================================
+  // COMUNICAÇÃO
+  // ============================================================
   'share-intro': {
     content: 'Compartilhar OKRs cria alinhamento e compromisso.',
     icon: 'info',
   },
   
-  // Check-in Colaborador
+  // ============================================================
+  // CHECK-IN COLABORADOR
+  // ============================================================
   'checkin-value': {
     content: 'Atualize com o valor mais recente. Seja honesto.',
     icon: 'info',
   },
   'checkin-confidence': {
-    content: 'Confiança mostra sua percepção de risco. Não tem resposta errada.',
+    content: 'Sinaliza risco, não falha. Não tem resposta errada.',
+    icon: 'help',
+  },
+  'checkin-confidence-low': {
+    content: 'Confiança baixa sinaliza risco, não falha.',
     icon: 'help',
   },
   'checkin-blocker': {
     content: 'Registrar bloqueadores ajuda seu líder a te apoiar.',
     icon: 'lightbulb',
   },
+  'checkin-ritual': {
+    content: 'Atualização fora da janela recomendada. Sem bloqueio.',
+    icon: 'info',
+  },
+  'checkin-comment': {
+    content: '1-2 frases são suficientes. Foque no essencial.',
+    icon: 'lightbulb',
+  },
   
-  // Preparação do Líder
+  // ============================================================
+  // PREPARAÇÃO DO LÍDER
+  // ============================================================
   'leader-overview': {
     content: 'Visão geral mostra a saúde do time antes da reunião.',
     icon: 'info',
@@ -149,8 +203,14 @@ export const WIZARD_TOOLTIPS = {
     content: 'Marcar KRs para discussão ajuda a priorizar a reunião.',
     icon: 'info',
   },
+  'leader-notes': {
+    content: 'Notas pré-reunião ajudam a guiar a discussão.',
+    icon: 'lightbulb',
+  },
   
-  // Check-in de Time
+  // ============================================================
+  // CHECK-IN DE TIME
+  // ============================================================
   'team-review': {
     content: 'Revisar juntos cria alinhamento e responsabilidade compartilhada.',
     icon: 'info',
@@ -159,21 +219,41 @@ export const WIZARD_TOOLTIPS = {
     content: 'Decisões registradas viram compromissos do time.',
     icon: 'lightbulb',
   },
+  'team-checklist': {
+    content: 'Sabemos no que focar? No que NÃO fazer? Quem é responsável?',
+    icon: 'help',
+  },
   
-  // Check-in de Gestores
+  // ============================================================
+  // CHECK-IN DE GESTORES
+  // ============================================================
   'managers-panorama': {
-    content: 'Panorama mostra como as áreas estão performando em relação às metas.',
+    content: 'Panorama mostra como as áreas estão performando.',
     icon: 'info',
   },
   'managers-cross-issues': {
     content: 'Dependências entre áreas precisam de alinhamento no nível de gestão.',
     icon: 'help',
   },
+  'managers-adjustments': {
+    content: 'Ajustes devem ser comunicados para todos os afetados.',
+    icon: 'lightbulb',
+  },
   
-  // Check-in C-Level
+  // ============================================================
+  // CHECK-IN C-LEVEL
+  // ============================================================
+  'clevel-company-okrs': {
+    content: 'OKRs organizacionais refletem a direção estratégica da empresa.',
+    icon: 'info',
+  },
   'clevel-insights': {
     content: 'Insights estratégicos ajudam a calibrar a direção da empresa.',
     icon: 'info',
+  },
+  'clevel-decisions': {
+    content: 'Decisões executivas registradas viram compromissos da liderança.',
+    icon: 'lightbulb',
   },
   'clevel-directives': {
     content: 'Diretrizes são mensagens que cascateiam para toda a organização.',

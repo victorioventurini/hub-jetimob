@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicInsightsList } from '../shared/VicInsightCard';
+import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
 import type { LeaderHighlight, VicInsight } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -115,8 +117,19 @@ export function LeaderHighlightsStep({
           <div className="p-2 rounded-lg bg-primary/10">
             <Lightbulb className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h3 className="font-semibold text-lg">Pontos que merecem conversa</h3>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">Pontos que merecem conversa</h3>
+              <WizardTooltipInline tooltipKey="leader-highlights" />
+              <AskToVicStepHelper
+                context={{
+                  module: 'okrs',
+                  wizard: 'leader-prep',
+                  step: 'highlights',
+                  userRole: 'lider',
+                }}
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
               O sistema identificou esses itens para atenção
             </p>
