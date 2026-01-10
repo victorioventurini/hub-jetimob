@@ -2,6 +2,9 @@
  * Collaborator Wizard Components - Barrel Export
  */
 
+export { CollaboratorWizard } from './CollaboratorWizard';
+export type { CollaboratorWizardProps } from './CollaboratorWizard';
+
 export { CollaboratorContextStep } from './CollaboratorContextStep';
 export type { CollaboratorContextStepProps } from './CollaboratorContextStep';
 
@@ -16,3 +19,6 @@ export type { CollaboratorReflectionStepProps } from './CollaboratorReflectionSt
 
 export { CollaboratorSummary } from './CollaboratorSummary';
 export type { CollaboratorSummaryProps } from './CollaboratorSummary';
+
+export { CollaboratorWizardCard } from './CollaboratorWizardCard';
+export type { CollaboratorWizardCardProps } from './CollaboratorWizardCard';
