@@ -143,6 +143,10 @@ export const queryKeys = {
     wizardDraft: (userId: string) =>
       ['okr-wizard-draft', userId] as const,
 
+    // Generic wizard drafts (global per user per wizard type)
+    wizardDraftGeneric: (userId: string, wizardType: string) =>
+      ['okr-wizard-draft-generic', userId, wizardType] as const,
+
     // Wizard data
     wizardUserKrs: (
       buId: string | null,
