@@ -17,7 +17,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -52,12 +52,12 @@ interface PartnerContactProfile {
 }
 
 function usePartnerContactProfile(id: string | undefined) {
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
 
   return useQuery({
     queryKey: ["partner-contact-profile", id],
     queryFn: async (): Promise<PartnerContactProfile | null> => {
-      if (!id) return null;
+      if (!id || !supabase) return null;
 
       // Fetch contact with company
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,7 +111,7 @@ function usePartnerContactProfile(id: string | undefined) {
         ticket_count: count || 0,
       };
     },
-    enabled: !!id,
+    enabled: !!id && !!supabase,
   });
 }
 
