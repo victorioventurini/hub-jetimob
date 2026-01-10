@@ -132,10 +132,23 @@ export function TicketsBreadcrumb({
 export function AssetsBreadcrumb({ 
   assetCode,
   assetName,
+  items: customItems,
 }: { 
   assetCode?: string;
   assetName?: string;
+  /** Items personalizados (sobrescreve assetCode/assetName) */
+  items?: BreadcrumbItemConfig[];
 }) {
+  // Se items personalizados foram passados, use-os
+  if (customItems) {
+    const baseItems: BreadcrumbItemConfig[] = [
+      { label: 'Ativos', href: '/assets' },
+      ...customItems,
+    ];
+    return <GlobalBreadcrumb items={baseItems} />;
+  }
+  
+  // Caso contrário, use assetCode/assetName
   const items: BreadcrumbItemConfig[] = [
     { label: 'Ativos', href: '/assets' },
   ];

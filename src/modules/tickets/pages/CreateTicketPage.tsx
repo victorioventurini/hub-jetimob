@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSafeBack } from "@/hooks/useSafeBack";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -59,6 +60,7 @@ function formatFileSize(bytes: number): string {
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
+  const goBack = useSafeBack({ moduleRoot: '/tickets' });
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
   const { profileId } = useIdentity();
@@ -748,7 +750,7 @@ export default function CreateTicketPage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+            <Button type="button" variant="outline" onClick={goBack}>
               Cancelar
             </Button>
             <Button type="submit" disabled={createTicket.isPending || isUploading}>

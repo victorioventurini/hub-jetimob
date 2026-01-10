@@ -12,6 +12,7 @@ import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useUserKrsForWizard } from '@/modules/okrs/hooks/useUserKrsForWizard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
+import { handleError } from '@/lib/errorMessages';
 
 // Step components
 import { CollaboratorContextStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorContextStep';
@@ -134,8 +135,7 @@ export default function CollaboratorCheckinPage() {
       await saveDraft();
       toast.success('Rascunho salvo! Você pode continuar depois.');
     } catch (error) {
-      console.error('Failed to save draft:', error);
-      toast.error('Erro ao salvar rascunho');
+      handleError(error, { context: 'OKR Draft Save' });
     }
   }, [saveDraft]);
   

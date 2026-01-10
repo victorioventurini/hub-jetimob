@@ -4,6 +4,7 @@ import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { TicketsLayout } from "../components/TicketsLayout";
+import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 
 export default function TicketsPage() {
   usePageTitle("Tickets");
@@ -20,6 +21,7 @@ export default function TicketsPage() {
   return (
     <HubLayout>
       <div className="container py-6 max-w-7xl">
+        <TicketsBreadcrumb />
         <PageHeader
           title="Tickets"
           description="Gerencie demandas internas e externas da sua organização"
