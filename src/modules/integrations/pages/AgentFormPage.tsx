@@ -37,6 +37,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';
 import { AgentDocumentUpload } from '../components/AgentDocumentUpload';
+import { InstructionSourcesManager } from '../components/InstructionSourcesManager';
 
 const AVAILABLE_TOOLS = [
   { key: 'query_okrs', label: 'Consultar OKRs', description: 'Acesso aos objetivos e key results' },
@@ -467,6 +468,11 @@ export default function AgentFormPage() {
             </div>
           </CardContent>
         </Card>
+          
+        {/* Instruction Sources - Only show when editing */}
+        {isEditing && agentId && (
+          <InstructionSourcesManager agentId={agentId} />
+        )}
           
         {/* Knowledge Base - Only show when editing */}
         {isEditing && agentId && (
