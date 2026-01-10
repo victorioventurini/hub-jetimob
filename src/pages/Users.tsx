@@ -69,7 +69,7 @@ interface ProfileWithTeam {
   work_mode: "onsite" | "hybrid" | "remote";
   employment_status: "active" | "vacation" | "terminated";
   team: { id: string; name: string } | null;
-  manager: { id: string; display_name: string } | null;
+  manager: { id: string; display_name: string; photo_url: string | null } | null;
 }
 
 const workModeLabels: Record<string, string> = {
@@ -161,7 +161,8 @@ export default function UsersPage() {
           employment_status,
           team_id,
           team:teams!fk_profiles_team(id, name),
-          manager_user_id
+          manager_user_id,
+          manager:profiles!manager_user_id(id, display_name, photo_url)
         `)
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
@@ -191,7 +192,7 @@ export default function UsersPage() {
         work_mode: p.work_mode,
         employment_status: p.employment_status,
         team: p.team as { id: string; name: string } | null,
-        manager: null as { id: string; display_name: string } | null,
+        manager: p.manager as { id: string; display_name: string; photo_url: string | null } | null,
       })) as ProfileWithTeam[];
     },
     enabled: !!currentBu?.id,
@@ -469,16 +470,36 @@ export default function UsersPage() {
                     <TableCell className="text-sm">{profile.job_title_name}</TableCell>
                     <TableCell>
                       {profile.team ? (
-                        <div className="flex items-center gap-1.5 text-sm">
+                        <Link
+                          to={`/teams/${profile.team.id}`}
+                          className="flex items-center gap-1.5 text-sm hover:text-accent transition-colors"
+                        >
                           <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                          {profile.team.name}
-                        </div>
+                          <span className="hover:underline">{profile.team.name}</span>
+                        </Link>
                       ) : (
                         <span className="text-muted-foreground text-sm">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {profile.manager?.display_name || "—"}
+                    <TableCell>
+                      {profile.manager ? (
+                        <Link
+                          to={`/users/${profile.manager.id}`}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={profile.manager.photo_url || undefined} />
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                              {getInitials(profile.manager.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm hover:text-accent hover:underline transition-colors">
+                            {profile.manager.display_name}
+                          </span>
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
