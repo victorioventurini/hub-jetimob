@@ -257,8 +257,11 @@ export function NotificationCenter() {
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={cn(
-                      "w-full flex items-start gap-3 p-4 text-left hover:bg-accent transition-colors",
-                      !notification.is_read && "bg-primary/5"
+                      "w-full flex items-start gap-3 p-4 text-left transition-colors",
+                      "hover:bg-accent",
+                      !notification.is_read && "bg-primary/5",
+                      notification.context_url && "cursor-pointer",
+                      !notification.context_url && "cursor-default"
                     )}
                   >
                     {/* Avatar or Icon */}
