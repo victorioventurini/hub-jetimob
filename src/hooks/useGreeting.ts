@@ -57,14 +57,18 @@ const buildGreeting = (
   weather: Weather,
   userName?: string | null
 ): string => {
+  // IMPORTANT: Always use first name only for greetings
+  // Nobody says "Olá, Nome Sobrenome" - it's always "Olá, Nome"
+  const firstName = userName?.split(' ')[0];
+  
   const useBuenas = Math.random() > 0.5;
   const showEmoji = weather !== "unknown" && Math.random() > 0.6;
   const emoji = showEmoji ? ` ${weatherEmojis[weather]}` : "";
   
   // Variações com "Buenas"
   if (useBuenas) {
-    if (userName) {
-      return `Buenas, ${userName}!${emoji}`;
+    if (firstName) {
+      return `Buenas, ${firstName}!${emoji}`;
     }
     // Buenas com contexto de dia
     if (dayOfWeek === "fri") return `Buenas! Sextou.${emoji}`;
@@ -74,8 +78,8 @@ const buildGreeting = (
   
   // Saudação por período
   const base = periodGreetings[period];
-  if (userName) {
-    return `${base}, ${userName}.${emoji}`;
+  if (firstName) {
+    return `${base}, ${firstName}.${emoji}`;
   }
   return `${base}.${emoji}`;
 };

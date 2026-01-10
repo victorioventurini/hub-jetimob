@@ -298,7 +298,7 @@ export default function OkrCreationPage() {
   
   // Render step content
   const renderStepContent = () => {
-    const userName = profile?.display_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || undefined;
+    const userName = profile?.first_name || profile?.display_name?.split(' ')[0] || undefined;
     
     switch (draft.currentStep) {
       case 'intro':

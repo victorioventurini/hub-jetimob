@@ -96,10 +96,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Constructed magic link for:", user.email, "BU:", buName);
 
-    // Get display name
-    const displayName = user.user_metadata?.first_name || 
-                       user.user_metadata?.display_name || 
-                       user.email.split('@')[0];
+    // Get display name - always use first name only for greetings
+    const fullName = user.user_metadata?.first_name || 
+                     user.user_metadata?.display_name || 
+                     user.email.split('@')[0];
+    const displayName = fullName.split(' ')[0]; // Use first name only
 
     // Build email HTML
     const html = buildMagicLinkEmailHtml({

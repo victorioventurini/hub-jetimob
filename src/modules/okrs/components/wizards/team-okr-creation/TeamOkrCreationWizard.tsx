@@ -262,7 +262,7 @@ export function TeamOkrCreationWizard({
   const renderStepContent = () => {
     switch (currentStep) {
       case 'intro':
-        const userName = profile?.display_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || undefined;
+        const userName = profile?.first_name || profile?.display_name?.split(' ')[0] || undefined;
         return (
           <TeamOkrIntroStep
             teamName={teamName}

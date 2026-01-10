@@ -877,6 +877,54 @@ SELECT * FROM v_bu_active_profiles WHERE bu_id = current_bu_id();
 
 ---
 
+## K. Padrões de Nome e Saudações
+
+### K.1 Regra Universal: Primeiro Nome Apenas
+
+Em saudações e contextos informais, **SEMPRE usar apenas o primeiro nome**. Ninguém diz "Olá, Nome Sobrenome".
+
+```typescript
+// ✅ CORRETO
+"Olá, Victorio!"
+"Bom dia, Maria."
+"Buenas, João!"
+
+// ❌ ERRADO
+"Olá, Victorio Venturini!"
+"Bom dia, Maria Silva Costa."
+```
+
+### K.2 Implementação
+
+Use a função utilitária `getFirstName` de `@/lib/nameUtils.ts`:
+
+```typescript
+import { getFirstName, getGreetingName } from '@/lib/nameUtils';
+
+// A partir de display_name
+const firstName = getFirstName(profile.display_name); // "Victorio"
+
+// Com fallback seguro
+const greeting = getGreetingName(profile.first_name, profile.display_name);
+```
+
+### K.3 Prioridade de Fontes
+
+1. `profile.first_name` (preferido)
+2. Primeiro token de `profile.display_name`
+3. Fallback genérico (sem nome)
+
+### K.4 Instruções para IAs
+
+Todos os agentes de IA que geram saudações devem:
+
+1. Usar `user.first_name` quando disponível
+2. Se não, extrair primeiro token de `user.full_name` ou `user.display_name`
+3. Nunca usar nome completo em saudações
+4. Usar saudação neutra se nome não estiver disponível
+
+---
+
 ## Referências
 
 | Documento | Descrição |
