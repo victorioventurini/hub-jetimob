@@ -27,6 +27,7 @@ import {
   Quote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VicLoadingState, VicTypewriterBlock } from '@/modules/vic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { toast } from 'sonner';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
@@ -188,10 +189,12 @@ export function TeamOkrShareStep({
             </CardHeader>
             <CardContent>
               {isGenerating ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Gerando resumo...
-                </div>
+                <VicLoadingState 
+                  text="Gerando resumo..." 
+                  variant="inline" 
+                  size="sm"
+                  className="py-4"
+                />
               ) : (
                 <Textarea
                   value={summary}

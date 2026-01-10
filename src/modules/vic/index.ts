@@ -17,6 +17,8 @@ export { AskToVic, AskToVicInline, AskToVicStepHelper } from "./components/AskTo
 export { VicSidepanel } from "./components/VicSidepanel";
 export { BuIaSettings } from "./components/BuIaSettings";
 export { VicAuditPage } from "./components/VicAuditPage";
+export { VicTypewriterText, VicTypewriterBlock } from "./components/VicTypewriterText";
+export { VicLoadingState, VicGeneratingCard } from "./components/VicLoadingState";
 
 // Types
 export type * from "./types/ask-to-vic";

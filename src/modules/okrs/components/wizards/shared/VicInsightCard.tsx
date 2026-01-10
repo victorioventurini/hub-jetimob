@@ -29,6 +29,7 @@ import {
   Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VicTypewriterText } from '@/modules/vic';
 import type { VicInsight, VicInsightType, VicInsightPriority } from '@/modules/okrs/types/wizard';
 import { VIC_AGENTS, VicAgentSlug } from '@/modules/vic/types';
 
@@ -139,7 +140,13 @@ export function VicInsightCard({
         
         <CollapsibleContent>
           <div className="mt-3 space-y-3">
-            <p className="text-sm leading-relaxed">{insight.content}</p>
+            <p className="text-sm leading-relaxed">
+              <VicTypewriterText 
+                text={insight.content} 
+                speed={15}
+                cursorHeight="h-3"
+              />
+            </p>
             
             {insight.context && (
               <p className="text-xs text-muted-foreground italic">
