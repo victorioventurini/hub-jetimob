@@ -7869,6 +7869,37 @@ export type Database = {
           verified_users: number
         }[]
       }
+      get_bu_users_by_membership: {
+        Args: {
+          p_bu_id: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_status?: string
+          p_team_id?: string
+        }
+        Returns: {
+          city: string
+          display_name: string
+          employment_status: string
+          first_name: string
+          is_default_bu: boolean
+          job_title_id: string
+          job_title_name: string
+          last_name: string
+          manager_user_id: string
+          photo_url: string
+          profile_id: string
+          role_in_bu: string
+          state: string
+          team_id: string
+          team_name: string
+          total_count: number
+          user_id: string
+          work_email: string
+          work_mode: string
+        }[]
+      }
       get_cycle_checkins: {
         Args: { p_cycle_id: string; p_filters?: Json }
         Returns: Json
