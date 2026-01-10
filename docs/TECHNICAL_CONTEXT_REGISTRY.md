@@ -233,7 +233,7 @@ Dados do perfil de cada usuário.
 | start_date | date | Data de início |
 | birth_day | int | Dia do aniversário |
 | birth_month | int | Mês do aniversário |
-| employment_status | enum | `active`, `inactive`, `vacation` |
+| employment_status | enum | `active`, `vacation`, `terminated`, `external` |
 | onboarding_completed | bool | Onboarding concluído |
 | bu_id | uuid | BU principal |
 | team_id | uuid | Time principal |

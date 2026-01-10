@@ -57,7 +57,7 @@ interface FullProfile {
   city: string;
   state: string;
   work_mode: 'onsite' | 'remote' | 'hybrid';
-  employment_status: 'active' | 'inactive' | 'on_leave';
+  employment_status: 'active' | 'vacation' | 'terminated' | 'external';
   start_date: string;
   birth_day: number | null;
   birth_month: number | null;

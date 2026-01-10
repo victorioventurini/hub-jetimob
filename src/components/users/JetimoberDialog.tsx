@@ -37,7 +37,7 @@ const jetimoberSchema = z.object({
   city: z.string().trim().min(1, "Cidade é obrigatória").max(100),
   state: z.string().trim().min(1, "Estado é obrigatório").max(2),
   work_mode: z.enum(["onsite", "hybrid", "remote"]),
-  employment_status: z.enum(["active", "vacation", "terminated"]),
+  employment_status: z.enum(["active", "vacation", "terminated", "external"]),
   team_id: z.string().uuid().nullable(),
   manager_user_id: z.string().uuid().nullable(),
   start_date: z.string().min(1, "Data de início é obrigatória"),
@@ -55,7 +55,7 @@ interface Profile {
   city: string;
   state: string;
   work_mode: "onsite" | "hybrid" | "remote";
-  employment_status: "active" | "vacation" | "terminated";
+  employment_status: "active" | "vacation" | "terminated" | "external";
   team?: { id: string; name: string } | null;
   manager?: { id: string; display_name: string } | null;
 }

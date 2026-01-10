@@ -18,7 +18,7 @@ export interface DirectoryProfile {
   team_name: string | null;
   job_title_id: string | null;
   job_title_name: string | null;
-  employment_status: 'active' | 'vacation' | 'terminated';
+  employment_status: 'active' | 'vacation' | 'terminated' | 'external';
   onboarding_completed: boolean;
   has_bu_membership: boolean;
   start_date: string | null;
