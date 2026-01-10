@@ -36,22 +36,38 @@ export type OkrWizardType =
  */
 export type OkrWizardStep =
   // Creation wizard
+  | 'intro'
+  | 'context'
+  | 'retrospective'
   | 'objective'
+  | 'sharing'           // OKRs compartilhadas
   | 'kr-type'
   | 'kr-detail'
-  | 'initiatives'
   | 'dependencies'
-  | 'share'
-  // Check-in steps
+  | 'initiatives'
+  | 'share'             // Comunicação final
+  // Collaborator check-in
+  | 'collaborator-context'
   | 'kr-review'
-  | 'team-decisions'
   | 'reflection'
+  // Leader prep
   | 'overview'
   | 'highlights'
+  | 'prep'
+  | 'alignment'
+  // Team check-in
+  | 'team-opening'
+  | 'team-kr-review'
+  | 'team-initiatives'
+  | 'team-decisions'
+  // Managers check-in
   | 'panorama'
   | 'cross-issues'
   | 'adjustments'
+  // C-Level check-in
+  | 'company-okrs'
   | 'insights'
+  | 'decisions'
   | 'directives';
 
 /**
@@ -158,10 +174,28 @@ export interface ContextualQuestions {
  * Mapeamento de steps para perguntas sugeridas
  */
 export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
-  // Creation
+  // ============================================================
+  // CREATION WIZARD
+  // ============================================================
+  'intro': [
+    'O que são OKRs?',
+    'Por que usamos OKRs na Jet?',
+  ],
+  'context': [
+    'Onde meu time gera mais impacto nesse ciclo?',
+    'Como os OKRs da empresa se conectam com o meu time?',
+  ],
+  'retrospective': [
+    'O que normalmente faz um OKR falhar nesse cenário?',
+    'Como aprender com o ciclo anterior?',
+  ],
   'objective': [
     'Este objetivo está inspirador ou operacional demais?',
     'Como posso tornar este objetivo mais claro?',
+  ],
+  'sharing': [
+    'Quando faz sentido compartilhar um OKR?',
+    'Como definir responsabilidades em OKRs compartilhadas?',
   ],
   'kr-type': [
     'Qual a diferença entre KR fundacional, contribuição e habilitador?',
@@ -171,31 +205,38 @@ export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
     'Este KR está bem escrito?',
     'Como defino uma meta realista para este KR?',
   ],
-  'initiatives': [
-    'Que tipo de iniciativa costuma funcionar para isso?',
-    'Quantas iniciativas são ideais por KR?',
-  ],
   'dependencies': [
     'Este KR depende de outro time?',
     'Como lidar com dependências entre áreas?',
+  ],
+  'initiatives': [
+    'Que tipo de iniciativa costuma funcionar para isso?',
+    'Quantas iniciativas são ideais por KR?',
   ],
   'share': [
     'Como comunicar esses OKRs para o time?',
     'O que incluir no resumo de OKRs?',
   ],
-  // Check-in
+  
+  // ============================================================
+  // COLLABORATOR CHECK-IN
+  // ============================================================
+  'collaborator-context': [
+    'Como interpretar meu progresso semanal?',
+    'O que devo priorizar esta semana?',
+  ],
   'kr-review': [
     'Este progresso está dentro do esperado?',
     'O que pode estar travando este KR?',
-  ],
-  'team-decisions': [
-    'Que decisões precisam ser tomadas agora?',
-    'Como priorizar entre múltiplos bloqueios?',
   ],
   'reflection': [
     'O que mais impactou meus resultados?',
     'Como posso pedir ajuda de forma efetiva?',
   ],
+  
+  // ============================================================
+  // LEADER PREP
+  // ============================================================
   'overview': [
     'Como está o panorama geral do time?',
     'Quais KRs precisam de mais atenção?',
@@ -204,6 +245,38 @@ export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
     'Quais são os pontos críticos a abordar?',
     'Como priorizar as conversas 1:1?',
   ],
+  'prep': [
+    'Quais KRs merecem discussão em grupo?',
+    'Como estruturar a pauta da reunião?',
+  ],
+  'alignment': [
+    'O time está alinhado com a estratégia?',
+    'Quais dependências precisam de atenção?',
+  ],
+  
+  // ============================================================
+  // TEAM CHECK-IN
+  // ============================================================
+  'team-opening': [
+    'Como está a saúde geral dos OKRs do time?',
+    'O que priorizar na discussão de hoje?',
+  ],
+  'team-kr-review': [
+    'Este KR precisa de ajuste?',
+    'O que o time pode fazer para destravar este KR?',
+  ],
+  'team-initiatives': [
+    'Quais iniciativas estão contribuindo mais?',
+    'Devemos pausar alguma iniciativa?',
+  ],
+  'team-decisions': [
+    'Que decisões precisam ser tomadas agora?',
+    'Como priorizar entre múltiplos bloqueios?',
+  ],
+  
+  // ============================================================
+  // MANAGERS CHECK-IN
+  // ============================================================
   'panorama': [
     'Como as áreas estão performando?',
     'Onde estão os maiores riscos?',
@@ -216,9 +289,21 @@ export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
     'Que ajustes estratégicos são necessários?',
     'Como comunicar mudanças de prioridade?',
   ],
+  
+  // ============================================================
+  // C-LEVEL CHECK-IN
+  // ============================================================
+  'company-okrs': [
+    'Como está o progresso estratégico da empresa?',
+    'Quais OKRs precisam de atenção executiva?',
+  ],
   'insights': [
     'O que os dados estão mostrando?',
     'Quais tendências merecem atenção?',
+  ],
+  'decisions': [
+    'Quais decisões estratégicas precisam ser tomadas?',
+    'Quais trade-offs precisamos fazer?',
   ],
   'directives': [
     'Quais diretrizes precisam ser reforçadas?',
@@ -231,20 +316,27 @@ export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
  */
 export const WIZARD_AGENT_MAP: Record<OkrWizardType, Record<string, VicAgentSlug>> = {
   'creation': {
+    'intro': 'onboarding-buddy',
+    'context': 'analista-kpis',
+    'retrospective': 'analista-kpis',
     'objective': 'coach-okrs',
+    'sharing': 'alinhamento-estrategico',
     'kr-type': 'coach-okrs',
     'kr-detail': 'coach-okrs',
-    'initiatives': 'coach-okrs',
     'dependencies': 'alinhamento-estrategico',
+    'initiatives': 'coach-okrs',
     'share': 'revisor-comunicacao',
     'default': 'coach-okrs',
   },
   'team-checkin': {
-    'kr-review': 'coach-okrs',
+    'team-opening': 'analista-kpis',
+    'team-kr-review': 'coach-okrs',
+    'team-initiatives': 'coach-okrs',
     'team-decisions': 'facilitador-decisoes',
     'default': 'coach-okrs',
   },
   'collaborator': {
+    'collaborator-context': 'analista-kpis',
     'kr-review': 'coach-okrs',
     'reflection': 'cultura',
     'default': 'coach-okrs',
@@ -252,6 +344,8 @@ export const WIZARD_AGENT_MAP: Record<OkrWizardType, Record<string, VicAgentSlug
   'leader-prep': {
     'overview': 'analista-kpis',
     'highlights': 'alinhamento-estrategico',
+    'prep': 'facilitador-decisoes',
+    'alignment': 'alinhamento-estrategico',
     'default': 'coach-okrs',
   },
   'managers-checkin': {
@@ -261,7 +355,9 @@ export const WIZARD_AGENT_MAP: Record<OkrWizardType, Record<string, VicAgentSlug
     'default': 'alinhamento-estrategico',
   },
   'clevel-checkin': {
+    'company-okrs': 'analista-kpis',
     'insights': 'analista-kpis',
+    'decisions': 'facilitador-decisoes',
     'directives': 'alinhamento-estrategico',
     'default': 'alinhamento-estrategico',
   },
