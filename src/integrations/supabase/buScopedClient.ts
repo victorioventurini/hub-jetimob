@@ -19,6 +19,7 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
       headers: { "x-current-bu-id": buId },
     },
     auth: {
+      storage: localStorage, // CRITICAL: Share storage with global client
       persistSession: true,
       autoRefreshToken: true,
     },
