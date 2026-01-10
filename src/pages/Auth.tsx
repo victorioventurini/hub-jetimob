@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, type Location } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -56,15 +56,19 @@ export default function Auth() {
     signInWithMagicLink
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Redirect if already logged in
+  // Redirect if already logged in (preserve original destination if any)
   useEffect(() => {
-    if (user && !authLoading) {
-      navigate("/", {
-        replace: true
-      });
-    }
-  }, [user, authLoading, navigate]);
+    if (!user || authLoading) return;
+
+    const from = (location.state as { from?: Location } | null)?.from;
+    const target = from && from.pathname && from.pathname !== "/auth"
+      ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
+      : "/";
+
+    navigate(target, { replace: true });
+  }, [user, authLoading, navigate, location.state]);
 
   // Clear domain error when email changes
   useEffect(() => {
