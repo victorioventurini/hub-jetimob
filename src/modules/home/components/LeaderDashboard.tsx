@@ -16,6 +16,7 @@ import {
 } from "./leader";
 import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard";
 import { TeamCheckinWizardCard } from "@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard";
+import { TeamOkrCreationWizardCard } from "@/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizardCard";
 import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
@@ -45,6 +46,10 @@ export function LeaderDashboard() {
   const canViewKpis = has("kpis.read");
   const canViewTickets = has("tickets.read");
   const canViewAssets = has("assets.read");
+  
+  // Check OKR creation permission (team-scoped)
+  // Note: useLeaderScope already filters to teams where user is leader
+  const canCreateTeamOkrs = has("okrs.team_objective.create:team");
 
   const isLoading = isScopeLoading || isDashboardLoading;
 
@@ -78,20 +83,37 @@ export function LeaderDashboard() {
 
       {/* Wizard Entry Points */}
       {selectedTeam && (
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <LeaderPrepWizardCard
-            teamId={selectedTeamId || ''}
-            teamName={selectedTeam.team_name}
-            atRiskCount={summary?.okrs?.red || 0}
-            pendingCount={summary?.okrs?.pending_checkins || 0}
-            isLoading={isDashboardLoading}
-          />
-          <TeamCheckinWizardCard
-            teamId={selectedTeamId || ''}
-            teamName={selectedTeam.team_name}
-            pendingKrsCount={summary?.okrs?.pending_checkins || 0}
-            isLoading={isDashboardLoading}
-          />
+        <section className="space-y-4">
+          {/* OKR Creation Wizard - Always show for leaders with permission */}
+          {canCreateTeamOkrs && (
+            <TeamOkrCreationWizardCard
+              teamId={selectedTeamId || ''}
+              teamName={selectedTeam.team_name}
+              hasActiveOkrs={Boolean(
+                summary?.okrs && 
+                (summary.okrs.green + summary.okrs.yellow + summary.okrs.red + summary.okrs.not_started) > 0
+              )}
+              cycleStartingSoon={false}
+              isLoading={isDashboardLoading}
+            />
+          )}
+          
+          {/* Check-in Wizards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LeaderPrepWizardCard
+              teamId={selectedTeamId || ''}
+              teamName={selectedTeam.team_name}
+              atRiskCount={summary?.okrs?.red || 0}
+              pendingCount={summary?.okrs?.pending_checkins || 0}
+              isLoading={isDashboardLoading}
+            />
+            <TeamCheckinWizardCard
+              teamId={selectedTeamId || ''}
+              teamName={selectedTeam.team_name}
+              pendingKrsCount={summary?.okrs?.pending_checkins || 0}
+              isLoading={isDashboardLoading}
+            />
+          </div>
         </section>
       )}
 
