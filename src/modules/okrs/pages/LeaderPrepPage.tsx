@@ -103,8 +103,8 @@ export default function LeaderPrepPage() {
     quarterlyCycle?.id
   );
   const { data: pendingKrs, isLoading: isLoadingKrs } = useTeamPendingKrs(
-    teamIdParam || '',
-    quarterlyCycle?.id
+    quarterlyCycle?.id,
+    teamIdParam ? [teamIdParam] : []
   );
   
   // Navigation
@@ -201,17 +201,31 @@ export default function LeaderPrepPage() {
         );
         
       case 'highlights':
+        // Generate highlights from KRs
+        const highlights = krs
+          .filter(kr => kr.days_since_checkin >= 14 || kr.is_at_risk)
+          .map(kr => ({
+            id: kr.id,
+            type: kr.days_since_checkin >= 14 ? 'stagnant' as const : 'blocked' as const,
+            title: kr.title,
+            description: kr.days_since_checkin >= 14 
+              ? `Sem atualização há ${kr.days_since_checkin} dias`
+              : `Em risco - ${Math.round(kr.progress)}% progresso`,
+            priority: 'high' as const,
+            relatedKrId: kr.id,
+          }));
+        
         return (
           <LeaderHighlightsStep
-            teamName={selectedTeam.name}
-            krs={krs}
-            dismissedInsights={new Set(draft.data.dismissedInsights)}
+            highlights={highlights}
+            aiInsights={[]}
+            isLoading={isLoadingKrs}
+            onContinue={goNext}
+            onBack={goBack}
             onDismissInsight={(id) => {
               const updated = [...draft.data.dismissedInsights, id];
               updateDraft({ dismissedInsights: updated });
             }}
-            onContinue={goNext}
-            onBack={goBack}
           />
         );
         
@@ -219,9 +233,10 @@ export default function LeaderPrepPage() {
         return (
           <LeaderPrepStep
             krs={krs}
-            isLoading={isLoadingKrs}
             krActions={draft.data.krActions}
-            onKrActionChange={(actions) => updateDraft({ krActions: actions })}
+            onActionsChange={(actions) => updateDraft({ krActions: actions })}
+            meetingNotes={draft.data.meetingNotes}
+            onMeetingNotesChange={(notes) => updateDraft({ meetingNotes: notes })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -231,10 +246,9 @@ export default function LeaderPrepPage() {
         return (
           <LeaderAlignmentStep
             teamName={selectedTeam.name}
-            parentObjectives={[]} // TODO: fetch parent objectives
-            meetingNotes={draft.data.meetingNotes}
-            onNotesChange={(notes) => updateDraft({ meetingNotes: notes })}
-            onComplete={handleComplete}
+            teamKrs={krs}
+            parentObjectives={[]}
+            onStartCheckin={handleComplete}
             onBack={goBack}
           />
         );
