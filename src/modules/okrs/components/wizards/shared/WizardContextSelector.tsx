@@ -162,7 +162,7 @@ export function WizardContextSelector({
           {canSelectAnyUser ? (
             <BuUserSelect
               value={userId || profile?.id}
-              onValueChange={(newUserId) => onUserChange?.(newUserId)}
+              onValueChange={(newUserId) => onUserChange?.(newUserId ?? '')}
               placeholder="Selecione um usuário"
               teamId={teamId}
               showBadges={false}

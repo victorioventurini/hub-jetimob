@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -983,32 +983,13 @@ export default function SettingsNotifications() {
                 <div className="grid gap-4 max-w-md">
                   <div className="space-y-2">
                     <Label>Destinatário</Label>
-                    <Select value={testRecipient} onValueChange={setTestRecipient}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um usuário" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {profiles
-                          .filter(profile => profile.user_id) // Only show users that have logged in (have auth.users entry)
-                          .map(profile => (
-                          <SelectItem 
-                            key={profile.id} 
-                            value={profile.id}
-                            textValue={profile.display_name || profile.work_email || 'Usuário'}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Avatar className="w-6 h-6">
-                                <AvatarImage src={profile.photo_url ?? undefined} />
-                                <AvatarFallback className="text-xs">
-                                  {profile.display_name?.slice(0, 2).toUpperCase() || '?'}
-                                </AvatarFallback>
-                              </Avatar>
-                              {profile.display_name || profile.work_email || 'Usuário'}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <BuUserSelect
+                      value={testRecipient}
+                      onValueChange={(val) => setTestRecipient(val ?? '')}
+                      placeholder="Selecione um usuário"
+                      showSearch={false}
+                      showBadges={false}
+                    />
                   </div>
                   
                   <div className="space-y-2">
