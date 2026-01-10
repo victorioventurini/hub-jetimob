@@ -171,8 +171,8 @@ export function MentionInput({
 
       const displayName = match[1];
       const userId = match[2];
-      // Add mention chip as non-editable span
-      result += `<span contenteditable="false" data-mention-id="${userId}" class="mention-chip">@${escapeHtml(displayName)}</span>`;
+      // Add mention chip as non-editable span with zero-width space after for cursor positioning
+      result += `<span contenteditable="false" data-mention-id="${userId}" class="mention-chip">@${escapeHtml(displayName)}</span>\u200B`;
 
       lastIndex = match.index + match[0].length;
     }
@@ -366,32 +366,44 @@ export function MentionInput({
     setMentionStartOffset(null);
     setSearchTerm('');
 
-    // Set cursor position after mention
-    setTimeout(() => {
+    // Set cursor position after mention - ensure it's in an editable text node
+    requestAnimationFrame(() => {
       if (editorRef.current) {
         editorRef.current.focus();
         const selection = window.getSelection();
         if (selection) {
-          // Find the mention chip we just inserted and place cursor after it
-          const mentionChips = editorRef.current.querySelectorAll('.mention-chip');
-          const lastChip = mentionChips[mentionChips.length - 1];
-          if (lastChip && lastChip.nextSibling) {
+          // Find the last text node in the editor (after the mention chip)
+          const walker = document.createTreeWalker(
+            editorRef.current,
+            NodeFilter.SHOW_TEXT,
+            null
+          );
+          
+          let lastTextNode: Text | null = null;
+          let node: Node | null;
+          while ((node = walker.nextNode())) {
+            lastTextNode = node as Text;
+          }
+          
+          if (lastTextNode) {
             const range = document.createRange();
-            range.setStartAfter(lastChip);
+            range.setStart(lastTextNode, lastTextNode.length);
             range.collapse(true);
             selection.removeAllRanges();
             selection.addRange(range);
           } else {
-            // Place at end
+            // Create a text node at the end if none exists
+            const textNode = document.createTextNode('\u200B');
+            editorRef.current.appendChild(textNode);
             const range = document.createRange();
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
+            range.setStart(textNode, 1);
+            range.collapse(true);
             selection.removeAllRanges();
             selection.addRange(range);
           }
         }
       }
-    }, 0);
+    });
   };
 
   // Handle keyboard navigation
@@ -457,20 +469,19 @@ export function MentionInput({
     <div className="relative">
       <style>{`
         .mention-chip {
-          display: inline-flex;
-          align-items: center;
-          padding: 1px 6px;
-          margin: 0 2px;
-          border-radius: 4px;
-          background-color: hsl(var(--muted));
-          color: hsl(var(--foreground));
-          font-size: 0.875rem;
+          display: inline;
+          padding: 0 4px;
+          margin: 0 1px;
+          border-radius: 3px;
+          background-color: hsl(var(--primary) / 0.1);
+          color: hsl(var(--primary));
+          font-size: inherit;
           font-weight: 500;
-          user-select: all;
-          cursor: default;
+          vertical-align: baseline;
+          line-height: inherit;
         }
         .mention-chip:hover {
-          background-color: hsl(var(--muted-foreground) / 0.2);
+          background-color: hsl(var(--primary) / 0.2);
         }
         .mention-editor:empty::before {
           content: attr(data-placeholder);
