@@ -25,10 +25,12 @@ import {
   AlertTriangle,
   Clock,
   Users,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface Notification {
@@ -89,7 +91,7 @@ export function NotificationCenter() {
         .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(4);
 
       if (error) throw error;
 
@@ -219,22 +221,37 @@ export function NotificationCenter() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold">Notificações</h3>
-          {unreadCount > 0 && (
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => markAllAsRead.mutate()}
+                disabled={markAllAsRead.isPending}
+                className="text-xs"
+              >
+                <CheckCheck className="w-4 h-4 mr-1" />
+                Marcar todas como lidas
+              </Button>
+            )}
             <Button
               variant="ghost"
-              size="sm"
-              onClick={() => markAllAsRead.mutate()}
-              disabled={markAllAsRead.isPending}
-              className="text-xs"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                navigate('/me/notifications?tab=settings');
+                setOpen(false);
+              }}
+              title="Configurações de notificações"
             >
-              <CheckCheck className="w-4 h-4 mr-1" />
-              Marcar todas como lidas
+              <Settings className="h-4 w-4" />
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Notifications List */}
-        <ScrollArea className="h-[400px]">
+        {/* Notifications List */}
+        <div className="max-h-[320px]">
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
               Carregando...
@@ -258,7 +275,7 @@ export function NotificationCenter() {
                     onClick={() => handleNotificationClick(notification)}
                     className={cn(
                       "w-full flex items-start gap-3 p-4 text-left transition-colors",
-                      "hover:bg-accent",
+                      "hover:bg-primary/10",
                       !notification.is_read && "bg-primary/5",
                       notification.context_url && "cursor-pointer",
                       !notification.context_url && "cursor-default"
@@ -311,7 +328,21 @@ export function NotificationCenter() {
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
+
+        {/* Footer - Ver todas */}
+        <div className="border-t p-3">
+          <Button
+            variant="ghost"
+            className="w-full text-sm text-primary hover:text-primary"
+            onClick={() => {
+              navigate('/me/notifications');
+              setOpen(false);
+            }}
+          >
+            Ver todas as notificações
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
