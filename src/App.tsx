@@ -33,6 +33,7 @@ const Modules = lazy(() => import("./pages/Modules"));
 const SelectBu = lazy(() => import("./pages/SelectBu"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const WizardsPage = lazy(() => import("./pages/Wizards"));
+const VicTestPage = lazy(() => import("./pages/VicTestPage"));
 
 
 // Módulo Teams
@@ -447,6 +448,18 @@ const App = () => {
                         <ProtectedRoute>
                           <BuRequiredRoute>
                             <WizardsPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Vic Test Page - Isolated AI agent testing */}
+                    <Route
+                      path="/vic-test"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <VicTestPage />
                           </BuRequiredRoute>
                         </ProtectedRoute>
                       }
