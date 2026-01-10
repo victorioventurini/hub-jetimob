@@ -30,7 +30,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       if (!supabase) return [];
       let query = supabase
         .from("asset_gift_items")
-        .select("*")
+        .select("id, bu_id, name, category, status, notes, created_at, created_by, updated_at")
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");

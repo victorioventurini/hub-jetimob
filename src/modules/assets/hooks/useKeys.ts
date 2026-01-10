@@ -31,7 +31,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_clavicularies")
-        .select("*")
+        .select("id, bu_id, location_id, name, status, notes, created_at")
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");
@@ -58,7 +58,7 @@ export function useKeys(options: UseKeysOptions = {}) {
     if (!supabase) return [];
     const { data, error } = await supabase
       .from("asset_hooks")
-      .select("*")
+      .select("id, claviculary_id, hook_number, occupied, notes, created_at")
       .eq("claviculary_id", clavicularyId)
       .order("hook_number");
 

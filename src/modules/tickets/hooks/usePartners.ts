@@ -20,7 +20,7 @@ export function usePartnerCompanies() {
 
       const { data, error } = await supabase
         .from("partner_companies")
-        .select("*")
+        .select("id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .order("name");
@@ -42,7 +42,7 @@ export function usePartnerCompany(id: string | null) {
 
       const { data, error } = await supabase
         .from("partner_companies")
-        .select("*")
+        .select("id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
         .eq("id", id)
         .is("deleted_at", null)
         .maybeSingle();
