@@ -316,7 +316,7 @@ export default function WizardsPage() {
     <HubLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Wizards"
+          title="Rituais"
           description="Fluxos guiados para gestão de OKRs"
         />
 
