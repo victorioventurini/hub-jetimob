@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -102,16 +102,15 @@ export default function JobTitlesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Briefcase className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Cargos</h1>
-            <p className="text-muted-foreground">Gerencie a lista de cargos padronizados desta Business Unit</p>
-          </div>
-        </div>
+      <PageHeader
+        title="Cargos"
+        description="Gerencie a lista de cargos padronizados desta Business Unit"
+        icon={<Briefcase className="h-6 w-6 text-primary" />}
+        backTo="/hub"
+        backLabel="Voltar para Hub"
+      />
 
-        <Card>
+      <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between gap-4 mb-6">
               <div className="relative flex-1 max-w-sm">
@@ -225,7 +224,6 @@ export default function JobTitlesPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       <JobTitleDialog
         open={dialogOpen}
