@@ -9,7 +9,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Sparkles,
   ArrowRight,
@@ -19,6 +18,7 @@ import {
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useVicEnabled } from '@/modules/vic/hooks/useVicAgent';
+import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
 // ============================================================
 // TYPES
 // ============================================================
@@ -127,13 +127,15 @@ export function TeamOkrIntroStep({
           </div>
 
           {isLoading ? (
-            <div className="space-y-4 w-full max-w-md">
-              <Skeleton className="h-8 w-48 mx-auto" />
-              <Skeleton className="h-20 w-full" />
-            </div>
+            <VicLoadingState 
+              text="Preparando sua jornada de OKRs..."
+              size="sm"
+            />
           ) : (
             <>
-              <h2 className="text-2xl font-bold mb-2">{greeting}</h2>
+              <h2 className="text-2xl font-bold mb-2">
+                <VicTypewriterText text={greeting} speed={30} />
+              </h2>
               <p className="text-lg text-muted-foreground max-w-md">
                 Vamos definir os OKRs do <span className="font-medium text-foreground">{teamName}</span>
               </p>
@@ -152,10 +154,16 @@ export function TeamOkrIntroStep({
               </div>
               <div className="space-y-2">
                 {isLoading ? (
-                  <Skeleton className="h-16 w-full" />
+                  <VicLoadingState 
+                    text="Vic está pensando..."
+                    size="sm"
+                    variant="inline"
+                  />
                 ) : (
                   <>
-                    <p className="text-base leading-relaxed">{message}</p>
+                    <p className="text-base leading-relaxed">
+                      <VicTypewriterText text={message} speed={20} />
+                    </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
                       Vic, sua assistente de OKRs
