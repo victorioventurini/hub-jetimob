@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
+import { assertSupabaseClient } from "@/lib/supabaseGuard";
 import type { AssetGiftItem, AssetGiftBatch, AssetGiftMovement, GiftMovementType, GiftDestinationType } from "../types";
 
 // Helper to format profile name
@@ -13,14 +14,15 @@ export function useGifts() {
   const { user } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
-  const supabase = useBuScopedSupabase();
+  const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
 
   // Buscar itens de brinde
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
     queryKey: ["asset-gift-items", buId],
-    enabled: !!buId,
+    enabled: !!buId && !!supabase,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_gift_items")
         .select("*")
@@ -36,8 +38,9 @@ export function useGifts() {
   // Buscar lotes
   const { data: batches = [], isLoading: isLoadingBatches, refetch: refetchBatches } = useQuery({
     queryKey: ["asset-gift-batches", buId],
-    enabled: !!buId,
+    enabled: !!buId && !!supabase,
     queryFn: async () => {
+      if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_gift_batches")
         .select(`
@@ -55,6 +58,8 @@ export function useGifts() {
 
   // Buscar movimentações
   const getMovements = async (giftItemId?: string): Promise<AssetGiftMovement[]> => {
+    if (!supabase || !buId) return [];
+    
     let query = supabase
       .from("asset_gift_movements")
       .select(`
@@ -62,7 +67,7 @@ export function useGifts() {
         gift_item:asset_gift_items!gift_item_id(id, name),
         batch:asset_gift_batches!batch_id(id, batch_code)
       `)
-      .eq("bu_id", buId!)
+      .eq("bu_id", buId)
       .order("occurred_at", { ascending: false });
 
     if (giftItemId) {
@@ -101,7 +106,8 @@ export function useGifts() {
   // Criar item de brinde
   const createItemMutation = useMutation({
     mutationFn: async (data: { name: string; category?: string; notes?: string }) => {
-      const { data: item, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createGiftItem");
+      const { data: item, error } = await client
         .from("asset_gift_items")
         .insert({
           bu_id: buId!,
@@ -126,7 +132,8 @@ export function useGifts() {
   // Atualizar item
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, name, category, status, notes }: { id: string; name?: string; category?: string; status?: 'active' | 'inactive'; notes?: string }) => {
-      const { data: item, error } = await supabase
+      const client = assertSupabaseClient(supabase, "updateGiftItem");
+      const { data: item, error } = await client
         .from("asset_gift_items")
         .update({ name, category, status, notes })
         .eq("id", id)
@@ -156,7 +163,8 @@ export function useGifts() {
       campaign?: string;
       notes?: string;
     }) => {
-      const { data: batch, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createGiftBatch");
+      const { data: batch, error } = await client
         .from("asset_gift_batches")
         .insert({
           bu_id: buId!,
@@ -190,6 +198,8 @@ export function useGifts() {
       destination_description?: string;
       notes?: string;
     }) => {
+      const client = assertSupabaseClient(supabase, "createGiftMovement");
+      
       // Validar estoque para saídas
       if (data.movement_type === 'out' && data.batch_id) {
         const batch = batches.find(b => b.id === data.batch_id);
@@ -198,7 +208,7 @@ export function useGifts() {
         }
       }
 
-      const { data: movement, error } = await supabase
+      const { data: movement, error } = await client
         .from("asset_gift_movements")
         .insert({
           bu_id: buId!,

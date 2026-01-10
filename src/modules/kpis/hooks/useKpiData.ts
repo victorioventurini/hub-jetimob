@@ -3,6 +3,7 @@ import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScoped
 import { KpiCategory, KpiWithValues, KpiValue, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
+import { assertSupabaseClient } from "@/lib/supabaseGuard";
 
 interface UseKpiDataOptions {
   category?: KpiCategory;
@@ -193,7 +194,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       target_value: number | null;
       status: 'active' | 'inactive';
     }) => {
-      const { data: result, error } = await supabase
+      const client = assertSupabaseClient(supabase, "createKpi");
+      const { data: result, error } = await client
         .from("kpi_metrics")
         .insert(data)
         .select()
@@ -228,7 +230,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       notes?: string;
       created_by?: string;
     }) => {
-      const { data: result, error } = await supabase
+      const client = assertSupabaseClient(supabase, "addKpiValue");
+      const { data: result, error } = await client
         .from("kpi_values")
         .insert({
           kpi_id: data.kpi_id,
