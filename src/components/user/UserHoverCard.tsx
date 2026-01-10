@@ -126,7 +126,7 @@ export function UserHoverCard({ userId, profileId, children, asChild = true }: U
           </div>
         ) : profile ? (
           <Link 
-            to={`/users/${profile.user_id}`} 
+            to={`/users/${profile.id}`} 
             className="block p-4 hover:bg-accent/50 transition-colors rounded-md"
           >
             <div className="flex items-start gap-3">
