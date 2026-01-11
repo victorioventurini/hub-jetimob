@@ -43,15 +43,12 @@ export interface GlobalBreadcrumbProps {
   showHome?: boolean;
   /** Classes adicionais */
   className?: string;
-  /** Se true, usa estilo mais compacto */
-  compact?: boolean;
 }
 
 export function GlobalBreadcrumb({
   items,
   showHome = true,
   className,
-  compact = false,
 }: GlobalBreadcrumbProps) {
   // Construir lista com Home no início (opcional)
   const allItems: BreadcrumbItemConfig[] = showHome
@@ -59,7 +56,7 @@ export function GlobalBreadcrumb({
     : items;
 
   return (
-    <Breadcrumb className={cn(compact ? 'mb-1' : 'mb-2', className)}>
+    <Breadcrumb className={cn('mb-1', className)}>
       <BreadcrumbList>
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;
@@ -74,12 +71,7 @@ export function GlobalBreadcrumb({
               )}
               
               {isLast ? (
-                <BreadcrumbPage 
-                  className={cn(
-                    'flex items-center gap-1.5',
-                    compact && 'text-xs'
-                  )}
-                >
+                <BreadcrumbPage className="flex items-center gap-1.5">
                   {Icon && <Icon className="w-3.5 h-3.5" />}
                   <span className="truncate max-w-[200px]">{item.label}</span>
                 </BreadcrumbPage>
@@ -87,10 +79,7 @@ export function GlobalBreadcrumb({
                 <BreadcrumbLink asChild>
                   <Link 
                     to={item.href || '#'} 
-                    className={cn(
-                      'flex items-center gap-1.5',
-                      compact && 'text-xs'
-                    )}
+                    className="flex items-center gap-1.5"
                   >
                     {Icon && <Icon className="w-3.5 h-3.5" />}
                     <span className="truncate max-w-[150px]">{item.label}</span>
