@@ -14,7 +14,4 @@ export type { TeamInitiativesStepProps } from './TeamInitiativesStep';
 export { TeamDecisionsStep } from './TeamDecisionsStep';
 export type { TeamDecisionsStepProps } from './TeamDecisionsStep';
 
-export { TeamCheckinWizard } from './TeamCheckinWizard';
-export type { TeamCheckinWizardProps } from './TeamCheckinWizard';
-
 export { TeamCheckinWizardCard } from './TeamCheckinWizardCard';

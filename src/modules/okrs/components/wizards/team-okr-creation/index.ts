@@ -5,7 +5,6 @@
  * com alinhamento estratégico, OKRs compartilhadas e educação contextual.
  */
 
-export { TeamOkrCreationWizard } from './TeamOkrCreationWizard';
 export { TeamOkrCreationWizardCard } from './TeamOkrCreationWizardCard';
 
 // Steps (exported for testing/composition)

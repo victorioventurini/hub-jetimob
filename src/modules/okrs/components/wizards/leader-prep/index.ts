@@ -14,8 +14,5 @@ export type { LeaderPrepStepProps } from './LeaderPrepStep';
 export { LeaderAlignmentStep, type ParentObjective } from './LeaderAlignmentStep';
 export type { LeaderAlignmentStepProps } from './LeaderAlignmentStep';
 
-export { LeaderPrepWizard } from './LeaderPrepWizard';
-export type { LeaderPrepWizardProps } from './LeaderPrepWizard';
-
 export { LeaderPrepWizardCard } from './LeaderPrepWizardCard';
 export type { LeaderPrepWizardCardProps } from './LeaderPrepWizardCard';
