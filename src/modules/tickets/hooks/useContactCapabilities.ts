@@ -1,7 +1,15 @@
+// ============================================================
+// USE CONTACT CAPABILITIES - Gerencia capacidades de contatos
+// ============================================================
+// POST-BU: Usa cliente BU-scoped obrigatório
+// TCR v2.15.0: Campos explícitos, queryKeys centralizadas
+// ============================================================
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { useAuth } from "@/hooks/useAuth";
 
 // ===========================================
 // TYPES
@@ -32,6 +40,22 @@ export interface CreateCapabilityData {
   subcategory_id?: string | null;
 }
 
+// Explicit fields - avoid select('*')
+const CAPABILITY_FIELDS = `
+  id, bu_id, partner_company_id, contact_id, category_id, subcategory_id,
+  is_active, created_at, created_by, updated_at, deleted_at,
+  category:ticket_categories(id, name),
+  subcategory:ticket_subcategories(id, name)
+`;
+
+const CAPABILITY_WITH_CONTACT_FIELDS = `
+  id, bu_id, partner_company_id, contact_id, category_id, subcategory_id,
+  is_active, created_at, created_by, updated_at, deleted_at,
+  category:ticket_categories(id, name),
+  subcategory:ticket_subcategories(id, name),
+  contact:partner_contacts(id, name, email)
+`;
+
 // ===========================================
 // QUERIES
 // ===========================================
@@ -39,6 +63,7 @@ export interface CreateCapabilityData {
 export function useContactCapabilities(contactId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: queryKeys.tickets.contactCapabilities(buId ?? null, contactId),
@@ -47,11 +72,7 @@ export function useContactCapabilities(contactId?: string) {
 
       let query = supabase
         .from("partner_contact_capabilities")
-        .select(`
-          *,
-          category:ticket_categories(id, name),
-          subcategory:ticket_subcategories(id, name)
-        `)
+        .select(CAPABILITY_FIELDS)
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .eq("is_active", true)
@@ -73,6 +94,7 @@ export function useContactCapabilities(contactId?: string) {
 export function useCompanyContactCapabilities(companyId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: queryKeys.tickets.companyContactCapabilities(buId ?? null, companyId),
@@ -81,12 +103,7 @@ export function useCompanyContactCapabilities(companyId?: string) {
 
       const { data, error } = await supabase
         .from("partner_contact_capabilities")
-        .select(`
-          *,
-          category:ticket_categories(id, name),
-          subcategory:ticket_subcategories(id, name),
-          contact:partner_contacts(id, name, email)
-        `)
+        .select(CAPABILITY_WITH_CONTACT_FIELDS)
         .eq("bu_id", buId)
         .eq("partner_company_id", companyId)
         .is("deleted_at", null)
@@ -107,13 +124,13 @@ export function useCompanyContactCapabilities(companyId?: string) {
 export function useCreateContactCapability() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const { profile } = useAuth();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: CreateCapabilityData) => {
       if (!buId) throw new Error("BU não selecionada");
-
-      const { data: { user } } = await supabase.auth.getUser();
 
       const { data: capability, error } = await supabase
         .from("partner_contact_capabilities")
@@ -123,15 +140,15 @@ export function useCreateContactCapability() {
           contact_id: data.contact_id,
           category_id: data.category_id,
           subcategory_id: data.subcategory_id || null,
-          created_by: user?.id,
+          created_by: profile?.id || null,
         })
-        .select()
+        .select("id, bu_id, partner_company_id, contact_id, category_id, subcategory_id, is_active, created_at")
         .single();
 
       if (error) throw error;
       return capability;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.contactCapabilities(null, undefined) });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.companyContactCapabilities(null, undefined) });
     },
@@ -140,6 +157,7 @@ export function useCreateContactCapability() {
 
 export function useDeleteContactCapability() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -159,6 +177,7 @@ export function useDeleteContactCapability() {
 
 export function useToggleContactCapability() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
@@ -178,6 +197,7 @@ export function useToggleContactCapability() {
 
 export function useUpdateContactCapability() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -210,7 +230,9 @@ export function useUpdateContactCapability() {
 export function useSaveContactCapabilities() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const { profile } = useAuth();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -227,8 +249,6 @@ export function useSaveContactCapabilities() {
       }>;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
-
-      const { data: { user } } = await supabase.auth.getUser();
 
       // 1. Soft-delete all existing capabilities for this contact
       await supabase
@@ -257,7 +277,7 @@ export function useSaveContactCapabilities() {
             contact_id: contactId,
             category_id: selection.categoryId,
             subcategory_id: null,
-            created_by: user?.id || null,
+            created_by: profile?.id || null,
           });
         } else if (selection.subcategoryIds.length > 0) {
           // Specific subcategories
@@ -268,7 +288,7 @@ export function useSaveContactCapabilities() {
               contact_id: contactId,
               category_id: selection.categoryId,
               subcategory_id: subId,
-              created_by: user?.id || null,
+              created_by: profile?.id || null,
             });
           }
         }
