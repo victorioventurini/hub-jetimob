@@ -8,17 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
 import { useCreateInitiative, useUpdateInitiative } from "../../hooks/useInitiatives";
+import { useInitiativeNameValidation } from "../../hooks/useInitiativeNameValidation";
 import { getInitiativeStatusLabel, getInitiativePriorityLabel, type Initiative, type InitiativeStatus, type InitiativePriority } from "../../types/initiative";
-import { Loader2, Check, ChevronsUpDown, Target, Users, Info, X } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown, Target, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { AskToVicInline } from "@/modules/vic/components/AskToVic";
+import { InitiativeNameFeedback } from "./InitiativeNameFeedback";
+import { InitiativeCulturalMessage } from "./InitiativeCulturalMessage";
 
 interface KrContext {
   id: string;
@@ -64,6 +68,13 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
     notes: "",
     blocker_reason: "",
   });
+
+  // Semantic validation for initiative name
+  const { feedback: nameFeedback, isValidating: isNameValidating } = useInitiativeNameValidation(
+    formData.name,
+    krContext?.title || '',
+    { disabled: !open || isEditing }
+  );
 
   // Get default owner (current user's profile id)
   const currentUserProfile = useMemo(() => {
@@ -182,6 +193,16 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
     ? statuses 
     : statuses.filter(s => s !== 'completed');
 
+  // Context for AskToVic
+  const vicContext = {
+    module: 'okrs' as const,
+    wizard: 'creation' as const,
+    step: 'initiatives' as const,
+    krTitle: krContext?.title,
+    objectiveTitle: krContext?.objectiveTitle,
+    teamName: krContext?.teamName,
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -216,8 +237,16 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name field with AI validation */}
           <div className="space-y-2">
-            <Label htmlFor="name">Nome *</Label>
+            <div className="flex items-center gap-1">
+              <Label htmlFor="name">Nome *</Label>
+              <HelpTooltip 
+                content="Iniciativas descrevem ações concretas, não resultados finais. Responda: O que será feito?" 
+                size="sm"
+              />
+              <AskToVicInline context={vicContext} />
+            </div>
             <Input
               id="name"
               value={formData.name}
@@ -225,6 +254,12 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
               placeholder="O que será feito para mover esta KR?"
               required
             />
+            {!isEditing && (
+              <InitiativeNameFeedback 
+                feedback={nameFeedback} 
+                isValidating={isNameValidating} 
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -233,14 +268,20 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descreva brevemente a iniciativa..."
+              placeholder="Descreva brevemente como esta iniciativa deve ajudar o KR."
               rows={2}
             />
           </div>
 
           {/* Owner Select */}
           <div className="space-y-2">
-            <Label>Responsável *</Label>
+            <div className="flex items-center gap-1">
+              <Label>Responsável *</Label>
+              <HelpTooltip 
+                content="Responsável é quem puxa, acompanha e ajusta. Não é quem 'ajuda'." 
+                size="sm"
+              />
+            </div>
             <Popover open={ownerOpen} onOpenChange={setOwnerOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -309,7 +350,13 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
 
           {/* Contributors Multi-Select */}
           <div className="space-y-2">
-            <Label>Contribuidores</Label>
+            <div className="flex items-center gap-1">
+              <Label>Contribuidores</Label>
+              <HelpTooltip 
+                content="Use contribuidores quando a iniciativa depende de mais pessoas, não para diluir responsabilidade." 
+                size="sm"
+              />
+            </div>
             <Popover open={contributorsOpen} onOpenChange={setContributorsOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -397,7 +444,13 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Status</Label>
+              <div className="flex items-center gap-1">
+                <Label>Status</Label>
+                <HelpTooltip 
+                  content="Status descreve o momento da iniciativa, não seu sucesso." 
+                  size="sm"
+                />
+              </div>
               <Select
                 value={formData.status}
                 onValueChange={(value: InitiativeStatus) => setFormData({ ...formData, status: value })}
@@ -418,14 +471,10 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
             <div className="space-y-2">
               <div className="flex items-center gap-1">
                 <Label>Prioridade</Label>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[200px] text-xs">
-                    Prioridade indica foco relativo, não urgência diária
-                  </TooltipContent>
-                </Tooltip>
+                <HelpTooltip 
+                  content="Prioridade indica foco relativo dentro do KR — não urgência operacional." 
+                  size="sm"
+                />
               </div>
               <Select
                 value={formData.priority}
@@ -448,12 +497,18 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
           {/* Blocker reason when status is blocked */}
           {formData.status === 'blocked' && (
             <div className="space-y-2">
-              <Label htmlFor="blocker_reason">Motivo do bloqueio</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="blocker_reason">Motivo do bloqueio</Label>
+                <HelpTooltip 
+                  content="Registrar bloqueios ajuda o líder a destravar — não é um registro de falha." 
+                  size="sm"
+                />
+              </div>
               <Input
                 id="blocker_reason"
                 value={formData.blocker_reason}
                 onChange={(e) => setFormData({ ...formData, blocker_reason: e.target.value })}
-                placeholder="O que está impedindo o progresso?"
+                placeholder="O que está impedindo o avanço?"
               />
             </div>
           )}
@@ -470,7 +525,13 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expected_end_date">Previsão de término *</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="expected_end_date">Previsão de término *</Label>
+                <HelpTooltip 
+                  content="Datas em iniciativas são estimativas. Se mudar, ajuste — não esconda." 
+                  size="sm"
+                />
+              </div>
               <Input
                 id="expected_end_date"
                 type="date"
@@ -485,9 +546,6 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
               {!isEndDateValid && (
                 <p className="text-xs text-destructive">Data não pode ser no passado</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Data estimada para conclusão da iniciativa
-              </p>
             </div>
           </div>
 
@@ -504,7 +562,14 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notas</Label>
+            <div className="flex items-center gap-1">
+              <Label htmlFor="notes">Notas</Label>
+              <HelpTooltip 
+                content="Registre riscos, dependências ou bloqueios. Iniciativas sem contexto viram tarefas perdidas." 
+                size="sm"
+              />
+              <AskToVicInline context={vicContext} />
+            </div>
             <Textarea
               id="notes"
               value={formData.notes}
@@ -514,13 +579,16 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
             />
           </div>
 
+          {/* Cultural message - only on creation */}
+          {!isEditing && <InitiativeCulturalMessage />}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading || !canSubmit}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditing ? "Salvar" : "Criar"}
+              {isEditing ? "Salvar" : "Criar Iniciativa"}
             </Button>
           </DialogFooter>
         </form>
