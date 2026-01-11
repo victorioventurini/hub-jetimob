@@ -8233,6 +8233,7 @@ export type Database = {
           photo_url: string
           team_name: string
           user_id: string
+          user_type: string
         }[]
       }
       search_mention_candidates: {
