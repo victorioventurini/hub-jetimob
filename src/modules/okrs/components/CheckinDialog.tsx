@@ -118,7 +118,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   // Fetch user's team for check-in context (uses auth.users.id to find profile)
   const { data: userProfile } = useQuery({
-    queryKey: ['user-profile-for-checkin', userId, buId],
+    queryKey: queryKeys.okrs.userProfileForCheckin(userId ?? null, buId ?? null),
     queryFn: async () => {
       if (!supabase || !userId) return null;
       const { data, error } = await supabase

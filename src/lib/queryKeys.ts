@@ -168,6 +168,28 @@ export const queryKeys = {
     cycleCheckins: (buId: string | null, cycleId?: string, filters?: Record<string, unknown>) => 
       ['okr-cycle-checkins', buId, cycleId, filters] as const,
     
+    // Timeline
+    objectiveTimeline: (buId: string | null, objectiveId: string, objectiveType: string) =>
+      ['objective-timeline', buId, objectiveId, objectiveType] as const,
+    objectiveTimelineLast: (buId: string | null, objectiveId: string, objectiveType: string) =>
+      ['objective-timeline-last', buId, objectiveId, objectiveType] as const,
+    
+    // Cancellation reasons
+    cancellationReasons: (buId: string | null) =>
+      ['okr-cancellation-reasons', buId] as const,
+    
+    // User profile for check-in
+    userProfileForCheckin: (userId: string | null, buId: string | null) =>
+      ['user-profile-for-checkin', userId, buId] as const,
+    
+    // Team objective detail
+    teamObjectiveDetail: (objectiveId: string) =>
+      ['okr-team-objective', objectiveId] as const,
+    
+    // Org KRs for linking
+    orgKeyResultsForLinking: (orgObjectiveId: string | null) =>
+      ['okr-org-key-results', orgObjectiveId] as const,
+    
     // Wizard sessions
     wizardSession: (userId: string | null) =>
       ['okr-wizard-session', userId] as const,
