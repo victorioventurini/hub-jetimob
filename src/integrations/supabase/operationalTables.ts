@@ -78,7 +78,7 @@ export const OPERATIONAL_TABLES: string[] = [
 
   // Notifications
   "notifications",
-  "mentions",
+  "ticket_mentions",
   "notification_preferences",
   "notification_channels",
   "notification_endpoints",
