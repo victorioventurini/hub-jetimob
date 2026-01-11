@@ -66,7 +66,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       let query = supabase
         .from("kpi_metrics")
         .select(`
-          *,
+          id, name, description, category, bu_id, owner_user_id, team_id,
+          unit, direction, frequency, target_value, status, is_global,
+          created_at, updated_at, deleted_at,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name)
         `)
