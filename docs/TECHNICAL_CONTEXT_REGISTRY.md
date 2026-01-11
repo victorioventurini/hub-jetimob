@@ -1,28 +1,48 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.14.0  
-**Última atualização:** 2026-01-10
+**Versão:** 2.15.0  
+**Última atualização:** 2026-01-11
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo (V1 removido definitivamente) | Identity Cutover v3.0 completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 5 completo
 
-> 📚 **Documentação Complementar:**
-> - [DEVELOPMENT_STANDARDS.md v1.1.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões de Desenvolvimento** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, DB, Checklist PR)
-> - [DATA_MODEL_REGISTRY.md](./engineering/DATA_MODEL_REGISTRY.md) — **Fonte única de verdade para schema** (tabelas, views, funções, enums, identity map)
-> - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção de identidade (`user_id` vs `profile_id`)
-> - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de permissões e templates V2
-> - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state
-> - [engineering/QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys
-> - [engineering/BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase
-> - [engineering/PERMISSIONS_AND_RBAC_MODEL.md](./engineering/PERMISSIONS_AND_RBAC_MODEL.md) — Modelo de permissões e RBAC
-> - [engineering/SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Relatório final do estado do sistema
-> - [engineering/FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
-> - [ops/BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook oficial de backup e restore
-> - [ops/GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist oficial de go-live
+> 📚 **Documentação Técnica Consolidada:**
+>
+> ### Padrões de Desenvolvimento
+> - [DEVELOPMENT_STANDARDS.md v1.1.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
+> - [QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
+> - [BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
+> - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state para filtros e paginação
+>
+> ### Modelo de Dados e Banco
+> - [DATA_MODEL_REGISTRY.md](./engineering/DATA_MODEL_REGISTRY.md) — **Fonte única de verdade para schema** (tabelas, views, funções, enums)
+> - [DATA_MODEL_REGISTRY.json](./engineering/DATA_MODEL_REGISTRY.json) — Versão JSON para automação
+>
+> ### Identidade e Permissões
+> - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção `user_id` (auth) vs `profile_id` (domínio)
+> - [PERMISSIONS_AND_RBAC_MODEL.md](./engineering/PERMISSIONS_AND_RBAC_MODEL.md) — Modelo completo de permissões V2
+> - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
+>
+> ### Relatórios de Saúde e Compliance
+> - [HEALTH_REPORT_2026-01-11.md](./engineering/HEALTH_REPORT_2026-01-11.md) — **Relatório de saúde técnica atual**
+> - [COMPLIANCE_BASELINE.md](./engineering/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
+> - [FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
+> - [SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Estado final do sistema
+>
+> ### Operações
+> - [BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook de backup e restore
+> - [GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist de go-live
+>
+> ### Auditoria e Higienização
+> - [AUDIT_REPORT_2026-01-11_v3.md](./engineering/AUDIT_REPORT_2026-01-11_v3.md) — Último relatório de auditoria
+> - [CODEBASE_HYGIENE_ROADMAP.md](./CODEBASE_HYGIENE_ROADMAP.md) — Roadmap de limpeza de código
+> - [LEGACY_CLASSIFICATION_MATRIX.md](./LEGACY_CLASSIFICATION_MATRIX.md) — Matriz de classificação de código legado
 
 > ⚠️ **Data Model Registry (Canonical)**
 > - Arquivo: `docs/engineering/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)
 > - Regra: **NUNCA inventar nomes de tabela/view/função**. Usar exclusivamente o registry.
 > - Regenerar: `npx tsx scripts/generate-data-model-registry.ts`
+> 
+> 📑 **Índice Completo de Documentação:** [DOCUMENTATION_INDEX.md](./engineering/DOCUMENTATION_INDEX.md)
 
 ---
 
@@ -1880,6 +1900,40 @@ src/
 - **ResolveContextPage expandido**:
   - Novas entidades: `okr_org_kr`, `okr_team_kr`, `kpi`
   - Labels e rotas para todas entidades do Hub
+
+### v2.15.0 (2026-01-11)
+- **Auditoria Completa e Limpeza**:
+  - Análise completa de DB/Backend/Frontend executada
+  - Todos os componentes UI não utilizados removidos (carousel, menubar, context-menu, toggle-group, navigation-menu, input-otp, aspect-ratio, resizable, toggle)
+  - Dependências npm correspondentes removidas
+  - Hooks mock removidos (useMockOkrData, useMockKpiData)
+  - Tabela `mentions` removida (ticket_mentions é canônico)
+- **Relatório de Saúde Técnica**:
+  - Novo documento `HEALTH_REPORT_2026-01-11.md` com status completo
+  - Zero violações de padrões TCR
+  - 100% compliance com standards de segurança
+  - RLS em todas as tabelas operacionais
+  - SECURITY INVOKER em todas as views
+  - search_path fixo em todas as funções
+- **Índice de Documentação Consolidado**:
+  - TCR header atualizado com links para todos os docs técnicos
+  - Documentação categorizada por área (Padrões, Dados, Identity, Compliance, Ops)
+- **Linter Status**:
+  - SECURITY DEFINER Views: falso positivo (security_invoker=true em reloptions)
+  - RLS WITH CHECK(true): 4 tabelas de audit (exceção documentada)
+  - Extension in public: warning aceitável
+
+### v2.14.0 (2026-01-10)
+- **Wave 8 — External User Dashboard**:
+  - Dashboard dedicado para usuários externos (`employment_status = 'external'`)
+  - Novo hook `useExternalUser()` para detecção e dados específicos
+  - Componentes: `ExternalHero`, `ExternalTicketsSection`, `ExternalQuickActions`
+  - Rota `/external` com guarda `ExternalDashboardPage`
+  - RLS para tickets: contatos externos veem apenas tickets onde são `assigned_contact_id`
+  - Notificações filtradas para externos
+- **Performance Sweep (Wave P2.3)**:
+  - 23 índices de banco adicionados para performance
+  - Agregação RPC para dashboards implementada
 
 ### v2.10.0 (2026-01-08)
 - **Modelo de Identidade documentado e enforced**:

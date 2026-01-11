@@ -1,8 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.1.0  
-**Última atualização:** 2026-01-09  
+**Versão:** 1.2.0  
+**Última atualização:** 2026-01-11  
 **Status:** Normativo (V2-only mode ativo)
+**Referência:** TCR v2.15.0
 
 ---
 
