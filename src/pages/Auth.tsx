@@ -39,6 +39,7 @@ function saveEmail(email: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 type AuthState = "first-access" | "returning" | "otp-sent";
+
 export default function Auth() {
   usePageTitle("Login", {
     skipBu: true
@@ -50,6 +51,7 @@ export default function Auth() {
   const [authState, setAuthState] = useState<AuthState>(savedEmail ? "returning" : "first-access");
   const [domainError, setDomainError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [authTimeout, setAuthTimeout] = useState(false);
   const {
     user,
     isLoading: authLoading,
@@ -57,6 +59,21 @@ export default function Auth() {
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Safety timeout - if auth takes too long, show the form anyway
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthTimeout(false);
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      console.warn('[Auth] Auth loading timeout - showing form');
+      setAuthTimeout(true);
+    }, 5000); // 5 seconds timeout
+    
+    return () => clearTimeout(timer);
+  }, [authLoading]);
 
   // Redirect if already logged in (preserve original destination if any)
   useEffect(() => {
@@ -144,10 +161,13 @@ export default function Auth() {
     return firstName.charAt(0).toUpperCase() + firstName.slice(1);
   };
 
-  // Show loading while checking auth state
-  if (authLoading) {
+  // Show loading while checking auth state (with timeout fallback)
+  if (authLoading && !authTimeout) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Verificando sessão...</p>
+        </div>
       </div>;
   }
 
