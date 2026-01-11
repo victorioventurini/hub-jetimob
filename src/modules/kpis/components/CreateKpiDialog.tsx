@@ -39,6 +39,7 @@ import {
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
 } from "../types";
+import { queryKeys } from "@/lib/queryKeys";
 import { VicActionButton } from "@/modules/vic";
 
 const formSchema = z.object({
@@ -82,7 +83,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   });
 
   const { data: teams } = useQuery({
-    queryKey: ["teams-list", buId],
+    queryKey: queryKeys.settings.teamsList(buId ?? null),
     queryFn: async () => {
       if (!buId) return [];
       const { data, error } = await supabase
@@ -99,7 +100,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   });
 
   const { data: profiles } = useQuery({
-    queryKey: ["profiles-list", buId],
+    queryKey: queryKeys.settings.profilesList(buId ?? null),
     queryFn: async () => {
       if (!buId) return [];
       // Use canonical view - shows ALL registered users

@@ -367,6 +367,7 @@ export const queryKeys = {
   automations: {
     connections: (buId: string | null) => ['automations', 'connections', buId] as const,
     logs: (buId: string | null) => ['automations', 'logs', buId] as const,
+    tokens: (buId: string | null) => ['automation-tokens', buId] as const,
     events: () => ['automations', 'events'] as const,
     actions: () => ['automations', 'actions'] as const,
   },
@@ -425,6 +426,9 @@ export const queryKeys = {
   // ============= BU =============
   bu: {
     all: () => ['bu'] as const,
+    allBus: () => ['all-bus'] as const,
+    userBus: (userId: string | null) => ['user-bus', userId] as const,
+    unit: (buId: string | null) => ['bu-unit', buId] as const,
     detail: (buId: string) => ['bu', 'detail', buId] as const,
     locations: (buId: string | null) => ['bu', 'locations', buId] as const,
     location: (locationId: string) => ['bu', 'location', locationId] as const,
@@ -448,6 +452,12 @@ export const queryKeys = {
     jobTitles: (buId: string | null) => ['job-titles', buId] as const,
     jobTitlesActive: (buId: string | null) => ['job-titles', buId, 'active'] as const,
     jobTitlesPrefix: () => ['job-titles'] as const,
+    businessUnits: () => ['settings-business-units'] as const,
+    buMemberCounts: () => ['settings-bu-member-counts'] as const,
+    teamsList: (buId: string | null) => ['teams-list', buId] as const,
+    profilesList: (buId: string | null) => ['profiles-list', buId] as const,
+    kpiValuesBatch: (kpiIds?: string[]) => ['kpi-values-batch', kpiIds] as const,
+    kpiValuesBatchPrefix: () => ['kpi-values-batch'] as const,
   },
 
   // ============= Hub Notifications Admin =============
@@ -514,7 +524,7 @@ export const queryKeys = {
   // ============= Onboarding =============
   onboarding: {
     check: (userId: string | null) => ['onboarding-check', userId] as const,
-    page: () => ['onboarding-page'] as const,
+    page: (userId: string | null) => ['onboarding-page', userId] as const,
     myProfile: () => ['my-profile'] as const,
     teams: (buId: string | null) => ['onboarding', 'teams', buId] as const,
   },

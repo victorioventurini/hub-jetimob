@@ -90,7 +90,7 @@ export function useAutomationTokens(buId?: string) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['automation-tokens', buId],
+    queryKey: queryKeys.automations.tokens(buId ?? null),
     queryFn: async () => {
       let query = supabase
         .from('automation_incoming_tokens')

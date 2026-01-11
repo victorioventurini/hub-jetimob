@@ -48,7 +48,7 @@ export function useCyclesList() {
   const supabase = useOptionalBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['cycles-list'] as const,
+    queryKey: queryKeys.cycles.list(),
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase

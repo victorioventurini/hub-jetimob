@@ -171,7 +171,7 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
       // para garantir que guards e páginas vejam o estado atualizado
       queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.myProfile() });
       queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page(null) });
       // Navegar após invalidar queries
       onComplete();
     },
