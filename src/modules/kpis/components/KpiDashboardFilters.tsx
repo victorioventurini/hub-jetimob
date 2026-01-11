@@ -1,5 +1,4 @@
-import { TeamSelect } from "@/components/selects";
-import { CategorySelect, CategoryOption } from "@/components/selects";
+import { TeamSelect, CategorySelect, CategoryOption } from "@/components/selects";
 import { KpiCategory, CATEGORY_LABELS } from "../types";
 
 interface KpiDashboardFiltersProps {
