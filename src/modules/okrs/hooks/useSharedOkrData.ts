@@ -21,7 +21,7 @@ export function useObjectiveContributors(objectiveId: string | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-objective-contributors', objectiveId],
+    queryKey: queryKeys.okrs.objectiveContributors(objectiveId ?? null),
     queryFn: async (): Promise<OkrContributor[]> => {
       if (!objectiveId || !supabase) return [];
 
@@ -50,7 +50,7 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-team-contributed-objectives', teamId],
+    queryKey: queryKeys.okrs.teamContributedObjectives(teamId ?? null),
     queryFn: async () => {
       if (!teamId || !supabase) return [];
 
@@ -125,13 +125,13 @@ export function useManageContributors() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
-        queryKey: ['okr-objective-contributors', variables.objectiveId] 
+        queryKey: queryKeys.okrs.objectiveContributors(variables.objectiveId) 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['okr-team-objectives'] 
+        queryKey: queryKeys.okrs.teamObjectivesAll() 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['okr-team-objectives-with-krs'] 
+        queryKey: queryKeys.okrs.teamObjectivesWithKrsAll() 
       });
     },
     onError: (error) => {

@@ -120,6 +120,14 @@ export const queryKeys = {
       ['team-contribution-view', teamId, buId] as const,
     sharedSummary: () => 
       ['shared-okrs-summary'] as const,
+    objectiveContributors: (objectiveId: string | null) =>
+      ['okr-objective-contributors', objectiveId] as const,
+    teamContributedObjectives: (teamId: string | null) =>
+      ['okr-team-contributed-objectives', teamId] as const,
+    teamObjectivesAll: () =>
+      ['okr-team-objectives'] as const,
+    teamObjectivesWithKrsAll: () =>
+      ['okr-team-objectives-with-krs'] as const,
     
     // KR Metrics
     krMetrics: (krId: string, krType: string) => 
