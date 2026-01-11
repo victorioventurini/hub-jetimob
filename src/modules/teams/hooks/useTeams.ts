@@ -115,7 +115,7 @@ export function useTeam(teamId: string | undefined) {
       const { data, error } = await supabase
         .from("teams")
         .select(`
-          *,
+          id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id,
           leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
         `)
         .eq("id", teamId)
