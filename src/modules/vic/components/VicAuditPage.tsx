@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,6 +33,7 @@ interface AgentLog {
 
 export function VicAuditPage() {
   const { isAdmin } = useAuth();
+  const buScopedSupabase = useOptionalBuScopedSupabase();
   
   // URL State - object API
   const timeRangeState = useUrlState<"7d" | "30d" | "90d">({ 
@@ -72,9 +74,10 @@ export function VicAuditPage() {
       const daysMap = { "7d": 7, "30d": 30, "90d": 90 };
       const fromDate = subDays(new Date(), daysMap[timeRange]);
 
-      let query = supabase
+      const client = buScopedSupabase || supabase;
+      let query = client
         .from("ai_agent_logs")
-        .select("*")
+        .select("id, agent_name, scope, bu_id, user_id, action_context, status, error_message, latency_ms, input_tokens, output_tokens, total_tokens, model_used, created_at")
         .gte("created_at", fromDate.toISOString())
         .order("created_at", { ascending: false })
         .limit(500);

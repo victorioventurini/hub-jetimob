@@ -43,7 +43,7 @@ import {
   X,
   Trash2,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
@@ -97,6 +97,7 @@ export default function UsersPage() {
   
   const { isWildcard, has } = usePermissions();
   const { currentBu, isLoading: isBuLoading } = useBu();
+  const supabase = useBuScopedSupabase();
   
   // Admin de BU ou super_admin podem gerenciar usuários via permission key
   const canManageUsers = isWildcard || has("users.profile.manage:bu");

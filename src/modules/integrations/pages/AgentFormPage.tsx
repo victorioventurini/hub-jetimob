@@ -32,7 +32,7 @@ import {
   useCreateAgent,
   useUpdateAgent,
 } from '../hooks/useIntegrations';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';
@@ -63,6 +63,7 @@ export default function AgentFormPage() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const isEditing = !!agentId;
+  const supabase = useBuScopedSupabase();
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
   
@@ -103,7 +104,7 @@ export default function AgentFormPage() {
       setLoadingAgent(true);
       supabase
         .from('ai_agents')
-        .select('*')
+        .select('id, name, description, is_active, scope, system_prompt, output_format, output_schema, allowed_tools, model_name, max_tokens, temperature, integration_key, bu_id, slug')
         .eq('id', agentId)
         .single()
         .then(({ data, error }) => {
