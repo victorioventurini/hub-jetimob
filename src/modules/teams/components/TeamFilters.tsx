@@ -5,9 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
 
 interface TeamFiltersProps {
   search: string;
@@ -41,15 +41,13 @@ export function TeamFilters({
   return (
     <div className="flex flex-col sm:flex-row gap-3">
       {/* Search */}
-      <div className="relative flex-1 max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar time..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <UrlSearchInput
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Buscar time..."
+        className="flex-1 max-w-xs"
+        debounceMs={300}
+      />
 
       {/* Parent Team Filter */}
       <Select
