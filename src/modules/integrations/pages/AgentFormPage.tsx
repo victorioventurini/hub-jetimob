@@ -104,7 +104,7 @@ export default function AgentFormPage() {
       setLoadingAgent(true);
       supabase
         .from('ai_agents')
-        .select('id, name, description, is_active, scope, system_prompt, output_format, output_schema, allowed_tools, model_name, max_tokens, temperature, integration_key, bu_id, slug')
+        .select('id, name, description, is_active, scope, system_prompt, output_format, output_schema, allowed_tools, model_name, max_tokens, temperature, integration_key, bu_id, slug, created_by, created_at, updated_at')
         .eq('id', agentId)
         .single()
         .then(({ data, error }) => {
