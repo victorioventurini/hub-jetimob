@@ -48,6 +48,7 @@ export function useNewJetimobers(limit = 5) {
 
   return useQuery({
     queryKey: queryKeys.home.newJetimobers(currentBu?.id ?? null, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes - data changes rarely
     queryFn: async (): Promise<NewJetimober[]> => {
       // Buscar colaboradores dos últimos 30 dias
       const thirtyDaysAgo = new Date();
@@ -117,6 +118,7 @@ export function useBirthdays() {
 
   return useQuery({
     queryKey: queryKeys.home.birthdays(currentBu?.id ?? null, currentMonth),
+    staleTime: 10 * 60 * 1000, // 10 minutes - birthdays don't change
     queryFn: async (): Promise<Birthday[]> => {
       // Use canonical view for user directory
       let query = supabase
@@ -179,6 +181,7 @@ export function useWorkAnniversaries() {
 
   return useQuery({
     queryKey: queryKeys.home.anniversaries(currentBu?.id ?? null, currentMonth),
+    staleTime: 10 * 60 * 1000, // 10 minutes - anniversaries don't change
     queryFn: async (): Promise<WorkAnniversary[]> => {
       // Use canonical view for user directory
       let query = supabase
