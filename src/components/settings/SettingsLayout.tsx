@@ -1,5 +1,6 @@
-import { ReactNode } from "react";
-import { SettingsSidebar } from "./SettingsSidebar";
+import { ReactNode, useState } from "react";
+import { HubGlobalSidebar } from "../layout/HubGlobalSidebar";
+import { HubGlobalMobileSidebar } from "../layout/HubGlobalMobileSidebar";
 import { Search, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationCenter } from "@/components/notifications";
@@ -18,14 +19,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 interface SettingsLayoutProps {
   children: ReactNode;
@@ -38,10 +32,14 @@ const roleLabels: Record<string, string> = {
   collaborator: "Colaborador",
 };
 
-function SettingsHeader() {
+interface SettingsHeaderProps {
+  sidebarCollapsed: boolean;
+  onMobileMenuToggle: () => void;
+}
+
+function SettingsHeader({ sidebarCollapsed, onMobileMenuToggle }: SettingsHeaderProps) {
   const { profile, role, signOut } = useAuth();
   const { hasMultipleBus } = useBu();
-  const { isMobile } = useSidebar();
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -60,15 +58,18 @@ function SettingsHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-card/80 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-30 h-16 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between h-full px-4 lg:px-8">
         {/* Mobile menu trigger + Search */}
         <div className="flex items-center gap-3 flex-1 max-w-md">
-          {isMobile && (
-            <SidebarTrigger className="-ml-1">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={onMobileMenuToggle}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -157,43 +158,38 @@ function SettingsHeader() {
   );
 }
 
-function SettingsSidebarWrapper() {
-  return (
-    <Sidebar collapsible="offcanvas" className="border-r border-border">
-      <SidebarHeader className="h-16 border-b border-border px-4 flex flex-row items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg shrink-0">
-          H
-        </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-lg font-bold text-foreground">Hub</span>
-          <span className="text-xs text-muted-foreground truncate">Configurações Globais</span>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SettingsSidebar />
-      </SidebarContent>
-    </Sidebar>
-  );
-}
-
 export function SettingsLayout({ children }: SettingsLayoutProps) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <SidebarProvider defaultOpen>
-      <div className="min-h-screen flex w-full bg-background">
-        <SettingsSidebarWrapper />
-        
-        {/* Main content area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <SettingsHeader />
-          
-          {/* Content */}
-          <main className="flex-1 p-4 lg:p-8 overflow-auto">
-            <div className="w-full">
-              {children}
-            </div>
-          </main>
-        </div>
+    <div className="min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <HubGlobalSidebar 
+        collapsed={sidebarCollapsed} 
+        onCollapse={setSidebarCollapsed} 
+      />
+      
+      {/* Mobile Sidebar (Sheet) */}
+      <HubGlobalMobileSidebar 
+        open={mobileMenuOpen} 
+        onOpenChange={setMobileMenuOpen} 
+      />
+      
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
+        )}
+      >
+        <SettingsHeader 
+          sidebarCollapsed={sidebarCollapsed} 
+          onMobileMenuToggle={() => setMobileMenuOpen(true)}
+        />
+        <main className="p-4 lg:p-8">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
