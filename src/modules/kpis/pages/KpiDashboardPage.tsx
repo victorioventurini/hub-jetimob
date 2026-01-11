@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useMockKpiData } from "../hooks/useMockKpiData";
+import { useKpiData } from "../hooks/useKpiData";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 import { KpiCategorySection } from "../components/KpiCategorySection";
 import { KpiDetailDialog } from "../components/KpiDetailDialog";
@@ -42,15 +42,20 @@ export default function KpiDashboardPage() {
   const [addValueOpen, setAddValueOpen] = useState(false);
   const [addValueKpi, setAddValueKpi] = useState<KpiWithValues | null>(null);
 
-  // Use mock data for now
-  const { kpis: allKpis, summary, isLoading } = useMockKpiData();
-
-  // Apply filters
-  const filteredKpis = allKpis.filter((kpi) => {
-    if (categoryFilter !== "all" && kpi.category !== categoryFilter) return false;
-    if (teamFilter !== "all" && kpi.team_id !== teamFilter) return false;
-    return true;
+  // Use real data from hook
+  const { kpis: allKpis, isLoading, error } = useKpiData({
+    category: categoryFilter === 'all' ? undefined : categoryFilter,
+    teamId: teamFilter === 'all' ? undefined : teamFilter,
   });
+
+  // Calculate summary from real data
+  const summary = {
+    total: allKpis.length,
+    onTrack: allKpis.filter(k => k.rag_status === 'on_track').length,
+    atRisk: allKpis.filter(k => k.rag_status === 'at_risk').length,
+    offTrack: allKpis.filter(k => k.rag_status === 'off_track').length,
+    improving: allKpis.filter(k => k.trend === 'up').length,
+  };
 
   const handleKpiClick = (kpi: KpiWithValues) => {
     setSelectedKpiId(kpi.id);
@@ -60,14 +65,11 @@ export default function KpiDashboardPage() {
   // Group KPIs by category
   const kpisByCategory = (Object.keys(CATEGORY_LABELS) as KpiCategory[]).reduce(
     (acc, category) => {
-      acc[category] = filteredKpis.filter((kpi) => kpi.category === category);
+      acc[category] = allKpis.filter((kpi) => kpi.category === category);
       return acc;
     },
     {} as Record<KpiCategory, KpiWithValues[]>
   );
-
-  // Get unique teams for filter
-  const teams = Array.from(new Set(allKpis.map(k => k.team).filter(Boolean)));
 
   return (
     <HubLayout>
@@ -108,7 +110,17 @@ export default function KpiDashboardPage() {
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner size="lg" text="Carregando KPIs..." />
           </div>
-        ) : filteredKpis.length === 0 ? (
+        ) : error ? (
+          <Card>
+            <CardContent className="py-4">
+              <EmptyState
+                icon={BarChart3}
+                title="Erro ao carregar KPIs"
+                description="Ocorreu um erro ao carregar os indicadores. Tente novamente."
+              />
+            </CardContent>
+          </Card>
+        ) : allKpis.length === 0 ? (
           <Card>
             <CardContent className="py-4">
               <EmptyState

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { OrgObjectiveHeader } from '../components/org-view/OrgObjectiveHeader';
 import { OrgKrExpandableCard } from '../components/org-view/OrgKrExpandableCard';
 import { OrgViewInsights } from '../components/org-view/OrgViewInsights';
 import { OrgViewFilters, StatusFilter, TeamFilter } from '../components/org-view/OrgViewFilters';
+import { useUrlState } from '@/shared/url';
 
 export default function OrgObjectiveViewPage() {
   const { objectiveId } = useParams<{ objectiveId: string }>();
@@ -17,8 +18,21 @@ export default function OrgObjectiveViewPage() {
   
   usePageTitle(objective?.title || 'Visão Organizacional');
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
+  // URL State for filters (P2 fix - migrate from useState)
+  const statusFilterState = useUrlState<StatusFilter>({
+    key: 'status',
+    defaultValue: 'all',
+    parse: (v) => v as StatusFilter,
+  });
+  const teamFilterState = useUrlState<TeamFilter>({
+    key: 'team',
+    defaultValue: 'all',
+  });
+
+  const statusFilter = statusFilterState.value;
+  const setStatusFilter = statusFilterState.set;
+  const teamFilter = teamFilterState.value;
+  const setTeamFilter = teamFilterState.set;
 
   // Get unique teams from linked KRs
   const availableTeams = useMemo(() => {
