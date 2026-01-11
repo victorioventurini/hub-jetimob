@@ -182,6 +182,7 @@ export interface Ticket {
   messages_count?: number;
   attachments_count?: number;
   last_message_at?: string | null;
+  mentions_list?: { id: string; display_name: string; photo_url: string | null; type: 'user' | 'contact' }[];
 }
 
 // Participante de Ticket

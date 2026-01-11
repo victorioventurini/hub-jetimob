@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
-import { Clock, AlertCircle, Building2, User, UserCircle } from "lucide-react";
+import { Clock, AlertCircle, Building2, User, UserCircle, MessageSquare, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Ticket, TicketStatus, TicketType } from "../types";
 
@@ -43,6 +43,16 @@ export function TicketCard({ ticket }: TicketCardProps) {
   const category = ticket.category;
   const subcategory = ticket.subcategory;
   const assignedContact = ticket.assigned_contact;
+  
+  // Aggregated data
+  const messagesCount = ticket.messages_count ?? 0;
+  const lastMessageAt = ticket.last_message_at;
+  const mentionsList = ticket.mentions_list ?? [];
+  const mentionsCount = mentionsList.length;
+
+  // Show max 3 avatars for mentions
+  const visibleMentions = mentionsList.slice(0, 3);
+  const remainingMentions = mentionsList.length - 3;
 
   return (
     <Link to={`/tickets/${ticket.id}`}>
@@ -100,8 +110,53 @@ export function TicketCard({ ticket }: TicketCardProps) {
                 </div>
               )}
 
-              {/* Meta info */}
-              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              {/* Activity info: Messages, Mentions, Last update */}
+              <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                {/* Messages count */}
+                {messagesCount > 0 && (
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    {messagesCount}
+                  </span>
+                )}
+                
+                {/* Mentions with avatars */}
+                {mentionsCount > 0 && (
+                  <div className="flex items-center gap-1">
+                    <AtSign className="h-3 w-3" />
+                    <div className="flex -space-x-1.5">
+                      {visibleMentions.map((mention) => (
+                        <OptimizedAvatar
+                          key={mention.id}
+                          src={mention.photo_url}
+                          fallback={getInitials(mention.display_name)}
+                          size="sm"
+                          className="h-4 w-4 border border-background"
+                          fallbackClassName="text-[8px]"
+                        />
+                      ))}
+                      {remainingMentions > 0 && (
+                        <span className="flex items-center justify-center h-4 w-4 rounded-full bg-muted text-[8px] font-medium border border-background">
+                          +{remainingMentions}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Last update */}
+                {lastMessageAt && (
+                  <span className="flex items-center gap-1 text-muted-foreground/70">
+                    Atualizado {formatDistanceToNow(new Date(lastMessageAt), { 
+                      addSuffix: false, 
+                      locale: ptBR 
+                    })}
+                  </span>
+                )}
+              </div>
+
+              {/* Meta info: Creator + Created date + Due date */}
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                 {/* Creator */}
                 {creatorProfile && (
                   <span className="flex items-center gap-1">
