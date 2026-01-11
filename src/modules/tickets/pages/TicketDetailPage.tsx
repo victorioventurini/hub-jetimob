@@ -13,6 +13,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { useTicket, useUpdateTicketStatus } from "../hooks/useTickets";
 import { useTicketMessages, useTicketAttachments, useCreateMessage } from "../hooks/useTicketMessages";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -98,21 +99,25 @@ export default function TicketDetailPage() {
 
   if (isLoadingTicket) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
+      <HubLayout>
+        <div className="container py-6 max-w-5xl space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </HubLayout>
     );
   }
 
   if (!ticket) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Ticket não encontrado</p>
-        <Button asChild variant="link">
-          <Link to="/tickets">Voltar para lista</Link>
-        </Button>
-      </div>
+      <HubLayout>
+        <div className="container py-6 max-w-5xl text-center py-12">
+          <p className="text-muted-foreground">Ticket não encontrado</p>
+          <Button asChild variant="link">
+            <Link to="/tickets">Voltar para lista</Link>
+          </Button>
+        </div>
+      </HubLayout>
     );
   }
 
@@ -120,7 +125,8 @@ export default function TicketDetailPage() {
   const isExternal = ticket.type === "external";
 
   return (
-    <div className="space-y-4">
+    <HubLayout>
+      <div className="container py-6 max-w-5xl space-y-4">
       {/* Breadcrumb */}
       <TicketsBreadcrumb ticketId={ticket.id} ticketTitle={ticket.title} />
 
@@ -293,6 +299,7 @@ export default function TicketDetailPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </HubLayout>
   );
 }
