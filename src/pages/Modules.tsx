@@ -29,7 +29,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -107,6 +107,7 @@ export default function Modules() {
   const { currentBu } = useBu();
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
   
   // URL State - object API
   const [activeTab, setActiveTab] = useUrlTab<"all" | "global" | "operational">("all");
@@ -118,7 +119,7 @@ export default function Modules() {
       // Buscar módulos
       const { data: modulesData, error: modulesError } = await supabase
         .from("modules")
-        .select("*")
+        .select("id, name, slug, description, icon, route, version, status, health_status, type, display_order, dependencies")
         .order("display_order");
 
       if (modulesError) throw modulesError;

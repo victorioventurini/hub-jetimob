@@ -102,7 +102,7 @@ export function useSquad(squadId: string | undefined) {
 
       const { data, error } = await supabase
         .from("squads")
-        .select("*")
+        .select("id, bu_id, name, description, products, status, created_at, updated_at, deleted_at")
         .eq("id", squadId)
         .maybeSingle();
 

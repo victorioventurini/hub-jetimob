@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { queryKeys } from '@/lib/queryKeys';
 import type {
   AutomationEventCatalog,
   AutomationActionCatalog,
@@ -8,15 +9,22 @@ import type {
   AutomationLog,
 } from '../types';
 
+// Campos explícitos para evitar select('*')
+const EVENT_CATALOG_FIELDS = 'id, event_key, name, description, category, payload_schema, payload_example, scope, is_active, event_version, created_at, updated_at';
+const ACTION_CATALOG_FIELDS = 'id, action_key, name, description, category, payload_schema, payload_example, required_fields, is_active, action_version, created_at, updated_at';
+const CONNECTION_FIELDS = 'id, bu_id, name, description, webhook_url, http_method, auth_type, auth_config_encrypted, headers_encrypted, timeout_ms, retry_count, scope, is_active, created_by, created_at, updated_at';
+const TOKEN_FIELDS = 'id, bu_id, name, description, token_hash, scope, is_active, allowed_actions, rate_limit_per_minute, expires_at, last_used_at, created_by, created_at, updated_at';
+const LOG_FIELDS = 'id, bu_id, connection_id, token_id, type, event_key, action_key, status, status_code, latency_ms, request_payload, response_payload, error_message, retry_attempt, user_id, created_at';
+
 export function useEventCatalog() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['automation-event-catalog'],
+    queryKey: queryKeys.automations.events(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('automation_event_catalog')
-        .select('*')
+        .select(EVENT_CATALOG_FIELDS)
         .eq('is_active', true)
         .order('category')
         .order('event_key');
@@ -31,11 +39,11 @@ export function useActionCatalog() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['automation-action-catalog'],
+    queryKey: queryKeys.automations.actions(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('automation_action_catalog')
-        .select('*')
+        .select(ACTION_CATALOG_FIELDS)
         .eq('is_active', true)
         .order('category')
         .order('action_key');
@@ -50,12 +58,12 @@ export function useAutomationConnections(buId?: string) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['automation-connections', buId],
+    queryKey: queryKeys.automations.connections(buId ?? null),
     queryFn: async () => {
       let query = supabase
         .from('automation_connections')
         .select(`
-          *,
+          ${CONNECTION_FIELDS},
           bu:bu_units(name),
           events:automation_connection_events(
             id,
@@ -87,7 +95,7 @@ export function useAutomationTokens(buId?: string) {
       let query = supabase
         .from('automation_incoming_tokens')
         .select(`
-          *,
+          ${TOKEN_FIELDS},
           bu:bu_units(name)
         `)
         .order('created_at', { ascending: false });
@@ -114,12 +122,12 @@ export function useAutomationLogs(filters?: {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ['automation-logs', filters],
+    queryKey: queryKeys.automations.logs(filters?.buId ?? null),
     queryFn: async () => {
       let query = supabase
         .from('automation_logs')
         .select(`
-          *,
+          ${LOG_FIELDS},
           connection:automation_connections(name),
           bu:bu_units(name)
         `)

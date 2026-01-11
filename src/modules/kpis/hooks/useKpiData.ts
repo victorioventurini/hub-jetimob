@@ -95,11 +95,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   const { data: allValues } = useQuery({
     queryKey: ['kpi-values-batch', kpis?.map((k) => k.id)],
     queryFn: async () => {
-      if (!kpis || kpis.length === 0) return [];
+      if (!kpis || kpis.length === 0 || !supabase) return [];
 
       const { data, error } = await supabase
         .from("kpi_values")
-        .select("*")
+        .select("id, kpi_id, value, reference_date, source, notes, created_by, created_at")
         .in(
           "kpi_id",
           kpis.map((k) => k.id)
@@ -109,7 +109,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       if (error) throw error;
       return data as DbKpiValue[];
     },
-    enabled: !!kpis && kpis.length > 0,
+    enabled: !!supabase && !!kpis && kpis.length > 0,
   });
 
   // Combine KPIs with their values and calculate metrics
@@ -302,7 +302,7 @@ export function useKpiDetail(kpiId: string) {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("kpi_values")
-        .select("*")
+        .select("id, kpi_id, value, reference_date, source, notes, created_by, created_at")
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: false });
 
