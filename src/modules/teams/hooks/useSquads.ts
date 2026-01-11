@@ -98,6 +98,7 @@ export function useSquads(teamId?: string) {
       })) as SquadWithRelations[];
     },
     enabled: !!currentBu?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -151,6 +152,7 @@ export function useSquad(squadId: string | undefined) {
       } as SquadWithRelations;
     },
     enabled: !!squadId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 

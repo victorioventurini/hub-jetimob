@@ -32,6 +32,7 @@ export function useEventCatalog() {
       if (error) throw error;
       return data as AutomationEventCatalog[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - catalog rarely changes
   });
 }
 
@@ -51,6 +52,7 @@ export function useActionCatalog() {
       if (error) throw error;
       return data as AutomationActionCatalog[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - catalog rarely changes
   });
 }
 
@@ -83,6 +85,7 @@ export function useAutomationConnections(buId?: string) {
       if (error) throw error;
       return data as AutomationConnection[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -109,6 +112,7 @@ export function useAutomationTokens(buId?: string) {
       if (error) throw error;
       return data as AutomationIncomingToken[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -152,5 +156,6 @@ export function useAutomationLogs(filters?: {
       if (error) throw error;
       return data as AutomationLog[];
     },
+    staleTime: 30 * 1000, // 30 seconds - logs update frequently
   });
 }

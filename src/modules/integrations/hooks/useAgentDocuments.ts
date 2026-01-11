@@ -21,6 +21,7 @@ export function useAgentDocuments(agentId: string | undefined) {
       return data as AgentDocument[];
     },
     enabled: !!agentId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
