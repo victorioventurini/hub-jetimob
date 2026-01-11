@@ -171,9 +171,9 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
-  // Joined
-  created_by?: { id: string; full_name: string; avatar_url: string | null } | null;
-  owner?: { id: string; full_name: string; avatar_url: string | null } | null;
+  // Joined (using actual database field names from profiles table)
+  created_by?: { id: string; display_name: string; photo_url: string | null } | null;
+  owner?: { id: string; display_name: string; photo_url: string | null } | null;
   partner_company?: { id: string; name: string } | null;
   category?: { id: string; name: string } | null;
   subcategory?: { id: string; name: string } | null;
@@ -195,8 +195,8 @@ export interface TicketParticipant {
   role: TicketParticipantRole;
   is_active: boolean;
   created_at: string;
-  // Joined
-  user?: { id: string; full_name: string; avatar_url: string | null } | null;
+  // Joined (using actual database field names from profiles table)
+  user?: { id: string; display_name: string; photo_url: string | null } | null;
   partner_contact?: { id: string; name: string; email: string } | null;
 }
 
@@ -212,8 +212,8 @@ export interface TicketMessage {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
-  // Joined
-  author_user?: { id: string; full_name: string; avatar_url: string | null } | null;
+  // Joined (using actual database field names from profiles table)
+  author_user?: { id: string; display_name: string; photo_url: string | null } | null;
   author_contact?: { id: string; name: string; email: string } | null;
   attachments?: TicketAttachment[];
   mentions?: TicketMention[];
@@ -253,8 +253,8 @@ export interface TicketAttachment {
   uploaded_by_user_id: string | null;
   created_at: string;
   deleted_at: string | null;
-  // Joined
-  uploaded_by?: { id: string; full_name: string } | null;
+  // Joined (using actual database field names from profiles table)
+  uploaded_by?: { id: string; display_name: string } | null;
 }
 
 // Menção em Ticket
@@ -266,8 +266,8 @@ export interface TicketMention {
   mentioned_user_id: string | null;
   mentioned_contact_id: string | null;
   created_at: string;
-  // Joined
-  mentioned_user?: { id: string; full_name: string } | null;
+  // Joined (using actual database field names from profiles table)
+  mentioned_user?: { id: string; display_name: string } | null;
   mentioned_contact?: { id: string; name: string } | null;
 }
 

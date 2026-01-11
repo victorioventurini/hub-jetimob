@@ -248,33 +248,33 @@ export default function TicketDetailPage() {
               )}
 
               {/* Owner */}
-              {(ticket as any).owner && (
+              {ticket.owner && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Responsável</p>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={(ticket as any).owner.avatar_url} />
+                      <AvatarImage src={ticket.owner.photo_url ?? undefined} />
                       <AvatarFallback className="text-xs">
-                        {(ticket as any).owner.full_name?.slice(0, 2).toUpperCase()}
+                        {ticket.owner.display_name?.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{(ticket as any).owner.full_name}</span>
+                    <span className="text-sm">{ticket.owner.display_name}</span>
                   </div>
                 </div>
               )}
 
               {/* Creator */}
-              {(ticket as any).creator && (
+              {ticket.created_by && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Criado por</p>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={(ticket as any).creator.avatar_url} />
+                      <AvatarImage src={ticket.created_by.photo_url ?? undefined} />
                       <AvatarFallback className="text-xs">
-                        {(ticket as any).creator.full_name?.slice(0, 2).toUpperCase()}
+                        {ticket.created_by.display_name?.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{(ticket as any).creator.full_name}</span>
+                    <span className="text-sm">{ticket.created_by.display_name}</span>
                   </div>
                 </div>
               )}

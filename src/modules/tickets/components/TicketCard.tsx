@@ -3,8 +3,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageSquare, Paperclip, Clock, AlertCircle } from "lucide-react";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
+import { Clock, AlertCircle, Building2, User, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Ticket, TicketStatus, TicketType } from "../types";
 
@@ -25,13 +25,24 @@ const typeConfig: Record<TicketType, { label: string; className: string }> = {
   external: { label: "Externo", className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
 };
 
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  return name.slice(0, 2).toUpperCase();
+}
+
 export function TicketCard({ ticket }: TicketCardProps) {
   const status = statusConfig[ticket.status];
   const type = typeConfig[ticket.type];
   const isOverdue = ticket.expected_due_at && new Date(ticket.expected_due_at) < new Date() && ticket.status !== "done" && ticket.status !== "discarded";
+  const isExternal = ticket.type === "external";
 
-  const ownerProfile = ticket.owner_user_id ? (ticket as any).owner : null;
-  const creatorProfile = ticket.created_by_user_id ? (ticket as any).creator : null;
+  // Get joined data
+  const creatorProfile = ticket.created_by;
+  const ownerProfile = ticket.owner;
+  const partnerCompany = ticket.partner_company;
+  const category = ticket.category;
+  const subcategory = ticket.subcategory;
+  const assignedContact = ticket.assigned_contact;
 
   return (
     <Link to={`/tickets/${ticket.id}`}>
@@ -63,16 +74,41 @@ export function TicketCard({ ticket }: TicketCardProps) {
                 {ticket.title}
               </h3>
 
-              {/* Category */}
-              {(ticket as any).category && (
+              {/* Category & Subcategory */}
+              {category && (
                 <p className="text-sm text-muted-foreground truncate">
-                  {(ticket as any).category.name}
-                  {(ticket as any).subcategory && ` → ${(ticket as any).subcategory.name}`}
+                  {category.name}
+                  {subcategory && ` → ${subcategory.name}`}
                 </p>
+              )}
+
+              {/* External ticket info: Company + Contact */}
+              {isExternal && (partnerCompany || assignedContact) && (
+                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                  {partnerCompany && (
+                    <span className="flex items-center gap-1">
+                      <Building2 className="h-3 w-3" />
+                      <span className="truncate max-w-[150px]">{partnerCompany.name}</span>
+                    </span>
+                  )}
+                  {assignedContact && (
+                    <span className="flex items-center gap-1">
+                      <UserCircle className="h-3 w-3" />
+                      <span className="truncate max-w-[120px]">{assignedContact.name}</span>
+                    </span>
+                  )}
+                </div>
               )}
 
               {/* Meta info */}
               <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                {/* Creator */}
+                {creatorProfile && (
+                  <span className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    <span className="truncate max-w-[100px]">{creatorProfile.display_name}</span>
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {formatDistanceToNow(new Date(ticket.created_at), { 
@@ -93,12 +129,13 @@ export function TicketCard({ ticket }: TicketCardProps) {
 
             {/* Owner avatar */}
             {ownerProfile && (
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={ownerProfile.avatar_url} />
-                <AvatarFallback className="text-xs">
-                  {ownerProfile.full_name?.slice(0, 2).toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <OptimizedAvatar
+                src={ownerProfile.photo_url}
+                fallback={getInitials(ownerProfile.display_name)}
+                size="sm"
+                className="h-8 w-8"
+                fallbackClassName="text-xs"
+              />
             )}
           </div>
         </CardContent>

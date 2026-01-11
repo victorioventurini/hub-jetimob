@@ -39,6 +39,7 @@ export function useTickets(filters?: TicketFilters) {
       if (!buId) return [];
 
       // Build base query with explicit fields (no select('*'))
+      // Include creator, owner profiles and assigned_contact for external tickets
       let query = supabase
         .from("tickets")
         .select(`
@@ -51,14 +52,24 @@ export function useTickets(filters?: TicketFilters) {
           created_by_user_id,
           owner_user_id,
           visibility,
+          visibility_team_ids,
+          visibility_squad_ids,
+          visibility_user_ids,
           partner_company_id,
           category_id,
           subcategory_id,
+          external_assignee_contact_ids,
+          assigned_contact_id,
+          assignment_source,
           created_at,
           updated_at,
+          deleted_at,
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
-          subcategory:ticket_subcategories(id, name)
+          subcategory:ticket_subcategories(id, name),
+          created_by:profiles!tickets_created_by_user_id_fkey(id, display_name, photo_url),
+          owner:profiles!tickets_owner_user_id_fkey(id, display_name, photo_url),
+          assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("bu_id", buId)
         .is("deleted_at", null)
@@ -112,7 +123,17 @@ export function useTickets(filters?: TicketFilters) {
 
       if (error) throw error;
 
-      return data as Ticket[];
+      // Map the data to normalize joined relations (Supabase returns arrays for nullable FKs)
+      return (data || []).map((ticket) => ({
+        ...ticket,
+        // Normalize single-object relations that might come as arrays
+        created_by: Array.isArray(ticket.created_by) ? ticket.created_by[0] ?? null : ticket.created_by,
+        owner: Array.isArray(ticket.owner) ? ticket.owner[0] ?? null : ticket.owner,
+        partner_company: Array.isArray(ticket.partner_company) ? ticket.partner_company[0] ?? null : ticket.partner_company,
+        category: Array.isArray(ticket.category) ? ticket.category[0] ?? null : ticket.category,
+        subcategory: Array.isArray(ticket.subcategory) ? ticket.subcategory[0] ?? null : ticket.subcategory,
+        assigned_contact: Array.isArray(ticket.assigned_contact) ? ticket.assigned_contact[0] ?? null : ticket.assigned_contact,
+      })) as Ticket[];
     },
     enabled: !!buId,
   });
