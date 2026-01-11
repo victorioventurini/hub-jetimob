@@ -10,6 +10,7 @@
  */
 
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,9 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useBuUsersDirectory, type DirectoryProfile } from "@/hooks/useBuUsersDirectory";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { Search, User, Clock, AlertCircle } from "lucide-react";
 
@@ -72,19 +76,62 @@ export function BuUserSelect({
   // Special value for "none" option
   const NONE_VALUE = "__none__";
   
+  const supabase = useOptionalBuScopedSupabase();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
+  
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
     q: showSearch ? search : undefined,
     teamId,
     pageSize: 200,
   });
 
+  // Separate query to fetch the selected profile when not in list
+  // This ensures the selected value is always displayed correctly
+  const { data: selectedProfileData } = useQuery({
+    queryKey: queryKeys.profiles.detail(value ?? ""),
+    queryFn: async () => {
+      if (!supabase || !buId || !value) return null;
+      
+      const { data, error } = await supabase
+        .from("v_bu_active_profiles")
+        .select(`
+          id,
+          user_id,
+          display_name,
+          first_name,
+          last_name,
+          work_email,
+          photo_url,
+          team_id,
+          team_name,
+          job_title_id,
+          job_title_name,
+          employment_status,
+          onboarding_completed,
+          has_bu_membership,
+          start_date,
+          created_at
+        `)
+        .eq("bu_id", buId)
+        .eq("id", value)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as DirectoryProfile | null;
+    },
+    enabled: !!supabase && !!buId && !!value,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   const filteredProfiles = useMemo(() => {
     return profiles.filter((p) => !excludeUserIds.includes(p.id));
   }, [profiles, excludeUserIds]);
 
+  // Use selected profile from list if available, fallback to separate query
   const selectedProfile = useMemo(() => {
-    return profiles.find((p) => p.id === value);
-  }, [profiles, value]);
+    return profiles.find((p) => p.id === value) ?? selectedProfileData ?? null;
+  }, [profiles, value, selectedProfileData]);
   
   // Handle value for Select (convert null/undefined to NONE_VALUE if allowNone)
   const selectValue = allowNone && !value ? NONE_VALUE : value;
