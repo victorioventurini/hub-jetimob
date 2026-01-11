@@ -186,10 +186,13 @@ assets/
 2. [ ] Revisar 4 policies de INSERT com `WITH CHECK(true)`
 3. [ ] Habilitar Leaked Password Protection
 
-### Wave 2 - Performance (Alto)
-4. [ ] Corrigir 2 `select('*')` em `useInventory.ts`
-5. [ ] Corrigir 1 `select('*')` em `useKpiData.ts`
-6. [ ] Dividir `useInventory.ts` (558 linhas → 4 arquivos)
+### Wave 2 - Performance (Alto) ✅ Concluída
+4. [x] Corrigir 2 `select('*')` em `useInventory.ts` ✅
+5. [x] Corrigir 1 `select('*')` em `useKpiData.ts` ✅
+6. [x] Dividir `useInventory.ts` (558 linhas → 3 arquivos) ✅
+   - `useInventoryQueries.ts` - Queries e funções de busca
+   - `useInventoryMutations.ts` - Mutations (CRUD)
+   - `useInventory.ts` - Hook agregador (backward compatible)
 
 ### Wave 3 - Manutenibilidade (Médio)
 7. [ ] Adicionar namespace `queryKeys.integrations.*`
