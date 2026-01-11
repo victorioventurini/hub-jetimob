@@ -21,6 +21,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
+import { UserLink } from "@/components/links/UserLink";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
 
@@ -264,7 +265,12 @@ export default function TicketDetailPage() {
                         {ticket.owner.display_name?.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{ticket.owner.display_name}</span>
+                    <UserLink 
+                      userId={ticket.owner.id} 
+                      displayName={ticket.owner.display_name || 'Usuário'} 
+                      openInNewTab 
+                      className="text-sm"
+                    />
                   </div>
                 </div>
               )}
@@ -280,7 +286,12 @@ export default function TicketDetailPage() {
                         {ticket.created_by.display_name?.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{ticket.created_by.display_name}</span>
+                    <UserLink 
+                      userId={ticket.created_by.id} 
+                      displayName={ticket.created_by.display_name || 'Usuário'} 
+                      openInNewTab 
+                      className="text-sm"
+                    />
                   </div>
                 </div>
               )}
