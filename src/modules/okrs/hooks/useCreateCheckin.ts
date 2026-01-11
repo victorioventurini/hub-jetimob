@@ -157,7 +157,7 @@ export function useCreateCheckin(options: CreateCheckinOptions = {}) {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null) });
-      queryClient.invalidateQueries({ queryKey: ['okr-wizard-krs'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardTeamKrs(null, null, [], 'all') });
 
       if (!options.skipToast) {
         toast({

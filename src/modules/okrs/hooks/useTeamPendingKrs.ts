@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { differenceInDays, parseISO } from "date-fns";
+import { queryKeys } from "@/lib/queryKeys";
 
 // ============================================================
 // TYPES
@@ -55,7 +56,7 @@ export function useTeamPendingKrs(
   const { currentBuId } = useBu();
 
   return useQuery({
-    queryKey: ['okr-wizard-krs', currentBuId, cycleId, teamIds, filter],
+    queryKey: queryKeys.okrs.wizardTeamKrs(currentBuId, cycleId ?? null, teamIds, filter),
     queryFn: async (): Promise<WizardKr[]> => {
       if (!cycleId || teamIds.length === 0) return [];
 
