@@ -182,7 +182,11 @@ export function useInventory(options: UseInventoryOptions = {}) {
     const { data, error } = await supabase
       .from("asset_inventory")
       .select(`
-        *,
+        id, bu_id, internal_code, name, category_id, description, status,
+        home_location_id, current_holder_type, current_location_id, current_user_id,
+        assigned_at, last_moved_at, acquired_at, acquisition_value, serial_number,
+        brand, model, quantity_total, quantity_available, photos, documents, notes,
+        created_at, updated_at,
         category:asset_categories!category_id(id, name)
       `)
       .eq("id", itemId)
@@ -230,7 +234,11 @@ export function useInventory(options: UseInventoryOptions = {}) {
     const { data, error } = await supabase
       .from("asset_inventory")
       .select(`
-        *,
+        id, bu_id, internal_code, name, category_id, description, status,
+        home_location_id, current_holder_type, current_location_id, current_user_id,
+        assigned_at, last_moved_at, acquired_at, acquisition_value, serial_number,
+        brand, model, quantity_total, quantity_available, photos, documents, notes,
+        created_at, updated_at,
         category:asset_categories!category_id(id, name)
       `)
       .eq("bu_id", buId)
