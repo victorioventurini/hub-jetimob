@@ -17,7 +17,8 @@ export function TicketMessageBubble({
   isOwnMessage,
   attachments = [],
 }: TicketMessageBubbleProps) {
-  const authorProfile = (message as any).author;
+  // Get author from message - use author_user for internal users
+  const authorProfile = message.author_user ?? (message as any).author;
 
   // Extract text content from body_richtext
   const getMessageText = (): string => {
@@ -53,9 +54,9 @@ export function TicketMessageBubble({
       isOwnMessage && "flex-row-reverse"
     )}>
       <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage src={authorProfile?.avatar_url || authorProfile?.photo_url} />
+        <AvatarImage src={authorProfile?.photo_url ?? undefined} />
         <AvatarFallback className="text-xs">
-          {(authorProfile?.full_name || authorProfile?.display_name)?.slice(0, 2).toUpperCase() || "?"}
+          {authorProfile?.display_name?.slice(0, 2).toUpperCase() || "?"}
         </AvatarFallback>
       </Avatar>
       
@@ -68,7 +69,7 @@ export function TicketMessageBubble({
           isOwnMessage && "justify-end"
         )}>
           <span className="text-sm font-medium">
-            {authorProfile?.full_name || authorProfile?.display_name || "Usuário"}
+            {authorProfile?.display_name || "Usuário"}
           </span>
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(message.created_at), { 
