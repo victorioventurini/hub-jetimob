@@ -58,3 +58,17 @@ export {
   type OrgObjectiveWithKrs,
   type OkrContributor,
 } from './useOkrAggregateQueries';
+
+// Dashboard aggregate query
+export {
+  useOkrDashboardData,
+  deriveStatusCounts,
+  calculateOverallProgress,
+  type OkrDashboardView,
+  type OkrDashboardParams,
+  type OkrDashboardData,
+  type OkrTeam,
+  type OrgObjectiveWithKrs as DashboardOrgObjectiveWithKrs,
+  type TeamObjectiveWithKrs as DashboardTeamObjectiveWithKrs,
+  type SharedOkrInsights,
+} from './useOkrDashboardData';

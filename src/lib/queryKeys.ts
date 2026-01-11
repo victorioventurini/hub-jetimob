@@ -165,6 +165,8 @@ export const queryKeys = {
     // Dashboard
     dashboard: (buId: string | null, teamId?: string) => 
       ['okr-dashboard', buId, teamId] as const,
+    dashboardData: (buId: string | null, year?: number, view?: string, teamId?: string) =>
+      ['okr-dashboard-data', buId, year, view, teamId] as const,
     
     // Cycle Check-ins Page
     cycleCheckins: (buId: string | null, cycleId?: string, filters?: Record<string, unknown>) => 

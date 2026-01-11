@@ -8238,6 +8238,15 @@ export type Database = {
         Args: { p_team_id: string }
         Returns: Json
       }
+      rpc_okr_dashboard_data: {
+        Args: {
+          p_bu_id: string
+          p_team_id?: string
+          p_view?: string
+          p_year?: number
+        }
+        Returns: Json
+      }
       search_bu_users_for_mention: {
         Args: { p_bu_id: string; p_limit?: number; p_search_term?: string }
         Returns: {
