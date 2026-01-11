@@ -52,7 +52,7 @@ export const OKR_FIELDS = {
       id, bu_id, team_id, team_objective_id, linked_org_kr_id, parent_kr_id,
       title, type, baseline, current_value, target, direction, unit, status,
       owner_user_id, last_checkin_at, created_at, updated_at, deleted_at, cancelled_at,
-      owner:profiles!okr_team_key_results_owner_user_id_fkey(id, display_name, photo_url)
+      owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name, photo_url)
     )
   ` as const,
   
@@ -80,7 +80,7 @@ export const OKR_JOINED_FIELDS = {
     ${OKR_FIELDS.teamKr},
     team:teams!okr_team_key_results_team_id_fkey(id, name),
     team_objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey(id, title),
-    owner:profiles!okr_team_key_results_owner_user_id_fkey(id, display_name, photo_url)
+    owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name, photo_url)
   ` as const,
 } as const;
 
