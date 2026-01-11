@@ -22,7 +22,8 @@ export type WizardPersona =
   | 'team-checkin' 
   | 'managers-checkin' 
   | 'clevel-checkin'
-  | 'team-okr-creation';
+  | 'team-okr-creation'
+  | 'team-kr-creation';
 
 // ============================================================
 // STEP CONFIG
@@ -330,7 +331,7 @@ export interface WizardSession {
 // ============================================================
 
 export interface WizardVicContext extends VicContext {
-  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation';
+  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation';
   wizardStep?: string;
   krContext?: {
     krId: string;
@@ -361,6 +362,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'managers-checkin': 'okr-check-alignment',
   'clevel-checkin': 'okr-check-alignment',
   'team-okr-creation': 'okr-check-alignment',
+  'team-kr-creation': 'okr-check-alignment',
 };
 
 // ============================================================
@@ -444,5 +446,21 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
       { id: 'share', label: 'Compartilhar', shortLabel: 'Compartilhar' },
     ],
     aiAgents: ['cultura', 'coach-okrs', 'analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes', 'revisor-comunicacao'],
+  },
+  'team-kr-creation': {
+    persona: 'team-kr-creation',
+    title: 'Criação de Key Results',
+    description: 'Defina como medir o sucesso do objetivo do time',
+    steps: [
+      { id: 'kr-context', label: 'Contexto', shortLabel: 'Contexto' },
+      { id: 'kr-alignment', label: 'Alinhamento', shortLabel: 'Alinhamento' },
+      { id: 'kr-type', label: 'Tipos de KR', shortLabel: 'Tipos' },
+      { id: 'kr-detail', label: 'Detalhamento', shortLabel: 'KRs' },
+      { id: 'kr-shared-check', label: 'Validação', shortLabel: 'Validação', optional: true },
+      { id: 'kr-dependencies', label: 'Dependências', shortLabel: 'Deps', optional: true },
+      { id: 'kr-initiatives', label: 'Iniciativas', shortLabel: 'Iniciativas', optional: true },
+      { id: 'kr-review', label: 'Revisão', shortLabel: 'Revisar' },
+    ],
+    aiAgents: ['coach-okrs', 'analista-kpis', 'alinhamento-estrategico'],
   },
 };
