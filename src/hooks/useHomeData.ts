@@ -67,6 +67,7 @@ export function useNewJetimobers(limit = 5) {
           team_id
         `
         )
+        .eq("user_type", "internal") // Exclude external contacts
         .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
         .order("start_date", { ascending: false })
         .limit(limit);
