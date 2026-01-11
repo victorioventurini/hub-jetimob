@@ -16,16 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  ArrowRight,
-  ArrowLeft,
-  Target,
-  TrendingUp,
-  Building2,
-  AlertTriangle,
-} from 'lucide-react';
+import { Target, TrendingUp, Building2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicGeneratingCard } from '@/modules/vic';
+import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
@@ -281,17 +275,11 @@ export function TeamOkrContextStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-        <Button onClick={onContinue} className="flex-1 gap-2">
-          Continuar
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <WizardStepFooter
+        onBack={onBack}
+        primaryLabel="Continuar"
+        onPrimary={onContinue}
+      />
     </div>
   );
 }

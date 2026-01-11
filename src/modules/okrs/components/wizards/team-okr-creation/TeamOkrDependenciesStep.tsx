@@ -20,20 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  ArrowRight,
-  ArrowLeft,
-  AlertTriangle,
-  Link2,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-} from 'lucide-react';
+import { AlertTriangle, Link2, CheckCircle2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicLoadingState } from '@/modules/vic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
@@ -332,33 +324,15 @@ export function TeamOkrDependenciesStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-        {noDependencies ? (
-          <Button onClick={onContinue} className="flex-1 gap-2">
-            Continuar
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        ) : (
-          <>
-            <Button variant="outline" onClick={onSkip} className="gap-2">
-              Pular
-            </Button>
-            <Button 
-              onClick={onContinue} 
-              className="flex-1 gap-2"
-              disabled={isAnalyzing}
-            >
-              Continuar
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </>
-        )}
-      </div>
+      <WizardStepFooter
+        onBack={onBack}
+        primaryLabel="Continuar"
+        onPrimary={onContinue}
+        primaryDisabled={isAnalyzing}
+        showSkip={!noDependencies}
+        skipLabel="Pular"
+        onSkip={onSkip}
+      />
     </div>
   );
 }

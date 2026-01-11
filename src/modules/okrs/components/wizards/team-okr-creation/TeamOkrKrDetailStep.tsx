@@ -22,19 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  ArrowRight,
-  ArrowLeft,
-  Target,
-  Link2,
-  Wrench,
-  TrendingUp,
-  TrendingDown,
-  User,
-  Loader2,
-  CheckCircle2,
-} from 'lucide-react';
+import { Target, Link2, Wrench, TrendingUp, TrendingDown, User, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebounce } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
@@ -388,25 +378,13 @@ export function TeamOkrKrDetailStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={handlePrev} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          {currentKrIndex === 0 ? 'Voltar' : 'KR Anterior'}
-        </Button>
-        <Button 
-          onClick={handleNext} 
-          className="flex-1 gap-2"
-          disabled={!isKrValid}
-        >
-          {isLastKr ? (
-            allKrsValid ? 'Revisar dependências' : 'Completar KRs restantes'
-          ) : (
-            'Próximo KR'
-          )}
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <WizardStepFooter
+        backLabel={currentKrIndex === 0 ? 'Voltar' : 'KR Anterior'}
+        onBack={handlePrev}
+        primaryLabel={isLastKr ? (allKrsValid ? 'Revisar dependências' : 'Completar KRs restantes') : 'Próximo KR'}
+        onPrimary={handleNext}
+        primaryDisabled={!isKrValid}
+      />
     </div>
   );
 }

@@ -14,20 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Send,
-  ArrowLeft,
-  Sparkles,
-  Copy,
-  CheckCircle2,
-  Loader2,
-  MessageSquare,
-  Target,
-  Users,
-  Quote,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { VicLoadingState, VicTypewriterBlock, VicTypewriterText } from '@/modules/vic';
+import { Send, Sparkles, Copy, CheckCircle2, Loader2, MessageSquare, Target, Users, Quote } from 'lucide-react';
+import { VicLoadingState, VicTypewriterText } from '@/modules/vic';
+import { WizardLastStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { toast } from 'sonner';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
@@ -298,30 +287,32 @@ export function TeamOkrShareStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="gap-2" disabled={isSubmitting}>
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-        <Button 
-          onClick={onSubmit} 
-          className="flex-1 gap-2"
-          disabled={isGenerating || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Criando OKRs...
-            </>
-          ) : (
-            <>
-              <Send className="h-4 w-4" />
-              Compartilhar e iniciar o ciclo
-            </>
-          )}
-        </Button>
-      </div>
+      <WizardLastStepFooter
+        onBack={onBack}
+        backDisabled={isSubmitting}
+        primaryLoading={isSubmitting}
+        onPrimary={onSubmit}
+        primaryDisabled={isGenerating || isSubmitting}
+        rightContent={
+          <button
+            onClick={onSubmit}
+            disabled={isGenerating || isSubmitting}
+            className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-green-600 text-white h-10 px-4 py-2 hover:bg-green-700 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Criando OKRs...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                Compartilhar e iniciar o ciclo
+              </>
+            )}
+          </button>
+        }
+      />
     </div>
   );
 }

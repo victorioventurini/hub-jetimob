@@ -15,18 +15,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  ArrowRight,
-  ArrowLeft,
-  Lightbulb,
-  Sparkles,
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-} from 'lucide-react';
+import { Lightbulb, Sparkles, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebounce } from '@/hooks/useDebounce';
+import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
@@ -324,21 +317,12 @@ export function TeamOkrObjectiveStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-        <Button 
-          onClick={onContinue} 
-          className="flex-1 gap-2"
-          disabled={!canContinue}
-        >
-          Escolher KRs
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <WizardStepFooter
+        onBack={onBack}
+        primaryLabel="Escolher KRs"
+        onPrimary={onContinue}
+        primaryDisabled={!canContinue}
+      />
     </div>
   );
 }
