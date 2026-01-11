@@ -5,6 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { queryKeys } from '@/lib/queryKeys';
 
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,7 @@ export default function CronJobConfigPage() {
   const endpointUrl = `https://${projectId}.supabase.co/functions/v1/cron-dispatcher`;
 
   const { data: config, isLoading: configLoading } = useQuery({
-    queryKey: ['integrations', 'global-config', 'cron-job'],
+    queryKey: queryKeys.cronJob.globalConfig(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_global_config')
@@ -78,7 +79,7 @@ export default function CronJobConfigPage() {
   }, [config]);
 
   const { data: logs, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
-    queryKey: ['cron-execution-logs'],
+    queryKey: queryKeys.cronJob.executionLogs(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cron_execution_logs' as any)
@@ -99,7 +100,7 @@ export default function CronJobConfigPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['integrations', 'global-config', 'cron-job'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cronJob.globalConfig() });
       toast.success('Configuração atualizada');
     },
     onError: () => toast.error('Erro ao atualizar'),
@@ -118,7 +119,7 @@ export default function CronJobConfigPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['integrations', 'global-config', 'cron-job'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cronJob.globalConfig() });
       setHasUnsavedChanges(false);
       toast.success('Secret salvo com sucesso!');
     },

@@ -135,7 +135,7 @@ export default function HubNotifications() {
   
   // Global outbox stats with per-channel breakdown
   const { data: outboxStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['notification-outbox-stats-global'],
+    queryKey: queryKeys.hubNotifications.outboxStatsGlobal(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_outbox')
@@ -179,7 +179,7 @@ export default function HubNotifications() {
   
   // Outbox items for table view
   const { data: outboxItems = [], isLoading: outboxLoading } = useQuery({
-    queryKey: ['notification-outbox-items'],
+    queryKey: queryKeys.hubNotifications.outboxItems(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_outbox')
@@ -206,7 +206,7 @@ export default function HubNotifications() {
   }
 
   const { data: healthAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ['notification-health-alerts-global'],
+    queryKey: queryKeys.hubNotifications.healthAlertsGlobal(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_health_alerts' as any)
@@ -245,7 +245,7 @@ export default function HubNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-events'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hubNotifications.eventsPrefix() });
       setEventDialogOpen(false);
       setEditingEvent(null);
       setEventForm(defaultEventForm);
@@ -267,7 +267,7 @@ export default function HubNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-events'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hubNotifications.eventsPrefix() });
       toast.success('Evento removido');
     },
     onError: (error) => {
@@ -286,7 +286,7 @@ export default function HubNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-channels'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hubNotifications.channelsPrefix() });
       toast.success('Canal atualizado');
     },
     onError: (error) => {

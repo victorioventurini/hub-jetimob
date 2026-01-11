@@ -297,7 +297,7 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
 // Hook for global outbox stats (diagnostics)
 export function useOutboxStats() {
   return useQuery({
-    queryKey: ['notifications', 'outbox-stats'],
+    queryKey: queryKeys.notificationAdmin.outboxStats(),
     queryFn: async () => {
       const { data, error } = await globalSupabase
         .from('notification_outbox')

@@ -436,9 +436,9 @@ export const queryKeys = {
 
   // ============= Settings =============
   settings: {
-    modulesList: () => ['settings', 'modules-list'] as const,
-    busList: () => ['settings', 'bus-list'] as const,
-    moduleConfigs: (buId: string | null) => ['settings', 'module-configs', buId] as const,
+    modulesList: () => ['settings-modules-list'] as const,
+    busList: () => ['settings-bus-list'] as const,
+    moduleConfigs: () => ['settings-module-configs'] as const,
     profilesCount: (buId: string | null) => ['settings', 'profiles-count', buId] as const,
     teamsCount: (buId: string | null) => ['settings-teams-count', buId] as const,
     busCount: () => ['settings-bus-count'] as const,
@@ -450,6 +450,34 @@ export const queryKeys = {
     jobTitlesPrefix: () => ['job-titles'] as const,
   },
 
+  // ============= Hub Notifications Admin =============
+  hubNotifications: {
+    outboxStatsGlobal: () => ['notification-outbox-stats-global'] as const,
+    outboxItems: () => ['notification-outbox-items'] as const,
+    healthAlertsGlobal: () => ['notification-health-alerts-global'] as const,
+    eventsPrefix: () => ['notification-events'] as const,
+    channelsPrefix: () => ['notification-channels'] as const,
+  },
+
+  // ============= Cron Integration =============
+  cronJob: {
+    globalConfig: () => ['integrations', 'global-config', 'cron-job'] as const,
+    executionLogs: () => ['cron-execution-logs'] as const,
+  },
+
+  // ============= Modules Page =============
+  modulesPage: {
+    all: (buId: string | null) => ['all-modules', buId] as const,
+    allPrefix: () => ['all-modules'] as const,
+    buModulesPrefix: () => ['bu-modules'] as const,
+  },
+
+  // ============= My Profile =============
+  myProfile: {
+    profile: (userId: string | null) => ['my-profile', userId] as const,
+    profilePrefix: () => ['my-profile'] as const,
+    team: (teamId: string | null) => ['profile-team', teamId] as const,
+  },
 
   // ============= Home Dashboard =============
   home: {

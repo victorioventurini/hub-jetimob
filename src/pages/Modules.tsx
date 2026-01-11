@@ -35,6 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
 import { useUrlTab } from "@/shared/url";
+import { queryKeys } from "@/lib/queryKeys";
 
 // Mapeamento de ícones
 const iconMap: Record<string, LucideIcon> = {
@@ -114,7 +115,7 @@ export default function Modules() {
 
   // Buscar todos os módulos
   const { data: modules = [], isLoading } = useQuery({
-    queryKey: ["all-modules", currentBu?.id],
+    queryKey: queryKeys.modulesPage.all(currentBu?.id ?? null),
     queryFn: async () => {
       // Buscar módulos
       const { data: modulesData, error: modulesError } = await supabase
@@ -182,8 +183,8 @@ export default function Modules() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["all-modules"] });
-      queryClient.invalidateQueries({ queryKey: ["bu-modules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modulesPage.allPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modulesPage.buModulesPrefix() });
       toast.success("Configuração atualizada");
     },
     onError: (error) => {
