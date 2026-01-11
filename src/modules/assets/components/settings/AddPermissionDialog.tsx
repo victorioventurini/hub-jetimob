@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   Dialog,
   DialogContent,
@@ -62,7 +63,7 @@ export function AddPermissionDialog({ open, onOpenChange }: AddPermissionDialogP
 
   // Fetch profiles for the current BU using v_bu_active_profiles
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
-    queryKey: ["profiles-for-assets-permissions", currentBu?.id],
+    queryKey: queryKeys.assets.profilesForPermissions(currentBu?.id ?? null),
     enabled: !!currentBu?.id,
     queryFn: async () => {
       if (!currentBu?.id) return [];

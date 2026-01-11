@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
+import { queryKeys } from "@/lib/queryKeys";
 import type { AssetGiftItem, AssetGiftBatch, AssetGiftMovement, GiftMovementType, GiftDestinationType } from "../types";
 
 // Helper to format profile name
@@ -24,7 +25,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
 
   // Buscar itens de brinde
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
-    queryKey: ["asset-gift-items", buId, { search }],
+    queryKey: queryKeys.assets.gifts.items(buId ?? null, { search }),
     enabled: !!buId && !!supabase,
     queryFn: async () => {
       if (!supabase) return [];
@@ -49,7 +50,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
 
   // Buscar lotes
   const { data: batches = [], isLoading: isLoadingBatches, refetch: refetchBatches } = useQuery({
-    queryKey: ["asset-gift-batches", buId],
+    queryKey: queryKeys.assets.gifts.batches(buId ?? null),
     enabled: !!buId && !!supabase,
     queryFn: async () => {
       if (!supabase) return [];
@@ -133,7 +134,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-gift-items", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false });
       toast.success("Item criado");
     },
     onError: () => {
@@ -156,7 +157,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-gift-items", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false });
       toast.success("Item atualizado");
     },
     onError: () => {
@@ -191,7 +192,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return batch;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-gift-batches", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.batches(buId ?? null) });
       toast.success("Lote criado");
     },
     onError: () => {
@@ -234,7 +235,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return movement;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-gift-batches", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.batches(buId ?? null) });
       toast.success("Movimentação registrada");
     },
     onError: (error: any) => {

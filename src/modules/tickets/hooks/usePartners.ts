@@ -163,7 +163,7 @@ export function usePartnerContacts(companyId?: string) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partner-contacts", buId, companyId],
+    queryKey: queryKeys.tickets.partnerContacts(buId ?? null, companyId),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -194,7 +194,7 @@ export function usePartnerContact(id: string | null) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["partner-contact", id],
+    queryKey: queryKeys.tickets.partnerContact(id),
     queryFn: async () => {
       if (!id) return null;
 
@@ -282,7 +282,7 @@ export function useCreatePartnerContact() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['partner-contacts', buId],
+        queryKey: queryKeys.tickets.partnerContacts(buId ?? null, undefined),
         exact: false 
       });
     },
@@ -323,10 +323,10 @@ export function useUpdatePartnerContact() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
-        queryKey: ['partner-contacts', buId],
+        queryKey: queryKeys.tickets.partnerContacts(buId ?? null, undefined),
         exact: false 
       });
-      queryClient.invalidateQueries({ queryKey: ["partner-contact", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerContact(variables.id) });
     },
   });
 }
@@ -348,7 +348,7 @@ export function useDeletePartnerContact() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['partner-contacts', buId],
+        queryKey: queryKeys.tickets.partnerContacts(buId ?? null, undefined),
         exact: false 
       });
     },
