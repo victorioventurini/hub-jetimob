@@ -25,6 +25,15 @@ export const OKR_FIELDS = {
     created_at, updated_at, deleted_at
   ` as const,
   
+  orgObjectiveWithKrs: `
+    id, bu_id, title, description, year, status, 
+    created_at, updated_at, deleted_at,
+    key_results:okr_org_key_results(
+      id, bu_id, org_objective_id, title, baseline, current_value, target,
+      direction, unit, status, created_at, updated_at, deleted_at, cancelled_at
+    )
+  ` as const,
+  
   orgKr: `
     id, bu_id, org_objective_id, title, baseline, current_value, target,
     direction, unit, status, created_at, updated_at, deleted_at, cancelled_at
@@ -111,7 +120,7 @@ function useOrgObjectivesImpl(options: UseOrgObjectivesOptions = {}) {
       
       let query = supabase
         .from('okr_org_objectives')
-        .select(OKR_FIELDS.orgObjective)
+        .select(OKR_FIELDS.orgObjectiveWithKrs)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -126,7 +135,14 @@ function useOrgObjectivesImpl(options: UseOrgObjectivesOptions = {}) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      
+      // Filter out deleted/cancelled KRs from the nested results
+      return (data || []).map(obj => ({
+        ...obj,
+        key_results: (obj.key_results || []).filter(
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+        ),
+      }));
     },
     enabled: !!buId && !!supabase,
     staleTime: STALE_TIME.list,
