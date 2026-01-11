@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { toast } from 'sonner';
+import { queryKeys } from '@/lib/queryKeys';
 import type { 
   IntegrationCatalogItem, 
   IntegrationGlobalConfig, 
@@ -18,7 +19,7 @@ import type { Json } from '@/integrations/supabase/types';
 export function useIntegrationsCatalog() {
   // Uses global client since catalog is platform-level data
   return useQuery({
-    queryKey: ['integrations-catalog'],
+    queryKey: queryKeys.integrations.catalog(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_catalog')
@@ -34,7 +35,7 @@ export function useIntegrationsCatalog() {
 export function useIntegrationByKey(integrationKey: string) {
   // Uses global client since catalog is platform-level data
   return useQuery({
-    queryKey: ['integration-catalog', integrationKey],
+    queryKey: queryKeys.integrations.catalogByKey(integrationKey),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_catalog')
@@ -56,7 +57,7 @@ export function useIntegrationByKey(integrationKey: string) {
 export function useGlobalConfigs() {
   // Uses global client for admin panel
   return useQuery({
-    queryKey: ['integrations-global-configs'],
+    queryKey: queryKeys.integrations.global(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_global_config')
@@ -71,7 +72,7 @@ export function useGlobalConfigs() {
 export function useGlobalConfig(integrationKey: string) {
   // Uses global client for admin panel
   return useQuery({
-    queryKey: ['integration-global-config', integrationKey],
+    queryKey: queryKeys.integrations.globalByKey(integrationKey),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hub_integrations_global_config')
@@ -130,8 +131,8 @@ export function useUpsertGlobalConfig() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['integrations-global-configs'] });
-      queryClient.invalidateQueries({ queryKey: ['integration-global-config', variables.integration_key] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.global() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.globalByKey(variables.integration_key) });
       toast.success('Configuração global salva!');
     },
     onError: (error) => {
@@ -163,7 +164,7 @@ export function useUpdateGlobalTestStatus() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['integration-global-config', variables.integration_key] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.globalByKey(variables.integration_key) });
     },
   });
 }
@@ -176,7 +177,7 @@ export function useBuIntegrationConfigs(buId: string | undefined) {
   const { client: buSupabase, isReady } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['bu-integration-configs', buId],
+    queryKey: queryKeys.integrations.bu(buId ?? null),
     queryFn: async () => {
       if (!buSupabase || !buId) return [];
       const { data, error } = await buSupabase
@@ -195,7 +196,7 @@ export function useBuIntegrationConfig(buId: string | undefined, integrationKey:
   const { client: buSupabase, isReady } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['bu-integration-config', buId, integrationKey],
+    queryKey: queryKeys.integrations.buByKey(buId ?? null, integrationKey),
     queryFn: async () => {
       if (!buSupabase || !buId) return null;
       const { data, error } = await buSupabase
@@ -265,8 +266,8 @@ export function useUpsertBuIntegrationConfig(buId: string | undefined) {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['bu-integration-configs', variables.bu_id] });
-      queryClient.invalidateQueries({ queryKey: ['bu-integration-config', variables.bu_id, variables.integration_key] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.bu(variables.bu_id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.buByKey(variables.bu_id, variables.integration_key) });
       toast.success('Configuração da BU salva!');
     },
     onError: (error) => {
@@ -283,7 +284,7 @@ export function useUpsertBuIntegrationConfig(buId: string | undefined) {
 export function useGlobalAgents(integrationKey?: string) {
   // Uses global client for admin panel
   return useQuery({
-    queryKey: ['global-agents', integrationKey],
+    queryKey: queryKeys.integrations.globalAgents(integrationKey),
     queryFn: async () => {
       let query = supabase
         .from('ai_agents')
@@ -306,7 +307,7 @@ export function useBuAgents(buId: string | undefined, integrationKey?: string) {
   const { client: buSupabase, isReady } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: ['bu-agents', buId, integrationKey],
+    queryKey: queryKeys.integrations.buAgents(buId ?? null, integrationKey),
     queryFn: async () => {
       if (!buSupabase || !buId) return [];
       
@@ -373,9 +374,9 @@ export function useCreateAgent() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['global-agents'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.globalAgents() });
       if (variables.bu_id) {
-        queryClient.invalidateQueries({ queryKey: ['bu-agents', variables.bu_id] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.integrations.buAgents(variables.bu_id) });
       }
       toast.success('Agente criado com sucesso!');
     },
@@ -425,8 +426,8 @@ export function useUpdateAgent() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['global-agents'] });
-      queryClient.invalidateQueries({ queryKey: ['bu-agents'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.globalAgents() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.buAgents(null) });
       toast.success('Agente atualizado!');
     },
     onError: (error) => {
@@ -450,8 +451,8 @@ export function useDeleteAgent() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['global-agents'] });
-      queryClient.invalidateQueries({ queryKey: ['bu-agents'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.globalAgents() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.buAgents(null) });
       toast.success('Agente removido!');
     },
     onError: (error) => {
@@ -473,7 +474,7 @@ export function useAgentLogs(filters?: {
 }) {
   // Uses global client for admin panel
   return useQuery({
-    queryKey: ['agent-logs', filters],
+    queryKey: queryKeys.integrations.agentLogsFiltered(filters),
     queryFn: async () => {
       let query = supabase
         .from('ai_agent_logs')

@@ -244,11 +244,19 @@ export const queryKeys = {
   integrations: {
     all: () => ['integrations'] as const,
     catalog: () => ['integrations', 'catalog'] as const,
+    catalogByKey: (integrationKey: string) => ['integrations', 'catalog', integrationKey] as const,
     global: () => ['integrations', 'global'] as const,
+    globalByKey: (integrationKey: string) => ['integrations', 'global', integrationKey] as const,
     bu: (buId: string | null) => ['integrations', 'bu', buId] as const,
+    buByKey: (buId: string | null, integrationKey: string) => ['integrations', 'bu', buId, integrationKey] as const,
+    // Agents
     agents: (buId: string | null) => ['integrations', 'agents', buId] as const,
+    globalAgents: (integrationKey?: string) => ['integrations', 'global-agents', integrationKey] as const,
+    buAgents: (buId: string | null, integrationKey?: string) => ['integrations', 'bu-agents', buId, integrationKey] as const,
     agentDetail: (agentId: string) => ['integrations', 'agent', agentId] as const,
     agentLogs: (agentId: string) => ['integrations', 'agent-logs', agentId] as const,
+    agentLogsFiltered: (filters?: { bu_id?: string; agent_id?: string; integration_key?: string; limit?: number }) => 
+      ['integrations', 'agent-logs', filters] as const,
     agentDocuments: (agentId: string) => ['integrations', 'agent-documents', agentId] as const,
   },
 
