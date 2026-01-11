@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClavicularySelect } from "@/components/selects";
 import { useKeys } from "../../hooks/useKeys";
 import type { AssetHook } from "../../types";
 
@@ -123,20 +124,14 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Claviculário *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {clavicularies.map((clav) => (
-                        <SelectItem key={clav.id} value={clav.id}>
-                          {clav.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ClavicularySelect
+                      value={field.value}
+                      onValueChange={(val) => field.onChange(val)}
+                      placeholder="Selecione..."
+                      triggerClassName="w-full"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
