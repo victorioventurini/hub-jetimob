@@ -14,6 +14,7 @@ export function useGlobalUsers(filters: GlobalUserFilters = {}) {
 
   return useQuery({
     queryKey: queryKeys.users.globalList(filters),
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async (): Promise<GlobalUser[]> => {
       const { data, error } = await supabase.rpc("get_global_users_admin", {
         p_search: q || null,

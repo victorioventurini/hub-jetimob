@@ -174,6 +174,7 @@ export function useVicEnabled() {
 
   const { data: iaConfig, isLoading } = useQuery({
     queryKey: queryKeys.vic.buConfig(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes - config rarely changes
     queryFn: async () => {
       if (!supabase || !isReady || !buId) return null;
 
@@ -260,6 +261,7 @@ export function useVicAgentActivations() {
 
   const { data: activations, isLoading } = useQuery({
     queryKey: queryKeys.vic.agentActivations(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !isReady || !buId) return [];
 

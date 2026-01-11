@@ -8,6 +8,7 @@ export function useBuLocations(buId: string | null) {
   
   return useQuery({
     queryKey: queryKeys.bu.locations(buId),
+    staleTime: 5 * 60 * 1000, // 5 minutes - locations change rarely
     queryFn: async () => {
       if (!buId) return [];
       
@@ -32,6 +33,7 @@ export function useBuLocation(locationId: string | null) {
   
   return useQuery({
     queryKey: queryKeys.bu.location(locationId ?? ''),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!locationId) return null;
       

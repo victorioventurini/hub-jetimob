@@ -14,6 +14,7 @@ interface BuOption {
 export function useAllBus() {
   return useQuery({
     queryKey: queryKeys.bu.allList(),
+    staleTime: 5 * 60 * 1000, // 5 minutes - BU list changes rarely
     queryFn: async (): Promise<BuOption[]> => {
       const { data, error } = await supabase
         .from("bu_units")
