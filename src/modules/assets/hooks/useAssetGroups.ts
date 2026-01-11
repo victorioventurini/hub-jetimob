@@ -204,7 +204,7 @@ export function useAssetGroups() {
       return group;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Kit atualizado");
     },
     onError: () => {
@@ -223,7 +223,7 @@ export function useAssetGroups() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Kit removido");
     },
     onError: () => {
@@ -259,7 +259,7 @@ export function useAssetGroups() {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Item adicionado ao kit");
     },
     onError: (error: any) => {
@@ -285,7 +285,7 @@ export function useAssetGroups() {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Item atualizado");
     },
     onError: () => {
@@ -304,7 +304,7 @@ export function useAssetGroups() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Item removido do kit");
     },
     onError: () => {
@@ -334,7 +334,7 @@ export function useAssetGroups() {
       if (groupError) throw groupError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset-groups", buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.groups.all(buId ?? null) });
       toast.success("Item definido como primário");
     },
     onError: () => {

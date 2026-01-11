@@ -75,7 +75,7 @@ export function useCompanyContactCapabilities(companyId?: string) {
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: ["company-contact-capabilities", buId, companyId],
+    queryKey: queryKeys.tickets.companyContactCapabilities(buId ?? null, companyId),
     queryFn: async () => {
       if (!buId || !companyId) return [];
 
@@ -151,8 +151,8 @@ export function useDeleteContactCapability() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
-      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.contactCapabilities(null, undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.companyContactCapabilities(null, undefined) });
     },
   });
 }
@@ -170,8 +170,8 @@ export function useToggleContactCapability() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
-      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.contactCapabilities(null, undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.companyContactCapabilities(null, undefined) });
     },
   });
 }
@@ -197,8 +197,8 @@ export function useUpdateContactCapability() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
-      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.contactCapabilities(null, undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.companyContactCapabilities(null, undefined) });
     },
   });
 }

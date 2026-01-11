@@ -60,8 +60,9 @@ export const queryKeys = {
   teams: {
     all: (buId: string | null) => ['teams', buId] as const,
     list: (buId: string | null, includeInactive = false) => ['teams', 'list', buId, includeInactive] as const,
-    detail: (teamId: string) => ['teams', 'detail', teamId] as const,
+    detail: (teamId: string | undefined) => ['team', teamId] as const,
     members: (teamId: string) => ['teams', 'members', teamId] as const,
+    availableLeaders: (buId: string | null) => ['available-leaders', buId] as const,
   },
 
   squads: {
@@ -277,17 +278,19 @@ export const queryKeys = {
     
     // Keys
     keys: {
-      all: (buId: string | null) => ['assets', 'keys', buId] as const,
-      keyrings: (buId: string | null) => ['assets', 'keys', 'keyrings', buId] as const,
-      clavicularies: (buId: string | null) => ['assets', 'keys', 'clavicularies', buId] as const,
+      all: (buId: string | null) => ['asset-keys', buId] as const,
+      keyrings: (buId: string | null, filters?: { search?: string }) => 
+        ['asset-keyrings', buId, filters] as const,
+      clavicularies: (buId: string | null) => ['asset-clavicularies', buId] as const,
       movements: (keyringId: string) => ['assets', 'keys', 'movements', keyringId] as const,
     },
     
     // Gifts
     gifts: {
       all: (buId: string | null) => ['assets', 'gifts', buId] as const,
-      items: (buId: string | null) => ['assets', 'gifts', 'items', buId] as const,
-      batches: (itemId: string) => ['assets', 'gifts', 'batches', itemId] as const,
+      items: (buId: string | null, filters?: { search?: string }) => 
+        ['asset-gift-items', buId, filters] as const,
+      batches: (buId: string | null) => ['asset-gift-batches', buId] as const,
       movements: (itemId: string) => ['assets', 'gifts', 'movements', itemId] as const,
     },
     
@@ -296,6 +299,7 @@ export const queryKeys = {
     locations: (buId: string | null) => ['assets', 'locations', buId] as const,
     locationsOptions: (buId: string | null) => ['assets', 'locations-options', buId] as const,
     permissions: (buId: string | null) => ['assets', 'permissions', buId] as const,
+    profilesForPermissions: (buId: string | null) => ['profiles-for-assets-permissions', buId] as const,
   },
 
   // ============= Tickets =============
@@ -306,10 +310,21 @@ export const queryKeys = {
     myTickets: (buId: string | null) => ['tickets', 'my', buId] as const,
     detail: (ticketId: string) => ['tickets', 'detail', ticketId] as const,
     messages: (ticketId: string) => ['tickets', 'messages', ticketId] as const,
+    attachments: (ticketId: string | null) => ['ticket-attachments', ticketId] as const,
     categories: (buId: string | null, scope?: string) => ['tickets', 'categories', buId, scope] as const,
     subcategories: (buId: string | null, categoryId?: string) => ['tickets', 'subcategories', buId, categoryId] as const,
     partners: (buId: string | null) => ['tickets', 'partners', buId] as const,
     partnerCompany: (id: string | null) => ['tickets', 'partner-company', id] as const,
+    partnerContacts: (buId: string | null, companyId?: string) => 
+      ['partner-contacts', buId, companyId] as const,
+    partnerContact: (id: string | null) => ['partner-contact', id] as const,
+    partnerContactHover: (contactId: string | null) => ['partner-contact-hover', contactId] as const,
+    partnerServices: (buId: string | null, companyId?: string) => 
+      ['partner-services', buId, companyId] as const,
+    partnerCategories: (companyId?: string) => ['partner-categories', companyId] as const,
+    partnerSubcategories: (categoryId?: string) => ['partner-subcategories', categoryId] as const,
+    partnerServiceMappings: (buId: string | null, companyId?: string) => 
+      ['partner-service-mappings', buId, companyId] as const,
     routingRules: (buId: string | null) => ['tickets', 'routing-rules', buId] as const,
     internalRoutingRules: (buId: string | null) => ['tickets', 'internal-routing-rules', buId] as const,
     contactCapabilities: (buId: string | null, contactId?: string) => 

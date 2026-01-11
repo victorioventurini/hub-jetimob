@@ -107,7 +107,7 @@ export function useTeam(teamId: string | undefined) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["team", teamId],
+    queryKey: queryKeys.teams.detail(teamId),
     queryFn: async () => {
       if (!teamId) return null;
 
@@ -306,7 +306,8 @@ export function useCreateTeam() {
       return team;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(currentBu?.id ?? null, false) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(currentBu?.id ?? null, true) });
       toast.success("Time criado com sucesso");
     },
     onError: (error: Error) => {
@@ -353,8 +354,9 @@ export function useUpdateTeam() {
       return team;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
-      queryClient.invalidateQueries({ queryKey: ["team", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(null, false), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(null, true), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(variables.id) });
       toast.success("Time atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -402,7 +404,8 @@ export function useDeactivateTeam() {
       toast.error("Erro ao desativar time");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, false) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, true) });
       toast.success("Time desativado com sucesso");
     },
   });
@@ -431,7 +434,8 @@ export function useDeleteTeam() {
     // Optimistic update: remove from list immediately
     onMutate: async (teamId) => {
       // Cancel both active and inactive queries
-      await queryClient.cancelQueries({ queryKey: ["teams"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.teams.list(buId, false) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.teams.list(buId, true) });
       
       const activeKey = queryKeys.teams.list(buId, false);
       const inactiveKey = queryKeys.teams.list(buId, true);
@@ -458,8 +462,9 @@ export function useDeleteTeam() {
       toast.error("Erro ao excluir time");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
-      queryClient.invalidateQueries({ queryKey: ["team"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, false) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, true) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(undefined) });
       toast.success("Time excluído com sucesso");
     },
   });
@@ -499,7 +504,7 @@ export function useAvailableLeaders() {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["available-leaders", currentBu?.id],
+    queryKey: queryKeys.teams.availableLeaders(currentBu?.id ?? null),
     queryFn: async () => {
       // Use canonical view - shows ALL registered users
       let query = supabase
