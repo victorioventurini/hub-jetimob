@@ -72,6 +72,7 @@ export function useInstructionSources(agentId: string) {
       return data as InstructionSourceRow[];
     },
     enabled: !!agentId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 

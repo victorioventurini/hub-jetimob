@@ -29,6 +29,7 @@ export function useIntegrationsCatalog() {
       if (error) throw error;
       return data as IntegrationCatalogItem[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - catalog rarely changes
   });
 }
 
@@ -47,6 +48,7 @@ export function useIntegrationByKey(integrationKey: string) {
       return data as IntegrationCatalogItem;
     },
     enabled: !!integrationKey,
+    staleTime: 10 * 60 * 1000, // 10 minutes - catalog rarely changes
   });
 }
 
@@ -66,6 +68,7 @@ export function useGlobalConfigs() {
       if (error) throw error;
       return data as IntegrationGlobalConfig[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -84,6 +87,7 @@ export function useGlobalConfig(integrationKey: string) {
       return data as IntegrationGlobalConfig | null;
     },
     enabled: !!integrationKey,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -189,6 +193,7 @@ export function useBuIntegrationConfigs(buId: string | undefined) {
       return data as BuIntegrationConfig[];
     },
     enabled: !!buId && isReady && !!buSupabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -210,6 +215,7 @@ export function useBuIntegrationConfig(buId: string | undefined, integrationKey:
       return data as BuIntegrationConfig | null;
     },
     enabled: !!buId && !!integrationKey && isReady && !!buSupabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -300,6 +306,7 @@ export function useGlobalAgents(integrationKey?: string) {
       if (error) throw error;
       return data as AiAgent[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -327,6 +334,7 @@ export function useBuAgents(buId: string | undefined, integrationKey?: string) {
       return data as AiAgent[];
     },
     enabled: !!buId && isReady && !!buSupabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -496,5 +504,6 @@ export function useAgentLogs(filters?: {
       if (error) throw error;
       return data as AiAgentLog[];
     },
+    staleTime: 30 * 1000, // 30 seconds - logs update frequently
   });
 }

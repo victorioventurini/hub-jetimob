@@ -97,8 +97,24 @@ export function useTeamPendingKrs(
       const now = new Date();
       const PENDING_THRESHOLD_DAYS = 7;
 
-      // Transform and enrich data
-      const krs: WizardKr[] = await Promise.all((data || []).map(async (kr) => {
+      // Batch fetch all owner profiles to avoid N+1
+      const ownerIds = [...new Set((data || [])
+        .map(kr => kr.owner_user_id)
+        .filter((id): id is string => !!id)
+      )];
+      
+      let ownerMap = new Map<string, { display_name: string | null; photo_url: string | null }>();
+      if (ownerIds.length > 0) {
+        const { data: owners } = await supabase
+          .from('profiles')
+          .select('id, display_name, photo_url')
+          .in('id', ownerIds);
+        
+        ownerMap = new Map((owners || []).map(o => [o.id, { display_name: o.display_name, photo_url: o.photo_url }]));
+      }
+
+      // Transform and enrich data (no more N+1)
+      const krs: WizardKr[] = (data || []).map((kr) => {
         const objective = kr.team_objective as any;
         const team = objective?.team as any;
 
@@ -116,20 +132,8 @@ export function useTeamPendingKrs(
           ? Math.min(100, Math.max(0, ((kr.current_value - kr.baseline) / range) * 100))
           : 0;
 
-        // Fetch owner info if exists
-        let ownerName = null;
-        let ownerPhoto = null;
-        if (kr.owner_user_id) {
-          const { data: ownerData } = await supabase
-            .from('profiles')
-            .select('display_name, photo_url')
-            .eq('id', kr.owner_user_id)
-            .maybeSingle();
-          if (ownerData) {
-            ownerName = ownerData.display_name;
-            ownerPhoto = ownerData.photo_url;
-          }
-        }
+        // Get owner info from batch lookup
+        const owner = kr.owner_user_id ? ownerMap.get(kr.owner_user_id) : null;
 
         return {
           id: kr.id,
@@ -143,8 +147,8 @@ export function useTeamPendingKrs(
           last_checkin_at: kr.last_checkin_at,
           days_since_checkin: daysSinceCheckin,
           owner_user_id: kr.owner_user_id,
-          owner_name: ownerName,
-          owner_photo: ownerPhoto,
+          owner_name: owner?.display_name || null,
+          owner_photo: owner?.photo_url || null,
           team_id: team?.id || '',
           team_name: team?.name || '',
           objective_id: objective?.id || '',
@@ -153,7 +157,7 @@ export function useTeamPendingKrs(
           is_at_risk: isAtRisk,
           progress,
         };
-      }));
+      });
 
       // Apply filter
       if (filter === 'pending') {

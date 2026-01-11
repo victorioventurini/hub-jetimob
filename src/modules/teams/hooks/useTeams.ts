@@ -100,6 +100,7 @@ export function useTeams(optionsOrIncludeInactive: UseTeamsOptions | boolean = f
       })) as TeamWithRelations[];
     },
     enabled: isReady && !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -173,6 +174,7 @@ export function useTeam(teamId: string | undefined) {
       } as TeamWithRelations & { members: any[] };
     },
     enabled: !!teamId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -522,6 +524,7 @@ export function useAvailableLeaders() {
       return data;
     },
     enabled: !!currentBu?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes - leader list changes rarely
   });
 }
 

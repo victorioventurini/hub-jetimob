@@ -27,6 +27,7 @@ export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: s
       return data as unknown as ObjectiveHealthData;
     },
     enabled: !!currentBuId && !!objectiveId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -93,6 +94,7 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
       })) as OkrInsight[];
     },
     enabled: !!currentBuId && !!scopeId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -200,6 +202,7 @@ export function useRiskObjectives(limit = 5) {
       return data || [];
     },
     enabled: !!currentBuId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -232,5 +235,6 @@ export function useDashboardInsights(limit = 10) {
       })) as OkrInsight[];
     },
     enabled: !!currentBuId && isReady && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }

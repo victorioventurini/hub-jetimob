@@ -129,6 +129,7 @@ export function useWizardSession() {
       return data ? mapDbToSession(data as DbWizardSession) : null;
     },
     enabled: !!profile?.id,
+    staleTime: 30 * 1000, // 30 seconds - session state changes frequently
   });
 
   // Create new session
@@ -308,5 +309,6 @@ export function useRecentWizardSessions(wizardType?: WizardPersona, limit = 10) 
       return (data || []).map(d => mapDbToSession(d as DbWizardSession));
     },
     enabled: !!profile?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
