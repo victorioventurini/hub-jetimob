@@ -29,6 +29,8 @@ import {
   BuUserMultiSelect,
   BuLocationSelect,
   AssetStatusSelect,
+  AssetCategorySelect,
+  ClavicularySelect,
   TicketStatusSelect,
   TicketTypeSelect,
   TicketCategorySelect,
@@ -201,6 +203,14 @@ const componentUsageData: Record<string, { description: string; pages: string[] 
     description: "Status de inventário com indicador de cor",
     pages: ["/assets/inventory"]
   },
+  "AssetCategorySelect": {
+    description: "Categoria de ativo com hierarquia subcategoria",
+    pages: ["/assets/inventory"]
+  },
+  "ClavicularySelect": {
+    description: "Seleção de claviculário para chaveiros",
+    pages: ["/assets/keys"]
+  },
   "TicketStatusSelect": {
     description: "Status de ticket com indicador de cor",
     pages: ["/tickets/*"]
@@ -227,7 +237,7 @@ const componentUsageData: Record<string, { description: string; pages: string[] 
   },
   "YearSelect": {
     description: "Seleção de ano",
-    pages: ["/okrs/*", "/kpis/*"]
+    pages: ["/kpis/*"]
   },
 };
 
@@ -338,6 +348,90 @@ function BuUserMultiSelectDemo() {
       onValueChange={setValue}
       placeholder="Selecione usuários..."
       showBadges
+    />
+  );
+}
+
+// Domain-specific Select Demos
+function BuLocationSelectDemo() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  return (
+    <BuLocationSelect
+      value={value}
+      onValueChange={setValue}
+      placeholder="Selecione localização..."
+      includeAll
+      allLabel="Todas localizações"
+    />
+  );
+}
+
+function AssetStatusSelectDemo() {
+  const [value, setValue] = useState<"all" | "available" | "loaned" | "maintenance" | "written_off">("all");
+  return (
+    <AssetStatusSelect
+      value={value}
+      onValueChange={setValue}
+      includeAll
+      allLabel="Todos status"
+    />
+  );
+}
+
+function AssetCategorySelectDemo() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  return (
+    <AssetCategorySelect
+      value={value}
+      onValueChange={setValue}
+      includeAll
+      allLabel="Todas categorias"
+    />
+  );
+}
+
+function ClavicularySelectDemo() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  return (
+    <ClavicularySelect
+      value={value}
+      onValueChange={setValue}
+      placeholder="Selecione claviculário..."
+    />
+  );
+}
+
+function TicketStatusSelectDemo() {
+  const [value, setValue] = useState<"all" | "waiting" | "paused" | "in_progress" | "done" | "discarded">("all");
+  return (
+    <TicketStatusSelect
+      value={value}
+      onValueChange={setValue}
+      includeAll
+      allLabel="Todos status"
+    />
+  );
+}
+
+function TicketTypeSelectDemo() {
+  const [value, setValue] = useState<"all" | "internal" | "external">("all");
+  return (
+    <TicketTypeSelect
+      value={value}
+      onValueChange={setValue}
+      includeAll
+      allLabel="Todos tipos"
+    />
+  );
+}
+
+function StatusSelectDemo() {
+  const [value, setValue] = useState<string>("all");
+  return (
+    <StatusSelect
+      value={value}
+      onValueChange={setValue}
+      variant="rag"
     />
   );
 }
@@ -509,6 +603,56 @@ export default function SettingsUiCatalog() {
               <div className="space-y-3">
                 <Label>Seleção múltipla de usuários</Label>
                 <BuUserMultiSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            {/* Domain-specific Selects */}
+            <ComponentShowcase {...componentUsageData["BuLocationSelect"]} name="BuLocationSelect">
+              <div className="space-y-3">
+                <Label>Localização (sede/sala)</Label>
+                <BuLocationSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["AssetStatusSelect"]} name="AssetStatusSelect">
+              <div className="space-y-3">
+                <Label>Status de inventário</Label>
+                <AssetStatusSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["AssetCategorySelect"]} name="AssetCategorySelect">
+              <div className="space-y-3">
+                <Label>Categoria de ativo</Label>
+                <AssetCategorySelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["ClavicularySelect"]} name="ClavicularySelect">
+              <div className="space-y-3">
+                <Label>Claviculário</Label>
+                <ClavicularySelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["TicketStatusSelect"]} name="TicketStatusSelect">
+              <div className="space-y-3">
+                <Label>Status de ticket</Label>
+                <TicketStatusSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["TicketTypeSelect"]} name="TicketTypeSelect">
+              <div className="space-y-3">
+                <Label>Tipo de ticket</Label>
+                <TicketTypeSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["StatusSelect"]} name="StatusSelect">
+              <div className="space-y-3">
+                <Label>Status OKR (RAG)</Label>
+                <StatusSelectDemo />
               </div>
             </ComponentShowcase>
           </div>

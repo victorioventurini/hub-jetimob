@@ -31,10 +31,10 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserPlus } from "lucide-react";
+import { AssetCategorySelect, BuLocationSelect, BuUserSelect } from "@/components/selects";
 import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
-import { useAssetProfiles } from "../../hooks/useProfiles";
 import { useIdentity } from "@/hooks/useIdentity";
 import { useBrands } from "../../hooks/useBrands";
 import { AutocompleteInput } from "./AutocompleteInput";
@@ -116,7 +116,6 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
   const { items, categories, createItemAsync, updateItemAsync, isCreatingItem, isUpdatingItem } = useInventory();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
   const { isInventoryAdmin } = useAssetPermissions();
-  const { profiles } = useAssetProfiles();
   const { profileId } = useIdentity();
   const { brands } = useBrands();
   const isEditing = !!item && !cloneMode;
@@ -651,36 +650,16 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Atribuir a</FormLabel>
-                      <Select 
-                        onValueChange={(val) => field.onChange(val === "__none__" ? undefined : val)} 
-                        value={field.value || "__none__"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um colaborador..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="__none__">Nenhum (disponível)</SelectItem>
-                          {profiles.map((profile) => (
-                            <SelectItem 
-                              key={profile.id} 
-                              value={profile.id}
-                              textValue={profile.full_name}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={profile.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs">
-                                    {profile.full_name.slice(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{profile.full_name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <BuUserSelect
+                          value={field.value}
+                          onValueChange={(val) => field.onChange(val)}
+                          placeholder="Selecione um colaborador..."
+                          allowNone
+                          noneLabel="Nenhum (disponível)"
+                          className="w-full"
+                        />
+                      </FormControl>
                       <FormDescription>
                         Se selecionado, o item será criado como emprestado
                       </FormDescription>

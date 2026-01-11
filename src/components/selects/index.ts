@@ -25,6 +25,10 @@ export type { StatusOption, OkrStatusValue } from "./StatusSelect";
 export { AssetStatusSelect, ASSET_STATUS_OPTIONS } from "./AssetStatusSelect";
 export type { AssetInventoryStatus } from "./AssetStatusSelect";
 
+// Assets - Categories, Clavicularies
+export { AssetCategorySelect } from "./AssetCategorySelect";
+export { ClavicularySelect } from "./ClavicularySelect";
+
 // Status (Tickets)
 export { TicketStatusSelect, TICKET_STATUS_OPTIONS } from "./TicketStatusSelect";
 export type { TicketStatus } from "./TicketStatusSelect";
