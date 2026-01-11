@@ -117,7 +117,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
 
   // Use canonical view for managers select
   const { data: managers } = useQuery({
-    queryKey: ["managers-select", currentBu?.id],
+    queryKey: queryKeys.managers.select(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       const { data, error } = await supabase
@@ -340,7 +340,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null) });
       toast.success("Jetimober cadastrado com sucesso!");
       onOpenChange(false);
     },
@@ -382,7 +382,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null) });
       toast.success("Jetimober atualizado com sucesso!");
       onOpenChange(false);
     },

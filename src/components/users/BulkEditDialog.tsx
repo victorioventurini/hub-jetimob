@@ -37,7 +37,7 @@ export function BulkEditDialog({
   const [managerId, setManagerId] = useState<string>("no-change");
 
   const { data: managers } = useQuery({
-    queryKey: ["managers-select", currentBu?.id],
+    queryKey: queryKeys.managers.select(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       // Use canonical view - shows ALL registered users

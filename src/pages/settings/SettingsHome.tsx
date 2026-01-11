@@ -3,6 +3,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   Users,
   Building2,
@@ -99,7 +100,7 @@ export default function SettingsHome() {
 
   // Fetch Business Units count
   const { data: busData, isLoading: busLoading } = useQuery({
-    queryKey: ["settings-bus-count"],
+    queryKey: queryKeys.settings.busCount(),
     queryFn: async () => {
       const { count, error } = await supabase
         .from("bu_units")
@@ -112,7 +113,7 @@ export default function SettingsHome() {
 
   // Fetch Modules count - optimized with parallel count queries
   const { data: modulesData, isLoading: modulesLoading } = useQuery({
-    queryKey: ["settings-modules-count"],
+    queryKey: queryKeys.settings.modulesCount(),
     queryFn: async () => {
       const [activeResult, totalResult] = await Promise.all([
         supabase
@@ -131,7 +132,7 @@ export default function SettingsHome() {
 
   // Fetch Integrations count - optimized with parallel count queries
   const { data: integrationsData, isLoading: integrationsLoading } = useQuery({
-    queryKey: ["settings-integrations-count"],
+    queryKey: queryKeys.settings.integrationsCount(),
     queryFn: async () => {
       const [catalogResult, enabledResult] = await Promise.all([
         supabase
@@ -150,7 +151,7 @@ export default function SettingsHome() {
 
   // Fetch Profiles count - scoped to current BU using canonical view
   const { data: profilesData, isLoading: profilesLoading } = useQuery({
-    queryKey: ["settings-profiles-count", currentBu?.id],
+    queryKey: queryKeys.settings.profilesCount(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase
@@ -165,7 +166,7 @@ export default function SettingsHome() {
 
   // Fetch Teams count - scoped to current BU
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ["settings-teams-count", currentBu?.id],
+    queryKey: queryKeys.settings.teamsCount(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase

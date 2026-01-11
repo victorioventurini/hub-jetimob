@@ -51,7 +51,7 @@ export function useTicketAttachments(ticketId: string | null) {
   const buScopedSupabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["ticket-attachments", ticketId],
+    queryKey: queryKeys.tickets.attachments(ticketId),
     queryFn: async () => {
       if (!ticketId) return [];
 
@@ -186,7 +186,7 @@ export function useCreateMessage(profileId: string | null) {
         queryKey: queryKeys.tickets.messages(variables.ticketId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["ticket-attachments", variables.ticketId],
+        queryKey: queryKeys.tickets.attachments(variables.ticketId),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.tickets.detail(variables.ticketId),
