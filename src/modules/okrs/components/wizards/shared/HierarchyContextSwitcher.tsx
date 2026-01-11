@@ -82,9 +82,8 @@ function HierarchyTeamSelect({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
-  const { isAdmin, role } = useAuth();
-  const isSuperAdmin = role === 'super_admin';
-  const isAdminLevel = isSuperAdmin || isAdmin;
+  const { isAdmin } = useAuth();
+  const isAdminLevel = isAdmin;
   
   // Use manageable teams for leaders, all teams for admins
   const { teams: manageableTeams, isLoading: isLoadingManageable } = useManageableTeamsFlat();
@@ -158,9 +157,8 @@ function HierarchyUserSelect({
   onClose: () => void;
   filterTeamIds?: string[];
 }) {
-  const { isAdmin, role, profile } = useAuth();
-  const isSuperAdmin = role === 'super_admin';
-  const isAdminLevel = isSuperAdmin || isAdmin;
+  const { isAdmin, profile } = useAuth();
+  const isAdminLevel = isAdmin;
   const [search, setSearch] = useState('');
   
   // For leaders, get only users from their manageable teams
@@ -267,9 +265,8 @@ export function HierarchyContextSwitcher({
   className,
   filterTeamIds,
 }: HierarchyContextSwitcherProps) {
-  const { isAdmin, role } = useAuth();
-  const isSuperAdmin = role === 'super_admin';
-  const isAdminLevel = isSuperAdmin || isAdmin;
+  const { isAdmin } = useAuth();
+  const isAdminLevel = isAdmin;
   
   const [open, setOpen] = useState(false);
   

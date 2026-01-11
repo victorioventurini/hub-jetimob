@@ -1,6 +1,6 @@
 import { Settings, Calendar, Scale, BookOpen, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUrlTab } from "@/hooks/useUrlState";
+import { useUrlTab } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
 import { CyclesTab } from "../components/settings/CyclesTab";

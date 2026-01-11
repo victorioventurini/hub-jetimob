@@ -56,13 +56,12 @@ export function WizardContextSelector({
   className,
   compact = false,
 }: WizardContextSelectorProps) {
-  const { profile, role, isAdmin } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const { teams: leaderTeams, isLeader } = useLeaderTeams();
   
-  // Permission checks
-  const isSuperAdmin = role === 'super_admin';
-  const canSelectAnyTeam = isSuperAdmin || isAdmin;
-  const canSelectAnyUser = isSuperAdmin || isAdmin;
+  // Permission checks - isAdmin already includes super_admin
+  const canSelectAnyTeam = isAdmin;
+  const canSelectAnyUser = isAdmin;
   
   // Transform leaderTeams to FlatTeamItem format for TeamSelect
   const allowedTeams: FlatTeamItem[] = useMemo(() => {

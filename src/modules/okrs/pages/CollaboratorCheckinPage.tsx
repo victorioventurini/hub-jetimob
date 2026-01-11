@@ -64,11 +64,10 @@ const DEFAULT_DATA: CollaboratorDraftData = {
 export default function CollaboratorCheckinPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { profile, isAdmin, role } = useAuth();
+  const { profile, isAdmin } = useAuth();
   
-  // Check if user is admin
-  const isSuperAdmin = role === 'super_admin';
-  const canSwitchUser = isSuperAdmin || isAdmin;
+  // Check if user is admin - isAdmin already includes super_admin
+  const canSwitchUser = isAdmin;
   
   // URL param for user impersonation (admin only)
   const userIdParam = searchParams.get('user');

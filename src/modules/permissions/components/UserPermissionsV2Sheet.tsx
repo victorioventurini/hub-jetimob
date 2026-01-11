@@ -75,8 +75,7 @@ export function UserPermissionsV2Sheet({
   onOpenChange,
   user,
 }: UserPermissionsV2SheetProps) {
-  const { role } = useAuth();
-  const isSuperAdmin = role === 'super_admin';
+  const { isAdmin: currentUserIsAdmin } = useAuth();
   
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
@@ -272,8 +271,8 @@ export function UserPermissionsV2Sheet({
   const isLoading = templatesLoading || v2AssignmentsLoading;
   const isSaving = assignTemplate.isPending || removeTemplate.isPending || isApplying;
 
-  // Only super_admin can edit admin users
-  const canEdit = !isAdmin || isSuperAdmin;
+  // Only admin (includes super_admin) can edit admin users
+  const canEdit = !isAdmin || currentUserIsAdmin;
 
   return (
     <>
@@ -313,7 +312,7 @@ export function UserPermissionsV2Sheet({
           </SheetHeader>
           
           {/* Revoke Access Button */}
-          {user?.role_in_bu && (isSuperAdmin || !isAdmin) && (
+          {user?.role_in_bu && (currentUserIsAdmin || !isAdmin) && (
             <Button
               variant="ghost"
               size="sm"
@@ -391,7 +390,7 @@ export function UserPermissionsV2Sheet({
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
-              ) : isAdmin && !isSuperAdmin ? (
+              ) : isAdmin && !currentUserIsAdmin ? (
                 <div className="text-center py-8">
                   <Shield className="h-10 w-10 mx-auto text-primary mb-2" />
                   <p className="font-medium text-sm">Administrador da BU</p>
