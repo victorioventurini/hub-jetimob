@@ -3,6 +3,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { BuUnit, UserBuMembership } from "../types";
+import { queryKeys } from "@/lib/queryKeys";
 
 // Fetch all BUs the current user has access to
 // NOTE: Uses global supabase client (not bu-scoped) because this runs
@@ -11,7 +12,7 @@ export function useUserBus() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["user-bus", user?.id],
+    queryKey: queryKeys.bu.userBus(user?.id ?? null),
     enabled: !!user?.id,
     queryFn: async () => {
       if (!user?.id) return [];
@@ -53,7 +54,7 @@ export function useBuUnit(buId: string | null) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["bu-unit", buId],
+    queryKey: queryKeys.bu.unit(buId),
     queryFn: async () => {
       if (!buId) return null;
 
@@ -75,7 +76,7 @@ export function useAllBus() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["all-bus"],
+    queryKey: queryKeys.bu.allBus(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
@@ -127,7 +128,7 @@ export function useCreateBu() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["all-bus"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus() });
     },
   });
 }
@@ -150,9 +151,9 @@ export function useUpdateBu() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["all-bus"] });
-      queryClient.invalidateQueries({ queryKey: ["bu-unit", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["user-bus"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.unit(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBus(null) });
     },
   });
 }

@@ -95,7 +95,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
   // Fetch values for all KPIs
   const { data: allValues } = useQuery({
-    queryKey: ['kpi-values-batch', kpis?.map((k) => k.id)],
+    queryKey: queryKeys.settings.kpiValuesBatch(kpis?.map((k) => k.id)),
     queryFn: async () => {
       if (!kpis || kpis.length === 0 || !supabase) return [];
 
@@ -250,7 +250,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kpi-values-batch'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix() });
       toast({
         title: "Valor registrado",
         description: "O valor do KPI foi registrado com sucesso.",

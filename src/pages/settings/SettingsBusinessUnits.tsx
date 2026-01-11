@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +34,7 @@ export default function SettingsBusinessUnits() {
   const [selectedBu, setSelectedBu] = useState<BuUnit | null>(null);
 
   const { data: businessUnits, isLoading } = useQuery({
-    queryKey: ["settings-business-units"],
+    queryKey: queryKeys.settings.businessUnits(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
@@ -45,7 +46,7 @@ export default function SettingsBusinessUnits() {
   });
 
   const { data: memberCounts } = useQuery({
-    queryKey: ["settings-bu-member-counts"],
+    queryKey: queryKeys.settings.buMemberCounts(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_user_memberships")

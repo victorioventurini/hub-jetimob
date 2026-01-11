@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Loader2 } from "lucide-react";
+import { queryKeys } from "@/lib/queryKeys";
 
 export default function Onboarding() {
   const { user, isLoading: authLoading } = useAuth();
@@ -16,7 +17,7 @@ export default function Onboarding() {
   });
 
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["onboarding-page", user?.id],
+    queryKey: queryKeys.onboarding.page(user?.id ?? null),
     queryFn: async () => {
       if (!user?.id) return null;
 
