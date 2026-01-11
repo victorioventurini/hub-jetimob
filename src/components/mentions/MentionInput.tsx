@@ -410,8 +410,8 @@ export function MentionInput({
   }, []);
 
   const minHeight = rows * 24; // Approximate line height
-  // Only show external badges when we have partner company (i.e., mix of internal + external)
-  const showExternalBadges = context === 'internal+external' && !!partnerCompanyId;
+  // Show external badges when context supports both internal and external users
+  const showExternalBadges = context === 'internal+external';
 
   return (
     <div className="relative">
