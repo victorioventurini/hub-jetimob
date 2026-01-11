@@ -86,10 +86,9 @@ export function useMentionableUsers(
   const supabase = useBuScopedSupabase();
   const buId = currentBu?.id ?? null;
 
-  // Validate options for 'internal+external' context with partner company
-  const hasPartnerCompany = !!partnerCompanyId;
-
-  // Query for 'internal+external' context WITH partner company - uses search_mention_candidates RPC
+  // Query for 'internal+external' context - uses search_mention_candidates RPC
+  // This RPC returns both internal users AND external contacts
+  // When partnerCompanyId is null, it returns contacts from ALL partner companies
   const combinedQuery = useQuery({
     queryKey: queryKeys.mentions.candidates(buId, context, partnerCompanyId ?? null, searchTerm),
     queryFn: async (): Promise<MentionCandidate[]> => {
@@ -115,12 +114,11 @@ export function useMentionableUsers(
         partner_company_name: u.partner_company_name || null,
       }));
     },
-    // Only enable when we have a partner company selected
-    enabled: enabled && !!buId && context === 'internal+external' && hasPartnerCompany,
+    // Enable for 'internal+external' context (with or without partner company)
+    enabled: enabled && !!buId && context === 'internal+external',
   });
 
-  // Query for 'internal' context OR 'internal+external' without partner company
-  // Uses search_bu_users_for_mention RPC (internal users only)
+  // Query for 'internal' context - uses search_bu_users_for_mention RPC (internal users only)
   const internalQuery = useQuery({
     queryKey: queryKeys.mentions.internalCandidates(buId, searchTerm),
     queryFn: async (): Promise<MentionCandidate[]> => {
@@ -146,12 +144,12 @@ export function useMentionableUsers(
         partner_company_name: null,
       }));
     },
-    // Enable for 'internal' context OR 'internal+external' without partner company
-    enabled: enabled && !!buId && (context === 'internal' || (context === 'internal+external' && !hasPartnerCompany)),
+    // Enable ONLY for 'internal' context
+    enabled: enabled && !!buId && context === 'internal',
   });
 
-  // Select the appropriate query based on context and partner company availability
-  const activeQuery = (context === 'internal+external' && hasPartnerCompany) ? combinedQuery : internalQuery;
+  // Select the appropriate query based on context
+  const activeQuery = context === 'internal+external' ? combinedQuery : internalQuery;
 
   return {
     candidates: (activeQuery.data ?? []) as MentionCandidate[],
