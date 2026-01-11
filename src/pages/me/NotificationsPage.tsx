@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useUrlState } from '@/shared/url';
 import {
   useUserNotificationSettings,
   useUserNotificationPreferenceMutation,
@@ -122,8 +123,8 @@ function NotificationList() {
   const { currentBuId } = useBu();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebouncedValue(searchTerm, 300);
+  const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
+  const debouncedSearch = useDebouncedValue(searchState.value, 300);
 
   const supabaseBu = useMemo(() => {
     return currentBuId ? createBuScopedClient(currentBuId) : null;
@@ -280,8 +281,8 @@ function NotificationList() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Buscar notificações..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchState.value}
+          onChange={(e) => searchState.set(e.target.value)}
           className="pl-10"
         />
       </div>

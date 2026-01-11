@@ -1,3 +1,7 @@
+/**
+ * @deprecated Mock data for KPIs - TO BE REMOVED after real data integration
+ * This file should be deleted once KpiDashboardPage uses real KPI data
+ */
 import { useMemo } from 'react';
 import { KpiWithValues, KpiCategory, KpiValueSource, calculateRagStatus } from '../types';
 import { subDays, format, subHours } from 'date-fns';
