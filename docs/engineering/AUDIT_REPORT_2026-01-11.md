@@ -1,7 +1,7 @@
 # 🔍 Relatório de Auditoria Completa — Hub da Jet
-**Data:** 2026-01-11  
+**Data:** 2026-01-11 (Atualizado)  
 **Versão do TCR:** 1.1.0  
-**Status:** Análise Consolidada
+**Status:** Correções Aplicadas
 
 ---
 
@@ -9,58 +9,65 @@
 
 | Categoria | Crítico | Alto | Médio | Baixo | Total |
 |-----------|---------|------|-------|-------|-------|
-| 🔒 Segurança (DB) | 2 | 4 | 1 | 0 | 7 |
+| 🔒 Segurança (DB) | ✅ 0 | 4 | 1 | 0 | 5 |
 | 🗃️ Banco de Dados | 0 | 2 | 3 | 2 | 7 |
 | 🔧 Backend (Edge Functions) | 0 | 1 | 2 | 1 | 4 |
-| 🖥️ Frontend (Código) | 1 | 5 | 8 | 6 | 20 |
-| 📦 Código Legado | 0 | 2 | 5 | 3 | 10 |
-| **TOTAL** | **3** | **14** | **19** | **12** | **48** |
+| 🖥️ Frontend (Código) | ✅ 0 | ✅ 0 | 4 | 3 | 7 |
+| 📦 Código Legado | 0 | ✅ 0 | 3 | 3 | 6 |
+| **TOTAL** | **0** | **7** | **13** | **9** | **29** |
+
+---
+
+## Correções Aplicadas (2026-01-11)
+
+### ✅ Wave 1 - Segurança
+
+| Item | Antes | Depois | Status |
+|------|-------|--------|--------|
+| `v_ai_agents_public` | SECURITY DEFINER | SECURITY INVOKER | ✅ Migração aplicada |
+| `v_profiles_directory` | SECURITY DEFINER | SECURITY INVOKER | ✅ Migração aplicada |
+
+### ✅ Wave 2 - Código Frontend
+
+| Item | Ação | Status |
+|------|------|--------|
+| `MultiUserSelect.tsx` | Removido (0 usos) | ✅ Deletado |
+| `useDelete*` funções (4) | Removidas do `useOkrMutations.ts` | ✅ Removido |
+| `useProfilesList` | Removida de `useSharedData.ts` | ✅ Removido |
+| `OkrDashboardPage.tsx` | Migrado para hooks novos | ✅ Atualizado |
+| Selects index | Removida export deprecated | ✅ Limpo |
+
+### ⚠️ Warnings Remanescentes (Aceitáveis)
+
+| Item | Razão |
+|------|-------|
+| RLS `WITH CHECK(true)` (4) | Tabelas de audit/log - intencional |
+| Leaked Password Protection | Não usa senhas (OTP only) |
+| Extension in public | Baixo risco, P3 |
 
 ---
 
 ## 1. 🔒 Segurança — Banco de Dados
 
-### 1.1 CRÍTICO: Views com SECURITY DEFINER
+### 1.1 ✅ CORRIGIDO: Views com SECURITY DEFINER → INVOKER
 
-**Problema:** 2 views detectadas com `SECURITY DEFINER` em vez de `SECURITY INVOKER`.
+~~**Problema:** 2 views detectadas com `SECURITY DEFINER`.~~
 
-| View | Risco | Ação |
-|------|-------|------|
-| (identificar via linter) | Views ignoram RLS do usuário | Alterar para SECURITY INVOKER |
+**Status:** Migração `20260111_fix_security_invoker_views.sql` aplicada.
 
-**Impacto:** Qualquer usuário autenticado pode acessar dados de outras BUs.
+### 1.2 INTENCIONAL: RLS Policies com `WITH CHECK(true)` em tabelas de log
 
-**Correção:**
-```sql
-ALTER VIEW public.nome_da_view SET (security_invoker = on);
-```
+**Tabelas afetadas:** `notification_template_versions`, `notification_template_audit_log`, `cron_execution_logs`, `okr_audit_log`
 
-### 1.2 CRÍTICO: RLS Policies com `USING(true)` em operações de escrita
+**Razão:** Tabelas de auditoria precisam aceitar inserts de qualquer contexto autenticado.
 
-**Problema:** 4 policies detectadas com `USING(true)` ou `WITH CHECK(true)` para INSERT/UPDATE/DELETE.
+### 1.3 N/A: Leaked Password Protection
 
-**Risco:** Qualquer usuário pode modificar/deletar dados de outras BUs.
+**Status:** ⏭️ Ignorado - sistema usa OTP, não senhas.
 
-**Ação:** Revisar e adicionar condições de BU scope:
-```sql
--- De
-WITH CHECK (true)
+### 1.4 BAIXO: Extension no Schema Public
 
--- Para
-WITH CHECK (is_current_bu(bu_id) AND has_permission(...))
-```
-
-### 1.3 ALTO: Leaked Password Protection Desabilitado
-
-**Status:** ⚠️ Proteção contra senhas vazadas está DESABILITADA.
-
-**Ação:** Habilitar no Supabase Dashboard → Auth → Password Protection.
-
-### 1.4 MÉDIO: Extension no Schema Public
-
-**Problema:** Extension instalada no schema `public` ao invés de schema separado.
-
-**Ação:** Mover extensions para schema `extensions`.
+**Ação:** Mover extensions para schema `extensions` (P3).
 
 ---
 

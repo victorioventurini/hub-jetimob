@@ -2,8 +2,6 @@ export { TeamSelect } from "./TeamSelect";
 export { MultiTeamSelect } from "./MultiTeamSelect";
 export { BuUserMultiSelect } from "./BuUserMultiSelect";
 export type { BuUserMultiSelectProps } from "./BuUserMultiSelect";
-/** @deprecated Use BuUserMultiSelect instead */
-export { MultiUserSelect } from "./MultiUserSelect";
 export { StatusSelect, OKR_STATUS_OPTIONS, RAG_STATUS_OPTIONS } from "./StatusSelect";
 export type { StatusOption, OkrStatusValue } from "./StatusSelect";
 export { YearSelect } from "./YearSelect";
