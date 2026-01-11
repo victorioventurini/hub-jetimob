@@ -18,7 +18,7 @@ export function useResetOnboarding() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       toast.success("Onboarding resetado com sucesso");
     },
     onError: (error) => {
@@ -39,7 +39,7 @@ export function useUpdateGlobalRole() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       toast.success("Role global atualizado");
     },
     onError: (error) => {
@@ -72,7 +72,7 @@ export function useAddBuAccess() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       toast.success("Acesso à BU adicionado");
     },
     onError: (error) => {
@@ -93,7 +93,7 @@ export function useRemoveBuAccess() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       toast.success("Acesso à BU removido");
     },
     onError: (error) => {
