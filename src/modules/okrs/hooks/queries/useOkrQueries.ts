@@ -44,6 +44,18 @@ export const OKR_FIELDS = {
     is_shared, responsibility_model, created_at, updated_at, deleted_at
   ` as const,
   
+  teamObjectiveWithKrs: `
+    id, bu_id, team_id, title, description, year, status, org_objective_id,
+    is_shared, responsibility_model, created_at, updated_at, deleted_at,
+    team:teams!okr_team_objectives_team_id_fkey(id, name),
+    key_results:okr_team_key_results(
+      id, bu_id, team_id, team_objective_id, linked_org_kr_id, parent_kr_id,
+      title, type, baseline, current_value, target, direction, unit, status,
+      owner_user_id, last_checkin_at, created_at, updated_at, deleted_at, cancelled_at,
+      owner:profiles!okr_team_key_results_owner_user_id_fkey(id, display_name, photo_url)
+    )
+  ` as const,
+  
   teamKr: `
     id, bu_id, team_id, team_objective_id, linked_org_kr_id, parent_kr_id, metric_id,
     title, type, baseline, current_value, target, direction, unit, status,
@@ -266,7 +278,7 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
       
       let query = supabase
         .from('okr_team_objectives')
-        .select(OKR_FIELDS.teamObjective)
+        .select(OKR_FIELDS.teamObjectiveWithKrs)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -281,7 +293,14 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      
+      // Filter out deleted/cancelled KRs from the nested results
+      return (data || []).map(obj => ({
+        ...obj,
+        key_results: (obj.key_results || []).filter(
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+        ),
+      }));
     },
     enabled: !!buId && !!supabase,
     staleTime: STALE_TIME.list,
