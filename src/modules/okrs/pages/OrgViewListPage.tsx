@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HubLayout } from '@/components/layout/HubLayout';
+import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
 import { YearSelect } from '@/components/selects';
@@ -58,23 +59,21 @@ export default function OrgViewListPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-primary" />
-              Visão Organizacional
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Acompanhe como os OKRs dos times contribuem para os objetivos estratégicos
-            </p>
-          </div>
-          <YearSelect
-            value={selectedYear}
-            onValueChange={setSelectedYear}
-            years={years}
-            triggerClassName="w-[120px]"
-          />
-        </div>
+        <PageHeader
+          title="Visão Organizacional"
+          description="Acompanhe como os OKRs dos times contribuem para os objetivos estratégicos"
+          icon={<Building2 className="h-6 w-6 text-primary" />}
+          backTo="/okrs"
+          backLabel="Voltar para OKRs"
+          actions={
+            <YearSelect
+              value={selectedYear}
+              onValueChange={setSelectedYear}
+              years={years}
+              triggerClassName="w-[120px]"
+            />
+          }
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
