@@ -1,22 +1,24 @@
 import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target } from 'lucide-react';
+import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target, Loader2 } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
-import { mockOrgObjectives, mockTeamObjectives, getMockStats } from '../hooks/useMockOkrData';
 import { YearSelect, TeamSelect } from '@/components/selects';
-import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 import { useUrlState, useUrlTab, parsers } from "@/shared/url";
+import { useOrgObjectives, useTeamObjectives } from '../hooks/queries';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function OkrsPage() {
   usePageTitle("OKRs");
+  const { buId } = useOptionalBuClient();
   const currentYear = new Date().getFullYear();
   
-  // URL State - object API
+  // URL State
   const yearState = useUrlState<number>({ key: 'year', defaultValue: currentYear, parse: parsers.number });
   const selectedYear = yearState.value;
   const setSelectedYear = yearState.set;
@@ -28,22 +30,45 @@ export default function OkrsPage() {
   const [activeTab, setActiveTab] = useUrlTab<string>('org');
 
   const years = [currentYear, currentYear + 1];
-  const stats = useMemo(() => getMockStats(), []);
 
-  // Get unique teams from mock data
+  // Fetch real data from hooks
+  const { 
+    data: orgObjectives = [], 
+    isLoading: isLoadingOrg 
+  } = useOrgObjectives({ buId, year: selectedYear });
+
+  const { 
+    data: teamObjectives = [], 
+    isLoading: isLoadingTeam 
+  } = useTeamObjectives({ 
+    buId, 
+    teamId: selectedTeam === 'all' ? undefined : selectedTeam 
+  });
+
+  // Calculate stats from real data
+  const stats = useMemo(() => {
+    return {
+      totalOrgObjectives: orgObjectives.length,
+      totalTeamObjectives: teamObjectives.length,
+      // Note: KR stats would require fetching KRs - simplified for now
+      atRiskKrs: 0,
+      greenKrs: 0,
+    };
+  }, [orgObjectives, teamObjectives]);
+
+  // Get unique teams from team objectives
   const teams = useMemo(() => {
     const uniqueTeams = new Map<string, string>();
-    mockTeamObjectives.forEach(obj => {
-      uniqueTeams.set(obj.team_id, obj.team_name);
+    teamObjectives.forEach(obj => {
+      if (obj.team_id) {
+        // We don't have team_name in the data, would need to join
+        uniqueTeams.set(obj.team_id, obj.team_id);
+      }
     });
-    return Array.from(uniqueTeams, ([id, name]) => ({ id, name }));
-  }, []);
+    return Array.from(uniqueTeams, ([id]) => ({ id, name: id }));
+  }, [teamObjectives]);
 
-  // Filter team objectives by selected team
-  const filteredTeamObjectives = useMemo(() => {
-    if (selectedTeam === 'all') return mockTeamObjectives;
-    return mockTeamObjectives.filter(obj => obj.team_id === selectedTeam);
-  }, [selectedTeam]);
+  const isLoading = isLoadingOrg || isLoadingTeam;
 
   return (
     <HubLayout>
@@ -78,7 +103,9 @@ export default function OkrsPage() {
               <Building2 className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalOrgObjectives}</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.totalOrgObjectives}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -89,7 +116,9 @@ export default function OkrsPage() {
               <Users className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTeamObjectives}</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.totalTeamObjectives}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -100,7 +129,9 @@ export default function OkrsPage() {
               <TrendingUp className="w-4 h-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.greenKrs}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.greenKrs}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -111,7 +142,9 @@ export default function OkrsPage() {
               <AlertTriangle className="w-4 h-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.atRiskKrs}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.atRiskKrs}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -131,19 +164,35 @@ export default function OkrsPage() {
 
           {/* Org Objectives */}
           <TabsContent value="org" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {mockOrgObjectives.map((objective) => (
-                <OkrObjectiveCard
-                  key={objective.id}
-                  id={objective.id}
-                  title={objective.title}
-                  description={objective.description}
-                  status={objective.status}
-                  type="org"
-                  keyResults={objective.key_results}
-                />
-              ))}
-            </div>
+            {isLoadingOrg ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : orgObjectives.length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <EmptyState
+                    icon={Target}
+                    title="Nenhum objetivo organizacional"
+                    description="Crie seu primeiro objetivo organizacional para começar."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {orgObjectives.map((objective) => (
+                  <OkrObjectiveCard
+                    key={objective.id}
+                    id={objective.id}
+                    title={objective.title}
+                    description={objective.description || undefined}
+                    status={objective.status}
+                    type="org"
+                    keyResults={[]} // Would need separate query for KRs
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Team Objectives */}
@@ -158,20 +207,35 @@ export default function OkrsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredTeamObjectives.map((objective) => (
-                <OkrObjectiveCard
-                  key={objective.id}
-                  id={objective.id}
-                  title={objective.title}
-                  description={objective.description}
-                  status={objective.status}
-                  type="team"
-                  teamName={objective.team_name}
-                  keyResults={objective.key_results}
-                />
-              ))}
-            </div>
+            {isLoadingTeam ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : teamObjectives.length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <EmptyState
+                    icon={Target}
+                    title="Nenhum objetivo de time"
+                    description="Crie seu primeiro objetivo de time para começar."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {teamObjectives.map((objective) => (
+                  <OkrObjectiveCard
+                    key={objective.id}
+                    id={objective.id}
+                    title={objective.title}
+                    description={objective.description || undefined}
+                    status={objective.status}
+                    type="team"
+                    keyResults={[]} // Would need separate query for KRs
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
