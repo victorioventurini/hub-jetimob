@@ -51,7 +51,7 @@ interface AuthContextType {
   profile: Profile | null;
   role: UserRole['role'] | null;
   isLoading: boolean;
-  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signInWithMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -180,9 +180,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
+  async function signInWithMagicLink(email: string, redirectTo?: string): Promise<{ error: Error | null }> {
     // Email domain validation is done by the edge function
-    const redirectUrl = `${window.location.origin}/`;
+    // Use provided redirectTo or fallback to root
+    const redirectUrl = redirectTo || `${window.location.origin}/`;
     
     try {
       // Call our custom edge function that uses SendGrid
