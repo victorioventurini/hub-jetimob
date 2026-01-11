@@ -32,6 +32,7 @@ export function useBuMigrationStatus() {
 
   const { data: status, isLoading, refetch } = useQuery({
     queryKey: queryKeys.permissions.migrationStatus(buId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId) return null;
 
@@ -60,6 +61,7 @@ export function useUserMigrationStatus(userId: string | null) {
 
   const { data: migration, isLoading } = useQuery({
     queryKey: queryKeys.permissions.userMigration(buId, userId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId || !userId) return null;
 

@@ -47,6 +47,7 @@ export function usePermissionTemplatesV2() {
 
   const { data: templates = [], isLoading, error } = useQuery({
     queryKey: queryKeys.permissions.templatesV2(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - templates change rarely
     queryFn: async () => {
       if (!supabase) throw new Error("No client available");
       
@@ -148,6 +149,7 @@ export function useTemplateItemsV2(templateId: string | null) {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.templateItemsV2(templateId),
+    staleTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
       if (!supabase || !templateId) return [];
       
@@ -209,6 +211,7 @@ export function useUserTemplatesV2(userId: string | null) {
 
   const { data: assignments = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.userTemplatesV2(buId, userId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!userId || !buId) return [];
       
@@ -279,6 +282,7 @@ export function useEffectivePermissionsV2(userId: string | null) {
 
   const { data: permissions = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.effectivePreview(buId, userId, 'v2'),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId || !userId) return [];
       
