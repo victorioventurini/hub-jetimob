@@ -34,6 +34,7 @@ export function useTicketMessages(ticketId: string | null) {
           created_at,
           edited_at,
           deleted_at,
+          author_user:profiles!author_user_id(id, display_name, photo_url),
           author_contact:partner_contacts(id, name, email)
         `)
         .eq("ticket_id", ticketId)
