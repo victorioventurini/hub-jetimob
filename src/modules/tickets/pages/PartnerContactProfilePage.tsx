@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -285,11 +285,14 @@ export default function PartnerContactProfilePage() {
           </Button>
 
           <div className="flex flex-col sm:flex-row gap-6 flex-1">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary font-semibold">
-                {getInitials(profile.name)}
-              </AvatarFallback>
-            </Avatar>
+            <OptimizedAvatar
+              src={null}
+              alt={profile.name}
+              fallback={getInitials(profile.name)}
+              size="lg"
+              className="h-24 w-24 border-4 border-background shadow-lg"
+              fallbackClassName="text-2xl bg-accent text-accent-foreground"
+            />
 
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">
