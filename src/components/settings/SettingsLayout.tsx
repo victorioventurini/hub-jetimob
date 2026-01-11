@@ -120,10 +120,10 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{displayName}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
+                <DropdownMenuLabel className="cursor-default">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium no-underline">{displayName}</span>
+                      <span className="text-xs font-normal text-muted-foreground underline">
                         {email}
                       </span>
                     </div>
