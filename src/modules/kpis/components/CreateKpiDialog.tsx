@@ -27,9 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useBu } from "@/contexts/BuContext";
+import { TeamSelect, BuUserSelect } from "@/components/selects";
 import { useKpiData } from "../hooks/useKpiData";
 import {
   KpiCategory,
@@ -39,7 +37,6 @@ import {
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
 } from "../types";
-import { queryKeys } from "@/lib/queryKeys";
 import { VicActionButton } from "@/modules/vic";
 
 const formSchema = z.object({
@@ -66,9 +63,6 @@ interface CreateKpiDialogProps {
 export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createKpi } = useKpiData();
-  const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
-  const buId = currentBu?.id;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,39 +74,6 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       direction: "up",
       frequency: "monthly",
     },
-  });
-
-  const { data: teams } = useQuery({
-    queryKey: queryKeys.settings.teamsList(buId ?? null),
-    queryFn: async () => {
-      if (!buId) return [];
-      const { data, error } = await supabase
-        .from("teams")
-        .select("id, name")
-        .eq("bu_id", buId)
-        .is("deleted_at", null)
-        .eq("status", "active")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!buId,
-  });
-
-  const { data: profiles } = useQuery({
-    queryKey: queryKeys.settings.profilesList(buId ?? null),
-    queryFn: async () => {
-      if (!buId) return [];
-      // Use canonical view - shows ALL registered users
-      const { data, error } = await supabase
-        .from("v_bu_active_profiles")
-        .select("id, display_name, onboarding_completed")
-        .eq("bu_id", buId)
-        .order("display_name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!buId,
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -329,20 +290,14 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Time (opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {teams?.map((team) => (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <TeamSelect
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Selecione..."
+                        triggerClassName="w-full"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -354,24 +309,14 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Owner (opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {profiles?.map((profile) => (
-                          <SelectItem 
-                            key={profile.id} 
-                            value={profile.id}
-                            textValue={profile.display_name || undefined}
-                          >
-                            {profile.display_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <BuUserSelect
+                        value={field.value}
+                        onValueChange={(val) => field.onChange(val ?? undefined)}
+                        placeholder="Selecione..."
+                        className="w-full"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
