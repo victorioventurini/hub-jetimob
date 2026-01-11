@@ -104,8 +104,9 @@ export function OrgObjectiveFormDialog({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
+      // Use prefix helpers for broad invalidation
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success('Objetivo organizacional criado com sucesso!');
       onOpenChange(false);
     },
@@ -136,7 +137,9 @@ export function OrgObjectiveFormDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
+      // Use prefix helpers for broad invalidation
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       hookToast({
         title: 'Objetivo atualizado',
         description: 'O objetivo organizacional foi atualizado com sucesso.',

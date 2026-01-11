@@ -30,8 +30,9 @@ export function useCancelOrgObjective() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
+      // Use prefix helpers for broad invalidation (all BUs, all years, all teams)
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success("Objetivo organizacional cancelado");
     },
     onError: () => {
@@ -63,8 +64,9 @@ export function useCancelOrgKeyResult() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsAll() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success("Key Result cancelado");
     },
     onError: () => {
@@ -99,8 +101,9 @@ export function useCancelTeamObjective() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success("Objetivo de time cancelado");
     },
     onError: () => {
@@ -132,8 +135,9 @@ export function useCancelTeamKeyResult() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrsAll() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success("Key Result cancelado");
     },
     onError: () => {

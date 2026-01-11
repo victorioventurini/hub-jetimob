@@ -73,6 +73,18 @@ export const queryKeys = {
 
   // ============= OKRs =============
   okrs: {
+    // ── Prefix helpers for broad invalidation ──
+    /** Invalidate all org objectives queries (all years, all BUs) */
+    orgObjectivesPrefix: () => ['okr-org-objectives'] as const,
+    /** Invalidate all org KRs queries */
+    orgKeyResultsPrefix: () => ['okr-org-key-results'] as const,
+    /** Invalidate all team objectives queries (all teams, all BUs) */
+    teamObjectivesPrefix: () => ['okr-team-objectives'] as const,
+    /** Invalidate all team KRs queries */
+    teamKeyResultsPrefix: () => ['okr-team-key-results'] as const,
+    /** Invalidate all dashboard data queries */
+    dashboardDataPrefix: () => ['okr-dashboard-data'] as const,
+    
     // Org level
     orgObjectives: (buId: string | null, year?: number) => 
       ['okr-org-objectives', buId, year] as const,

@@ -191,11 +191,10 @@ export function useCreateTeamOkrBundle() {
       };
     },
     onSuccess: (_, variables) => {
-      // Invalidate all relevant queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(currentBuId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(currentBuId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesAll() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrsAll() });
+      // Use prefix helpers for broad invalidation
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
       
       toast.success('OKRs do time criados com sucesso!');

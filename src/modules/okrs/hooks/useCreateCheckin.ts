@@ -153,11 +153,12 @@ export function useCreateCheckin(options: CreateCheckinOptions = {}) {
       return checkinData.id;
     },
     onSuccess: (checkinId) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
+      // Use prefix helpers for broad invalidation
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardTeamKrs(null, null, [], 'all') });
 
       if (!options.skipToast) {
         toast({

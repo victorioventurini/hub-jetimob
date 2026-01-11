@@ -234,9 +234,10 @@ export function TeamObjectiveFormDialog({
       return createdObjective;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithShared(null) });
+      // Use prefix helpers for broad invalidation
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success('Objetivo de time criado com sucesso!');
       onOpenChange(false);
     },
@@ -281,8 +282,9 @@ export function TeamObjectiveFormDialog({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithShared(null) });
+      // Use prefix helpers for broad invalidation
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       hookToast({
         title: 'Objetivo atualizado',
         description: 'O objetivo do time foi atualizado com sucesso.',
