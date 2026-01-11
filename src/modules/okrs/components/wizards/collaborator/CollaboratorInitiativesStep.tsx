@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { queryKeys } from '@/lib/queryKeys';
 import { InitiativesSummary } from '../shared/InitiativesSummary';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
@@ -55,7 +56,7 @@ export function CollaboratorInitiativesStep({
 
   // Fetch initiatives for all KRs
   const { data: initiatives = [], isLoading } = useQuery({
-    queryKey: ['wizard-initiatives', krIds],
+    queryKey: queryKeys.okrs.initiativesByKrs(krIds),
     queryFn: async () => {
       if (krIds.length === 0) return [];
 

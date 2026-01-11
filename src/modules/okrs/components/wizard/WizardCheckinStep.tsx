@@ -38,6 +38,7 @@ import { useIdentity } from '@/hooks/useIdentity';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface WizardCheckinStepProps {
   kr: WizardKr;
@@ -114,7 +115,7 @@ export function WizardCheckinStep({
   
   // Get user's team for check-in context
   const { data: userProfile } = useQuery({
-    queryKey: ['user-profile-for-wizard', userId, currentBuId],
+    queryKey: queryKeys.okrs.userProfileForWizard(userId ?? null, currentBuId),
     queryFn: async () => {
       if (!userId) return null;
       const { data, error } = await supabase
