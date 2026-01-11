@@ -87,10 +87,10 @@ export function useKeys(options: UseKeysOptions = {}) {
         .is("deleted_at", null)
         .order("tag_number");
 
-      // Server-side text search
+      // Server-side text search (name, tag_number, notes)
       if (search && search.trim()) {
         const term = `%${search.trim()}%`;
-        query = query.or(`name.ilike.${term},tag_number.ilike.${term}`);
+        query = query.or(`name.ilike.${term},tag_number.ilike.${term},notes.ilike.${term}`);
       }
 
       const { data, error } = await query;
