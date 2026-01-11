@@ -22,7 +22,23 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { DiscardChangesDialog } from "@/components/ui/discard-changes-dialog";
-import { TeamSelect, MultiTeamSelect, BuUserSelect, BuUserMultiSelect } from "@/components/selects";
+import { 
+  TeamSelect, 
+  MultiTeamSelect, 
+  BuUserSelect, 
+  BuUserMultiSelect,
+  BuLocationSelect,
+  AssetStatusSelect,
+  TicketStatusSelect,
+  TicketTypeSelect,
+  TicketCategorySelect,
+  PartnerCompanySelect,
+  StatusSelect,
+  CycleSelect,
+  YearSelect,
+} from "@/components/selects";
+import { UrlSearchInput } from "@/shared/filters";
+import { useUrlTab, useUrlSearch } from "@/shared/url";
 import { 
   AlertCircle, 
   Check, 
@@ -38,7 +54,11 @@ import {
   Trash2,
   User,
   Users,
-  X
+  X,
+  MapPin,
+  Building2,
+  Tag,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -155,7 +175,7 @@ const componentUsageData: Record<string, { description: string; pages: string[] 
     pages: ["/okrs/*", "/hub/*", "/settings/*"]
   },
   
-  // Selects & Dropdowns
+  // Selects & Dropdowns - Teams & Users
   "TeamSelect": {
     description: "Seleção de time único com hierarquia visual",
     pages: ["/okrs/*", "/teams/*", "/users/*", "/assets/*", "/tickets/*"]
@@ -171,6 +191,43 @@ const componentUsageData: Record<string, { description: string; pages: string[] 
   "BuUserMultiSelect": {
     description: "Seleção múltipla de usuários com busca",
     pages: ["/okrs/*", "/teams/*", "/tickets/*"]
+  },
+  // Selects & Dropdowns - Domain-specific
+  "BuLocationSelect": {
+    description: "Seleção de localização com hierarquia (sede/sala)",
+    pages: ["/assets/inventory", "/assets/keys"]
+  },
+  "AssetStatusSelect": {
+    description: "Status de inventário com indicador de cor",
+    pages: ["/assets/inventory"]
+  },
+  "TicketStatusSelect": {
+    description: "Status de ticket com indicador de cor",
+    pages: ["/tickets/*"]
+  },
+  "TicketTypeSelect": {
+    description: "Tipo de ticket (interno/externo) com ícone",
+    pages: ["/tickets/*"]
+  },
+  "TicketCategorySelect": {
+    description: "Categoria de ticket com fetch automático",
+    pages: ["/tickets/*"]
+  },
+  "PartnerCompanySelect": {
+    description: "Empresa parceira para tickets externos",
+    pages: ["/tickets/*"]
+  },
+  "StatusSelect": {
+    description: "Status genérico (OKR/RAG) com variantes",
+    pages: ["/okrs/*"]
+  },
+  "CycleSelect": {
+    description: "Seleção de ciclo OKR",
+    pages: ["/okrs/*"]
+  },
+  "YearSelect": {
+    description: "Seleção de ano",
+    pages: ["/okrs/*", "/kpis/*"]
   },
 };
 
@@ -299,7 +356,13 @@ const CATEGORIES = [
 
 export default function SettingsUiCatalog() {
   usePageTitle("Catálogo de UI", { skipBu: true });
-  const [search, setSearch] = useState("");
+  
+  // URL state for tab and search
+  const [tab, setTab] = useUrlTab("buttons");
+  const searchState = useUrlSearch();
+  const search = searchState.value;
+  const setSearch = searchState.set;
+  
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
@@ -325,7 +388,7 @@ export default function SettingsUiCatalog() {
         </Badge>
       </div>
 
-      <Tabs defaultValue="buttons" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0">
           {CATEGORIES.map((cat) => (
             <TabsTrigger
