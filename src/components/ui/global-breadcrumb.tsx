@@ -99,19 +99,20 @@ export function GlobalBreadcrumb({
  */
 
 export function TicketsBreadcrumb({ 
-  ticketCode,
+  ticketId,
   ticketTitle,
 }: { 
-  ticketCode?: string;
+  ticketId?: string;
   ticketTitle?: string;
 }) {
   const items: BreadcrumbItemConfig[] = [
     { label: 'Tickets', href: '/tickets' },
   ];
   
-  if (ticketCode) {
+  // Se tem ticketId ou ticketTitle, adiciona item de detalhe
+  if (ticketId || ticketTitle) {
     items.push({ 
-      label: ticketTitle ? `#${ticketCode} - ${ticketTitle}` : `#${ticketCode}` 
+      label: ticketTitle || `Ticket ${ticketId?.slice(0, 8)}...`
     });
   }
   
@@ -121,13 +122,24 @@ export function TicketsBreadcrumb({
 export function AssetsBreadcrumb({ 
   assetCode,
   assetName,
+  section,
   items: customItems,
 }: { 
   assetCode?: string;
   assetName?: string;
+  /** Seção intermediária (ex: "Inventário", "Chaves", "Brindes") */
+  section?: 'inventory' | 'keys' | 'gifts' | 'settings' | 'reports';
   /** Items personalizados (sobrescreve assetCode/assetName) */
   items?: BreadcrumbItemConfig[];
 }) {
+  const sectionLabels: Record<string, { label: string; href: string }> = {
+    inventory: { label: 'Inventário', href: '/assets/inventory' },
+    keys: { label: 'Chaves', href: '/assets/keys' },
+    gifts: { label: 'Brindes', href: '/assets/gifts' },
+    settings: { label: 'Configurações', href: '/assets/settings' },
+    reports: { label: 'Relatórios', href: '/assets/reports' },
+  };
+
   // Se items personalizados foram passados, use-os
   if (customItems) {
     const baseItems: BreadcrumbItemConfig[] = [
@@ -137,14 +149,23 @@ export function AssetsBreadcrumb({
     return <GlobalBreadcrumb items={baseItems} />;
   }
   
-  // Caso contrário, use assetCode/assetName
+  // Construir items com seção opcional
   const items: BreadcrumbItemConfig[] = [
     { label: 'Ativos', href: '/assets' },
   ];
   
+  // Adiciona seção intermediária se especificada
+  if (section && sectionLabels[section]) {
+    items.push({ 
+      label: sectionLabels[section].label, 
+      href: sectionLabels[section].href 
+    });
+  }
+  
+  // Adiciona item de detalhe se assetCode fornecido
   if (assetCode) {
     items.push({ 
-      label: assetName ? `#${assetCode} - ${assetName}` : `#${assetCode}` 
+      label: assetName ? `${assetCode} - ${assetName}` : assetCode 
     });
   }
   

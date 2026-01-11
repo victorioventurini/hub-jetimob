@@ -122,7 +122,7 @@ export default function TicketDetailPage() {
   return (
     <div className="space-y-4">
       {/* Breadcrumb */}
-      <TicketsBreadcrumb ticketTitle={ticket.title} />
+      <TicketsBreadcrumb ticketId={ticket.id} ticketTitle={ticket.title} />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">

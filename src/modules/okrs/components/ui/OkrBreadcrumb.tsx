@@ -1,63 +1,22 @@
-import { Link } from 'react-router-dom';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Crosshair } from 'lucide-react';
+import { GlobalBreadcrumb, type BreadcrumbItemConfig } from '@/components/ui/global-breadcrumb';
 import { cn } from '@/lib/utils';
 
-interface BreadcrumbItem {
-  label: string;
-  href?: string;
-}
-
 interface OkrBreadcrumbProps {
-  items: BreadcrumbItem[];
+  items: BreadcrumbItemConfig[];
   className?: string;
 }
 
 /**
  * OKR-specific breadcrumb with consistent styling
- * Always includes OKRs as the root
+ * Uses GlobalBreadcrumb to ensure Hub is always included at root
  */
 export function OkrBreadcrumb({ items, className }: OkrBreadcrumbProps) {
-  const allItems: BreadcrumbItem[] = [
+  const allItems: BreadcrumbItemConfig[] = [
     { label: 'OKRs', href: '/okrs' },
     ...items,
   ];
 
-  return (
-    <Breadcrumb className={cn('mb-1', className)}>
-      <BreadcrumbList>
-        {allItems.map((item, index) => {
-          const isLast = index === allItems.length - 1;
-
-          return (
-            <BreadcrumbItem key={index}>
-              {index > 0 && <BreadcrumbSeparator />}
-              {isLast ? (
-                <BreadcrumbPage className="flex items-center gap-1.5">
-                  {index === 0 && <Crosshair className="w-3.5 h-3.5" />}
-                  {item.label}
-                </BreadcrumbPage>
-              ) : (
-                <BreadcrumbLink asChild>
-                  <Link to={item.href || '#'} className="flex items-center gap-1.5">
-                    {index === 0 && <Crosshair className="w-3.5 h-3.5" />}
-                    {item.label}
-                  </Link>
-                </BreadcrumbLink>
-              )}
-            </BreadcrumbItem>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
-  );
+  return <GlobalBreadcrumb items={allItems} className={className} />;
 }
 
 /**

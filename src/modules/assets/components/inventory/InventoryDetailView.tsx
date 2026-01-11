@@ -299,6 +299,7 @@ export function InventoryDetailView() {
     <div className="space-y-6">
       {/* Breadcrumb */}
       <AssetsBreadcrumb 
+        section="inventory"
         assetCode={item.internal_code}
         assetName={item.name}
       />
