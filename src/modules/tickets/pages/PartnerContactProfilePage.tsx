@@ -314,15 +314,18 @@ export default function PartnerContactProfilePage() {
               )}
 
               <div className="flex flex-wrap gap-2">
-                {profile.capabilities.slice(0, 4).map((cap) => (
-                  <Badge key={cap.id} variant="outline" className="gap-1">
-                    <Tag className="h-3 w-3" />
-                    {cap.subcategory_name || cap.category_name}
-                  </Badge>
-                ))}
-                {profile.capabilities.length > 4 && (
+                {/* Show unique categories from capabilities */}
+                {Array.from(new Map(profile.capabilities.map(cap => [cap.category_id, cap])).values())
+                  .slice(0, 4)
+                  .map((cap) => (
+                    <Badge key={cap.category_id} variant="outline" className="gap-1">
+                      <Tag className="h-3 w-3" />
+                      {cap.category_name}
+                    </Badge>
+                  ))}
+                {new Set(profile.capabilities.map(cap => cap.category_id)).size > 4 && (
                   <Badge variant="outline">
-                    +{profile.capabilities.length - 4}
+                    +{new Set(profile.capabilities.map(cap => cap.category_id)).size - 4}
                   </Badge>
                 )}
               </div>
@@ -382,7 +385,7 @@ export default function PartnerContactProfilePage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Zap className="h-4 w-4" />
-                  Capacidades do Contato ({profile.capabilities.length})
+                  Especialidades de "{profile.name.split(' ')[0]}"
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -466,41 +469,31 @@ export default function PartnerContactProfilePage() {
                       </div>
                     </>
                   )}
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Company Services / Categories */}
-            {profile.company_services.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" />
-                    Categorias da Empresa
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {Array.from(groupedServices.entries()).map(([categoryId, group]) => (
-                      <div key={categoryId} className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm font-medium">{group.category_name}</span>
-                        </div>
-                        <div className="ml-5 flex flex-wrap gap-1">
-                          {group.items.map((service) => (
+                  {/* Area de Atuação - moved from separate card */}
+                  {profile.company_services.length > 0 && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                          <Briefcase className="h-3.5 w-3.5" />
+                          Área de Atuação
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {/* Show unique categories only */}
+                          {Array.from(new Map(profile.company_services.map(s => [s.category_id, s])).values()).map((service) => (
                             <Badge
-                              key={service.id}
+                              key={service.category_id}
                               variant="secondary"
                               className="text-xs"
                             >
-                              {service.subcategory_name || "Geral"}
+                              {service.category_name}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -508,7 +501,7 @@ export default function PartnerContactProfilePage() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Ações</CardTitle>
+                <CardTitle className="text-base">Ações com "{profile.name.split(' ')[0]}"</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button asChild variant="outline" className="w-full justify-start gap-2">
