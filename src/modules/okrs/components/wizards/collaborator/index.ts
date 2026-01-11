@@ -1,9 +1,7 @@
 /**
  * Collaborator Wizard Components - Barrel Export
+ * Modal removido - usar CollaboratorCheckinPage (fullpage)
  */
-
-export { CollaboratorWizard } from './CollaboratorWizard';
-export type { CollaboratorWizardProps } from './CollaboratorWizard';
 
 export { CollaboratorContextStep } from './CollaboratorContextStep';
 export type { CollaboratorContextStepProps } from './CollaboratorContextStep';
