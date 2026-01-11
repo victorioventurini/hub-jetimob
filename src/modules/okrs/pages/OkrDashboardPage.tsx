@@ -11,14 +11,14 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
 import { useUrlState, useUrlStates, parsers, serializers } from '@/shared/url';
 import { 
-  useOrgObjectivesWithKrs, 
-  useTeamObjectivesWithKrs, 
+  useOrgObjectives, 
+  useTeamObjectives, 
   useTeamKeyResults,
   useTeams, 
-  useAllOrgKeyResults,
+  useOrgKeyResults,
   useLatestCheckinDate,
   useUserProfile,
-} from '../hooks/useOkrData';
+} from '../hooks/queries';
 import { useKrStatusDistribution, OkrCalculatedStatus } from '../hooks/useOkrStatus';
 import { usePendingCheckins } from '../hooks/usePendingCheckins';
 import { useSharedOkrsInsights } from '../hooks/useTeamContributedOkrs';
@@ -81,12 +81,12 @@ export default function OkrDashboardPage() {
   const { data: latestCheckinDate } = useLatestCheckinDate();
   const { data: pendingCheckins } = usePendingCheckins();
   
-  const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectivesWithKrs(currentBu?.id, filters.year);
-  const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectivesWithKrs(
-    currentBu?.id,
-    activeView === 'team' ? filters.teamId : undefined
-  );
-  const { data: allOrgKrs } = useAllOrgKeyResults(currentBu?.id);
+  const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectives({ buId: currentBu?.id, year: filters.year });
+  const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectives({
+    buId: currentBu?.id,
+    teamId: activeView === 'team' ? filters.teamId : undefined
+  });
+  const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBu?.id });
   const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBu?.id, filters.teamId);
   
   // Shared OKRs insights

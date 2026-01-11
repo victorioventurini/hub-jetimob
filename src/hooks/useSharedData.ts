@@ -90,39 +90,4 @@ export function useUserProfile(userId?: string) {
   });
 }
 
-/**
- * Lista simples de profiles para selects (líderes, owners, etc.)
- * 
- * @deprecated Use useBuUsersDirectory from @/hooks/useBuUsersDirectory instead.
- * This hook filters by employment_status='active' which excludes users who 
- * haven't completed onboarding. The new hook shows ALL registered users.
- */
-export function useProfilesList(buId?: string) {
-  const supabase = useOptionalBuScopedSupabase();
-  
-  return useQuery({
-    queryKey: queryKeys.profiles.list(buId ?? null),
-    queryFn: async () => {
-      if (!supabase) return [];
-      // Use canonical view that includes ALL registered users (not just active)
-      let query = supabase
-        .from("v_bu_active_profiles")
-        .select("id, display_name, photo_url, job_title_id, job_title_name, user_id, onboarding_completed, has_bu_membership")
-        .order("display_name");
-
-      if (buId) {
-        query = query.eq("bu_id", buId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return (data || []).map(p => ({
-        ...p,
-        job_title: p.job_title_name || null,
-        job_title_rel: p.job_title_name ? { name: p.job_title_name } : null,
-      }));
-    },
-    enabled: !!supabase && (buId ? !!buId : true),
-  });
-}
+// useProfilesList foi removido - use useBuUsersDirectory de @/hooks/useBuUsersDirectory

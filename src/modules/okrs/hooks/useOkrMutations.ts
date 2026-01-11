@@ -41,14 +41,6 @@ export function useCancelOrgObjective() {
 }
 
 /**
- * @deprecated Use useCancelOrgObjective instead.
- * Mantido para compatibilidade, mas agora usa status em vez de deleted_at.
- */
-export function useDeleteOrgObjective() {
-  return useCancelOrgObjective();
-}
-
-/**
  * Cancela (não exclui) um KR organizacional.
  * Usa cancelled_at em vez de status pois KRs têm RAG status.
  */
@@ -79,13 +71,6 @@ export function useCancelOrgKeyResult() {
       toast.error("Erro ao cancelar KR");
     },
   });
-}
-
-/**
- * @deprecated Use useCancelOrgKeyResult instead.
- */
-export function useDeleteOrgKeyResult() {
-  return useCancelOrgKeyResult();
 }
 
 // ========================
@@ -125,13 +110,6 @@ export function useCancelTeamObjective() {
 }
 
 /**
- * @deprecated Use useCancelTeamObjective instead.
- */
-export function useDeleteTeamObjective() {
-  return useCancelTeamObjective();
-}
-
-/**
  * Cancela (não exclui) um KR de time.
  * Usa cancelled_at em vez de status pois KRs têm RAG status.
  */
@@ -162,11 +140,4 @@ export function useCancelTeamKeyResult() {
       toast.error("Erro ao cancelar KR");
     },
   });
-}
-
-/**
- * @deprecated Use useCancelTeamKeyResult instead.
- */
-export function useDeleteTeamKeyResult() {
-  return useCancelTeamKeyResult();
 }
