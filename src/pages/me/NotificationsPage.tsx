@@ -208,7 +208,7 @@ function NotificationList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
     },
   });
 
@@ -224,7 +224,7 @@ function NotificationList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
       toast.success('Todas as notificações foram marcadas como lidas');
     },
   });

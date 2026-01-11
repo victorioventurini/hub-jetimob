@@ -34,6 +34,7 @@ import { icons, LucideIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab, useUrlState } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface Module {
   id: string;
@@ -93,7 +94,7 @@ export default function SettingsModules() {
 
   // Fetch all modules
   const { data: modules, isLoading: modulesLoading } = useQuery({
-    queryKey: ["settings-modules-list"],
+    queryKey: queryKeys.settings.modulesList(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("modules")
@@ -107,7 +108,7 @@ export default function SettingsModules() {
 
   // Fetch all BUs
   const { data: bus } = useQuery({
-    queryKey: ["settings-bus-list"],
+    queryKey: queryKeys.settings.busList(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
@@ -121,7 +122,7 @@ export default function SettingsModules() {
 
   // Fetch module configs for all BUs
   const { data: moduleConfigs, isLoading: configsLoading } = useQuery({
-    queryKey: ["settings-module-configs"],
+    queryKey: queryKeys.settings.moduleConfigs(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_module_configs")
@@ -170,8 +171,8 @@ export default function SettingsModules() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings-module-configs"] });
-      queryClient.invalidateQueries({ queryKey: ["bu-modules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.moduleConfigs() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modulesPage.buModulesPrefix() });
       toast.success("Configuração atualizada");
     },
     onError: (error) => {

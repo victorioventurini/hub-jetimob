@@ -28,6 +28,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
 import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from '@/lib/phone';
+import { queryKeys } from '@/lib/queryKeys';
 
 const profileSchema = z.object({
   first_name: z.string().trim().min(1, 'Nome é obrigatório').max(100),
@@ -102,7 +103,7 @@ export default function Profile() {
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['my-profile', user?.id],
+    queryKey: queryKeys.myProfile.profile(user?.id ?? null),
     queryFn: async () => {
       if (!user?.id) throw new Error('Usuário não autenticado');
       
@@ -129,7 +130,7 @@ export default function Profile() {
   });
 
   const { data: team } = useQuery({
-    queryKey: ['profile-team', profile?.team_id],
+    queryKey: queryKeys.myProfile.team(profile?.team_id ?? null),
     queryFn: async () => {
       if (!profile?.team_id) return null;
       
@@ -218,7 +219,7 @@ export default function Profile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myProfile.profilePrefix() });
       toast.success('Perfil atualizado com sucesso!');
     },
     onError: (error) => {
@@ -285,7 +286,7 @@ export default function Profile() {
 
       if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myProfile.profilePrefix() });
       toast.success('Foto atualizada com sucesso!');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -322,7 +323,7 @@ export default function Profile() {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myProfile.profilePrefix() });
       toast.success('Foto removida com sucesso!');
     } catch (error) {
       console.error('Error removing photo:', error);
