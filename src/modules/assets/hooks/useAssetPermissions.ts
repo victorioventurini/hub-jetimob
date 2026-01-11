@@ -13,10 +13,9 @@ export function useAssetPermissions() {
   const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
-  // Super admin ou admin de BU tem acesso total
-  const isSuperAdmin = userRole === "super_admin";
-  const isBuAdmin = userRole === "admin";
-  const hasFullAccess = isSuperAdmin || isBuAdmin;
+  // Admin de BU tem acesso total - userRole já considera super_admin via contexto
+  const isBuAdmin = userRole === "admin" || userRole === "super_admin";
+  const hasFullAccess = isBuAdmin;
 
   // Buscar permissões do usuário atual
   // Only fetch if not loading BU context and user doesn't have full access

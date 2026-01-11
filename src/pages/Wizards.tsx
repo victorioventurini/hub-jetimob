@@ -171,13 +171,10 @@ export default function WizardsPage() {
     customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Hub.',
   });
 
-  const { isAdmin, role } = useAuth();
+  const { isAdmin } = useAuth();
   const { has } = usePermissions();
   const { isLeader, teams: leaderTeams } = useLeaderTeams();
   const { teams: allTeams } = useHierarchicalTeamList();
-  
-  // Check if user is super_admin
-  const isSuperAdmin = role === 'super_admin';
 
   // Determine user role hierarchy
   const userRoles = useMemo(() => {
@@ -187,33 +184,30 @@ export default function WizardsPage() {
     if (isAdmin) {
       roles.add('manager');
       roles.add('leader');
-    }
-    if (isSuperAdmin) {
+      // isAdmin includes super_admin, so add executive and admin roles
       roles.add('executive');
-      roles.add('manager');
-      roles.add('leader');
       roles.add('admin');
     }
     
     return roles;
-  }, [isLeader, isAdmin, isSuperAdmin]);
+  }, [isLeader, isAdmin]);
 
   // Check if user can access a wizard
   const canAccessWizard = useCallback((wizard: WizardDefinition): boolean => {
     // Check role requirement
     if (!userRoles.has(wizard.requiredRole)) {
-      // Super admin and admin can access all wizards
-      if (!isSuperAdmin && !isAdmin) return false;
+      // Admin (includes super_admin) can access all wizards
+      if (!isAdmin) return false;
     }
     
     // Check specific permission if required
     if (wizard.permissionKey && !has(wizard.permissionKey)) {
       // Admin bypass
-      if (!isSuperAdmin && !isAdmin) return false;
+      if (!isAdmin) return false;
     }
     
     return true;
-  }, [userRoles, has, isSuperAdmin, isAdmin]);
+  }, [userRoles, has, isAdmin]);
 
   // Filter sections based on user access
   const visibleSections = useMemo(() => {
@@ -231,7 +225,7 @@ export default function WizardsPage() {
       const firstAnyTeam = allTeams?.[0];
       const teamToUse = firstLeaderTeam 
         ? firstLeaderTeam.team_id 
-        : ((isSuperAdmin || isAdmin) && firstAnyTeam) 
+        : (isAdmin && firstAnyTeam) 
           ? firstAnyTeam.id 
           : null;
       
@@ -245,7 +239,7 @@ export default function WizardsPage() {
 
     // Navigate to the wizard's full-page route
     navigate(wizard.route);
-  }, [leaderTeams, allTeams, isSuperAdmin, isAdmin, navigate]);
+  }, [leaderTeams, allTeams, isAdmin, navigate]);
 
   return (
     <HubLayout>
