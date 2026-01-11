@@ -71,8 +71,8 @@ export function useCancelOrgKeyResult() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["okr-org-key-results"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-org-objectives-with-krs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsAll() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesWithKrs(null) });
       toast.success("Key Result cancelado");
     },
     onError: () => {
@@ -154,8 +154,8 @@ export function useCancelTeamKeyResult() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["okr-team-key-results"] });
-      queryClient.invalidateQueries({ queryKey: ["okr-team-objectives-with-krs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrsAll() });
       toast.success("Key Result cancelado");
     },
     onError: () => {

@@ -82,7 +82,7 @@ export const queryKeys = {
       ['org-objective-view', objectiveId, buId] as const,
     orgKeyResults: (buId: string | null, objectiveId?: string) => 
       ['okr-org-key-results', buId, objectiveId] as const,
-    orgKeyResultsAll: (buId: string | null) => 
+    orgKeyResultsAllBu: (buId: string | null) => 
       ['okr-all-org-key-results', buId] as const,
     allOrgObjectivesView: (year: number, buId: string | null) => 
       ['all-org-objectives-view', year, buId] as const,
@@ -187,6 +187,36 @@ export const queryKeys = {
       userProfileId: string | null,
       filter: string
     ) => ['okr-wizard-user-krs', buId, cycleId, userProfileId, filter] as const,
+    wizardTeamKrs: (
+      buId: string | null, 
+      cycleId: string | null, 
+      teamIds: string[], 
+      filter: string
+    ) => ['okr-wizard-krs', buId, cycleId, teamIds, filter] as const,
+    
+    // Team Overview Metrics (Leader Wizard)
+    teamOverviewMetrics: (
+      buId: string | null, 
+      cycleId: string | null, 
+      teamIds: string[]
+    ) => ['okr-team-overview-metrics', buId, cycleId, teamIds] as const,
+    
+    // KR History
+    krCheckinHistory: (buId: string | null, krId: string | null) =>
+      ['kr-checkin-history', buId, krId] as const,
+    krLinkedKpis: (krId: string, krType: string) =>
+      ['kr-linked-kpis', krId, krType] as const,
+    krGuardrailHistories: (kpiIds: string[]) =>
+      ['kr-guardrail-histories', kpiIds] as const,
+    
+    // Manageable Teams
+    manageableTeams: (buId: string | null, userId: string | null) =>
+      ['okr-manageable-teams', buId, userId] as const,
+    myTeamId: (buId: string | null, userId: string | null) =>
+      ['my-team-id', buId, userId] as const,
+      
+    // Org KRs
+    orgKeyResultsAll: () => ['okr-org-key-results'] as const,
   },
 
 

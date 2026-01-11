@@ -13,6 +13,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { differenceInDays, parseISO } from "date-fns";
 import type { LeaderOverviewMetrics, LeaderHighlight } from "@/modules/okrs/types/wizard";
+import { queryKeys } from "@/lib/queryKeys";
 
 // ============================================================
 // HOOK
@@ -29,7 +30,7 @@ export function useTeamOverviewMetrics(
   const normalizedTeamIds = Array.isArray(teamIds) ? teamIds : teamIds ? [teamIds] : [];
 
   return useQuery({
-    queryKey: ['okr-team-overview-metrics', currentBuId, cycleId, normalizedTeamIds],
+    queryKey: queryKeys.okrs.teamOverviewMetrics(currentBuId, cycleId ?? null, normalizedTeamIds),
     queryFn: async (): Promise<{
       metrics: LeaderOverviewMetrics;
       highlights: LeaderHighlight[];

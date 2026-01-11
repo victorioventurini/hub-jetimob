@@ -136,9 +136,10 @@ export function useUpdateKrMetric() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      // Invalidate all KR metrics queries
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics'] });
+    onSuccess: (_, variables) => {
+      // Invalidate all KR metrics queries for this specific KR
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.id, 'org') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.id, 'team') });
       toast.success('KPI atualizado');
     },
     onError: (error: Error) => {
@@ -167,9 +168,13 @@ export function useDeleteKrMetric() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      // Invalidate all KR metrics queries
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-metrics'] });
+    onSuccess: (_, id) => {
+      // Invalidate broad pattern - we don't have context of which KR this was
+      // The queryKey pattern will match all krMetrics queries
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && query.queryKey[0] === 'okr-kr-metrics'
+      });
       toast.success('KPI desvinculado');
     },
     onError: () => {
