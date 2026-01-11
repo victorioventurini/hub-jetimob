@@ -48,7 +48,7 @@ export default function OkrDashboardPage() {
   const currentYear = new Date().getFullYear();
   const { user } = useAuth();
   const { has, isWildcard } = usePermissions();
-  const { currentBu } = useBu();
+  const { currentBu, currentBuId } = useBu();
   
   // URL State - View (object API)
   const viewState = useUrlState<OkrView>({
@@ -81,13 +81,14 @@ export default function OkrDashboardPage() {
   const { data: latestCheckinDate } = useLatestCheckinDate();
   const { data: pendingCheckins } = usePendingCheckins();
   
-  const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectives({ buId: currentBu?.id, year: filters.year });
+  // IMPORTANT: use currentBuId for BU-scoped queries (currentBu may be null if bu_unit data isn't loaded yet)
+  const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectives({ buId: currentBuId, year: filters.year });
   const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectives({
-    buId: currentBu?.id,
-    teamId: activeView === 'team' ? filters.teamId : undefined
+    buId: currentBuId,
+    teamId: activeView === 'team' ? filters.teamId : undefined,
   });
-  const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBu?.id });
-  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBu?.id, filters.teamId);
+  const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBuId });
+  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, filters.teamId);
   
   // Shared OKRs insights
   const sharedInsights = useSharedOkrsInsights();
