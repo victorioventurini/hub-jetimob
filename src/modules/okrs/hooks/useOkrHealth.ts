@@ -3,6 +3,7 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useBu } from '@/contexts/BuContext';
 import type { ObjectiveHealthData, OkrInsight } from '../types/health';
 import { toast } from 'sonner';
+import { queryKeys } from '@/lib/queryKeys';
 
 /**
  * Hook para buscar health score de um objetivo
@@ -12,7 +13,7 @@ export function useObjectiveHealth(objectiveType: 'org' | 'team', objectiveId: s
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-health', currentBuId, objectiveType, objectiveId],
+    queryKey: queryKeys.okrs.health(currentBuId ?? null, objectiveType, objectiveId),
     queryFn: async () => {
       if (!currentBuId || !objectiveId || !supabase) return null;
 
@@ -51,9 +52,9 @@ export function useRefreshObjectiveHealth() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['okr-health', currentBuId, variables.objectiveType, variables.objectiveId] });
-      queryClient.invalidateQueries({ queryKey: ['okr-org-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.health(currentBuId ?? null, variables.objectiveType, variables.objectiveId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(currentBuId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesAll() });
     },
     onError: () => {
       toast.error('Erro ao recalcular health score');
@@ -69,7 +70,7 @@ export function useObjectiveInsights(scopeType: string, scopeId: string | null) 
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-insights', currentBuId, scopeType, scopeId],
+    queryKey: queryKeys.okrs.insights(currentBuId ?? null, scopeType, scopeId),
     queryFn: async () => {
       if (!currentBuId || !scopeId || !supabase) return [];
 
@@ -118,7 +119,7 @@ export function useGenerateObjectiveInsights() {
       return data as number;
     },
     onSuccess: (count, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['okr-insights', currentBuId, variables.objectiveType + '_objective', variables.objectiveId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.insights(currentBuId ?? null, variables.objectiveType + '_objective', variables.objectiveId) });
       if (count > 0) {
         toast.info(`${count} insight(s) gerado(s)`);
       }
@@ -151,7 +152,7 @@ export function useDismissInsight() {
     },
     // Optimistic update: remove from list immediately
     onMutate: async (insightId) => {
-      const queryKey = ['okr-insights', currentBuId];
+      const queryKey = queryKeys.okrs.insights(currentBuId ?? null);
       await queryClient.cancelQueries({ queryKey });
       
       const previousData = queryClient.getQueryData<OkrInsight[]>(queryKey);
@@ -169,7 +170,7 @@ export function useDismissInsight() {
       toast.error('Erro ao resolver insight');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['okr-insights', currentBuId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.insights(currentBuId ?? null) });
       toast.success('Insight marcado como resolvido');
     },
   });
@@ -183,7 +184,7 @@ export function useRiskObjectives(limit = 5) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-risk-objectives', currentBuId, limit],
+    queryKey: queryKeys.okrs.riskObjectives(currentBuId ?? null, limit),
     queryFn: async () => {
       if (!currentBuId || !supabase) return [];
 
@@ -210,7 +211,7 @@ export function useDashboardInsights(limit = 10) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['okr-dashboard-insights', currentBuId, limit],
+    queryKey: queryKeys.okrs.dashboardInsights(currentBuId ?? null, limit),
     queryFn: async () => {
       if (!currentBuId || !supabase) return [];
 
