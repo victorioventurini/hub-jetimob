@@ -9,6 +9,6 @@ export { UrlSearchInput } from "./UrlSearchInput";
 export { UrlSelect } from "./UrlSelect";
 export { UrlMultiSelect } from "./UrlMultiSelect";
 export { UrlDateRangePicker } from "./UrlDateRangePicker";
-export { UrlPagination } from "./UrlPagination";
+
 export { UrlSortControl } from "./UrlSortControl";
 export { UrlFilterBar, buildActiveFilters } from "./UrlFilterBar";

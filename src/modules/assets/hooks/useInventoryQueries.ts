@@ -10,11 +10,9 @@ export interface UseInventoryFilters {
   categoryFilter?: string;
   holderFilter?: string;
   locationFilter?: string;
-  page?: number;
-  pageSize?: number;
 }
 
-const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_LIMIT = 1000;
 
 // Shared field lists for consistency
 const INVENTORY_FIELDS = `
@@ -133,7 +131,7 @@ export function useAssetCategoriesQuery() {
 }
 
 /**
- * Hook for querying inventory list with pagination and filters
+ * Hook for querying inventory list with filters (no pagination, high limit)
  */
 export function useInventoryListQuery(filters: UseInventoryFilters = {}) {
   const { currentBu } = useBu();
@@ -141,28 +139,25 @@ export function useInventoryListQuery(filters: UseInventoryFilters = {}) {
   const buId = currentBu?.id;
   
   const { 
-    search, statusFilter, categoryFilter, holderFilter, locationFilter, 
-    page = 1, pageSize = DEFAULT_PAGE_SIZE 
+    search, statusFilter, categoryFilter, holderFilter, locationFilter 
   } = filters;
-
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
   return useQuery({
     queryKey: queryKeys.assets.inventory.list(buId ?? null, { 
-      search, statusFilter, categoryFilter, holderFilter, locationFilter, page, pageSize 
+      search, statusFilter, categoryFilter, holderFilter, locationFilter 
     }),
     enabled: !!supabase && !!buId,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    queryFn: async (): Promise<{ items: AssetInventory[]; total: number }> => {
-      if (!supabase) return { items: [], total: 0 };
+    queryFn: async (): Promise<AssetInventory[]> => {
+      if (!supabase) return [];
       
       let query = supabase
         .from("asset_inventory")
-        .select(INVENTORY_FIELDS, { count: 'exact' })
+        .select(INVENTORY_FIELDS)
         .eq("bu_id", buId!)
         .is("deleted_at", null)
-        .order("name");
+        .order("name")
+        .limit(DEFAULT_LIMIT);
 
       // Server-side filters
       if (search?.trim()) {
@@ -186,15 +181,11 @@ export function useInventoryListQuery(filters: UseInventoryFilters = {}) {
         query = query.or(`home_location_id.eq.${locationFilter},current_location_id.eq.${locationFilter}`);
       }
 
-      // Apply pagination
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      const enrichedItems = await enrichInventoryItems(supabase, data || []);
-      return { items: enrichedItems, total: count ?? 0 };
+      return enrichInventoryItems(supabase, data || []);
     },
   });
 }
