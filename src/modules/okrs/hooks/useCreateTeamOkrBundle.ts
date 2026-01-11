@@ -194,9 +194,9 @@ export function useCreateTeamOkrBundle() {
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectives(currentBuId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrs(currentBuId) });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives'] });
-      queryClient.invalidateQueries({ queryKey: ['okr-team-objectives-with-krs'] });
-      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesAll() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesWithKrsAll() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
       
       toast.success('OKRs do time criados com sucesso!');
     },

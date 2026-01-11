@@ -146,6 +146,19 @@ export const queryKeys = {
     // Cycles & Settings
     settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,
     cyclesList: (buId: string | null) => ['cycles-list', buId] as const,
+    cycleDetail: (cycleId: string | null) => ['okr-cycle', cycleId] as const,
+    
+    // Health & Insights
+    health: (buId: string | null, objectiveType: string, objectiveId: string | null) =>
+      ['okr-health', buId, objectiveType, objectiveId] as const,
+    insights: (buId: string | null, scopeType?: string, scopeId?: string | null) =>
+      scopeType && scopeId 
+        ? ['okr-insights', buId, scopeType, scopeId] as const
+        : ['okr-insights', buId] as const,
+    riskObjectives: (buId: string | null, limit?: number) =>
+      ['okr-risk-objectives', buId, limit] as const,
+    dashboardInsights: (buId: string | null, limit?: number) =>
+      ['okr-dashboard-insights', buId, limit] as const,
     
     // Dashboard
     dashboard: (buId: string | null, teamId?: string) => 

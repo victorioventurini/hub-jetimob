@@ -66,7 +66,7 @@ export function useCycle(cycleId: string | null | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["okr-cycle", cycleId],
+    queryKey: queryKeys.okrs.cycleDetail(cycleId ?? null),
     queryFn: async () => {
       if (!cycleId || !supabase) return null;
       
