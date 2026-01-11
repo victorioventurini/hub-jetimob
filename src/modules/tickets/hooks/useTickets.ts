@@ -16,33 +16,27 @@ import type {
 // CONSTANTS
 // ===========================================
 
-const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_LIMIT = 1000;
 
 // ===========================================
 // QUERIES
 // ===========================================
 
 /**
- * Hook para buscar tickets com paginação server-side
- * @param filters - Filtros incluindo page e pageSize
- * @returns Dados paginados com total count
+ * Hook para buscar tickets (limite alto, busca fluida)
+ * @param filters - Filtros de busca
+ * @returns Lista de tickets
  */
 export function useTickets(filters?: TicketFilters) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
-  // Pagination defaults
-  const page = filters?.page ?? 1;
-  const pageSize = filters?.pageSize ?? DEFAULT_PAGE_SIZE;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
   return useQuery({
     queryKey: queryKeys.tickets.list(buId ?? null, filters as Record<string, unknown>),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    queryFn: async (): Promise<PaginatedTicketsResponse> => {
-      if (!buId) return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
+    queryFn: async (): Promise<Ticket[]> => {
+      if (!buId) return [];
 
       // Build base query with explicit fields (no select('*'))
       let query = supabase
@@ -65,10 +59,11 @@ export function useTickets(filters?: TicketFilters) {
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name)
-        `, { count: 'exact' })
+        `)
         .eq("bu_id", buId)
         .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(DEFAULT_LIMIT);
 
       // Apply filters
       if (filters?.type) {
@@ -113,22 +108,11 @@ export function useTickets(filters?: TicketFilters) {
         query = query.ilike("title", `%${filters.search}%`);
       }
 
-      // Apply pagination
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      const total = count ?? 0;
-
-      return {
-        data: data as Ticket[],
-        total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
-      };
+      return data as Ticket[];
     },
     enabled: !!buId,
   });

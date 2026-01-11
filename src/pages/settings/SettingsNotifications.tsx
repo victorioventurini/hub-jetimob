@@ -83,7 +83,6 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UrlSelect } from '@/shared/filters/UrlSelect';
-import { UrlPagination } from '@/shared/filters/UrlPagination';
 
 const channelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   in_app: Bell,
@@ -121,8 +120,6 @@ export default function SettingsNotifications() {
   const tabState = useUrlState<TabValue>({ key: 'tab', defaultValue: 'channels' });
   const statusState = useUrlState<string>({ key: 'status', defaultValue: 'all' });
   const channelState = useUrlState<string>({ key: 'channel', defaultValue: 'all' });
-  const pageState = useUrlState<number>({ key: 'page', defaultValue: 1, parse: (v) => parseInt(v) || 1 });
-  const pageSizeState = useUrlState<number>({ key: 'pageSize', defaultValue: 25, parse: (v) => parseInt(v) || 25 });
   
   // Queries
   const { data: channels = [], isLoading: channelsLoading } = useNotificationChannels();
@@ -134,16 +131,10 @@ export default function SettingsNotifications() {
   const outboxFilters = {
     status: statusState.value,
     channel: channelState.value,
-    page: pageState.value,
-    pageSize: pageSizeState.value,
   };
   const { data: outboxData, isLoading: outboxLoading } = useNotificationOutbox(currentBu?.id, outboxFilters);
   
-  const inappFilters = {
-    page: pageState.value,
-    pageSize: pageSizeState.value,
-  };
-  const { data: inappData, isLoading: inappLoading } = useInAppNotifications(currentBu?.id, inappFilters);
+  const { data: inappData, isLoading: inappLoading } = useInAppNotifications(currentBu?.id);
   
   // Mutations
   const { upsertChannel } = useBuNotificationChannelMutations();
@@ -893,14 +884,10 @@ export default function SettingsNotifications() {
                       </TableBody>
                     </Table>
                     
-                    {(outboxData?.count ?? 0) > 0 && (
-                      <UrlPagination
-                        page={pageState.value}
-                        pageSize={pageSizeState.value}
-                        totalItems={outboxData?.count ?? 0}
-                        onPageChange={pageState.set}
-                        onPageSizeChange={pageSizeState.set}
-                      />
+                    {outboxData?.count > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        {outboxData.count} item{outboxData.count !== 1 ? 's' : ''} no outbox
+                      </p>
                     )}
                   </>
                 )}
@@ -971,14 +958,10 @@ export default function SettingsNotifications() {
                       </TableBody>
                     </Table>
                     
-                    {(inappData?.count ?? 0) > 0 && (
-                      <UrlPagination
-                        page={pageState.value}
-                        pageSize={pageSizeState.value}
-                        totalItems={inappData?.count ?? 0}
-                        onPageChange={pageState.set}
-                        onPageSizeChange={pageSizeState.set}
-                      />
+                    {inappData?.count > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        {inappData.count} notificação{inappData.count !== 1 ? 'ões' : ''} in-app
+                      </p>
                     )}
                   </>
                 )}

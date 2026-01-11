@@ -34,17 +34,6 @@ export type { UseInventoryFilters };
 
 export interface UseInventoryOptions extends UseInventoryFilters {}
 
-export interface PaginatedInventoryResponse {
-  items: AssetInventory[];
-  categories: AssetCategory[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
-
-const DEFAULT_PAGE_SIZE = 25;
-
 /**
  * Combined hook for asset inventory operations
  * Provides queries and mutations in a single hook for convenience
@@ -53,7 +42,6 @@ export function useInventory(options: UseInventoryOptions = {}) {
   const { currentBu } = useBu();
   const supabase = useOptionalBuScopedSupabase();
   const buId = currentBu?.id;
-  const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = options;
 
   // Queries
   const { data: categories = [], isLoading: isLoadingCategories } = useAssetCategoriesQuery();
@@ -87,9 +75,8 @@ export function useInventory(options: UseInventoryOptions = {}) {
   } = useAssetMovementMutations();
 
   // Computed values
-  const items = inventoryData?.items ?? [];
-  const total = inventoryData?.total ?? 0;
-  const totalPages = Math.ceil(total / pageSize);
+  const items = inventoryData ?? [];
+  const total = items.length;
 
   // Imperative functions (wrapped for backward compatibility)
   const getItem = async (itemId: string): Promise<AssetInventory | null> => {
@@ -110,7 +97,6 @@ export function useInventory(options: UseInventoryOptions = {}) {
     categories,
     items,
     total,
-    totalPages,
     isLoading: isLoadingCategories || isLoadingItems,
     
     // Imperative queries

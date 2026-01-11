@@ -8,7 +8,6 @@ import { useTickets, useMyTickets } from "../hooks/useTickets";
 import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
-import { UrlPagination } from "@/shared/filters";
 import { useUrlState, useUrlTab, useUrlSearch, parsers } from "@/shared/url";
 import type { TicketStatus, TicketType, Ticket } from "../types";
 
@@ -44,23 +43,6 @@ export default function TicketsListPage() {
   });
   const showOverdue = overdueState.value;
   const setShowOverdue = overdueState.set;
-
-  // Pagination URL state
-  const pageState = useUrlState<number>({ 
-    key: "page", 
-    defaultValue: 1, 
-    parse: parsers.number 
-  });
-  const page = pageState.value;
-  const setPage = pageState.set;
-
-  const pageSizeState = useUrlState<number>({ 
-    key: "pageSize", 
-    defaultValue: 25, 
-    parse: parsers.number 
-  });
-  const pageSize = pageSizeState.value;
-  const setPageSize = pageSizeState.set;
   const tabStatusFilter = useMemo((): TicketStatus | TicketStatus[] | undefined => {
     switch (activeTab) {
       case "waiting":
@@ -76,7 +58,7 @@ export default function TicketsListPage() {
     }
   }, [activeTab, statusFilter]);
 
-  // Use paginated query for "all" tabs, my tickets for "mine" tab
+  // Use query for "all" tabs, my tickets for "mine" tab
   const queryFilters = useMemo(() => ({
     type: typeFilter !== "all" ? typeFilter : undefined,
     status: tabStatusFilter,
@@ -84,9 +66,7 @@ export default function TicketsListPage() {
     partner_company_id: partnerId !== "all" ? partnerId : undefined,
     search: search || undefined,
     overdue: showOverdue || undefined,
-    page,
-    pageSize,
-  }), [typeFilter, tabStatusFilter, categoryId, partnerId, search, showOverdue, page, pageSize]);
+  }), [typeFilter, tabStatusFilter, categoryId, partnerId, search, showOverdue]);
 
   const { 
     data: ticketsResponse, 
@@ -120,23 +100,15 @@ export default function TicketsListPage() {
   // Get the right data based on active tab
   const displayTickets = activeTab === "mine" 
     ? filteredMyTickets 
-    : (ticketsResponse?.data ?? []);
+    : (ticketsResponse ?? []);
   
-  const totalItems = activeTab === "mine" 
-    ? filteredMyTickets.length 
-    : (ticketsResponse?.total ?? 0);
+  const totalItems = displayTickets.length;
 
   const isLoading = activeTab === "mine" ? isLoadingMy : isLoadingAll;
 
-  // Reset page when changing tabs or filters
+  // Handler for tab change
   const handleTabChange = (tab: string) => {
     setActiveTab(tab as TicketTab);
-    setPage(1);
-  };
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setPage(1); // Reset to first page when changing page size
   };
 
   return (
@@ -160,17 +132,17 @@ export default function TicketsListPage() {
       {/* Filters */}
       <TicketFilters
         search={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         type={typeFilter}
-        onTypeChange={(v) => { setTypeFilter(v); setPage(1); }}
+        onTypeChange={setTypeFilter}
         status={statusFilter}
-        onStatusChange={(v) => { setStatusFilter(v); setPage(1); }}
+        onStatusChange={setStatusFilter}
         categoryId={categoryId}
-        onCategoryChange={(v) => { setCategoryId(v); setPage(1); }}
+        onCategoryChange={setCategoryId}
         partnerId={partnerId}
-        onPartnerChange={(v) => { setPartnerId(v); setPage(1); }}
+        onPartnerChange={setPartnerId}
         showOverdueOnly={showOverdue}
-        onOverdueChange={(v) => { setShowOverdue(v); setPage(1); }}
+        onOverdueChange={setShowOverdue}
       />
 
       {/* Tabs */}
@@ -208,17 +180,6 @@ export default function TicketsListPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Pagination - only show for non-mine tabs or when there are items */}
-      {totalItems > 0 && (
-        <UrlPagination
-          page={page}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          onPageSizeChange={handlePageSizeChange}
-          showPageSize={activeTab !== "mine"}
-        />
-      )}
     </div>
   );
 }

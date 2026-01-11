@@ -63,17 +63,15 @@ export interface OutboxFilters {
   channel?: string;
   eventSlug?: string;
   q?: string;
-  page?: number;
-  pageSize?: number;
 }
 
 export interface InAppFilters {
   isRead?: boolean | null;
   type?: string;
   q?: string;
-  page?: number;
-  pageSize?: number;
 }
+
+const DEFAULT_LIMIT = 1000;
 
 // Hook for BU event settings
 export function useBuEventSettings(buId?: string) {
@@ -143,8 +141,6 @@ export function useBuEventSettingMutation() {
 // Hook for notification outbox (admin view)
 export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
   const supabase = useBuScopedSupabase();
-  const page = filters?.page ?? 1;
-  const pageSize = filters?.pageSize ?? 25;
   
   return useQuery({
     queryKey: queryKeys.notifications.outbox(buId ?? null, filters),
@@ -158,9 +154,10 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
           status, retries, max_retries, last_error, 
           processed_at, created_at, dedupe_key,
           recipient:profiles!notification_outbox_user_id_fkey(display_name, work_email)
-        `, { count: 'exact' })
+        `)
         .eq('bu_id', buId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(DEFAULT_LIMIT);
       
       // Apply filters - cast to enum values
       if (filters?.status && filters.status !== 'all') {
@@ -173,12 +170,7 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
         query = query.eq('event_slug', filters.eventSlug);
       }
       
-      // Pagination
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-      query = query.range(from, to);
-      
-      const { data, error, count } = await query;
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -195,10 +187,7 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
       
       return { 
         data: mappedData, 
-        count: count ?? 0,
-        page,
-        pageSize,
-        totalPages: Math.ceil((count ?? 0) / pageSize),
+        count: mappedData.length,
       };
     },
     enabled: !!buId,
@@ -236,8 +225,6 @@ export function useRetryOutboxItem() {
 // Hook for in-app notifications (admin view)
 export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
   const supabase = useBuScopedSupabase();
-  const page = filters?.page ?? 1;
-  const pageSize = filters?.pageSize ?? 25;
   
   return useQuery({
     queryKey: queryKeys.notifications.inAppLogs(buId ?? null, { read: filters?.isRead ?? undefined }),
@@ -252,22 +239,17 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
           is_read, read_at, created_at, event_slug,
           recipient:profiles!notifications_user_id_fkey(display_name),
           actor:profiles!notifications_actor_id_fkey(display_name)
-        `, { count: 'exact' })
+        `)
         .eq('bu_id', buId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(DEFAULT_LIMIT);
       
       // Apply filters
       if (filters?.isRead !== null && filters?.isRead !== undefined) {
         query = query.eq('is_read', filters.isRead);
       }
-      // Type filter removed - too many enum values to cast safely
       
-      // Pagination
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-      query = query.range(from, to);
-      
-      const { data, error, count } = await query;
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -284,10 +266,7 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
       
       return { 
         data: mappedData, 
-        count: count ?? 0,
-        page,
-        pageSize,
-        totalPages: Math.ceil((count ?? 0) / pageSize),
+        count: mappedData.length,
       };
     },
     enabled: !!buId,
