@@ -110,7 +110,7 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
   
   // First get the linked KPIs
   const { data: krMetrics } = useQuery({
-    queryKey: ["kr-linked-kpis", krId, krType],
+    queryKey: queryKeys.okrs.krLinkedKpis(krId, krType),
     queryFn: async () => {
       if (!supabase) return [];
       
@@ -135,7 +135,7 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
 
   // Fetch guardrail KPI histories
   const { data: guardrailHistories, isLoading: guardrailsLoading } = useQuery({
-    queryKey: ["kr-guardrail-histories", guardrailKpiIds],
+    queryKey: queryKeys.okrs.krGuardrailHistories(guardrailKpiIds),
     queryFn: async () => {
       if (guardrailKpiIds.length === 0 || !supabase) return [];
 

@@ -25,7 +25,7 @@ export function useManageableTeams() {
   const { client, isReady, buId } = useOptionalBuClient();
 
   const query = useQuery({
-    queryKey: ["okr-manageable-teams", buId, user?.id],
+    queryKey: queryKeys.okrs.manageableTeams(buId ?? null, user?.id ?? null),
     queryFn: async (): Promise<ManageableTeam[]> => {
       if (!client || !buId) return [];
 
@@ -89,7 +89,7 @@ export function useManageableTeamsFlat(): {
 
   // Get user's own team (for pre-selection)
   const userTeamQuery = useQuery({
-    queryKey: ["my-team-id", buId, user?.id],
+    queryKey: queryKeys.okrs.myTeamId(buId ?? null, user?.id ?? null),
     queryFn: async (): Promise<string | null> => {
       if (!client || !buId || !user?.id) return null;
 
