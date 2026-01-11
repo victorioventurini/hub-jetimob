@@ -795,8 +795,21 @@ const App = () => {
                       <Route index element={<TicketsListPage />} />
                       <Route path="new" element={<CreateTicketPage />} />
                       <Route path="settings" element={<TicketsSettingsPage />} />
-                      <Route path=":id" element={<TicketDetailPage />} />
                     </Route>
+
+                    {/* Ticket Detail - Standalone page without tabs */}
+                    <Route
+                      path="/tickets/:id"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="tickets">
+                              <TicketDetailPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* BU Settings Home - Admin da BU */}
                     <Route
