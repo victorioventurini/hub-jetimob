@@ -276,26 +276,128 @@ export function useMyTickets() {
   return useQuery({
     queryKey: queryKeys.tickets.myTickets(buId ?? null, profileId ?? undefined),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    queryFn: async () => {
+    queryFn: async (): Promise<Ticket[]> => {
       if (!buId || !profileId) return [];
 
       const { data, error } = await supabase
         .from("tickets")
         .select(`
-          id, bu_id, type, title, status,
-          expected_due_at, created_by_user_id, owner_user_id,
-          created_at, updated_at,
-          category:ticket_categories(id, name)
+          id,
+          bu_id,
+          type,
+          title,
+          status,
+          expected_due_at,
+          created_by_user_id,
+          owner_user_id,
+          visibility,
+          partner_company_id,
+          category_id,
+          subcategory_id,
+          assigned_contact_id,
+          created_at,
+          updated_at,
+          partner_company:partner_companies(id, name),
+          category:ticket_categories(id, name),
+          subcategory:ticket_subcategories(id, name),
+          created_by:profiles!tickets_created_by_user_id_fkey(id, display_name, photo_url),
+          owner:profiles!tickets_owner_user_id_fkey(id, display_name, photo_url),
+          assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .or(`created_by_user_id.eq.${profileId},owner_user_id.eq.${profileId}`)
         .order("updated_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (error) throw error;
+      if (!data || data.length === 0) return [];
 
-      return data as Ticket[];
+      const ticketIds = data.map(t => t.id);
+
+      // Fetch messages counts and last message dates in batch
+      const { data: messagesData } = await supabase
+        .from("ticket_messages")
+        .select("ticket_id, created_at")
+        .in("ticket_id", ticketIds)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+
+      // Aggregate messages count and last_message_at per ticket
+      const messagesMap = new Map<string, { count: number; last_at: string | null }>();
+      (messagesData || []).forEach(msg => {
+        const existing = messagesMap.get(msg.ticket_id);
+        if (!existing) {
+          messagesMap.set(msg.ticket_id, { count: 1, last_at: msg.created_at });
+        } else {
+          existing.count++;
+        }
+      });
+
+      // Fetch mentions with profile info in batch
+      const { data: mentionsData } = await supabase
+        .from("mentions")
+        .select(`
+          entity_id,
+          mentioned_user_id,
+          mentioned_contact_id,
+          mentioned_user:profiles!mentions_mentioned_user_id_fkey(id, display_name, photo_url),
+          mentioned_contact:partner_contacts!mentions_mentioned_contact_id_fkey(id, name)
+        `)
+        .eq("entity_type", "ticket")
+        .in("entity_id", ticketIds);
+
+      // Aggregate mentions per ticket (unique users only)
+      type MentionInfo = { id: string; display_name: string; photo_url: string | null; type: 'user' | 'contact' };
+      const mentionsMap = new Map<string, MentionInfo[]>();
+      (mentionsData || []).forEach(mention => {
+        const ticketId = mention.entity_id;
+        const existing = mentionsMap.get(ticketId) || [];
+        
+        const user = Array.isArray(mention.mentioned_user) 
+          ? mention.mentioned_user[0] 
+          : mention.mentioned_user;
+        const contact = Array.isArray(mention.mentioned_contact) 
+          ? mention.mentioned_contact[0] 
+          : mention.mentioned_contact;
+        
+        if (user && !existing.some(m => m.id === user.id)) {
+          existing.push({ 
+            id: user.id, 
+            display_name: user.display_name, 
+            photo_url: user.photo_url,
+            type: 'user'
+          });
+        } else if (contact && !existing.some(m => m.id === contact.id)) {
+          existing.push({ 
+            id: contact.id, 
+            display_name: contact.name, 
+            photo_url: null,
+            type: 'contact'
+          });
+        }
+        
+        mentionsMap.set(ticketId, existing);
+      });
+
+      // Map the data to normalize joined relations
+      return data.map((ticket) => {
+        const msgInfo = messagesMap.get(ticket.id);
+        const mentions = mentionsMap.get(ticket.id) || [];
+        
+        return {
+          ...ticket,
+          created_by: Array.isArray(ticket.created_by) ? ticket.created_by[0] ?? null : ticket.created_by,
+          owner: Array.isArray(ticket.owner) ? ticket.owner[0] ?? null : ticket.owner,
+          partner_company: Array.isArray(ticket.partner_company) ? ticket.partner_company[0] ?? null : ticket.partner_company,
+          category: Array.isArray(ticket.category) ? ticket.category[0] ?? null : ticket.category,
+          subcategory: Array.isArray(ticket.subcategory) ? ticket.subcategory[0] ?? null : ticket.subcategory,
+          assigned_contact: Array.isArray(ticket.assigned_contact) ? ticket.assigned_contact[0] ?? null : ticket.assigned_contact,
+          messages_count: msgInfo?.count ?? 0,
+          last_message_at: msgInfo?.last_at ?? null,
+          mentions_list: mentions,
+        };
+      }) as Ticket[];
     },
     enabled: !!buId && isReady,
   });
