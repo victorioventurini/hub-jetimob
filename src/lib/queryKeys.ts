@@ -130,6 +130,10 @@ export const queryKeys = {
     // Initiatives
     initiatives: (krId: string) => ['okr-initiatives', krId] as const,
     initiativeDetail: (id: string) => ['okr-initiative', id] as const,
+    initiativesCount: (krId: string) => ['okr-initiatives', 'count', krId] as const,
+    initiativesByUser: (profileId: string | null) => ['okr-initiatives', 'user', profileId] as const,
+    initiativesByStatus: (buId: string | null, status?: string) => ['okr-initiatives', 'status', buId, status] as const,
+    initiativesAll: () => ['okr-initiatives'] as const,
     
     // Cycles & Settings
     settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,

@@ -57,7 +57,7 @@ export function useKrInitiativesCount(krId: string | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["initiatives", "kr", krId, "count"],
+    queryKey: queryKeys.okrs.initiativesCount(krId || ''),
     queryFn: async () => {
       if (!krId || !supabase) return 0;
       
@@ -80,7 +80,7 @@ export function useUserInitiatives(profileId: string | undefined) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["initiatives", "user", profileId],
+    queryKey: queryKeys.okrs.initiativesByUser(profileId ?? null),
     queryFn: async () => {
       if (!profileId || !supabase) return [];
       
@@ -122,7 +122,7 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ["initiatives", "status", buId, status],
+    queryKey: queryKeys.okrs.initiativesByStatus(buId ?? null, status),
     queryFn: async () => {
       if (!supabase) return [];
       
@@ -200,9 +200,9 @@ export function useCreateInitiative() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "kr", variables.kr_id] });
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "user"] });
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "status"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(variables.kr_id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null) });
       toast.success("Iniciativa criada com sucesso");
     },
     onError: () => {
@@ -238,10 +238,10 @@ export function useUpdateInitiative() {
     onSuccess: (data) => {
       // Invalidate the specific KR initiatives list
       if (data?.kr_id) {
-        queryClient.invalidateQueries({ queryKey: ["initiatives", "kr", data.kr_id] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(data.kr_id) });
       }
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "user"] });
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "status"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null) });
       toast.success("Iniciativa atualizada");
     },
     onError: () => {
@@ -272,7 +272,7 @@ export function useDeleteInitiative() {
     },
     // Optimistic update: remove from list immediately
     onMutate: async ({ initiativeId, krId }) => {
-      const queryKey = ["initiatives", "kr", krId];
+      const queryKey = queryKeys.okrs.initiatives(krId);
       await queryClient.cancelQueries({ queryKey });
       
       const previousData = queryClient.getQueryData<Initiative[]>(queryKey);
@@ -291,9 +291,9 @@ export function useDeleteInitiative() {
     },
     onSuccess: (data) => {
       // Invalidate the specific KR initiatives list
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "kr", data.krId] });
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "user"] });
-      queryClient.invalidateQueries({ queryKey: ["initiatives", "status"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(data.krId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null) });
       toast.success("Iniciativa removida");
     },
   });
@@ -319,7 +319,7 @@ export function useUpdateInitiativeStatus() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
       toast.success("Status atualizado");
     },
     onError: () => {
