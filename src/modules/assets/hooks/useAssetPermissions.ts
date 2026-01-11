@@ -7,15 +7,15 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { AssetPermission, AssetPermissionRole } from "../types";
 
 export function useAssetPermissions() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { currentBu, userRole, isLoading: isBuLoading } = useBu();
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
-  // Admin de BU tem acesso total - userRole já considera super_admin via contexto
-  const isBuAdmin = userRole === "admin" || userRole === "super_admin";
-  const hasFullAccess = isBuAdmin;
+  // isAdmin from useAuth() covers super_admin + admin global roles
+  // userRole === "admin" covers BU-level admin
+  const hasFullAccess = isAdmin || userRole === "admin";
 
   // Buscar permissões do usuário atual
   // Only fetch if not loading BU context and user doesn't have full access

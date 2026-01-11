@@ -1,4 +1,7 @@
-// Mock data for OKRs - optimized for fast rendering
+/**
+ * @deprecated Mock data for OKRs - TO BE REMOVED after real data integration
+ * This file should be deleted once OkrsPage uses real OKR data from hooks/queries
+ */
 import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
 export interface MockOrgKr {

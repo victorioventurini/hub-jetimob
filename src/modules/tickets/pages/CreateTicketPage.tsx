@@ -30,7 +30,7 @@ import { useIdentity } from "@/hooks/useIdentity";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
-import { MultiUserSelect } from "@/components/selects/MultiUserSelect";
+import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
 import { TicketMentionInput, type ParsedMention } from "@/components/mentions/TicketMentionInput";
 import type { TicketType, TicketVisibility } from "../types";
 
@@ -611,7 +611,7 @@ export default function CreateTicketPage() {
               {selectedVisibility === "users" && currentUserProfileId && (
                 <div className="space-y-2">
                   <Label>Usuários com acesso *</Label>
-                  <MultiUserSelect
+                  <BuUserMultiSelect
                     value={selectedUserIds}
                     onValueChange={setSelectedUserIds}
                     placeholder="Selecione os usuários..."
