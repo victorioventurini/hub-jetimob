@@ -5,9 +5,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Target, User, CheckCircle2, Sparkles } from 'lucide-react';
+import { Target, User, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardLastStepFooter } from '../shared';
+import { WizardStepFooter } from '../shared';
 import type { DraftTeamKr, DraftTeamDependency, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
 
 export interface KrReviewStepProps {
@@ -180,11 +180,12 @@ export function KrReviewStep({
         </div>
       </ScrollArea>
 
-      <WizardLastStepFooter
+      <WizardStepFooter
         onBack={onBack}
         primaryLabel="Criar KRs e iniciar acompanhamento"
         onPrimary={onConfirm}
         primaryLoading={isSubmitting}
+        primaryVariant="success"
       />
     </div>
   );

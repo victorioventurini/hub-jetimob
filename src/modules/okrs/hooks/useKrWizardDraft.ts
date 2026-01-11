@@ -1,19 +1,11 @@
 /**
  * useKrWizardDraft - Hook para persistir estado do wizard de criação de KRs
  * 
- * Persiste o draft no localStorage para acesso imediato offline
- * e no banco de dados para persistência entre sessões
+ * Usa localStorage para persistência simples (sem banco de dados)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { useBu } from '@/contexts/BuContext';
-import { useAuth } from '@/hooks/useAuth';
-import { queryKeys } from '@/lib/queryKeys';
-import type { OkrKrType, OkrDirection, DraftTeamKr, DraftTeamDependency, DraftTeamInitiative } from '../types/wizard';
-import type { KrPlan } from '../components/wizards/team-okr-creation/TeamOkrKrTypeStep';
+import type { DraftTeamKr, DraftTeamDependency, DraftTeamInitiative } from '../types/wizard';
 
 // ============================================================
 // TYPES
@@ -28,6 +20,12 @@ export type KrWizardStep =
   | 'kr-dependencies' 
   | 'kr-initiatives' 
   | 'kr-review';
+
+export interface KrPlan {
+  foundational: number;
+  contribution: number;
+  enabler: number;
+}
 
 export interface TeamKrDraft {
   version: number;
@@ -58,6 +56,8 @@ export interface TeamKrDraft {
 
 export interface UseKrWizardDraftOptions {
   objectiveId: string;
+  teamId: string;
+  cycleId?: string | null;
   enabled?: boolean;
 }
 
@@ -67,12 +67,9 @@ export interface UseKrWizardDraftReturn {
   setStep: (step: KrWizardStep) => void;
   clearDraft: () => void;
   discardDraft: () => void;
-  saveDraft: () => Promise<void>;
   isDirty: boolean;
-  isSaving: boolean;
-  isResumingDraft: boolean;
   hasSavedDraft: boolean;
-  lastSavedAt: string | null;
+  initializeDraft: () => void;
 }
 
 // ============================================================
@@ -113,171 +110,62 @@ function createEmptyDraft(objectiveId: string, teamId: string, cycleId: string |
 // ============================================================
 
 export function useKrWizardDraft(options: UseKrWizardDraftOptions): UseKrWizardDraftReturn {
-  const { objectiveId, enabled = true } = options;
-  const queryClient = useQueryClient();
-  const { client: supabase } = useOptionalBuClient();
-  const { currentBuId } = useBu();
-  const { user } = useAuth();
+  const { objectiveId, teamId, cycleId = null, enabled = true } = options;
 
   // State
   const [draft, setDraft] = useState<TeamKrDraft | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isResumingDraft, setIsResumingDraft] = useState(true);
-  const [initializedFor, setInitializedFor] = useState<string | null>(null);
-  const hasLoadedFromDb = useRef(false);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const initializedRef = useRef(false);
 
   // Storage key
   const storageKey = getStorageKey(objectiveId);
 
-  // ── Query for existing session ──
-  const { data: existingSession, isLoading: isLoadingSession } = useQuery({
-    queryKey: queryKeys.okrs.wizardDraftGeneric(user?.id ?? '', `team-kr-creation.${objectiveId}`),
-    queryFn: async () => {
-      if (!supabase || !currentBuId || !user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('okr_wizard_sessions')
-        .select('id, draft_data, created_at, updated_at')
-        .eq('bu_id', currentBuId)
-        .eq('user_id', user.id)
-        .eq('wizard_type', 'team-kr-creation')
-        .eq('objective_id', objectiveId)
-        .is('completed_at', null)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading KR wizard session:', error);
-        return null;
-      }
-      return data;
-    },
-    enabled: enabled && !!supabase && !!currentBuId && !!user?.id && !!objectiveId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // ── Debounced localStorage persistence ──
-  const persistToStorage = useDebouncedCallback((draftToSave: TeamKrDraft) => {
-    if (!objectiveId) return;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(draftToSave));
-    } catch (e) {
-      console.error('Failed to persist KR draft to localStorage:', e);
-    }
-  }, 500);
-
-  // ── Mutation for saving to DB ──
-  const saveMutation = useMutation({
-    mutationFn: async (draftToSave: TeamKrDraft) => {
-      if (!supabase || !currentBuId || !user?.id) {
-        throw new Error('Client not available');
-      }
-
-      const sessionData = {
-        bu_id: currentBuId,
-        user_id: user.id,
-        wizard_type: 'team-kr-creation',
-        objective_id: objectiveId,
-        team_id: draftToSave.teamId,
-        draft_data: draftToSave as any,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (sessionId) {
-        // Update existing session
-        const { error } = await supabase
-          .from('okr_wizard_sessions')
-          .update(sessionData)
-          .eq('id', sessionId);
-        if (error) throw error;
-      } else {
-        // Create new session
-        const { data, error } = await supabase
-          .from('okr_wizard_sessions')
-          .insert(sessionData)
-          .select('id')
-          .single();
-        if (error) throw error;
-        setSessionId(data.id);
-      }
-    },
-    onSuccess: () => {
-      setLastSavedAt(new Date().toISOString());
-      setIsDirty(false);
-    },
-    onError: (error) => {
-      console.error('Failed to save KR draft to DB:', error);
-    },
-  });
-
-  // ── Initialize draft ──
+  // ── Load from localStorage on mount ──
   useEffect(() => {
-    if (!enabled || !objectiveId || initializedFor === objectiveId) return;
-    if (isLoadingSession) return;
+    if (!enabled || !objectiveId || initializedRef.current) return;
 
-    setIsResumingDraft(true);
-
-    // Try localStorage first
     const savedLocal = localStorage.getItem(storageKey);
-    let localDraft: TeamKrDraft | null = null;
 
     if (savedLocal) {
       try {
-        const parsed = JSON.parse(savedLocal);
+        const parsed = JSON.parse(savedLocal) as TeamKrDraft;
         if (parsed.version === DRAFT_VERSION && parsed.objectiveId === objectiveId) {
-          localDraft = parsed;
+          setDraft(parsed);
+          setHasSavedDraft(true);
+          initializedRef.current = true;
+          return;
         }
       } catch (e) {
         console.error('Failed to parse local KR draft:', e);
+        localStorage.removeItem(storageKey);
       }
     }
 
-    // Prefer DB session if newer
-    if (existingSession && !hasLoadedFromDb.current) {
-      const dbDraft = existingSession.draft_data as TeamKrDraft;
-      const dbUpdated = new Date(existingSession.updated_at);
-      const localUpdated = localDraft ? new Date(localDraft.updatedAt) : new Date(0);
-
-      if (dbUpdated >= localUpdated) {
-        setDraft(dbDraft);
-        setSessionId(existingSession.id);
-        setLastSavedAt(existingSession.updated_at);
-        hasLoadedFromDb.current = true;
-        setIsResumingDraft(false);
-        setInitializedFor(objectiveId);
-        return;
-      }
-    }
-
-    // Use local draft or create new
-    if (localDraft) {
-      setDraft(localDraft);
-    }
-
-    setIsResumingDraft(false);
-    setInitializedFor(objectiveId);
-  }, [enabled, objectiveId, storageKey, existingSession, isLoadingSession, initializedFor]);
+    initializedRef.current = true;
+  }, [enabled, objectiveId, storageKey]);
 
   // ── Persist to localStorage when draft changes ──
   useEffect(() => {
     if (draft && isDirty) {
-      persistToStorage(draft);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(draft));
+        setHasSavedDraft(true);
+      } catch (e) {
+        console.error('Failed to persist KR draft:', e);
+      }
     }
-  }, [draft, isDirty, persistToStorage]);
+  }, [draft, isDirty, storageKey]);
 
   // ── API ──
   const updateDraft = useCallback((updates: Partial<TeamKrDraft>) => {
     setDraft(prev => {
       if (!prev) return prev;
-      const updated = {
+      return {
         ...prev,
         ...updates,
         updatedAt: new Date().toISOString(),
       };
-      return updated;
     });
     setIsDirty(true);
   }, []);
@@ -286,64 +174,25 @@ export function useKrWizardDraft(options: UseKrWizardDraftOptions): UseKrWizardD
     updateDraft({ currentStep: step });
   }, [updateDraft]);
 
-  const saveDraft = useCallback(async () => {
-    if (!draft) return;
-    await saveMutation.mutateAsync(draft);
-  }, [draft, saveMutation]);
-
   const clearDraft = useCallback(() => {
-    // Clear both localStorage and DB session
     localStorage.removeItem(storageKey);
-    
-    if (sessionId && supabase) {
-      supabase
-        .from('okr_wizard_sessions')
-        .update({ completed_at: new Date().toISOString() })
-        .eq('id', sessionId)
-        .then(() => {
-          queryClient.invalidateQueries({ 
-            queryKey: queryKeys.okrs.wizardDraftGeneric(user?.id ?? '', `team-kr-creation.${objectiveId}`) 
-          });
-        });
-    }
-
     setDraft(null);
-    setSessionId(null);
     setIsDirty(false);
-    setInitializedFor(null);
-    hasLoadedFromDb.current = false;
-  }, [storageKey, sessionId, supabase, queryClient, user?.id, objectiveId]);
+    setHasSavedDraft(false);
+    initializedRef.current = false;
+  }, [storageKey]);
 
   const discardDraft = useCallback(() => {
-    // Mark session as discarded if exists
-    localStorage.removeItem(storageKey);
-    
-    if (sessionId && supabase) {
-      supabase
-        .from('okr_wizard_sessions')
-        .delete()
-        .eq('id', sessionId)
-        .then(() => {
-          queryClient.invalidateQueries({ 
-            queryKey: queryKeys.okrs.wizardDraftGeneric(user?.id ?? '', `team-kr-creation.${objectiveId}`) 
-          });
-        });
-    }
+    clearDraft();
+  }, [clearDraft]);
 
-    setDraft(null);
-    setSessionId(null);
-    setIsDirty(false);
-    setInitializedFor(null);
-    hasLoadedFromDb.current = false;
-  }, [storageKey, sessionId, supabase, queryClient, user?.id, objectiveId]);
-
-  // ── Initialize empty draft for objective ──
-  const initializeDraft = useCallback((teamId: string, cycleId: string | null) => {
-    if (!draft && objectiveId) {
+  const initializeDraft = useCallback(() => {
+    if (!draft && objectiveId && teamId) {
       const newDraft = createEmptyDraft(objectiveId, teamId, cycleId);
       setDraft(newDraft);
+      setIsDirty(true);
     }
-  }, [draft, objectiveId]);
+  }, [draft, objectiveId, teamId, cycleId]);
 
   return {
     draft,
@@ -351,12 +200,8 @@ export function useKrWizardDraft(options: UseKrWizardDraftOptions): UseKrWizardD
     setStep,
     clearDraft,
     discardDraft,
-    saveDraft,
     isDirty,
-    isSaving: saveMutation.isPending,
-    isResumingDraft,
-    hasSavedDraft: !!existingSession || !!draft,
-    lastSavedAt,
+    hasSavedDraft,
     initializeDraft,
-  } as UseKrWizardDraftReturn & { initializeDraft: (teamId: string, cycleId: string | null) => void };
+  };
 }

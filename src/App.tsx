@@ -51,6 +51,7 @@ const TeamContributionPage = lazy(() => import("./modules/okrs/pages/TeamContrib
 const CycleCheckinsPage = lazy(() => import("./modules/okrs/pages/CycleCheckinsPage"));
 const OkrsSettingsPage = lazy(() => import("./modules/okrs/pages/OkrsSettingsPage"));
 const OkrCreationPage = lazy(() => import("./modules/okrs/pages/OkrCreationPage"));
+const TeamKrCreationPage = lazy(() => import("./modules/okrs/pages/TeamKrCreationPage"));
 const CollaboratorCheckinPage = lazy(() => import("./modules/okrs/pages/CollaboratorCheckinPage"));
 const LeaderPrepPage = lazy(() => import("./modules/okrs/pages/LeaderPrepPage"));
 const TeamCheckinPage = lazy(() => import("./modules/okrs/pages/TeamCheckinPage"));
@@ -614,6 +615,18 @@ const App = () => {
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="okrs">
                               <OkrCreationPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/okrs/objectives/:objectiveId/krs/create"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="okrs">
+                              <TeamKrCreationPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>
