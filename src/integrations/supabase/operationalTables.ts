@@ -76,9 +76,9 @@ export const OPERATIONAL_TABLES: string[] = [
   "partner_contacts",
   "partner_contact_skills",
 
-  // Notifications
+  // Notifications & Mentions
   "notifications",
-  "ticket_mentions",
+  "mentions",
   "notification_preferences",
   "notification_channels",
   "notification_endpoints",
