@@ -1,9 +1,9 @@
 # Permissions & RBAC Model — Hub da Jet
 
-**Versão:** 1.0.0  
-**Data:** 2026-01-10  
+**Versão:** 1.1.0  
+**Data:** 2026-01-11  
 **Status:** Normativo (V2-only mode)  
-**Referência:** TCR v2.13.0, RBAC_TEMPLATES_V3.md
+**Referência:** TCR v2.15.0, RBAC_TEMPLATES_V3.md
 
 ---
 
