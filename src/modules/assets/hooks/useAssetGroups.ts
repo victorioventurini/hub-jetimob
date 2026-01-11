@@ -24,6 +24,7 @@ export function useAssetGroups() {
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: queryKeys.assets.groups.all(buId ?? null),
     enabled: !!buId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_groups")

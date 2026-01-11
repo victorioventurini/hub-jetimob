@@ -65,6 +65,7 @@ export function usePartnerServices(partnerCompanyId?: string) {
 
   return useQuery({
     queryKey: queryKeys.tickets.partnerServices(buId ?? null, partnerCompanyId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId) return [];
 
@@ -95,6 +96,7 @@ export function usePartnerCategories(partnerCompanyId: string | undefined) {
 
   return useQuery({
     queryKey: queryKeys.tickets.partnerCategories(partnerCompanyId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!partnerCompanyId) return [];
 
@@ -119,6 +121,7 @@ export function usePartnerSubcategories(
 
   return useQuery({
     queryKey: queryKeys.tickets.partnerSubcategories(partnerCompanyId, categoryId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!partnerCompanyId || !categoryId) return [];
 
@@ -145,6 +148,7 @@ export function usePartnerServiceMappings(partnerCompanyId: string | undefined) 
 
   return useQuery({
     queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, partnerCompanyId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId || !partnerCompanyId) return [];
 

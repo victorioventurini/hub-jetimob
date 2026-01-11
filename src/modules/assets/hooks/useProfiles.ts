@@ -28,6 +28,7 @@ export function useAssetProfiles() {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: queryKeys.profiles.buProfiles(buId ?? null),
     enabled: !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - profiles change rarely
     queryFn: async () => {
       // Use canonical view - shows ALL registered users, not just active/logged-in
       const { data, error } = await supabase

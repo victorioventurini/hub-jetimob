@@ -30,6 +30,7 @@ export function useAuthorizers() {
   const { data: authorizers = [], isLoading } = useQuery({
     queryKey: [...queryKeys.profiles.buProfiles(buId ?? null), "authorizers"],
     enabled: !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - authorizers change rarely
     queryFn: async () => {
       // 1. Fetch memberships for admin roles using profile_id (Identity Cutover v3.0)
       const { data: memberships, error: membershipError } = await supabase

@@ -23,6 +23,7 @@ export function useBuAdmins() {
   const { data: admins = [], isLoading } = useQuery({
     queryKey: [...queryKeys.profiles.buProfiles(buId ?? null), 'admins'],
     enabled: !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - admins change rarely
     queryFn: async () => {
       // Fetch memberships for admin roles using profile_id (Identity Cutover v3.0)
       const { data: memberships, error: membershipError } = await supabase
