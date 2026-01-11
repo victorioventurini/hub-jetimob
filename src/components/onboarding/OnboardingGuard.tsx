@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/lib/queryKeys";
 import { Loader2 } from "lucide-react";
 
 interface OnboardingGuardProps {
@@ -13,7 +14,7 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
 
   // NOTE: Onboarding happens before BU selection; must NOT require BU-scoped client.
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["onboarding-check", user?.id],
+    queryKey: queryKeys.onboarding.check(user?.id ?? null),
     queryFn: async () => {
       if (!user?.id) return null;
 

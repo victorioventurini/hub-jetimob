@@ -286,8 +286,8 @@ export function useSaveContactCapabilities() {
       return { count: newCapabilities.length };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contact-capabilities"] });
-      queryClient.invalidateQueries({ queryKey: ["company-contact-capabilities"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.contactCapabilitiesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.companyContactCapabilitiesPrefix() });
     },
   });
 }

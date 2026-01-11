@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,7 +33,7 @@ export function PartnerContactHoverCard({
   const supabase = useBuScopedSupabase();
 
   const { data: contact, isLoading } = useQuery({
-    queryKey: ["partner-contact-hover", contactId],
+    queryKey: queryKeys.tickets.partnerContactHover(contactId),
     queryFn: async (): Promise<PartnerContactData | null> => {
       if (!contactId) return null;
 

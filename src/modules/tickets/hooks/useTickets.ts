@@ -139,7 +139,7 @@ export function useTicket(ticketId: string | null) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["ticket", ticketId],
+    queryKey: queryKeys.tickets.detail(ticketId),
     queryFn: async () => {
       if (!ticketId) return null;
 
@@ -170,7 +170,7 @@ export function useMyTickets() {
   const { profileId, isReady } = useIdentity();
 
   return useQuery({
-    queryKey: ["my-tickets", buId, profileId],
+    queryKey: queryKeys.tickets.myTickets(buId ?? null, profileId ?? undefined),
     queryFn: async () => {
       if (!buId || !profileId) return [];
 
@@ -291,7 +291,7 @@ export function useCreateTicket(profileId: string | null) {
     },
     onSuccess: () => {
       // Invalida todas as queries de tickets (list, all, my)
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
     },
   });
 }
@@ -349,9 +349,9 @@ export function useUpdateTicketStatus() {
       return ticket;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
     },
   });
 }
@@ -370,8 +370,8 @@ export function useDeleteTicket() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
     },
   });
 }

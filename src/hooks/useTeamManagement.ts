@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/hooks/useIdentity";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * Hook para verificar se o usuário pode gerenciar um time específico.
@@ -25,7 +26,7 @@ export function useTeamManagement() {
   const { client, buId, isReady: buReady } = useOptionalBuClient();
 
   const { data: manageableTeams = [], isLoading } = useQuery({
-    queryKey: ["manageable-teams", buId, userId],
+    queryKey: queryKeys.teamManagement.manageableTeams(buId ?? null, userId ?? null),
     queryFn: async () => {
       if (!buId || !userId || !client) {
         throw new Error("useTeamManagement: No BU client available");

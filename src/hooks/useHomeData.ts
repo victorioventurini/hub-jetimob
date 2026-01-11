@@ -5,6 +5,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -43,7 +44,7 @@ export function useQuickStats() {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["quick-stats", currentBu?.id],
+    queryKey: queryKeys.home.quickStats(currentBu?.id ?? null),
     queryFn: async (): Promise<QuickStatsData> => {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -135,7 +136,7 @@ export function useNewJetimobers(limit = 5) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["new-jetimobers", currentBu?.id, limit],
+    queryKey: queryKeys.home.newJetimobers(currentBu?.id ?? null, limit),
     queryFn: async (): Promise<NewJetimober[]> => {
       // Buscar colaboradores dos últimos 30 dias
       const thirtyDaysAgo = new Date();
@@ -204,7 +205,7 @@ export function useBirthdays() {
   const currentMonth = new Date().getMonth() + 1;
 
   return useQuery({
-    queryKey: ["birthdays", currentBu?.id, currentMonth],
+    queryKey: queryKeys.home.birthdays(currentBu?.id ?? null, currentMonth),
     queryFn: async (): Promise<Birthday[]> => {
       // Use canonical view for user directory
       let query = supabase
@@ -266,7 +267,7 @@ export function useWorkAnniversaries() {
   const currentYear = new Date().getFullYear();
 
   return useQuery({
-    queryKey: ["work-anniversaries", currentBu?.id, currentMonth],
+    queryKey: queryKeys.home.anniversaries(currentBu?.id ?? null, currentMonth),
     queryFn: async (): Promise<WorkAnniversary[]> => {
       // Use canonical view for user directory
       let query = supabase
@@ -334,7 +335,7 @@ export function useModules() {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["modules-home"],
+    queryKey: queryKeys.home.modulesHome(),
     queryFn: async (): Promise<ModuleItem[]> => {
       const { data, error } = await supabase
         .from("modules")

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 // ===========================================
 // TYPES
@@ -63,7 +64,7 @@ export function usePartnerServices(partnerCompanyId?: string) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partner-services", buId, partnerCompanyId],
+    queryKey: queryKeys.tickets.partnerServices(buId ?? null, partnerCompanyId),
     queryFn: async () => {
       if (!buId) return [];
 
@@ -93,7 +94,7 @@ export function usePartnerCategories(partnerCompanyId: string | undefined) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partner-categories", partnerCompanyId],
+    queryKey: queryKeys.tickets.partnerCategories(partnerCompanyId),
     queryFn: async () => {
       if (!partnerCompanyId) return [];
 
@@ -117,7 +118,7 @@ export function usePartnerSubcategories(
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partner-subcategories", partnerCompanyId, categoryId],
+    queryKey: queryKeys.tickets.partnerSubcategories(partnerCompanyId, categoryId),
     queryFn: async () => {
       if (!partnerCompanyId || !categoryId) return [];
 
@@ -143,7 +144,7 @@ export function usePartnerServiceMappings(partnerCompanyId: string | undefined) 
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partner-service-mappings", buId, partnerCompanyId],
+    queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, partnerCompanyId),
     queryFn: async () => {
       if (!buId || !partnerCompanyId) return [];
 
@@ -201,11 +202,11 @@ export function useCreatePartnerService() {
       return mapping as PartnerServiceMapping;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["partner-services"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-subcategories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerServicesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCategoriesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerSubcategoriesPrefix() });
       queryClient.invalidateQueries({
-        queryKey: ["partner-service-mappings", buId, variables.partner_company_id],
+        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, variables.partner_company_id),
       });
     },
   });
@@ -255,11 +256,11 @@ export function useDeletePartnerService() {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["partner-services"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-subcategories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerServicesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCategoriesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerSubcategoriesPrefix() });
       queryClient.invalidateQueries({
-        queryKey: ["partner-service-mappings", buId, data.partner_company_id],
+        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, data.partner_company_id),
       });
     },
   });
@@ -328,11 +329,11 @@ export function useSavePartnerServices() {
       return mappings as PartnerServiceMapping[];
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["partner-services"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["partner-subcategories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerServicesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCategoriesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerSubcategoriesPrefix() });
       queryClient.invalidateQueries({
-        queryKey: ["partner-service-mappings", buId, variables.partner_company_id],
+        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, variables.partner_company_id),
       });
     },
   });

@@ -307,12 +307,14 @@ export const queryKeys = {
     all: (buId: string | null) => ['tickets', buId] as const,
     list: (buId: string | null, filters?: Record<string, unknown>) => 
       ['tickets', 'list', buId, filters] as const,
-    myTickets: (buId: string | null) => ['tickets', 'my', buId] as const,
-    detail: (ticketId: string) => ['tickets', 'detail', ticketId] as const,
+    myTickets: (buId: string | null, profileId?: string) => ['my-tickets', buId, profileId] as const,
+    detail: (ticketId: string | null) => ['ticket', ticketId] as const,
     messages: (ticketId: string) => ['tickets', 'messages', ticketId] as const,
     attachments: (ticketId: string | null) => ['ticket-attachments', ticketId] as const,
     categories: (buId: string | null, scope?: string) => ['tickets', 'categories', buId, scope] as const,
     subcategories: (buId: string | null, categoryId?: string) => ['tickets', 'subcategories', buId, categoryId] as const,
+    categoriesPrefix: (buId: string | null) => ['tickets', 'categories', buId] as const,
+    subcategoriesPrefix: (buId: string | null) => ['tickets', 'subcategories', buId] as const,
     partners: (buId: string | null) => ['tickets', 'partners', buId] as const,
     partnerCompany: (id: string | null) => ['tickets', 'partner-company', id] as const,
     partnerContacts: (buId: string | null, companyId?: string) => 
@@ -322,9 +324,13 @@ export const queryKeys = {
     partnerServices: (buId: string | null, companyId?: string) => 
       ['partner-services', buId, companyId] as const,
     partnerCategories: (companyId?: string) => ['partner-categories', companyId] as const,
-    partnerSubcategories: (categoryId?: string) => ['partner-subcategories', categoryId] as const,
+    partnerSubcategories: (companyId?: string, categoryId?: string) => 
+      ['partner-subcategories', companyId, categoryId] as const,
     partnerServiceMappings: (buId: string | null, companyId?: string) => 
       ['partner-service-mappings', buId, companyId] as const,
+    partnerServicesPrefix: () => ['partner-services'] as const,
+    partnerCategoriesPrefix: () => ['partner-categories'] as const,
+    partnerSubcategoriesPrefix: () => ['partner-subcategories'] as const,
     routingRules: (buId: string | null) => ['tickets', 'routing-rules', buId] as const,
     internalRoutingRules: (buId: string | null) => ['tickets', 'internal-routing-rules', buId] as const,
     contactCapabilities: (buId: string | null, contactId?: string) => 
@@ -333,6 +339,8 @@ export const queryKeys = {
       ['tickets', 'company-contact-capabilities', buId, companyId] as const,
     partnerContactProfile: (contactId: string) => 
       ['tickets', 'partner-contact-profile', contactId] as const,
+    contactCapabilitiesPrefix: () => ['contact-capabilities'] as const,
+    companyContactCapabilitiesPrefix: () => ['company-contact-capabilities'] as const,
   },
 
   // ============= Integrations =============
@@ -435,18 +443,16 @@ export const queryKeys = {
     integrationsCatalog: () => ['settings', 'integrations-catalog'] as const,
   },
 
-  // ============= Onboarding =============
-  onboarding: {
-    teams: (buId: string | null) => ['onboarding', 'teams', buId] as const,
-  },
 
   // ============= Home Dashboard =============
   home: {
     dashboard: (buId: string | null, userId: string) => 
       ['home', 'dashboard', buId, userId] as const,
-    birthdays: (buId: string | null) => ['home', 'birthdays', buId] as const,
-    anniversaries: (buId: string | null) => ['home', 'anniversaries', buId] as const,
-    newJetimobers: (buId: string | null) => ['home', 'new-jetimobers', buId] as const,
+    birthdays: (buId: string | null, month?: number) => ['birthdays', buId, month] as const,
+    anniversaries: (buId: string | null, month?: number) => ['work-anniversaries', buId, month] as const,
+    newJetimobers: (buId: string | null, limit?: number) => ['new-jetimobers', buId, limit] as const,
+    quickStats: (buId: string | null) => ['quick-stats', buId] as const,
+    modulesHome: () => ['modules-home'] as const,
     cultureMessage: () => ['home', 'culture-message'] as const,
     leaderSummary: (buId: string | null, teamId: string | null) => 
       ['home', 'leader-summary', buId, teamId] as const,
@@ -454,6 +460,49 @@ export const queryKeys = {
       ['home', 'leader-focus', buId, teamId] as const,
     leaderTeams: (buId: string | null, userId: string | null) => 
       ['home', 'leader-teams', buId, userId] as const,
+  },
+
+  // ============= Public Profile =============
+  publicProfile: {
+    profile: (profileId: string | null, buId: string | null) => 
+      ['public-profile', profileId, buId] as const,
+    okrs: (userId: string | null, buId: string | null) => 
+      ['user-okrs', userId, buId] as const,
+    kpis: (userId: string | null, buId: string | null) => 
+      ['user-kpis', userId, buId] as const,
+    squads: (userId: string | null, buId: string | null) => 
+      ['user-squads', userId, buId] as const,
+    buMemberships: (profileId: string | null) => 
+      ['user-bu-memberships', profileId] as const,
+  },
+
+  // ============= Onboarding =============
+  onboarding: {
+    check: (userId: string | null) => ['onboarding-check', userId] as const,
+    page: () => ['onboarding-page'] as const,
+    myProfile: () => ['my-profile'] as const,
+    teams: (buId: string | null) => ['onboarding', 'teams', buId] as const,
+  },
+
+  // ============= Managers/Leaders =============
+  managers: {
+    select: (buId: string | null) => ['managers-select', buId] as const,
+  },
+
+  // ============= Team Management =============
+  teamManagement: {
+    manageableTeams: (buId: string | null, userId: string | null) => 
+      ['manageable-teams', buId, userId] as const,
+  },
+
+  // ============= Cycles (Global) =============
+  cycles: {
+    list: () => ['cycles-list'] as const,
+  },
+
+  // ============= Notification Admin =============
+  notificationAdmin: {
+    outboxStats: () => ['notifications', 'outbox-stats'] as const,
   },
 
   // ============= Global Search =============
