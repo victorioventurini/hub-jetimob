@@ -24,14 +24,15 @@ interface HeaderProps {
 }
 
 export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, signOut, isAdmin } = useAuth();
   const { userRole, hasMultipleBus } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
   
-  // Admin de BU ou super_admin podem acessar configurações
-  const canAccessSettings = role === "super_admin" || role === "admin" || userRole === "admin";
+  // Admin de BU ou acesso administrativo podem acessar configurações
+  // isAdmin já considera super_admin e admin via useAuth
+  const canAccessSettings = isAdmin || userRole === "admin";
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";
@@ -151,7 +152,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
                   </Link>
                 </DropdownMenuItem>
               )}
-              {role === "super_admin" && (
+              {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link to="/hub" className="cursor-pointer">
                     <Shield className="h-4 w-4 mr-2" />

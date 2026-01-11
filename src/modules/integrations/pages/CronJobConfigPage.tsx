@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Copy, ExternalLink, Play, RefreshCw, Check, Clock, AlertCircle, Eye, EyeOff, Key, Loader2, CheckCircle2, Circle, Info } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -242,8 +242,10 @@ export default function CronJobConfigPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/hub/integrations')}>
-          <ArrowLeft className="h-4 w-4" />
+        <Button asChild variant="ghost" size="icon">
+          <Link to="/hub/integrations">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
         </Button>
         <IntegrationIcon icon="clock" color="#4F46E5" size="lg" />
         <div className="flex-1">

@@ -103,7 +103,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
   
   // Check if user is BU admin or higher (admin role in BU = bu admin)
-  const isBuAdmin = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  const isBuAdmin = userRole === "admin" || isAdmin;
 
   const NavItem = ({ 
     name, 

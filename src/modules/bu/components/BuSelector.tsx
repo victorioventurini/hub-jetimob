@@ -12,12 +12,10 @@ import { useAuth } from "@/hooks/useAuth";
 
 export function BuSelector() {
   const { currentBu, userBus, hasMultipleBus, switchBu } = useBu();
-  const { role } = useAuth();
+  const { isAdmin } = useAuth();
 
-  const isSuperAdmin = role === "super_admin";
-
-  // Always show for super_admin, otherwise only if user has multiple BUs
-  if (!isSuperAdmin && (!hasMultipleBus || !currentBu)) {
+  // Always show for admin (includes super_admin), otherwise only if user has multiple BUs
+  if (!isAdmin && (!hasMultipleBus || !currentBu)) {
     return null;
   }
 

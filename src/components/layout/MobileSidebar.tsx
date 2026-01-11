@@ -99,7 +99,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
   
   // Check if user is BU admin or higher
-  const isBuAdmin = userRole === "admin" || userRole === "super_admin" || isAdmin;
+  const isBuAdmin = userRole === "admin" || isAdmin;
 
   const NavItem = ({ 
     name, 
