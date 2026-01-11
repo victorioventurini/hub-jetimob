@@ -66,9 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         // Keep BU-scoped clients in sync with the global auth session.
         // Otherwise, a BU client created pre-login can stay "unauth" forever due to caching.
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
@@ -81,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            if (mounted) fetchUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
@@ -91,19 +95,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      } else {
+    // THEN check for existing session with error handling
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('[useAuth] Error getting session:', error);
+          // Clear any corrupted session state
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setRole(null);
+          setIsLoading(false);
+          return;
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          fetchUserData(session.user.id);
+        } else {
+          setIsLoading(false);
+        }
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        console.error('[useAuth] Critical error in getSession:', error);
+        // Ensure we never get stuck in loading state
+        setIsLoading(false);
+      });
+
+    // Safety timeout - ensure isLoading becomes false even if something hangs
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && isLoading) {
+        console.warn('[useAuth] Safety timeout triggered - forcing isLoading to false');
         setIsLoading(false);
       }
-    });
+    }, 10000); // 10 seconds max
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   async function fetchUserData(userId: string) {
