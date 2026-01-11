@@ -8229,6 +8229,10 @@ export type Database = {
         Returns: string
       }
       resolve_work_email: { Args: { p_auth_user_id: string }; Returns: string }
+      rpc_home_dashboard_data: {
+        Args: { p_bu_id: string; p_user_id: string }
+        Returns: Json
+      }
       rpc_leader_dashboard_focus: { Args: { p_team_id: string }; Returns: Json }
       rpc_leader_dashboard_summary: {
         Args: { p_team_id: string }

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 
 // ===========================================
@@ -60,6 +60,7 @@ export interface PartnerSubcategory {
 export function usePartnerServices(partnerCompanyId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["partner-services", buId, partnerCompanyId],
@@ -89,6 +90,8 @@ export function usePartnerServices(partnerCompanyId?: string) {
  * Busca categorias atendidas por um parceiro (usando função SQL)
  */
 export function usePartnerCategories(partnerCompanyId: string | undefined) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["partner-categories", partnerCompanyId],
     queryFn: async () => {
@@ -111,6 +114,8 @@ export function usePartnerSubcategories(
   partnerCompanyId: string | undefined,
   categoryId: string | undefined
 ) {
+  const supabase = useBuScopedSupabase();
+
   return useQuery({
     queryKey: ["partner-subcategories", partnerCompanyId, categoryId],
     queryFn: async () => {
@@ -135,6 +140,7 @@ export function usePartnerSubcategories(
 export function usePartnerServiceMappings(partnerCompanyId: string | undefined) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: ["partner-service-mappings", buId, partnerCompanyId],
@@ -162,6 +168,7 @@ export function useCreatePartnerService() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: {
@@ -211,6 +218,7 @@ export function useDeletePartnerService() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -265,6 +273,7 @@ export function useSavePartnerServices() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
