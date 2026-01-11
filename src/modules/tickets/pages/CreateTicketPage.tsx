@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,7 +66,11 @@ export default function CreateTicketPage() {
   });
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const goBack = useSafeBack({ moduleRoot: '/tickets' });
+  
+  // Read type from URL (?type=external or ?type=internal)
+  const typeFromUrl = searchParams.get('type') as 'internal' | 'external' | null;
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
   const { profileId } = useIdentity();
@@ -87,7 +91,7 @@ export default function CreateTicketPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(createTicketSchema),
     defaultValues: {
-      type: "internal",
+      type: typeFromUrl === 'external' ? 'external' : 'internal',
       title: "",
       initial_message: "",
     },
