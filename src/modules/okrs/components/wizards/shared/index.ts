@@ -35,3 +35,20 @@ export type { InitiativesSummaryProps } from './InitiativesSummary';
 
 export { WizardContextSelector } from './WizardContextSelector';
 export type { WizardContextSelectorProps, WizardContextMode } from './WizardContextSelector';
+
+export { 
+  WizardStepFooter, 
+  WizardFirstStepFooter, 
+  WizardLastStepFooter, 
+  WizardOptionalStepFooter 
+} from './WizardStepFooter';
+export type { WizardStepFooterProps } from './WizardStepFooter';
+
+export { WizardStepHeader } from './WizardStepHeader';
+export type { WizardStepHeaderProps, WizardHeaderVariant } from './WizardStepHeader';
+
+export { FullPageWizardShell } from './FullPageWizardShell';
+export type { FullPageWizardShellProps } from './FullPageWizardShell';
+
+export { WizardStepper, WizardStepperCompact } from './WizardStepper';
+export type { WizardStepDefinition } from './WizardStepper';

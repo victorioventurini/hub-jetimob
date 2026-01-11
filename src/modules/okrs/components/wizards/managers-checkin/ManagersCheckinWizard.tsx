@@ -1,19 +1,21 @@
 /**
  * ManagersCheckinWizard - Orquestrador do Wizard de Check-in de Gestores (Wizard 4)
  * 
+ * Refatorado para usar useWizardOrchestrator
+ * 
  * Fluxo:
  * 1. Panorama - Visão geral de todas as áreas
  * 2. Cross Issues - Dependências e bloqueios
  * 3. Adjustments - Ajustes de foco
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { WizardShell } from '../shared/WizardShell';
 import { ManagersPanoramaStep } from './ManagersPanoramaStep';
 import { ManagersCrossIssuesStep } from './ManagersCrossIssuesStep';
 import { ManagersAdjustmentsStep } from './ManagersAdjustmentsStep';
-import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
+import { useWizardOrchestrator } from '@/modules/okrs/hooks/useWizardOrchestrator';
 import { WIZARD_CONFIGS, type AreaOkrSummary, type CrossDependency } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -25,7 +27,8 @@ export interface ManagersCheckinWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type WizardStep = 'panorama' | 'cross-issues' | 'adjustments';
+const STEPS = ['panorama', 'cross-issues', 'adjustments'] as const;
+type WizardStep = typeof STEPS[number];
 
 // ============================================================
 // COMPONENT
@@ -37,12 +40,22 @@ export function ManagersCheckinWizard({
 }: ManagersCheckinWizardProps) {
   const config = WIZARD_CONFIGS['managers-checkin'];
   
-  // Session persistence
-  const { createSession, completeSession, isCreating } = useWizardSession();
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Orchestrator handles session + navigation + cycle
+  const {
+    currentStep,
+    stepIndex,
+    goToStep,
+    handleClose,
+    completeWizard,
+  } = useWizardOrchestrator<WizardStep>({
+    wizardType: 'managers-checkin',
+    steps: STEPS,
+    open,
+    onOpenChange,
+    skipCycleFetch: true, // Managers don't need cycle
+  });
   
-  // State
-  const [currentStep, setCurrentStep] = useState<WizardStep>('panorama');
+  // Local state
   const [adjustments, setAdjustments] = useState<string[]>([]);
 
   // Mock data (in real implementation, fetch from API)
@@ -75,49 +88,15 @@ export function ManagersCheckinWizard({
     return Math.round(areas.reduce((sum, a) => sum + a.avgProgress, 0) / areas.length);
   }, [areas]);
 
-  // Step index
-  const stepIndex = useMemo(() => {
-    switch (currentStep) {
-      case 'panorama': return 0;
-      case 'cross-issues': return 1;
-      case 'adjustments': return 2;
-      default: return 0;
-    }
-  }, [currentStep]);
-
-  // Create session when wizard opens
-  useEffect(() => {
-    if (open && !sessionId && !isCreating) {
-      createSession({
-        wizardType: 'managers-checkin',
-      }).then(session => {
-        setSessionId(session.id);
-      }).catch(err => {
-        console.error('Failed to create wizard session:', err);
-      });
-    }
-  }, [open, sessionId, isCreating, createSession]);
-
   // Handlers
-  const handleClose = useCallback(() => {
-    setCurrentStep('panorama');
-    setAdjustments([]);
-    setSessionId(null);
-    onOpenChange(false);
-  }, [onOpenChange]);
-
   const handleComplete = useCallback(async () => {
-    // Complete session with adjustments
-    if (sessionId) {
-      await completeSession({
-        sessionId,
-        actionItems: adjustments.map(a => ({ task: a, ownerId: '' })),
-      }).catch(err => console.error('Failed to complete session:', err));
-    }
+    await completeWizard({
+      actionItems: adjustments.map(a => ({ task: a, ownerId: '' })),
+    });
     
     toast.success('Check-in de gestores concluído!');
     handleClose();
-  }, [sessionId, completeSession, adjustments, handleClose]);
+  }, [completeWizard, adjustments, handleClose]);
 
   // Render step content
   const renderStepContent = () => {
@@ -127,7 +106,7 @@ export function ManagersCheckinWizard({
           <ManagersPanoramaStep
             areas={areas}
             companyProgress={companyProgress}
-            onContinue={() => setCurrentStep('cross-issues')}
+            onContinue={() => goToStep('cross-issues')}
           />
         );
 
@@ -135,8 +114,8 @@ export function ManagersCheckinWizard({
         return (
           <ManagersCrossIssuesStep
             dependencies={dependencies}
-            onContinue={() => setCurrentStep('adjustments')}
-            onBack={() => setCurrentStep('panorama')}
+            onContinue={() => goToStep('adjustments')}
+            onBack={() => goToStep('panorama')}
           />
         );
 
@@ -146,7 +125,7 @@ export function ManagersCheckinWizard({
             adjustments={adjustments}
             onAdjustmentsChange={setAdjustments}
             onComplete={handleComplete}
-            onBack={() => setCurrentStep('cross-issues')}
+            onBack={() => goToStep('cross-issues')}
           />
         );
 
