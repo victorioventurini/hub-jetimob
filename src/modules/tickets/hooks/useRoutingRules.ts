@@ -12,6 +12,7 @@ export function useRoutingRules() {
 
   return useQuery({
     queryKey: queryKeys.tickets.routingRules(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes - routing rules change rarely
     queryFn: async () => {
       if (!buId) return [];
 

@@ -19,6 +19,7 @@ export function useLocations() {
   const { data: locations = [], isLoading } = useQuery({
     queryKey: queryKeys.assets.locationsOptions(buId ?? null),
     enabled: !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - locations change rarely
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_locations")
