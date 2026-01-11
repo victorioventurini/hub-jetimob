@@ -2,6 +2,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +65,7 @@ export function ObjectiveTimeline({
   const tableName = objectiveType === "org" ? "okr_org_objectives" : "okr_team_objectives";
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["objective-timeline", buId, objectiveId, objectiveType],
+    queryKey: queryKeys.okrs.objectiveTimeline(buId ?? null, objectiveId, objectiveType),
     queryFn: async (): Promise<TimelineEvent[]> => {
       if (!supabase || !buId) return [];
 
@@ -281,7 +282,7 @@ export function ObjectiveTimelineCompact({
   const { client: supabase, buId } = useOptionalBuClient();
 
   const { data: lastEvent } = useQuery({
-    queryKey: ["objective-timeline-last", buId, objectiveId, objectiveType],
+    queryKey: queryKeys.okrs.objectiveTimelineLast(buId ?? null, objectiveId, objectiveType),
     queryFn: async (): Promise<TimelineEvent | null> => {
       if (!supabase || !buId) return null;
 

@@ -100,7 +100,7 @@ export function TeamKrFormDialog({
   }, [kr]));
 
   const { data: teamObjective } = useQuery({
-    queryKey: ['okr-team-objective', objectiveId],
+    queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('okr_team_objectives')
@@ -116,7 +116,7 @@ export function TeamKrFormDialog({
   const effectiveBuId = buId || teamObjective?.bu_id;
 
   const { data: orgKrs } = useQuery({
-    queryKey: ['okr-org-key-results', teamObjective?.org_objective_id],
+    queryKey: queryKeys.okrs.orgKeyResultsForLinking(teamObjective?.org_objective_id ?? null),
     queryFn: async () => {
       if (!teamObjective?.org_objective_id) return [];
       const { data, error } = await supabase

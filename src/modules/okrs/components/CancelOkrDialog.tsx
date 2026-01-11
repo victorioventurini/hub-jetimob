@@ -75,7 +75,7 @@ export function CancelOkrDialog({
 
   // Fetch cancellation reasons
   const { data: reasons = [] } = useQuery({
-    queryKey: ["okr-cancellation-reasons", buId],
+    queryKey: queryKeys.okrs.cancellationReasons(buId ?? null),
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
