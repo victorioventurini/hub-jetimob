@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface PublicProfile {
   id: string;
@@ -33,7 +34,7 @@ export function usePublicProfile(profileId?: string) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["public-profile", profileId, currentBu?.id],
+    queryKey: queryKeys.publicProfile.profile(profileId ?? null, currentBu?.id ?? null),
     queryFn: async () => {
       if (!profileId || !currentBu?.id) return null;
 
@@ -97,7 +98,7 @@ export function useUserOkrs(userId?: string) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["user-okrs", userId, currentBu?.id],
+    queryKey: queryKeys.publicProfile.okrs(userId ?? null, currentBu?.id ?? null),
     queryFn: async () => {
       if (!userId || !currentBu?.id) return { objectives: [], keyResults: [] };
 
@@ -155,7 +156,7 @@ export function useUserKpis(userId?: string) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["user-kpis", userId, currentBu?.id],
+    queryKey: queryKeys.publicProfile.kpis(userId ?? null, currentBu?.id ?? null),
     queryFn: async () => {
       if (!userId || !currentBu?.id) return [];
 
@@ -187,7 +188,7 @@ export function useUserSquads(userId?: string) {
   const { currentBu } = useBu();
   
   return useQuery({
-    queryKey: ["user-squads", userId, currentBu?.id],
+    queryKey: queryKeys.publicProfile.squads(userId ?? null, currentBu?.id ?? null),
     queryFn: async () => {
       if (!userId) return [];
 
@@ -216,7 +217,7 @@ export function useUserBuMemberships(profileId?: string) {
   const supabase = useBuScopedSupabase();
   
   return useQuery({
-    queryKey: ["user-bu-memberships", profileId],
+    queryKey: queryKeys.publicProfile.buMemberships(profileId ?? null),
     queryFn: async () => {
       if (!profileId) return [];
 

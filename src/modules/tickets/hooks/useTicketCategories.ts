@@ -84,7 +84,7 @@ export function useCreateTicketCategory() {
     onSuccess: () => {
       // Invalidate all category queries for this BU (any scope)
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'categories', buId],
+        queryKey: queryKeys.tickets.categoriesPrefix(buId ?? null),
         exact: false 
       });
     },
@@ -120,7 +120,7 @@ export function useUpdateTicketCategory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'categories', buId],
+        queryKey: queryKeys.tickets.categoriesPrefix(buId ?? null),
         exact: false 
       });
     },
@@ -144,7 +144,7 @@ export function useDeleteTicketCategory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'categories', buId],
+        queryKey: queryKeys.tickets.categoriesPrefix(buId ?? null),
         exact: false 
       });
     },
@@ -220,12 +220,12 @@ export function useCreateTicketSubcategory() {
     onSuccess: () => {
       // Invalidate categories (which include subcategories in nested query)
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'categories', buId],
+        queryKey: queryKeys.tickets.categoriesPrefix(buId ?? null),
         exact: false 
       });
       // Invalidate subcategories
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'subcategories', buId],
+        queryKey: queryKeys.tickets.subcategoriesPrefix(buId ?? null),
         exact: false 
       });
     },
@@ -259,11 +259,11 @@ export function useUpdateTicketSubcategory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'categories', buId],
+        queryKey: queryKeys.tickets.categoriesPrefix(buId ?? null),
         exact: false 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'subcategories', buId],
+        queryKey: queryKeys.tickets.subcategoriesPrefix(buId ?? null),
         exact: false 
       });
     },
@@ -287,11 +287,11 @@ export function useDeleteTicketSubcategory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'categories', buId],
+        queryKey: queryKeys.tickets.categoriesPrefix(buId ?? null),
         exact: false 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['tickets', 'subcategories', buId],
+        queryKey: queryKeys.tickets.subcategoriesPrefix(buId ?? null),
         exact: false 
       });
     },

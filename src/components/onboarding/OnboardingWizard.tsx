@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { cn } from "@/lib/utils";
+import { queryKeys } from "@/lib/queryKeys";
 import { User, MapPin, ChevronRight, ChevronLeft, Loader2, Check, Sparkles, Phone, Camera } from "lucide-react";
 
 const MONTHS = [
@@ -168,9 +169,9 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
       toast.success("Bem-vindo ao Hub Jetimob! 🚀");
       // Invalidar TODAS as queries de profile/onboarding ANTES de navegar
       // para garantir que guards e páginas vejam o estado atualizado
-      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["onboarding-check"] });
-      queryClient.invalidateQueries({ queryKey: ["onboarding-page"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.myProfile() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page() });
       // Navegar após invalidar queries
       onComplete();
     },
