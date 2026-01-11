@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History } from 'lucide-react';
+import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History, Wand2 } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
 import { useKrInitiativesCount } from '../../hooks/useInitiatives';
 import { cn } from '@/lib/utils';
@@ -252,6 +253,15 @@ export function ObjectiveListItem({
                             <Plus className="w-4 h-4 mr-2" />
                             Adicionar KR
                           </DropdownMenuItem>
+                          {type === 'team' && (
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `/okrs/objectives/${objective.id}/krs/create`;
+                            }}>
+                              <Wand2 className="w-4 h-4 mr-2" />
+                              Wizard de KRs
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                       

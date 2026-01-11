@@ -132,7 +132,6 @@ export function KrTypeStep({
                   wizard: 'creation',
                   step: 'kr-type',
                   objectiveTitle,
-                  isShared: isSharedObjective,
                 }}
               />
             </div>

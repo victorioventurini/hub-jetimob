@@ -22,3 +22,6 @@ export * from './clevel-checkin';
 
 // Wizard 6: Team OKR Creation
 export * from './team-okr-creation';
+
+// Wizard 7: Team KR Creation (NEW)
+export * from './team-kr-creation';
