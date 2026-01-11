@@ -161,8 +161,8 @@ export default function CreateTicketPage() {
     selectedCategoryId
   );
 
-  // Subcategorias para tickets internos
-  const { data: allSubcategories = [] } = useTicketSubcategories(selectedCategoryId || "");
+  // Subcategorias para tickets internos (pass undefined instead of empty string for proper filtering)
+  const { data: allSubcategories = [] } = useTicketSubcategories(selectedCategoryId);
 
   // Verificar se a categoria selecionada permite subcategoria vazia (generalista)
   const selectedPartnerCategory = useMemo(() => {
