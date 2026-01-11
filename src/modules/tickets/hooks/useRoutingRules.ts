@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { TicketRoutingRule } from "../types";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { queryKeys } from "@/lib/queryKeys";
 export function useRoutingRules() {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: queryKeys.tickets.routingRules(buId ?? null),
@@ -31,6 +32,7 @@ export function useRoutingRules() {
 export function useCreateRoutingRule() {
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: {
@@ -76,6 +78,7 @@ export function useCreateRoutingRule() {
 
 export function useUpdateRoutingRule() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -112,6 +115,7 @@ export function useUpdateRoutingRule() {
 
 export function useDeleteRoutingRule() {
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (id: string) => {

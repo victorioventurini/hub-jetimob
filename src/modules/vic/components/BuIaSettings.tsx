@@ -9,16 +9,16 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Bot, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useVicConfig, useVicAgentActivations, VIC_AGENTS } from "@/modules/vic";
 import type { VicAgentSlug } from "@/modules/vic";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 
 export function BuIaSettings() {
   const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
   const { updateConfig, isUpdating } = useVicConfig();
   const { activations, isLoading: isLoadingActivations, toggleAgent, isToggling } = useVicAgentActivations();
   
@@ -36,7 +36,7 @@ export function BuIaSettings() {
 
       const { data, error } = await supabase
         .from("bu_ia_config")
-        .select("*")
+        .select("id, bu_id, ia_enabled, ia_mode, max_calls_per_user_day, max_calls_per_bu_day, created_at, updated_at")
         .eq("bu_id", currentBu.id)
         .single();
 

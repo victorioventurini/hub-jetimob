@@ -1,9 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
-import { usePendingCheckins, useCheckinSummary } from "@/modules/okrs/hooks/usePendingCheckins";
-import { useTeams } from "@/modules/teams/hooks/useTeams";
 import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { queryKeys } from "@/lib/queryKeys";
 
 // Types
 interface KpiSummary {
@@ -76,78 +75,52 @@ const mockKpisByRole: Record<string, KpiSummary[]> = {
   ],
 };
 
+// Response type from RPC
+interface DashboardRpcResponse {
+  user_team_id: string | null;
+  user_team_name: string | null;
+  okr_counts: {
+    on_track: number;
+    at_risk: number;
+    off_track: number;
+  };
+  checkin_summary: {
+    overdue: number;
+    pending: number;
+  };
+  team_count: number;
+}
+
 export function useHomeDashboard(): HomeDashboardData {
   const { role, user } = useAuth();
   const { currentBu } = useBu();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
-  const { data: pendingCheckins, isLoading: checkinsLoading } = usePendingCheckins();
-  const { summary: checkinSummary } = useCheckinSummary();
-  const { data: teams } = useTeams();
-  
-  // Hook to get user's team ID
-  const { data: userTeamId } = useQuery({
-    queryKey: ['user-team-id', user?.id, buId],
-    queryFn: async () => {
-      if (!user?.id || !supabase) return null;
+
+  // Single RPC call to get all dashboard data
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: queryKeys.home.dashboard(buId, user?.id ?? ''),
+    queryFn: async (): Promise<DashboardRpcResponse | null> => {
+      if (!buId || !user?.id || !supabase) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('team_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data?.team_id || null;
-    },
-    enabled: !!user?.id && isReady && !!supabase,
-  });
-
-  // Hook to get real OKR status counts - scoped to BU
-  const { data: okrCounts, isLoading: okrLoading } = useQuery({
-    queryKey: ['okr-status-counts', buId, userTeamId],
-    queryFn: async () => {
-      if (!buId || !supabase) return { onTrack: 0, atRisk: 0, offTrack: 0 };
-      
-      let query = supabase
-        .from('okr_team_key_results')
-        .select('status')
-        .eq('bu_id', buId)
-        .is('deleted_at', null);
-
-      if (userTeamId) {
-        query = query.eq('team_id', userTeamId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const counts = {
-        onTrack: 0,
-        atRisk: 0,
-        offTrack: 0,
-      };
-
-      data?.forEach(kr => {
-        switch (kr.status) {
-          case 'green':
-            counts.onTrack++;
-            break;
-          case 'yellow':
-            counts.atRisk++;
-            break;
-          case 'red':
-            counts.offTrack++;
-            break;
-        }
+      const { data, error } = await supabase.rpc('rpc_home_dashboard_data', {
+        p_bu_id: buId,
+        p_user_id: user.id,
       });
-
-      return counts;
+      
+      if (error) throw error;
+      return data as unknown as DashboardRpcResponse;
     },
-    enabled: isReady && !!buId && !!supabase,
+    enabled: isReady && !!buId && !!user?.id && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
   const roleCategory = mapRoleToCategory(role as string | undefined);
-  const isLoading = checkinsLoading || okrLoading;
+
+  // Extract data from RPC response
+  const okrCounts = dashboardData?.okr_counts ?? { on_track: 0, at_risk: 0, off_track: 0 };
+  const checkinSummary = dashboardData?.checkin_summary ?? { overdue: 0, pending: 0 };
+  const teamCount = dashboardData?.team_count ?? 0;
+  const userTeamName = dashboardData?.user_team_name;
 
   // Build focus items dynamically based on real data
   const focusItems: FocusItem[] = [];
@@ -162,33 +135,30 @@ export function useHomeDashboard(): HomeDashboardData {
   }
 
   // Add at-risk OKRs warning
-  if (okrCounts && okrCounts.atRisk > 0) {
+  if (okrCounts.at_risk > 0) {
     focusItems.push({
       type: "warning",
-      label: `${okrCounts.atRisk} OKR${okrCounts.atRisk > 1 ? 's' : ''} em risco`,
+      label: `${okrCounts.at_risk} OKR${okrCounts.at_risk > 1 ? 's' : ''} em risco`,
       link: "/okrs",
     });
   }
 
   // Add off-track OKRs warning
-  if (okrCounts && okrCounts.offTrack > 0) {
+  if (okrCounts.off_track > 0) {
     focusItems.push({
       type: "warning",
-      label: `${okrCounts.offTrack} OKR${okrCounts.offTrack > 1 ? 's' : ''} fora do caminho`,
+      label: `${okrCounts.off_track} OKR${okrCounts.off_track > 1 ? 's' : ''} fora do caminho`,
       link: "/okrs",
     });
   }
 
   // Add info items for executives
-  if (roleCategory === "executive") {
-    // Count teams with pending check-ins (mock for now)
-    if (teams && teams.length > 0) {
-      focusItems.push({
-        type: "info",
-        label: `${teams.length} time${teams.length > 1 ? 's' : ''} ativo${teams.length > 1 ? 's' : ''}`,
-        link: "/teams",
-      });
-    }
+  if (roleCategory === "executive" && teamCount > 0) {
+    focusItems.push({
+      type: "info",
+      label: `${teamCount} time${teamCount > 1 ? 's' : ''} ativo${teamCount > 1 ? 's' : ''}`,
+      link: "/teams",
+    });
   }
 
   // If no focus items, add an encouraging message
@@ -201,28 +171,28 @@ export function useHomeDashboard(): HomeDashboardData {
 
   // Calculate team status
   let teamStatus: TeamStatus | undefined;
-  if (okrCounts) {
-    const total = okrCounts.onTrack + okrCounts.atRisk + okrCounts.offTrack;
-    if (total > 0) {
-      const teamName = roleCategory === "executive" 
-        ? "Toda a BU" 
-        : userTeamId
-          ? teams?.find(t => t.id === userTeamId)?.name || "Meu Time"
-          : "Meu Time";
+  const total = okrCounts.on_track + okrCounts.at_risk + okrCounts.off_track;
+  if (total > 0) {
+    const teamName = roleCategory === "executive" 
+      ? "Toda a BU" 
+      : userTeamName || "Meu Time";
 
-      teamStatus = {
-        teamName,
-        onTrackPercent: Math.round((okrCounts.onTrack / total) * 100),
-        atRiskPercent: Math.round((okrCounts.atRisk / total) * 100),
-        offTrackPercent: Math.round((okrCounts.offTrack / total) * 100),
-      };
-    }
+    teamStatus = {
+      teamName,
+      onTrackPercent: Math.round((okrCounts.on_track / total) * 100),
+      atRiskPercent: Math.round((okrCounts.at_risk / total) * 100),
+      offTrackPercent: Math.round((okrCounts.off_track / total) * 100),
+    };
   }
 
   return {
     role: roleCategory,
     kpis: mockKpisByRole[roleCategory] || mockKpisByRole.collaborator,
-    okrSummary: okrCounts || { onTrack: 0, atRisk: 0, offTrack: 0 },
+    okrSummary: { 
+      onTrack: okrCounts.on_track, 
+      atRisk: okrCounts.at_risk, 
+      offTrack: okrCounts.off_track 
+    },
     focusItems,
     teamStatus,
     isLoading,
