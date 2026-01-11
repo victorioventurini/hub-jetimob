@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import { OverallProgressCard } from '../components/dashboard/OverallProgressCard
 import { StatusDistributionBar } from '../components/dashboard/StatusDistributionBar';
 import { ObjectiveListItem } from '../components/dashboard/ObjectiveListItem';
 import { OrgObjectiveFormDialog } from '../components/OrgObjectiveFormDialog';
-import { TeamObjectiveFormDialog } from '../components/TeamObjectiveFormDialog';
+
 import { OkrEmptyState } from '../components/OkrEmptyState';
 import { OkrAlertsCard } from '../components/OkrAlertsCard';
 import { SharedOkrInsights } from '../components/SharedOkrInsights';
@@ -45,6 +45,7 @@ interface OkrFiltersState {
 
 export default function OkrDashboardPage() {
   usePageTitle("OKRs");
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const { user } = useAuth();
   const { has, isWildcard } = usePermissions();
@@ -77,7 +78,6 @@ export default function OkrDashboardPage() {
   const normalizedTeamId = filters.teamId && filters.teamId !== 'all' ? filters.teamId : undefined;
 
   const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(false);
-  const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
 
   // Queries
   const { data: teams, isLoading: teamsLoading } = useTeams();
@@ -146,7 +146,9 @@ export default function OkrDashboardPage() {
     if (activeView === 'company' && canCreateOrg) {
       setShowCreateOrgDialog(true);
     } else if ((activeView === 'team' || activeView === 'my') && canCreateTeam) {
-      setShowCreateTeamDialog(true);
+      // Navigate to fullpage wizard for team OKR creation
+      const teamParam = normalizedTeamId ? `?team=${normalizedTeamId}` : '';
+      navigate(`/okrs/create${teamParam}`);
     }
   };
 
@@ -361,7 +363,7 @@ export default function OkrDashboardPage() {
                 activeView === 'company' && canCreateOrg
                   ? () => setShowCreateOrgDialog(true)
                   : activeView !== 'company' && canCreateTeam
-                  ? () => setShowCreateTeamDialog(true)
+                  ? () => navigate(`/okrs/create${normalizedTeamId ? `?team=${normalizedTeamId}` : ''}`)
                   : undefined
               }
             />
@@ -386,12 +388,6 @@ export default function OkrDashboardPage() {
         open={showCreateOrgDialog}
         onOpenChange={setShowCreateOrgDialog}
         year={filters.year}
-      />
-      <TeamObjectiveFormDialog
-        open={showCreateTeamDialog}
-        onOpenChange={setShowCreateTeamDialog}
-        teams={teams || []}
-        orgObjectives={orgObjectives || []}
       />
     </HubLayout>
   );
