@@ -27,6 +27,7 @@ export function useBuUsers() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.buUsers(buId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId) return [];
 

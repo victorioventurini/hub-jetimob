@@ -12,6 +12,7 @@ export function useBuUserOverrides(userId: string | null) {
 
   const { data: overrides = [], isLoading } = useQuery({
     queryKey,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId || !userId) return [];
 
@@ -92,6 +93,7 @@ export function useUserEffectivePermissions(userId: string | null) {
 
   const { data: effectivePermissions = [], isLoading } = useQuery({
     queryKey: queryKeys.permissions.userEffective(buId, userId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId || !userId) return [];
 
