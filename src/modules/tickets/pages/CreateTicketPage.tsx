@@ -27,6 +27,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/hooks/useIdentity";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
@@ -59,6 +60,11 @@ function formatFileSize(bytes: number): string {
 }
 
 export default function CreateTicketPage() {
+  usePageTitle("Novo Ticket", {
+    pageType: "subpage",
+    customDescription: "Crie um novo ticket interno ou externo e defina categoria, visibilidade e prazo.",
+  });
+
   const navigate = useNavigate();
   const goBack = useSafeBack({ moduleRoot: '/tickets' });
   const { currentBu } = useBu();

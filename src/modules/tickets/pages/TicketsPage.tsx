@@ -7,7 +7,9 @@ import { TicketsLayout } from "../components/TicketsLayout";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 
 export default function TicketsPage() {
-  usePageTitle("Tickets");
+  usePageTitle("Tickets", {
+    customDescription: "Gerencie tickets internos e externos, acompanhe status, prazos e mensagens.",
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
