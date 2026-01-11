@@ -16,6 +16,7 @@ export function useJobTitles() {
 
   return useQuery({
     queryKey: queryKeys.settings.jobTitles(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes - job titles change rarely
     queryFn: async (): Promise<JobTitleWithUsageCount[]> => {
       if (!buId) return [];
 
@@ -66,6 +67,7 @@ export function useActiveJobTitles() {
 
   return useQuery({
     queryKey: queryKeys.settings.jobTitlesActive(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes - job titles change rarely
     queryFn: async (): Promise<JobTitle[]> => {
       if (!buId) return [];
 

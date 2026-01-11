@@ -38,6 +38,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
   // Fetch KPIs where user is owner
   const { data: kpis = [], isLoading: kpisLoading } = useQuery({
     queryKey: [...queryKeys.kpis.all(buId ?? null), "owner", profileId],
+    staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!buId && !!profileId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,6 +56,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
   // Fetch Initiatives where user is owner
   const { data: initiatives = [], isLoading: initiativesLoading } = useQuery({
     queryKey: [...queryKeys.okrs.initiatives(buId ?? null), "owner", profileId],
+    staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!buId && !!profileId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -72,6 +74,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
   // Fetch open Tickets where user is owner (not closed/discarded)
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: [...queryKeys.tickets.all(buId ?? null), "owner", profileId],
+    staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!buId && !!profileId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -90,6 +93,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
   // Fetch Teams where user is leader (optional - will be SET NULL)
   const { data: teams = [], isLoading: teamsLoading } = useQuery({
     queryKey: [...queryKeys.teams.all(buId ?? null), "leader", profileId],
+    staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!buId && !!profileId,
     queryFn: async () => {
       const { data, error } = await supabase

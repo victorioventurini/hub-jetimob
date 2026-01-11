@@ -58,6 +58,7 @@ export function useNotificationEvents() {
   
   return useQuery({
     queryKey: queryKeys.notifications.events(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - catalog rarely changes
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_events')
@@ -77,6 +78,7 @@ export function useNotificationChannels() {
   
   return useQuery({
     queryKey: queryKeys.notifications.channels(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - catalog rarely changes
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notification_channels')
@@ -96,6 +98,7 @@ export function useBuNotificationChannels(buId?: string) {
   
   return useQuery({
     queryKey: queryKeys.notifications.buChannels(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId) return [];
       
@@ -162,6 +165,7 @@ export function useUserNotificationSettings() {
   
   return useQuery({
     queryKey: queryKeys.notifications.settings(user?.id ?? '', currentBu?.id ?? ''),
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async () => {
       if (!user?.id || !currentBu?.id) return [];
       
