@@ -231,14 +231,16 @@ export function useTicket(ticketId: string | null) {
       const { data, error } = await supabase
         .from("tickets")
         .select(`
-          id, bu_id, type, title, description, status,
-          expected_due_at, actual_due_at, visibility,
+          id, bu_id, type, title, status,
+          expected_due_at, visibility,
           created_by_user_id, owner_user_id, assigned_contact_id,
           partner_company_id, category_id, subcategory_id,
-          metadata, created_at, updated_at,
+          created_at, updated_at,
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name),
+          created_by:profiles!tickets_created_by_user_id_fkey(id, display_name, photo_url),
+          owner:profiles!tickets_owner_user_id_fkey(id, display_name, photo_url),
           assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("id", ticketId)
@@ -246,7 +248,20 @@ export function useTicket(ticketId: string | null) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as unknown as Ticket | null;
+      
+      // Normalize single-object relations that might come as arrays
+      if (data) {
+        return {
+          ...data,
+          created_by: Array.isArray(data.created_by) ? data.created_by[0] ?? null : data.created_by,
+          owner: Array.isArray(data.owner) ? data.owner[0] ?? null : data.owner,
+          partner_company: Array.isArray(data.partner_company) ? data.partner_company[0] ?? null : data.partner_company,
+          category: Array.isArray(data.category) ? data.category[0] ?? null : data.category,
+          subcategory: Array.isArray(data.subcategory) ? data.subcategory[0] ?? null : data.subcategory,
+          assigned_contact: Array.isArray(data.assigned_contact) ? data.assigned_contact[0] ?? null : data.assigned_contact,
+        } as Ticket;
+      }
+      return null;
     },
     enabled: !!ticketId && !!buId,
   });
