@@ -383,14 +383,17 @@ export function useCreateTicket(profileId: string | null) {
       return ticket;
     },
     onSuccess: () => {
-      // Invalida todas as queries de tickets (list, all, my)
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      // Invalidate ticket lists (all filters) + my tickets for this BU
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId ?? null) });
     },
   });
 }
 
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -412,15 +415,17 @@ export function useUpdateTicket() {
       return ticket;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
     },
   });
 }
 
 export function useUpdateTicketStatus() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -442,15 +447,17 @@ export function useUpdateTicketStatus() {
       return ticket;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
     },
   });
 }
 
 export function useDeleteTicket() {
   const queryClient = useQueryClient();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
   const supabase = useBuScopedSupabase();
 
   return useMutation({
@@ -463,8 +470,8 @@ export function useDeleteTicket() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTickets(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId) });
     },
   });
 }
