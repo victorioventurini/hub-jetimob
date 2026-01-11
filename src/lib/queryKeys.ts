@@ -142,6 +142,7 @@ export const queryKeys = {
     initiativesByUser: (profileId: string | null) => ['okr-initiatives', 'user', profileId] as const,
     initiativesByStatus: (buId: string | null, status?: string) => ['okr-initiatives', 'status', buId, status] as const,
     initiativesAll: () => ['okr-initiatives'] as const,
+    initiativesByKrs: (krIds: string[]) => ['wizard-initiatives', krIds] as const,
     
     // Cycles & Settings
     settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,
@@ -181,6 +182,8 @@ export const queryKeys = {
     // User profile for check-in
     userProfileForCheckin: (userId: string | null, buId: string | null) =>
       ['user-profile-for-checkin', userId, buId] as const,
+    userProfileForWizard: (userId: string | null, buId: string | null) =>
+      ['user-profile-for-wizard', userId, buId] as const,
     
     // Team objective detail
     teamObjectiveDetail: (objectiveId: string) =>
