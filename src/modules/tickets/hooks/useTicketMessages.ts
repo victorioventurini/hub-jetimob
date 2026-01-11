@@ -124,20 +124,21 @@ export function useCreateMessage(profileId: string | null) {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", ticketId);
 
-      // Create mentions if provided
+      // Create mentions if provided (using global mentions table)
       if (data.mentions && data.mentions.length > 0) {
         const mentionInserts = data.mentions
           .filter((m) => m.user_id || m.contact_id)
           .map((m) => ({
             bu_id: buId,
-            ticket_id: ticketId,
-            message_id: message.id,
+            entity_type: "ticket_message" as const,
+            entity_id: message.id,
             mentioned_user_id: m.user_id || null,
             mentioned_contact_id: m.contact_id || null,
+            created_by: profileId,
           }));
 
         if (mentionInserts.length > 0) {
-          await buScopedSupabase.from("ticket_mentions").insert(mentionInserts);
+          await buScopedSupabase.from("mentions").insert(mentionInserts);
         }
       }
 

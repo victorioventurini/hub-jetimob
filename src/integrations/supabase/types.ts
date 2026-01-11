@@ -6170,65 +6170,6 @@ export type Database = {
           },
         ]
       }
-      ticket_mentions: {
-        Row: {
-          bu_id: string
-          created_at: string
-          id: string
-          mentioned_contact_id: string | null
-          mentioned_user_id: string | null
-          message_id: string
-          ticket_id: string
-        }
-        Insert: {
-          bu_id: string
-          created_at?: string
-          id?: string
-          mentioned_contact_id?: string | null
-          mentioned_user_id?: string | null
-          message_id: string
-          ticket_id: string
-        }
-        Update: {
-          bu_id?: string
-          created_at?: string
-          id?: string
-          mentioned_contact_id?: string | null
-          mentioned_user_id?: string | null
-          message_id?: string
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_mentions_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_mentions_mentioned_contact_id_fkey"
-            columns: ["mentioned_contact_id"]
-            isOneToOne: false
-            referencedRelation: "partner_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_mentions_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "ticket_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_mentions_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ticket_messages: {
         Row: {
           author_contact_id: string | null

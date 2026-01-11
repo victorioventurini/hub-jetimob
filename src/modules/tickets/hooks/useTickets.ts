@@ -255,20 +255,21 @@ export function useCreateTicket(profileId: string | null) {
           .select("id")
           .single();
 
-        // Insert mentions for initial message
+        // Insert mentions for initial message (using global mentions table)
         if (!messageError && message && data.initial_message_mentions && data.initial_message_mentions.length > 0) {
           const mentionInserts = data.initial_message_mentions
             .filter((m) => m.user_id || m.contact_id)
             .map((m) => ({
               bu_id: buId,
-              ticket_id: ticket.id,
-              message_id: message.id,
+              entity_type: "ticket_message" as const,
+              entity_id: message.id,
               mentioned_user_id: m.user_id || null,
               mentioned_contact_id: m.contact_id || null,
+              created_by: profileId,
             }));
 
           if (mentionInserts.length > 0) {
-            await supabase.from("ticket_mentions").insert(mentionInserts);
+            await supabase.from("mentions").insert(mentionInserts);
           }
         }
       }

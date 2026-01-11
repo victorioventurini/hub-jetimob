@@ -600,6 +600,19 @@ export const queryKeys = {
     globalDetail: (profileId: string) =>
       ['users', 'global-detail', profileId] as const,
   },
+
+  // ============= Mentions =============
+  mentions: {
+    /** Candidates for internal+external context */
+    candidates: (buId: string | null, context: string, partnerCompanyId: string | null, q: string) =>
+      ['mentions', 'candidates', buId, context, partnerCompanyId, { q }] as const,
+    /** Candidates for internal-only context */
+    internalCandidates: (buId: string | null, q: string) =>
+      ['mentions', 'internal-candidates', buId, { q }] as const,
+    /** Mentions by entity (for fetching mentions of a specific message/checkin/etc) */
+    byEntity: (entityType: string, entityId: string) =>
+      ['mentions', 'by-entity', entityType, entityId] as const,
+  },
 } as const;
 
 // Helper type for extracting query key types
