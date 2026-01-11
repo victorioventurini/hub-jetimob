@@ -1,20 +1,27 @@
 /**
  * CLevelCheckinWizard - Wizard de Check-in Estratégico C-Level (Wizard 5)
  * 
- * Simplificado para MVP - 4 etapas de direção estratégica
+ * Refatorado para usar useWizardOrchestrator e componentes compartilhados
+ * 
+ * Fluxo:
+ * 1. Company OKRs - Visão estratégica
+ * 2. Insights - Leitura do sistema
+ * 3. Decisions - Decisões estratégicas
+ * 4. Directives - Direcionamentos
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { WizardShell } from '../shared/WizardShell';
-import { ArrowRight, ArrowLeft, Target, Lightbulb, CheckCircle2, TrendingUp } from 'lucide-react';
-import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
+import { WizardStepHeader } from '../shared/WizardStepHeader';
+import { WizardStepFooter, WizardFirstStepFooter, WizardLastStepFooter } from '../shared/WizardStepFooter';
+import { Target, Lightbulb, TrendingUp } from 'lucide-react';
+import { useWizardOrchestrator } from '@/modules/okrs/hooks/useWizardOrchestrator';
 import { WIZARD_CONFIGS } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -26,7 +33,8 @@ export interface CLevelCheckinWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type WizardStep = 'company-okrs' | 'insights' | 'decisions' | 'directives';
+const STEPS = ['company-okrs', 'insights', 'decisions', 'directives'] as const;
+type WizardStep = typeof STEPS[number];
 
 // ============================================================
 // COMPONENT
@@ -35,11 +43,24 @@ type WizardStep = 'company-okrs' | 'insights' | 'decisions' | 'directives';
 export function CLevelCheckinWizard({ open, onOpenChange }: CLevelCheckinWizardProps) {
   const config = WIZARD_CONFIGS['clevel-checkin'];
   
-  // Session persistence
-  const { createSession, completeSession, isCreating } = useWizardSession();
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Orchestrator handles session + navigation
+  const {
+    currentStep,
+    stepIndex,
+    goToStep,
+    goNext,
+    goBack,
+    handleClose,
+    completeWizard,
+  } = useWizardOrchestrator<WizardStep>({
+    wizardType: 'clevel-checkin',
+    steps: STEPS,
+    open,
+    onOpenChange,
+    skipCycleFetch: true,
+  });
   
-  const [currentStep, setCurrentStep] = useState<WizardStep>('company-okrs');
+  // Local state
   const [strategicDecisions, setStrategicDecisions] = useState('');
   const [directives, setDirectives] = useState('');
 
@@ -50,61 +71,26 @@ export function CLevelCheckinWizard({ open, onOpenChange }: CLevelCheckinWizardP
     { id: '3', title: 'Reduzir churn para 3%', progress: 72, trend: 'improving' as const },
   ], []);
 
-  const stepIndex = useMemo(() => {
-    const steps: WizardStep[] = ['company-okrs', 'insights', 'decisions', 'directives'];
-    return steps.indexOf(currentStep);
-  }, [currentStep]);
-
-  // Create session when wizard opens
-  useEffect(() => {
-    if (open && !sessionId && !isCreating) {
-      createSession({
-        wizardType: 'clevel-checkin',
-      }).then(session => {
-        setSessionId(session.id);
-      }).catch(err => {
-        console.error('Failed to create wizard session:', err);
-      });
-    }
-  }, [open, sessionId, isCreating, createSession]);
-
-  const handleClose = useCallback(() => {
-    setCurrentStep('company-okrs');
-    setStrategicDecisions('');
-    setDirectives('');
-    setSessionId(null);
-    onOpenChange(false);
-  }, [onOpenChange]);
-
   const handleComplete = useCallback(async () => {
-    // Complete session with decisions and directives
-    if (sessionId) {
-      await completeSession({
-        sessionId,
-        meetingNotes: `Decisões: ${strategicDecisions}\n\nDirecionamentos: ${directives}`,
-      }).catch(err => console.error('Failed to complete session:', err));
-    }
+    await completeWizard({
+      meetingNotes: `Decisões: ${strategicDecisions}\n\nDirecionamentos: ${directives}`,
+    });
     
     toast.success('Check-in estratégico concluído!');
     handleClose();
-  }, [sessionId, completeSession, strategicDecisions, directives, handleClose]);
+  }, [completeWizard, strategicDecisions, directives, handleClose]);
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 'company-okrs':
         return (
           <div className="flex flex-col h-full">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-amber-500/10 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                  <Target className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">OKRs da Empresa</h3>
-                  <p className="text-sm text-muted-foreground">Visão estratégica consolidada</p>
-                </div>
-              </div>
-            </div>
+            <WizardStepHeader
+              icon={Target}
+              title="OKRs da Empresa"
+              description="Visão estratégica consolidada"
+              variant="amber"
+            />
             <ScrollArea className="flex-1 p-6">
               <div className="space-y-4">
                 {companyOkrs.map((okr) => (
@@ -123,74 +109,105 @@ export function CLevelCheckinWizard({ open, onOpenChange }: CLevelCheckinWizardP
                 ))}
               </div>
             </ScrollArea>
-            <div className="px-6 py-4 border-t">
-              <Button onClick={() => setCurrentStep('insights')} className="w-full">
-                Ver insights <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+            <WizardFirstStepFooter
+              primaryLabel="Ver insights"
+              onPrimary={goNext}
+            />
           </div>
         );
 
       case 'insights':
         return (
           <div className="flex flex-col h-full">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Lightbulb className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Leitura do Sistema</h3>
-                  <p className="text-sm text-muted-foreground">Insights automáticos</p>
-                </div>
-              </div>
-            </div>
+            <WizardStepHeader
+              icon={Lightbulb}
+              title="Leitura do Sistema"
+              description="Insights automáticos"
+              variant="primary"
+            />
             <ScrollArea className="flex-1 p-6">
               <div className="space-y-3">
-                <Card className="border-green-200"><CardContent className="p-4 text-sm">✓ 2 de 3 OKRs em tendência de melhora</CardContent></Card>
-                <Card className="border-yellow-200"><CardContent className="p-4 text-sm">⚠ NPS estagnado - requer atenção</CardContent></Card>
-                <Card><CardContent className="p-4 text-sm">💡 Engenharia é gargalo para 2 áreas</CardContent></Card>
+                <Card className="border-green-200">
+                  <CardContent className="p-4 text-sm">✓ 2 de 3 OKRs em tendência de melhora</CardContent>
+                </Card>
+                <Card className="border-yellow-200">
+                  <CardContent className="p-4 text-sm">⚠ NPS estagnado - requer atenção</CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-sm">💡 Engenharia é gargalo para 2 áreas</CardContent>
+                </Card>
               </div>
             </ScrollArea>
-            <div className="px-6 py-4 border-t flex gap-3">
-              <Button variant="ghost" onClick={() => setCurrentStep('company-okrs')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
-              <Button onClick={() => setCurrentStep('decisions')} className="flex-1">Decisões <ArrowRight className="ml-2 h-4 w-4" /></Button>
-            </div>
+            <WizardStepFooter
+              onBack={goBack}
+              primaryLabel="Decisões"
+              onPrimary={goNext}
+            />
           </div>
         );
 
       case 'decisions':
         return (
           <div className="flex flex-col h-full">
-            <div className="px-6 py-4 border-b"><h3 className="font-semibold text-lg">Decisões Estratégicas</h3></div>
+            <WizardStepHeader
+              icon={Target}
+              title="Decisões Estratégicas"
+              description="Registre as decisões tomadas"
+              variant="default"
+            />
             <div className="flex-1 p-6">
-              <Textarea value={strategicDecisions} onChange={(e) => setStrategicDecisions(e.target.value)} placeholder="Registre decisões tomadas..." className="min-h-[200px]" />
+              <Textarea 
+                value={strategicDecisions} 
+                onChange={(e) => setStrategicDecisions(e.target.value)} 
+                placeholder="Registre decisões tomadas..." 
+                className="min-h-[200px]" 
+              />
             </div>
-            <div className="px-6 py-4 border-t flex gap-3">
-              <Button variant="ghost" onClick={() => setCurrentStep('insights')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
-              <Button onClick={() => setCurrentStep('directives')} className="flex-1">Direcionamentos <ArrowRight className="ml-2 h-4 w-4" /></Button>
-            </div>
+            <WizardStepFooter
+              onBack={goBack}
+              primaryLabel="Direcionamentos"
+              onPrimary={goNext}
+            />
           </div>
         );
 
       case 'directives':
         return (
           <div className="flex flex-col h-full">
-            <div className="px-6 py-4 border-b"><h3 className="font-semibold text-lg">Direcionamentos</h3></div>
+            <WizardStepHeader
+              icon={Target}
+              title="Direcionamentos"
+              description="Direcionamentos para as áreas"
+              variant="default"
+            />
             <div className="flex-1 p-6">
-              <Textarea value={directives} onChange={(e) => setDirectives(e.target.value)} placeholder="Direcionamentos para as áreas..." className="min-h-[200px]" />
+              <Textarea 
+                value={directives} 
+                onChange={(e) => setDirectives(e.target.value)} 
+                placeholder="Direcionamentos para as áreas..." 
+                className="min-h-[200px]" 
+              />
             </div>
-            <div className="px-6 py-4 border-t flex gap-3">
-              <Button variant="ghost" onClick={() => setCurrentStep('decisions')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
-              <Button onClick={handleComplete} className="flex-1"><CheckCircle2 className="h-4 w-4 mr-2" />Concluir</Button>
-            </div>
+            <WizardLastStepFooter
+              onBack={goBack}
+              onPrimary={handleComplete}
+            />
           </div>
         );
     }
   };
 
   return (
-    <WizardShell open={open} onOpenChange={onOpenChange} persona="clevel-checkin" title={config.title} subtitle={config.description} steps={config.steps} currentStepIndex={stepIndex} onClose={handleClose}>
+    <WizardShell 
+      open={open} 
+      onOpenChange={onOpenChange} 
+      persona="clevel-checkin" 
+      title={config.title} 
+      subtitle={config.description} 
+      steps={config.steps} 
+      currentStepIndex={stepIndex} 
+      onClose={handleClose}
+    >
       {renderStepContent()}
     </WizardShell>
   );
