@@ -78,7 +78,7 @@ export default function SettingsIntegrations() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings-integrations-catalog"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.integrationsCatalog() });
       toast.success("Configuração atualizada!");
     },
     onError: (error: any) => {

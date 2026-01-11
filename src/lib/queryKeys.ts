@@ -440,7 +440,14 @@ export const queryKeys = {
     busList: () => ['settings', 'bus-list'] as const,
     moduleConfigs: (buId: string | null) => ['settings', 'module-configs', buId] as const,
     profilesCount: (buId: string | null) => ['settings', 'profiles-count', buId] as const,
+    teamsCount: (buId: string | null) => ['settings-teams-count', buId] as const,
+    busCount: () => ['settings-bus-count'] as const,
+    modulesCount: () => ['settings-modules-count'] as const,
+    integrationsCount: () => ['settings-integrations-count'] as const,
     integrationsCatalog: () => ['settings', 'integrations-catalog'] as const,
+    jobTitles: (buId: string | null) => ['job-titles', buId] as const,
+    jobTitlesActive: (buId: string | null) => ['job-titles', buId, 'active'] as const,
+    jobTitlesPrefix: () => ['job-titles'] as const,
   },
 
 

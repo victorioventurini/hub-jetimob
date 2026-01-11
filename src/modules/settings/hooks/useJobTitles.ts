@@ -1,10 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
 import type { JobTitle, JobTitleFormData, JobTitleWithUsageCount } from "../types";
-
-const QUERY_KEY = "job-titles";
 
 /**
  * Hook para gerenciar cargos da BU atual
@@ -16,7 +15,7 @@ export function useJobTitles() {
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: [QUERY_KEY, buId],
+    queryKey: queryKeys.settings.jobTitles(buId ?? null),
     queryFn: async (): Promise<JobTitleWithUsageCount[]> => {
       if (!buId) return [];
 
@@ -66,7 +65,7 @@ export function useActiveJobTitles() {
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: [QUERY_KEY, buId, "active"],
+    queryKey: queryKeys.settings.jobTitlesActive(buId ?? null),
     queryFn: async (): Promise<JobTitle[]> => {
       if (!buId) return [];
 
@@ -117,7 +116,7 @@ export function useCreateJobTitle() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.jobTitlesPrefix() });
       toast.success("Cargo criado com sucesso");
     },
     onError: (error: Error) => {
@@ -166,7 +165,7 @@ export function useUpdateJobTitle() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.jobTitlesPrefix() });
       toast.success("Cargo atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -210,25 +209,25 @@ export function useDeleteJobTitle() {
     },
     // Optimistic update: remove from list immediately
     onMutate: async (id) => {
-      const queryKey = [QUERY_KEY, buId];
-      await queryClient.cancelQueries({ queryKey });
+      const qk = queryKeys.settings.jobTitles(buId ?? null);
+      await queryClient.cancelQueries({ queryKey: qk });
       
-      const previousData = queryClient.getQueryData<JobTitleWithUsageCount[]>(queryKey);
+      const previousData = queryClient.getQueryData<JobTitleWithUsageCount[]>(qk);
       
       if (previousData) {
-        queryClient.setQueryData(queryKey, previousData.filter((jt) => jt.id !== id));
+        queryClient.setQueryData(qk, previousData.filter((jt) => jt.id !== id));
       }
       
-      return { previousData, queryKey };
+      return { previousData, qk };
     },
     onError: (error: Error, _id, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(context.queryKey, context.previousData);
+      if (context?.previousData && context?.qk) {
+        queryClient.setQueryData(context.qk, context.previousData);
       }
       toast.error(error.message || "Erro ao remover cargo");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.jobTitlesPrefix() });
       toast.success("Cargo removido com sucesso");
     },
   });
