@@ -14,6 +14,7 @@ export function useCategories() {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: queryKeys.assets.categories(buId ?? null),
     enabled: !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - categories change rarely
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_categories")

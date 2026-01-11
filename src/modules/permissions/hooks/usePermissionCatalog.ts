@@ -10,6 +10,7 @@ export function usePermissionCatalog() {
 
   const { data: permissions = [], isLoading, error } = useQuery({
     queryKey: queryKeys.permissions.catalog(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - permission catalog changes rarely
     queryFn: async () => {
       if (!supabase) throw new Error("No BU client available");
       
