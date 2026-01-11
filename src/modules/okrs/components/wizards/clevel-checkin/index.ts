@@ -1,7 +1,6 @@
 /**
  * C-Level Check-in Wizard Components - Barrel Export
+ * Modal removido - usar CLevelCheckinPage (fullpage)
  */
 
-export { CLevelCheckinWizard } from './CLevelCheckinWizard';
 export { CLevelCheckinWizardCard } from './CLevelCheckinWizardCard';
-export type { CLevelCheckinWizardProps } from './CLevelCheckinWizard';

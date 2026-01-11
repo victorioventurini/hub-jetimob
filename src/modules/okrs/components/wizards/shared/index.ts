@@ -1,9 +1,7 @@
 /**
  * Shared Wizard Components - Barrel Export
+ * WizardShell e WizardContextSelector removidos (Wave 6 - migração para fullpage)
  */
-
-export { WizardShell } from './WizardShell';
-export type { WizardShellProps } from './WizardShell';
 
 export { VicInsightCard, VicInsightsList } from './VicInsightCard';
 export type { VicInsightCardProps, VicInsightsListProps } from './VicInsightCard';
@@ -33,9 +31,6 @@ export type { KrContextCardProps } from './KrContextCard';
 export { InitiativesSummary } from './InitiativesSummary';
 export type { InitiativesSummaryProps } from './InitiativesSummary';
 
-export { WizardContextSelector } from './WizardContextSelector';
-export type { WizardContextSelectorProps, WizardContextMode } from './WizardContextSelector';
-
 export { 
   WizardStepFooter, 
   WizardFirstStepFooter, 
@@ -52,3 +47,6 @@ export type { FullPageWizardShellProps } from './FullPageWizardShell';
 
 export { WizardStepper, WizardStepperCompact } from './WizardStepper';
 export type { WizardStepDefinition } from './WizardStepper';
+
+export { AdminContextSwitcher } from './AdminContextSwitcher';
+export type { AdminContextSwitcherProps } from './AdminContextSwitcher';

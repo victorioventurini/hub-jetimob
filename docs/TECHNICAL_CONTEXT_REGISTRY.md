@@ -1,14 +1,14 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.15.0  
+**Versão:** 2.16.0  
 **Última atualização:** 2026-01-11
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 5 completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 6 completo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
 > ### Padrões de Desenvolvimento
-> - [DEVELOPMENT_STANDARDS.md v1.1.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
+> - [DEVELOPMENT_STANDARDS.md v1.2.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
 > - [QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
 > - [BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state para filtros e paginação

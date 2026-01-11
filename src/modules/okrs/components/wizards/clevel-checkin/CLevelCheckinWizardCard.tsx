@@ -1,14 +1,13 @@
 /**
  * CLevelCheckinWizardCard - Entry point for C-Level Check-in Wizard
- * Shows for executives to conduct strategic review
+ * Navega para a página fullpage /okrs/clevel-checkin
  */
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Crown, Play, Target, TrendingUp } from 'lucide-react';
-import { CLevelCheckinWizard } from './CLevelCheckinWizard';
 
 interface CLevelCheckinWizardCardProps {
   companyOkrCount?: number;
@@ -23,7 +22,11 @@ export function CLevelCheckinWizardCard({
   atRiskCount = 0,
   isLoading = false,
 }: CLevelCheckinWizardCardProps) {
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/okrs/clevel-checkin');
+  };
 
   if (isLoading) {
     return (
@@ -40,49 +43,42 @@ export function CLevelCheckinWizardCard({
   }
 
   return (
-    <>
-      <Card className="border-l-4 border-l-purple-500">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-purple-500" />
-              <CardTitle className="text-lg">Check-in Estratégico</CardTitle>
-            </div>
-            {atRiskCount > 0 && (
-              <Badge variant="destructive">
-                {atRiskCount} OKRs em risco
-              </Badge>
-            )}
+    <Card className="border-l-4 border-l-purple-500">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-purple-500" />
+            <CardTitle className="text-lg">Check-in Estratégico</CardTitle>
           </div>
-          <CardDescription>
-            Revisão mensal dos OKRs de empresa
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Target className="h-4 w-4" />
-              <span>{companyOkrCount} Objetivos</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
-              <span>{overallProgress.toFixed(0)}% progresso</span>
-            </div>
+          {atRiskCount > 0 && (
+            <Badge variant="destructive">
+              {atRiskCount} OKRs em risco
+            </Badge>
+          )}
+        </div>
+        <CardDescription>
+          Revisão mensal dos OKRs de empresa
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Target className="h-4 w-4" />
+            <span>{companyOkrCount} Objetivos</span>
           </div>
-          <Button 
-            onClick={() => setWizardOpen(true)} 
-            className="w-full gap-2 bg-purple-600 hover:bg-purple-700"
-          >
-            <Play className="h-4 w-4" />
-            Iniciar Revisão Estratégica
-          </Button>
-        </CardContent>
-      </Card>
-
-      <CLevelCheckinWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-      />
-    </>
+          <div className="flex items-center gap-1">
+            <TrendingUp className="h-4 w-4" />
+            <span>{overallProgress.toFixed(0)}% progresso</span>
+          </div>
+        </div>
+        <Button 
+          onClick={handleClick} 
+          className="w-full gap-2 bg-purple-600 hover:bg-purple-700"
+        >
+          <Play className="h-4 w-4" />
+          Iniciar Revisão Estratégica
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
