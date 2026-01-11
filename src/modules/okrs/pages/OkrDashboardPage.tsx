@@ -71,7 +71,11 @@ export default function OkrDashboardPage() {
   // Convert URL filters to component state format
   const filters: OkrFiltersState = urlFiltersResult.values;
   const setFilters = (newFilters: OkrFiltersState) => urlFiltersResult.set(newFilters);
-  
+
+  // Normalize legacy/all value coming from TeamSelect ("all")
+  // NOTE: if team_id=all, passing it to the query would filter everything out.
+  const normalizedTeamId = filters.teamId && filters.teamId !== 'all' ? filters.teamId : undefined;
+
   const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(false);
   const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
 
@@ -80,16 +84,16 @@ export default function OkrDashboardPage() {
   const { data: userProfile } = useUserProfile(user?.id);
   const { data: latestCheckinDate } = useLatestCheckinDate();
   const { data: pendingCheckins } = usePendingCheckins();
-  
+
   // IMPORTANT: use currentBuId for BU-scoped queries (currentBu may be null if bu_unit data isn't loaded yet)
   const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectives({ buId: currentBuId, year: filters.year });
   const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectives({
     buId: currentBuId,
-    teamId: activeView === 'team' ? filters.teamId : undefined,
+    teamId: activeView === 'team' ? normalizedTeamId : undefined,
   });
   const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBuId });
-  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, filters.teamId);
-  
+  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, normalizedTeamId);
+
   // Shared OKRs insights
   const sharedInsights = useSharedOkrsInsights();
   
