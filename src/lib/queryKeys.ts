@@ -363,6 +363,8 @@ export const queryKeys = {
     agentLogsFiltered: (filters?: { bu_id?: string; agent_id?: string; integration_key?: string; limit?: number }) => 
       ['integrations', 'agent-logs', filters] as const,
     agentDocuments: (agentId: string) => ['integrations', 'agent-documents', agentId] as const,
+    instructionSources: (agentId: string) => ['integrations', 'instruction-sources', agentId] as const,
+    instructionSourceDetail: (sourceId: string) => ['integrations', 'instruction-sources', 'detail', sourceId] as const,
   },
 
   // ============= Automations =============

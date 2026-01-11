@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
@@ -80,6 +80,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const { profile } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const buSupabase = useBuScopedSupabase();
   
   const storageKey = getDraftKey(wizardType);
   
@@ -106,7 +107,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     queryFn: async () => {
       if (!profile?.id) return null;
       
-      const { data, error } = await supabase
+      const { data, error } = await buSupabase
         .from('okr_wizard_sessions')
         .select('id, team_id, cycle_id, reflection_data, updated_at')
         .eq('started_by', profile.id)
@@ -224,7 +225,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       
       if (sessionId) {
         // Update existing session
-        const { error } = await supabase
+        const { error } = await buSupabase
           .from('okr_wizard_sessions')
           .update({
             reflection_data: reflectionData,
@@ -238,7 +239,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
         return sessionId;
       } else {
         // Create new session
-        const { data, error } = await supabase
+        const { data, error } = await buSupabase
           .from('okr_wizard_sessions')
           .insert([{
             bu_id: currentBu.id,
@@ -297,7 +298,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     // Mark session as abandoned in DB
     if (sessionId) {
       try {
-        await supabase
+        await buSupabase
           .from('okr_wizard_sessions')
           .update({ status: 'abandoned' })
           .eq('id', sessionId);
@@ -329,7 +330,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     // Mark session as completed in DB
     if (sessionId) {
       try {
-        await supabase
+        await buSupabase
           .from('okr_wizard_sessions')
           .update({ status: 'completed', completed_at: new Date().toISOString() })
           .eq('id', sessionId);

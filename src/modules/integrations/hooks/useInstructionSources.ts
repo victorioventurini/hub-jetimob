@@ -1,18 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { queryKeys } from '@/lib/queryKeys';
 import type { InstructionSourceType } from '../types';
 import type { Json } from '@/integrations/supabase/types';
-
-// ============================================================================
-// Query Keys
-// ============================================================================
-
-const instructionSourceKeys = {
-  all: ['instruction-sources'] as const,
-  byAgent: (agentId: string) => [...instructionSourceKeys.all, 'agent', agentId] as const,
-  detail: (id: string) => [...instructionSourceKeys.all, 'detail', id] as const,
-};
 
 // ============================================================================
 // Types
@@ -65,7 +56,7 @@ interface UpdateInstructionSourceInput {
  */
 export function useInstructionSources(agentId: string) {
   return useQuery({
-    queryKey: instructionSourceKeys.byAgent(agentId),
+    queryKey: queryKeys.integrations.instructionSources(agentId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ai_agent_instruction_sources')
@@ -115,7 +106,7 @@ export function useCreateInstructionSource() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: instructionSourceKeys.byAgent(data.agent_id),
+        queryKey: queryKeys.integrations.instructionSources(data.agent_id),
       });
     },
     onError: (error) => {
@@ -151,7 +142,7 @@ export function useUpdateInstructionSource() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: instructionSourceKeys.byAgent(data.agent_id),
+        queryKey: queryKeys.integrations.instructionSources(data.agent_id),
       });
       toast.success('Fonte atualizada');
     },
@@ -192,7 +183,7 @@ export function useDeleteInstructionSource() {
     onSuccess: (result) => {
       if (result.agentId) {
         queryClient.invalidateQueries({
-          queryKey: instructionSourceKeys.byAgent(result.agentId),
+          queryKey: queryKeys.integrations.instructionSources(result.agentId),
         });
       }
       toast.success('Fonte excluída');
