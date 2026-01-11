@@ -22,10 +22,12 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { DiscardChangesDialog } from "@/components/ui/discard-changes-dialog";
+import { TeamSelect, MultiTeamSelect, BuUserSelect, BuUserMultiSelect } from "@/components/selects";
 import { 
   AlertCircle, 
   Check, 
   ChevronRight, 
+  ChevronDown,
   Copy, 
   FileText, 
   Inbox, 
@@ -35,6 +37,7 @@ import {
   Settings,
   Trash2,
   User,
+  Users,
   X
 } from "lucide-react";
 import { toast } from "sonner";
@@ -151,6 +154,24 @@ const componentUsageData: Record<string, { description: string; pages: string[] 
     description: "Ícone de ajuda com tooltip explicativo",
     pages: ["/okrs/*", "/hub/*", "/settings/*"]
   },
+  
+  // Selects & Dropdowns
+  "TeamSelect": {
+    description: "Seleção de time único com hierarquia visual",
+    pages: ["/okrs/*", "/teams/*", "/users/*", "/assets/*", "/tickets/*"]
+  },
+  "MultiTeamSelect": {
+    description: "Seleção múltipla de times com checkboxes",
+    pages: ["/okrs/*", "/teams/*"]
+  },
+  "BuUserSelect": {
+    description: "Seleção de usuário único com busca e avatar",
+    pages: ["/okrs/*", "/assets/*", "/tickets/*", "/teams/*"]
+  },
+  "BuUserMultiSelect": {
+    description: "Seleção múltipla de usuários com busca",
+    pages: ["/okrs/*", "/teams/*", "/tickets/*"]
+  },
 };
 
 interface ComponentShowcaseProps {
@@ -214,9 +235,60 @@ function ComponentShowcase({ name, description, pages, children }: ComponentShow
   );
 }
 
+// Demo components with internal state for selects
+function TeamSelectDemo() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  return (
+    <TeamSelect
+      value={value}
+      onValueChange={setValue}
+      placeholder="Selecione um time"
+      includeAll
+      allLabel="Todos os times"
+    />
+  );
+}
+
+function MultiTeamSelectDemo() {
+  const [value, setValue] = useState<string[]>([]);
+  return (
+    <MultiTeamSelect
+      value={value}
+      onValueChange={setValue}
+      placeholder="Selecione times..."
+    />
+  );
+}
+
+function BuUserSelectDemo() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  return (
+    <BuUserSelect
+      value={value}
+      onValueChange={setValue}
+      placeholder="Selecione um usuário"
+      showSearch
+      showBadges
+    />
+  );
+}
+
+function BuUserMultiSelectDemo() {
+  const [value, setValue] = useState<string[]>([]);
+  return (
+    <BuUserMultiSelect
+      value={value}
+      onValueChange={setValue}
+      placeholder="Selecione usuários..."
+      showBadges
+    />
+  );
+}
+
 const CATEGORIES = [
   { id: "buttons", label: "Buttons & Actions", icon: <Settings className="h-4 w-4" /> },
   { id: "forms", label: "Forms & Inputs", icon: <FileText className="h-4 w-4" /> },
+  { id: "selects", label: "Selects & Dropdowns", icon: <ChevronDown className="h-4 w-4" /> },
   { id: "layout", label: "Layout & Structure", icon: <ChevronRight className="h-4 w-4" /> },
   { id: "feedback", label: "Feedback & Status", icon: <AlertCircle className="h-4 w-4" /> },
   { id: "display", label: "Display", icon: <User className="h-4 w-4" /> },
@@ -332,6 +404,48 @@ export default function SettingsUiCatalog() {
               <div className="space-y-2">
                 <Label htmlFor="demo-input">Email</Label>
                 <Input id="demo-input" type="email" placeholder="exemplo@email.com" />
+              </div>
+            </ComponentShowcase>
+          </div>
+        </TabsContent>
+
+        {/* Selects & Dropdowns */}
+        <TabsContent value="selects" className="space-y-4">
+          <Alert className="mb-4">
+            <Users className="h-4 w-4" />
+            <AlertTitle>Componentes Canônicos de Seleção</AlertTitle>
+            <AlertDescription>
+              Use SEMPRE estes componentes para seleção de times e usuários. Nunca reimplemente lógica de seleção.
+              Importe de <code className="text-xs bg-muted px-1 rounded">@/components/selects</code>
+            </AlertDescription>
+          </Alert>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <ComponentShowcase {...componentUsageData["TeamSelect"]} name="TeamSelect">
+              <div className="space-y-3">
+                <Label>Seleção simples de time</Label>
+                <TeamSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["MultiTeamSelect"]} name="MultiTeamSelect">
+              <div className="space-y-3">
+                <Label>Seleção múltipla de times</Label>
+                <MultiTeamSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["BuUserSelect"]} name="BuUserSelect">
+              <div className="space-y-3">
+                <Label>Seleção simples de usuário</Label>
+                <BuUserSelectDemo />
+              </div>
+            </ComponentShowcase>
+
+            <ComponentShowcase {...componentUsageData["BuUserMultiSelect"]} name="BuUserMultiSelect">
+              <div className="space-y-3">
+                <Label>Seleção múltipla de usuários</Label>
+                <BuUserMultiSelectDemo />
               </div>
             </ComponentShowcase>
           </div>
