@@ -2,9 +2,11 @@
  * useWizardSession - Hook para persistência de sessões de wizard
  * 
  * Gerencia criação, atualização e conclusão de sessões de wizard de OKRs
+ * 
+ * TCR v2.15.0: Usa cliente BU-scoped, campos explícitos, queryKeys centralizadas
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
@@ -71,6 +73,13 @@ interface DbWizardSession {
   updated_at: string;
 }
 
+// Explicit fields - avoid select('*')
+const SESSION_FIELDS = `
+  id, bu_id, cycle_id, team_id, wizard_type, started_by, started_at, 
+  completed_at, status, decisions, action_items, ai_insights_shown, 
+  reflection_data, meeting_notes, created_at, updated_at
+`;
+
 // ============================================================
 // MAPPERS
 // ============================================================
@@ -99,6 +108,7 @@ export function useWizardSession() {
   const { profile } = useAuth();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
 
   // Get active session for current user (in_progress)
   const activeSessionQuery = useQuery({
@@ -108,7 +118,7 @@ export function useWizardSession() {
 
       const { data, error } = await supabase
         .from('okr_wizard_sessions')
-        .select('id, bu_id, cycle_id, team_id, wizard_type, started_by, started_at, completed_at, status, decisions, action_items, ai_insights_shown, reflection_data, meeting_notes, created_at, updated_at')
+        .select(SESSION_FIELDS)
         .eq('started_by', profile.id)
         .eq('status', 'in_progress')
         .order('started_at', { ascending: false })
@@ -137,7 +147,7 @@ export function useWizardSession() {
           cycle_id: params.cycleId || null,
           started_by: profile.id,
         })
-        .select('id, bu_id, cycle_id, team_id, wizard_type, started_by, started_at, completed_at, status, decisions, action_items, ai_insights_shown, reflection_data, meeting_notes, created_at, updated_at')
+        .select(SESSION_FIELDS)
         .single();
 
       if (error) throw error;
@@ -273,6 +283,7 @@ export function useWizardSession() {
  */
 export function useRecentWizardSessions(wizardType?: WizardPersona, limit = 10) {
   const { profile } = useAuth();
+  const supabase = useBuScopedSupabase();
 
   return useQuery({
     queryKey: [...queryKeys.okrs.wizardSession(profile?.id || ''), 'recent', wizardType, limit],
@@ -281,7 +292,7 @@ export function useRecentWizardSessions(wizardType?: WizardPersona, limit = 10) 
 
       let query = supabase
         .from('okr_wizard_sessions')
-        .select('id, bu_id, cycle_id, team_id, wizard_type, started_by, started_at, completed_at, status, decisions, action_items, ai_insights_shown, reflection_data, meeting_notes, created_at, updated_at')
+        .select(SESSION_FIELDS)
         .eq('started_by', profile.id)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false })
