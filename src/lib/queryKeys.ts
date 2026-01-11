@@ -313,6 +313,10 @@ export const queryKeys = {
     // Current user
     myPermissions: (buId: string | null, userId: string | null) => 
       ['permissions', 'my', buId, userId] as const,
+    
+    // Audit
+    audit: (buId: string | null) => 
+      ['permissions', 'audit', buId] as const,
   },
 
   // ============= BU =============
