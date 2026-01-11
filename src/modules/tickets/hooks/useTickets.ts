@@ -40,6 +40,7 @@ export function useTickets(filters?: TicketFilters) {
 
   return useQuery({
     queryKey: queryKeys.tickets.list(buId ?? null, filters as Record<string, unknown>),
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async (): Promise<PaginatedTicketsResponse> => {
       if (!buId) return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
 
@@ -140,13 +141,18 @@ export function useTicket(ticketId: string | null) {
 
   return useQuery({
     queryKey: queryKeys.tickets.detail(ticketId),
+    staleTime: 60 * 1000, // 1 minute - detail pages may have updates
     queryFn: async () => {
       if (!ticketId) return null;
 
       const { data, error } = await supabase
         .from("tickets")
         .select(`
-          *,
+          id, bu_id, type, title, description, status,
+          expected_due_at, actual_due_at, visibility,
+          created_by_user_id, owner_user_id, assigned_contact_id,
+          partner_company_id, category_id, subcategory_id,
+          metadata, created_at, updated_at,
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name),
@@ -171,13 +177,16 @@ export function useMyTickets() {
 
   return useQuery({
     queryKey: queryKeys.tickets.myTickets(buId ?? null, profileId ?? undefined),
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async () => {
       if (!buId || !profileId) return [];
 
       const { data, error } = await supabase
         .from("tickets")
         .select(`
-          *,
+          id, bu_id, type, title, status,
+          expected_due_at, created_by_user_id, owner_user_id,
+          created_at, updated_at,
           category:ticket_categories(id, name)
         `)
         .eq("bu_id", buId)

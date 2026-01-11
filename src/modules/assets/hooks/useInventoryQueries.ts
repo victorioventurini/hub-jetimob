@@ -116,6 +116,7 @@ export function useAssetCategoriesQuery() {
   return useQuery({
     queryKey: queryKeys.assets.categories(buId ?? null),
     enabled: !!supabase && !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - categories change rarely
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -152,6 +153,7 @@ export function useInventoryListQuery(filters: UseInventoryFilters = {}) {
       search, statusFilter, categoryFilter, holderFilter, locationFilter, page, pageSize 
     }),
     enabled: !!supabase && !!buId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async (): Promise<{ items: AssetInventory[]; total: number }> => {
       if (!supabase) return { items: [], total: 0 };
       

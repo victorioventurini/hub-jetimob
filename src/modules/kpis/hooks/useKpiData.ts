@@ -61,6 +61,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   const { data: kpis, isLoading, error } = useQuery({
     queryKey: queryKeys.kpis.list(null, { category, teamId, ownerId }),
     enabled: !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       let query = supabase
@@ -96,6 +97,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   // Fetch values for all KPIs
   const { data: allValues } = useQuery({
     queryKey: queryKeys.settings.kpiValuesBatch(kpis?.map((k) => k.id)),
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!kpis || kpis.length === 0 || !supabase) return [];
 
@@ -280,6 +282,7 @@ export function useKpiDetail(kpiId: string) {
   
   const { data: kpi, isLoading } = useQuery({
     queryKey: queryKeys.kpis.detail(kpiId),
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return null;
       const { data, error } = await supabase
@@ -300,6 +303,7 @@ export function useKpiDetail(kpiId: string) {
 
   const { data: values } = useQuery({
     queryKey: queryKeys.kpis.values(kpiId),
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase

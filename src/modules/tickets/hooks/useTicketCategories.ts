@@ -15,13 +15,14 @@ export function useTicketCategories(scope?: TicketCategoryScope) {
 
   return useQuery({
     queryKey: queryKeys.tickets.categories(buId ?? null, scope),
+    staleTime: 5 * 60 * 1000, // 5 minutes - categories change rarely
     queryFn: async () => {
       if (!buId) return [];
 
       let query = supabase
         .from("ticket_categories")
         .select(`
-          *,
+          id, bu_id, name, description, scope, status, created_at, updated_at,
           subcategories:ticket_subcategories(id, name, status)
         `)
         .eq("bu_id", buId)
@@ -162,13 +163,14 @@ export function useTicketSubcategories(categoryId?: string) {
 
   return useQuery({
     queryKey: queryKeys.tickets.subcategories(buId ?? null, categoryId),
+    staleTime: 5 * 60 * 1000, // 5 minutes - subcategories change rarely
     queryFn: async () => {
       if (!buId) return [];
 
       let query = supabase
         .from("ticket_subcategories")
         .select(`
-          *,
+          id, bu_id, category_id, name, description, status, created_at, updated_at,
           category:ticket_categories(id, name)
         `)
         .eq("bu_id", buId)

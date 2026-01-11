@@ -28,6 +28,7 @@ export function useKeys(options: UseKeysOptions = {}) {
   const { data: clavicularies = [], isLoading: isLoadingClavicularies, refetch: refetchClavicularies } = useQuery({
     queryKey: queryKeys.assets.keys.clavicularies(buId ?? null),
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -71,12 +72,14 @@ export function useKeys(options: UseKeysOptions = {}) {
   const { data: keyrings = [], isLoading: isLoadingKeyrings, refetch: refetchKeyrings } = useQuery({
     queryKey: queryKeys.assets.keys.keyrings(buId ?? null, { search }),
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       let query = supabase
         .from("asset_keyrings")
         .select(`
-          *,
+          id, bu_id, name, tag_number, status, notes, claviculary_id, hook_id, current_user_id,
+          created_at, created_by,
           claviculary:asset_clavicularies!claviculary_id(id, name),
           hook:asset_hooks!hook_id(id, hook_number)
         `)
@@ -117,12 +120,13 @@ export function useKeys(options: UseKeysOptions = {}) {
   const { data: keys = [], isLoading: isLoadingKeys, refetch: refetchKeys } = useQuery({
     queryKey: queryKeys.assets.keys.all(buId ?? null),
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_keys")
         .select(`
-          *,
+          id, bu_id, tag_number, description, access_type, status, notes, keyring_id, created_at, created_by,
           keyring:asset_keyrings!keyring_id(id, name, tag_number)
         `)
         .eq("bu_id", buId!)
