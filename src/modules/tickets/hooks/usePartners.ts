@@ -173,7 +173,7 @@ export function usePartnerContacts(companyId?: string) {
       let query = supabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, partner_company_id, name, email, phone, status, notes, created_at, updated_at,
+          id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
           partner_company:partner_companies(id, name)
         `)
         .eq("bu_id", buId)
@@ -205,7 +205,7 @@ export function usePartnerContact(id: string | null) {
       const { data, error } = await supabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, partner_company_id, name, email, phone, status, notes, created_at, updated_at,
+          id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
           partner_company:partner_companies(id, name)
         `)
         .eq("id", id)
