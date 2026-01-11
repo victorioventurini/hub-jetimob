@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, Send, X, Loader2, FileIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
-  TicketMentionInput, 
+  MentionInput, 
   extractMentionsFromText, 
   type ParsedMention 
-} from "@/components/mentions/TicketMentionInput";
+} from "@/components/mentions";
 import { toast } from "sonner";
 
 interface SelectedFile {
@@ -213,9 +213,10 @@ export function TicketMessageComposer({
 
         {/* Mention input */}
         <div className="flex-1">
-          <TicketMentionInput
+          <MentionInput
             value={content}
             onChange={handleContentChange}
+            context="internal+external"
             partnerCompanyId={partnerCompanyId}
             placeholder={placeholder}
             rows={2}

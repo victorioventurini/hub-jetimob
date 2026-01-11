@@ -3,7 +3,7 @@ import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FileIcon, Download, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { parseMentionsForTicketDisplay } from "@/components/mentions/TicketMentionInput";
+import { parseMentionsForDisplay } from "@/lib/mentions";
 import type { TicketMessage, TicketAttachment } from "../types";
 
 interface TicketMessageBubbleProps {
@@ -34,7 +34,7 @@ export function TicketMessageBubble({
   };
 
   const messageText = getMessageText();
-  const messageContent = parseMentionsForTicketDisplay(messageText);
+  const messageContent = parseMentionsForDisplay(messageText);
 
   const formatFileSize = (bytes: number | null): string => {
     if (!bytes) return "";

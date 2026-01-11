@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { OkrProgressBar } from './OkrProgressBar';
-import { MentionInput, getMentionDisplayText } from '@/components/notifications/MentionInput';
+import { InternalMentionInput, getMentionDisplayText } from '@/components/mentions';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Target, 
@@ -539,7 +539,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
                   Use @ para mencionar pessoas
                 </span>
               </Label>
-              <MentionInput
+              <InternalMentionInput
                 id="reflection"
                 placeholder="Avançamos em X, mas estamos travados em Y. Use @nome para mencionar colegas."
                 value={reflection}

@@ -28,7 +28,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MentionInput } from '@/components/notifications/MentionInput';
+import { InternalMentionInput } from '@/components/mentions';
 import { WizardKr } from '../../hooks/useTeamPendingKrs';
 import { useCreateCheckin, CheckinConfidence } from '../../hooks/useCreateCheckin';
 import { formatDaysSince } from '../../hooks/useCycleCheckins';
@@ -362,7 +362,7 @@ export function WizardCheckinStep({
             {/* Comment */}
             <div className="space-y-2">
               <Label htmlFor="comment">Comentário</Label>
-              <MentionInput
+              <InternalMentionInput
                 id="comment"
                 value={comment}
                 onChange={(value, mentions) => {
@@ -377,7 +377,7 @@ export function WizardCheckinStep({
             {/* Blockers */}
             <div className="space-y-2">
               <Label htmlFor="blockers">Bloqueadores</Label>
-              <MentionInput
+              <InternalMentionInput
                 id="blockers"
                 value={blockers}
                 onChange={(value) => setBlockers(value)}

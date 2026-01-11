@@ -21,7 +21,7 @@ import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import type { TicketStatus } from "../types";
-import type { ParsedMention } from "@/components/mentions/TicketMentionInput";
+import type { ParsedMention } from "@/components/mentions";
 
 const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   waiting: { label: "Aguardando", variant: "secondary" },

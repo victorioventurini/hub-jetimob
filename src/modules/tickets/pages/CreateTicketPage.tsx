@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
 import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
-import { TicketMentionInput, type ParsedMention } from "@/components/mentions/TicketMentionInput";
+import { MentionInput, type ParsedMention } from "@/components/mentions";
 import type { TicketType, TicketVisibility } from "../types";
 
 const createTicketSchema = z.object({
@@ -678,12 +678,13 @@ export default function CreateTicketPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <TicketMentionInput
+                      <MentionInput
                         value={field.value || ''}
                         onChange={(value, mentions) => {
                           field.onChange(value);
                           setInitialMessageMentions(mentions);
                         }}
+                        context="internal+external"
                         partnerCompanyId={selectedType === "external" ? selectedPartnerId : null}
                         placeholder="Descreva os detalhes da demanda... Use @ para mencionar usuários"
                         rows={6}
