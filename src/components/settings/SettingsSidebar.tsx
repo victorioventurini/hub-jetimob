@@ -12,6 +12,7 @@ import {
   Briefcase,
   Bell,
   Users,
+  Palette,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -83,6 +84,7 @@ export function SettingsSidebar() {
         <NavItem to="/hub/job-titles" icon={Briefcase} label="Cargos" />
         <NavItem to="/hub/users" icon={Users} label="Usuários" />
         <NavItem to="/hub/notifications" icon={Bell} label="Notificações" />
+        <NavItem to="/hub/ui" icon={Palette} label="Catálogo UI" />
       </div>
 
       {/* Recursos Section */}

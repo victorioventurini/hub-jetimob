@@ -106,6 +106,7 @@ const SettingsIntegrations = lazy(() => import("./pages/settings/SettingsIntegra
 const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifications"));
 const BuSettingsPage = lazy(() => import("./pages/settings/BuSettingsPage"));
 const JobTitlesPage = lazy(() => import("./modules/settings/pages/JobTitlesPage"));
+const SettingsUiCatalog = lazy(() => import("./pages/settings/SettingsUiCatalog"));
 
 // Páginas de Notificações
 const HubNotifications = lazy(() => import("./pages/hub/HubNotifications"));
@@ -444,6 +445,18 @@ const App = () => {
                           <AdminRoute>
                             <SettingsLayout>
                               <GlobalUsersPage />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/hub/ui"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <SettingsUiCatalog />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>
