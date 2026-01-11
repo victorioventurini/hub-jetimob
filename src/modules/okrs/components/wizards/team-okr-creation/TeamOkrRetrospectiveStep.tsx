@@ -15,20 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  ArrowRight,
-  ArrowLeft,
-  History,
-  Target,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import { History, Target, TrendingUp, TrendingDown, AlertCircle, Sparkles, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicGeneratingCard } from '@/modules/vic';
+import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
@@ -317,17 +307,11 @@ export function TeamOkrRetrospectiveStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-        <Button onClick={onContinue} className="flex-1 gap-2">
-          Definir o foco do ciclo
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <WizardStepFooter
+        onBack={onBack}
+        primaryLabel="Definir o foco do ciclo"
+        onPrimary={onContinue}
+      />
     </div>
   );
 }

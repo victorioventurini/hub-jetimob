@@ -16,16 +16,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Plus,
-  X,
-  Lightbulb,
-  Target,
-  Users,
-} from 'lucide-react';
+import { CheckCircle2, Plus, X, Lightbulb, Target, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardStepHeader, WizardLastStepFooter } from '../shared';
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -94,20 +87,12 @@ export function TeamDecisionsStep({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-green-500/10 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg">Decisões e Próximos Passos</h3>
-            <p className="text-sm text-muted-foreground">
-              Registre o que foi decidido nesta reunião
-            </p>
-          </div>
-        </div>
-      </div>
+      <WizardStepHeader
+        icon={CheckCircle2}
+        title="Decisões e Próximos Passos"
+        description="Registre o que foi decidido nesta reunião"
+        variant="green"
+      />
 
       {/* Content */}
       <ScrollArea className="flex-1">
@@ -236,29 +221,16 @@ export function TeamDecisionsStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-          <Button 
-            onClick={onComplete} 
-            className="flex-1" 
-            size="lg"
-            disabled={!allChecked}
-          >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Concluir Check-in
-          </Button>
-        </div>
-        {!allChecked && (
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Complete o checklist para finalizar
-          </p>
-        )}
-      </div>
+      <WizardLastStepFooter
+        onBack={onBack}
+        onPrimary={onComplete}
+        primaryDisabled={!allChecked}
+      />
+      {!allChecked && (
+        <p className="text-xs text-muted-foreground text-center pb-2">
+          Complete o checklist para finalizar
+        </p>
+      )}
     </div>
   );
 }

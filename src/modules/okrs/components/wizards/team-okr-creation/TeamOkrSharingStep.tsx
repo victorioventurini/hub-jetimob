@@ -16,16 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { MultiTeamSelect } from '@/components/selects/MultiTeamSelect';
 import { VicActionButton, VicLoadingState, VicTypewriterText } from '@/modules/vic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Users, 
-  User, 
-  HandshakeIcon,
-  Sparkles,
-  AlertCircle,
-  Info,
-} from 'lucide-react';
+import { Users, User, HandshakeIcon, Sparkles, AlertCircle, Info } from 'lucide-react';
+import { WizardStepFooter } from '../shared';
 import { cn } from '@/lib/utils';
 import type { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 
@@ -443,18 +435,12 @@ export function TeamOkrSharingStep({
           />
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <Button variant="ghost" onClick={onBack}>
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          
-          <Button onClick={onContinue} disabled={!canContinue}>
-            Continuar
-            <ChevronRight className="h-4 w-4 ml-2" />
-          </Button>
-        </div>
+        <WizardStepFooter
+          onBack={onBack}
+          primaryLabel="Continuar"
+          onPrimary={onContinue}
+          primaryDisabled={!canContinue}
+        />
       </div>
     </ScrollArea>
   );

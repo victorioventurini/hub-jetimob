@@ -7,19 +7,13 @@
  */
 
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  ArrowRight,
-  Users,
-  Target,
-  AlertTriangle,
-  CheckCircle2,
-} from 'lucide-react';
+import { Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardStepHeader, WizardFirstStepFooter } from '../shared';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 
 // ============================================================
@@ -76,24 +70,18 @@ export function TeamOpeningStep({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-500/10 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-            <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">Check-in: {teamName}</h3>
-            {cycleName && (
-              <p className="text-sm text-muted-foreground">{cycleName}</p>
-            )}
-          </div>
+      <WizardStepHeader
+        icon={Users}
+        title={`Check-in: ${teamName}`}
+        description={cycleName}
+        variant="primary"
+        rightContent={
           <div className="text-right">
             <p className="text-2xl font-bold">{stats.avgProgress}%</p>
             <p className="text-xs text-muted-foreground">progresso médio</p>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Status Summary */}
       <div className="px-6 py-4 border-b">
@@ -185,13 +173,10 @@ export function TeamOpeningStep({
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <Button onClick={onContinue} className="w-full" size="lg">
-          Revisar KRs
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
+      <WizardFirstStepFooter
+        primaryLabel="Revisar KRs"
+        onPrimary={onContinue}
+      />
     </div>
   );
 }

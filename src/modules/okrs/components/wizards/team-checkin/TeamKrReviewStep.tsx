@@ -12,15 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  ArrowRight,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle2,
-  MessageSquare,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardStepHeader, WizardStepFooter } from '../shared';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 
@@ -103,16 +97,13 @@ export function TeamKrReviewStep({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
-        <div className="flex items-center justify-between">
+      <WizardStepHeader
+        icon={Target}
+        title="Revisão dos KRs"
+        description={`${reviewedCount} de ${totalCount} revisados`}
+        variant="primary"
+        rightContent={
           <div className="flex items-center gap-2">
-            <div>
-              <h3 className="font-semibold text-lg">Revisão dos KRs</h3>
-              <p className="text-sm text-muted-foreground">
-                {reviewedCount} de {totalCount} revisados
-              </p>
-            </div>
             <AskToVicStepHelper
               context={{
                 module: 'okrs',
@@ -125,8 +116,6 @@ export function TeamKrReviewStep({
                 teamName: currentKr?.team_name,
               }}
             />
-          </div>
-          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -147,12 +136,12 @@ export function TeamKrReviewStep({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-        <Progress 
-          value={(reviewedCount / totalCount) * 100} 
-          className="h-1 mt-3" 
-        />
-      </div>
+        }
+      />
+      <Progress 
+        value={(reviewedCount / totalCount) * 100} 
+        className="h-1" 
+      />
 
       {/* KR Card */}
       <ScrollArea className="flex-1">
@@ -253,19 +242,11 @@ export function TeamKrReviewStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-          <Button onClick={onContinue} className="flex-1">
-            Ver iniciativas
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <WizardStepFooter
+        onBack={onBack}
+        primaryLabel="Ver iniciativas"
+        onPrimary={onContinue}
+      />
     </div>
   );
 }

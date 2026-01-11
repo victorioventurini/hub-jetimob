@@ -7,19 +7,12 @@
  */
 
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  ArrowRight,
-  ArrowLeft,
-  Zap,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-} from 'lucide-react';
+import { Zap, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WizardStepHeader, WizardStepFooter } from '../shared';
 
 // ============================================================
 // TYPES
@@ -71,35 +64,28 @@ export function TeamInitiativesStep({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Zap className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">Iniciativas Relevantes</h3>
-            <p className="text-sm text-muted-foreground">
-              {initiatives.length} iniciativas no ciclo
-            </p>
-          </div>
-        </div>
-        
-        {hasContent && (
-          <div className="flex items-center gap-3 mt-3">
-            {blockedCount > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                {blockedCount} bloqueada{blockedCount > 1 ? 's' : ''}
-              </Badge>
-            )}
-            {inProgressCount > 0 && (
-              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                {inProgressCount} em andamento
-              </Badge>
-            )}
-          </div>
-        )}
-      </div>
+      <WizardStepHeader
+        icon={Zap}
+        title="Iniciativas Relevantes"
+        description={`${initiatives.length} iniciativas no ciclo`}
+        variant="primary"
+        rightContent={
+          hasContent && (
+            <div className="flex items-center gap-2">
+              {blockedCount > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {blockedCount} bloqueada{blockedCount > 1 ? 's' : ''}
+                </Badge>
+              )}
+              {inProgressCount > 0 && (
+                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                  {inProgressCount} em andamento
+                </Badge>
+              )}
+            </div>
+          )
+        }
+      />
 
       {/* Content */}
       <ScrollArea className="flex-1">
@@ -153,19 +139,11 @@ export function TeamInitiativesStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-          <Button onClick={onContinue} className="flex-1">
-            Registrar decisões
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <WizardStepFooter
+        onBack={onBack}
+        primaryLabel="Registrar decisões"
+        onPrimary={onContinue}
+      />
     </div>
   );
 }

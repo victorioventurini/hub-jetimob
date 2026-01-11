@@ -26,18 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  ArrowRight,
-  ArrowLeft,
-  Lightbulb,
-  Plus,
-  Trash2,
-  Sparkles,
-  User,
-  Calendar,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
+import { Lightbulb, Plus, Trash2, Sparkles, User } from 'lucide-react';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { WizardOptionalStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
 import type { TeamMember } from './TeamOkrKrDetailStep';
@@ -321,20 +312,13 @@ export function TeamOkrInitiativesStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-4 bg-muted/30 flex gap-3">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-        <Button variant="outline" onClick={onSkip} className="gap-2">
-          Pular
-        </Button>
-        <Button onClick={onContinue} className="flex-1 gap-2">
-          Preparar comunicação
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <WizardOptionalStepFooter
+        onBack={onBack}
+        primaryLabel="Preparar comunicação"
+        onPrimary={onContinue}
+        skipLabel="Pular"
+        onSkip={onSkip}
+      />
     </div>
   );
 }
