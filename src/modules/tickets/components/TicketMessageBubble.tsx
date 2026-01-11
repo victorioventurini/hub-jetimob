@@ -85,10 +85,9 @@ export function TicketMessageBubble({
         {/* Message content */}
         {messageText && (
           <div className={cn(
-            "rounded-lg px-4 py-2 text-sm whitespace-pre-wrap",
-            isOwnMessage 
-              ? "bg-primary text-primary-foreground" 
-              : "bg-muted"
+            "rounded-lg px-4 py-2 text-sm whitespace-pre-wrap inline-block",
+            "bg-muted text-foreground",
+            isOwnMessage ? "text-right" : "text-left"
           )}>
             {messageContent}
           </div>
