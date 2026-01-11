@@ -2816,60 +2816,6 @@ export type Database = {
           },
         ]
       }
-      mentions: {
-        Row: {
-          author_id: string
-          bu_id: string | null
-          context_id: string
-          context_type: string
-          created_at: string
-          id: string
-          mentioned_user_id: string
-          notification_id: string | null
-          parent_id: string | null
-          parent_type: string | null
-        }
-        Insert: {
-          author_id: string
-          bu_id?: string | null
-          context_id: string
-          context_type: string
-          created_at?: string
-          id?: string
-          mentioned_user_id: string
-          notification_id?: string | null
-          parent_id?: string | null
-          parent_type?: string | null
-        }
-        Update: {
-          author_id?: string
-          bu_id?: string | null
-          context_id?: string
-          context_type?: string
-          created_at?: string
-          id?: string
-          mentioned_user_id?: string
-          notification_id?: string | null
-          parent_id?: string | null
-          parent_type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mentions_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_notification_id_fkey"
-            columns: ["notification_id"]
-            isOneToOne: false
-            referencedRelation: "notifications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       modules: {
         Row: {
           created_at: string

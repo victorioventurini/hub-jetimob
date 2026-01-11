@@ -37,10 +37,7 @@ export const parsers = {
   boolean: (value: string): boolean => 
     value === "true" || value === "1" || value === "yes",
 
-  /** 
-   * Converte para array de strings (formato: value1,value2,value3)
-   * @deprecated Use arrayFromRepeated para novo padrão
-   */
+  /** Converte para array de strings (formato: value1,value2,value3) */
   stringArray: (value: string): string[] => 
     value.split(",").map(v => v.trim()).filter(Boolean),
 
@@ -85,10 +82,7 @@ export const serializers = {
   boolean: (value: boolean | undefined | null): string | null =>
     value !== undefined && value !== null ? String(value) : null,
 
-  /** 
-   * Serializa array para CSV
-   * @deprecated Use serializeToRepeated para novo padrão
-   */
+  /** Serializa array para CSV */
   stringArray: (value: string[] | undefined | null): string | null =>
     value && value.length > 0 ? value.join(",") : null,
 

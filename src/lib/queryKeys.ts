@@ -498,8 +498,6 @@ export const queryKeys = {
     birthdays: (buId: string | null, month?: number) => ['birthdays', buId, month] as const,
     anniversaries: (buId: string | null, month?: number) => ['work-anniversaries', buId, month] as const,
     newJetimobers: (buId: string | null, limit?: number) => ['new-jetimobers', buId, limit] as const,
-    quickStats: (buId: string | null) => ['quick-stats', buId] as const,
-    modulesHome: () => ['modules-home'] as const,
     cultureMessage: () => ['home', 'culture-message'] as const,
     leaderSummary: (buId: string | null, teamId: string | null) => 
       ['home', 'leader-summary', buId, teamId] as const,
