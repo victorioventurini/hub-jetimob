@@ -385,7 +385,7 @@ export default function PartnerContactProfilePage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Zap className="h-4 w-4" />
-                  Especialidades de "{profile.name.split(' ')[0]}"
+                  Especialidades de {profile.name.split(' ')[0]}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -501,7 +501,7 @@ export default function PartnerContactProfilePage() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Ações com "{profile.name.split(' ')[0]}"</CardTitle>
+                <CardTitle className="text-base">Ações com {profile.name.split(' ')[0]}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button asChild variant="outline" className="w-full justify-start gap-2">
