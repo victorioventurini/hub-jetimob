@@ -1,4 +1,4 @@
-import { Menu, LogOut, User, Settings, Building2, Shield } from "lucide-react";
+import { Menu, LogOut, User, Settings, Building2, Cog } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,7 +118,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
               <DropdownMenuLabel className="cursor-default">
                 <div className="flex flex-col gap-0.5">
                   <span className="font-medium no-underline">{displayName}</span>
-                  <span className="text-xs font-normal text-muted-foreground underline">
+                  <span className="text-xs font-normal text-muted-foreground">
                     {email}
                   </span>
                 </div>
@@ -155,7 +155,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
               {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link to="/hub" className="cursor-pointer">
-                    <Shield className="h-4 w-4 mr-2" />
+                    <Cog className="h-4 w-4 mr-2" />
                     Configurações do Hub
                   </Link>
                 </DropdownMenuItem>

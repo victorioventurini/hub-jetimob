@@ -119,7 +119,7 @@ function SettingsHeader({ sidebarCollapsed, onMobileMenuToggle }: SettingsHeader
               <DropdownMenuLabel className="cursor-default">
                 <div className="flex flex-col gap-0.5">
                   <span className="font-medium no-underline">{displayName}</span>
-                  <span className="text-xs font-normal text-muted-foreground underline">
+                  <span className="text-xs font-normal text-muted-foreground">
                     {email}
                   </span>
                 </div>
