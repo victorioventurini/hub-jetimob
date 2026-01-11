@@ -22,6 +22,7 @@ export function useAssetPermissions() {
   const { data: userPermissions = [], isLoading: isLoadingUserPermissions } = useQuery({
     queryKey: [...queryKeys.assets.permissions(buId ?? null), 'user', user?.id, hasFullAccess],
     enabled: !!user?.id && !!buId && !isBuLoading && !hasFullAccess,
+    staleTime: 5 * 60 * 1000, // 5 minutes - permissions change rarely
     queryFn: async () => {
       const { data, error } = await supabase
         .from("asset_permissions")
@@ -38,6 +39,7 @@ export function useAssetPermissions() {
   const { data: allPermissions = [], isLoading: isLoadingAllPermissions, refetch: refetchAllPermissions } = useQuery({
     queryKey: [...queryKeys.assets.permissions(buId ?? null), 'all'],
     enabled: !!buId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - permissions change rarely
     queryFn: async () => {
       const { data: permissions, error } = await supabase
         .from("asset_permissions")

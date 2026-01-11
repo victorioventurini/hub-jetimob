@@ -98,6 +98,7 @@ export function usePermissionPresets() {
 
   const { data: presets = [], isLoading } = useQuery({
     queryKey: governanceQueryKeys.presets(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - presets change rarely
     queryFn: async () => {
       if (!supabase) throw new Error("No client available");
 
@@ -140,6 +141,7 @@ export function usePresetItems(presetId: string | null) {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: governanceQueryKeys.presetItems(presetId),
+    staleTime: 10 * 60 * 1000, // 10 minutes - preset items change rarely
     queryFn: async () => {
       if (!supabase || !presetId) return [];
 
@@ -175,6 +177,7 @@ export function usePermissionDiff(userId: string | null, newTemplateIds: string[
 
   const { data: diff = [], isLoading, refetch } = useQuery({
     queryKey: governanceQueryKeys.diff(userId || "", newTemplateIds),
+    staleTime: 30 * 1000, // 30 seconds - diff is calculated on-demand
     queryFn: async () => {
       if (!supabase || !buId || !userId || newTemplateIds.length === 0) return [];
 
@@ -213,6 +216,7 @@ export function usePermissionExplanation(userId: string | null, permissionKey: s
 
   const { data: explanations = [], isLoading } = useQuery({
     queryKey: governanceQueryKeys.explanation(userId || "", permissionKey || ""),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId || !userId || !permissionKey) return [];
 
@@ -244,6 +248,7 @@ export function usePermissionRiskReport() {
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: governanceQueryKeys.riskReport(buId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
@@ -279,6 +284,7 @@ export function usePermissionAuditLogs(limit = 50) {
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: governanceQueryKeys.auditLogs(buId),
+    staleTime: 2 * 60 * 1000, // 2 minutes - audit logs may update frequently
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
@@ -353,6 +359,7 @@ export function useUsersWithoutTemplates() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: governanceQueryKeys.usersWithoutTemplates(buId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
