@@ -19,6 +19,10 @@ import {
   FolderOpen,
   Tag,
   Briefcase,
+  Clock,
+  CheckCircle2,
+  Loader2,
+  Hourglass,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
@@ -70,6 +74,12 @@ interface PartnerContactProfile {
   capabilities: CapabilityWithCategory[];
   company_services: ServiceMapping[];
   ticket_count: number;
+  ticket_stats: {
+    waiting: number;
+    in_progress: number;
+    done: number;
+    avg_resolution_days: number | null;
+  };
 }
 
 function usePartnerContactProfile(id: string | undefined) {
@@ -170,6 +180,42 @@ function usePartnerContactProfile(id: string | undefined) {
         .select("id", { count: "exact", head: true })
         .eq("reporter_partner_contact_id", id);
 
+      // Fetch ticket stats by status
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: ticketsData } = await (supabase as any)
+        .from("tickets")
+        .select("status, created_at, closed_at")
+        .eq("reporter_partner_contact_id", id);
+
+      const ticketStats = {
+        waiting: 0,
+        in_progress: 0,
+        done: 0,
+        avg_resolution_days: null as number | null,
+      };
+
+      const resolutionTimes: number[] = [];
+
+      for (const ticket of ticketsData || []) {
+        if (ticket.status === 'waiting') ticketStats.waiting++;
+        if (ticket.status === 'in_progress') ticketStats.in_progress++;
+        if (ticket.status === 'done') {
+          ticketStats.done++;
+          if (ticket.closed_at && ticket.created_at) {
+            const created = new Date(ticket.created_at);
+            const closed = new Date(ticket.closed_at);
+            const diffDays = Math.ceil((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+            resolutionTimes.push(diffDays);
+          }
+        }
+      }
+
+      if (resolutionTimes.length > 0) {
+        ticketStats.avg_resolution_days = Math.round(
+          resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length
+        );
+      }
+
       return {
         id: contactData.id,
         name: contactData.name,
@@ -181,6 +227,7 @@ function usePartnerContactProfile(id: string | undefined) {
         capabilities,
         company_services: companyServices,
         ticket_count: count || 0,
+        ticket_stats: ticketStats,
       };
     },
     enabled: !!id && !!supabase,
@@ -498,30 +545,55 @@ export default function PartnerContactProfilePage() {
               </Card>
             )}
 
-            {/* Quick Actions */}
+            {/* Tickets Overview */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Ações com {profile.name.split(' ')[0]}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Ticket className="h-4 w-4" />
+                  Tickets com {profile.name.split(' ')[0]}
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button asChild variant="outline" className="w-full justify-start gap-2">
-                  <a href={`mailto:${profile.email}`}>
-                    <Mail className="h-4 w-4" />
-                    Enviar e-mail
-                  </a>
-                </Button>
-                {profile.phone && (
-                  <Button asChild variant="outline" className="w-full justify-start gap-2">
-                    <a href={`tel:${profile.phone.replace(/\D/g, "")}`}>
-                      <Phone className="h-4 w-4" />
-                      Ligar
-                    </a>
-                  </Button>
-                )}
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/30">
+                    <Hourglass className="h-4 w-4 mx-auto mb-1 text-yellow-600 dark:text-yellow-400" />
+                    <p className="text-lg font-semibold text-yellow-700 dark:text-yellow-300">
+                      {profile.ticket_stats.waiting}
+                    </p>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400">Aguardando</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                    <Loader2 className="h-4 w-4 mx-auto mb-1 text-blue-600 dark:text-blue-400" />
+                    <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+                      {profile.ticket_stats.in_progress}
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">Em andamento</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+                    <CheckCircle2 className="h-4 w-4 mx-auto mb-1 text-green-600 dark:text-green-400" />
+                    <p className="text-lg font-semibold text-green-700 dark:text-green-300">
+                      {profile.ticket_stats.done}
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Concluídos</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>Tempo médio de resolução:</span>
+                  <span className="font-medium text-foreground">
+                    {profile.ticket_stats.avg_resolution_days !== null
+                      ? `${profile.ticket_stats.avg_resolution_days} dia${profile.ticket_stats.avg_resolution_days !== 1 ? 's' : ''}`
+                      : 'N/A'}
+                  </span>
+                </div>
+
                 <Button asChild variant="outline" className="w-full justify-start gap-2">
                   <Link to={`/tickets?reporter=${profile.id}`}>
                     <Ticket className="h-4 w-4" />
-                    Ver tickets
+                    Ver todos os tickets
                   </Link>
                 </Button>
               </CardContent>
