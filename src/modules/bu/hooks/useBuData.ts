@@ -13,6 +13,7 @@ export function useUserBus() {
 
   return useQuery({
     queryKey: queryKeys.bu.userBus(user?.id ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes - BU memberships rarely change
     enabled: !!user?.id,
     queryFn: async () => {
       if (!user?.id) return [];
@@ -55,6 +56,7 @@ export function useBuUnit(buId: string | null) {
   
   return useQuery({
     queryKey: queryKeys.bu.unit(buId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId) return null;
 
@@ -77,6 +79,7 @@ export function useAllBus() {
   
   return useQuery({
     queryKey: queryKeys.bu.allBus(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
