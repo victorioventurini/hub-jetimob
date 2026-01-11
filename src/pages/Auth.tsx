@@ -98,6 +98,16 @@ export default function Auth() {
     const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendCooldown]);
+  // Build redirect URL preserving original destination
+  const getRedirectUrl = useCallback(() => {
+    const from = (location.state as { from?: Location } | null)?.from;
+    if (from && from.pathname && from.pathname !== "/auth") {
+      const target = `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
+      return `${window.location.origin}${target}`;
+    }
+    return `${window.location.origin}/`;
+  }, [location.state]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setDomainError(null);
@@ -120,9 +130,10 @@ export default function Auth() {
       return;
     }
     setIsLoading(true);
+    const redirectUrl = getRedirectUrl();
     const {
       error
-    } = await signInWithMagicLink(email);
+    } = await signInWithMagicLink(email, redirectUrl);
     setIsLoading(false);
     if (error) {
       toast.error("Algo deu errado. Tenta de novo?");
@@ -137,9 +148,10 @@ export default function Auth() {
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setIsLoading(true);
+    const redirectUrl = getRedirectUrl();
     const {
       error
-    } = await signInWithMagicLink(email);
+    } = await signInWithMagicLink(email, redirectUrl);
     setIsLoading(false);
     if (error) {
       toast.error("Não conseguimos reenviar. Tenta de novo?");
