@@ -1,5 +1,4 @@
-import { StatusSelect } from '@/components/selects';
-import { TeamSelect } from '@/components/selects';
+import { StatusSelect, TeamSelect } from '@/components/selects';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 

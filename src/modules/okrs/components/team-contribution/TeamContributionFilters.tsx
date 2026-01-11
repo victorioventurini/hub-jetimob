@@ -17,14 +17,12 @@ export function TeamContributionFilters({
   onStatusFilterChange,
 }: TeamContributionFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <StatusSelect
-        value={statusFilter}
-        onValueChange={onStatusFilterChange}
-        variant="custom"
-        options={STATUS_OPTIONS}
-        triggerClassName="w-[160px]"
-      />
-    </div>
+    <StatusSelect
+      value={statusFilter}
+      onValueChange={onStatusFilterChange}
+      variant="custom"
+      options={STATUS_OPTIONS}
+      triggerClassName="w-[160px]"
+    />
   );
 }

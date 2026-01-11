@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { TeamContributionInsights } from "../components/team-contribution/TeamCo
 import { TeamContributionFilters } from "../components/team-contribution/TeamContributionFilters";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useSafeBack } from "@/hooks/useSafeBack";
+import { useUrlState } from "@/shared/url";
 
 export default function TeamContributionPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -21,7 +22,11 @@ export default function TeamContributionPage() {
   const { currentBu } = useBu();
   const { data, isLoading, error } = useTeamContributionView(teamId);
   
-  const [statusFilter, setStatusFilter] = useState("all");
+  // URL State for filters
+  const { value: statusFilter, set: setStatusFilter } = useUrlState<string>({ 
+    key: 'status', 
+    defaultValue: 'all' 
+  });
 
   const filteredContributions = useMemo(() => {
     if (!data?.contributions) return [];
