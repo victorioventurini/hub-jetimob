@@ -184,7 +184,7 @@ export function useAllOrgKeyResults(buId?: string | null, includeCancelled: bool
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: queryKeys.okrs.orgKeyResultsAll(buId),
+    queryKey: queryKeys.okrs.orgKeyResultsAllBu(buId ?? null),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
