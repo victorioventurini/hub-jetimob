@@ -1,19 +1,31 @@
 /**
  * CycleCheckinsFilters - Barra de filtros para a página de check-ins
+ * 
+ * Usa componentes canônicos de seleção e UrlSearchInput.
  */
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  X, 
-  Filter,
-  Users,
-} from 'lucide-react';
+import { Search, X } from 'lucide-react';
+import { UrlSearchInput } from '@/shared/filters';
+import { TeamSelect, StatusSelect } from '@/components/selects';
 import { useManageableTeamsFlat } from '../../hooks/useManageableTeams';
-import { cn } from '@/lib/utils';
+
+// Confidence options for the filter
+const CONFIDENCE_OPTIONS = [
+  { value: 'all', label: 'Todas' },
+  { value: 'high', label: 'Alta', color: 'bg-emerald-500' },
+  { value: 'medium', label: 'Média', color: 'bg-amber-500' },
+  { value: 'low', label: 'Baixa', color: 'bg-red-500' },
+];
+
+// RAG status options for the filter
+const RAG_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'green', label: 'No caminho', color: 'bg-emerald-500' },
+  { value: 'yellow', label: 'Em risco', color: 'bg-amber-500' },
+  { value: 'red', label: 'Atrasado', color: 'bg-red-500' },
+];
 
 interface FiltersState {
   teamId: string;
@@ -60,78 +72,42 @@ export function CycleCheckinsFilters({
       {/* Search & Main Filters Row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar KR ou Objetivo..."
-            value={filters.search}
-            onChange={(e) => onFiltersChange({ search: e.target.value })}
-            className="pl-9"
-          />
-          {filters.search && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-              onClick={() => onFiltersChange({ search: '' })}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <UrlSearchInput
+          value={filters.search}
+          onChange={(v) => onFiltersChange({ search: v })}
+          placeholder="Buscar KR ou Objetivo..."
+          className="flex-1"
+          debounceMs={300}
+        />
         
-        {/* Team Filter */}
-        <Select
-          value={filters.teamId || 'all'}
-          onValueChange={(v) => onFiltersChange({ teamId: v === 'all' ? '' : v })}
-        >
-          <SelectTrigger className="w-full sm:w-48">
-            <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Todos os times" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os times</SelectItem>
-            {manageableTeams.map((team) => (
-              <SelectItem key={team.id} value={team.id}>
-                <span style={{ paddingLeft: `${team.level * 12}px` }}>
-                  {team.name}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Team Filter - using canonical TeamSelect */}
+        <TeamSelect
+          value={filters.teamId || undefined}
+          onValueChange={(v) => onFiltersChange({ teamId: v ?? '' })}
+          placeholder="Todos os times"
+          includeAll
+          allLabel="Todos os times"
+          teams={manageableTeams}
+          triggerClassName="w-full sm:w-48"
+        />
         
-        {/* Confidence Filter */}
-        <Select
+        {/* Confidence Filter - using canonical StatusSelect */}
+        <StatusSelect
           value={filters.confidence}
           onValueChange={(v) => onFiltersChange({ confidence: v })}
-        >
-          <SelectTrigger className="w-full sm:w-36">
-            <SelectValue placeholder="Confiança" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="high">Alta</SelectItem>
-            <SelectItem value="medium">Média</SelectItem>
-            <SelectItem value="low">Baixa</SelectItem>
-          </SelectContent>
-        </Select>
+          variant="custom"
+          options={CONFIDENCE_OPTIONS}
+          triggerClassName="w-full sm:w-36"
+        />
         
-        {/* Status Filter */}
-        <Select
+        {/* RAG Status Filter - using canonical StatusSelect */}
+        <StatusSelect
           value={filters.ragStatus}
           onValueChange={(v) => onFiltersChange({ ragStatus: v })}
-        >
-          <SelectTrigger className="w-full sm:w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="green">No caminho</SelectItem>
-            <SelectItem value="yellow">Em risco</SelectItem>
-            <SelectItem value="red">Atrasado</SelectItem>
-          </SelectContent>
-        </Select>
+          variant="custom"
+          options={RAG_OPTIONS}
+          triggerClassName="w-full sm:w-36"
+        />
         
         {/* Clear Filters */}
         {hasActiveFilters && (

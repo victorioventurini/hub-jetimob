@@ -1,84 +1,13 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { INVENTORY_STATUS_LABELS, type AssetInventoryStatus, type AssetCategory } from "../../types";
+import { AssetStatusSelect, BuLocationSelect } from "@/components/selects";
+import { BuUserSelect } from "@/components/selects";
+import type { AssetInventoryStatus, AssetCategory } from "../../types";
 import type { BuLocationOption } from "../../hooks/useLocations";
+import { AssetCategorySelect } from "../selects/AssetCategorySelect";
 
 interface HolderOption {
   id: string;
   full_name: string;
   avatar_url?: string | null;
-}
-
-interface FlatItem {
-  id: string;
-  name: string;
-  level: number;
-}
-
-function buildFlatCategoryList(categories: AssetCategory[]): FlatItem[] {
-  const result: FlatItem[] = [];
-  
-  const childrenMap = new Map<string | null, AssetCategory[]>();
-  categories.forEach((cat) => {
-    const parentId = cat.parent_id || null;
-    if (!childrenMap.has(parentId)) {
-      childrenMap.set(parentId, []);
-    }
-    childrenMap.get(parentId)!.push(cat);
-  });
-
-  function addWithLevel(parentId: string | null, level: number) {
-    const children = childrenMap.get(parentId) || [];
-    children.sort((a, b) => a.name.localeCompare(b.name));
-    
-    for (const child of children) {
-      result.push({
-        id: child.id,
-        name: child.name,
-        level,
-      });
-      addWithLevel(child.id, level + 1);
-    }
-  }
-
-  addWithLevel(null, 0);
-  return result;
-}
-
-function buildFlatLocationList(locations: BuLocationOption[]): FlatItem[] {
-  const result: FlatItem[] = [];
-  
-  const childrenMap = new Map<string | null, BuLocationOption[]>();
-  locations.forEach((loc) => {
-    const parentId = loc.parent_location_id || null;
-    if (!childrenMap.has(parentId)) {
-      childrenMap.set(parentId, []);
-    }
-    childrenMap.get(parentId)!.push(loc);
-  });
-
-  function addWithLevel(parentId: string | null, level: number) {
-    const children = childrenMap.get(parentId) || [];
-    children.sort((a, b) => a.name.localeCompare(b.name));
-    
-    for (const child of children) {
-      result.push({
-        id: child.id,
-        name: child.name,
-        level,
-      });
-      addWithLevel(child.id, level + 1);
-    }
-  }
-
-  addWithLevel(null, 0);
-  return result;
 }
 
 interface InventoryFiltersProps {
@@ -95,6 +24,10 @@ interface InventoryFiltersProps {
   locations: BuLocationOption[];
 }
 
+/**
+ * Inventory filters using canonical select components.
+ * All filter state is managed by the parent (URL state in InventoryPage).
+ */
 export function InventoryFilters({
   statusFilter,
   onStatusChange,
@@ -105,103 +38,51 @@ export function InventoryFilters({
   locationFilter,
   onLocationChange,
   categories,
-  holders,
   locations,
 }: InventoryFiltersProps) {
-  const flatCategories = buildFlatCategoryList(categories);
-  const flatLocations = buildFlatLocationList(locations);
-
   return (
     <div className="flex flex-wrap gap-3">
-      {/* Status */}
-      <Select value={statusFilter} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-[160px] h-9">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os status</SelectItem>
-          {Object.entries(INVENTORY_STATUS_LABELS).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Status - using canonical component */}
+      <AssetStatusSelect
+        value={statusFilter}
+        onValueChange={onStatusChange}
+        includeAll
+        allLabel="Todos os status"
+        triggerClassName="w-[160px] h-9"
+      />
 
-      {/* Categoria - hierarchical */}
-      <Select value={categoryFilter} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-[200px] h-9">
-          <SelectValue placeholder="Categoria" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas as categorias</SelectItem>
-          {flatCategories.map((cat) => (
-            <SelectItem
-              key={cat.id}
-              value={cat.id}
-              className={cn(
-                cat.level === 0 && "font-medium",
-                cat.level > 0 && "text-[13px] text-muted-foreground"
-              )}
-            >
-              <span 
-                className="flex items-center"
-                style={{ paddingLeft: `${cat.level * 16}px` }}
-              >
-                {cat.level > 0 && (
-                  <span className="mr-1.5 text-muted-foreground/50">└</span>
-                )}
-                {cat.name}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Categoria - hierarchical using AssetCategorySelect */}
+      <AssetCategorySelect
+        value={categoryFilter === "all" ? undefined : categoryFilter}
+        onValueChange={(val) => onCategoryChange(val ?? "all")}
+        categories={categories}
+        placeholder="Categoria"
+        includeNone
+        noneLabel="Todas as categorias"
+        triggerClassName="w-[200px] h-9"
+      />
 
-      {/* Localização - hierarchical */}
-      <Select value={locationFilter} onValueChange={onLocationChange}>
-        <SelectTrigger className="w-[200px] h-9">
-          <SelectValue placeholder="Localização" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas as localizações</SelectItem>
-          {flatLocations.map((loc) => (
-            <SelectItem
-              key={loc.id}
-              value={loc.id}
-              className={cn(
-                loc.level === 0 && "font-medium",
-                loc.level > 0 && "text-[13px] text-muted-foreground"
-              )}
-            >
-              <span 
-                className="flex items-center"
-                style={{ paddingLeft: `${loc.level * 16}px` }}
-              >
-                {loc.level > 0 && (
-                  <span className="mr-1.5 text-muted-foreground/50">└</span>
-                )}
-                {loc.name}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Localização - hierarchical using canonical component */}
+      <BuLocationSelect
+        value={locationFilter === "all" ? undefined : locationFilter}
+        onValueChange={(val) => onLocationChange(val ?? "all")}
+        locations={locations}
+        placeholder="Localização"
+        includeAll
+        allLabel="Todas as localizações"
+        triggerClassName="w-[200px] h-9"
+      />
 
-      {/* Jetimober (holder) */}
-      <Select value={holderFilter} onValueChange={onHolderChange}>
-        <SelectTrigger className="w-[200px] h-9">
-          <SelectValue placeholder="Jetimober" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os jetimobers</SelectItem>
-          {holders.map((holder) => (
-            <SelectItem key={holder.id} value={holder.id}>
-              {holder.full_name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Jetimober (holder) - using canonical BuUserSelect */}
+      <BuUserSelect
+        value={holderFilter === "all" ? undefined : holderFilter}
+        onValueChange={(val) => onHolderChange(val ?? "all")}
+        placeholder="Todos os jetimobers"
+        className="w-[200px]"
+        showSearch
+        allowNone
+        noneLabel="Todos os jetimobers"
+      />
     </div>
   );
 }

@@ -1,8 +1,10 @@
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
-import { useTicketCategories } from "../hooks/useTicketCategories";
-import { usePartnerCompanies } from "../hooks/usePartners";
+import { UrlSearchInput } from "@/shared/filters";
+import { 
+  TicketTypeSelect, 
+  TicketStatusSelect, 
+  TicketCategorySelect, 
+  PartnerCompanySelect 
+} from "@/components/selects";
 import type { TicketStatus, TicketType } from "../types";
 
 interface TicketFiltersProps {
@@ -20,6 +22,10 @@ interface TicketFiltersProps {
   onOverdueChange: (value: boolean) => void;
 }
 
+/**
+ * Ticket filters using canonical select components.
+ * All filter state is managed by the parent (URL state in TicketsListPage).
+ */
 export function TicketFilters({
   search,
   onSearchChange,
@@ -31,82 +37,54 @@ export function TicketFilters({
   onCategoryChange,
   partnerId,
   onPartnerChange,
-  showOverdueOnly,
-  onOverdueChange,
 }: TicketFiltersProps) {
-  const { data: categories = [] } = useTicketCategories();
-  const { data: partners = [] } = usePartnerCompanies();
-
   return (
     <div className="flex flex-wrap gap-3">
       {/* Search */}
-      <div className="relative flex-1 min-w-[200px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por título..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <UrlSearchInput
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Buscar por título..."
+        className="flex-1 min-w-[200px]"
+        debounceMs={300}
+      />
 
-      {/* Type */}
-      <Select value={type} onValueChange={(v) => onTypeChange(v as TicketType | "all")}>
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Tipo" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os tipos</SelectItem>
-          <SelectItem value="internal">Interno</SelectItem>
-          <SelectItem value="external">Externo</SelectItem>
-        </SelectContent>
-      </Select>
+      {/* Type - using canonical component */}
+      <TicketTypeSelect
+        value={type}
+        onValueChange={onTypeChange}
+        includeAll
+        allLabel="Todos os tipos"
+        triggerClassName="w-[140px]"
+      />
 
-      {/* Status */}
-      <Select value={status} onValueChange={(v) => onStatusChange(v as TicketStatus | "all")}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os status</SelectItem>
-          <SelectItem value="waiting">Aguardando</SelectItem>
-          <SelectItem value="in_progress">Em andamento</SelectItem>
-          <SelectItem value="paused">Pausado</SelectItem>
-          <SelectItem value="done">Concluído</SelectItem>
-          <SelectItem value="discarded">Descartado</SelectItem>
-        </SelectContent>
-      </Select>
+      {/* Status - using canonical component */}
+      <TicketStatusSelect
+        value={status}
+        onValueChange={onStatusChange}
+        includeAll
+        allLabel="Todos os status"
+        triggerClassName="w-[160px]"
+      />
 
-      {/* Category */}
-      <Select value={categoryId} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Categoria" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas categorias</SelectItem>
-          {categories.map((cat) => (
-            <SelectItem key={cat.id} value={cat.id}>
-              {cat.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Category - using canonical component */}
+      <TicketCategorySelect
+        value={categoryId}
+        onValueChange={onCategoryChange}
+        includeAll
+        allLabel="Todas categorias"
+        triggerClassName="w-[180px]"
+      />
 
       {/* Partner (only if external type selected) */}
       {type === "external" && (
-        <Select value={partnerId} onValueChange={onPartnerChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Parceiro" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos parceiros</SelectItem>
-            {partners.map((partner) => (
-              <SelectItem key={partner.id} value={partner.id}>
-                {partner.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <PartnerCompanySelect
+          value={partnerId}
+          onValueChange={onPartnerChange}
+          includeAll
+          allLabel="Todos parceiros"
+          triggerClassName="w-[180px]"
+        />
       )}
     </div>
   );
