@@ -9,18 +9,27 @@ import {
 } from "../types/squad";
 import { toast } from "sonner";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
+
+// Explicit fields - avoid select('*')
+const SQUAD_FIELDS = `
+  id, bu_id, name, description, products, status, created_at, updated_at, deleted_at
+`;
 
 export function useSquads(teamId?: string) {
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
+  const buId = currentBu?.id ?? null;
 
   return useQuery({
-    queryKey: ["squads", { buId: currentBu?.id, teamId }],
+    queryKey: teamId 
+      ? queryKeys.squads.byTeam(teamId) 
+      : queryKeys.squads.all(buId),
     queryFn: async () => {
       let query = supabase
         .from("squads")
         .select(`
-          *,
+          ${SQUAD_FIELDS},
           squad_teams!inner(team_id)
         `)
         .is("deleted_at", null)
@@ -96,7 +105,7 @@ export function useSquad(squadId: string | undefined) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["squad", squadId],
+    queryKey: queryKeys.squads.detail(squadId ?? ''),
     queryFn: async () => {
       if (!squadId) return null;
 
@@ -188,7 +197,7 @@ export function useCreateSquad() {
       return squad;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null) });
       toast.success("Squad criado com sucesso");
     },
     onError: (error: Error) => {
@@ -254,8 +263,8 @@ export function useUpdateSquad() {
       return squad;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
-      queryClient.invalidateQueries({ queryKey: ["squad", variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.id) });
       toast.success("Squad atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -302,8 +311,8 @@ export function useAddSquadMember() {
       return membership;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
-      queryClient.invalidateQueries({ queryKey: ["squad", variables.squadId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId) });
       toast.success("Membro adicionado ao squad");
     },
     onError: (error: Error) => {
@@ -334,8 +343,8 @@ export function useUpdateSquadMember() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
-      queryClient.invalidateQueries({ queryKey: ["squad", variables.squadId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId) });
       toast.success("Papel atualizado");
     },
     onError: () => {
@@ -365,8 +374,8 @@ export function useRemoveSquadMember() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
-      queryClient.invalidateQueries({ queryKey: ["squad", variables.squadId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId) });
       toast.success("Membro removido do squad");
     },
     onError: () => {
@@ -391,10 +400,11 @@ export function useDeactivateSquad() {
     },
     // Optimistic update: remove from list immediately
     onMutate: async (squadId) => {
-      await queryClient.cancelQueries({ queryKey: ["squads"] });
+      const allKey = queryKeys.squads.all(null);
+      await queryClient.cancelQueries({ queryKey: allKey });
       
       // Get all squad queries and update them
-      const queries = queryClient.getQueriesData<SquadWithRelations[]>({ queryKey: ["squads"] });
+      const queries = queryClient.getQueriesData<SquadWithRelations[]>({ queryKey: allKey });
       const previousData = new Map(queries);
       
       queries.forEach(([key, data]) => {
@@ -412,7 +422,7 @@ export function useDeactivateSquad() {
       toast.error("Erro ao desativar squad");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
       toast.success("Squad desativado");
     },
   });
@@ -438,9 +448,10 @@ export function useDeleteSquad() {
     },
     // Optimistic update: remove from list immediately
     onMutate: async (squadId) => {
-      await queryClient.cancelQueries({ queryKey: ["squads"] });
+      const allKey = queryKeys.squads.all(null);
+      await queryClient.cancelQueries({ queryKey: allKey });
       
-      const queries = queryClient.getQueriesData<SquadWithRelations[]>({ queryKey: ["squads"] });
+      const queries = queryClient.getQueriesData<SquadWithRelations[]>({ queryKey: allKey });
       const previousData = new Map(queries);
       
       queries.forEach(([key, data]) => {
@@ -458,8 +469,7 @@ export function useDeleteSquad() {
       toast.error("Erro ao excluir squad");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["squads"] });
-      queryClient.invalidateQueries({ queryKey: ["squad"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
       toast.success("Squad excluído com sucesso");
     },
   });
