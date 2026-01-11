@@ -30,7 +30,7 @@ export default function SelectBu() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, signOut, isAdmin } = useAuth();
   const { userBus, isLoading: buLoading, selectBu } = useBu();
 
   const from = (location.state as { from?: Location } | null)?.from;
@@ -163,7 +163,7 @@ export default function SelectBu() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {role === "super_admin" && (
+              {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link to="/hub" className="cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />
@@ -171,7 +171,7 @@ export default function SelectBu() {
                   </Link>
                 </DropdownMenuItem>
               )}
-              {role === "super_admin" && <DropdownMenuSeparator />}
+              {isAdmin && <DropdownMenuSeparator />}
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive cursor-pointer"
                 onClick={handleSignOut}

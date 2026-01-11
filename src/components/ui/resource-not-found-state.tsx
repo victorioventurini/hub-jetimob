@@ -19,7 +19,7 @@
  */
 
 import { Ghost, ArrowLeft, List } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { cn } from '@/lib/utils';
@@ -90,9 +90,11 @@ export function ResourceNotFoundState({
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar
         </Button>
-        <Button onClick={() => navigate(moduleRoot)}>
-          <List className="w-4 h-4 mr-2" />
-          {viewAllLabel || `Ver ${plural}`}
+        <Button asChild>
+          <Link to={moduleRoot}>
+            <List className="w-4 h-4 mr-2" />
+            {viewAllLabel || `Ver ${plural}`}
+          </Link>
         </Button>
       </div>
     </div>
