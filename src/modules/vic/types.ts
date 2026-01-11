@@ -20,6 +20,7 @@ export type VicActionContext =
   | "okr-edit-kr"
   | "okr-review-quality"
   | "okr-check-alignment"
+  | "okr-initiative-review"
   | "kpi-create"
   | "kpi-edit"
   | "kpi-analyze-variation"
