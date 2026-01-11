@@ -65,7 +65,7 @@ export function useUserMigrationStatus(userId: string | null) {
 
       const { data, error } = await supabase
         .from("permission_migrations")
-        .select("*")
+        .select("id, bu_id, user_id, status, v1_groups_snapshot, v2_templates_applied, migrated_at, migrated_by, verified_at, verified_by, notes, created_at, updated_at")
         .eq("bu_id", buId)
         .eq("user_id", userId)
         .maybeSingle();
