@@ -67,8 +67,8 @@ export function useTickets(filters?: TicketFilters) {
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name),
-          created_by:profiles!tickets_created_by_user_id_fkey(id, display_name, photo_url),
-          owner:profiles!tickets_owner_user_id_fkey(id, display_name, photo_url),
+          created_by:profiles!tickets_created_by_profile_fkey(id, display_name, photo_url),
+          owner:profiles!tickets_owner_profile_fkey(id, display_name, photo_url),
           assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("bu_id", buId)
@@ -239,8 +239,8 @@ export function useTicket(ticketId: string | null) {
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name),
-          created_by:profiles!tickets_created_by_user_id_fkey(id, display_name, photo_url),
-          owner:profiles!tickets_owner_user_id_fkey(id, display_name, photo_url),
+          created_by:profiles!tickets_created_by_profile_fkey(id, display_name, photo_url),
+          owner:profiles!tickets_owner_profile_fkey(id, display_name, photo_url),
           assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("id", ticketId)
@@ -300,8 +300,8 @@ export function useMyTickets() {
           partner_company:partner_companies(id, name),
           category:ticket_categories(id, name),
           subcategory:ticket_subcategories(id, name),
-          created_by:profiles!tickets_created_by_user_id_fkey(id, display_name, photo_url),
-          owner:profiles!tickets_owner_user_id_fkey(id, display_name, photo_url),
+          created_by:profiles!tickets_created_by_profile_fkey(id, display_name, photo_url),
+          owner:profiles!tickets_owner_profile_fkey(id, display_name, photo_url),
           assigned_contact:partner_contacts!tickets_assigned_contact_id_fkey(id, name, email)
         `)
         .eq("bu_id", buId)
