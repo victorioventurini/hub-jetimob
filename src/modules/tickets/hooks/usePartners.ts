@@ -15,6 +15,7 @@ export function usePartnerCompanies() {
 
   return useQuery({
     queryKey: queryKeys.tickets.partners(buId ?? null),
+    staleTime: 5 * 60 * 1000, // 5 minutes - partner list changes rarely
     queryFn: async () => {
       if (!buId) return [];
 
@@ -37,6 +38,7 @@ export function usePartnerCompany(id: string | null) {
   
   return useQuery({
     queryKey: queryKeys.tickets.partnerCompany(id),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!id) return null;
 
@@ -164,13 +166,14 @@ export function usePartnerContacts(companyId?: string) {
 
   return useQuery({
     queryKey: queryKeys.tickets.partnerContacts(buId ?? null, companyId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId) return [];
 
       let query = supabase
         .from("partner_contacts")
         .select(`
-          *,
+          id, bu_id, partner_company_id, name, email, phone, status, notes, created_at, updated_at,
           partner_company:partner_companies(id, name)
         `)
         .eq("bu_id", buId)
@@ -195,13 +198,14 @@ export function usePartnerContact(id: string | null) {
   
   return useQuery({
     queryKey: queryKeys.tickets.partnerContact(id),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!id) return null;
 
       const { data, error } = await supabase
         .from("partner_contacts")
         .select(`
-          *,
+          id, bu_id, partner_company_id, name, email, phone, status, notes, created_at, updated_at,
           partner_company:partner_companies(id, name)
         `)
         .eq("id", id)

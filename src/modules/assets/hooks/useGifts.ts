@@ -27,6 +27,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
     queryKey: queryKeys.assets.gifts.items(buId ?? null, { search }),
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       let query = supabase
@@ -52,12 +53,14 @@ export function useGifts(options: UseGiftsOptions = {}) {
   const { data: batches = [], isLoading: isLoadingBatches, refetch: refetchBatches } = useQuery({
     queryKey: queryKeys.assets.gifts.batches(buId ?? null),
     enabled: !!buId && !!supabase,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("asset_gift_batches")
         .select(`
-          *,
+          id, bu_id, gift_item_id, batch_code, acquired_at, quantity_in, quantity_available,
+          cost_center, campaign, notes, created_at, created_by,
           gift_item:asset_gift_items!gift_item_id(id, name)
         `)
         .eq("bu_id", buId!)

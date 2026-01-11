@@ -17,6 +17,7 @@ export function useTicketMessages(ticketId: string | null) {
 
   return useQuery({
     queryKey: queryKeys.tickets.messages(ticketId ?? ''),
+    staleTime: 30 * 1000, // 30 seconds - messages update frequently
     queryFn: async () => {
       if (!ticketId) return [];
 
@@ -52,6 +53,7 @@ export function useTicketAttachments(ticketId: string | null) {
 
   return useQuery({
     queryKey: queryKeys.tickets.attachments(ticketId),
+    staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async () => {
       if (!ticketId) return [];
 
