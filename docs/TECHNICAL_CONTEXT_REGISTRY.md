@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.24.0  
+**Versão:** 2.25.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Impersonation System v2.0 ativo | RLS V2 100% migrado
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2148,6 +2148,20 @@ src/
 ### v2.23.0 (2026-01-12)
 - **Impersonation System v2.0** completo
 - **Identity Cutover v3.0** finalizado
+
+### v2.25.0 (2026-01-12)
+- **Wave 2 - Deprecações CONCLUÍDO**:
+  - ✅ `profiles.job_title` - Coluna já removida do banco (migrado para `job_title_id`)
+  - ✅ `user_notification_preferences` - Tabela já removida (migrado para v2)
+  - ✅ `send-magic-link` - Edge function removida (0 chamadas em 30 dias, substituída por `request-magic-link`)
+- **Cleanup de documentação**:
+  - `LEGACY_CLASSIFICATION_MATRIX.md` atualizado para v2.0
+  - `DEPRECATION_SEND_MAGIC_LINK.md` e `DEPRECATION_SEND_MAGIC_LINK_REPORT.md` removidos
+  - Script `generate-data-model-registry.ts` atualizado
+- **Tabela `mentions` global restaurada** (correção v2.19.0):
+  - Modelo com `entity_type` + `entity_id` para uso multi-módulo
+  - RLS V2 policies aplicadas
+  - Frontend atualizado (`useTickets.ts`, `useTicketMessages.ts`)
 
 ### v2.22.0 (2026-01-12)
 - **Technical Debt Sprint P1-P3**:

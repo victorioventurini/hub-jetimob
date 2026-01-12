@@ -1,8 +1,8 @@
 # Legacy Classification Matrix
 
-**Data:** 2026-01-08  
+**Data:** 2026-01-12  
 **Autor:** Auditoria Automatizada  
-**Versão:** 1.0
+**Versão:** 2.0
 
 ---
 
@@ -14,6 +14,19 @@
 | **LEGACY** | Ainda em uso, deve ser substituído |
 | **SUSPECT** | Sem evidência clara de uso |
 | **OBSOLETE** | Comprovadamente sem uso, pode remover |
+| **REMOVED** | Já removido do sistema |
+
+---
+
+## Wave 2 - Status: ✅ CONCLUÍDO (2026-01-12)
+
+Os seguintes itens foram verificados e confirmados como já removidos:
+
+| Item | Status | Evidência |
+|------|--------|-----------|
+| `profiles.job_title` | ✅ REMOVIDO | Coluna não existe mais no banco |
+| `user_notification_preferences` | ✅ REMOVIDO | Tabela não existe mais |
+| `send-magic-link` | ✅ REMOVIDO | 0 chamadas em 30 dias, função deletada |
 
 ---
 
@@ -26,17 +39,17 @@
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
 | `metrics` | DB | OBSOLETE | Baixo | Nenhuma | Remover Wave 3 |
-| `user_notification_preferences` | DB | LEGACY | Médio | Migrar para v2 | Deprecar Wave 2 |
-| `okr_dependencies` | DB | SUSPECT | Baixo | OKRs | Avaliar Wave 2 |
-| `okr_coaching_events` | DB | SUSPECT | Baixo | OKRs | Avaliar Wave 2 |
-| `squad_memberships` | DB | SUSPECT | Baixo | Squads | Avaliar uso |
+| ~~`user_notification_preferences`~~ | DB | ~~LEGACY~~ REMOVED | - | - | ✅ Wave 2 concluído |
+| `okr_dependencies` | DB | SUSPECT | Baixo | OKRs | Avaliar Wave 3 |
+| `okr_coaching_events` | DB | SUSPECT | Baixo | OKRs | Avaliar Wave 3 |
+| `squad_memberships` | DB | ACTIVE | Baixo | Squads | Em uso por useSquads |
 | `automation_*` (4 tabelas) | DB | SUSPECT | Baixo | Feature | Avaliar lançamento |
 
 #### 1.2 Colunas
 
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
-| `profiles.job_title` | DB | LEGACY | Médio | `job_title_id` | Deprecar Wave 2 |
+| ~~`profiles.job_title`~~ | DB | ~~LEGACY~~ REMOVED | - | - | ✅ Wave 2 concluído |
 
 #### 1.3 Views
 
@@ -55,28 +68,23 @@
 
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
-| `CityAutocomplete.tsx` | Front | LEGACY | Baixo | Profile/JetimoberDialog | Avaliar remoção |
-| `NavLink.tsx` | Front | SUSPECT | Baixo | Nenhuma detectada | Remover Wave 1 |
-| `CopyLinkButton.tsx` | Front | SUSPECT | Baixo | Nenhuma detectada | Remover Wave 1 |
-| `ui/pagination.tsx` | Front | SUSPECT | Baixo | Shadcn | Manter (pode usar) |
-| `ui/input-otp.tsx` | Front | SUSPECT | Baixo | Shadcn | Manter (pode usar) |
-| `ui/carousel.tsx` | Front | SUSPECT | Baixo | Shadcn | Manter (pode usar) |
+| `CityAutocomplete.tsx` | Front | ACTIVE | Baixo | Profile/JetimoberDialog | Em uso |
+| `ui/pagination.tsx` | Front | ACTIVE | Baixo | Shadcn | Pode usar |
+| `ui/input-otp.tsx` | Front | ACTIVE | Baixo | Shadcn | Pode usar |
 
 #### 2.2 Hooks
 
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
-| `useUrlState.ts` | Front | LEGACY | Baixo | Migrado | Remover Wave 1 |
-| `useNotifications.ts` | Front | LEGACY | Médio | useNotificationCenter | Consolidar Wave 2 |
-| `useUserProfile` (shared) | Front | SUSPECT | Baixo | Duplicado | Consolidar |
-| `useProfilesList` (shared) | Front | SUSPECT | Baixo | Duplicado | Consolidar |
+| `useNotifications.ts` | Front | LEGACY | Médio | useNotificationCenter | Consolidar Wave 3 |
+| `useUserProfile` (shared) | Front | ACTIVE | Baixo | Canônico | Manter |
+| `useProfilesList` (shared) | Front | ACTIVE | Baixo | Canônico | Manter |
 
 #### 2.3 Páginas
 
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
-| `LegacyAssetRedirect.tsx` | Front | ~~LEGACY~~ **REMOVIDO** | - | - | ✅ Removido (dead code) |
-| Todas as outras | Front | ACTIVE | - | - | Manter |
+| Todas as páginas | Front | ACTIVE | - | - | Manter |
 
 ---
 
@@ -84,7 +92,7 @@
 
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
-| `send-magic-link` | Edge | LEGACY | Baixo | request-magic-link | Remover Wave 2 |
+| ~~`send-magic-link`~~ | Edge | ~~LEGACY~~ REMOVED | - | - | ✅ Wave 2 concluído |
 | `request-magic-link` | Edge | ACTIVE | - | SendGrid | Manter |
 | `auth-email-hook` | Edge | ACTIVE | - | Supabase Auth | Manter |
 | `search-cities` | Edge | ACTIVE | - | Google Maps | Manter |
@@ -92,13 +100,14 @@
 | `get-place-details` | Edge | ACTIVE | - | Google Places | Manter |
 | `audit-permissions` | Edge | ACTIVE | - | RBAC | Manter |
 | `process-agent-document` | Edge | ACTIVE | - | IA | Manter |
-| `global-search` | Edge | ACTIVE | - | Busca | Manter |
 | `get-public-asset` | Edge | ACTIVE | - | Assets | Manter |
 | `invoke-vic` | Edge | ACTIVE | - | IA | Manter |
 | `culture-message` | Edge | ACTIVE | - | IA | Manter |
-| `hub-greeting` | Edge | ACTIVE | - | Home | Manter |
 | `process-notification-outbox` | Edge | ACTIVE | - | Notificações | Manter |
+| `evaluate-notification-health` | Edge | ACTIVE | - | Notificações | Manter |
+| `cron-dispatcher` | Edge | ACTIVE | - | Scheduled Jobs | Manter |
 | `get-tcr` | Edge | ACTIVE | - | Custom GPT | Manter |
+| `send-partner-invite` | Edge | ACTIVE | - | Partners | Manter |
 
 ---
 
@@ -107,36 +116,25 @@
 ### ACTIVE (Manter)
 - **DB:** 85+ tabelas, 7 views, 70+ funções SQL
 - **Front:** 17 páginas, 13 módulos, 18+ hooks, 2 contexts
-- **Edge:** 14 funções
+- **Edge:** 15 funções
 
 ### LEGACY (Deprecar/Substituir)
-- **DB:** 
-  - `user_notification_preferences` → v2
-  - `profiles.job_title` → `job_title_id`
 - **Front:**
-  - `useUrlState.ts`
-  - `useNotifications.ts` (wrapper)
-  - `CityAutocomplete.tsx`
-  - `LegacyAssetRedirect.tsx` (manter para compat)
-- **Edge:**
-  - `send-magic-link`
+  - `useNotifications.ts` (wrapper) → consolidar com `useNotificationCenter`
 
-### SUSPECT (Avaliar)
+### SUSPECT (Avaliar Wave 3)
 - **DB:**
-  - `metrics`
+  - `metrics` (OBSOLETE - pode remover)
   - `okr_dependencies`
   - `okr_coaching_events`
-  - `squad_memberships`
-  - `automation_*` (4 tabelas)
-- **Front:**
-  - `NavLink.tsx`
-  - `CopyLinkButton.tsx`
-  - Componentes shadcn não utilizados
+  - `automation_*` (4 tabelas - aguardando feature)
 
-### OBSOLETE (Remover)
-- **DB:** `metrics` (após confirmação)
-- **Front:** Nenhum confirmado
-- **Edge:** Nenhum confirmado
+### REMOVED (Wave 2 - Concluído)
+- **DB:**
+  - `user_notification_preferences`
+  - `profiles.job_title`
+- **Edge:**
+  - `send-magic-link`
 
 ---
 
@@ -146,16 +144,16 @@
 |---------|-------|--------|
 | Cobertura RLS | 100% | ✅ Excelente |
 | Tabelas com bu_id | 70/92 | ⚠️ Verificar exceções |
-| QueryKeys centralizados | ~95% | ✅ Bom |
-| Identity convention | ~90% | ✅ Bom |
-| Hooks ativos | 18/21 | ✅ Bom |
-| Edge functions ativas | 14/15 | ✅ Excelente |
+| QueryKeys centralizados | ~98% | ✅ Excelente |
+| Identity convention | 100% | ✅ Excelente |
+| Hooks ativos | 20/20 | ✅ Excelente |
+| Edge functions ativas | 15/15 | ✅ Excelente |
 
 ---
 
-## Próximos Passos
+## Próximos Passos (Wave 3)
 
-1. Revisar itens SUSPECT com stakeholders
-2. Criar tickets para deprecações LEGACY
-3. Planejar remoções por Wave
-4. Atualizar documentação após cada Wave
+1. Avaliar remoção da tabela `metrics`
+2. Decidir sobre `okr_dependencies` e `okr_coaching_events`
+3. Consolidar `useNotifications.ts` → `useNotificationCenter`
+4. Avaliar tabelas `automation_*` quando feature for lançada
