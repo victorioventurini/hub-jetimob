@@ -20,6 +20,7 @@ export { BuIaSettings } from "./components/BuIaSettings";
 export { VicAuditPage } from "./components/VicAuditPage";
 export { VicTypewriterText, VicTypewriterBlock, VicStreamingText } from "./components/VicTypewriterText";
 export { VicLoadingState, VicGeneratingCard } from "./components/VicLoadingState";
+export { VicErrorState } from "./components/VicErrorState";
 
 // Types
 export type * from "./types/ask-to-vic";

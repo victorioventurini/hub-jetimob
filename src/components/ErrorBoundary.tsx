@@ -1,5 +1,5 @@
 import React, { Component, ReactNode } from 'react';
-import { ErrorState } from '@/components/ui/error-state';
+import { VicErrorState } from '@/modules/vic/components/VicErrorState';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ErrorBoundaryProps {
@@ -73,22 +73,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-          <ErrorState
-            title="Algo deu errado"
-            description="Ocorreu um erro ao carregar esta página. Tente novamente."
+          <VicErrorState
+            title="Opa, algo deu errado 😅"
+            description="Tive um problema ao carregar esta página, mas bora tentar de novo!"
             onRetry={this.handleRetry}
+            technicalDetails={this.state.error?.stack || this.state.error?.message || null}
           />
-
-          {this.state.error && (
-            <details className="mt-6 w-full max-w-3xl rounded-lg border border-border bg-card p-4">
-              <summary className="cursor-pointer text-sm font-medium">
-                Detalhes técnicos
-              </summary>
-              <pre className="mt-3 text-xs whitespace-pre-wrap break-words text-muted-foreground">
-{this.state.error.stack || this.state.error.message}
-              </pre>
-            </details>
-          )}
         </div>
       );
     }
