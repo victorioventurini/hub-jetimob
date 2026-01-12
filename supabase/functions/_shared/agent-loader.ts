@@ -185,8 +185,22 @@ export async function buildSystemPrompt(
  * Build user prompt from context
  */
 export function buildUserPrompt(context: AgentContext, userQuestion?: string): string {
+  // Special-case: Culture message must ALWAYS fit in 60 characters.
+  if (context.type === "culture_message") {
+    const details = {
+      title: context.title,
+      description: context.description,
+      status: context.status,
+      additionalData: context.additionalData ?? {},
+    };
+
+    const questionPart = userQuestion ? `\n\nPergunta do usuário: ${userQuestion}` : "";
+
+    return `Contexto: culture_message\n\nDados (JSON):\n${JSON.stringify(details, null, 2)}\n\nTAREFA:\n- Gere UMA mensagem de cultura para exibir na Home\n- Máximo 60 caracteres (incluindo espaços)\n- Uma única linha (sem quebras)\n- Sem aspas, sem reticências, sem assinatura\n- Evite emojis\n\nFORMATO:\nRetorne APENAS a mensagem.${questionPart}`;
+  }
+
   let contextDescription = `Contexto: ${context.type}`;
-  
+
   if (context.title) contextDescription += `\nTítulo: ${context.title}`;
   if (context.description) contextDescription += `\nDescrição: ${context.description}`;
   if (context.currentValue !== undefined)
@@ -203,7 +217,7 @@ export function buildUserPrompt(context: AgentContext, userQuestion?: string): s
   if (userQuestion) {
     return `${contextDescription}\n\nPergunta do usuário: ${userQuestion}`;
   }
-  
+
   return `${contextDescription}\n\nAnalise o contexto acima e forneça suas recomendações.`;
 }
 
