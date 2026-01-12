@@ -155,7 +155,7 @@ export function LeaderHighlightsStep({
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    Insights da Vic
+                    Insights do Vic
                   </h4>
                   <VicInsightsList
                     insights={aiInsights}

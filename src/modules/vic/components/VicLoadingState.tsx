@@ -2,7 +2,7 @@
  * VicLoadingState - Loading moderno com identidade Vic
  * 
  * Substitui os spinners genéricos por uma animação
- * moderna que faz alusão à IA Vic.
+ * moderna que faz alusão ao Vic (IA masculino).
  */
 
 import { motion } from 'framer-motion';

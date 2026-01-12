@@ -1,7 +1,7 @@
 /**
  * VicTypewriterText - Efeito de digitação estilo Vic
  * 
- * Usado para todos os textos gerados por IA,
+ * Usado para todos os textos gerados pelo Vic (IA),
  * simulando a digitação letra por letra.
  * 
  * Suporta sequenciamento via VicTypewriterQueueProvider para evitar
