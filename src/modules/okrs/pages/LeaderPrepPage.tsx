@@ -100,8 +100,8 @@ export default function LeaderPrepPage() {
   
   // Fetch team data
   const { data: metrics, isLoading: isLoadingMetrics } = useTeamOverviewMetrics(
-    teamIdParam || '',
-    quarterlyCycle?.id
+    quarterlyCycle?.id,
+    teamIdParam || ''
   );
   const { data: pendingKrs, isLoading: isLoadingKrs } = useTeamPendingKrs(
     quarterlyCycle?.id,
