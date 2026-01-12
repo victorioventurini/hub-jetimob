@@ -261,7 +261,7 @@ export function InventoryDetailView() {
 
   const handleOpenPublicLink = () => {
     if (!item) return;
-    const publicUrl = `${window.location.origin}/p/assets/${item.internal_code}`;
+    const publicUrl = `${window.location.origin}/assets/${item.internal_code}`;
     window.open(publicUrl, '_blank');
   };
 
