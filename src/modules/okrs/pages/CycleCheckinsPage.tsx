@@ -34,6 +34,7 @@ import { CycleCheckinsFilters as FiltersBar } from '../components/cycle-checkins
 import { CheckinWizard } from '../components/CheckinWizard';
 import { useManageableTeamsFlat } from '../hooks/useManageableTeams';
 import { cn } from '@/lib/utils';
+import { OkrCycleCheckinsBreadcrumb } from '../components/ui/OkrBreadcrumb';
 
 type CheckinsTab = 'feed' | 'pending' | 'summary';
 
@@ -140,6 +141,9 @@ export default function CycleCheckinsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
+        {/* Breadcrumb */}
+        <OkrCycleCheckinsBreadcrumb />
+        
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

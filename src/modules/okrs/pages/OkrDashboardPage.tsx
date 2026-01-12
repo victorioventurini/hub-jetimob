@@ -36,6 +36,7 @@ import { OrgObjectiveFormDialog } from '../components/OrgObjectiveFormDialog';
 import { OkrEmptyState } from '../components/OkrEmptyState';
 import { OkrAlertsCard } from '../components/OkrAlertsCard';
 import { SharedOkrInsights } from '../components/SharedOkrInsights';
+import { OkrDashboardBreadcrumb } from '../components/ui/OkrBreadcrumb';
 
 interface OkrFiltersState {
   year: number;
@@ -162,6 +163,9 @@ export default function OkrDashboardPage() {
   return (
     <HubLayout>
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Breadcrumb */}
+        <OkrDashboardBreadcrumb />
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

@@ -11,6 +11,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
 import { YearSelect } from '@/components/selects';
 import { useUrlState, parsers } from '@/shared/url';
+import { OkrOrgViewListBreadcrumb } from '../components/ui/OkrBreadcrumb';
 
 const statusConfig = {
   on_track: {
@@ -58,6 +59,9 @@ export default function OrgViewListPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
+        {/* Breadcrumb */}
+        <OkrOrgViewListBreadcrumb />
+        
         {/* Header */}
         <PageHeader
           title="Visão Organizacional"

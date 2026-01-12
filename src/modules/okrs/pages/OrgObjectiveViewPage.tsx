@@ -11,6 +11,7 @@ import { OrgKrExpandableCard } from '../components/org-view/OrgKrExpandableCard'
 import { OrgViewInsights } from '../components/org-view/OrgViewInsights';
 import { OrgViewFilters, StatusFilter, TeamFilter } from '../components/org-view/OrgViewFilters';
 import { useUrlState } from '@/shared/url';
+import { OkrOrgObjectiveDetailBreadcrumb } from '../components/ui/OkrBreadcrumb';
 
 export default function OrgObjectiveViewPage() {
   const { objectiveId } = useParams<{ objectiveId: string }>();
@@ -115,15 +116,8 @@ export default function OrgObjectiveViewPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Back button */}
-        <div>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/okrs/org-view">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para Visão Organizacional
-            </Link>
-          </Button>
-        </div>
+        {/* Breadcrumb */}
+        <OkrOrgObjectiveDetailBreadcrumb objectiveTitle={objective.title} />
 
         {/* Header */}
         <OrgObjectiveHeader objective={objective} />

@@ -14,6 +14,7 @@ import { TeamContributionFilters } from "../components/team-contribution/TeamCon
 import { EmptyState } from "@/components/ui/empty-state";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useUrlState } from "@/shared/url";
+import { OkrTeamContributionBreadcrumb } from "../components/ui/OkrBreadcrumb";
 
 export default function TeamContributionPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -61,21 +62,11 @@ export default function TeamContributionPage() {
   return (
     <HubLayout>
       <div className="p-6 space-y-6">
-      {/* Back Button */}
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        asChild
-        className="gap-2"
-      >
-        <Link to="/teams">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Link>
-      </Button>
+        {/* Breadcrumb */}
+        <OkrTeamContributionBreadcrumb teamName={data.team.name} />
 
-      {/* Header */}
-      <TeamContributionHeader data={data} buName={currentBu?.name} />
+        {/* Header */}
+        <TeamContributionHeader data={data} buName={currentBu?.name} />
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
