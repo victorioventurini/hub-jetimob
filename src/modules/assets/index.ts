@@ -3,8 +3,6 @@ export * from "./types";
 
 // Hooks
 export { useAssetPermissionsV2 } from "./hooks/useAssetPermissionsV2";
-/** @deprecated Use useAssetPermissionsV2 instead. Legacy hook for old asset_permissions table. */
-export { useAssetPermissions } from "./hooks/useAssetPermissions";
 export { useInventory } from "./hooks/useInventory";
 export { useKeys } from "./hooks/useKeys";
 export { useGifts } from "./hooks/useGifts";
