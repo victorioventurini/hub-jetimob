@@ -48,6 +48,34 @@ interface InvokeVicRequest {
   stream?: boolean;
 }
 
+const MAX_CULTURE_MESSAGE_CHARS = 60;
+
+function normalizeSingleLineText(input: string): string {
+  return input
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stripWrappingQuotes(input: string): string {
+  const s = input.trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    return s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+function normalizeCultureMessage(input: string): string {
+  return stripWrappingQuotes(normalizeSingleLineText(input));
+}
+
 /**
  * Log agent invocation to ai_agent_logs
  */
