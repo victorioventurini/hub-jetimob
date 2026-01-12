@@ -9,13 +9,13 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
+import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
+import { useManagersPanorama, useCrossDependencies } from '@/modules/okrs/hooks/useManagersPanorama';
 
 // Step components
 import { ManagersPanoramaStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersPanoramaStep';
 import { ManagersCrossIssuesStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersCrossIssuesStep';
 import { ManagersAdjustmentsStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersAdjustmentsStep';
-
-import type { AreaOkrSummary, CrossDependency } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -41,31 +41,6 @@ const DEFAULT_DATA: ManagersDraftData = {
   resolvedDependencies: [],
 };
 
-// Mock data (in real implementation, fetch from API)
-const MOCK_AREAS: AreaOkrSummary[] = [
-  { areaName: 'Produto', teamId: 'team-1', okrCount: 5, avgProgress: 72, trend: 'improving', atRiskCount: 1 },
-  { areaName: 'Engenharia', teamId: 'team-2', okrCount: 8, avgProgress: 58, trend: 'stable', atRiskCount: 2 },
-  { areaName: 'Comercial', teamId: 'team-3', okrCount: 4, avgProgress: 85, trend: 'improving', atRiskCount: 0 },
-  { areaName: 'Marketing', teamId: 'team-4', okrCount: 3, avgProgress: 45, trend: 'declining', atRiskCount: 1 },
-];
-
-const MOCK_DEPENDENCIES: CrossDependency[] = [
-  {
-    id: 'dep-1',
-    description: 'API de integração para campanha de marketing',
-    fromTeam: { id: 'team-2', name: 'Engenharia' },
-    toTeam: { id: 'team-4', name: 'Marketing' },
-    status: 'at_risk',
-  },
-  {
-    id: 'dep-2',
-    description: 'Feature de checkout para meta comercial',
-    fromTeam: { id: 'team-1', name: 'Produto' },
-    toTeam: { id: 'team-3', name: 'Comercial' },
-    status: 'healthy',
-  },
-];
-
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -74,6 +49,17 @@ export default function ManagersCheckinPage() {
   const navigate = useNavigate();
   
   usePageTitle('Check-in de Gestores');
+  
+  // Get active quarterly cycle
+  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
+  const quarterlyCycle = useMemo(() => 
+    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
+    [activeCycles]
+  );
+  
+  // Fetch real data
+  const { data: panoramaData, isLoading: isLoadingPanorama } = useManagersPanorama(quarterlyCycle?.id);
+  const { data: dependencies, isLoading: isLoadingDeps } = useCrossDependencies(quarterlyCycle?.id);
   
   // Draft persistence
   const {
@@ -94,9 +80,11 @@ export default function ManagersCheckinPage() {
   });
   
   // Calculated values
-  const companyProgress = useMemo(() => {
-    return Math.round(MOCK_AREAS.reduce((sum, a) => sum + a.avgProgress, 0) / MOCK_AREAS.length);
-  }, []);
+  const companyProgress = panoramaData?.companyProgress ?? 0;
+  const areas = panoramaData?.areas ?? [];
+  const crossDependencies = dependencies ?? [];
+  
+  const isLoading = isLoadingCycles || isLoadingPanorama || isLoadingDeps;
   
   // Navigation
   const completedSteps = useMemo(() => {
@@ -162,8 +150,9 @@ export default function ManagersCheckinPage() {
       case 'panorama':
         return (
           <ManagersPanoramaStep
-            areas={MOCK_AREAS}
+            areas={areas}
             companyProgress={companyProgress}
+            isLoading={isLoading}
             onContinue={goNext}
           />
         );
@@ -171,7 +160,7 @@ export default function ManagersCheckinPage() {
       case 'cross-issues':
         return (
           <ManagersCrossIssuesStep
-            dependencies={MOCK_DEPENDENCIES}
+            dependencies={crossDependencies}
             onContinue={goNext}
             onBack={goBack}
           />

@@ -10,10 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { ArrowRight, ArrowLeft, Target, Lightbulb, CheckCircle2, TrendingUp } from 'lucide-react';
+import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
+import { ArrowRight, ArrowLeft, Target, Lightbulb, CheckCircle2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ============================================================
 // TYPES
@@ -42,24 +44,68 @@ const DEFAULT_DATA: CLevelDraftData = {
   reviewedOkrs: [],
 };
 
-// Mock company OKRs
-const MOCK_OKRS = [
-  { id: '1', title: 'Crescer receita em 30%', progress: 65, trend: 'improving' as const },
-  { id: '2', title: 'NPS acima de 70', progress: 48, trend: 'stable' as const },
-  { id: '3', title: 'Reduzir churn para 3%', progress: 72, trend: 'improving' as const },
-];
-
 // ============================================================
 // STEP COMPONENTS
 // ============================================================
 
 function CompanyOkrsStep({ 
   okrs, 
+  isLoading,
   onContinue 
 }: { 
-  okrs: typeof MOCK_OKRS; 
+  okrs: { id: string; title: string; progress: number; trend: 'improving' | 'stable' | 'declining' }[]; 
+  isLoading?: boolean;
   onContinue: () => void 
 }) {
+  const getTrendIcon = (trend: string) => {
+    if (trend === 'improving') return <TrendingUp className="h-4 w-4" />;
+    if (trend === 'declining') return <TrendingDown className="h-4 w-4" />;
+    return <Minus className="h-4 w-4" />;
+  };
+
+  const getTrendLabel = (trend: string) => {
+    if (trend === 'improving') return 'Melhorando';
+    if (trend === 'declining') return 'Em risco';
+    return 'Estável';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-7 w-48 mb-2" />
+          <Skeleton className="h-5 w-72" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-5 w-64 mb-3" />
+                <Skeleton className="h-4 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (okrs.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">OKRs da Empresa</h2>
+          <p className="text-muted-foreground">Nenhum objetivo organizacional encontrado para este ano.</p>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={onContinue} className="gap-2">
+            Continuar <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -76,8 +122,9 @@ function CompanyOkrsStep({
                   <Target className="h-4 w-4 text-primary" />
                   <span className="font-medium">{okr.title}</span>
                 </div>
-                <Badge variant={okr.trend === 'improving' ? 'default' : 'secondary'}>
-                  {okr.trend === 'improving' ? 'Melhorando' : 'Estável'}
+                <Badge variant={okr.trend === 'declining' ? 'destructive' : okr.trend === 'improving' ? 'default' : 'secondary'} className="gap-1">
+                  {getTrendIcon(okr.trend)}
+                  {getTrendLabel(okr.trend)}
                 </Badge>
               </div>
               <div className="flex items-center gap-3">
@@ -237,6 +284,10 @@ export default function CLevelCheckinPage() {
   
   usePageTitle('Check-in Estratégico');
   
+  // Fetch real company OKRs data
+  const { data: companyData, isLoading: isLoadingOkrs } = useCompanyOkrs();
+  const okrs = companyData?.okrs ?? [];
+  
   // Draft persistence
   const {
     draft,
@@ -318,7 +369,7 @@ export default function CLevelCheckinPage() {
   const renderStepContent = () => {
     switch (draft.currentStep) {
       case 'company-okrs':
-        return <CompanyOkrsStep okrs={MOCK_OKRS} onContinue={goNext} />;
+        return <CompanyOkrsStep okrs={okrs} isLoading={isLoadingOkrs} onContinue={goNext} />;
         
       case 'insights':
         return <InsightsStep onContinue={goNext} onBack={goBack} />;
