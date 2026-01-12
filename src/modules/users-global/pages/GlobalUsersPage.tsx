@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/table";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Search, Users, Shield, Building2, CheckCircle, Clock } from "lucide-react";
+import { Search, Users, Shield, Building2, CheckCircle, Clock, UserCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useGlobalUsers } from "../hooks/useGlobalUsers";
 import { useAllBus } from "../hooks/useAllBus";
 import { UserGlobalSheet } from "../components/UserGlobalSheet";
-import type { GlobalUser } from "../types";
+import type { GlobalUser, UserTypeFilter } from "../types";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Admin",
@@ -51,6 +51,7 @@ export default function GlobalUsersPage() {
   
   const buFilter = searchParams.get("bu") || "all";
   const onboardingFilter = searchParams.get("onboarding") || "all";
+  const userTypeFilter = (searchParams.get("type") || "all") as UserTypeFilter;
   
   const setBuFilter = (value: string) => {
     setSearchParams((prev) => {
@@ -76,6 +77,18 @@ export default function GlobalUsersPage() {
     }, { replace: true });
   };
 
+  const setUserTypeFilter = (value: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      if (value === "all") {
+        newParams.delete("type");
+      } else {
+        newParams.set("type", value);
+      }
+      return newParams;
+    }, { replace: true });
+  };
+
   const [selectedUser, setSelectedUser] = useState<GlobalUser | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -84,6 +97,7 @@ export default function GlobalUsersPage() {
     q: search,
     buId: buFilter === "all" ? undefined : buFilter,
     onboardingStatus: onboardingFilter === "all" ? undefined : (onboardingFilter as "completed" | "pending"),
+    userType: userTypeFilter,
   });
 
   const handleOpenUser = (user: GlobalUser) => {
@@ -133,6 +147,17 @@ export default function GlobalUsersPage() {
             <SelectItem value="pending">Pendente</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={userTypeFilter} onValueChange={setUserTypeFilter}>
+          <SelectTrigger className="w-[160px]">
+            <UserCircle className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="internal">Interno</SelectItem>
+            <SelectItem value="external">Externo</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Tabela */}
@@ -143,7 +168,7 @@ export default function GlobalUsersPage() {
           icon={Users}
           title="Nenhum usuário encontrado"
           description={
-            search || buFilter !== "all" || onboardingFilter !== "all"
+            search || buFilter !== "all" || onboardingFilter !== "all" || userTypeFilter !== "all"
               ? "Tente ajustar os filtros de busca"
               : "Ainda não há usuários cadastrados"
           }

@@ -8239,25 +8239,47 @@ export type Database = {
           type: Database["public"]["Enums"]["module_type"]
         }[]
       }
-      get_global_users_admin: {
-        Args: {
-          p_bu_id?: string
-          p_onboarding_status?: string
-          p_search?: string
-        }
-        Returns: {
-          bu_accesses: Json
-          display_name: string
-          global_role: string
-          last_sign_in_at: string
-          onboarding_completed: boolean
-          primary_bu_id: string
-          primary_bu_name: string
-          profile_id: string
-          user_id: string
-          work_email: string
-        }[]
-      }
+      get_global_users_admin:
+        | {
+            Args: {
+              p_bu_id?: string
+              p_onboarding_status?: string
+              p_search?: string
+            }
+            Returns: {
+              bu_accesses: Json
+              display_name: string
+              global_role: string
+              last_sign_in_at: string
+              onboarding_completed: boolean
+              primary_bu_id: string
+              primary_bu_name: string
+              profile_id: string
+              user_id: string
+              work_email: string
+            }[]
+          }
+        | {
+            Args: {
+              p_bu_id?: string
+              p_onboarding_status?: string
+              p_search?: string
+              p_user_type?: string
+            }
+            Returns: {
+              bu_accesses: Json
+              display_name: string
+              global_role: string
+              last_sign_in_at: string
+              onboarding_completed: boolean
+              primary_bu_id: string
+              primary_bu_name: string
+              profile_id: string
+              user_id: string
+              user_type: string
+              work_email: string
+            }[]
+          }
       get_integration_config_for_bu: {
         Args: { p_bu_id: string; p_integration_key: string }
         Returns: Json
