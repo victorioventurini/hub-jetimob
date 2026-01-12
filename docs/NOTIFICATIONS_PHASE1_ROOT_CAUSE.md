@@ -138,7 +138,74 @@ SELECT 'bu_notification_event_settings' as table_name, COUNT(*) FROM bu_notifica
 
 ## Próximos Passos (Phase 2)
 
-1. Adicionar botão "Enviar Teste" na UI
-2. Tabs de Outbox e In-App Logs em /settings/notifications
-3. Configurar cron para `process-notification-outbox`
+1. ~~Adicionar botão "Enviar Teste" na UI~~ ✅ Implementado
+2. ~~Tabs de Outbox e In-App Logs em /settings/notifications~~ ✅ Implementado
+3. ~~Configurar cron para `process-notification-outbox`~~ ✅ Migrado para cron-dispatcher externo
 4. Health dashboard com métricas
+
+---
+
+## Phase 3 — RLS Hardening (2026-01-11)
+
+### Problema Identificado
+
+As tabs de **Outbox** e **In-App** em `/settings/notifications` não carregavam dados porque as RLS policies estavam incorretas:
+
+1. **Policies originais usavam permission keys sem sufixo `:scope`** (ex: `notifications.outbox.view` ao invés de `notifications.outbox.view:bu`)
+2. **Policy de `notifications` para admin view não existia** — apenas a policy de "own notifications" funcionava
+
+### Correções Aplicadas (Migration `20260111235054`)
+
+```sql
+-- notification_outbox (SELECT)
+CREATE POLICY notification_outbox_view_policy
+ON public.notification_outbox FOR SELECT TO authenticated
+USING (
+  is_current_bu(bu_id) AND (
+    has_role(auth.uid(), 'super_admin'::app_role)
+    OR has_role(auth.uid(), 'admin'::app_role)
+    OR has_permission(auth.uid(), current_bu_id(), 'notifications.outbox.view:bu')
+  )
+);
+
+-- notification_outbox (UPDATE)
+CREATE POLICY notification_outbox_update_policy
+ON public.notification_outbox FOR UPDATE TO authenticated
+USING (
+  is_current_bu(bu_id) AND (
+    has_role(auth.uid(), 'super_admin'::app_role)
+    OR has_role(auth.uid(), 'admin'::app_role)
+    OR has_permission(auth.uid(), current_bu_id(), 'notifications.outbox.retry:bu')
+  )
+);
+
+-- notifications (SELECT para admin view)
+CREATE POLICY notifications_admin_view
+ON public.notifications FOR SELECT TO authenticated
+USING (
+  is_current_bu(bu_id) AND (
+    has_role(auth.uid(), 'super_admin'::app_role)
+    OR has_role(auth.uid(), 'admin'::app_role)
+    OR has_permission(auth.uid(), current_bu_id(), 'notifications.bu.view:bu')
+    OR has_permission(auth.uid(), current_bu_id(), 'notifications.bu.manage:bu')
+  )
+);
+```
+
+### Permission Keys Necessárias
+
+| Key | Descrição |
+|-----|-----------|
+| `notifications.outbox.view:bu` | Ver fila de envio de notificações (outbox) |
+| `notifications.outbox.retry:bu` | Reprocessar notificações com falha |
+| `notifications.bu.view:bu` | Ver configuração de notificações da BU |
+| `notifications.bu.manage:bu` | Gerenciar canais e eventos de notificação da BU |
+
+### Validação
+
+```sql
+-- Verificar que usuário tem permissão
+SELECT * FROM v_user_effective_permissions 
+WHERE user_id = '<user-id>' AND bu_id = '<bu-id>'
+AND permission_key IN ('notifications.outbox.view:bu', 'notifications.bu.view:bu');
+```
