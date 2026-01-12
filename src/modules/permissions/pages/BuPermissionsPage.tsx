@@ -72,8 +72,11 @@ export default function BuPermissionsPage() {
 
   const sortedUsers = useMemo(() => {
     return [...filteredUsers].sort((a, b) => {
-      if (a.role_in_bu === "admin" && b.role_in_bu !== "admin") return -1;
-      if (b.role_in_bu === "admin" && a.role_in_bu !== "admin") return 1;
+      // Admin by role OR by template first
+      const aIsAdmin = a.role_in_bu === "admin" || a.has_admin_template;
+      const bIsAdmin = b.role_in_bu === "admin" || b.has_admin_template;
+      if (aIsAdmin && !bIsAdmin) return -1;
+      if (bIsAdmin && !aIsAdmin) return 1;
       const aExternal = a.role_in_bu === "external";
       const bExternal = b.role_in_bu === "external";
       if (aExternal && !bExternal) return 1;
@@ -86,7 +89,8 @@ export default function BuPermissionsPage() {
     name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const getRoleBadge = (user: BuUser) => {
-    if (user.role_in_bu === "admin") {
+    // Show Admin badge if role is admin OR has admin template
+    if (user.role_in_bu === "admin" || user.has_admin_template) {
       return <Badge variant="default" className="gap-1"><Crown className="h-3 w-3" />Admin</Badge>;
     }
     if (user.role_in_bu === "external") {
@@ -99,7 +103,8 @@ export default function BuPermissionsPage() {
   };
 
   const getPermissionIndicator = (user: BuUser) => {
-    if (user.role_in_bu === "admin") {
+    // Show wildcard indicator if role is admin OR has admin template
+    if (user.role_in_bu === "admin" || user.has_admin_template) {
       return <span className="flex items-center gap-1 text-xs text-primary font-medium"><Shield className="h-3 w-3" />Acesso Total (*)</span>;
     }
     return null;
