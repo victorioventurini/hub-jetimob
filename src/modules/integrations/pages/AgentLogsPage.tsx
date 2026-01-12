@@ -12,14 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from '@/components/ui/table';
+import { VirtualizedTable } from '@/components/ui/virtualized-list';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -252,59 +245,39 @@ export default function AgentLogsPage() {
               ))}
             </div>
           ) : filteredLogs && filteredLogs.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Agente</TableHead>
-                    <TableHead>Escopo</TableHead>
-                    <TableHead>Latência</TableHead>
-                    <TableHead>Tokens</TableHead>
-                    <TableHead>Modelo</TableHead>
-                    <TableHead>Data/Hora</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>
-                        <Badge 
-                          variant={
-                            log.status === 'success' ? 'default' :
-                            log.status === 'error' ? 'destructive' : 'secondary'
-                          }
-                          className="gap-1"
-                        >
-                          {log.status === 'success' && <CheckCircle className="w-3 h-3" />}
-                          {log.status === 'error' && <XCircle className="w-3 h-3" />}
-                          {log.status === 'timeout' && <Clock className="w-3 h-3" />}
-                          {log.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{log.agent_name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {log.scope === 'global' ? 'Global' : 'BU'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {log.latency_ms ? `${log.latency_ms}ms` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {log.total_tokens?.toLocaleString() || '-'}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {log.model_used || '-'}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <VirtualizedTable
+              items={filteredLogs}
+              height={400}
+              rowHeight={48}
+              getItemKey={(log) => log.id}
+              columns={[
+                {
+                  key: "status",
+                  header: "Status",
+                  width: 100,
+                  render: (log) => (
+                    <Badge 
+                      variant={
+                        log.status === 'success' ? 'default' :
+                        log.status === 'error' ? 'destructive' : 'secondary'
+                      }
+                      className="gap-1"
+                    >
+                      {log.status === 'success' && <CheckCircle className="w-3 h-3" />}
+                      {log.status === 'error' && <XCircle className="w-3 h-3" />}
+                      {log.status === 'timeout' && <Clock className="w-3 h-3" />}
+                      {log.status}
+                    </Badge>
+                  ),
+                },
+                { key: "agent_name", header: "Agente", render: (log) => <span className="font-medium">{log.agent_name}</span> },
+                { key: "scope", header: "Escopo", width: 80, render: (log) => <Badge variant="outline">{log.scope === 'global' ? 'Global' : 'BU'}</Badge> },
+                { key: "latency_ms", header: "Latência", width: 80, render: (log) => log.latency_ms ? `${log.latency_ms}ms` : '-' },
+                { key: "total_tokens", header: "Tokens", width: 80, render: (log) => log.total_tokens?.toLocaleString() || '-' },
+                { key: "model_used", header: "Modelo", render: (log) => <span className="text-muted-foreground">{log.model_used || '-'}</span> },
+                { key: "created_at", header: "Data/Hora", width: 120, render: (log) => <span className="text-muted-foreground">{format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}</span> },
+              ]}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">

@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { VirtualizedTable } from '@/components/ui/virtualized-list';
 import { Eye, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import type { AutomationLog } from '../types';
 import { logStatusColors, logStatusLabels } from '../types';
@@ -51,75 +44,107 @@ export function AutomationLogsTable({ logs, isLoading }: AutomationLogsTableProp
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Tipo</TableHead>
-              <TableHead>Evento / Ação</TableHead>
-              <TableHead>Conexão / Token</TableHead>
-              <TableHead>BU</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Latência</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead className="w-[60px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {logs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell>
-                  <div className="flex items-center gap-1.5">
-                    {log.type === 'event' ? (
-                      <ArrowUpRight className="h-4 w-4 text-blue-500" />
-                    ) : (
-                      <ArrowDownLeft className="h-4 w-4 text-purple-500" />
-                    )}
-                    <span className="text-xs uppercase text-muted-foreground">
-                      {log.type === 'event' ? 'Evento' : 'Ação'}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                    {log.event_key || log.action_key}
-                  </code>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {log.connection?.name || '-'}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {log.bu?.name || 'Global'}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="secondary"
-                    className={logStatusColors[log.status]}
-                  >
-                    {logStatusLabels[log.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right text-sm tabular-nums">
-                  {log.latency_ms ? `${log.latency_ms}ms` : '-'}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setSelectedLog(log)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <VirtualizedTable
+        items={logs}
+        height={500}
+        rowHeight={48}
+        getItemKey={(log) => log.id}
+        columns={[
+          {
+            key: "type",
+            header: "Tipo",
+            width: 100,
+            render: (log) => (
+              <div className="flex items-center gap-1.5">
+                {log.type === 'event' ? (
+                  <ArrowUpRight className="h-4 w-4 text-blue-500" />
+                ) : (
+                  <ArrowDownLeft className="h-4 w-4 text-purple-500" />
+                )}
+                <span className="text-xs uppercase text-muted-foreground">
+                  {log.type === 'event' ? 'Evento' : 'Ação'}
+                </span>
+              </div>
+            ),
+          },
+          {
+            key: "event_key",
+            header: "Evento / Ação",
+            render: (log) => (
+              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                {log.event_key || log.action_key}
+              </code>
+            ),
+          },
+          {
+            key: "connection",
+            header: "Conexão / Token",
+            render: (log) => (
+              <span className="text-sm text-muted-foreground">
+                {log.connection?.name || '-'}
+              </span>
+            ),
+          },
+          {
+            key: "bu",
+            header: "BU",
+            width: 100,
+            render: (log) => (
+              <span className="text-sm text-muted-foreground">
+                {log.bu?.name || 'Global'}
+              </span>
+            ),
+          },
+          {
+            key: "status",
+            header: "Status",
+            width: 100,
+            render: (log) => (
+              <Badge
+                variant="secondary"
+                className={logStatusColors[log.status]}
+              >
+                {logStatusLabels[log.status]}
+              </Badge>
+            ),
+          },
+          {
+            key: "latency_ms",
+            header: "Latência",
+            width: 80,
+            className: "text-right tabular-nums",
+            render: (log) => log.latency_ms ? `${log.latency_ms}ms` : '-',
+          },
+          {
+            key: "created_at",
+            header: "Data",
+            width: 120,
+            render: (log) => (
+              <span className="text-sm text-muted-foreground">
+                {format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
+              </span>
+            ),
+          },
+          {
+            key: "actions",
+            header: "",
+            width: 60,
+            render: (log) => (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedLog(log);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            ),
+          },
+        ]}
+      />
 
       <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
         <DialogContent className="max-w-2xl">
