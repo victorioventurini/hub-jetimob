@@ -20,7 +20,6 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
 const PublicAssetRedirect = lazy(() => import("./pages/PublicAssetRedirect"));
-const LegacyAssetRedirect = lazy(() => import("./pages/LegacyAssetRedirect"));
 const ResolveContextPage = lazy(() => import("./pages/ResolveContextPage"));
 
 // Lazy loading para módulos (carregados sob demanda)
