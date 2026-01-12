@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUrlTab, useLocalSearch } from "@/shared/url";
-import { PageHeader } from "@/components/ui/page-header";
+import { HubPageHeader } from "@/components/hub/HubPageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,11 @@ export default function GlobalPermissionsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Permissões Globais" description="Gerencie o catálogo de permissões e templates globais do Hub" />
+      <HubPageHeader 
+        title="Permissões Globais" 
+        description="Gerencie o catálogo de permissões e templates globais do Hub"
+        breadcrumbs={[{ label: "Permissões" }]}
+      />
 
       <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
         <AlertTriangle className="h-4 w-4 text-amber-500" />

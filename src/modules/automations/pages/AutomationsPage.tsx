@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
-import { GlobalBreadcrumb } from '@/components/ui/global-breadcrumb';
+import { HubPageHeader } from '@/components/hub/HubPageHeader';
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -110,11 +109,10 @@ export default function AutomationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <GlobalBreadcrumb items={[{ label: 'Automações' }]} />
-      <PageHeader
+      <HubPageHeader
         title="Automações"
         description="Catálogo de eventos e ações disponíveis para automações do Hub"
+        breadcrumbs={[{ label: "Automações" }]}
       />
 
       {/* Stats */}

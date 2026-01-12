@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useLocalSearch } from "@/shared/url";
 import { queryKeys } from "@/lib/queryKeys";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { HubPageHeader } from "@/components/hub/HubPageHeader";
 
 export default function SettingsIntegrations() {
   usePageTitle("Integrações", { 
@@ -104,13 +105,11 @@ export default function SettingsIntegrations() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Integrações</h1>
-        <p className="text-muted-foreground">
-          Configure as integrações globais do Hub
-        </p>
-      </div>
+      <HubPageHeader
+        title="Integrações"
+        description="Configure as integrações globais do Hub"
+        breadcrumbs={[{ label: "Integrações" }]}
+      />
 
       {/* Search */}
       <div className="relative max-w-md">
