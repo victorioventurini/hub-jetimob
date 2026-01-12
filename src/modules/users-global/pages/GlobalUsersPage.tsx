@@ -2,11 +2,11 @@
 // GLOBAL USERS PAGE - Listagem de todos usuários do sistema
 // ============================================================
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLocalSearch } from "@/shared/url";
 import { useSearchParams } from "react-router-dom";
-import { PageHeader } from "@/components/ui/page-header";
+import { HubPageHeader } from "@/components/hub/HubPageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -107,9 +107,10 @@ export default function GlobalUsersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <HubPageHeader
         title="Usuários do Hub"
         description="Gerenciar todos os usuários da plataforma, acessos e configurações"
+        breadcrumbs={[{ label: "Usuários" }]}
       />
 
       {/* Filtros */}

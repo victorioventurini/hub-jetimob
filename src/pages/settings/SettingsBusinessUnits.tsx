@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { queryKeys } from "@/lib/queryKeys";
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ import { BuDetailDialog } from "@/modules/bu/components/BuDetailDialog";
 import { BuUnit } from "@/modules/bu/types";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLocalSearch } from "@/shared/url";
+import { HubPageHeader } from "@/components/hub/HubPageHeader";
 
 export default function SettingsBusinessUnits() {
   usePageTitle("Business Units", { 
@@ -83,19 +84,17 @@ export default function SettingsBusinessUnits() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Business Units</h1>
-          <p className="text-muted-foreground">
-            Gerencie as unidades de negócio do Hub
-          </p>
-        </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova BU
-        </Button>
-      </div>
+      <HubPageHeader
+        title="Business Units"
+        description="Gerencie as unidades de negócio do Hub"
+        breadcrumbs={[{ label: "Business Units" }]}
+        actions={
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova BU
+          </Button>
+        }
+      />
 
       {/* Search */}
       <div className="relative max-w-md">

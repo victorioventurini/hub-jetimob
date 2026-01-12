@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader } from "@/components/ui/page-header";
+import { HubPageHeader } from "@/components/hub/HubPageHeader";
 import {
   Tooltip,
   TooltipContent,
@@ -128,11 +128,10 @@ export default function JobTitlesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <HubPageHeader
         title="Cargos"
-        description="Gerencie a lista de cargos padronizados desta Business Unit"
-        backTo="/hub"
-        backLabel="Voltar para Hub"
+        description="Gerencie a lista de cargos padronizados da plataforma"
+        breadcrumbs={[{ label: "Cargos" }]}
       />
 
       <Card>
