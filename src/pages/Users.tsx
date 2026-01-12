@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
+import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { queryKeys } from "@/lib/queryKeys";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -301,6 +302,7 @@ export default function UsersPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
+        <UsersBreadcrumb />
         <PageHeader
           title="Jetimobers"
           description="Diretório de colaboradores da Jetimob"

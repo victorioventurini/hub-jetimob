@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AssetsLayout } from "../components/AssetsLayout";
 import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
@@ -21,12 +22,10 @@ export default function AssetsPage() {
     <HubLayout>
       <div className="container py-6 max-w-7xl">
         <AssetsBreadcrumb />
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Assets</h1>
-          <p className="text-muted-foreground">
-            Gerencie inventário, chaves e brindes da sua organização
-          </p>
-        </div>
+        <PageHeader
+          title="Assets"
+          description="Gerencie inventário, chaves e brindes da sua organização"
+        />
         <AssetsLayout />
       </div>
     </HubLayout>

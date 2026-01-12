@@ -3,6 +3,7 @@ import { Plus, BarChart3 } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { KpisBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -75,6 +76,7 @@ export default function KpiDashboardPage() {
     <HubLayout>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
+        <KpisBreadcrumb />
         <PageHeader
           title="KPIs"
           description="Indicadores de saúde do negócio"

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EmptyState } from "@/components/ui/empty-state";
 import { BarChart3, Bot, Clock, User, Building2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -122,9 +123,12 @@ export function VicAuditPage() {
 
   if (!isAdmin) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Acesso restrito a administradores</p>
-      </div>
+      <EmptyState
+        icon={AlertCircle}
+        title="Acesso Restrito"
+        description="Esta página é restrita a administradores."
+        compact
+      />
     );
   }
 
