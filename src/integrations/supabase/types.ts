@@ -8465,13 +8465,13 @@ export type Database = {
       log_permission_change: {
         Args: {
           p_action: string
-          p_after_state: Json
-          p_before_state: Json
+          p_after_state?: Json
+          p_before_state?: Json
           p_bu_id: string
-          p_entity_id: string
-          p_entity_name: string
+          p_entity_id?: string
+          p_entity_name?: string
           p_entity_type: string
-          p_reason: string
+          p_reason?: string
           p_target_user_id: string
         }
         Returns: string
