@@ -14,7 +14,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
-import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
+import { useDebouncedCallback } from '@/hooks/useDebounce';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 
 // ============================================================
