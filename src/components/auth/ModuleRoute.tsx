@@ -2,8 +2,9 @@ import { ReactNode } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useModules } from "@/contexts/ModuleContext";
 import { useBu } from "@/contexts/BuContext";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { AlertTriangle, Lock } from "lucide-react";
+import { AlertTriangle, Lock, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,23 +13,29 @@ interface ModuleRouteProps {
   children: ReactNode;
   moduleSlug: string;
   requiresBu?: boolean;
+  /** Se true, não verifica permissões V2 (para módulos sempre acessíveis) */
+  skipPermissionCheck?: boolean;
 }
 
 /**
- * Route guard que verifica se um módulo está habilitado para a BU atual.
+ * Route guard que verifica se um módulo está habilitado para a BU atual
+ * E se o usuário tem permissão para acessá-lo (sistema V2).
  * 
  * - Módulos globais (type='global') não requerem BU e estão sempre habilitados
  * - Módulos operacionais (type='operational') requerem BU ativa e config habilitada
+ * - Usuários precisam de permissão V2 para acessar o módulo
  */
 export function ModuleRoute({ 
   children, 
   moduleSlug, 
-  requiresBu = true 
+  requiresBu = true,
+  skipPermissionCheck = false,
 }: ModuleRouteProps) {
   const { currentBu, isLoading: buLoading } = useBu();
   const { isModuleEnabled, getModuleBySlug, isLoading: modulesLoading } = useModules();
+  const { canAccess, isLoading: permissionsLoading } = useModuleAccess(moduleSlug);
 
-  const isLoading = buLoading || modulesLoading;
+  const isLoading = buLoading || modulesLoading || permissionsLoading;
 
   if (isLoading) {
     return (
@@ -115,6 +122,35 @@ export function ModuleRoute({
     );
   }
 
-  // Módulo habilitado - renderizar children
+  // Verificar permissão V2 do usuário (se não for skip)
+  if (!skipPermissionCheck && !canAccess) {
+    return (
+      <HubLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <ShieldX className="h-6 w-6 text-destructive" />
+              </div>
+              <CardTitle>Acesso não autorizado</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                Você não tem permissão para acessar o módulo <strong>{module.name}</strong>.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Solicite acesso ao administrador da sua BU através do gerenciamento de permissões.
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/">Voltar ao início</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </HubLayout>
+    );
+  }
+
+  // Módulo habilitado e usuário tem permissão - renderizar children
   return <>{children}</>;
 }

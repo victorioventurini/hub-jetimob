@@ -1,22 +1,39 @@
 import { Outlet, useLocation, Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Package, Key, Gift, FileBarChart, Settings } from "lucide-react";
-import { useAssetPermissions } from "../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 
-const tabs = [
-  { name: "Inventário", href: "/assets/inventory", icon: Package },
-  { name: "Chaves", href: "/assets/keys", icon: Key },
-  { name: "Brindes", href: "/assets/gifts", icon: Gift },
-  { name: "Relatórios", href: "/assets/reports", icon: FileBarChart },
-  { name: "Configurações", href: "/assets/settings", icon: Settings, adminOnly: true },
+/**
+ * Tab definitions com permission check baseado em V2.
+ * `permissionCheck` é a função do hook que determina visibilidade.
+ */
+type TabDef = {
+  name: string;
+  href: string;
+  icon: typeof Package;
+  permissionKey: 
+    | "canAccessInventoryTab" 
+    | "canAccessKeysTab" 
+    | "canAccessGiftsTab" 
+    | "canAccessReportsTab" 
+    | "canAccessSettingsTab";
+};
+
+const tabs: TabDef[] = [
+  { name: "Inventário", href: "/assets/inventory", icon: Package, permissionKey: "canAccessInventoryTab" },
+  { name: "Chaves", href: "/assets/keys", icon: Key, permissionKey: "canAccessKeysTab" },
+  { name: "Brindes", href: "/assets/gifts", icon: Gift, permissionKey: "canAccessGiftsTab" },
+  { name: "Relatórios", href: "/assets/reports", icon: FileBarChart, permissionKey: "canAccessReportsTab" },
+  { name: "Configurações", href: "/assets/settings", icon: Settings, permissionKey: "canAccessSettingsTab" },
 ];
 
 export function AssetsLayout() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { isAssetsAdmin } = useAssetPermissions();
+  const permissions = useAssetPermissionsV2();
 
-  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isAssetsAdmin);
+  // Filter tabs based on V2 permissions
+  const visibleTabs = tabs.filter((tab) => permissions[tab.permissionKey]);
   
   // Preserve query params when navigating between tabs
   const getTabHref = (baseHref: string) => {

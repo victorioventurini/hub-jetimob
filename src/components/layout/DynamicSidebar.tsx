@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBuBranding } from "@/modules/bu/hooks/useBuBranding";
 import { useModules } from "@/contexts/ModuleContext";
 import { useBu } from "@/contexts/BuContext";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import {
   Home,
   Users,
@@ -101,6 +102,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
   const { currentBu, userRole } = useBu();
   const { symbolUrl, buName, primaryColor } = useBuBranding();
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
+  const { hasModuleAccess, isLoading: permissionsLoading } = useModuleAccess();
   
   // Check if user is BU admin or higher (admin role in BU = bu admin)
   const isBuAdmin = userRole === "admin" || isAdmin;
@@ -213,7 +215,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto [scrollbar-gutter:stable] p-3 space-y-1">
-          {isLoading ? (
+          {isLoading || permissionsLoading ? (
             <div className="space-y-2">
               {[...Array(6)].map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full" />
@@ -242,7 +244,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                 </div>
               )}
 
-              {/* Menu da BU (ordem fixa, filtrado por módulos habilitados) */}
+              {/* Menu da BU (ordem fixa, filtrado por módulos habilitados E permissões V2) */}
               {currentBu && (
                 <div className="pt-4 mt-4 border-t border-sidebar-border space-y-1">
                   {!collapsed && (
@@ -250,15 +252,21 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                       {currentBu.name}
                     </p>
                   )}
-                  {/* Módulos operacionais habilitados */}
+                  {/* Módulos operacionais: habilitados na BU + usuário tem permissão V2 */}
                   {buMenuItems
-                    .filter((item) => enabledOperationalModules.some((m) => m.slug === item.slug))
+                    .filter((item) => 
+                      enabledOperationalModules.some((m) => m.slug === item.slug) &&
+                      hasModuleAccess(item.slug)
+                    )
                     .map((item) => (
                       <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                     ))}
-                  {/* Módulos globais que aparecem dentro da BU */}
+                  {/* Módulos globais que aparecem dentro da BU + permissão V2 */}
                   {globalBuItems
-                    .filter((item) => globalModules.some((m) => m.slug === item.slug))
+                    .filter((item) => 
+                      globalModules.some((m) => m.slug === item.slug) &&
+                      hasModuleAccess(item.slug)
+                    )
                     .map((item) => (
                       <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                     ))}
