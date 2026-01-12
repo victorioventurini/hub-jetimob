@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.18.0  
+**Versão:** 2.19.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 7 completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 8 completo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -36,6 +36,7 @@
 > - [AUDIT_REPORT_2026-01-11_v3.md](./engineering/AUDIT_REPORT_2026-01-11_v3.md) — Último relatório de auditoria
 > - [CODEBASE_HYGIENE_ROADMAP.md](./CODEBASE_HYGIENE_ROADMAP.md) — Roadmap de limpeza de código
 > - [LEGACY_CLASSIFICATION_MATRIX.md](./LEGACY_CLASSIFICATION_MATRIX.md) — Matriz de classificação de código legado
+> - [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./engineering/HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) — **Plano de Higienização e Otimização 2026-01** ⭐
 
 > ⚠️ **Data Model Registry (Canonical)**
 > - Arquivo: `docs/engineering/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)
