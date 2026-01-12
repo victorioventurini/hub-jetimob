@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
 import { useVicAgent } from "@/modules/vic/hooks/useVicAgent";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { getContextualCultureMessage } from "@/data/cultureMessages";
 
 const CACHE_KEY = "culture_message_ai";
@@ -146,9 +147,15 @@ export function useCultureMessage(): UseCultureMessageReturn {
 
   const { currentBuId } = useBu();
   const { profile } = useAuth();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
   const { role, okrSummary, focusItems, teamStatus, isLoading: dashboardLoading } = useHomeDashboard();
   const { isLeader, teams, isLoading: teamsLoading } = useLeaderTeams();
   const { invoke, isLoading: vicLoading } = useVicAgent();
+
+  // Use impersonated user ID for cache when impersonating
+  const effectiveUserId = isImpersonating && impersonatedUserId 
+    ? impersonatedUserId 
+    : profile?.id;
 
   const roleCategory = role || 'collaborator';
 
@@ -207,7 +214,7 @@ export function useCultureMessage(): UseCultureMessageReturn {
 
   const fetchMessage = useCallback(async (forceRefresh = false) => {
     // Se não tem contexto, usar fallback
-    if (!currentBuId || !profile?.id) {
+    if (!currentBuId || !effectiveUserId) {
       const fallback = getStaticFallback();
       setMessage(fallback);
       setIsFromAI(false);
@@ -217,7 +224,7 @@ export function useCultureMessage(): UseCultureMessageReturn {
 
     // Verificar cache (exceto se forçando refresh)
     if (!forceRefresh) {
-      const cached = getCachedMessage(currentBuId, profile.id);
+      const cached = getCachedMessage(currentBuId, effectiveUserId);
       if (cached) {
         setMessage(cached.message);
         setIsFromAI(cached.isFromAI);
@@ -251,7 +258,7 @@ export function useCultureMessage(): UseCultureMessageReturn {
         }
         setMessage(aiMessage);
         setIsFromAI(true);
-        setCachedMessage(currentBuId, profile.id, aiMessage, true);
+        setCachedMessage(currentBuId, effectiveUserId, aiMessage, true);
         markAsUsed(aiMessage);
       } else {
         throw new Error('No response from AI');
@@ -261,12 +268,12 @@ export function useCultureMessage(): UseCultureMessageReturn {
       const fallback = getStaticFallback();
       setMessage(fallback);
       setIsFromAI(false);
-      setCachedMessage(currentBuId, profile.id, fallback, false);
+      setCachedMessage(currentBuId, effectiveUserId, fallback, false);
       setError('Usando mensagem do pool');
     } finally {
       setIsLoading(false);
     }
-  }, [currentBuId, profile?.id, buildContext, invoke, getStaticFallback]);
+  }, [currentBuId, effectiveUserId, buildContext, invoke, getStaticFallback]);
 
   const refresh = useCallback(async () => {
     setHasFetched(false);
