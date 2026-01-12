@@ -11,6 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { GlobalBreadcrumb } from '@/components/ui/global-breadcrumb';
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -108,12 +111,11 @@ export default function AutomationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Automações</h1>
-        <p className="text-muted-foreground">
-          Catálogo de eventos e ações disponíveis para automações do Hub
-        </p>
-      </div>
+      <GlobalBreadcrumb items={[{ label: 'Automações' }]} />
+      <PageHeader
+        title="Automações"
+        description="Catálogo de eventos e ações disponíveis para automações do Hub"
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -208,10 +210,11 @@ export default function AutomationsPage() {
                     />
                   ))}
                   {Object.keys(eventsByCategory).length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <ArrowUpRight className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                      <p className="text-muted-foreground">Nenhum evento encontrado.</p>
-                    </div>
+                    <EmptyState
+                      icon={ArrowUpRight}
+                      title="Nenhum evento encontrado"
+                      description={searchTerm ? "Tente ajustar os termos de busca" : "Não há eventos cadastrados"}
+                    />
                   )}
                 </div>
               )}
@@ -245,10 +248,11 @@ export default function AutomationsPage() {
                     />
                   ))}
                   {Object.keys(actionsByCategory).length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <ArrowDownLeft className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                      <p className="text-muted-foreground">Nenhuma ação encontrada.</p>
-                    </div>
+                    <EmptyState
+                      icon={ArrowDownLeft}
+                      title="Nenhuma ação encontrada"
+                      description={searchTerm ? "Tente ajustar os termos de busca" : "Não há ações cadastradas"}
+                    />
                   )}
                 </div>
               )}

@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -10,15 +8,6 @@ export default function TicketsPage() {
   usePageTitle("Tickets", {
     customDescription: "Gerencie tickets internos e externos, acompanhe status, prazos e mensagens.",
   });
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Redirect to list if at base /tickets
-  useEffect(() => {
-    if (location.pathname === "/tickets") {
-      // Stay on this page - it shows the list
-    }
-  }, [location.pathname, navigate]);
 
   return (
     <HubLayout>
