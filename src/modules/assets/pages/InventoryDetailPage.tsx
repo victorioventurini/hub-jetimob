@@ -6,9 +6,7 @@ export default function InventoryDetailPage() {
 
   return (
     <HubLayout>
-      <div className="container py-6 max-w-5xl">
-        <InventoryDetailView />
-      </div>
+      <InventoryDetailView />
     </HubLayout>
   );
 }

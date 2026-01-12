@@ -94,7 +94,7 @@ export default function TicketDetailPage() {
   if (isLoadingTicket) {
     return (
       <HubLayout>
-        <div className="container py-6 max-w-5xl space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -105,7 +105,7 @@ export default function TicketDetailPage() {
   if (ticketError) {
     return (
       <HubLayout>
-        <div className="container py-6 max-w-5xl">
+        <div className="space-y-6">
           <TicketsBreadcrumb />
           <ErrorState
             title="Erro ao carregar ticket"
@@ -120,7 +120,7 @@ export default function TicketDetailPage() {
   if (!ticket) {
     return (
       <HubLayout>
-        <div className="container py-6 max-w-5xl">
+        <div className="space-y-6">
           <TicketsBreadcrumb />
           <ErrorState
             title="Ticket não encontrado"
@@ -135,7 +135,7 @@ export default function TicketDetailPage() {
 
   return (
     <HubLayout>
-      <div className="container py-6 max-w-5xl space-y-4">
+      <div className="space-y-6">
         {/* Breadcrumb */}
         <TicketsBreadcrumb ticketId={ticket.id} ticketTitle={ticket.title} />
 
@@ -150,7 +150,7 @@ export default function TicketDetailPage() {
           isUpdating={updateStatus.isPending}
         />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content - Messages Thread */}
         <div className="lg:col-span-2 space-y-4">
           <Card>

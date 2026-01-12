@@ -5,7 +5,7 @@ import { Button } from "./button";
 
 interface PageHeaderProps {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
   /** Link para voltar - exibe botão de voltar se fornecido */
