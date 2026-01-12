@@ -6,6 +6,7 @@ import { HubLayout } from "@/components/layout/HubLayout";
 import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { queryKeys } from "@/lib/queryKeys";
 import { PageHeader } from "@/components/ui/page-header";
+import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -327,13 +328,11 @@ export default function UsersPage() {
         )}
 
         {profilesError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Erro ao carregar usuários</AlertTitle>
-            <AlertDescription>
-              {(profilesError as Error).message}
-            </AlertDescription>
-          </Alert>
+          <ErrorState
+            title="Erro ao carregar usuários"
+            description="Não foi possível carregar a lista de usuários. Tente novamente."
+            compact
+          />
         )}
 
 

@@ -4,40 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Building2 } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
+import { ErrorState } from "@/components/ui/error-state";
 import { useTicket, useUpdateTicketStatus } from "../hooks/useTickets";
 import { useTicketMessages, useTicketAttachments, useCreateMessage } from "../hooks/useTicketMessages";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useSafeBack } from "@/hooks/useSafeBack";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
+import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { UserLink } from "@/components/links/UserLink";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
 
-const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  waiting: { label: "Aguardando", variant: "secondary" },
-  paused: { label: "Pausado", variant: "outline" },
-  in_progress: { label: "Em andamento", variant: "default" },
-  done: { label: "Concluído", variant: "secondary" },
-  discarded: { label: "Descartado", variant: "destructive" },
-};
-
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { profileId } = useIdentity();
+  const goBack = useSafeBack({ moduleRoot: "/tickets" });
 
-  const { data: ticket, isLoading: isLoadingTicket } = useTicket(id!);
+  const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
   const { data: attachments = [] } = useTicketAttachments(id!);
   const updateStatus = useUpdateTicketStatus();
@@ -49,7 +42,7 @@ export default function TicketDetailPage() {
     {
       pageType: "subpage",
       customDescription: ticket 
-        ? `Visualize e acompanhe o ticket "${ticket.title}" - ${statusConfig[ticket.status]?.label || ticket.status}`
+        ? `Visualize e acompanhe o ticket "${ticket.title}"`
         : "Visualize detalhes do ticket",
     }
   );
@@ -109,70 +102,53 @@ export default function TicketDetailPage() {
     );
   }
 
-  if (!ticket) {
+  if (ticketError) {
     return (
       <HubLayout>
-        <div className="container py-6 max-w-5xl text-center py-12">
-          <p className="text-muted-foreground">Ticket não encontrado</p>
-          <Button asChild variant="link">
-            <Link to="/tickets">Voltar para lista</Link>
-          </Button>
+        <div className="container py-6 max-w-5xl">
+          <TicketsBreadcrumb />
+          <ErrorState
+            title="Erro ao carregar ticket"
+            description="Não foi possível carregar os dados do ticket. Tente novamente."
+            onBack={goBack}
+          />
         </div>
       </HubLayout>
     );
   }
 
-  const status = statusConfig[ticket.status];
-  const isExternal = ticket.type === "external";
+  if (!ticket) {
+    return (
+      <HubLayout>
+        <div className="container py-6 max-w-5xl">
+          <TicketsBreadcrumb />
+          <ErrorState
+            title="Ticket não encontrado"
+            description="O ticket que você está procurando não existe ou foi removido."
+            onBack={goBack}
+            backLabel="Voltar para lista"
+          />
+        </div>
+      </HubLayout>
+    );
+  }
 
   return (
     <HubLayout>
       <div className="container py-6 max-w-5xl space-y-4">
-      {/* Breadcrumb */}
-      <TicketsBreadcrumb ticketId={ticket.id} ticketTitle={ticket.title} />
+        {/* Breadcrumb */}
+        <TicketsBreadcrumb ticketId={ticket.id} ticketTitle={ticket.title} />
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className={cn(
-              "px-2 py-0.5 rounded text-xs font-medium",
-              isExternal 
-                ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-            )}>
-              {isExternal ? "Externo" : "Interno"}
-            </span>
-            <Badge variant={status.variant}>{status.label}</Badge>
-          </div>
-          <h1 className="text-xl font-bold">{ticket.title}</h1>
-          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              Criado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: ptBR })}
-            </span>
-            {ticket.expected_due_at && (
-              <span>
-                Prazo: {format(new Date(ticket.expected_due_at), "dd/MM/yyyy")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Status changer */}
-        <Select value={ticket.status} onValueChange={(v) => handleStatusChange(v as TicketStatus)}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="waiting">Aguardando</SelectItem>
-            <SelectItem value="in_progress">Em andamento</SelectItem>
-            <SelectItem value="paused">Pausado</SelectItem>
-            <SelectItem value="done">Concluído</SelectItem>
-            <SelectItem value="discarded">Descartado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        {/* Header - usando componente especializado */}
+        <TicketDetailHeader
+          title={ticket.title}
+          type={ticket.type}
+          status={ticket.status}
+          createdAt={ticket.created_at}
+          expectedDueAt={ticket.expected_due_at}
+          onStatusChange={handleStatusChange}
+          isUpdating={updateStatus.isPending}
+        />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content - Messages Thread */}
@@ -244,7 +220,7 @@ export default function TicketDetailPage() {
               )}
 
               {/* Partner */}
-              {isExternal && (ticket as any).partner && (
+              {ticket.type === "external" && (ticket as any).partner && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Parceiro</p>
                   <div className="flex items-center gap-2">
