@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
-import { useGreetingSubtext } from "@/hooks/useGreetingSubtext";
+
 import { useProductivityTip } from "@/hooks/useProductivityTip";
 import { useBu } from "@/contexts/BuContext";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
@@ -53,13 +53,6 @@ const Index = () => {
     teamName: leaderTeams?.[0]?.team_name,
   });
   
-  // AI-powered contextual subtext
-  const { subtext, isLoading: subtextLoading } = useGreetingSubtext({
-    userName: displayName,
-    profile: greetingProfile,
-    buName: currentBu?.name,
-    teamName: leaderTeams?.[0]?.team_name,
-  });
 
   // Productivity tip for display below greeting
   const { tip, isLoading: tipLoading, isFromAI } = useProductivityTip();
@@ -102,18 +95,11 @@ const Index = () => {
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
             {greeting}
           </h1>
-          {subtextLoading ? (
-            <Skeleton className="h-6 w-56" />
-          ) : (
-            <p className="text-lg text-muted-foreground">
-              {subtext}
-            </p>
-          )}
           {/* Dica do Dia - abaixo do nome */}
           {tipLoading ? (
-            <Skeleton className="h-5 w-80 mt-3" />
+            <Skeleton className="h-5 w-80 mt-2" />
           ) : (
-            <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
               <span>{tip}</span>
               {isFromAI && (
