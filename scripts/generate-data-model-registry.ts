@@ -268,7 +268,7 @@ function generateMarkdown(registry: DataModelRegistry): string {
     'permission_audit_log', 'permission_catalog', 'permission_migrations',
     'permission_template_permissions_v2', 'permission_templates_v2',
     'profiles', 'squad_memberships', 'squads',
-    'teams', 'ticket_attachments', 'ticket_categories', 'ticket_mentions',
+    'teams', 'ticket_attachments', 'ticket_categories',
     'ticket_messages', 'ticket_priority_rules', 'ticket_sla_configs', 'tickets',
     'user_notification_preferences', 'user_roles', 'user_team_memberships',
   ];
