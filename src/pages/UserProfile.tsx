@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
 import {
-  ArrowLeft,
   User,
   Building2,
   MapPin,
@@ -150,20 +150,11 @@ export default function UserProfile() {
   return (
     <HubLayout>
       <div className="max-w-5xl mx-auto space-y-6">
+        {/* Breadcrumb */}
+        <UsersBreadcrumb userName={profile.display_name} />
+        
         {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            className="mt-1"
-          >
-            <Link to="/users">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-
-          <div className="flex flex-col sm:flex-row gap-6 flex-1">
+        <div className="flex flex-col sm:flex-row gap-6">
             <OptimizedAvatar 
               src={profile.photo_url} 
               alt={profile.display_name}
@@ -205,7 +196,6 @@ export default function UserProfile() {
                   ))
                 )}
               </div>
-            </div>
           </div>
         </div>
 
