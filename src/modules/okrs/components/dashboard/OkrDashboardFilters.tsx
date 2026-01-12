@@ -105,13 +105,13 @@ export function OkrDashboardFilters({
   const hierarchicalTeams = buildHierarchicalList(teams);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center gap-2 min-w-max sm:min-w-0 sm:flex-wrap">
       {/* Year selector */}
       <YearSelect
         value={filters.year}
         onValueChange={(year) => onFiltersChange({ ...filters, year })}
         years={years}
-        triggerClassName="w-[100px]"
+        triggerClassName="w-[90px] sm:w-[100px]"
       />
 
       {/* Team filter */}
@@ -121,7 +121,7 @@ export function OkrDashboardFilters({
         teams={hierarchicalTeams}
         includeAll
         allLabel="Todos os times"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-[140px] sm:w-[180px]"
       />
 
       {/* Shared/Exclusive filter */}

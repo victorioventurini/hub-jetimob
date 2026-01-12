@@ -23,10 +23,13 @@ export function OkrViewSelector({ activeView, onViewChange, showMyOkrs = true }:
   const filteredViews = showMyOkrs ? views : views.filter(v => v.id !== 'my');
   
   return (
-    <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+    <div className="flex items-center gap-0.5 sm:gap-1 p-1 bg-muted rounded-lg shrink-0">
       {filteredViews.map((view) => {
         const Icon = view.icon;
         const isActive = activeView === view.id;
+        
+        // Shorter labels for mobile
+        const mobileLabel = view.id === 'company' ? 'Org' : view.id === 'team' ? 'Time' : 'Meus';
         
         return (
           <Button
@@ -35,13 +38,14 @@ export function OkrViewSelector({ activeView, onViewChange, showMyOkrs = true }:
             size="sm"
             onClick={() => onViewChange(view.id)}
             className={cn(
-              "h-9 px-3 gap-2 rounded-md transition-all",
+              "h-8 sm:h-9 px-2 sm:px-3 gap-1.5 sm:gap-2 rounded-md transition-all text-xs sm:text-sm",
               isActive 
                 ? "bg-background shadow-sm text-foreground font-medium" 
                 : "text-muted-foreground hover:text-foreground hover:bg-transparent"
             )}
           >
             <Icon className="w-4 h-4" />
+            <span className="hidden xs:inline sm:hidden">{mobileLabel}</span>
             <span className="hidden sm:inline">{view.label}</span>
           </Button>
         );

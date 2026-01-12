@@ -162,56 +162,63 @@ export default function OkrDashboardPage() {
 
   return (
     <HubLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Breadcrumb */}
         <OkrDashboardBreadcrumb />
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Crosshair className="h-6 w-6" />
-              OKRs
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Acompanhe o progresso e alinhamento dos objetivos
-            </p>
+        {/* Header - Mobile optimized */}
+        <div className="space-y-4">
+          {/* Title Row */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                <Crosshair className="h-5 w-5 sm:h-6 sm:w-6" />
+                OKRs
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5 hidden sm:block">
+                Acompanhe o progresso e alinhamento dos objetivos
+              </p>
+            </div>
+            
+            {/* Create button - always visible on mobile */}
+            {((activeView === 'company' && canCreateOrg) || 
+              (activeView !== 'company' && canCreateTeam)) && (
+              <Button onClick={handleCreateClick} size="sm" className="shrink-0">
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Novo Objetivo</span>
+              </Button>
+            )}
           </div>
           
-          <div className="flex items-center gap-3">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/okrs/org-view">
-                <Building2 className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Visão Org.</span>
-              </Link>
-            </Button>
-            
+          {/* View Selector and Org View Button - scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
             <OkrViewSelector 
               activeView={activeView} 
               onViewChange={setActiveView}
               showMyOkrs={!isWildcard}
             />
             
-            {((activeView === 'company' && canCreateOrg) || 
-              (activeView !== 'company' && canCreateTeam)) && (
-              <Button onClick={handleCreateClick}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Objetivo
-              </Button>
-            )}
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link to="/okrs/org-view">
+                <Building2 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Visão Org.</span>
+              </Link>
+            </Button>
           </div>
         </div>
         
-        {/* Filters */}
-        <OkrDashboardFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          teams={teams || []}
-          years={years}
-        />
+        {/* Filters - scrollable on mobile */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible pb-1">
+          <OkrDashboardFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            teams={teams || []}
+            years={years}
+          />
+        </div>
 
         {/* Top Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <OverallProgressCard
             progress={overallProgress}
             trend={overallProgress >= 50 ? 'up' : overallProgress >= 30 ? 'stable' : 'down'}
@@ -220,19 +227,19 @@ export default function OkrDashboardPage() {
           />
           
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center justify-between">
                 <span>Objetivos</span>
-                <Target className="w-4 h-4" />
+                <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               {isLoading ? (
-                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-7 sm:h-8 w-10 sm:w-12" />
               ) : (
                 <>
-                  <div className="text-3xl font-bold">{displayObjectives.length}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-2xl sm:text-3xl font-bold">{displayObjectives.length}</div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                     {activeView === 'company' ? (currentBu?.name || 'da empresa') : 'do time'}
                   </p>
                 </>
@@ -241,19 +248,20 @@ export default function OkrDashboardPage() {
           </Card>
           
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-                <span>Key Results</span>
-                <TrendingUp className="w-4 h-4" />
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center justify-between">
+                <span className="hidden sm:inline">Key Results</span>
+                <span className="sm:hidden">KRs</span>
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               {isLoading ? (
-                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-7 sm:h-8 w-10 sm:w-12" />
               ) : (
                 <>
-                  <div className="text-3xl font-bold">{statusCounts.total}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-2xl sm:text-3xl font-bold">{statusCounts.total}</div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                     em acompanhamento
                   </p>
                 </>
@@ -262,22 +270,23 @@ export default function OkrDashboardPage() {
           </Card>
           
           <Card className={atRiskCount > 0 ? 'border-destructive/50 bg-destructive/5' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center justify-between">
                 <span>Atenção</span>
-                <AlertTriangle className={`w-4 h-4 ${atRiskCount > 0 ? 'text-destructive' : ''}`} />
+                <AlertTriangle className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${atRiskCount > 0 ? 'text-destructive' : ''}`} />
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               {isLoading ? (
-                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-7 sm:h-8 w-10 sm:w-12" />
               ) : (
                 <>
-                  <div className={`text-3xl font-bold ${atRiskCount > 0 ? 'text-destructive' : ''}`}>
+                  <div className={`text-2xl sm:text-3xl font-bold ${atRiskCount > 0 ? 'text-destructive' : ''}`}>
                     {atRiskCount}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {statusCounts.off_track} fora, {statusCounts.at_risk} em risco
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
+                    <span className="hidden sm:inline">{statusCounts.off_track} fora, {statusCounts.at_risk} em risco</span>
+                    <span className="sm:hidden">{statusCounts.off_track}+{statusCounts.at_risk} risco</span>
                   </p>
                 </>
               )}
@@ -297,7 +306,7 @@ export default function OkrDashboardPage() {
         )}
 
         {/* Alerts and Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             {/* Status Distribution */}
             <Card>
