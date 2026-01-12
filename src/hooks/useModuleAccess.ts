@@ -74,19 +74,21 @@ export interface ModuleAccessResult {
  * - isAdmin ou BU admin (wildcard): acesso total a todos os módulos
  * - Outros usuários: precisam de pelo menos uma permission key do módulo
  * - Módulos em ALWAYS_ACCESSIBLE_MODULES não requerem verificação
+ * - Durante impersonação: usa permissões do usuário impersonado (sem full access)
  * 
  * @param moduleSlug - Slug do módulo para verificar (opcional)
  * @returns Objeto com estado de acesso e helpers
  */
 export function useModuleAccess(moduleSlug?: string): ModuleAccessResult {
-  const { hasAny, isWildcard, isLoading: permissionsLoading } = usePermissions();
+  const { hasAny, isWildcard, isLoading: permissionsLoading, isImpersonating } = usePermissions();
   const { isAdmin } = useAuth();
   const { userRole, isLoading: buLoading } = useBu();
 
   const isLoading = permissionsLoading || buLoading;
   
   // Full access: super_admin, admin global, ou admin da BU
-  const hasFullAccess = isAdmin || userRole === "admin" || isWildcard;
+  // IMPORTANTE: Durante impersonação, NÃO conceder full access - usar permissões reais do usuário impersonado
+  const hasFullAccess = !isImpersonating && (isAdmin || userRole === "admin" || isWildcard);
 
   /**
    * Verifica se o usuário pode acessar um módulo específico
