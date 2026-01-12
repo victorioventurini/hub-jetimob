@@ -13,7 +13,7 @@
 |------|--------|-----------|
 | **Fase 1: Cleanup** | ✅ Concluída | Funções legacy removidas |
 | **Fase 2: Refatoração invoke-vic** | ✅ Concluída | Modularizado em 3 arquivos |
-| **Fase 3: Documentação** | ⏳ Pendente | Documentar SECURITY DEFINER |
+| **Fase 3: Documentação** | ✅ Concluída | Funções/views SECURITY DEFINER documentadas |
 
 ---
 
@@ -22,7 +22,7 @@
 | Categoria | Status | Itens Críticos | Ação |
 |-----------|--------|----------------|------|
 | **Edge Functions** | ✅ Bom | invoke-vic refatorado | ✅ Concluído |
-| **Database Functions** | ✅ Bom | Funções legadas removidas | ✅ Concluído |
+| **Database Functions** | ✅ Bom | Funções documentadas | ✅ Concluído |
 | **RLS Policies** | 🟢 Sólido | Bem estruturado | Manter |
 | **Triggers** | 🟡 Bom | Nomenclatura inconsistente | Padronizar |
 | **Middleware** | 🟢 Excelente | Centralizado | Manter |
@@ -313,13 +313,16 @@ DROP FUNCTION IF EXISTS _identity_dual_mode_deadline();
 | `llm-client.ts` | `resolveLLMConfig()`, `llmComplete()`, `llmStream()`, `mapLLMError()` |
 | `agent-loader.ts` | `loadAgent()`, `buildSystemPrompt()`, `buildUserPrompt()`, `getAgentTools()` |
 
-#### ⏳ Fase 3: Documentação (Pendente)
+#### ✅ Fase 3: Documentação (Concluída)
 
-```
-1. [ ] Documentar todas as funções SECURITY DEFINER
-2. [ ] Documentar views SECURITY DEFINER (v_profiles_directory, v_bu_all_profiles_admin)
-3. [ ] Atualizar TCR com decisões
-```
+Funções e views SECURITY DEFINER documentadas com comentários SQL:
+
+| Categoria | Funções Documentadas |
+|-----------|---------------------|
+| **Identidade** | `current_bu_id()`, `current_profile_id()`, `my_profile_id()` |
+| **Autorização** | `is_platform_admin()`, `is_bu_admin()`, `user_has_permission()`, `user_has_bu_access()` |
+| **Hierarquia** | `team_is_ancestor()`, `user_can_manage_team()`, `get_okr_manageable_team_ids()` |
+| **Views** | `v_profiles_directory`, `v_bu_all_profiles_admin`, `v_ai_agents_public`, `identity_rls_violations` |
 
 ---
 
