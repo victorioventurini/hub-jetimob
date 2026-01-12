@@ -8279,6 +8279,10 @@ export type Database = {
         Args: { p_bu_id?: string; p_user_id?: string }
         Returns: string[]
       }
+      get_okr_manageable_team_ids_for_impersonation: {
+        Args: { p_bu_id: string; p_target_profile_id: string }
+        Returns: string[]
+      }
       get_partner_categories: {
         Args: { p_partner_company_id: string }
         Returns: {

@@ -5,6 +5,7 @@ import { useBuBranding } from "@/modules/bu/hooks/useBuBranding";
 import { useModules } from "@/contexts/ModuleContext";
 import { useBu } from "@/contexts/BuContext";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import {
   Home,
   Users,
@@ -103,9 +104,11 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
   const { symbolUrl, buName, primaryColor } = useBuBranding();
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
   const { hasModuleAccess, isLoading: permissionsLoading } = useModuleAccess();
+  const { isImpersonating } = useOptionalImpersonation();
   
   // Check if user is BU admin or higher (admin role in BU = bu admin)
-  const isBuAdmin = userRole === "admin" || isAdmin;
+  // IMPORTANTE: Durante impersonação, NÃO conceder acesso admin - simular experiência real
+  const isBuAdmin = !isImpersonating && (userRole === "admin" || isAdmin);
 
   const NavItem = ({ 
     name, 

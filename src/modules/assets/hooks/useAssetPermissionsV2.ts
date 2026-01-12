@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 
 /**
  * Hook de permissões do módulo Assets usando sistema V2.
@@ -9,17 +10,21 @@ import { useBu } from "@/contexts/BuContext";
  * Substitui o antigo useAssetPermissions que usava a tabela legada asset_permissions.
  * Agora usa o sistema centralizado de permissões via permission_catalog + templates V2.
  * 
+ * IMPORTANTE: Respeita impersonação - durante simulação, usa permissões do usuário impersonado.
+ * 
  * @returns Objeto com flags de permissão para o módulo Assets
  */
 export function useAssetPermissionsV2() {
   const { has, hasAny, isWildcard, isLoading: permissionsLoading } = usePermissions();
   const { isAdmin } = useAuth();
   const { userRole, isLoading: buLoading } = useBu();
+  const { isImpersonating } = useOptionalImpersonation();
 
   const isLoading = permissionsLoading || buLoading;
 
   // Full access: super_admin, admin global, ou admin da BU
-  const hasFullAccess = isAdmin || userRole === "admin" || isWildcard;
+  // IMPORTANTE: Durante impersonação, NÃO conceder full access - usar permissões do usuário impersonado
+  const hasFullAccess = !isImpersonating && (isAdmin || userRole === "admin" || isWildcard);
 
   // === Permissões de VISUALIZAÇÃO ===
   const canViewAssets = hasFullAccess || hasAny([
