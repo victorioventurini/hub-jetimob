@@ -93,15 +93,33 @@ export function useCreateTeamKrBundle() {
         krIds.push(krData.id);
       }
 
-      // 2. Create dependencies (if table exists)
+      // 2. Create dependencies
       if (input.dependencies && input.dependencies.length > 0) {
         for (const dep of input.dependencies) {
           const krId = krIds[dep.kr_index];
           if (!krId) continue;
 
-          // Note: okr_dependencies table might need to be created
-          // For now, store as metadata
-          // TODO: Implement when okr_dependencies table is available
+          // Constraint: precisa de team OU kr
+          if (!dep.depends_on_team_id && !dep.depends_on_kr_id) continue;
+
+          const { data: depData, error: depError } = await supabase
+            .from('okr_dependencies')
+            .insert({
+              kr_id: krId,
+              depends_on_team_id: dep.depends_on_team_id || null,
+              depends_on_kr_id: dep.depends_on_kr_id || null,
+              description: dep.description || null,
+              status: 'ok',
+            })
+            .select('id')
+            .single();
+
+          if (depError) {
+            console.error('Error creating dependency:', depError);
+            // Non-blocking: continue with other deps
+          } else {
+            dependencyIds.push(depData.id);
+          }
         }
       }
 
@@ -145,6 +163,7 @@ export function useCreateTeamKrBundle() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectiveDetail(variables.objectiveId) });
+      queryClient.invalidateQueries({ queryKey: ['cross-dependencies'] });
       
       toast.success('Key Results criados com sucesso!');
     },
