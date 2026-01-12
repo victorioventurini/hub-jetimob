@@ -6,12 +6,20 @@
  * 
  * Suporta sequenciamento via VicTypewriterQueueProvider para evitar
  * múltiplos blocos animando simultaneamente.
+ * 
+ * VELOCIDADE GLOBAL: ~12-15 caracteres por segundo (natural)
+ * Humanos digitam ~5-8 chars/segundo, leitura rápida ~25 chars/segundo
  */
 
 import { useState, useEffect, useCallback, memo, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useVicTypewriterQueue } from '../contexts/VicTypewriterQueue';
+
+// ============================================================
+// VELOCIDADE GLOBAL - Ajuste aqui para todas as animações do Vic
+// ============================================================
+const VIC_TYPING_SPEED_MS = 70; // 70ms por caractere = ~14 chars/segundo
 
 // ============================================================
 // TYPES
@@ -44,7 +52,7 @@ export interface VicTypewriterTextProps {
 
 function VicTypewriterTextComponent({
   text,
-  speed = 55, // Velocidade mais natural (~55ms por caractere)
+  speed = VIC_TYPING_SPEED_MS, // Usa velocidade global
   onComplete,
   autoStart = true,
   className,
@@ -196,7 +204,7 @@ export interface VicTypewriterBlockProps {
 
 export function VicTypewriterBlock({
   text,
-  speed = 45, // Velocidade mais natural (~45ms por caractere)
+  speed = VIC_TYPING_SPEED_MS, // Usa velocidade global
   onComplete,
   className,
   showSignature = true,
@@ -268,8 +276,13 @@ export interface VicStreamingTextProps {
 
 /**
  * VicStreamingText - Exibe texto com efeito de digitação progressivo
- * - Em streaming: acompanha o texto conforme chega (sem “pular” para o final)
- * - Em modo estático: garante que mesmo texto vindo inteiro apareça “digitando”
+ * 
+ * MUDANÇA IMPORTANTE: Velocidade FIXA de 1 caractere por tick
+ * - Antes: Dividia o texto restante por targetTicks, fazendo textos longos parecerem rápidos
+ * - Agora: 1 caractere a cada 70ms = ~14 chars/segundo (velocidade natural constante)
+ * 
+ * Em streaming: acompanha o texto conforme chega
+ * Em modo estático: mesmo texto vindo inteiro aparece "digitando" naturalmente
  */
 export function VicStreamingText({
   text,
@@ -290,7 +303,7 @@ export function VicStreamingText({
       return;
     }
 
-    // Se o texto mudou “por completo” (ex: regenerate), reinicia
+    // Se o texto mudou "por completo" (ex: regenerate), reinicia
     if (displayedText && !text.startsWith(displayedText)) {
       setDisplayedText('');
     }
@@ -305,22 +318,21 @@ export function VicStreamingText({
 
     intervalRef.current = window.setInterval(() => {
       setDisplayedText((current) => {
-        // Se o texto mudou “por completo” durante o intervalo
+        // Se o texto mudou "por completo" durante o intervalo
         if (current && !text.startsWith(current)) return '';
 
         const remaining = text.length - current.length;
         if (remaining <= 0) return current;
 
-        // Alvo: completar rápido quando veio tudo de uma vez,
-        // e acompanhar suave quando está em streaming.
-        // targetTicks maior = mais lento (mais ticks para completar)
-        const targetTicks = isStreaming ? 60 : 120; // Mais lento e suave
-        const step = Math.max(1, Math.ceil(remaining / targetTicks));
+        // VELOCIDADE FIXA: 1 caractere por tick
+        // Isso garante velocidade constante independente do tamanho da resposta
+        // NÃO usa mais a fórmula (remaining / targetTicks) que acelerava textos longos
+        const step = 1;
 
         const nextLen = Math.min(text.length, current.length + step);
         return text.slice(0, nextLen);
       });
-    }, 40); // Intervalo maior para digitação mais natural (era 25ms)
+    }, VIC_TYPING_SPEED_MS); // Usa velocidade global (70ms = ~14 chars/segundo)
 
     return () => {
       if (intervalRef.current) {
