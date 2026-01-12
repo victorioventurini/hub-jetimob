@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.16.0  
+**Versão:** 2.17.0  
 **Última atualização:** 2026-01-11
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 6 completo
@@ -1706,6 +1706,18 @@ src/
 ---
 
 ## Changelog
+
+### v2.17.0 (2026-01-11) — Notification Admin RLS Hardening
+- **RLS Policies corrigidas para telas administrativas de notificações**:
+  - `notification_outbox` (SELECT): agora exige `is_current_bu(bu_id)` + (`super_admin` OR `admin` OR `notifications.outbox.view:bu`)
+  - `notification_outbox` (UPDATE): agora exige `is_current_bu(bu_id)` + (`super_admin` OR `admin` OR `notifications.outbox.retry:bu`)
+  - `notifications` (SELECT para admin view): agora exige `is_current_bu(bu_id)` + (`super_admin` OR `admin` OR `notifications.bu.view:bu` OR `notifications.bu.manage:bu`)
+- **Permission Keys usadas** (já existentes no catálogo):
+  - `notifications.outbox.view:bu` — Ver fila de envio de notificações (outbox)
+  - `notifications.outbox.retry:bu` — Reprocessar notificações com falha
+  - `notifications.bu.view:bu` — Ver configuração de notificações da BU
+  - `notifications.bu.manage:bu` — Gerenciar canais e eventos de notificação da BU
+- **Correção de padrão**: todas as policies agora usam o sufixo `:scope` canônico (ex: `:bu`) conforme TCR v2.11+
 
 ### v2.13.0 (2026-01-09) — V2-Only Mode & Governance Hardening
 - **V1 Permissions completamente removido** (Wave 9 Final):
