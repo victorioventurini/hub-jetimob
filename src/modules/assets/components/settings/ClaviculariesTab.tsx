@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Key, Trash2, MapPin, Edit } from "lucide-react";
+import { Plus, Key, Trash2, MapPin, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,11 +25,30 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useKeys } from "../../hooks/useKeys";
 import { ClavicularyDialog } from "../keys/ClavicularyDialog";
+import type { AssetClaviculary } from "../../types";
 
 export function ClaviculariesTab() {
   const { clavicularies, isLoading } = useKeys();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingClaviculary, setEditingClaviculary] = useState<AssetClaviculary | undefined>(undefined);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleOpenCreate = () => {
+    setEditingClaviculary(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleOpenEdit = (claviculary: AssetClaviculary) => {
+    setEditingClaviculary(claviculary);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditingClaviculary(undefined);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -51,7 +70,7 @@ export function ClaviculariesTab() {
               Gerencie os claviculários (armários de chaves) da unidade
             </CardDescription>
           </div>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={handleOpenCreate}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Claviculário
           </Button>
@@ -63,7 +82,7 @@ export function ClaviculariesTab() {
               title="Nenhum claviculário cadastrado"
               description="Cadastre um claviculário para organizar os chaveiros."
               actionLabel="Novo Claviculário"
-              onAction={() => setDialogOpen(true)}
+              onAction={handleOpenCreate}
               compact
             />
           ) : (
@@ -106,13 +125,22 @@ export function ClaviculariesTab() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(claviculary.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenEdit(claviculary)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(claviculary.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -122,7 +150,11 @@ export function ClaviculariesTab() {
         </CardContent>
       </Card>
 
-      <ClavicularyDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <ClavicularyDialog 
+        open={dialogOpen} 
+        onOpenChange={handleCloseDialog} 
+        claviculary={editingClaviculary}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
