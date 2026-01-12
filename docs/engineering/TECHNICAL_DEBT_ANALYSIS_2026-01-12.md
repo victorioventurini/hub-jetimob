@@ -370,22 +370,22 @@ Usar view `v_perf_indexes_report` para monitorar:
 
 ## 📊 Plano de Execução por Prioridade
 
-### P1 — Crítico (Esta semana)
+### P1 — Crítico (Esta semana) ✅ CONCLUÍDO
 
-| Item | Esforço | Impacto |
-|------|---------|---------|
-| Agendar cleanup de logs via cron | 30 min | Storage |
-| Criar índices para tickets/* | 15 min | Query speed |
-| Atualizar DOCUMENTATION_INDEX | 10 min | Consistência |
+| Item | Esforço | Impacto | Status |
+|------|---------|---------|--------|
+| Agendar cleanup de logs via cron | 30 min | Storage | ✅ Done |
+| Criar índices para tickets/* | 15 min | Query speed | ✅ Done (7 índices) |
+| Atualizar DOCUMENTATION_INDEX | 10 min | Consistência | ✅ Done |
 
-### P2 — Importante (Próximas 2 semanas)
+### P2 — Importante (Próximas 2 semanas) ✅ PARCIALMENTE CONCLUÍDO
 
-| Item | Esforço | Impacto |
-|------|---------|---------|
-| Migrar colunas text → enum | 2h | Type safety |
-| Criar helpers _shared/response.ts | 1h | DX |
-| Remover TicketMentionInput deprecated | 30 min | Cleanup |
-| Consolidar hooks debounce | 30 min | DX |
+| Item | Esforço | Impacto | Status |
+|------|---------|---------|--------|
+| Migrar colunas text → enum | 2h | Type safety | ⏳ Adiado (views dependentes) |
+| Criar helpers _shared/response.ts | 1h | DX | ✅ Done |
+| Remover TicketMentionInput deprecated | 30 min | Cleanup | ✅ Done |
+| Consolidar hooks debounce | 30 min | DX | ✅ Done |
 
 ### P3 — Desejável (Backlog)
 
