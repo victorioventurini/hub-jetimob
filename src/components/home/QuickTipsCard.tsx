@@ -1,73 +1,63 @@
 /**
- * QuickTipsCard - Card de dicas rápidas para a home
+ * QuickTipsCard - Card de dicas de produtividade personalizadas
  * 
- * Exibido quando o usuário não tem dados de time,
- * preenchendo o espaço no grid de 4 colunas.
+ * Usa o agente coach-produtividade para gerar dicas baseadas no
+ * contexto rico do usuário (role, OKRs, check-ins, etc).
+ * 
+ * Features:
+ * - Dicas personalizadas via IA
+ * - Cache inteligente por turno
+ * - Fallback com dicas estáticas por perfil
+ * - Indicador visual quando dica é da IA
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lightbulb, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Lightbulb, RefreshCw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Tip {
-  id: string;
-  text: string;
-  linkTo?: string;
-  linkLabel?: string;
-}
-
-const QUICK_TIPS: Tip[] = [
-  {
-    id: "1",
-    text: "Atualize seus OKRs semanalmente para manter o progresso visível.",
-    linkTo: "/okrs",
-    linkLabel: "Ver OKRs",
-  },
-  {
-    id: "2",
-    text: "Defina seu foco do dia para aumentar sua produtividade.",
-    // Link removido - página /tasks não existe ainda
-  },
-  {
-    id: "3",
-    text: "Conheça os novos Jetimobeiros e fortaleça o networking.",
-  },
-];
+import { useProductivityTip } from "@/hooks/useProductivityTip";
 
 export function QuickTipsCard() {
-  // Rotate tips based on day of week
-  const today = new Date().getDay();
-  const tipIndex = today % QUICK_TIPS.length;
-  const tip = QUICK_TIPS[tipIndex];
+  const { tip, isLoading, isFromAI, refresh } = useProductivityTip();
 
   return (
     <Card className="animate-fade-in">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base font-medium">
-          <Lightbulb className="h-4 w-4 text-amber-500" />
-          Dica do Dia
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2 text-base font-medium">
+            <Lightbulb className="h-4 w-4 text-amber-500" />
+            Dica do Dia
+            {isFromAI && (
+              <Sparkles className="h-3 w-3 text-purple-400" aria-label="Gerada por IA" />
+            )}
+          </span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7"
+            onClick={refresh}
+            disabled={isLoading}
+            aria-label="Atualizar dica"
+          >
+            <RefreshCw className={cn(
+              "h-3.5 w-3.5 text-muted-foreground",
+              isLoading && "animate-spin"
+            )} />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : (
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {tip.text}
+            {tip}
           </p>
-          
-          {tip.linkTo && tip.linkLabel && (
-            <Link 
-              to={tip.linkTo}
-              className={cn(
-                "inline-flex items-center gap-1 text-sm font-medium",
-                "text-primary hover:text-primary/80 transition-colors"
-              )}
-            >
-              {tip.linkLabel}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          )}
-        </div>
+        )}
       </CardContent>
     </Card>
   );
