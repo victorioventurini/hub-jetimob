@@ -118,7 +118,7 @@ export default function OrgViewListPage() {
               const totalTeamKrs = objective.orgKrs.reduce((sum, kr) => sum + kr.linkedTeamKrs.length, 0);
 
               return (
-                <Link key={objective.id} to={`/okrs/org-view/${objective.id}`}>
+                <Link key={objective.id} to={`/okrs/org-view/${objective.id}`} className="block">
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
