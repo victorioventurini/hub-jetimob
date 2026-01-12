@@ -55,7 +55,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
   const remainingMentions = mentionsList.length - 3;
 
   return (
-    <Link to={`/tickets/${ticket.id}`}>
+    <Link to={`/tickets/${ticket.id}`} className="block">
       <Card className={cn(
         "hover:shadow-md transition-shadow cursor-pointer",
         isOverdue && "border-destructive/50"
