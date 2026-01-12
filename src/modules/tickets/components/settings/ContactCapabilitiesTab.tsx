@@ -12,10 +12,14 @@ import { usePartnerCompanies, usePartnerContacts } from "../../hooks/usePartners
 import { useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks/useContactCapabilities";
 import { ContactCapabilityDialog } from "./ContactCapabilityDialog";
 import { toast } from "sonner";
+import { useUrlSearch, useUrlState } from "@/shared/url";
 
 export function ContactCapabilitiesTab() {
-  const [search, setSearch] = useState("");
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const { value: search, set: setSearch } = useUrlSearch("capSearch", 300);
+  const { value: selectedCompanyId, set: setSelectedCompanyId } = useUrlState<string | null>({
+    key: "companyId",
+    defaultValue: null,
+  });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ContactCapability | null>(null);
 
