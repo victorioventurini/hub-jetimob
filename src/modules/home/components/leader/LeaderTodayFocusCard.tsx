@@ -2,7 +2,7 @@
  * LeaderTodayFocusCard - Shows top 3 actionable items for today
  */
 import { Link } from "react-router-dom";
-import { Zap, AlertCircle, Info, ArrowRight } from "lucide-react";
+import { Zap, AlertCircle, Info, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +41,33 @@ export function LeaderTodayFocusCard({ items, isLoading }: LeaderTodayFocusCardP
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Empty state when no focus items
+  if (!items || items.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            Hoje seu foco
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
+              <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">
+              Tudo em dia!
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Não há pendências para hoje. Continue assim.
+            </p>
           </div>
         </CardContent>
       </Card>
