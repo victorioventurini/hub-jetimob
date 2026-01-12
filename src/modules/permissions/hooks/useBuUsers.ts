@@ -6,6 +6,8 @@ export interface BuUser {
   user_id: string;
   profile_id: string;
   role_in_bu: string | null;
+  /** True if user has bu_admin_v2 template assigned */
+  has_admin_template: boolean;
   has_bu_membership: boolean;
   onboarding_completed: boolean;
   profiles: {
@@ -60,6 +62,22 @@ export function useBuUsers() {
         }
       }
 
+      // Fetch user templates to detect admin template
+      const profileIds = profiles.map(p => p.id);
+      const { data: userTemplates } = await supabase
+        .from("bu_user_permission_templates_v2")
+        .select("user_id, permission_templates_v2!inner(slug)")
+        .eq("bu_id", buId)
+        .in("user_id", profileIds);
+
+      // Build set of profile_ids that have the bu_admin template
+      const adminTemplateUsers = new Set<string>();
+      for (const ut of (userTemplates ?? []) as Array<{ user_id: string; permission_templates_v2: { slug: string } }>) {
+        if (ut.permission_templates_v2?.slug === "bu_admin_v2") {
+          adminTemplateUsers.add(ut.user_id);
+        }
+      }
+
       // Fetch team memberships
       let teamsByUserId: Record<string, Array<{ id: string; name: string; is_primary: boolean }>> = {};
       
@@ -91,6 +109,7 @@ export function useBuUsers() {
         user_id: p.user_id || p.id,
         profile_id: p.id,
         role_in_bu: membershipByProfileId[p.id] || null,
+        has_admin_template: adminTemplateUsers.has(p.id),
         has_bu_membership: p.has_bu_membership,
         onboarding_completed: p.onboarding_completed,
         profiles: {
