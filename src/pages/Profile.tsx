@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { HubLayout } from '@/components/layout/HubLayout';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
+import { GlobalBreadcrumb } from '@/components/ui/global-breadcrumb';
 import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
 import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from '@/lib/phone';
 import { queryKeys } from '@/lib/queryKeys';
@@ -444,10 +446,11 @@ export default function Profile() {
   return (
     <HubLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Meu Perfil</h1>
-          <p className="text-muted-foreground">Gerencie suas informações pessoais</p>
-        </div>
+        <GlobalBreadcrumb items={[{ label: 'Meu Perfil' }]} />
+        <PageHeader
+          title="Meu Perfil"
+          description="Gerencie suas informações pessoais"
+        />
 
         {/* Header Card */}
         <Card>
