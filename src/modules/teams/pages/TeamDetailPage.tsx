@@ -36,13 +36,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
+import { ErrorState } from "@/components/ui/error-state";
+import { TeamsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useUrlTab } from "@/shared/url";
+import { useSafeBack } from "@/hooks/useSafeBack";
 
 export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: team, isLoading } = useTeam(id);
+  const { data: team, isLoading, error } = useTeam(id);
   const { data: squads } = useSquads(id);
   const deleteTeam = useDeleteTeam();
+  const goBack = useSafeBack({ moduleRoot: "/teams" });
   
   usePageTitle(team?.name ? `${team.name} - Times` : "Times");
   
@@ -90,18 +94,31 @@ export default function TeamDetailPage() {
     );
   }
 
+  if (error) {
+    return (
+      <HubLayout>
+        <div className="p-6">
+          <ErrorState
+            title="Erro ao carregar time"
+            description="Não foi possível carregar os dados do time. Tente novamente."
+            onBack={goBack}
+          />
+        </div>
+      </HubLayout>
+    );
+  }
+
   if (!team) {
     return (
       <HubLayout>
-        <div className="flex flex-col items-center justify-center py-12">
-          <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Time não encontrado</h2>
-          <p className="text-muted-foreground mb-4">
-            O time que você está procurando não existe ou foi removido.
-          </p>
-          <Button asChild>
-            <Link to="/teams">Voltar para Times</Link>
-          </Button>
+        <div className="p-6">
+          <TeamsBreadcrumb />
+          <ErrorState
+            title="Time não encontrado"
+            description="O time que você está procurando não existe ou foi removido."
+            onBack={goBack}
+            backLabel="Voltar para Times"
+          />
         </div>
       </HubLayout>
     );

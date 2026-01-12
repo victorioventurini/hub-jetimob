@@ -1,6 +1,5 @@
 import React, { Component, ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { ErrorState } from '@/components/ui/error-state';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -41,19 +40,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <div className="text-center max-w-md space-y-4">
-            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
-            </div>
-            <h2 className="text-xl font-semibold">Algo deu errado</h2>
-            <p className="text-muted-foreground text-sm">
-              Ocorreu um erro ao carregar esta página. Tente novamente.
-            </p>
-            <Button onClick={this.handleRetry} className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Tentar novamente
-            </Button>
-          </div>
+          <ErrorState
+            title="Algo deu errado"
+            description="Ocorreu um erro ao carregar esta página. Tente novamente."
+            onRetry={this.handleRetry}
+          />
         </div>
       );
     }
