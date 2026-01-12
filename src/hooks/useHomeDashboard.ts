@@ -3,6 +3,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 
 // Types
 interface KpiSummary {
@@ -95,26 +96,61 @@ export function useHomeDashboard(): HomeDashboardData {
   const { role, user } = useAuth();
   const { currentBu } = useBu();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
+
+  // Determine effective user ID for data fetching
+  const effectiveUserId = isImpersonating && impersonatedUserId 
+    ? impersonatedUserId 
+    : user?.id;
 
   // Single RPC call to get all dashboard data
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: queryKeys.home.dashboard(buId, user?.id ?? ''),
+    queryKey: isImpersonating && impersonatedUserId
+      ? [...queryKeys.home.dashboard(buId, impersonatedUserId), 'impersonated']
+      : queryKeys.home.dashboard(buId, user?.id ?? ''),
     queryFn: async (): Promise<DashboardRpcResponse | null> => {
-      if (!buId || !user?.id || !supabase) return null;
+      if (!buId || !effectiveUserId || !supabase) return null;
       
       const { data, error } = await supabase.rpc('rpc_home_dashboard_data', {
         p_bu_id: buId,
-        p_user_id: user.id,
+        p_user_id: effectiveUserId,
       });
       
       if (error) throw error;
       return data as unknown as DashboardRpcResponse;
     },
-    enabled: isReady && !!buId && !!user?.id && !!supabase,
+    enabled: isReady && !!buId && !!effectiveUserId && !!supabase,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  const roleCategory = mapRoleToCategory(role as string | undefined);
+  // Fetch impersonated user's role when impersonating
+  const { data: impersonatedRole } = useQuery({
+    queryKey: queryKeys.identity.impersonatedRole(buId ?? null, impersonatedUserId ?? null),
+    queryFn: async () => {
+      if (!supabase || !buId || !impersonatedUserId) return null;
+      
+      const { data, error } = await supabase.rpc('get_user_role_for_impersonation', {
+        p_target_profile_id: impersonatedUserId,
+        p_bu_id: buId,
+      });
+      
+      if (error) {
+        console.error("Error fetching impersonated role:", error);
+        return null;
+      }
+      
+      return data as string;
+    },
+    enabled: isReady && isImpersonating && !!impersonatedUserId && !!buId && !!supabase,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Use impersonated role when impersonating, otherwise use real role
+  const effectiveRole = isImpersonating && impersonatedRole 
+    ? impersonatedRole 
+    : role;
+  
+  const roleCategory = mapRoleToCategory(effectiveRole as string | undefined);
 
   // Extract data from RPC response
   const okrCounts = dashboardData?.okr_counts ?? { on_track: 0, at_risk: 0, off_track: 0 };

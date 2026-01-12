@@ -8307,6 +8307,14 @@ export type Database = {
           team_name: string
         }[]
       }
+      get_leader_teams_for_impersonation: {
+        Args: { p_bu_id: string; p_target_profile_id: string }
+        Returns: {
+          member_count: number
+          team_id: string
+          team_name: string
+        }[]
+      }
       get_manageable_teams: {
         Args: { p_bu_id?: string; p_user_id?: string }
         Returns: {
@@ -8390,6 +8398,10 @@ export type Database = {
       get_user_permissions_for_impersonation: {
         Args: { p_bu_id: string; p_target_profile_id: string }
         Returns: string[]
+      }
+      get_user_role_for_impersonation: {
+        Args: { p_bu_id: string; p_target_profile_id: string }
+        Returns: string
       }
       get_vacuum_instructions: { Args: never; Returns: string }
       has_asset_permission: {
