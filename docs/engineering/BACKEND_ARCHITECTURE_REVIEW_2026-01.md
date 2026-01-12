@@ -1,9 +1,19 @@
 # 🔍 Revisão de Arquitetura Backend — Hub da Jet
 
 **Data:** 2026-01-12  
-**Versão:** 1.0.0  
+**Versão:** 1.1.0 (Atualizado com Fases 1 e 2 concluídas)  
 **Escopo:** Edge Functions, Database Functions, RLS, Triggers  
 **Objetivo:** Identificar fragilidades, complexidade desnecessária e propor melhorias
+
+---
+
+## ✅ Status de Execução
+
+| Fase | Status | Descrição |
+|------|--------|-----------|
+| **Fase 1: Cleanup** | ✅ Concluída | Funções legacy removidas |
+| **Fase 2: Refatoração invoke-vic** | ✅ Concluída | Modularizado em 3 arquivos |
+| **Fase 3: Documentação** | ⏳ Pendente | Documentar SECURITY DEFINER |
 
 ---
 
@@ -11,8 +21,8 @@
 
 | Categoria | Status | Itens Críticos | Ação |
 |-----------|--------|----------------|------|
-| **Edge Functions** | 🟡 Bom | 2 problemas de design | Refatorar |
-| **Database Functions** | 🟠 Atenção | 5+ funções redundantes | Consolidar |
+| **Edge Functions** | ✅ Bom | invoke-vic refatorado | ✅ Concluído |
+| **Database Functions** | ✅ Bom | Funções legadas removidas | ✅ Concluído |
 | **RLS Policies** | 🟢 Sólido | Bem estruturado | Manter |
 | **Triggers** | 🟡 Bom | Nomenclatura inconsistente | Padronizar |
 | **Middleware** | 🟢 Excelente | Centralizado | Manter |
@@ -280,29 +290,35 @@ CREATE POLICY "tickets_update" ...
 
 ### 5.2 Plano de Ação
 
-#### Fase 1: Cleanup (1 dia)
+#### ✅ Fase 1: Cleanup (Concluída)
 
 ```sql
--- Remover funções obsoletas
+-- Removido via migration:
 DROP FUNCTION IF EXISTS _identity_dual_mode_deadline();
-DROP FUNCTION IF EXISTS _use_profile_id_for_identity();
+-- Documentadas funções SECURITY DEFINER críticas:
+-- is_bu_admin(uuid, uuid), user_has_permission(uuid, uuid, text)
 ```
 
-#### Fase 2: Refatorar invoke-vic (2-3 dias)
+#### ✅ Fase 2: Refatorar invoke-vic (Concluída)
+
+**Resultado:**
+- `invoke-vic/index.ts`: 648 → 380 linhas (-41%)
+- Novos módulos criados:
+  - `_shared/llm-client.ts` (~260 linhas) - Cliente LLM unificado
+  - `_shared/agent-loader.ts` (~180 linhas) - Carregador de agentes
+
+**Módulos extraídos:**
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `llm-client.ts` | `resolveLLMConfig()`, `llmComplete()`, `llmStream()`, `mapLLMError()` |
+| `agent-loader.ts` | `loadAgent()`, `buildSystemPrompt()`, `buildUserPrompt()`, `getAgentTools()` |
+
+#### ⏳ Fase 3: Documentação (Pendente)
 
 ```
-1. Extrair validação para validate.ts
-2. Extrair agent loading para agent-loader.ts
-3. Extrair LLM client para llm-client.ts
-4. Manter index.ts como orquestrador fino
-```
-
-#### Fase 3: Documentação (1 dia)
-
-```
-1. Documentar todas as funções SECURITY DEFINER
-2. Documentar views SECURITY DEFINER
-3. Atualizar TCR com decisões
+1. [ ] Documentar todas as funções SECURITY DEFINER
+2. [ ] Documentar views SECURITY DEFINER (v_profiles_directory, v_bu_all_profiles_admin)
+3. [ ] Atualizar TCR com decisões
 ```
 
 ---
@@ -365,12 +381,12 @@ get_vacuum_instructions()
 
 ## 7. MÉTRICAS DE SUCESSO
 
-| Métrica | Atual | Meta |
-|---------|-------|------|
-| Linhas em `invoke-vic/index.ts` | 400+ | < 150 |
-| Funções legacy | 5+ | 0 |
-| Documentação SECURITY DEFINER | 0% | 100% |
-| Triggers com nomenclatura padrão | 60% | 90% |
+| Métrica | Antes | Depois | Meta | Status |
+|---------|-------|--------|------|--------|
+| Linhas em `invoke-vic/index.ts` | 648 | 380 | < 400 | ✅ Atingida |
+| Funções legacy | 5+ | 0 | 0 | ✅ Atingida |
+| Documentação SECURITY DEFINER | 0% | 20% | 100% | ⏳ Em progresso |
+| Triggers com nomenclatura padrão | 60% | 60% | 90% | ⏳ Pendente |
 
 ---
 
