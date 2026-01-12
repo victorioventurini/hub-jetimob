@@ -19,7 +19,7 @@ import { useVicTypewriterQueue } from '../contexts/VicTypewriterQueue';
 // ============================================================
 // VELOCIDADE GLOBAL - Ajuste aqui para todas as animações do Vic
 // ============================================================
-const VIC_TYPING_SPEED_MS = 7; // 7ms por caractere = ~143 chars/segundo (entre 120-180)
+const VIC_TYPING_SPEED_MS = 8; // 8ms por caractere = ~120 chars/segundo
 
 // ============================================================
 // TYPES
