@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AssetsLayout } from "../components/AssetsLayout";
 import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
+import { useBu } from "@/contexts/BuContext";
 
 export default function AssetsPage() {
   usePageTitle("Assets");
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentBu } = useBu();
 
   // Redireciona para inventário se estiver na rota base /assets
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function AssetsPage() {
         <AssetsBreadcrumb />
         <PageHeader
           title="Assets"
-          description="Gerencie inventário, chaves e brindes da sua organização"
+          description={`Gerencie inventário, chaves e brindes da ${currentBu?.name || 'organização'}`}
         />
         <AssetsLayout />
       </div>
