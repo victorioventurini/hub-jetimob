@@ -308,8 +308,13 @@ ALTER TABLE asset_inventory
 - `trg_update_team_member_count` — Atualiza member_count ao inserir/deletar membros
 
 **Funções criadas:**
-- `initialize_counting_columns()` — Recalcula contagens (executar manualmente)
-- `cleanup_old_wizard_sessions()` — Remove sessões antigas (>90 dias)
+- `initialize_counting_columns()` — Recalcula contagens (executado via cron-dispatcher)
+- `cleanup_old_wizard_sessions()` — Remove sessões antigas >90 dias (executado via cron-dispatcher)
+
+**Automação:**
+- ✅ `cron-dispatcher` edge function atualizada para executar manutenção automaticamente:
+  - Inicializa colunas de contagem
+  - Limpa wizard sessions antigas
 
 ### Wave 3 — Cleanup (P3) ✅ CONCLUÍDA
 

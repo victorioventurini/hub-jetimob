@@ -18,11 +18,17 @@ interface HealthResult {
   admins_notified: number;
 }
 
+interface MaintenanceResult {
+  counting_columns_initialized: boolean;
+  wizard_sessions_cleaned: number;
+}
+
 interface ExecutionResult {
   success: boolean;
   correlation_id: string;
   outbox: OutboxResult;
   health: HealthResult;
+  maintenance: MaintenanceResult;
   duration_ms: number;
   ran_at: string;
 }
@@ -101,6 +107,34 @@ async function evaluateHealth(supabase: any): Promise<HealthResult> {
   return result;
 }
 
+// Run database maintenance tasks
+async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
+  const result: MaintenanceResult = { counting_columns_initialized: false, wizard_sessions_cleaned: 0 };
+
+  try {
+    // Initialize counting columns (runs only if needed)
+    const { error: initError } = await supabase.rpc("initialize_counting_columns");
+    if (!initError) {
+      result.counting_columns_initialized = true;
+      console.log("[cron-dispatcher] Counting columns initialized");
+    }
+  } catch {
+    console.log("[cron-dispatcher] initialize_counting_columns RPC not available");
+  }
+
+  try {
+    // Cleanup old wizard sessions
+    const { error: cleanupError } = await supabase.rpc("cleanup_old_wizard_sessions");
+    if (!cleanupError) {
+      console.log("[cron-dispatcher] Old wizard sessions cleaned");
+    }
+  } catch {
+    console.log("[cron-dispatcher] cleanup_old_wizard_sessions RPC not available");
+  }
+
+  return result;
+}
+
 // Log execution to database
 async function logExecution(supabase: any, result: ExecutionResult): Promise<void> {
   try {
@@ -156,6 +190,7 @@ Deno.serve(async (req) => {
   try {
     const outboxResult = await processOutbox();
     const healthResult = await evaluateHealth(supabase);
+    const maintenanceResult = await runMaintenance(supabase);
     const duration = Date.now() - startTime;
 
     const result: ExecutionResult = {
@@ -163,6 +198,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: outboxResult,
       health: healthResult,
+      maintenance: maintenanceResult,
       duration_ms: duration,
       ran_at: new Date().toISOString(),
     };
@@ -179,6 +215,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: { processed: 0, sent: 0, failed: 0 },
       health: { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 },
+      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0 },
       duration_ms: Date.now() - startTime,
       ran_at: new Date().toISOString(),
     };
