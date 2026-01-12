@@ -64,6 +64,9 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
 
         if (storedToken && (!currentAuth || isAnonAuth)) {
           headers.set("Authorization", `Bearer ${storedToken}`);
+          if (import.meta.env.DEV) {
+            console.debug("[BuScopedClient] Injected JWT from storage for buId:", buId);
+          }
         }
 
         return fetch(input, { ...init, headers });
