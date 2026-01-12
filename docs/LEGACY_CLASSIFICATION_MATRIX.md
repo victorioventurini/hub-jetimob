@@ -75,7 +75,7 @@
 
 | Item | Camada | Classificação | Risco | Dependências | Recomendação |
 |------|--------|---------------|-------|--------------|--------------|
-| `LegacyAssetRedirect.tsx` | Front | LEGACY | Baixo | QR codes antigos | Manter para compat |
+| `LegacyAssetRedirect.tsx` | Front | ~~LEGACY~~ **REMOVIDO** | - | - | ✅ Removido (dead code) |
 | Todas as outras | Front | ACTIVE | - | - | Manter |
 
 ---
