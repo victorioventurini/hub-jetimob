@@ -76,12 +76,7 @@ export function TemplateEditorSheet({
   const { keys: currentKeys, isLoading: keysLoading, setTemplateItems } = useTemplateItemsV2(templateId);
   const { permissions, permissionsByModule, isLoading: catalogLoading, modules } = usePermissionCatalog();
 
-  // Don't render if there's no template
-  if (!template) {
-    return null;
-  }
-
-  // Form state
+  // Form state - ALL hooks must be called before any early return
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [module, setModule] = useState("");
@@ -96,11 +91,13 @@ export function TemplateEditorSheet({
 
   // Initialize form when template changes
   useEffect(() => {
-    setName(template.name);
-    setDescription(template.description || "");
-    setModule(template.module || "");
-    setSurface(template.surface || "");
-  }, [template.id, template.name, template.description, template.module, template.surface]);
+    if (template) {
+      setName(template.name);
+      setDescription(template.description || "");
+      setModule(template.module || "");
+      setSurface(template.surface || "");
+    }
+  }, [template?.id, template?.name, template?.description, template?.module, template?.surface]);
 
   // Sync selected keys when template items load
   useEffect(() => {
@@ -113,13 +110,19 @@ export function TemplateEditorSheet({
 
   // Check if metadata has changes
   const hasMetadataChanges = useMemo(() => {
+    if (!template) return false;
     return (
       name !== template.name ||
       description !== (template.description || "") ||
       module !== (template.module || "") ||
       surface !== (template.surface || "")
     );
-  }, [template.name, template.description, template.module, template.surface, name, description, module, surface]);
+  }, [template, name, description, module, surface]);
+
+  // Don't render if there's no template
+  if (!template) {
+    return null;
+  }
 
   // Check if keys have changes
   const hasKeyChanges = useMemo(() => {
