@@ -8220,9 +8220,16 @@ export type Database = {
       get_effective_permissions_v2: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: {
+          action: string
+          bu_id: string
+          module: string
+          permission_id: string
           permission_key: string
+          resource: string
+          scope: string
           source: string
           source_name: string
+          user_id: string
         }[]
       }
       get_enabled_modules_for_bu: {
