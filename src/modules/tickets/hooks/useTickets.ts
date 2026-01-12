@@ -145,24 +145,32 @@ export function useTickets(filters?: TicketFilters) {
         }
       });
 
-      // Fetch mentions with profile info in batch
-      const { data: mentionsData } = await supabase
-        .from("mentions")
+      // Fetch mentions with profile info in batch (using ticket_mentions table)
+      // Note: ticket_mentions exists in DB but types.ts may not be updated yet
+      type TicketMentionRow = {
+        ticket_id: string;
+        mentioned_user_id: string | null;
+        mentioned_contact_id: string | null;
+        mentioned_user: { id: string; display_name: string; photo_url: string | null } | null;
+        mentioned_contact: { id: string; name: string } | null;
+      };
+      
+      const { data: mentionsData } = await (supabase as any)
+        .from("ticket_mentions")
         .select(`
-          entity_id,
+          ticket_id,
           mentioned_user_id,
           mentioned_contact_id,
-          mentioned_user:profiles!mentions_mentioned_user_id_fkey(id, display_name, photo_url),
-          mentioned_contact:partner_contacts!mentions_mentioned_contact_id_fkey(id, name)
+          mentioned_user:profiles!ticket_mentions_mentioned_user_fkey(id, display_name, photo_url),
+          mentioned_contact:partner_contacts!ticket_mentions_mentioned_contact_fkey(id, name)
         `)
-        .eq("entity_type", "ticket")
-        .in("entity_id", ticketIds);
+        .in("ticket_id", ticketIds) as { data: TicketMentionRow[] | null };
 
       // Aggregate mentions per ticket (unique users only)
       type MentionInfo = { id: string; display_name: string; photo_url: string | null; type: 'user' | 'contact' };
       const mentionsMap = new Map<string, MentionInfo[]>();
-      (mentionsData || []).forEach(mention => {
-        const ticketId = mention.entity_id;
+      (mentionsData || []).forEach((mention: TicketMentionRow) => {
+        const ticketId = mention.ticket_id;
         const existing = mentionsMap.get(ticketId) || [];
         
         // Get user/contact info
@@ -334,24 +342,32 @@ export function useMyTickets() {
         }
       });
 
-      // Fetch mentions with profile info in batch
-      const { data: mentionsData } = await supabase
-        .from("mentions")
+      // Fetch mentions with profile info in batch (using ticket_mentions table)
+      // Note: ticket_mentions exists in DB but types.ts may not be updated yet
+      type TicketMentionRow = {
+        ticket_id: string;
+        mentioned_user_id: string | null;
+        mentioned_contact_id: string | null;
+        mentioned_user: { id: string; display_name: string; photo_url: string | null } | null;
+        mentioned_contact: { id: string; name: string } | null;
+      };
+      
+      const { data: mentionsData } = await (supabase as any)
+        .from("ticket_mentions")
         .select(`
-          entity_id,
+          ticket_id,
           mentioned_user_id,
           mentioned_contact_id,
-          mentioned_user:profiles!mentions_mentioned_user_id_fkey(id, display_name, photo_url),
-          mentioned_contact:partner_contacts!mentions_mentioned_contact_id_fkey(id, name)
+          mentioned_user:profiles!ticket_mentions_mentioned_user_fkey(id, display_name, photo_url),
+          mentioned_contact:partner_contacts!ticket_mentions_mentioned_contact_fkey(id, name)
         `)
-        .eq("entity_type", "ticket")
-        .in("entity_id", ticketIds);
+        .in("ticket_id", ticketIds) as { data: TicketMentionRow[] | null };
 
       // Aggregate mentions per ticket (unique users only)
       type MentionInfo = { id: string; display_name: string; photo_url: string | null; type: 'user' | 'contact' };
       const mentionsMap = new Map<string, MentionInfo[]>();
-      (mentionsData || []).forEach(mention => {
-        const ticketId = mention.entity_id;
+      (mentionsData || []).forEach((mention: TicketMentionRow) => {
+        const ticketId = mention.ticket_id;
         const existing = mentionsMap.get(ticketId) || [];
         
         const user = Array.isArray(mention.mentioned_user) 
@@ -470,15 +486,15 @@ export function useCreateTicket(profileId: string | null) {
             .filter((m) => m.user_id || m.contact_id)
             .map((m) => ({
               bu_id: buId,
-              entity_type: "ticket_message" as const,
-              entity_id: message.id,
+              ticket_id: ticket.id,
+              message_id: message.id,
               mentioned_user_id: m.user_id || null,
               mentioned_contact_id: m.contact_id || null,
               created_by: profileId,
             }));
 
           if (mentionInserts.length > 0) {
-            await supabase.from("mentions").insert(mentionInserts);
+            await (supabase as any).from("ticket_mentions").insert(mentionInserts);
           }
         }
       }

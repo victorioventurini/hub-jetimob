@@ -135,37 +135,15 @@ export function usePermissionPresets() {
 
 /**
  * Hook for preset items (templates in a preset)
+ * NOTE: permission_preset_items table was removed. This hook now returns empty data.
+ * Presets system needs redesign - templates are linked directly via permission_presets.template_ids array.
  */
 export function usePresetItems(presetId: string | null) {
-  const { client: supabase, isReady } = useOptionalBuClient();
-
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: governanceQueryKeys.presetItems(presetId),
-    staleTime: 10 * 60 * 1000, // 10 minutes - preset items change rarely
-    queryFn: async () => {
-      if (!supabase || !presetId) return [];
-
-      const { data, error } = await supabase
-        .from("permission_preset_items")
-        .select(`
-          id,
-          preset_id,
-          template_id,
-          created_at,
-          permission_templates_v2 (id, slug, name, surface, module)
-        `)
-        .eq("preset_id", presetId);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: isReady && !!presetId,
-  });
-
+  // Table was dropped - return empty structure
   return {
-    items,
-    templateIds: items.map((i) => i.template_id),
-    isLoading,
+    items: [] as Array<{ id: string; preset_id: string; template_id: string; created_at: string }>,
+    templateIds: [] as string[],
+    isLoading: false,
   };
 }
 
