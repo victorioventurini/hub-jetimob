@@ -387,14 +387,14 @@ Usar view `v_perf_indexes_report` para monitorar:
 | Remover TicketMentionInput deprecated | 30 min | Cleanup | ✅ Done |
 | Consolidar hooks debounce | 30 min | DX | ✅ Done |
 
-### P3 — Desejável (Backlog)
+### P3 — Desejável (Backlog) ✅ AVALIADO
 
-| Item | Esforço | Impacto |
-|------|---------|---------|
-| Migrar ticket_subcategories | 4h | Simplificação |
-| Migrar queryKeys imports | 2h | Modernização |
-| Implementar okr_dependencies UI | 4h | Feature |
-| Avaliar remoção LegacyAssetRedirect | 1h | Cleanup |
+| Item | Esforço | Impacto | Status |
+|------|---------|---------|--------|
+| Migrar ticket_subcategories | 4h | Simplificação | ⏳ Adiado (apenas 1 ticket usa) |
+| Migrar queryKeys imports | 2h | Modernização | ⏳ Gradual (estrutura pronta) |
+| Implementar okr_dependencies UI | 4h | Feature | ⏳ Backlog |
+| Avaliar remoção LegacyAssetRedirect | 1h | Cleanup | ✅ Done (dead code removido) |
 
 ---
 
