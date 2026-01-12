@@ -12,6 +12,8 @@ interface TeamOkrSectionsProps {
   teamId: string;
   teamName: string;
   isLoading?: boolean;
+  /** Se o usuário pode editar OKRs deste time */
+  canEdit?: boolean;
 }
 
 /**
@@ -25,6 +27,7 @@ export function TeamOkrSections({
   teamId,
   teamName,
   isLoading = false,
+  canEdit = false,
 }: TeamOkrSectionsProps) {
   const hasContributions = contributedObjectives.length > 0;
 
@@ -70,6 +73,7 @@ export function TeamOkrSections({
                 keyResults={objective.key_results || []}
                 type="team"
                 teamName={teamName}
+                canEdit={canEdit}
               />
             ))}
           </div>

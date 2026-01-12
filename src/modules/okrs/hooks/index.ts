@@ -138,6 +138,7 @@ export { useTeamContributionView } from './useTeamContributionView';
 // TEAM-SPECIFIC
 // =========================
 export { useManageableTeams } from './useManageableTeams';
+export { useCanManageTeamOkr, useCanManageOrgOkr } from './useCanManageTeamOkr';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
 export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';
