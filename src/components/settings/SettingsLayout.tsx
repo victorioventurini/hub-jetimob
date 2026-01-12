@@ -1,8 +1,7 @@
 import { ReactNode, useState } from "react";
 import { HubGlobalSidebar } from "../layout/HubGlobalSidebar";
 import { HubGlobalMobileSidebar } from "../layout/HubGlobalMobileSidebar";
-import { Search, Menu } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Menu } from "lucide-react";
 import { NotificationCenter } from "@/components/notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -60,24 +59,18 @@ function SettingsHeader({ sidebarCollapsed, onMobileMenuToggle }: SettingsHeader
   return (
     <header className="sticky top-0 z-30 h-16 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between h-full px-4 lg:px-8">
-        {/* Mobile menu trigger + Search */}
-        <div className="flex items-center gap-3 flex-1 max-w-md">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={onMobileMenuToggle}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar no Hub..."
-              className="pl-10 bg-muted/50 border-0 focus-visible:ring-1"
-            />
-          </div>
-        </div>
+        {/* Mobile menu trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={onMobileMenuToggle}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        {/* Spacer */}
+        <div className="flex-1" />
 
         {/* Right section */}
         <div className="flex items-center gap-2">
