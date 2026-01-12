@@ -1,8 +1,9 @@
 # 🔧 Plano de Higienização e Otimização — Hub da Jet
 
 **Data:** 2026-01-12  
-**Versão:** 1.0.0  
-**Baseado em:** TCR v2.17.0, HEALTH_REPORT_2026-01-11
+**Versão:** 1.1.0  
+**Baseado em:** TCR v2.21.0, HEALTH_REPORT_2026-01-11  
+**Status:** ✅ CONCLUÍDO
 
 ---
 
@@ -473,14 +474,33 @@ queryClient.prefetchQuery({
 
 ## ✅ Métricas de Sucesso
 
-| Métrica | Atual | Meta |
-|---------|-------|------|
-| Tabelas vazias (legacy) | 1 | 0 |
-| Funções SQL obsoletas | 1 | 0 |
-| Componentes duplicados | 5+ | 0 |
-| Índices não utilizados | 25 | < 10 |
-| Tempo de load (dashboard) | — | < 2s |
-| Bundle size (main chunk) | — | < 500KB |
+| Métrica | Antes | Depois | Meta | Status |
+|---------|-------|--------|------|--------|
+| Tabelas vazias (legacy) | 1 | 0 | 0 | ✅ |
+| Funções SQL obsoletas | 1 | 0 | 0 | ✅ |
+| Componentes duplicados | 5+ | 0 | 0 | ✅ |
+| Tipos compartilhados | 0 | 4 | ≥3 | ✅ |
+| Cache config centralizado | 0 | 5 domínios | ≥4 | ✅ |
+| RPCs agregadoras | 2 | 3 | ≥3 | ✅ |
+| Índices não utilizados | 25 | — | < 10 | ⏳ Monitorar 30d |
+| Tempo de load (dashboard) | — | — | < 2s | ⏳ Medir |
+| Bundle size (main chunk) | — | — | < 500KB | ⏳ Medir |
+
+---
+
+## 📝 Resumo Executivo Final
+
+**Plano executado com sucesso em 4 waves:**
+
+1. **Wave 1 (Higienização):** DROP de tabela/função legacy, funções de retenção de logs, índices de performance
+2. **Wave 2 (Centralização):** ConfirmDialog genérico, tipos compartilhados, validação de componentes existentes
+3. **Wave 3 (OKRs):** Barrel exports organizados para hooks e utils
+4. **Wave 4 (Performance):** `rpc_tickets_summary`, `queryCacheConfig.ts` com staleTime por domínio
+
+**Itens pendentes (baixa prioridade):**
+- FKs faltantes no Identity Map (integridade referencial)
+- UI para `okr_dependencies` (feature futura)
+- Monitoramento de índices por 30 dias
 
 ---
 
