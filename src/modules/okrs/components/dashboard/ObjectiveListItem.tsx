@@ -77,6 +77,8 @@ interface ObjectiveListItemProps {
   isLoading?: boolean;
   type: 'org' | 'team';
   teamName?: string;
+  /** Se o usuário pode editar este objetivo (via useCanManageTeamOkr ou useCanManageOrgOkr) */
+  canEdit?: boolean;
 }
 
 export function ObjectiveListItem({ 
@@ -84,7 +86,8 @@ export function ObjectiveListItem({
   keyResults = [], 
   isLoading, 
   type,
-  teamName 
+  teamName,
+  canEdit = false,
 }: ObjectiveListItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
@@ -232,38 +235,40 @@ export function ObjectiveListItem({
                         {statusConfig.label}
                       </Badge>
                       
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            setShowEditObjectiveDialog(true);
-                          }}>
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Editar Objetivo
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            setShowAddKrDialog(true);
-                          }}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Adicionar KR
-                          </DropdownMenuItem>
-                          {type === 'team' && (
+                      {canEdit && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
-                              window.location.href = `/okrs/objectives/${objective.id}/krs/create`;
+                              setShowEditObjectiveDialog(true);
                             }}>
-                              <Wand2 className="w-4 h-4 mr-2" />
-                              Wizard de KRs
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Editar Objetivo
                             </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              setShowAddKrDialog(true);
+                            }}>
+                              <Plus className="w-4 h-4 mr-2" />
+                              Adicionar KR
+                            </DropdownMenuItem>
+                            {type === 'team' && (
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = `/okrs/objectives/${objective.id}/krs/create`;
+                              }}>
+                                <Wand2 className="w-4 h-4 mr-2" />
+                                Wizard de KRs
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                       
                       <OkrOwnerInfo owner={objective.owner} size="md" />
                     </div>
@@ -295,6 +300,7 @@ export function ObjectiveListItem({
                       type={type}
                       objectiveTitle={objective.title}
                       teamName={teamName}
+                      canEdit={canEdit}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
                       onShowHistory={() => setHistoryKr(kr)}
@@ -447,12 +453,13 @@ interface KeyResultRowProps {
   type: 'org' | 'team';
   objectiveTitle?: string;
   teamName?: string;
+  canEdit?: boolean;
   onEdit: () => void;
   onCheckin: () => void;
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(false);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   
@@ -541,20 +548,22 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, o
                   <History className="w-3 h-3" />
                 </Button>
                 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit();
-                  }}
-                  title="Editar KR"
-                >
-                  <Pencil className="w-3 h-3" />
-                </Button>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }}
+                    title="Editar KR"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                )}
                 
-                {type === 'team' && (
+                {canEdit && type === 'team' && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -599,7 +608,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, onEdit, onCheckin, o
               objectiveTitle,
               teamName,
             }}
-            canEdit 
+            canEdit={canEdit}
           />
         </div>
       )}
