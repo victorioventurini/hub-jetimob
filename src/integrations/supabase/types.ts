@@ -4771,6 +4771,7 @@ export type Database = {
       }
       okr_team_objectives: {
         Row: {
+          avg_progress: number | null
           bu_id: string
           cancellation_learning: string | null
           cancellation_reason: string | null
@@ -4785,6 +4786,7 @@ export type Database = {
           health_status: string | null
           id: string
           is_shared: boolean
+          kr_count: number | null
           last_health_calculated_at: string | null
           last_reviewed_at: string | null
           next_review_due: string | null
@@ -4799,6 +4801,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          avg_progress?: number | null
           bu_id: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
@@ -4813,6 +4816,7 @@ export type Database = {
           health_status?: string | null
           id?: string
           is_shared?: boolean
+          kr_count?: number | null
           last_health_calculated_at?: string | null
           last_reviewed_at?: string | null
           next_review_due?: string | null
@@ -4827,6 +4831,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          avg_progress?: number | null
           bu_id?: string
           cancellation_learning?: string | null
           cancellation_reason?: string | null
@@ -4841,6 +4846,7 @@ export type Database = {
           health_status?: string | null
           id?: string
           is_shared?: boolean
+          kr_count?: number | null
           last_health_calculated_at?: string | null
           last_reviewed_at?: string | null
           next_review_due?: string | null
@@ -5991,6 +5997,7 @@ export type Database = {
           description: string | null
           id: string
           leader_user_id: string | null
+          member_count: number | null
           name: string
           parent_team_id: string | null
           status: Database["public"]["Enums"]["team_status"]
@@ -6006,6 +6013,7 @@ export type Database = {
           description?: string | null
           id?: string
           leader_user_id?: string | null
+          member_count?: number | null
           name: string
           parent_team_id?: string | null
           status?: Database["public"]["Enums"]["team_status"]
@@ -6021,6 +6029,7 @@ export type Database = {
           description?: string | null
           id?: string
           leader_user_id?: string | null
+          member_count?: number | null
           name?: string
           parent_team_id?: string | null
           status?: Database["public"]["Enums"]["team_status"]
@@ -7841,6 +7850,7 @@ export type Database = {
       }
       cleanup_old_agent_logs: { Args: never; Returns: number }
       cleanup_old_cron_logs: { Args: never; Returns: number }
+      cleanup_old_wizard_sessions: { Args: never; Returns: number }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
@@ -8162,6 +8172,13 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      initialize_counting_columns: {
+        Args: never
+        Returns: {
+          objectives_updated: number
+          teams_updated: number
+        }[]
       }
       is_agent_enabled_for_bu: {
         Args: { p_agent_id: string; p_bu_id: string }

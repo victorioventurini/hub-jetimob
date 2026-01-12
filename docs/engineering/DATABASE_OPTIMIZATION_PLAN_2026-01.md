@@ -287,14 +287,27 @@ ALTER TABLE asset_inventory
 - `asset_keyrings.created_by` (1 órfão)
 - `asset_clavicularies.created_by` (1 órfão)
 
-### Wave 2 — Performance (P2)
+### Wave 2 — Performance (P2) ✅ CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| Adicionar colunas de contagem | 2h | Query speed | 🔲 Pendente |
-| Criar triggers de contagem | 1h | Manutenção | 🔲 Pendente |
-| VACUUM em audit_logs | 5min | Storage | 🔲 Pendente |
-| Retenção okr_wizard_sessions | 30min | Storage | 🔲 Pendente |
+| Adicionar colunas de contagem | 2h | Query speed | ✅ Feito (`kr_count`, `avg_progress`, `member_count`) |
+| Criar triggers de contagem | 1h | Manutenção | ✅ Feito (2 triggers) |
+| Função de retenção wizard | 30min | Storage | ✅ Feito (`cleanup_old_wizard_sessions`) |
+| Inicializar contagens | 10min | Dados | ⚠️ Pendente (executar via Dashboard SQL) |
+
+**Colunas adicionadas:**
+- `okr_team_objectives.kr_count` — Contagem de KRs ativos
+- `okr_team_objectives.avg_progress` — Progresso médio (cache)
+- `teams.member_count` — Contagem de membros
+
+**Triggers criados:**
+- `trg_update_objective_kr_count` — Atualiza kr_count ao inserir/deletar KRs
+- `trg_update_team_member_count` — Atualiza member_count ao inserir/deletar membros
+
+**Funções criadas:**
+- `initialize_counting_columns()` — Recalcula contagens (executar manualmente)
+- `cleanup_old_wizard_sessions()` — Remove sessões antigas (>90 dias)
 
 ### Wave 3 — Cleanup (P3)
 

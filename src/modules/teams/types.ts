@@ -17,7 +17,7 @@ export interface TeamWithRelations extends Team {
     name: string;
     status: string;
   }[];
-  member_count?: number;
+  // member_count now comes from Team base type
 }
 
 export interface TeamTreeNode {
