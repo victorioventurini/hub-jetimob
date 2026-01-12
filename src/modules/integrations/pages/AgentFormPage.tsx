@@ -61,7 +61,7 @@ const MODELS = [
 export default function AgentFormPage() {
   const { integrationKey, agentId } = useParams<{ integrationKey: string; agentId?: string }>();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
   const isEditing = !!agentId;
   const supabase = useBuScopedSupabase();
   
@@ -189,7 +189,10 @@ export default function AgentFormPage() {
         },
       });
     } else {
-      createAgent.mutate(agentData, {
+      createAgent.mutate({
+        ...agentData,
+        created_by: profile?.id || null, // ✅ Usa profiles.id conforme convenção
+      }, {
         onSuccess: () => {
           navigate(`/hub/integrations/${integrationKey}/agents`);
         },

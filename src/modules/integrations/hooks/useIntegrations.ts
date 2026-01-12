@@ -357,9 +357,8 @@ export function useCreateAgent() {
       model_name?: string | null;
       max_tokens?: number | null;
       temperature?: number;
+      created_by?: string | null;
     }) => {
-      const { data: user } = await supabase.auth.getUser();
-      
       const { error } = await supabase
         .from('ai_agents')
         .insert({
@@ -376,7 +375,7 @@ export function useCreateAgent() {
           model_name: agent.model_name || null,
           max_tokens: agent.max_tokens || null,
           temperature: agent.temperature ?? 0.7,
-          created_by: user.user?.id,
+          created_by: agent.created_by || null,
         });
       
       if (error) throw error;
