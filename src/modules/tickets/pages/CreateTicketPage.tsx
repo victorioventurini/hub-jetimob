@@ -20,7 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useCreateTicket } from "../hooks/useTickets";
-import { useTicketCategories, useTicketSubcategories } from "../hooks/useTicketCategories";
+import { useTicketCategories } from "../hooks/useTicketCategories";
 import { usePartnerCompanies } from "../hooks/usePartners";
 import { usePartnerCategories, usePartnerSubcategories, useHasPartnerServices } from "../hooks/usePartnerServices";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
@@ -161,8 +161,6 @@ export default function CreateTicketPage() {
     selectedCategoryId
   );
 
-  // Subcategorias para tickets internos (pass undefined instead of empty string for proper filtering)
-  const { data: allSubcategories = [] } = useTicketSubcategories(selectedCategoryId);
 
   // Verificar se a categoria selecionada permite subcategoria vazia (generalista)
   const selectedPartnerCategory = useMemo(() => {
@@ -207,8 +205,10 @@ export default function CreateTicketPage() {
 
   // Determinar subcategorias disponíveis
   const availableSubcategories = useMemo(() => {
-    if (selectedType === "internal") {
-      return allSubcategories;
+    if (selectedType === "internal" && selectedCategoryId) {
+      // Use subcategories embedded in the selected category (already filtered by status)
+      const category = allCategories.find(c => c.id === selectedCategoryId);
+      return category?.subcategories || [];
     }
     
     if (selectedType === "external" && selectedPartnerId && selectedCategoryId) {
@@ -226,7 +226,7 @@ export default function CreateTicketPage() {
     }
     
     return [];
-  }, [selectedType, selectedPartnerId, selectedCategoryId, isGeneralistCategory, allSubcategories, partnerSubcategories, allCategories]);
+  }, [selectedType, selectedPartnerId, selectedCategoryId, isGeneralistCategory, partnerSubcategories, allCategories]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
