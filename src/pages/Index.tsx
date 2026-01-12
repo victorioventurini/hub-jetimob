@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
+import { useGreetingSubtext } from "@/hooks/useGreetingSubtext";
 import { useBu } from "@/contexts/BuContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigate } from "react-router-dom";
@@ -36,7 +37,15 @@ const Index = () => {
   
   // Determine profile for greeting
   const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
-  const { greeting, subtext } = useGreeting({ 
+  const { greeting } = useGreeting({ 
+    userName: profile?.first_name,
+    profile: greetingProfile,
+    buName: currentBu?.name,
+    teamName: leaderTeams?.[0]?.team_name,
+  });
+  
+  // AI-powered contextual subtext
+  const { subtext, isLoading: subtextLoading } = useGreetingSubtext({
     userName: profile?.first_name,
     profile: greetingProfile,
     buName: currentBu?.name,
@@ -81,9 +90,13 @@ const Index = () => {
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
             {greeting}
           </h1>
-          <p className="text-lg text-muted-foreground">
-            {subtext}
-          </p>
+          {subtextLoading ? (
+            <Skeleton className="h-6 w-56" />
+          ) : (
+            <p className="text-lg text-muted-foreground">
+              {subtext}
+            </p>
+          )}
         </section>
 
         {/* Culture Card - Full Width with Typewriter */}
