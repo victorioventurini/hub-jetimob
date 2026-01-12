@@ -1,20 +1,74 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Search, Filter, Plus, Lock, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface EmptyStateProps {
+/**
+ * Variant presets for common empty state scenarios.
+ * Each variant provides default icon, title, and description.
+ */
+export type EmptyStateVariant = 
+  | 'search'      // Search with no results
+  | 'filter'      // Filters too restrictive  
+  | 'firstUse'    // First use - CTA to create
+  | 'noPermission' // No access
+  | 'default';    // Generic
+
+const variantDefaults: Record<EmptyStateVariant, {
   icon: LucideIcon;
   title: string;
   description: string;
+}> = {
+  search: {
+    icon: Search,
+    title: "Nenhum resultado encontrado",
+    description: "Tente ajustar os termos de busca ou verifique a ortografia.",
+  },
+  filter: {
+    icon: Filter,
+    title: "Nenhum item corresponde aos filtros",
+    description: "Tente remover alguns filtros para ver mais resultados.",
+  },
+  firstUse: {
+    icon: Plus,
+    title: "Comece agora",
+    description: "Crie seu primeiro item para começar.",
+  },
+  noPermission: {
+    icon: Lock,
+    title: "Acesso restrito",
+    description: "Você não tem permissão para visualizar este conteúdo.",
+  },
+  default: {
+    icon: Inbox,
+    title: "Nenhum item encontrado",
+    description: "Não há itens para exibir no momento.",
+  },
+};
+
+interface EmptyStateProps {
+  /** Contextual variant - provides sensible defaults */
+  variant?: EmptyStateVariant;
+  /** Custom icon (overrides variant default) */
+  icon?: LucideIcon;
+  /** Title text (overrides variant default) */
+  title?: string;
+  /** Description text (overrides variant default) */
+  description?: string;
+  /** Action button label */
   actionLabel?: string;
+  /** Action button callback */
   onAction?: () => void;
+  /** Additional CSS classes */
   className?: string;
+  /** Custom icon classes */
   iconClassName?: string;
+  /** Compact mode for smaller spaces */
   compact?: boolean;
 }
 
 export function EmptyState({
-  icon: Icon,
+  variant = 'default',
+  icon,
   title,
   description,
   actionLabel,
@@ -23,6 +77,12 @@ export function EmptyState({
   iconClassName,
   compact = false,
 }: EmptyStateProps) {
+  // Merge variant defaults with explicit props
+  const defaults = variantDefaults[variant];
+  const Icon = icon || defaults.icon;
+  const displayTitle = title || defaults.title;
+  const displayDescription = description || defaults.description;
+
   return (
     <div
       className={cn(
@@ -51,7 +111,7 @@ export function EmptyState({
           compact ? "text-base" : "text-xl"
         )}
       >
-        {title}
+        {displayTitle}
       </h3>
       <p
         className={cn(
@@ -59,7 +119,7 @@ export function EmptyState({
           compact ? "text-sm mb-4" : "text-base mb-6"
         )}
       >
-        {description}
+        {displayDescription}
       </p>
       {actionLabel && onAction && (
         <Button onClick={onAction} size={compact ? "sm" : "default"}>
