@@ -355,7 +355,6 @@ export default function TeamsPage() {
                           <TeamCard
                             key={team.id}
                             team={team}
-                            onEdit={setEditingTeam}
                             variant="team"
                           />
                         ))}
@@ -393,7 +392,6 @@ export default function TeamsPage() {
                           <TeamCard
                             key={team.id}
                             team={team}
-                            onEdit={setEditingTeam}
                             variant="subteam"
                           />
                         ))}
