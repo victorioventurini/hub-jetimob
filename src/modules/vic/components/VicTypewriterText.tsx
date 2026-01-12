@@ -44,7 +44,7 @@ export interface VicTypewriterTextProps {
 
 function VicTypewriterTextComponent({
   text,
-  speed = 30, // Aumentado de 25 para 30 (~20% mais lento)
+  speed = 55, // Velocidade mais natural (~55ms por caractere)
   onComplete,
   autoStart = true,
   className,
@@ -196,7 +196,7 @@ export interface VicTypewriterBlockProps {
 
 export function VicTypewriterBlock({
   text,
-  speed = 24, // Aumentado de 20 para 24 (~20% mais lento)
+  speed = 45, // Velocidade mais natural (~45ms por caractere)
   onComplete,
   className,
   showSignature = true,
@@ -314,13 +314,13 @@ export function VicStreamingText({
         // Alvo: completar rápido quando veio tudo de uma vez,
         // e acompanhar suave quando está em streaming.
         // targetTicks maior = mais lento (mais ticks para completar)
-        const targetTicks = isStreaming ? 30 : 80; // Streaming mais lento e suave
+        const targetTicks = isStreaming ? 60 : 120; // Mais lento e suave
         const step = Math.max(1, Math.ceil(remaining / targetTicks));
 
         const nextLen = Math.min(text.length, current.length + step);
         return text.slice(0, nextLen);
       });
-    }, 25); // Intervalo maior para digitação mais natural (era 15ms)
+    }, 40); // Intervalo maior para digitação mais natural (era 25ms)
 
     return () => {
       if (intervalRef.current) {
