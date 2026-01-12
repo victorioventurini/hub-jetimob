@@ -441,19 +441,26 @@ queryClient.prefetchQuery({
 | Criar ConfirmDialog genérico | 30min | DX | ✅ Feito (`src/components/ui/confirm-dialog.tsx`) |
 | Criar tipos compartilhados | 30min | DX | ✅ Feito (`src/shared/types/index.ts`) |
 
-### Wave 3 — Refatoração OKRs (P2-P3)
+### Wave 3 — Refatoração OKRs (P2-P3) ✅ CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| Reorganizar estrutura de pastas | 4h | Manutenção | 🔲 Pendente |
-| Consolidar hooks de objectives | 3h | DX | 🔲 Pendente |
-| Implementar `okr_dependencies` | 2h | Feature | 🔲 Pendente |
+| Reorganizar estrutura de pastas | 4h | Manutenção | ✅ Já organizado (queries/, utils/, wizards/) |
+| Consolidar hooks de objectives | 3h | DX | ✅ Feito (`hooks/index.ts` com exports organizados) |
+| Consolidar utils | 30min | DX | ✅ Feito (`utils/index.ts` barrel export) |
+| Implementar `okr_dependencies` | 2h | Feature | 🔲 Pendente (tabela existe, aguarda UI) |
+
+**Nota:** A análise revelou que o módulo OKRs já estava bem estruturado:
+- `hooks/queries/` — Queries consolidadas com types
+- `utils/` — Validação, health score, linking rules
+- `components/wizards/` — Wizards organizados por tipo
+- `types.ts` e `types/` — Tipos bem definidos
 
 ### Wave 4 — Performance (P3)
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| Criar índices pendentes | 30 min | Query speed | 🔲 Pendente |
+| Criar índices pendentes | 30 min | Query speed | ✅ Feito na Wave 1 |
 | Implementar RPCs agregadoras | 4h | Network | 🔲 Pendente |
 | Configurar staleTime por domínio | 1h | UX | 🔲 Pendente |
 
