@@ -84,7 +84,7 @@ export function TemplateEditorSheet({
   // Form state - ALL hooks must be called before any early return
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [module, setModule] = useState("");
+  const [module, setModule] = useState<string>(MODULE_GLOBAL_VALUE);
   const [surface, setSurface] = useState<string>(SURFACE_NONE_VALUE);
   
   // Permission keys state
@@ -124,11 +124,6 @@ export function TemplateEditorSheet({
     );
   }, [template, name, description, module, surface]);
 
-  // Don't render if there's no template
-  if (!template) {
-    return null;
-  }
-
   // Check if keys have changes
   const hasKeyChanges = useMemo(() => {
     if (keysLoading) return false;
@@ -145,22 +140,28 @@ export function TemplateEditorSheet({
   // Filter permissions by search
   const filteredPermissionsByModule = useMemo(() => {
     if (!searchQuery.trim()) return permissionsByModule;
-    
+
     const query = searchQuery.toLowerCase();
     const filtered: Record<string, typeof permissions> = {};
-    
+
     for (const [mod, perms] of Object.entries(permissionsByModule)) {
       const matchingPerms = perms.filter(
-        p => p.key.toLowerCase().includes(query) || 
-             p.description?.toLowerCase().includes(query)
+        (p) =>
+          p.key.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query)
       );
       if (matchingPerms.length > 0) {
         filtered[mod] = matchingPerms;
       }
     }
-    
+
     return filtered;
-  }, [permissionsByModule, searchQuery]);
+  }, [permissionsByModule, searchQuery, permissions]);
+
+  // Don't render if there's no template (mas somente APÓS declarar todos os hooks)
+  if (!template) {
+    return null;
+  }
 
   const handleToggleKey = (key: string) => {
     setSelectedKeys(prev => {
