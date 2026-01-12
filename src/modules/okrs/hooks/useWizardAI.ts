@@ -196,7 +196,7 @@ export function useWizardAI() {
             id: `ai-q-${Date.now()}`,
             question: response.response,
             source: 'coach-okrs',
-            context: 'Sugerido pela IA',
+            context: 'Sugerido pelo Vic',
           };
           setQuestions(prev => [aiQuestion, ...prev.slice(0, 1)]);
         }).catch(() => {

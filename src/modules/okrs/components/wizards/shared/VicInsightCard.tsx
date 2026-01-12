@@ -58,7 +58,7 @@ const TYPE_ICONS: Record<VicInsightType, typeof HelpCircle> = {
 
 const TYPE_LABELS: Record<VicInsightType, string> = {
   question: 'Pergunta para reflexão',
-  insight: 'Insight da Vic',
+  insight: 'Insight do Vic',
   alert: 'Atenção',
   suggestion: 'Sugestão',
 };

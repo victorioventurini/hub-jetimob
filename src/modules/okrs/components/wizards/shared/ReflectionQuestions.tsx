@@ -1,7 +1,7 @@
 /**
  * ReflectionQuestions - Perguntas orientadoras contextuais
  * 
- * Exibe perguntas para reflexão geradas pela IA ou pré-definidas,
+ * Exibe perguntas para reflexão geradas pelo Vic ou pré-definidas,
  * aparecendo como microcopy para guiar o usuário no check-in.
  */
 
@@ -96,7 +96,7 @@ export function ReflectionQuestions({
                   {q.source === 'ai' && (
                     <span className="inline-flex items-center gap-1 text-xs text-primary mt-1">
                       <Sparkles className="h-3 w-3" />
-                      Sugerido pela Vic
+                      Sugerido pelo Vic
                     </span>
                   )}
                 </div>
