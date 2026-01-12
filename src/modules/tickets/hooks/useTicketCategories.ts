@@ -156,6 +156,24 @@ export function useDeleteTicketCategory() {
 // SUBCATEGORIES
 // ===========================================
 
+/**
+ * @deprecated Use subcategories embedded in useTicketCategories() instead.
+ * 
+ * This hook filters subcategories by the current BU's bu_id, which causes issues
+ * when categories are shared across BUs. The embedded subcategories in the category
+ * object are already filtered by status and properly associated with their parent.
+ * 
+ * Example migration:
+ * ```typescript
+ * // Before (deprecated):
+ * const { data: subcategories } = useTicketSubcategories(categoryId);
+ * 
+ * // After (preferred):
+ * const { data: categories } = useTicketCategories();
+ * const selectedCategory = categories.find(c => c.id === categoryId);
+ * const subcategories = selectedCategory?.subcategories || [];
+ * ```
+ */
 export function useTicketSubcategories(categoryId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;

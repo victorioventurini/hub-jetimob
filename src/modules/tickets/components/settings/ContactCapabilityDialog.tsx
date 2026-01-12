@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePartnerContacts } from "../../hooks/usePartners";
-import { useTicketCategories, useTicketSubcategories } from "../../hooks/useTicketCategories";
+import { useTicketCategories } from "../../hooks/useTicketCategories";
 import { useCreateContactCapability } from "../../hooks/useContactCapabilities";
 import { toast } from "sonner";
 
@@ -38,13 +38,16 @@ export function ContactCapabilityDialog({
 
   const { data: contacts = [] } = usePartnerContacts(companyId);
   const { data: categories = [] } = useTicketCategories();
-  const { data: subcategories = [] } = useTicketSubcategories(categoryId || "");
   const createCapability = useCreateContactCapability();
 
   const activeContacts = contacts.filter((c) => c.status === "active");
   const externalCategories = categories.filter(
     (c) => c.scope === "external" || c.scope === "both"
   );
+  
+  // Get subcategories from the selected category (embedded in category data)
+  const selectedCategory = categories.find((c) => c.id === categoryId);
+  const subcategories = selectedCategory?.subcategories || [];
 
   // Reset form when dialog opens/closes
   useEffect(() => {
