@@ -1,8 +1,8 @@
 # Convenção de Identidade: user_id vs profile_id
 
-**Versão:** 2.0.0  
-**Última atualização:** 2026-01-08  
-**Status:** Ativo
+**Versão:** 2.1.0  
+**Última atualização:** 2026-01-12  
+**Status:** Ativo | Impersonation Support v2.0
 
 ---
 
@@ -185,39 +185,57 @@ O Hub utiliza **dois identificadores distintos** para representar usuários:
 
 ## 3. Conversão entre IDs
 
-### 3.1 No Frontend (TypeScript)
+### 3.1 No Frontend (TypeScript) — Hook Canônico
 
 ```typescript
-// Obtendo ambos os IDs a partir do contexto de autenticação
-import { useAuth } from "@/hooks/useAuth";
+// ✅ CORRETO: Usar useIdentity() (suporta impersonação)
+import { useIdentity } from "@/hooks/useIdentity";
 
-function useIdentity() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+function MyComponent() {
+  const { 
+    userId,           // auth.users.id do usuário efetivo (impersonado ou real)
+    profileId,        // profiles.id do usuário efetivo (impersonado ou real)
+    realUserId,       // auth.users.id do usuário REAL (sempre o logado)
+    realProfileId,    // profiles.id do usuário REAL (sempre o logado)
+    isLoading 
+  } = useIdentity();
   
-  // user.id = auth.users.id (user_id)
-  const userId = user?.id;
+  // Para LEITURA (respeita impersonação):
+  // Use userId/profileId
   
-  // Para obter profile_id, fazer query em profiles
-  useEffect(() => {
-    if (userId) {
-      supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", userId)
-        .single()
-        .then(({ data }) => setProfile(data));
-    }
-  }, [userId]);
-  
-  // profile.id = profiles.id (profile_id)
-  const profileId = profile?.id;
-  
-  return { userId, profileId };
+  // Para MUTATIONS (sempre o real):
+  // Use realUserId/realProfileId
 }
 ```
 
-### 3.2 No Backend (PostgreSQL)
+### 3.2 Impersonação
+
+O sistema de impersonação permite que `super_admin` visualize o sistema como outro usuário:
+
+```typescript
+// ✅ CORRETO: useIdentity() detecta automaticamente impersonação
+const { profileId, realProfileId } = useIdentity();
+
+// Para queries de LEITURA → usar profileId (respeita impersonação)
+const { data } = useQuery({
+  queryKey: ["my-data", profileId],
+  queryFn: () => supabase.from("table").select("*").eq("owner_user_id", profileId),
+});
+
+// Para MUTATIONS → usar realProfileId (sempre o usuário real)
+await supabase.from("table").insert({
+  owner_user_id: realProfileId, // Criado pelo usuário real, não o impersonado
+  ...data,
+});
+```
+
+**Regras de Impersonação:**
+- ✅ Impersonação é visual (apenas leitura)
+- ✅ Mutations sempre usam o usuário real
+- ✅ RPCs de impersonação só podem ser chamadas por `super_admin`
+- ❌ Nunca permitir mutations como outro usuário
+
+### 3.3 No Backend (PostgreSQL)
 
 ```sql
 -- De user_id para profile_id
@@ -248,15 +266,22 @@ SET search_path TO 'public'
 AS $$
   SELECT user_id FROM profiles WHERE id = p_profile_id LIMIT 1
 $$;
+
+-- ⭐ NEW: RPCs de Impersonação (somente super_admin)
+-- get_user_role_for_impersonation(p_target_profile_id, p_bu_id)
+-- get_leader_teams_for_impersonation(p_target_profile_id, p_bu_id)
 ```
 
-### 3.3 Padrão em Hooks
+### 3.4 Padrão em Hooks
 
 ```typescript
-// Hook que expõe ambos os IDs de forma consistente
+// Hook que expõe ambos os IDs + suporte a impersonação
 interface UserIdentity {
-  userId: string;      // auth.users.id
-  profileId: string;   // profiles.id
+  userId: string;         // auth.users.id efetivo
+  profileId: string;      // profiles.id efetivo
+  realUserId: string;     // auth.users.id sempre o real
+  realProfileId: string;  // profiles.id sempre o real
+  isImpersonating: boolean;
 }
 
 // Exemplo: useBuUsers retorna objeto com ambos

@@ -1,9 +1,9 @@
 # Shared Components & Utilities Registry
 
-**Versão:** 1.0.0  
-**Última atualização:** 2026-01-09  
+**Versão:** 1.1.0  
+**Última atualização:** 2026-01-12  
 **Status:** Normativo  
-**Referência:** TCR v2.13.0
+**Referência:** TCR v2.23.0
 
 ---
 
@@ -416,15 +416,60 @@ interface Props {
 
 **Caminho:** `src/hooks/useIdentity.ts`
 
+**Interface:**
+```tsx
+interface UserIdentity {
+  userId: string | null;         // auth.users.id efetivo (respeita impersonação)
+  profileId: string | null;      // profiles.id efetivo (respeita impersonação)
+  realUserId: string | null;     // auth.users.id sempre o usuário real
+  realProfileId: string | null;  // profiles.id sempre o usuário real
+  isLoading: boolean;
+}
+```
+
 **Uso:**
 ```tsx
 import { useIdentity, useProfileId } from "@/hooks/useIdentity";
 
-// Completo
-const { userId, profileId, isReady } = useIdentity();
+// Completo (com suporte a impersonação)
+const { 
+  userId,         // Efetivo (impersonado ou real)
+  profileId,      // Efetivo (impersonado ou real)
+  realUserId,     // Sempre o real
+  realProfileId,  // Sempre o real
+  isLoading 
+} = useIdentity();
 
-// Simplificado (só profile)
+// ✅ LEITURA: usa profileId (respeita impersonação)
+const { data } = useQuery({
+  queryKey: ["my-okrs", profileId],
+  queryFn: () => supabase.from("okrs").select("*").eq("owner_user_id", profileId),
+});
+
+// ✅ MUTATIONS: usa realProfileId (sempre o real)
+await supabase.from("okrs").insert({
+  owner_user_id: realProfileId,
+  ...data,
+});
+
+// Simplificado (só profile efetivo)
 const profileId = useProfileId();
+```
+
+### useOptionalImpersonation
+
+**Caminho:** `src/hooks/useImpersonation.ts`
+
+**Uso:**
+```tsx
+import { useOptionalImpersonation } from "@/hooks/useImpersonation";
+
+// Retorna null se fora do contexto de impersonação
+const impersonation = useOptionalImpersonation();
+
+if (impersonation?.isImpersonating) {
+  const targetProfileId = impersonation.targetProfile?.id;
+}
 ```
 
 ---
