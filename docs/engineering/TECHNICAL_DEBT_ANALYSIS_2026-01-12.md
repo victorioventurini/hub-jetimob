@@ -1,8 +1,8 @@
 # 📊 Análise de Débitos Técnicos e Plano de Ação
 
 **Data:** 2026-01-12  
-**Versão TCR:** 2.21.0  
-**Status:** Análise completa
+**Versão TCR:** 2.22.0  
+**Status:** ✅ SPRINT CONCLUÍDO (P1-P3 avaliado/executado)
 
 ---
 
@@ -398,34 +398,43 @@ Usar view `v_perf_indexes_report` para monitorar:
 
 ---
 
-## ✅ Métricas de Sucesso
+## ✅ Métricas de Sucesso (Atualizado pós-sprint)
 
-| Métrica | Atual | Meta | Status |
-|---------|-------|------|--------|
+| Métrica | Antes | Depois | Status |
+|---------|-------|--------|--------|
 | Tabelas com RLS | 100% | 100% | ✅ |
 | Views com SECURITY INVOKER | 100% | 100% | ✅ |
 | Funções com search_path | 100% | 100% | ✅ |
-| Componentes não utilizados | 0 | 0 | ✅ |
-| Hooks mock/legacy | 0 | 0 | ✅ |
+| Componentes não utilizados | 2 | 0 | ✅ (TicketMentionInput, LegacyAssetRedirect removidos) |
+| Hooks mock/legacy | 2 | 0 | ✅ (useDebouncedValue, useDebouncedCallback consolidados) |
 | select('*') no código | 0 | 0 | ✅ |
 | queryKeys centralizados | 100% | 100% | ✅ |
-| Índices de log crescendo | 2 tabelas | Retenção ativa | ⚠️ |
-| Índices não utilizados | ~25 | <10 | ⚠️ Monitorar |
+| Índices de log crescendo | 2 tabelas | Retenção ativa | ✅ (cleanup via cron) |
+| Novos índices de performance | 0 | +7 | ✅ |
+| Helpers de response padronizados | 0 | 1 | ✅ (_shared/response.ts) |
 
 ---
 
-## 📝 Conclusão
+## 📝 Conclusão Final
 
-O Hub da Jet está em **excelente estado técnico**. Os débitos identificados são majoritariamente de **otimização e polish**, não de correção crítica:
+O Hub da Jet está em **excelente estado técnico** após o sprint P1-P3:
 
 1. **Segurança:** ✅ 100% compliance (RLS, SECURITY INVOKER, search_path)
 2. **Padrões:** ✅ 100% aderência ao TCR
-3. **Código legado:** ✅ Mínimo, bem documentado
-4. **Performance:** ⚠️ Oportunidades de índices e retenção de logs
-5. **Documentação:** ⚠️ Pequenas atualizações de versão
+3. **Código legado:** ✅ Dead code removido (LegacyAssetRedirect, TicketMentionInput)
+4. **Performance:** ✅ 7 novos índices + cleanup automático de logs
+5. **DX (Developer Experience):** ✅ Helpers consolidados (debounce, response)
+6. **Documentação:** ✅ Atualizada para v2.22.0
 
-**Recomendação:** Executar Wave P1 imediatamente, agendar P2 para sprint atual.
+### Pendências de Baixo Impacto (Backlog)
+
+| Item | Razão do Adiamento |
+|------|-------------------|
+| Migração text→enum | Views dependentes requerem DROP/recreate |
+| ticket_subcategories→parent_id | Apenas 1 ticket usa subcategoria |
+| queryKeys migration gradual | Estrutura pronta, migração oportunística |
 
 ---
 
-*Relatório gerado em: 2026-01-12*
+*Sprint concluído em: 2026-01-12*  
+*Próxima revisão: Antes do próximo go-live*

@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.21.0  
+**Versão:** 2.22.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Hygiene & Optimization Plan 2026-01 completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | P1-P3 Technical Debt Sprint completo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2054,6 +2054,30 @@ src/
   - `EmptyState` - Estado vazio com CTA
   - `FilterBar`, `FilterSection` - Barra de filtros reutilizável
   - `PageHeader` - Cabeçalho de página padronizado
+
+### v2.22.0 (2026-01-12)
+- **Technical Debt Sprint P1-P3**:
+  - **P1 - Crítico** (✅ 100% completo):
+    - Cleanup automático de logs via `cron-dispatcher` (ai_agent_logs 90d, cron_logs 30d, wizard_sessions 7d)
+    - 7 novos índices de performance criados (ai_agents, app_error_logs, cycles, okr_objective_reviews, ticket_attachments, ticket_messages, ticket_participants)
+    - Documentação atualizada
+  - **P2 - Importante** (✅ 75% completo):
+    - `supabase/functions/_shared/response.ts` criado com helpers padronizados para respostas
+    - Hooks de debounce consolidados em `src/hooks/useDebounce.ts` (useDebouncedValue, useDebouncedCallback, useDebouncedCallbackAdvanced)
+    - `TicketMentionInput.tsx` removido (deprecated, substituído por MentionInput)
+    - Migração text→enum adiada (views dependentes)
+  - **P3 - Backlog** (✅ 100% avaliado):
+    - `LegacyAssetRedirect.tsx` removido (dead code - importado sem rota)
+    - `queryKeys` já modularizado em `/queryKeys/*.ts` - migração gradual
+    - `ticket_subcategories` avaliado: baixo impacto (1 ticket usa), manter como está
+- **Cleanup de código**:
+  - Removidos arquivos: `LegacyAssetRedirect.tsx`, `TicketMentionInput.tsx`, `useDebouncedValue.ts`, `useDebouncedCallback.ts`
+  - Imports atualizados para novos módulos consolidados
+
+### v2.21.0 (2026-01-12)
+- **Technical Debt Analysis** criado em `docs/engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-12.md`
+- Análise completa de higienização, refatoração, centralização e performance
+- Plano de ação P1/P2/P3 documentado
 
 ### v2.12.0 (2026-01-08)
 - **Wave 7 — Sunset V1 (Permissions)**:
