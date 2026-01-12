@@ -1,3 +1,12 @@
+/**
+ * invoke-vic - AI Agent Orchestrator
+ * 
+ * Refactored to use modular components:
+ * - llm-client.ts: LLM API interactions
+ * - agent-loader.ts: Agent configuration loading
+ * - hub-tools.ts: Tool execution
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -10,111 +19,110 @@ import {
   type RequestContext,
 } from "../_shared/middleware.ts";
 import {
-  loadInstructionSources,
-  assembleInstructionContent,
-} from "../_shared/instruction-sources.ts";
-import {
   HUB_TOOL_DEFINITIONS,
   executeHubTool,
 } from "../_shared/hub-tools.ts";
-
-// Get integration API key from hub_integrations_global_config
-async function getIntegrationApiKey(
-  serviceClient: any,
-  integrationKey: string
-): Promise<string | null> {
-  const { data, error } = await serviceClient
-    .from("hub_integrations_global_config")
-    .select("config_encrypted, is_enabled_global")
-    .eq("integration_key", integrationKey)
-    .maybeSingle();
-
-  if (error) {
-    console.error(`Error fetching ${integrationKey} config:`, error);
-    return null;
-  }
-
-  if (!data || !data.is_enabled_global) {
-    return null;
-  }
-
-  const config = data.config_encrypted as { api_key?: string } | null;
-  return config?.api_key || null;
-}
-
-// Mapeamento de slugs para nomes de agentes
-const AGENT_SLUGS: Record<string, string> = {
-  cultura: "Guardião da Cultura",
-  "coach-okrs": "Coach de OKRs",
-  "analista-kpis": "Analista de KPIs",
-  "facilitador-decisoes": "Facilitador de Decisões",
-  "alinhamento-estrategico": "Alinhamento Estratégico",
-  "revisor-comunicacao": "Revisor de comunicação interna",
-  "onboarding-buddy": "Onboarding dos Jetimobers",
-};
-
-// Prompt base da Persona do Vic que todos os agentes herdam
-const VIC_PERSONA_INTRO = `Você é o Vic, a personificação da forma de pensar da Jetimob.
-
-Seu tom é:
-- Direto e humano (sem firulas corporativas)
-- Construtivo e acionável (sempre sugere próximos passos)
-- Leve mas assertivo (usa humor sutil quando apropriado)
-- Conciso (respostas curtas e objetivas)
-
-Regras gerais:
-- Nunca use linguagem genérica de IA ("Claro!", "Com certeza!", etc.)
-- Seja específico e contextual
-- Limite respostas a 3-4 parágrafos no máximo
-- Quando possível, use bullet points
-
-`;
+import {
+  resolveLLMConfig,
+  llmComplete,
+  llmStream,
+  mapLLMError,
+  type LLMMessage,
+  type ToolCall,
+} from "../_shared/llm-client.ts";
+import {
+  loadAgent,
+  buildSystemPrompt,
+  buildUserPrompt,
+  getAgentTools,
+  type AgentContext,
+} from "../_shared/agent-loader.ts";
 
 interface InvokeVicRequest {
   agentSlug: string;
   buId?: string;
   userId?: string;
   actionContext: string;
-  context: {
-    type: string;
-    title?: string;
-    description?: string;
-    currentValue?: number;
-    targetValue?: number;
-    baselineValue?: number;
-    unit?: string;
-    status?: string;
-    additionalData?: Record<string, unknown>;
-  };
+  context: AgentContext;
   userQuestion?: string;
   stream?: boolean;
 }
 
-interface ToolCall {
-  id: string;
-  type: string;
-  function: {
-    name: string;
-    arguments: string;
-  };
+/**
+ * Log agent invocation to ai_agent_logs
+ */
+async function logAgentInvocation(
+  serviceClient: any,
+  params: {
+    agentId: string | null;
+    agentName: string;
+    scope: string;
+    buId: string;
+    userId: string;
+    integrationKey: string;
+    actionContext: string;
+    status: "success" | "error";
+    modelUsed?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+    errorMessage?: string;
+    latencyMs: number;
+  }
+) {
+  await serviceClient.from("ai_agent_logs").insert({
+    agent_id: params.agentId,
+    agent_name: params.agentName,
+    scope: params.scope,
+    bu_id: params.buId,
+    user_id: params.userId,
+    integration_key: params.integrationKey,
+    action_context: params.actionContext,
+    status: params.status,
+    model_used: params.modelUsed,
+    input_tokens: params.inputTokens,
+    output_tokens: params.outputTokens,
+    total_tokens: params.totalTokens,
+    error_message: params.errorMessage,
+    latency_ms: params.latencyMs,
+  });
 }
 
-type AgentRow = {
-  id: string;
-  name: string;
-  slug: string | null;
-  scope: string;
-  model_name: string | null;
-  integration_key: string;
-  system_prompt: string;
-  temperature: number | null;
-  max_tokens: number | null;
-  allowed_tools: unknown | null;
-  is_active: boolean;
-};
+/**
+ * Handle tool calls from the LLM
+ */
+async function handleToolCalls(
+  serviceClient: any,
+  toolCalls: ToolCall[],
+  buId: string,
+  requestId: string
+): Promise<{ role: string; tool_call_id: string; content: string }[]> {
+  const toolResults: { role: string; tool_call_id: string; content: string }[] = [];
 
-const AGENT_SELECT =
-  "id, name, slug, scope, model_name, integration_key, system_prompt, temperature, max_tokens, allowed_tools, is_active";
+  for (const toolCall of toolCalls) {
+    try {
+      const args = JSON.parse(toolCall.function.arguments);
+      const result = await executeHubTool(serviceClient, toolCall.function.name, args, buId);
+
+      toolResults.push({
+        role: "tool",
+        tool_call_id: toolCall.id,
+        content: result,
+      });
+
+      console.log(`[${requestId}] Tool ${toolCall.function.name} executed successfully`);
+    } catch (toolError) {
+      console.error(`[${requestId}] Tool ${toolCall.function.name} failed:`, toolError);
+      toolResults.push({
+        role: "tool",
+        tool_call_id: toolCall.id,
+        content: `Erro ao executar ${toolCall.function.name}: ${toolError instanceof Error ? toolError.message : "Unknown error"}`,
+      });
+    }
+  }
+
+  return toolResults;
+}
 
 serve(async (req) => {
   // NOTE: verify_jwt is disabled for this function in config.toml.
@@ -161,64 +169,20 @@ serve(async (req) => {
     const rateLimitError = await checkRateLimits(serviceClient, userId, buId, {}, requestId);
     if (rateLimitError) return rateLimitError;
 
-    // AI provider selection
-    const openAIApiKey = await getIntegrationApiKey(serviceClient, "chatgpt");
-    const useOpenAI = !!openAIApiKey;
-
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!openAIApiKey && !lovableApiKey) {
-      console.error(`[${requestId}] No AI API key configured (ChatGPT integration or LOVABLE_API_KEY fallback)`);
-      return errorResponse("AI service not configured", 500, { requestId, error: "AI_NOT_CONFIGURED" });
-    }
-
-    // Fetch agent by slug (no select('*'))
-    let agent: AgentRow | null = null;
-    const { data: agentBySlug, error: agentSlugError } = await serviceClient
-      .from("ai_agents")
-      .select(AGENT_SELECT)
-      .eq("slug", agentSlug)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (!agentSlugError && agentBySlug) {
-      agent = agentBySlug as AgentRow;
-    } else {
-      // Fallback by name
-      const agentNameFromSlug = AGENT_SLUGS[agentSlug];
-      if (agentNameFromSlug) {
-        const { data: agentByName } = await serviceClient
-          .from("ai_agents")
-          .select(AGENT_SELECT)
-          .eq("name", agentNameFromSlug)
-          .eq("is_active", true)
-          .maybeSingle();
-        if (agentByName) agent = agentByName as AgentRow;
-      }
-    }
-
-    if (!agent) {
-      console.error(`[${requestId}] Agent not found:`, agentSlug);
+    // =========================================================================
+    // LOAD AGENT
+    // =========================================================================
+    const loadedAgent = await loadAgent(serviceClient, agentSlug, buId, requestId);
+    
+    if (!loadedAgent) {
       return errorResponse("Agent not found", 404, { requestId, error: "AGENT_NOT_FOUND" });
     }
 
+    const { agent, effectiveSystemPrompt, isEnabledInBu } = loadedAgent;
     agentId = agent.id;
     agentName = agent.name;
 
-    // Check activation for this BU
-    const { data: activation, error: activationError } = await serviceClient
-      .from("bu_agent_activations")
-      .select("is_enabled, custom_system_prompt")
-      .eq("bu_id", buId)
-      .eq("agent_id", agent.id)
-      .maybeSingle();
-
-    if (activationError) {
-      console.error(`[${requestId}] Error fetching agent activation:`, activationError.message);
-      return errorResponse("Internal error", 500, { requestId, error: "AGENT_ACTIVATION_FETCH_FAILED" });
-    }
-
-    if (activation?.is_enabled === false) {
+    if (!isEnabledInBu) {
       return errorResponse("Agent is disabled for this BU", 403, {
         requestId,
         error: "AGENT_DISABLED",
@@ -226,360 +190,184 @@ serve(async (req) => {
       });
     }
 
-    const effectiveSystemPrompt = activation?.custom_system_prompt || agent.system_prompt;
+    // =========================================================================
+    // RESOLVE LLM CONFIG
+    // =========================================================================
+    const llmConfig = await resolveLLMConfig(serviceClient, agent.model_name);
+    
+    if (!llmConfig) {
+      console.error(`[${requestId}] No AI API key configured (ChatGPT integration or LOVABLE_API_KEY fallback)`);
+      return errorResponse("AI service not configured", 500, { requestId, error: "AI_NOT_CONFIGURED" });
+    }
+
+    // Override with agent settings
+    llmConfig.maxTokens = agent.max_tokens || llmConfig.maxTokens;
+    llmConfig.temperature = agent.temperature ?? llmConfig.temperature;
 
     // =========================================================================
-    // LOAD INSTRUCTION SOURCES
+    // BUILD PROMPTS
     // =========================================================================
-    console.log(`[${requestId}] Loading instruction sources for agent ${agentId}`);
+    const systemPrompt = await buildSystemPrompt(
+      serviceClient,
+      agent,
+      effectiveSystemPrompt,
+      buId,
+      requestId
+    );
+    const userPrompt = buildUserPrompt(aiContext, userQuestion);
 
-    const instructionSources = await loadInstructionSources(serviceClient, agent.id);
-    let instructionContent = "";
-
-    if (instructionSources.length > 0) {
-      console.log(`[${requestId}] Found ${instructionSources.length} instruction sources`);
-      instructionContent = await assembleInstructionContent(serviceClient, instructionSources, buId);
-    }
-
-    // Knowledge base documents
-    const { data: documents, error: documentsError } = await serviceClient
-      .from("ai_agent_documents")
-      .select("name, extracted_content")
-      .eq("agent_id", agent.id)
-      .eq("status", "ready");
-
-    if (documentsError) {
-      console.error(`[${requestId}] Error fetching agent documents:`, documentsError.message);
-    }
-
-    let knowledgeBase = "";
-    if (documents && documents.length > 0) {
-      knowledgeBase = (documents as any[])
-        .filter((doc) => doc.extracted_content)
-        .map((doc) => `=== ${doc.name} ===\n${doc.extracted_content}`)
-        .join("\n\n");
-    }
-
-    // Build system prompt
-    let systemPrompt = VIC_PERSONA_INTRO + effectiveSystemPrompt;
-
-    if (knowledgeBase) {
-      systemPrompt += `\n\n=== BASE DE CONHECIMENTO (Documentos) ===\n${knowledgeBase}`;
-    }
-
-    if (instructionContent) {
-      systemPrompt += instructionContent;
-    }
-
-    // Build context description
-    let contextDescription = `Contexto: ${aiContext.type}`;
-    if (aiContext.title) contextDescription += `\nTítulo: ${aiContext.title}`;
-    if (aiContext.description) contextDescription += `\nDescrição: ${aiContext.description}`;
-    if (aiContext.currentValue !== undefined)
-      contextDescription += `\nValor atual: ${aiContext.currentValue}${aiContext.unit || ""}`;
-    if (aiContext.targetValue !== undefined)
-      contextDescription += `\nMeta: ${aiContext.targetValue}${aiContext.unit || ""}`;
-    if (aiContext.baselineValue !== undefined)
-      contextDescription += `\nBaseline: ${aiContext.baselineValue}${aiContext.unit || ""}`;
-    if (aiContext.status) contextDescription += `\nStatus: ${aiContext.status}`;
-    if (aiContext.additionalData) {
-      contextDescription += `\nDados adicionais: ${JSON.stringify(aiContext.additionalData, null, 2)}`;
-    }
-
-    // Build user prompt
-    let userPrompt = contextDescription;
-    if (userQuestion) {
-      userPrompt += `\n\nPergunta do usuário: ${userQuestion}`;
-    } else {
-      userPrompt += `\n\nAnalise o contexto acima e forneça suas recomendações.`;
-    }
-
-    console.log(`[${requestId}] Invoking agent: ${agentName} (${agentSlug}) for context: ${actionContext}`);
-
-    const apiUrl = useOpenAI
-      ? "https://api.openai.com/v1/chat/completions"
-      : "https://ai.gateway.lovable.dev/v1/chat/completions";
-
-    const apiKey = useOpenAI ? openAIApiKey : lovableApiKey;
-
-    const modelName = useOpenAI
-      ? agent.model_name && agent.model_name.startsWith("gpt")
-        ? agent.model_name
-        : "gpt-4o-mini"
-      : agent.model_name || "google/gemini-2.5-flash";
-
-    const messages = [
+    const messages: LLMMessage[] = [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ];
 
-    // Tools (only when BU context is available)
-    const allowedTools = Array.isArray(agent.allowed_tools)
-      ? (agent.allowed_tools as string[])
-      : null;
+    console.log(`[${requestId}] Invoking agent: ${agentName} (${agentSlug}) for context: ${actionContext}`);
 
-    let requestPayload: any = {
-      model: modelName,
-      messages,
-      max_tokens: agent.max_tokens || 800,
-      temperature: agent.temperature ?? 0.7,
-    };
+    // =========================================================================
+    // PREPARE TOOLS
+    // =========================================================================
+    const allowedTools = getAgentTools(agent);
+    let agentTools: typeof HUB_TOOL_DEFINITIONS | undefined;
 
-    // Tools configuration
     if (allowedTools?.length) {
       const hubToolNames = HUB_TOOL_DEFINITIONS.map((t) => t.function.name);
-      const agentTools = allowedTools.filter((t) => hubToolNames.includes(t));
+      const filteredToolNames = allowedTools.filter((t) => hubToolNames.includes(t));
 
-      if (agentTools.length > 0) {
-        requestPayload.tools = HUB_TOOL_DEFINITIONS.filter((t) =>
-          agentTools.includes(t.function.name)
+      if (filteredToolNames.length > 0) {
+        agentTools = HUB_TOOL_DEFINITIONS.filter((t) =>
+          filteredToolNames.includes(t.function.name)
         );
-        requestPayload.tool_choice = "auto";
-        console.log(`[${requestId}] Agent has ${agentTools.length} tools enabled: ${agentTools.join(", ")}`);
+        console.log(`[${requestId}] Agent has ${filteredToolNames.length} tools enabled: ${filteredToolNames.join(", ")}`);
       }
     }
 
     // =========================================================================
-    // STREAMING MODE
+    // STREAMING MODE (only when no tools)
     // =========================================================================
-    if (stream && !allowedTools?.length) {
-      // Stream mode (only when no tools - tool calls require non-streaming)
-      requestPayload.stream = true;
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestPayload),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[${requestId}] AI API error:`, response.status, errorText);
-
-        await serviceClient.from("ai_agent_logs").insert({
-          agent_id: agentId,
-          agent_name: agentName,
-          scope: agent.scope,
-          bu_id: buId,
-          user_id: userId,
-          integration_key: agent.integration_key,
-          action_context: actionContext,
-          status: "error",
-          error_message: `AI API error: ${response.status}`,
-          latency_ms: Date.now() - startTime,
-        });
-
-        if (response.status === 429) {
-          return errorResponse("Rate limit exceeded", 429, { requestId, error: "RATE_LIMIT", code: "RATE_LIMIT" });
-        }
-        if (response.status === 402) {
-          return errorResponse("AI credits depleted", 402, { requestId, error: "NO_CREDITS", code: "NO_CREDITS" });
-        }
-
-        return errorResponse("AI API error", 502, { requestId, error: "AI_API_ERROR" });
-      }
-
-      // Create a transform stream to inject metadata at the end
-      const encoder = new TextEncoder();
-      const reader = response.body!.getReader();
-      let totalTokens = 0;
-      let accumulatedContent = "";
-
-      const stream = new ReadableStream({
-        async start(controller) {
-          // Send metadata event first
-          const metadataEvent = `data: ${JSON.stringify({
-            type: "metadata",
-            agentName,
-            agentSlug,
-          })}\n\n`;
-          controller.enqueue(encoder.encode(metadataEvent));
-        },
-        async pull(controller) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            // Log completion
-            const latencyMs = Date.now() - startTime;
-            await serviceClient.from("ai_agent_logs").insert({
-              agent_id: agentId,
-              agent_name: agentName,
-              scope: agent.scope,
-              bu_id: buId,
-              user_id: userId,
-              integration_key: agent.integration_key,
-              action_context: actionContext,
-              status: "success",
-              model_used: modelName,
-              total_tokens: totalTokens,
-              latency_ms: latencyMs,
-            });
-
-            // Send final metadata with latency
-            const finalEvent = `data: ${JSON.stringify({
-              type: "metadata",
+    if (stream && !agentTools?.length) {
+      try {
+        return await llmStream(llmConfig, messages, { agentName, agentSlug }, {
+          maxTokens: llmConfig.maxTokens,
+          temperature: llmConfig.temperature,
+          onComplete: async (totalTokens, latencyMs) => {
+            await logAgentInvocation(serviceClient, {
+              agentId,
               agentName,
-              agentSlug,
+              scope: agent.scope,
+              buId,
+              userId,
+              integrationKey: agent.integration_key,
+              actionContext,
+              status: "success",
+              modelUsed: llmConfig.model,
+              totalTokens,
               latencyMs,
-              tokensUsed: totalTokens,
-            })}\n\n`;
-            controller.enqueue(encoder.encode(finalEvent));
-            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-            controller.close();
-            
+            });
             console.log(`[${requestId}] Stream completed in ${latencyMs}ms`);
             logRequestCompletion(ctx, "success");
-            return;
-          }
+          },
+        });
+      } catch (error: any) {
+        const errorInfo = mapLLMError(error.status || 500, requestId);
+        
+        await logAgentInvocation(serviceClient, {
+          agentId,
+          agentName,
+          scope: agent.scope,
+          buId,
+          userId,
+          integrationKey: agent.integration_key,
+          actionContext,
+          status: "error",
+          errorMessage: `AI API error: ${error.status}`,
+          latencyMs: Date.now() - startTime,
+        });
 
-          // Pass through the chunk
-          controller.enqueue(value);
-
-          // Try to extract usage info from chunks (for logging)
-          try {
-            const text = new TextDecoder().decode(value);
-            const lines = text.split("\n");
-            for (const line of lines) {
-              if (line.startsWith("data: ") && !line.includes("[DONE]")) {
-                const jsonStr = line.slice(6);
-                try {
-                  const parsed = JSON.parse(jsonStr);
-                  if (parsed.usage?.total_tokens) {
-                    totalTokens = parsed.usage.total_tokens;
-                  }
-                  if (parsed.choices?.[0]?.delta?.content) {
-                    accumulatedContent += parsed.choices[0].delta.content;
-                  }
-                } catch {
-                  // Ignore parse errors
-                }
-              }
-            }
-          } catch {
-            // Ignore
-          }
-        },
-        cancel() {
-          reader.cancel();
-        },
-      });
-
-      return new Response(stream, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
-      });
+        return errorResponse(errorInfo.message, errorInfo.httpStatus, {
+          requestId,
+          error: errorInfo.code,
+          code: errorInfo.code,
+        });
+      }
     }
 
     // =========================================================================
     // NON-STREAMING MODE (with tool support)
     // =========================================================================
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestPayload),
-    });
+    let response;
+    try {
+      response = await llmComplete(llmConfig, messages, {
+        maxTokens: llmConfig.maxTokens,
+        temperature: llmConfig.temperature,
+        tools: agentTools,
+      });
+    } catch (error: any) {
+      console.error(`[${requestId}] AI API error:`, error.status, error.body);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[${requestId}] AI API error:`, response.status, errorText);
-
-      await serviceClient.from("ai_agent_logs").insert({
-        agent_id: agentId,
-        agent_name: agentName,
+      await logAgentInvocation(serviceClient, {
+        agentId,
+        agentName,
         scope: agent.scope,
-        bu_id: buId,
-        user_id: userId,
-        integration_key: agent.integration_key,
-        action_context: actionContext,
+        buId,
+        userId,
+        integrationKey: agent.integration_key,
+        actionContext,
         status: "error",
-        error_message: `AI API error: ${response.status}`,
-        latency_ms: Date.now() - startTime,
+        errorMessage: `AI API error: ${error.status}`,
+        latencyMs: Date.now() - startTime,
       });
 
-      if (response.status === 429) {
-        return errorResponse("Rate limit exceeded", 429, { requestId, error: "RATE_LIMIT", code: "RATE_LIMIT" });
-      }
-      if (response.status === 402) {
-        return errorResponse("AI credits depleted", 402, { requestId, error: "NO_CREDITS", code: "NO_CREDITS" });
-      }
-
-      return errorResponse("AI API error", 502, { requestId, error: "AI_API_ERROR" });
+      const errorInfo = mapLLMError(error.status || 500, requestId);
+      return errorResponse(errorInfo.message, errorInfo.httpStatus, {
+        requestId,
+        error: errorInfo.code,
+        code: errorInfo.code,
+      });
     }
 
-    let data = await response.json();
-    let content = data.choices?.[0]?.message?.content;
-    const toolCalls = data.choices?.[0]?.message?.tool_calls as ToolCall[] | undefined;
+    let content = response.content;
+    let usage = response.usage;
 
     // Handle tool calls
-    if (toolCalls?.length) {
-      console.log(`[${requestId}] Processing ${toolCalls.length} tool calls`);
+    if (response.toolCalls?.length) {
+      console.log(`[${requestId}] Processing ${response.toolCalls.length} tool calls`);
 
-      const toolResults: { role: string; tool_call_id: string; content: string }[] = [];
+      const toolResults = await handleToolCalls(
+        serviceClient,
+        response.toolCalls,
+        buId,
+        requestId
+      );
 
-      for (const toolCall of toolCalls) {
-        try {
-          const args = JSON.parse(toolCall.function.arguments);
-          const result = await executeHubTool(serviceClient, toolCall.function.name, args, buId);
-
-          toolResults.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: result,
-          });
-
-          console.log(`[${requestId}] Tool ${toolCall.function.name} executed successfully`);
-        } catch (toolError) {
-          console.error(`[${requestId}] Tool ${toolCall.function.name} failed:`, toolError);
-          toolResults.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: `Erro ao executar ${toolCall.function.name}: ${toolError instanceof Error ? toolError.message : "Unknown error"}`,
-          });
-        }
-      }
-
-      const secondMessages = [
+      // Second LLM call with tool results
+      const secondMessages: LLMMessage[] = [
         ...messages,
-        data.choices[0].message,
-        ...toolResults,
+        response.rawMessage as LLMMessage,
+        ...toolResults.map((r) => ({
+          role: "tool" as const,
+          content: r.content,
+          tool_call_id: r.tool_call_id,
+        })),
       ];
 
-      const secondResponse = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: secondMessages,
-          max_tokens: agent.max_tokens || 800,
-          temperature: agent.temperature ?? 0.7,
-        }),
-      });
+      try {
+        const secondResponse = await llmComplete(llmConfig, secondMessages, {
+          maxTokens: llmConfig.maxTokens,
+          temperature: llmConfig.temperature,
+        });
 
-      if (secondResponse.ok) {
-        const secondData = await secondResponse.json();
-        content = secondData.choices?.[0]?.message?.content || content;
+        content = secondResponse.content || content;
 
-        if (secondData.usage) {
-          data.usage = {
-            prompt_tokens: (data.usage?.prompt_tokens || 0) + (secondData.usage?.prompt_tokens || 0),
-            completion_tokens:
-              (data.usage?.completion_tokens || 0) + (secondData.usage?.completion_tokens || 0),
-            total_tokens: (data.usage?.total_tokens || 0) + (secondData.usage?.total_tokens || 0),
+        if (secondResponse.usage && usage) {
+          usage = {
+            promptTokens: usage.promptTokens + secondResponse.usage.promptTokens,
+            completionTokens: usage.completionTokens + secondResponse.usage.completionTokens,
+            totalTokens: usage.totalTokens + secondResponse.usage.totalTokens,
           };
         }
+      } catch (secondError) {
+        console.error(`[${requestId}] Second LLM call failed:`, secondError);
+        // Continue with first response content
       }
     }
 
@@ -589,31 +377,30 @@ serve(async (req) => {
 
     const latencyMs = Date.now() - startTime;
 
-    await serviceClient.from("ai_agent_logs").insert({
-      agent_id: agentId,
-      agent_name: agentName,
+    await logAgentInvocation(serviceClient, {
+      agentId,
+      agentName,
       scope: agent.scope,
-      bu_id: buId,
-      user_id: userId,
-      integration_key: agent.integration_key,
-      action_context: actionContext,
+      buId,
+      userId,
+      integrationKey: agent.integration_key,
+      actionContext,
       status: "success",
-      model_used: modelName,
-      input_tokens: data.usage?.prompt_tokens,
-      output_tokens: data.usage?.completion_tokens,
-      total_tokens: data.usage?.total_tokens,
-      latency_ms: latencyMs,
+      modelUsed: llmConfig.model,
+      inputTokens: usage?.promptTokens,
+      outputTokens: usage?.completionTokens,
+      totalTokens: usage?.totalTokens,
+      latencyMs,
     });
 
     console.log(`[${requestId}] Agent ${agentName} responded successfully in ${latencyMs}ms`);
-
     logRequestCompletion(ctx, "success");
 
     return jsonResponse({
       response: content,
       agentName,
       agentSlug,
-      tokensUsed: data.usage?.total_tokens,
+      tokensUsed: usage?.totalTokens,
       latencyMs,
     });
   } catch (error) {
@@ -624,15 +411,17 @@ serve(async (req) => {
     try {
       // Best-effort log
       const serviceClientFallback = createServiceClient();
-      await serviceClientFallback.from("ai_agent_logs").insert({
-        agent_id: agentId,
-        agent_name: agentName,
+      await logAgentInvocation(serviceClientFallback, {
+        agentId,
+        agentName,
         scope: "global",
-        integration_key: "invoke-vic",
-        action_context: "error",
+        buId: buId || "",
+        userId: userId || "",
+        integrationKey: "invoke-vic",
+        actionContext: "error",
         status: "error",
-        error_message: errorMessage,
-        latency_ms: Date.now() - startTime,
+        errorMessage,
+        latencyMs: Date.now() - startTime,
       });
     } catch (logError) {
       console.error(`[${requestId}] Failed to log error:`, logError);
