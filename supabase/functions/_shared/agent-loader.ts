@@ -2,7 +2,7 @@
  * Agent Loader - Load and configure AI agents
  */
 
-import { loadInstructionSources, assembleInstructionContent } from "./instruction-sources.ts";
+import { loadInstructionSources, assembleInstructionContent } from "../invoke-vic/instruction-sources.ts";
 
 // Vic persona intro - inherited by all agents
 export const VIC_PERSONA_INTRO = `Você é o Vic, a personificação da forma de pensar da Jetimob.

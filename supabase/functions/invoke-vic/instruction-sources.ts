@@ -1,15 +1,17 @@
 /**
- * Instruction Sources Manager
+ * Instruction Sources Manager (invoke-vic specific)
  * 
  * Handles fetching and assembling instructions from multiple sources:
  * - api: External HTTP APIs
  * - document: Uploaded documents (ai_agent_documents)
  * - hub_context: Internal HUB data (OKRs, KPIs, Teams)
  * - template: Static text templates
+ * 
+ * Moved from _shared/ as this is specific to the invoke-vic function.
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getHubContextData, type HubContextConfig } from "./hub-tools.ts";
+import { getHubContextData, type HubContextConfig } from "../_shared/hub-tools.ts";
 
 // =============================================================================
 // TYPES
@@ -40,7 +42,6 @@ export interface ApiSourceConfig {
   refresh_interval_seconds?: number;
   auth_type?: "none" | "bearer" | "api_key";
   auth_header_name?: string;
-  // Note: Actual secrets should come from encrypted storage
 }
 
 export interface DocumentSourceConfig {

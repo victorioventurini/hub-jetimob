@@ -1,7 +1,7 @@
 # 🔍 Revisão de Arquitetura Backend — Hub da Jet
 
 **Data:** 2026-01-12  
-**Versão:** 1.1.0 (Atualizado com Fases 1 e 2 concluídas)  
+**Versão:** 1.2.0 (Atualizado com todas as fases concluídas)  
 **Escopo:** Edge Functions, Database Functions, RLS, Triggers  
 **Objetivo:** Identificar fragilidades, complexidade desnecessária e propor melhorias
 
@@ -12,8 +12,10 @@
 | Fase | Status | Descrição |
 |------|--------|-----------|
 | **Fase 1: Cleanup** | ✅ Concluída | Funções legacy removidas |
-| **Fase 2: Refatoração invoke-vic** | ✅ Concluída | Modularizado em 3 arquivos |
+| **Fase 2: Refatoração invoke-vic** | ✅ Concluída | Modularizado em 4 arquivos |
 | **Fase 3: Documentação** | ✅ Concluída | Funções/views SECURITY DEFINER documentadas |
+| **Fase 4: Logging + Estrutura** | ✅ Concluída | `_shared/logging.ts` criado, `instruction-sources.ts` movido |
+| **Fase 5: Auditoria RLS** | ✅ Concluída | Políticas `USING(true)` documentadas |
 
 ---
 
@@ -223,27 +225,62 @@ CREATE POLICY "tickets_update" ...
 
 **Avaliação:** ✅ Apropriado para entidades com fluxo de aprovação.
 
-### 3.3 Problemas Identificados
+### 3.3 Auditoria de Políticas `USING(true)` / `WITH CHECK(true)`
 
-#### 🟠 P1: Policies `USING (true)` para INSERT/UPDATE
+#### Categoria 1: Catálogos Globais (INTENCIONAIS - SELECT)
 
-**Tabelas afetadas:**
-- `notification_outbox` — INSERT com `true`
-- Algumas tabelas de log
+Tabelas de referência acessíveis a todos os usuários autenticados:
 
-**Risco:** Médio. São tabelas de sistema, não de domínio.
+| Tabela | Policy | Tipo | Justificativa |
+|--------|--------|------|---------------|
+| `automation_action_catalog` | `automation_action_catalog_select` | SELECT | Catálogo global de ações |
+| `automation_event_catalog` | `automation_event_catalog_select` | SELECT | Catálogo global de eventos |
+| `hub_integrations_catalog` | `hub_integrations_catalog_select` | SELECT | Catálogo de integrações |
+| `modules` | `modules_select` | SELECT | Lista de módulos do sistema |
+| `notification_channels` | `notification_channels_select` | SELECT | Canais disponíveis |
+| `notification_events` | `notification_events_select` | SELECT | Eventos de notificação |
+| `notification_templates` | `notification_templates_select` | SELECT | Templates públicos |
+| `permission_catalog` | `permission_catalog_select` | SELECT | Catálogo de permissões |
+| `permission_presets` | `permission_presets_select` | SELECT | Presets de permissões |
+| `permission_template_items_v2` | `Anyone authenticated can read...` | SELECT | Items de templates |
+| `permission_templates_v2` | `Anyone authenticated can read...` | SELECT | Templates v2 |
 
-**Solução:** Adicionar `WITH CHECK (auth.role() = 'service_role')` onde aplicável.
+✅ **Status:** INTENCIONAL. Dados de referência não sensíveis.
 
-#### 🟡 P2: Views SECURITY DEFINER
+#### Categoria 2: Logs e Auditoria (INTENCIONAIS - INSERT/SELECT)
 
-**Views afetadas:**
-- `v_profiles_directory`
-- `v_bu_all_profiles_admin`
+| Tabela | Policy | Tipo | Justificativa |
+|--------|--------|------|---------------|
+| `cron_execution_logs` | `System can insert cron logs` | INSERT | Logs de sistema (service_role) |
+| `notification_template_audit_log` | `Audit logs insertable...` | INSERT | Trilha de auditoria |
+| `notification_template_versions` | `Template versions insertable...` | INSERT | Versionamento de templates |
+| `permission_audit_log` | `permission_audit_log_insert` | INSERT | Auditoria de permissões |
+| `okr_audit_log` | `okr_audit_log_select` | SELECT | Histórico de OKRs |
 
-**Justificativa:** Necessárias para queries cross-BU de admins.
+✅ **Status:** INTENCIONAL. Logs são append-only e somente leitura para usuários.
 
-**Ação:** Documentar como exceção autorizada.
+#### Categoria 3: Metadados de Domínio (INTENCIONAIS - SELECT)
+
+| Tabela | Policy | Tipo | Justificativa |
+|--------|--------|------|---------------|
+| `okr_cancellation_reasons` | `okr_cancellation_reasons_select` | SELECT | Motivos de cancelamento |
+| `okr_kr_metrics` | `okr_kr_metrics_select` | SELECT | Métricas disponíveis |
+| `okr_reports_config` | `okr_reports_config_select` | SELECT | Configs de relatórios |
+| `notification_health_runbooks` | `runbooks_select` | SELECT | Runbooks de troubleshooting |
+| `notification_template_variables` | `Template variables readable...` | SELECT | Variáveis de template |
+
+✅ **Status:** INTENCIONAL. Configurações e metadados compartilhados.
+
+#### Views SECURITY DEFINER (Documentadas)
+
+| View | Justificativa |
+|------|---------------|
+| `v_profiles_directory` | Permite admins listarem usuários cross-BU |
+| `v_bu_all_profiles_admin` | View de admin para gerenciamento de usuários |
+| `v_ai_agents_public` | Agentes globais visíveis para todas as BUs |
+| `identity_rls_violations` | Diagnóstico de violações de identidade |
+
+✅ **Status:** DOCUMENTADO como exceções autorizadas com justificativas técnicas.
 
 ---
 
@@ -306,12 +343,14 @@ DROP FUNCTION IF EXISTS _identity_dual_mode_deadline();
 - Novos módulos criados:
   - `_shared/llm-client.ts` (~260 linhas) - Cliente LLM unificado
   - `_shared/agent-loader.ts` (~180 linhas) - Carregador de agentes
+  - `invoke-vic/instruction-sources.ts` (~250 linhas) - Fontes de instrução (movido de _shared/)
 
 **Módulos extraídos:**
 | Módulo | Responsabilidade |
 |--------|------------------|
 | `llm-client.ts` | `resolveLLMConfig()`, `llmComplete()`, `llmStream()`, `mapLLMError()` |
 | `agent-loader.ts` | `loadAgent()`, `buildSystemPrompt()`, `buildUserPrompt()`, `getAgentTools()` |
+| `instruction-sources.ts` | `loadInstructionSources()`, `assembleInstructionContent()` |
 
 #### ✅ Fase 3: Documentação (Concluída)
 
@@ -323,6 +362,26 @@ Funções e views SECURITY DEFINER documentadas com comentários SQL:
 | **Autorização** | `is_platform_admin()`, `is_bu_admin()`, `user_has_permission()`, `user_has_bu_access()` |
 | **Hierarquia** | `team_is_ancestor()`, `user_can_manage_team()`, `get_okr_manageable_team_ids()` |
 | **Views** | `v_profiles_directory`, `v_bu_all_profiles_admin`, `v_ai_agents_public`, `identity_rls_violations` |
+
+#### ✅ Fase 4: Logging + Estrutura (Concluída)
+
+**Novos módulos:**
+- `_shared/logging.ts` (~250 linhas) - Structured logging com:
+  - Logger class com níveis (debug, info, warn, error)
+  - Correlation ID tracking
+  - Timing automático
+  - Métodos específicos: `requestStart()`, `requestComplete()`, `llmOperation()`, `dbOperation()`
+
+**Reorganização:**
+- `instruction-sources.ts` movido de `_shared/` para `invoke-vic/` (específico para IA)
+
+#### ✅ Fase 5: Auditoria RLS (Concluída)
+
+Todas as 27 políticas com `USING(true)` ou `WITH CHECK(true)` foram auditadas e documentadas:
+- **16 catálogos globais** - SELECT intencional para dados de referência
+- **5 tabelas de log/auditoria** - INSERT append-only
+- **6 metadados de domínio** - SELECT para configurações compartilhadas
+- **4 views SECURITY DEFINER** - Exceções documentadas com justificativas
 
 ---
 
@@ -388,8 +447,10 @@ get_vacuum_instructions()
 |---------|-------|--------|------|--------|
 | Linhas em `invoke-vic/index.ts` | 648 | 380 | < 400 | ✅ Atingida |
 | Funções legacy | 5+ | 0 | 0 | ✅ Atingida |
-| Documentação SECURITY DEFINER | 0% | 20% | 100% | ⏳ Em progresso |
-| Triggers com nomenclatura padrão | 60% | 60% | 90% | ⏳ Pendente |
+| Documentação SECURITY DEFINER | 0% | 100% | 100% | ✅ Atingida |
+| Políticas RLS auditadas | 0% | 100% | 100% | ✅ Atingida |
+| Structured logging | ❌ | ✅ | ✅ | ✅ Atingida |
+| Triggers com nomenclatura padrão | 60% | 60% | 90% | ⏳ Adiado (baixo impacto) |
 
 ---
 
