@@ -51,8 +51,7 @@ export function PermissionDiffDialog({
   const riskLevel = hasHighRiskChanges ? "high" : removals.length > 0 ? "medium" : "low";
 
   const handleConfirm = async () => {
-    if (!reason.trim()) return;
-    await onConfirm(reason.trim());
+    await onConfirm(reason.trim() || undefined);
     setReason("");
     onOpenChange(false);
   };
@@ -153,10 +152,10 @@ export function PermissionDiffDialog({
                 </div>
               )}
 
-              {/* Reason (Required) */}
+              {/* Reason (Optional) */}
               <div className="space-y-2">
                 <Label htmlFor="reason" className="text-sm font-medium">
-                  Motivo da alteração <span className="text-destructive">*</span>
+                  Motivo da alteração
                 </Label>
                 <Textarea
                   id="reason"
@@ -180,7 +179,7 @@ export function PermissionDiffDialog({
           {!noChanges && (
             <Button 
               onClick={handleConfirm} 
-              disabled={!reason.trim() || isPending}
+              disabled={isPending}
               variant={riskLevel === "high" ? "destructive" : "default"}
             >
               {isPending ? (

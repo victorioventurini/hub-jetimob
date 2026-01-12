@@ -199,13 +199,9 @@ export function UserPermissionsV2Sheet({
     setShowDiffDialog(true);
   };
 
-  // Apply changes with governance (reason required)
-  const handleApplyWithGovernance = async (reason: string) => {
+  // Apply changes with governance (reason optional)
+  const handleApplyWithGovernance = async (reason?: string) => {
     if (!user) return;
-    if (reason.length < 10) {
-      toast.error("O motivo deve ter pelo menos 10 caracteres");
-      return;
-    }
 
     setIsApplying(true);
     
