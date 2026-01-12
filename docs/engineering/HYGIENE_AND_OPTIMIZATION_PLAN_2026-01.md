@@ -456,13 +456,18 @@ queryClient.prefetchQuery({
 - `components/wizards/` — Wizards organizados por tipo
 - `types.ts` e `types/` — Tipos bem definidos
 
-### Wave 4 — Performance (P3)
+### Wave 4 — Performance (P3) ✅ CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
 | Criar índices pendentes | 30 min | Query speed | ✅ Feito na Wave 1 |
-| Implementar RPCs agregadoras | 4h | Network | 🔲 Pendente |
-| Configurar staleTime por domínio | 1h | UX | 🔲 Pendente |
+| Implementar RPCs agregadoras | 4h | Network | ✅ Feito (`rpc_home_dashboard_data`, `rpc_leader_dashboard_focus`, `rpc_tickets_summary`) |
+| Configurar staleTime por domínio | 1h | UX | ✅ Feito (`src/lib/queryCacheConfig.ts`) |
+
+**Arquivos criados:**
+- `src/lib/queryCacheConfig.ts` — Configuração centralizada de cache por domínio
+- `src/modules/tickets/hooks/useTicketsSummary.ts` — Hook para usar nova RPC
+- RPC `rpc_tickets_summary` — Agregação de dados de tickets
 
 ---
 

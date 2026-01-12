@@ -8226,6 +8226,10 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_tickets_summary: {
+        Args: { p_bu_id: string; p_team_id?: string }
+        Returns: Json
+      }
       search_bu_users_for_mention: {
         Args: { p_bu_id: string; p_limit?: number; p_search_term?: string }
         Returns: {

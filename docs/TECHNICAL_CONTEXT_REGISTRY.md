@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.19.0  
+**Versão:** 2.20.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 8 completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 9 completo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
