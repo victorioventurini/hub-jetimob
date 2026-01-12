@@ -22,6 +22,8 @@ import {
 import { useKrStatusDistribution, OkrCalculatedStatus } from '../hooks/useOkrStatus';
 import { usePendingCheckins } from '../hooks/usePendingCheckins';
 import { useSharedOkrsInsights } from '../hooks/useTeamContributedOkrs';
+import { useManageableTeams } from '../hooks/useManageableTeams';
+import { useCanManageOrgOkr } from '../hooks/useCanManageTeamOkr';
 import { calculateProgress } from '../types';
 
 import { OkrViewSelector, OkrView } from '../components/dashboard/OkrViewSelector';
@@ -96,6 +98,11 @@ export default function OkrDashboardPage() {
 
   // Shared OKRs insights
   const sharedInsights = useSharedOkrsInsights();
+  
+  // Permission checks for editing
+  const { teams: manageableTeams } = useManageableTeams();
+  const { canManage: canManageOrg } = useCanManageOrgOkr();
+  const manageableTeamIds = useMemo(() => new Set(manageableTeams.map(t => t.id)), [manageableTeams]);
   
   // Calculate pending checkins count
   const pendingCheckinsCount = pendingCheckins?.filter(c => c.is_overdue).length || 0;
@@ -376,6 +383,7 @@ export default function OkrDashboardPage() {
                   keyResults={objective.key_results || []}
                   type={activeView === 'company' ? 'org' : 'team'}
                   teamName={objective.team?.name}
+                  canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
                 />
               ))}
             </div>
