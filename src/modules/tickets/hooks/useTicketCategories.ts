@@ -156,13 +156,6 @@ export function useDeleteTicketCategory() {
 // SUBCATEGORIES
 // ===========================================
 
-/**
- * Fetches subcategories for a given category.
- * 
- * For internal ticket categories (scope: internal), subcategories are fetched
- * from the category's own BU, not the current BU. This allows internal categories
- * like "Hub" to be used across all BUs while keeping their subcategories accessible.
- */
 export function useTicketSubcategories(categoryId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
@@ -172,25 +165,29 @@ export function useTicketSubcategories(categoryId?: string) {
     queryKey: queryKeys.tickets.subcategories(buId ?? null, categoryId),
     staleTime: 5 * 60 * 1000, // 5 minutes - subcategories change rarely
     queryFn: async () => {
-      if (!buId || !categoryId) return [];
+      if (!buId) return [];
 
-      // Subcategories are fetched by category_id only (not bu_id)
-      // This allows internal categories to share subcategories across BUs
-      const { data, error } = await supabase
+      let query = supabase
         .from("ticket_subcategories")
         .select(`
           id, bu_id, category_id, name, description, status, created_at, updated_at,
           category:ticket_categories(id, name)
         `)
-        .eq("category_id", categoryId)
+        .eq("bu_id", buId)
         .is("deleted_at", null)
         .eq("status", "active")
         .order("name");
 
+      if (categoryId) {
+        query = query.eq("category_id", categoryId);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       return data as unknown as TicketSubcategory[];
     },
-    enabled: !!buId && !!categoryId,
+    enabled: !!buId,
   });
 }
 
