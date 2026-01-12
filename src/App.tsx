@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { BuProvider } from "@/contexts/BuContext";
 import { ModuleProvider } from "@/contexts/ModuleContext";
+import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
@@ -166,17 +167,18 @@ const App = () => {
       <BrowserRouter>
         <AuthProvider>
           <BuProvider>
-            <ModuleProvider>
-              <VicProvider>
-                <VicSidepanel />
-                <ErrorBoundary>
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                    {/* ===== ROTAS PÚBLICAS ===== */}
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/p/assets/:code" element={<PublicAsset />} />
+            <ImpersonationProvider>
+              <ModuleProvider>
+                <VicProvider>
+                  <VicSidepanel />
+                  <ErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                      {/* ===== ROTAS PÚBLICAS ===== */}
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/p/assets/:code" element={<PublicAsset />} />
 
-                    {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
+                      {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
                     
                     {/* Onboarding */}
                     <Route
@@ -880,9 +882,10 @@ const App = () => {
                 </ErrorBoundary>
               </VicProvider>
             </ModuleProvider>
-          </BuProvider>
-        </AuthProvider>
-      </BrowserRouter>
+          </ImpersonationProvider>
+        </BuProvider>
+      </AuthProvider>
+    </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
   );

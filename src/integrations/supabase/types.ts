@@ -8387,6 +8387,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_user_permissions_for_impersonation: {
+        Args: { p_bu_id: string; p_target_profile_id: string }
+        Returns: string[]
+      }
       get_vacuum_instructions: { Args: never; Returns: string }
       has_asset_permission: {
         Args: {
