@@ -155,7 +155,7 @@ export function TeamOkrIntroStep({
               <div className="space-y-2">
                 {isLoading ? (
                   <VicLoadingState 
-                    text="Vic está pensando..."
+                    text="Vic está matutando..."
                     size="sm"
                     variant="inline"
                   />

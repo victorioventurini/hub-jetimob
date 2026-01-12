@@ -200,7 +200,7 @@ export function VicSidepanel() {
           <div className="flex-1 min-h-0 mt-4">
             {isStreaming && !response ? (
               <VicLoadingState 
-                text="Vic está pensando..." 
+                text="Vic está matutando..."
                 size="lg" 
                 className="h-full" 
               />

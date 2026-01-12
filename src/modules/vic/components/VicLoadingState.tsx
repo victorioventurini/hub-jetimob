@@ -128,7 +128,7 @@ function VicSparkleIcon({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 // ============================================================
 
 export function VicLoadingState({
-  text = 'Vic está pensando...',
+  text = 'Vic está matutando...',
   size = 'md',
   variant = 'default',
   className,
