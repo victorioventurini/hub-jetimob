@@ -8647,7 +8647,6 @@ export type Database = {
         Args: { p_ancestor_team_id: string; p_team_id: string }
         Returns: boolean
       }
-      unaccent: { Args: { "": string }; Returns: string }
       update_user_global_role: {
         Args: { new_role: string; target_user_id: string }
         Returns: undefined
