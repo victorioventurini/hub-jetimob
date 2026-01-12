@@ -3137,96 +3137,6 @@ export type Database = {
           },
         ]
       }
-      mentions: {
-        Row: {
-          bu_id: string
-          created_at: string
-          created_by: string | null
-          entity_id: string
-          entity_type: string
-          id: string
-          mentioned_contact_id: string | null
-          mentioned_user_id: string | null
-        }
-        Insert: {
-          bu_id: string
-          created_at?: string
-          created_by?: string | null
-          entity_id: string
-          entity_type: string
-          id?: string
-          mentioned_contact_id?: string | null
-          mentioned_user_id?: string | null
-        }
-        Update: {
-          bu_id?: string
-          created_at?: string
-          created_by?: string | null
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          mentioned_contact_id?: string | null
-          mentioned_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mentions_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_all_profiles_admin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_profiles_directory"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_mentioned_contact_id_fkey"
-            columns: ["mentioned_contact_id"]
-            isOneToOne: false
-            referencedRelation: "partner_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_all_profiles_admin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_profiles_directory"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       modules: {
         Row: {
           created_at: string
@@ -5750,42 +5660,6 @@ export type Database = {
           },
         ]
       }
-      permission_preset_items: {
-        Row: {
-          created_at: string | null
-          id: string
-          preset_id: string
-          template_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          preset_id: string
-          template_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          preset_id?: string
-          template_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "permission_preset_items_preset_id_fkey"
-            columns: ["preset_id"]
-            isOneToOne: false
-            referencedRelation: "permission_presets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "permission_preset_items_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "permission_templates_v2"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       permission_presets: {
         Row: {
           created_at: string | null
@@ -8064,8 +7938,8 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_agent_logs: { Args: never; Returns: number }
-      cleanup_old_cron_logs: { Args: never; Returns: number }
-      cleanup_old_wizard_sessions: { Args: never; Returns: number }
+      cleanup_old_cron_logs: { Args: never; Returns: undefined }
+      cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
