@@ -29,8 +29,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   private async reportError(error: Error, errorInfo: React.ErrorInfo) {
     try {
-      const { data } = await supabase.auth.getUser();
-      const userId = data.user?.id;
+      // Prefer local session (não depende de rede)
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id ?? null;
       if (!userId) return;
 
       const buId = typeof window !== 'undefined'
@@ -78,13 +79,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             onRetry={this.handleRetry}
           />
 
-          {import.meta.env.DEV && this.state.error && (
-            <div className="mt-6 w-full max-w-3xl rounded-lg border border-border bg-card p-4">
-              <p className="text-sm font-medium mb-2">Detalhes técnicos (dev)</p>
-              <pre className="text-xs whitespace-pre-wrap break-words text-muted-foreground">
+          {this.state.error && (
+            <details className="mt-6 w-full max-w-3xl rounded-lg border border-border bg-card p-4">
+              <summary className="cursor-pointer text-sm font-medium">
+                Detalhes técnicos
+              </summary>
+              <pre className="mt-3 text-xs whitespace-pre-wrap break-words text-muted-foreground">
 {this.state.error.stack || this.state.error.message}
               </pre>
-            </div>
+            </details>
           )}
         </div>
       );
