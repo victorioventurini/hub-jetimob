@@ -12,6 +12,7 @@ export type VicAgentSlug =
 
 export type VicActionContext =
   | "dashboard-culture"
+  | "dashboard-productivity"
   | "dashboard-okrs"
   | "dashboard-kpis"
   | "dashboard-decision"
