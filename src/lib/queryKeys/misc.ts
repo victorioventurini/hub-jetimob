@@ -40,7 +40,7 @@ export const usersKeys = {
     ['users', 'mention-candidates', buId, { q }] as const,
   ticketMentionCandidates: (buId: string | null, partnerCompanyId: string | null, q: string) =>
     ['users', 'ticket-mention-candidates', buId, partnerCompanyId, { q }] as const,
-  globalList: (filters?: { q?: string; buId?: string; onboardingStatus?: string }) =>
+  globalList: (filters?: { q?: string; buId?: string; onboardingStatus?: string; userType?: string }) =>
     ['users', 'global-list', filters] as const,
   globalDetail: (profileId: string) =>
     ['users', 'global-detail', profileId] as const,
