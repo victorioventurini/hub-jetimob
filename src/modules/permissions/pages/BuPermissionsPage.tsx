@@ -17,7 +17,7 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Shield, Search, Users, ChevronRight, Crown, ExternalLink } from "lucide-react";
+import { Shield, Search, Users, ChevronRight, Crown, ExternalLink, UserCheck } from "lucide-react";
 import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
 import { UserPermissionsV2Sheet } from "../components/UserPermissionsV2Sheet";
 import { cn } from "@/lib/utils";
@@ -77,6 +77,10 @@ export default function BuPermissionsPage() {
       const bIsAdmin = b.role_in_bu === "admin" || b.has_admin_template;
       if (aIsAdmin && !bIsAdmin) return -1;
       if (bIsAdmin && !aIsAdmin) return 1;
+      // Leaders second
+      if (a.is_team_leader && !b.is_team_leader) return -1;
+      if (b.is_team_leader && !a.is_team_leader) return 1;
+      // External last
       const aExternal = a.role_in_bu === "external";
       const bExternal = b.role_in_bu === "external";
       if (aExternal && !bExternal) return 1;
@@ -92,6 +96,15 @@ export default function BuPermissionsPage() {
     // Show Admin badge if role is admin OR has admin template
     if (user.role_in_bu === "admin" || user.has_admin_template) {
       return <Badge variant="default" className="gap-1"><Crown className="h-3 w-3" />Admin</Badge>;
+    }
+    // Show Leader badge if user leads any team
+    if (user.is_team_leader) {
+      const teamNames = user.led_teams.map(t => t.name).join(", ");
+      return (
+        <Badge variant="secondary" className="gap-1" title={`Líder de: ${teamNames}`}>
+          <UserCheck className="h-3 w-3" />Líder
+        </Badge>
+      );
     }
     if (user.role_in_bu === "external") {
       return <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-700"><ExternalLink className="h-3 w-3" />Externo</Badge>;

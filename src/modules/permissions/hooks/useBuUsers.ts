@@ -10,6 +10,10 @@ export interface BuUser {
   has_admin_template: boolean;
   has_bu_membership: boolean;
   onboarding_completed: boolean;
+  /** True if user is leader of at least one team */
+  is_team_leader: boolean;
+  /** Teams where the user is the leader */
+  led_teams: Array<{ id: string; name: string }>;
   profiles: {
     id: string;
     display_name: string;
@@ -105,22 +109,49 @@ export function useBuUsers() {
         }
       }
 
-      return profiles.map((p) => ({
-        user_id: p.user_id || p.id,
-        profile_id: p.id,
-        role_in_bu: membershipByProfileId[p.id] || null,
-        has_admin_template: adminTemplateUsers.has(p.id),
-        has_bu_membership: p.has_bu_membership,
-        onboarding_completed: p.onboarding_completed,
-        profiles: {
-          id: p.id,
-          display_name: p.display_name,
-          work_email: p.work_email,
-          photo_url: p.photo_url,
-          job_title_name: p.job_title_name || null,
-        },
-        teams: p.user_id ? (teamsByUserId[p.user_id] || []) : [],
-      })) as BuUser[];
+      // Fetch teams where users are leaders (leader_user_id stores profile_id)
+      const { data: ledTeamsRaw } = await supabase
+        .from("teams")
+        .select("id, name, leader_user_id")
+        .eq("bu_id", buId)
+        .is("deleted_at", null)
+        .in("leader_user_id", profileIds);
+
+      // Map leader_user_id (profile_id) to their led teams
+      const ledTeamsByProfileId: Record<string, Array<{ id: string; name: string }>> = {};
+      for (const team of ledTeamsRaw ?? []) {
+        if (team.leader_user_id) {
+          if (!ledTeamsByProfileId[team.leader_user_id]) {
+            ledTeamsByProfileId[team.leader_user_id] = [];
+          }
+          ledTeamsByProfileId[team.leader_user_id].push({
+            id: team.id,
+            name: team.name,
+          });
+        }
+      }
+
+      return profiles.map((p) => {
+        const ledTeams = ledTeamsByProfileId[p.id] || [];
+        return {
+          user_id: p.user_id || p.id,
+          profile_id: p.id,
+          role_in_bu: membershipByProfileId[p.id] || null,
+          has_admin_template: adminTemplateUsers.has(p.id),
+          has_bu_membership: p.has_bu_membership,
+          onboarding_completed: p.onboarding_completed,
+          is_team_leader: ledTeams.length > 0,
+          led_teams: ledTeams,
+          profiles: {
+            id: p.id,
+            display_name: p.display_name,
+            work_email: p.work_email,
+            photo_url: p.photo_url,
+            job_title_name: p.job_title_name || null,
+          },
+          teams: p.user_id ? (teamsByUserId[p.user_id] || []) : [],
+        };
+      }) as BuUser[];
     },
     enabled: isReady && !!buId,
   });
