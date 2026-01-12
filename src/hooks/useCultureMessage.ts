@@ -93,6 +93,12 @@ function getCachedMessage(buId: string, userId: string): CachedMessage | null {
       return null;
     }
     
+    // Invalidar cache se mensagem excede 60 caracteres (cache antigo)
+    if (parsed.message && parsed.message.length > 60) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    
     return parsed;
   } catch {
     return null;
