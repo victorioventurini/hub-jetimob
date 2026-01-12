@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAssetGroups } from "../../hooks/useAssetGroups";
-import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import type { AssetInventory, AssetGroup, AssetGroupItem } from "../../types";
 import { INVENTORY_STATUS_LABELS, GROUP_ITEM_ROLE_LABELS } from "../../types";
 import { CreateKitDialog } from "./CreateKitDialog";
@@ -30,7 +30,7 @@ interface KitSectionProps {
 }
 
 export function KitSection({ item, onRefresh }: KitSectionProps) {
-  const { isInventoryAdmin } = useAssetPermissions();
+  const { isInventoryAdmin } = useAssetPermissionsV2();
   const { 
     getGroupByAssetId, 
     checkIfPrimaryOfKit, 

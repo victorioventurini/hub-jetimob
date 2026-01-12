@@ -30,7 +30,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory } from "../../hooks/useInventory";
-import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import { InventoryFormDialog } from "./InventoryFormDialog";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import { KitSection } from "./KitSection";
@@ -190,7 +190,7 @@ function LoanStatusCard({ item, movements }: { item: AssetInventory; movements: 
 export function InventoryDetailView() {
   const { id } = useParams<{ id: string }>();
   const { getItem, getItemByCode, getMovements, items, isLoading } = useInventory();
-  const { canManageInventory, isInventoryAdmin } = useAssetPermissions();
+  const { canManageInventory, isInventoryAdmin } = useAssetPermissionsV2();
 
   const [item, setItem] = useState<AssetInventory | null>(null);
   const [movements, setMovements] = useState<AssetMovement[]>([]);

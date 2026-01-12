@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Key, ArrowRightLeft, User, Calendar, History, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useKeys } from "../../hooks/useKeys";
-import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import { KeyringMovementDialog } from "./KeyringMovementDialog";
 import type { AssetKeyring, AssetKeyMovement, KeyMovementType } from "../../types";
 import { KEYRING_STATUS_LABELS, KEY_MOVEMENT_TYPE_LABELS } from "../../types";
@@ -36,7 +36,7 @@ interface KeyringDetailDialogProps {
 
 export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDetailDialogProps) {
   const { getKeyMovements, keys } = useKeys();
-  const { canManageKeys, isKeysAdmin } = useAssetPermissions();
+  const { canManageKeys, isKeysAdmin } = useAssetPermissionsV2();
   const [movements, setMovements] = useState<AssetKeyMovement[]>([]);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [movementType, setMovementType] = useState<KeyMovementType | undefined>();

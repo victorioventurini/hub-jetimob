@@ -34,7 +34,7 @@ import { UserPlus } from "lucide-react";
 import { AssetCategorySelect, BuLocationSelect, BuUserSelect } from "@/components/selects";
 import { useInventory } from "../../hooks/useInventory";
 import { useLocations } from "../../hooks/useLocations";
-import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import { useIdentity } from "@/hooks/useIdentity";
 import { useBrands } from "../../hooks/useBrands";
 import { AutocompleteInput } from "./AutocompleteInput";
@@ -115,7 +115,7 @@ interface InventoryFormDialogProps {
 export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false }: InventoryFormDialogProps) {
   const { items, categories, createItemAsync, updateItemAsync, isCreatingItem, isUpdatingItem } = useInventory();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
-  const { isInventoryAdmin } = useAssetPermissions();
+  const { isInventoryAdmin } = useAssetPermissionsV2();
   const { profileId } = useIdentity();
   const { brands } = useBrands();
   const isEditing = !!item && !cloneMode;

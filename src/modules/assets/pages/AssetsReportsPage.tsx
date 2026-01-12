@@ -4,14 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useInventory } from "../hooks/useInventory";
 import { useKeys } from "../hooks/useKeys";
 import { useGifts } from "../hooks/useGifts";
-import { useAssetPermissions } from "../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default function AssetsReportsPage() {
   const { items: inventoryItems, isLoading: loadingInventory } = useInventory();
   const { keyrings, isLoading: loadingKeys } = useKeys();
   const { items: giftItems, getItemTotals, isLoading: loadingGifts } = useGifts();
-  const { canManageInventory, canManageKeys, canManageGifts, canView } = useAssetPermissions();
+  const { canViewInventory, canViewKeys, canViewGifts, canView } = useAssetPermissionsV2();
 
   const isLoading = loadingInventory || loadingKeys || loadingGifts;
 
@@ -65,7 +65,7 @@ export default function AssetsReportsPage() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Card Inventário */}
-        {canManageInventory && (
+        {canViewInventory && (
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function AssetsReportsPage() {
         )}
 
         {/* Card Chaves */}
-        {canManageKeys && (
+        {canViewKeys && (
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export default function AssetsReportsPage() {
         )}
 
         {/* Card Brindes */}
-        {canManageGifts && (
+        {canViewGifts && (
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">

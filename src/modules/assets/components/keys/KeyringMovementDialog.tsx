@@ -32,7 +32,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowRightLeft, User, MapPin, XCircle, Key } from "lucide-react";
 import { useKeys } from "../../hooks/useKeys";
 import { useAssetProfiles } from "../../hooks/useProfiles";
-import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import { useIdentity } from "@/hooks/useIdentity";
 import type { AssetKeyring, AssetHook, KeyMovementType } from "../../types";
 import { KEY_MOVEMENT_TYPE_LABELS } from "../../types";
@@ -53,7 +53,7 @@ export function KeyringMovementDialog({
   const { profileId } = useIdentity();
   const { clavicularies, getHooks, createKeyMovement, isCreatingKeyMovement } = useKeys();
   const { profiles } = useAssetProfiles();
-  const { isKeysAdmin } = useAssetPermissions();
+  const { isKeysAdmin } = useAssetPermissionsV2();
 
   const [movementType, setMovementType] = useState<KeyMovementType>(initialType || "checkout");
   const [availableHooks, setAvailableHooks] = useState<AssetHook[]>([]);
