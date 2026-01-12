@@ -15,6 +15,7 @@ import { ProgressSummary } from '../components/ProgressSummary';
 import { YearSelect } from '@/components/selects';
 import { ManagersCheckinWizardCard } from '../components/wizards/managers-checkin/ManagersCheckinWizardCard';
 import { CLevelCheckinWizardCard } from '../components/wizards/clevel-checkin/CLevelCheckinWizardCard';
+import { OkrExecutiveDashboardBreadcrumb } from '../components/ui/OkrBreadcrumb';
 
 export default function ExecutiveDashboardPage() {
   usePageTitle("Dashboard Executivo - OKRs");
@@ -56,6 +57,9 @@ export default function ExecutiveDashboardPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
+        {/* Breadcrumb */}
+        <OkrExecutiveDashboardBreadcrumb />
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
