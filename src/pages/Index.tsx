@@ -8,7 +8,6 @@ import { KpiSummaryCard } from "@/components/home/KpiSummaryCard";
 import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
-import { QuickTipsCard } from "@/components/home/QuickTipsCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
@@ -21,10 +20,12 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
 import { useGreetingSubtext } from "@/hooks/useGreetingSubtext";
+import { useProductivityTip } from "@/hooks/useProductivityTip";
 import { useBu } from "@/contexts/BuContext";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigate } from "react-router-dom";
+import { Lightbulb, Sparkles } from "lucide-react";
 
 const Index = () => {
   usePageTitle("Início");
@@ -59,6 +60,9 @@ const Index = () => {
     buName: currentBu?.name,
     teamName: leaderTeams?.[0]?.team_name,
   });
+
+  // Productivity tip for display below greeting
+  const { tip, isLoading: tipLoading, isFromAI } = useProductivityTip();
 
   // Redirect external users to their dedicated dashboard
   if (!isExternalLoading && isExternal) {
@@ -105,6 +109,18 @@ const Index = () => {
               {subtext}
             </p>
           )}
+          {/* Dica do Dia - abaixo do nome */}
+          {tipLoading ? (
+            <Skeleton className="h-5 w-80 mt-3" />
+          ) : (
+            <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
+              <span>{tip}</span>
+              {isFromAI && (
+                <Sparkles className="h-3 w-3 text-purple-400 shrink-0" aria-label="Gerada por IA" />
+              )}
+            </p>
+          )}
         </section>
 
         {/* Culture Card - Full Width with Typewriter */}
@@ -141,7 +157,7 @@ const Index = () => {
         <MyOkrsCard />
 
         {/* Dashboard Cards - Vision rápida */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <KpiSummaryCard 
             kpis={dashboardData.kpis} 
             title={isExecutive ? "KPIs da BU" : "Meus KPIs"}
@@ -152,10 +168,6 @@ const Index = () => {
             offTrack={dashboardData.okrSummary.offTrack}
             title={isExecutive ? `OKRs ${currentBu?.name || 'da Empresa'}` : "Meus OKRs"}
           />
-          <FocusCard 
-            items={dashboardData.focusItems}
-            title="Seu Foco"
-          />
           {dashboardData.teamStatus ? (
             <TeamStatusCard
               teamName={dashboardData.teamStatus.teamName}
@@ -165,7 +177,10 @@ const Index = () => {
               title={isExecutive ? "Visão Geral" : "Meu Time"}
             />
           ) : (
-            <QuickTipsCard />
+            <FocusCard 
+              items={dashboardData.focusItems}
+              title="Seu Foco"
+            />
           )}
         </section>
 
