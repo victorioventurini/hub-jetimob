@@ -1,8 +1,9 @@
 # 🗄️ Plano de Otimização do Banco de Dados — Hub da Jet
 
 **Data:** 2026-01-12  
-**Versão:** 1.0.0  
-**Baseado em:** Análise de schema, estatísticas pg_stat e DATA_MODEL_REGISTRY
+**Versão:** 1.1.0  
+**Baseado em:** Análise de schema, estatísticas pg_stat e DATA_MODEL_REGISTRY  
+**Status:** Wave 1 parcialmente executada
 
 ---
 
@@ -255,13 +256,36 @@ ALTER TABLE asset_inventory
 
 ## 📊 Priorização de Execução
 
-### Wave 1 — Integridade (P1)
+### Wave 1 — Integridade (P1) ⏳ PARCIAL
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| Criar ENUMs faltantes | 1h | Integridade | 🔲 Pendente |
-| Migrar TEXT → ENUM (5 tabelas) | 2h | Integridade | 🔲 Pendente |
-| Adicionar FKs em asset_inventory | 30min | Integridade | 🔲 Pendente |
+| Criar ENUMs faltantes | 1h | Integridade | ✅ Feito (7 ENUMs criados) |
+| Migrar TEXT → ENUM (17 colunas) | 2h | Integridade | ⚠️ Bloqueado (triggers BU scope) |
+| Adicionar FKs em tabelas sem órfãos | 30min | Integridade | ✅ Feito (5 tabelas) |
+| Adicionar FKs em tabelas com órfãos | 30min | Integridade | ⚠️ Bloqueado (precisa limpar órfãos) |
+
+**ENUMs criados:**
+- `document_processing_status` (pending, processing, completed, error)
+- `automation_log_type` (webhook, incoming, scheduled)
+- `automation_log_status` (pending, success, error, timeout)
+- `cron_status` (started, completed, failed, timeout)
+- `cycle_type` (annual, quarterly, monthly, custom)
+- `wizard_session_status` (draft, in_progress, completed, abandoned)
+- `migration_status` (pending, in_progress, completed, failed, rolled_back)
+
+**FKs adicionadas:**
+- `asset_keys.created_by` → `profiles.id`
+- `asset_permissions.created_by` → `profiles.id`
+- `asset_groups.created_by` → `profiles.id`
+- `asset_gift_items.created_by` → `profiles.id`
+- `asset_gift_batches.created_by` → `profiles.id`
+
+**Pendentes (requerem limpeza de órfãos manual):**
+- `asset_inventory.created_by` (1 órfão)
+- `asset_inventory.updated_by` (9 órfãos)
+- `asset_keyrings.created_by` (1 órfão)
+- `asset_clavicularies.created_by` (1 órfão)
 
 ### Wave 2 — Performance (P2)
 
@@ -279,6 +303,7 @@ ALTER TABLE asset_inventory
 | Monitorar índices 30 dias | Passivo | Observabilidade | ⏳ Em andamento |
 | Remover índices não utilizados | 30min | Storage | 🔲 Após monitoramento |
 | Adicionar FKs restantes | 2h | Integridade | 🔲 Pendente |
+| Migrar TEXT → ENUM | 2h | Integridade | 🔲 Pendente (após resolver bloqueio)
 
 ---
 

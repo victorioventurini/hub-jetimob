@@ -532,6 +532,27 @@ export type Database = {
             referencedRelation: "asset_gift_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_asset_gift_batches_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_gift_batches_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_gift_batches_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       asset_gift_items: {
@@ -577,6 +598,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_gift_items_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_gift_items_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_gift_items_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -771,6 +813,27 @@ export type Database = {
             columns: ["primary_asset_id"]
             isOneToOne: false
             referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_groups_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_groups_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_groups_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -1178,6 +1241,27 @@ export type Database = {
             referencedRelation: "asset_keyrings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_asset_keys_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_keys_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_keys_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       asset_movements: {
@@ -1399,6 +1483,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_permissions_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_permissions_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_permissions_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
