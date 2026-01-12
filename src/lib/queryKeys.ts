@@ -362,6 +362,10 @@ export const queryKeys = {
       ['tickets', 'partner-contact-profile', contactId] as const,
     contactCapabilitiesPrefix: () => ['contact-capabilities'] as const,
     companyContactCapabilitiesPrefix: () => ['company-contact-capabilities'] as const,
+    
+    // Summary (aggregated dashboard data)
+    summary: (buId: string | null, teamId?: string) => 
+      ['tickets', 'summary', buId, teamId] as const,
   },
 
   // ============= Integrations =============
