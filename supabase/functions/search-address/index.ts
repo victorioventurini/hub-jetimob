@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  SearchAddressQuerySchema,
+  parseRequestBody,
+  formatValidationErrors,
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,14 +46,19 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
-
-    if (!query || query.length < 3) {
+    // Validate request body with Zod schema
+    const parseResult = await parseRequestBody(req, SearchAddressQuerySchema);
+    
+    if (!parseResult.success) {
+      // Return empty predictions for validation errors (graceful degradation)
+      console.warn("Validation failed:", formatValidationErrors(parseResult.error));
       return new Response(
         JSON.stringify({ predictions: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const { query } = parseResult.data;
 
     const apiKey = await getGoogleMapsApiKey();
     if (!apiKey) {

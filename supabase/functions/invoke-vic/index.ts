@@ -37,16 +37,13 @@ import {
   getAgentTools,
   type AgentContext,
 } from "../_shared/agent-loader.ts";
-
-interface InvokeVicRequest {
-  agentSlug: string;
-  buId?: string;
-  userId?: string;
-  actionContext: string;
-  context: AgentContext;
-  userQuestion?: string;
-  stream?: boolean;
-}
+import {
+  InvokeVicRequestSchema,
+  type InvokeVicRequest,
+  parseRequestBody,
+  formatValidationErrors,
+  validateToolCallArgs,
+} from "../_shared/validation.ts";
 
 const MAX_CULTURE_MESSAGE_CHARS = 60;
 
@@ -128,8 +125,20 @@ async function handleToolCalls(
   const toolResults: { role: string; tool_call_id: string; content: string }[] = [];
 
   for (const toolCall of toolCalls) {
+    // Safely parse tool arguments with validation
+    const args = validateToolCallArgs(toolCall.function.arguments);
+    
+    if (args === null) {
+      console.error(`[${requestId}] Tool ${toolCall.function.name} has invalid arguments`);
+      toolResults.push({
+        role: "tool",
+        tool_call_id: toolCall.id,
+        content: `Erro: argumentos inválidos para ${toolCall.function.name}`,
+      });
+      continue;
+    }
+
     try {
-      const args = JSON.parse(toolCall.function.arguments);
       const result = await executeHubTool(serviceClient, toolCall.function.name, args, buId);
 
       toolResults.push({
@@ -181,17 +190,22 @@ serve(async (req) => {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const body: InvokeVicRequest = await req.json();
+    // Validate request body with Zod schema
+    const parseResult = await parseRequestBody(req, InvokeVicRequestSchema);
+    
+    if (!parseResult.success) {
+      const errorMsg = formatValidationErrors(parseResult.error);
+      console.error(`[${requestId}] Validation error:`, errorMsg);
+      return errorResponse(`Invalid request: ${errorMsg}`, 400, {
+        requestId,
+        error: "VALIDATION_ERROR",
+      });
+    }
+
+    const body = parseResult.data;
     const { agentSlug, actionContext, context: aiContext, userQuestion, stream = false } = body;
 
     console.log(`[${requestId}] Invoke VIC: agent=${agentSlug}, user=${userId}, bu=${buId}, stream=${stream}`);
-
-    if (!agentSlug || !actionContext) {
-      return errorResponse("agentSlug and actionContext are required", 400, {
-        requestId,
-        error: "MISSING_PARAMS",
-      });
-    }
 
     // Rate limits (BU-scoped)
     const rateLimitError = await checkRateLimits(serviceClient, userId, buId, {}, requestId);
