@@ -32,7 +32,7 @@ import {
   useCreateAgent,
   useUpdateAgent,
 } from '../hooks/useIntegrations';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';
@@ -63,7 +63,7 @@ export default function AgentFormPage() {
   const navigate = useNavigate();
   const { isAdmin, profile } = useAuth();
   const isEditing = !!agentId;
-  const supabase = useBuScopedSupabase();
+  // Uses global client since this is a global admin page (skipBuCheck)
   
   const { data: integration, isLoading: loadingIntegration } = useIntegrationByKey(integrationKey || '');
   
