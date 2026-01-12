@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import { format, formatDistanceToNow, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  ArrowLeft,
   Package,
   MapPin,
   User,
@@ -28,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory } from "../../hooks/useInventory";
 import { useAssetPermissions } from "../../hooks/useAssetPermissions";
@@ -304,61 +304,62 @@ export function InventoryDetailView() {
         assetName={item.name}
       />
 
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/assets/inventory">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-foreground truncate">{item.name}</h1>
-          <div className="flex items-center gap-2 text-muted-foreground">
+      {/* Header - usando PageHeader canônico */}
+      <PageHeader
+        title={item.name}
+        description={
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
             <Tag className="h-4 w-4" />
             <span>{item.internal_code}</span>
             {item.category && (
               <>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span>{item.category.name}</span>
               </>
             )}
           </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleOpenPublicLink}
-          className="gap-2 shrink-0"
-        >
-          <Link2 className="h-4 w-4" />
-          Link público
-        </Button>
-        <StatusBadge 
-          status={item.status} 
-          customLabel={INVENTORY_STATUS_LABELS[item.status]}
-        />
-      </div>
+        }
+        backTo="/assets/inventory"
+        backLabel="Inventário"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenPublicLink}
+              className="gap-2"
+            >
+              <Link2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Link público</span>
+            </Button>
+            <StatusBadge 
+              status={item.status} 
+              customLabel={INVENTORY_STATUS_LABELS[item.status]}
+            />
+          </div>
+        }
+      />
 
       {/* Quick Actions */}
       {canManageInventory && item.status !== "written_off" && (
         <Card>
-          <CardContent className="flex flex-wrap gap-2 py-4">
+          <CardContent className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 py-4">
             {showCheckout && (
-              <Button size="sm" onClick={() => handleOpenMovement("checkout")}>
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Emprestar
+              <Button size="sm" onClick={() => handleOpenMovement("checkout")} className="justify-start sm:justify-center">
+                <ArrowRightLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Emprestar</span>
               </Button>
             )}
             {showReturn && (
-              <Button size="sm" onClick={() => handleOpenMovement("return")}>
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Devolver
+              <Button size="sm" onClick={() => handleOpenMovement("return")} className="justify-start sm:justify-center">
+                <ArrowRightLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Devolver</span>
               </Button>
             )}
             {showTransfer && (
-              <Button size="sm" variant="outline" onClick={() => handleOpenMovement("transfer")}>
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Transferir
+              <Button size="sm" variant="outline" onClick={() => handleOpenMovement("transfer")} className="justify-start sm:justify-center">
+                <ArrowRightLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Transferir</span>
               </Button>
             )}
             {showMaintenance && (
@@ -370,20 +371,23 @@ export function InventoryDetailView() {
                     item.status === "maintenance" ? "maintenance_end" : "maintenance_start"
                   )
                 }
+                className="justify-start sm:justify-center"
               >
-                <Wrench className="h-4 w-4 mr-2" />
-                {item.status === "maintenance" ? "Finalizar Manutenção" : "Iniciar Manutenção"}
+                <Wrench className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {item.status === "maintenance" ? "Finalizar Manutenção" : "Iniciar Manutenção"}
+                </span>
               </Button>
             )}
             {isInventoryAdmin && (
               <>
-                <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
+                <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)} className="justify-start sm:justify-center">
+                  <Edit className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Editar</span>
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setCloneDialogOpen(true)}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Clonar
+                <Button size="sm" variant="outline" onClick={() => setCloneDialogOpen(true)} className="justify-start sm:justify-center">
+                  <Copy className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Clonar</span>
                 </Button>
               </>
             )}
@@ -392,9 +396,10 @@ export function InventoryDetailView() {
                 size="sm"
                 variant="destructive"
                 onClick={() => handleOpenMovement("write_off")}
+                className="justify-start sm:justify-center"
               >
-                <XCircle className="h-4 w-4 mr-2" />
-                Baixar
+                <XCircle className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Baixar</span>
               </Button>
             )}
           </CardContent>

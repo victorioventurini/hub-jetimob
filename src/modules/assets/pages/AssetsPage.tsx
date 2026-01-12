@@ -1,7 +1,9 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AssetsLayout } from "../components/AssetsLayout";
 import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
@@ -20,7 +22,7 @@ export default function AssetsPage() {
 
   return (
     <HubLayout>
-      <div className="container py-6 max-w-7xl">
+      <div className="space-y-6">
         <AssetsBreadcrumb />
         <PageHeader
           title="Assets"

@@ -113,22 +113,6 @@ export default function TicketsListPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header with create button */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Lista de Tickets</h2>
-          <p className="text-sm text-muted-foreground">
-            {totalItems} ticket{totalItems !== 1 ? "s" : ""} encontrado{totalItems !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/tickets/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Ticket
-          </Link>
-        </Button>
-      </div>
-
       {/* Filters */}
       <TicketFilters
         search={search}
