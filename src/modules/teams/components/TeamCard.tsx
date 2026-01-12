@@ -2,24 +2,16 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Users, ChevronRight, Building2, Edit, Layers3, ArrowUpRight } from "lucide-react";
+import { Users, ChevronRight, Building2, Layers3, ArrowUpRight } from "lucide-react";
 import { TeamWithRelations } from "../types";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { cn } from "@/lib/utils";
 
 interface TeamCardProps {
   team: TeamWithRelations;
-  onEdit?: (team: TeamWithRelations) => void;
   variant?: "team" | "subteam";
 }
 
-export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
-  const { canManageTeam } = useTeamManagement();
-  
-  // Verificar se usuário pode gerenciar ESTE time específico
-  const canManageThisTeam = canManageTeam(team.id);
-
+export function TeamCard({ team, variant = "team" }: TeamCardProps) {
   const isSubteam = variant === "subteam";
 
   const getInitials = (name: string) =>
@@ -40,20 +32,6 @@ export function TeamCard({ team, onEdit, variant = "team" }: TeamCardProps) {
             : "hover:border-primary/30 border-l-4 border-l-primary/50"
         )}
       >
-      {/* Edit Button */}
-      {canManageThisTeam && onEdit && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(team);
-          }}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-      )}
 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
