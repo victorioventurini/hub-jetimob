@@ -64,7 +64,7 @@ Lista completa das tabelas no schema `public`:
 | `job_titles` | ✅ | ✅ | Cargos |
 | `kpi_metrics` | ✅ | ✅ | Métricas KPI |
 | `kpi_values` | ✅ | ✅ | Valores de KPI |
-| `mentions` | ✅ | ✅ | Menções (@) |
+| `mentions` | ✅ | ✅ | Menções globais (entity_type + entity_id) |
 | `modules` | ✅ | ❌ | Módulos do sistema |
 | `notification_channels` | ✅ | ❌ | Canais de notificação |
 | `notification_deliveries` | ✅ | ✅ | Entregas de notificação |
@@ -112,7 +112,6 @@ Lista completa das tabelas no schema `public`:
 | `teams` | ✅ | ✅ | Times |
 | `ticket_attachments` | ✅ | ✅ | Anexos de tickets |
 | `ticket_categories` | ✅ | ✅ | Categorias de tickets |
-| `ticket_mentions` | ✅ | ✅ | Menções em tickets |
 | `ticket_messages` | ✅ | ✅ | Mensagens de tickets |
 | `ticket_priority_rules` | ✅ | ✅ | Regras de prioridade |
 | `ticket_sla_configs` | ✅ | ✅ | Configurações de SLA |
@@ -121,7 +120,7 @@ Lista completa das tabelas no schema `public`:
 | `user_roles` | ✅ | ❌ | Roles globais |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 100 tabelas
+**Total:** 99 tabelas (ticket_mentions removida, centralizada em mentions)
 
 ---
 

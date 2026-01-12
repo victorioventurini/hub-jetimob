@@ -1770,9 +1770,15 @@ src/
 
 ## Changelog
 
+### v2.19.0 (2026-01-12) — Mentions Global Restoration
+- **Correção Arquitetural**: Tabela `mentions` restaurada como tabela global canônica
+  - A tabela `mentions` é agora a fonte única para menções em todos os módulos (tickets, OKRs, etc)
+  - Usa `entity_type` + `entity_id` para identificar o contexto (ex: `ticket_message`, `ticket`, `okr`)
+  - Tabela `ticket_mentions` foi removida (era específica, agora centralizado em `mentions`)
+- **Código atualizado**: `useTickets.ts`, `useTicketMessages.ts` usam `mentions` com `entity_type`
+
 ### v2.18.0 (2026-01-12) — Codebase Hygiene Wave 7
 - **Higienização de Banco de Dados**:
-  - Tabela `mentions` removida (substituída por `ticket_mentions`)
   - Função `_identity_dual_mode_deadline` removida (cutover concluído)
   - Funções de retenção criadas: `cleanup_old_agent_logs()` (90 dias), `cleanup_old_cron_logs()` (30 dias)
 - **Índices de Performance**:
@@ -1996,7 +2002,7 @@ src/
   - Todos os componentes UI não utilizados removidos (carousel, menubar, context-menu, toggle-group, navigation-menu, input-otp, aspect-ratio, resizable, toggle)
   - Dependências npm correspondentes removidas
   - Hooks mock removidos (useMockOkrData, useMockKpiData)
-  - Tabela `mentions` removida (ticket_mentions é canônico)
+  - **NOTA**: Entrada sobre `mentions` estava incorreta — ver v2.19.0 para correção
 - **Relatório de Saúde Técnica**:
   - Novo documento `HEALTH_REPORT_2026-01-11.md` com status completo
   - Zero violações de padrões TCR
