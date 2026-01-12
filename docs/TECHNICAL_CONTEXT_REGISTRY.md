@@ -176,6 +176,53 @@ const { data } = await supabase.from("tickets").select("*"); // BUG!
 
 ---
 
+### 1.6 Hooks e Componentes Canônicos
+
+Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se já existe solução canônica:
+
+#### Hooks Canônicos por Domínio
+
+| Domínio | Hook Canônico | Descrição |
+|---------|---------------|-----------|
+| **Listagem de usuários** | `useBuUsersDirectory()` | Lista usuários da BU atual (busca server-side) |
+| **Select de usuários** | `useBuUserSelectOptions()` | Retorna options formatadas para selects |
+| **Identidade** | `useIdentity()` | Resolve `userId` (auth) vs `profileId` (domínio) |
+| **Profile ID** | `useProfileId()` | Atalho para obter apenas o profileId |
+| **Permissões** | `usePermissions()` | Verifica permission keys do usuário |
+| **Cliente BU-scoped** | `useBuScopedSupabase()` | Cliente Supabase com header de BU |
+| **Cliente opcional** | `useOptionalBuScopedSupabase()` | Cliente que retorna null antes do BuProvider |
+| **BU Context** | `useBu()` | Acesso ao contexto da BU atual |
+| **Impersonação** | `useImpersonation()` | Estado de simulação visual (super_admin) |
+
+#### Componentes Canônicos por Domínio
+
+| Domínio | Componente | Descrição |
+|---------|------------|-----------|
+| **Select de usuário** | `BuUserSelect` | Dropdown para selecionar 1 usuário |
+| **Multi-select de usuários** | `BuUserMultiSelect` | Dropdown para selecionar múltiplos usuários |
+| **Avatar otimizado** | `OptimizedAvatar` | Avatar com lazy loading e fallback |
+| **Guard de permissão** | `PermissionGuard` | Renderiza children se permissão existe |
+| **Require permissão** | `RequirePermission` | Bloqueia acesso se permissão não existe |
+
+#### Views Canônicas (Supabase)
+
+| View | Propósito |
+|------|-----------|
+| `v_bu_active_profiles` | **Fonte única** para diretório de usuários da BU |
+| `v_profiles_directory` | Perfis com team/job info (alternativa legada) |
+| `v_bu_all_profiles_admin` | Todos os perfis incluindo inativos (admin) |
+
+#### Regras
+
+1. **Se existe hook/componente canônico → USAR**
+2. **Se não existe → PERGUNTAR antes de criar**
+3. **Nunca duplicar lógica** de hooks existentes
+4. **Nunca fazer query direta** se existe view canônica
+
+> 📋 **Referência completa:** [SHARED_COMPONENTS_REGISTRY.md](./engineering/SHARED_COMPONENTS_REGISTRY.md)
+
+---
+
 ## 2. Domínio de Dados
 
 ### 2.1 Entidades Principais
