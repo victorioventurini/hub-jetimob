@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.17.0  
-**Última atualização:** 2026-01-11
+**Versão:** 2.18.0  
+**Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 6 completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Codebase Hygiene Wave 7 completo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1706,6 +1706,20 @@ src/
 ---
 
 ## Changelog
+
+### v2.18.0 (2026-01-12) — Codebase Hygiene Wave 7
+- **Higienização de Banco de Dados**:
+  - Tabela `mentions` removida (substituída por `ticket_mentions`)
+  - Função `_identity_dual_mode_deadline` removida (cutover concluído)
+  - Funções de retenção criadas: `cleanup_old_agent_logs()` (90 dias), `cleanup_old_cron_logs()` (30 dias)
+- **Índices de Performance**:
+  - `idx_okr_team_objectives_bu_team_status` — OKR queries
+  - `idx_notifications_user_read_created` — Inbox do usuário
+  - `idx_notification_outbox_status_pending` — Processamento de outbox
+- **Documentação**:
+  - Novo documento `HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md` com roadmap completo
+  - Wave 1 (Higienização Crítica) concluída
+  - Waves 2-4 planejadas (centralização, refatoração OKRs, performance)
 
 ### v2.17.0 (2026-01-11) — Notification Admin RLS Hardening
 - **RLS Policies corrigidas para telas administrativas de notificações**:
