@@ -72,8 +72,14 @@ export function TemplateEditorSheet({
   onOpenChange,
 }: TemplateEditorSheetProps) {
   const { updateTemplate } = usePermissionTemplatesV2();
-  const { keys: currentKeys, isLoading: keysLoading, setTemplateItems } = useTemplateItemsV2(template?.id || null);
+  const templateId = template?.id ?? null;
+  const { keys: currentKeys, isLoading: keysLoading, setTemplateItems } = useTemplateItemsV2(templateId);
   const { permissions, permissionsByModule, isLoading: catalogLoading, modules } = usePermissionCatalog();
+
+  // Don't render if there's no template
+  if (!template) {
+    return null;
+  }
 
   // Form state
   const [name, setName] = useState("");
@@ -90,33 +96,30 @@ export function TemplateEditorSheet({
 
   // Initialize form when template changes
   useEffect(() => {
-    if (template) {
-      setName(template.name);
-      setDescription(template.description || "");
-      setModule(template.module || "");
-      setSurface(template.surface || "");
-    }
-  }, [template]);
+    setName(template.name);
+    setDescription(template.description || "");
+    setModule(template.module || "");
+    setSurface(template.surface || "");
+  }, [template.id, template.name, template.description, template.module, template.surface]);
 
   // Sync selected keys when template items load
   useEffect(() => {
     if (currentKeys.length > 0) {
       setSelectedKeys(new Set(currentKeys));
-    } else if (template) {
+    } else {
       setSelectedKeys(new Set());
     }
-  }, [currentKeys, template?.id]);
+  }, [currentKeys, templateId]);
 
   // Check if metadata has changes
   const hasMetadataChanges = useMemo(() => {
-    if (!template) return false;
     return (
       name !== template.name ||
       description !== (template.description || "") ||
       module !== (template.module || "") ||
       surface !== (template.surface || "")
     );
-  }, [template, name, description, module, surface]);
+  }, [template.name, template.description, template.module, template.surface, name, description, module, surface]);
 
   // Check if keys have changes
   const hasKeyChanges = useMemo(() => {
@@ -184,8 +187,6 @@ export function TemplateEditorSheet({
   };
 
   const handleSave = async () => {
-    if (!template) return;
-    
     setIsSaving(true);
     try {
       // Save metadata if changed
@@ -213,7 +214,7 @@ export function TemplateEditorSheet({
     }
   };
 
-  const isSystemTemplate = template?.is_system ?? false;
+  const isSystemTemplate = template.is_system;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -229,7 +230,7 @@ export function TemplateEditorSheet({
             )}
           </SheetTitle>
           <SheetDescription>
-            <code className="text-xs font-mono">{template?.slug}</code>
+            <code className="text-xs font-mono">{template.slug}</code>
           </SheetDescription>
         </SheetHeader>
 
