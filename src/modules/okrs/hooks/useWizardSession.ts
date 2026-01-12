@@ -7,7 +7,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { useAuth } from '@/hooks/useAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import type { 
@@ -105,21 +105,26 @@ function mapDbToSession(db: DbWizardSession): WizardSession {
 // ============================================================
 
 export function useWizardSession() {
-  const { profile } = useAuth();
+  // Para leitura, usa profileId (respeita impersonação)
+  // Para escrita, usa realProfileId (sempre o usuário logado)
+  const { profileId, realProfileId, isImpersonating } = useIdentity();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
 
   // Get active session for current user (in_progress)
+  // Durante impersonação, mostra sessões do usuário impersonado
   const activeSessionQuery = useQuery({
-    queryKey: queryKeys.okrs.wizardSession(profile?.id || ''),
+    queryKey: isImpersonating 
+      ? [...queryKeys.okrs.wizardSession(profileId || ''), 'impersonated']
+      : queryKeys.okrs.wizardSession(profileId || ''),
     queryFn: async () => {
-      if (!profile?.id) return null;
+      if (!profileId) return null;
 
       const { data, error } = await supabase
         .from('okr_wizard_sessions')
         .select(SESSION_FIELDS)
-        .eq('started_by', profile.id)
+        .eq('started_by', profileId)
         .eq('status', 'in_progress')
         .order('started_at', { ascending: false })
         .limit(1)
@@ -128,14 +133,14 @@ export function useWizardSession() {
       if (error) throw error;
       return data ? mapDbToSession(data as DbWizardSession) : null;
     },
-    enabled: !!profile?.id,
+    enabled: !!profileId,
     staleTime: 30 * 1000, // 30 seconds - session state changes frequently
   });
 
-  // Create new session
+  // Create new session (SEMPRE usa realProfileId - usuário real)
   const createSessionMutation = useMutation({
     mutationFn: async (params: CreateSessionParams): Promise<WizardSession> => {
-      if (!profile?.id || !currentBu?.id) {
+      if (!realProfileId || !currentBu?.id) {
         throw new Error('User or BU not available');
       }
 
@@ -146,7 +151,7 @@ export function useWizardSession() {
           wizard_type: params.wizardType,
           team_id: params.teamId || null,
           cycle_id: params.cycleId || null,
-          started_by: profile.id,
+          started_by: realProfileId, // Sempre o usuário real para escrita
         })
         .select(SESSION_FIELDS)
         .single();
@@ -155,7 +160,7 @@ export function useWizardSession() {
       return mapDbToSession(data as DbWizardSession);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(profile?.id || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(realProfileId || '') });
     },
   });
 
@@ -221,7 +226,7 @@ export function useWizardSession() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(profile?.id || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(realProfileId || '') });
     },
   });
 
@@ -236,7 +241,7 @@ export function useWizardSession() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(profile?.id || '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(realProfileId || '') });
     },
   });
 
@@ -283,18 +288,18 @@ export function useWizardSession() {
  * Get recent completed sessions for analytics
  */
 export function useRecentWizardSessions(wizardType?: WizardPersona, limit = 10) {
-  const { profile } = useAuth();
+  const { profileId } = useIdentity();
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: [...queryKeys.okrs.wizardSession(profile?.id || ''), 'recent', wizardType, limit],
+    queryKey: [...queryKeys.okrs.wizardSession(profileId || ''), 'recent', wizardType, limit],
     queryFn: async () => {
-      if (!profile?.id) return [];
+      if (!profileId) return [];
 
       let query = supabase
         .from('okr_wizard_sessions')
         .select(SESSION_FIELDS)
-        .eq('started_by', profile.id)
+        .eq('started_by', profileId)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false })
         .limit(limit);
@@ -308,7 +313,7 @@ export function useRecentWizardSessions(wizardType?: WizardPersona, limit = 10) 
       if (error) throw error;
       return (data || []).map(d => mapDbToSession(d as DbWizardSession));
     },
-    enabled: !!profile?.id,
+    enabled: !!profileId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
