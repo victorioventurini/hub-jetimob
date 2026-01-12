@@ -7734,6 +7734,8 @@ export type Database = {
         Args: { p_ctx?: Json; p_scope: string; p_user_id: string }
         Returns: boolean
       }
+      cleanup_old_agent_logs: { Args: never; Returns: number }
+      cleanup_old_cron_logs: { Args: never; Returns: number }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }

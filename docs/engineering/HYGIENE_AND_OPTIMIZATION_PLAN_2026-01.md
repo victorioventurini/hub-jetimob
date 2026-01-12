@@ -422,13 +422,14 @@ queryClient.prefetchQuery({
 
 ## 📊 Priorização de Execução
 
-### Wave 1 — Higienização Crítica (P1)
+### Wave 1 — Higienização Crítica (P1) ✅ CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| DROP tabela `mentions` | 5 min | Segurança | 🔲 Pendente |
-| DROP função `_identity_dual_mode_deadline` | 5 min | Cleanup | 🔲 Pendente |
-| Implementar retenção de logs | 30 min | Storage | 🔲 Pendente |
+| DROP tabela `mentions` | 5 min | Segurança | ✅ Feito (migration anterior) |
+| DROP função `_identity_dual_mode_deadline` | 5 min | Cleanup | ✅ Feito (migration anterior) |
+| Implementar retenção de logs | 30 min | Storage | ✅ Feito (`cleanup_old_agent_logs`, `cleanup_old_cron_logs`) |
+| Índices de performance | 10 min | Query speed | ✅ Feito (3 índices criados) |
 
 ### Wave 2 — Centralização (P2)
 
