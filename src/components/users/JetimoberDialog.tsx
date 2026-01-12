@@ -114,6 +114,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const [existingProfile, setExistingProfile] = useState<ExistingProfile | null>(null);
   const [roleInBu, setRoleInBu] = useState<string>("collaborator");
   const [teamIdForExisting, setTeamIdForExisting] = useState<string | undefined>(undefined);
+  const [jobTitleIdForExisting, setJobTitleIdForExisting] = useState<string | undefined>(undefined);
 
   // Use canonical view for managers select
   const { data: managers } = useQuery({
@@ -170,6 +171,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     setExistingProfile(null);
     setRoleInBu("collaborator");
     setTeamIdForExisting(undefined);
+    setJobTitleIdForExisting(undefined);
   }, [profile]));
 
   // Verificar email e decidir próximo passo
@@ -278,6 +280,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           bu_id: currentBu.id,
           role_in_bu: roleInBu as "super_admin" | "admin" | "collaborator",
           is_default: false,
+          job_title_id: jobTitleIdForExisting || null,
         });
       
       if (membershipError) throw membershipError;
@@ -551,6 +554,18 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
             placeholder="Selecione um time"
             triggerClassName="w-full"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Cargo nesta BU</Label>
+          <JobTitleSelect
+            value={jobTitleIdForExisting}
+            onValueChange={setJobTitleIdForExisting}
+            placeholder="Usar cargo padrão do perfil"
+          />
+          <p className="text-xs text-muted-foreground">
+            Deixe vazio para usar o cargo padrão do perfil
+          </p>
         </div>
       </div>
 

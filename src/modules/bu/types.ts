@@ -9,7 +9,10 @@ export type BuUnit = Tables<"bu_units"> & {
   secondary_color?: string | null;
 };
 
-export type BuUserMembership = Tables<"bu_user_memberships">;
+export type BuUserMembership = Tables<"bu_user_memberships"> & {
+  // Extended fields from joins
+  job_title?: { id: string; name: string } | null;
+};
 
 export interface BuUnitWithDetails extends BuUnit {
   member_count?: number;
