@@ -431,13 +431,15 @@ queryClient.prefetchQuery({
 | Implementar retenção de logs | 30 min | Storage | ✅ Feito (`cleanup_old_agent_logs`, `cleanup_old_cron_logs`) |
 | Índices de performance | 10 min | Query speed | ✅ Feito (3 índices criados) |
 
-### Wave 2 — Centralização (P2)
+### Wave 2 — Centralização (P2) ✅ PARCIALMENTE CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| Consolidar PageHeader/EmptyState/LoadingState | 2h | DX | 🔲 Pendente |
-| Criar `_shared/logging.ts` para Edge Functions | 1h | Observabilidade | 🔲 Pendente |
-| Adicionar FKs faltantes no Identity Map | 1h | Integridade | 🔲 Pendente |
+| Consolidar PageHeader/EmptyState/LoadingState | 2h | DX | ✅ Já existem em `src/components/ui/` |
+| Criar `_shared/logging.ts` para Edge Functions | 1h | Observabilidade | ✅ Já existe em `middleware.ts` |
+| Adicionar FKs faltantes no Identity Map | 1h | Integridade | 🔲 Pendente (baixa prioridade) |
+| Criar ConfirmDialog genérico | 30min | DX | ✅ Feito (`src/components/ui/confirm-dialog.tsx`) |
+| Criar tipos compartilhados | 30min | DX | ✅ Feito (`src/shared/types/index.ts`) |
 
 ### Wave 3 — Refatoração OKRs (P2-P3)
 
