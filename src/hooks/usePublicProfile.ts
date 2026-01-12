@@ -71,6 +71,7 @@ export function usePublicProfile(profileId?: string) {
         .maybeSingle();
 
       if (error) throw error;
+      if (!data) return null;
 
       // Fetch manager separately if exists
       let manager = null;
@@ -82,12 +83,31 @@ export function usePublicProfile(profileId?: string) {
           .maybeSingle();
         manager = managerData;
       }
+
+      // Fetch membership job title override (BU-specific job title)
+      // Priority: membership.job_title_id > profile.job_title_id
+      let effectiveJobTitle = (data.job_title_rel as { name: string } | null)?.name || "Sem cargo";
       
-      return data ? { 
+      if (data.user_id) {
+        const { data: membershipData } = await supabase
+          .from("bu_user_memberships")
+          .select("job_title_id, job_title:job_titles!bu_user_memberships_job_title_id_fkey(name)")
+          .eq("profile_id", profileId)
+          .eq("bu_id", currentBu.id)
+          .is("deleted_at", null)
+          .maybeSingle();
+        
+        // If membership has a specific job title, use it
+        if (membershipData?.job_title_id && membershipData?.job_title) {
+          effectiveJobTitle = (membershipData.job_title as { name: string }).name;
+        }
+      }
+      
+      return { 
         ...data, 
         manager,
-        job_title: (data.job_title_rel as { name: string } | null)?.name || "Sem cargo",
-      } as PublicProfile : null;
+        job_title: effectiveJobTitle,
+      } as PublicProfile;
     },
     enabled: !!profileId && !!currentBu?.id,
   });

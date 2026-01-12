@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useBu } from '@/contexts/BuContext';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,13 +29,14 @@ interface UserProfileData {
 
 export function UserHoverCard({ userId, profileId, children, asChild = true }: UserHoverCardProps) {
   const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
   
   // Determine which ID to use for the query
   const lookupId = userId || profileId;
   const lookupType = userId ? 'user_id' : 'profile_id';
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: queryKeys.profiles.hoverCard(lookupId || ''),
+    queryKey: queryKeys.profiles.hoverCard(lookupId || '', currentBu?.id),
     queryFn: async (): Promise<UserProfileData | null> => {
       if (!lookupId) return null;
 
@@ -51,7 +53,7 @@ export function UserHoverCard({ userId, profileId, children, asChild = true }: U
 
       if (profileError || !profileData) return null;
 
-      // Fetch job title separately
+      // Fetch default job title from profile
       let jobTitle: string | null = null;
       if (profileData.job_title_id) {
         const { data: jobTitleData } = await supabase
@@ -60,6 +62,29 @@ export function UserHoverCard({ userId, profileId, children, asChild = true }: U
           .eq('id', profileData.job_title_id)
           .maybeSingle();
         jobTitle = jobTitleData?.name || null;
+      }
+
+      // Check for BU-specific job title override in membership
+      if (currentBu?.id && profileData.id) {
+        const { data: membershipData } = await supabase
+          .from('bu_user_memberships')
+          .select('job_title_id')
+          .eq('profile_id', profileData.id)
+          .eq('bu_id', currentBu.id)
+          .is('deleted_at', null)
+          .maybeSingle();
+        
+        // If membership has a specific job title, use it instead
+        if (membershipData?.job_title_id) {
+          const { data: membershipJobTitle } = await supabase
+            .from('job_titles')
+            .select('name')
+            .eq('id', membershipData.job_title_id)
+            .maybeSingle();
+          if (membershipJobTitle?.name) {
+            jobTitle = membershipJobTitle.name;
+          }
+        }
       }
 
       // Fetch team memberships using user_id (always use user_id for memberships)
