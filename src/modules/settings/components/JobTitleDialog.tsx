@@ -23,14 +23,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { useCreateJobTitle, useUpdateJobTitle } from "../hooks/useJobTitles";
+import { useAllBus } from "@/modules/users-global/hooks/useAllBus";
+import { useBu } from "@/contexts/BuContext";
 import type { JobTitleWithUsageCount } from "../types";
 
 const formSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome muito longo"),
   description: z.string().max(500, "Descrição muito longa").optional(),
   is_active: z.boolean(),
+  bu_ids: z.array(z.string()).min(1, "Selecione pelo menos uma BU"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +48,8 @@ interface JobTitleDialogProps {
 
 export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitleDialogProps) {
   const isEditing = !!editingJobTitle;
+  const { currentBu } = useBu();
+  const { data: allBus = [] } = useAllBus();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -50,6 +57,7 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
       name: "",
       description: "",
       is_active: true,
+      bu_ids: currentBu?.id ? [currentBu.id] : [],
     },
   });
 
@@ -65,16 +73,18 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
           name: editingJobTitle.name,
           description: editingJobTitle.description || "",
           is_active: editingJobTitle.is_active,
+          bu_ids: editingJobTitle.bu_ids || [],
         });
       } else {
         form.reset({
           name: "",
           description: "",
           is_active: true,
+          bu_ids: currentBu?.id ? [currentBu.id] : [],
         });
       }
     }
-  }, [open, editingJobTitle, form]);
+  }, [open, editingJobTitle, form, currentBu?.id]);
 
   const handleSubmit = (values: FormValues) => {
     if (isEditing) {
@@ -84,6 +94,7 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
           name: values.name,
           description: values.description,
           is_active: values.is_active,
+          bu_ids: values.bu_ids,
         },
         {
           onSuccess: () => onOpenChange(false),
@@ -94,21 +105,33 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
         name: values.name,
         description: values.description,
         is_active: values.is_active,
+        bu_ids: values.bu_ids,
       }, {
         onSuccess: () => onOpenChange(false),
       });
     }
   };
 
+  const selectedBuIds = form.watch("bu_ids");
+
+  const toggleBu = (buId: string) => {
+    const current = form.getValues("bu_ids");
+    if (current.includes(buId)) {
+      form.setValue("bu_ids", current.filter((id) => id !== buId), { shouldValidate: true });
+    } else {
+      form.setValue("bu_ids", [...current, buId], { shouldValidate: true });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Cargo" : "Novo Cargo"}</DialogTitle>
           <DialogDescription>
             {isEditing
               ? "Atualize as informações do cargo"
-              : "Crie um novo cargo padronizado para esta BU"}
+              : "Crie um novo cargo e selecione em quais BUs ele estará disponível"}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,6 +153,37 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
 
             <FormField
               control={form.control}
+              name="bu_ids"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Business Units *</FormLabel>
+                  <div className="border rounded-md p-3 space-y-2 max-h-[150px] overflow-y-auto">
+                    {allBus.map((bu) => (
+                      <label
+                        key={bu.id}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
+                      >
+                        <Checkbox
+                          checked={selectedBuIds.includes(bu.id)}
+                          onCheckedChange={() => toggleBu(bu.id)}
+                        />
+                        <span className="text-sm">{bu.name}</span>
+                        {bu.id === currentBu?.id && (
+                          <Badge variant="secondary" className="text-xs">atual</Badge>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                  <FormDescription>
+                    Selecione em quais BUs este cargo estará disponível
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -142,9 +196,6 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Uma breve descrição das responsabilidades do cargo
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -158,7 +209,7 @@ export function JobTitleDialog({ open, onOpenChange, editingJobTitle }: JobTitle
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Cargo Ativo</FormLabel>
                     <FormDescription>
-                      Cargos inativos não aparecem para seleção em novos usuários
+                      Cargos inativos não aparecem para seleção
                     </FormDescription>
                   </div>
                   <FormControl>

@@ -1,40 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
 import type { JobTitle, JobTitleFormData, JobTitleWithUsageCount } from "../types";
 
 /**
- * Hook para gerenciar cargos da BU atual
- * @updated Wave 2.5 - Normalizado para usar bu_id ao invés de bu_ids[]
+ * Hook para gerenciar cargos (global, filtrado por acesso do usuário)
+ * @updated Wave 2.6 - Convertido para bu_ids[] (multi-BU)
  */
 export function useJobTitles() {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   return useQuery({
     queryKey: queryKeys.settings.jobTitles(buId ?? null),
     staleTime: 5 * 60 * 1000, // 5 minutes - job titles change rarely
     queryFn: async (): Promise<JobTitleWithUsageCount[]> => {
-      if (!buId) return [];
-
-      // Buscar cargos da BU atual (bu_id singular)
+      // Buscar todos os cargos que o usuário tem acesso (RLS filtra automaticamente)
       const { data: jobTitles, error } = await supabase
         .from("job_titles")
-        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
-        .eq("bu_id", buId)
+        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
         .is("deleted_at", null)
         .order("name");
 
       if (error) throw error;
 
-      // Buscar contagem de profiles por cargo
+      // Buscar contagem de profiles por cargo (global)
       const { data: usageCounts, error: countError } = await supabase
         .from("profiles")
         .select("job_title_id")
-        .eq("bu_id", buId)
         .is("deleted_at", null)
         .not("job_title_id", "is", null);
 
@@ -49,7 +44,14 @@ export function useJobTitles() {
       }, {} as Record<string, number>);
 
       return (jobTitles || []).map((jt) => ({
-        ...jt,
+        id: jt.id,
+        bu_ids: jt.bu_ids || [],
+        name: jt.name,
+        description: jt.description,
+        is_active: jt.is_active,
+        created_at: jt.created_at,
+        updated_at: jt.updated_at,
+        deleted_at: jt.deleted_at,
         usage_count: countMap[jt.id] || 0,
       }));
     },
@@ -58,11 +60,11 @@ export function useJobTitles() {
 }
 
 /**
- * Hook para listar cargos ativos (para select em formulários)
+ * Hook para listar cargos ativos da BU atual (para select em formulários)
+ * Filtra apenas cargos que incluem a BU atual no bu_ids[]
  */
 export function useActiveJobTitles() {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
   const buId = currentBu?.id;
 
   return useQuery({
@@ -73,14 +75,24 @@ export function useActiveJobTitles() {
 
       const { data, error } = await supabase
         .from("job_titles")
-        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
-        .eq("bu_id", buId)
+        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
         .eq("is_active", true)
         .is("deleted_at", null)
+        .contains("bu_ids", [buId])
         .order("name");
 
       if (error) throw error;
-      return data || [];
+      
+      return (data || []).map((jt) => ({
+        id: jt.id,
+        bu_ids: jt.bu_ids || [],
+        name: jt.name,
+        description: jt.description,
+        is_active: jt.is_active,
+        created_at: jt.created_at,
+        updated_at: jt.updated_at,
+        deleted_at: jt.deleted_at,
+      }));
     },
     enabled: !!buId,
   });
@@ -91,27 +103,31 @@ export function useActiveJobTitles() {
  */
 export function useCreateJobTitle() {
   const { currentBu } = useBu();
-  const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: JobTitleFormData) => {
       if (!currentBu?.id) throw new Error("BU não selecionada");
 
+      // Garantir que a BU atual está no array
+      const buIds = data.bu_ids.includes(currentBu.id) 
+        ? data.bu_ids 
+        : [...data.bu_ids, currentBu.id];
+
       const { data: result, error } = await supabase
         .from("job_titles")
         .insert({
-          bu_id: currentBu.id,
+          bu_ids: buIds,
           name: data.name.trim(),
           description: data.description?.trim() || null,
           is_active: data.is_active,
         })
-        .select("id, bu_id, name, description, is_active, created_at, updated_at, deleted_at")
+        .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
         .single();
 
       if (error) {
-        if (error.message?.includes("job_titles_bu_id_name_unique")) {
-          throw new Error("Já existe um cargo com este nome nesta BU");
+        if (error.message?.includes("job_titles_name_unique")) {
+          throw new Error("Já existe um cargo com este nome no sistema");
         }
         throw error;
       }
@@ -131,7 +147,6 @@ export function useCreateJobTitle() {
  * Hook para atualizar cargo
  */
 export function useUpdateJobTitle() {
-  const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -140,11 +155,13 @@ export function useUpdateJobTitle() {
       name, 
       description, 
       is_active,
+      bu_ids,
     }: { 
       id: string; 
       name?: string; 
       description?: string; 
       is_active?: boolean;
+      bu_ids?: string[];
     }) => {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
@@ -153,6 +170,7 @@ export function useUpdateJobTitle() {
       if (name !== undefined) updateData.name = name.trim();
       if (description !== undefined) updateData.description = description?.trim() || null;
       if (is_active !== undefined) updateData.is_active = is_active;
+      if (bu_ids !== undefined) updateData.bu_ids = bu_ids;
 
       const { error } = await supabase
         .from("job_titles")
@@ -160,8 +178,8 @@ export function useUpdateJobTitle() {
         .eq("id", id);
 
       if (error) {
-        if (error.message?.includes("job_titles_bu_id_name_unique")) {
-          throw new Error("Já existe um cargo com este nome nesta BU");
+        if (error.message?.includes("job_titles_name_unique")) {
+          throw new Error("Já existe um cargo com este nome no sistema");
         }
         throw error;
       }
@@ -180,7 +198,6 @@ export function useUpdateJobTitle() {
  * Hook para soft delete de cargo com optimistic update
  */
 export function useDeleteJobTitle() {
-  const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;

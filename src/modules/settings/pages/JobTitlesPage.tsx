@@ -163,7 +163,7 @@ export default function JobTitlesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Descrição</TableHead>
+                    <TableHead>BUs</TableHead>
                     <TableHead className="w-[100px] text-center">Usuários</TableHead>
                     <TableHead className="w-[100px] text-center">Status</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
@@ -173,8 +173,10 @@ export default function JobTitlesPage() {
                   {filteredJobTitles.map((jobTitle) => (
                     <TableRow key={jobTitle.id}>
                       <TableCell className="font-medium">{jobTitle.name}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {jobTitle.description || "—"}
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {jobTitle.bu_ids?.length || 0} BU{(jobTitle.bu_ids?.length || 0) !== 1 ? 's' : ''}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">

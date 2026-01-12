@@ -3121,7 +3121,7 @@ export type Database = {
       }
       job_titles: {
         Row: {
-          bu_id: string
+          bu_ids: string[] | null
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -3131,7 +3131,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bu_id: string
+          bu_ids?: string[] | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -3141,7 +3141,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bu_id?: string
+          bu_ids?: string[] | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -3150,15 +3150,7 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "job_titles_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       kpi_metrics: {
         Row: {
@@ -8834,6 +8826,10 @@ export type Database = {
         Returns: boolean
       }
       is_user_leader: { Args: { p_user_id?: string }; Returns: boolean }
+      job_title_belongs_to_bu: {
+        Args: { p_bu_id: string; p_job_title_id: string }
+        Returns: boolean
+      }
       log_audit_event: {
         Args: {
           p_action: string
