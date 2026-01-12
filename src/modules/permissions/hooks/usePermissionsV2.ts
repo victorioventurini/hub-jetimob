@@ -242,6 +242,8 @@ export function useUserTemplatesV2(userId: string | null) {
     },
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.permissions.userTemplatesV2(buId, userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.buUsers(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.effectivePreview(buId, userId, 'v2') });
       toast.success("Template v2 atribuído");
     },
     onError: (error: Error) => {
@@ -260,6 +262,8 @@ export function useUserTemplatesV2(userId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.permissions.userTemplatesV2(buId, userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.buUsers(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.effectivePreview(buId, userId, 'v2') });
       toast.success("Template v2 removido");
     },
     onError: (error: Error) => {
