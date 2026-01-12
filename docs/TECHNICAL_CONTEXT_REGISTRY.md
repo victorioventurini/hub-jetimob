@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.22.0  
+**Versão:** 2.23.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | P1-P3 Technical Debt Sprint completo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Impersonation System v2.0 ativo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -132,6 +132,19 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 - ❌ Líder NÃO pode gerenciar times irmãos
 - ❌ Líder NÃO pode gerenciar times de outros ramos
 
+#### Funções de Impersonação (v2.23+)
+
+| Função | Descrição |
+|--------|-----------|
+| `get_user_role_for_impersonation(p_target_profile_id, p_bu_id)` | Retorna role do usuário impersonado (somente super_admin pode chamar) |
+| `get_leader_teams_for_impersonation(p_target_profile_id, p_bu_id)` | Retorna times liderados pelo usuário impersonado (somente super_admin) |
+
+**Regras de Impersonação:**
+- ✅ Apenas `super_admin` pode ativar impersonação
+- ✅ Impersonação é visual (leitura) — não permite mutations como outro usuário
+- ✅ `useIdentity()` retorna `userId`/`profileId` do usuário impersonado para leitura
+- ✅ `useIdentity()` retorna `realUserId`/`realProfileId` do usuário real para mutations
+
 ---
 
 ### 1.5 Supabase Client Usage
@@ -186,13 +199,14 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 |---------|---------------|-----------|
 | **Listagem de usuários** | `useBuUsersDirectory()` | Lista usuários da BU atual (busca server-side) |
 | **Select de usuários** | `useBuUserSelectOptions()` | Retorna options formatadas para selects |
-| **Identidade** | `useIdentity()` | Resolve `userId` (auth) vs `profileId` (domínio) |
+| **Identidade** | `useIdentity()` | Resolve `userId`/`profileId` (suporta impersonação) — retorna também `realUserId`/`realProfileId` para mutations |
 | **Profile ID** | `useProfileId()` | Atalho para obter apenas o profileId |
 | **Permissões** | `usePermissions()` | Verifica permission keys do usuário |
 | **Cliente BU-scoped** | `useBuScopedSupabase()` | Cliente Supabase com header de BU |
 | **Cliente opcional** | `useOptionalBuScopedSupabase()` | Cliente que retorna null antes do BuProvider |
 | **BU Context** | `useBu()` | Acesso ao contexto da BU atual |
 | **Impersonação** | `useImpersonation()` | Estado de simulação visual (super_admin) |
+| **Impersonação opcional** | `useOptionalImpersonation()` | Retorna null se fora do contexto de impersonação |
 
 #### Componentes Canônicos por Domínio
 

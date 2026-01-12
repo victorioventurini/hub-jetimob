@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.2.0  
-**Última atualização:** 2026-01-11  
+**Versão:** 1.3.0  
+**Última atualização:** 2026-01-12  
 **Status:** Normativo (V2-only mode ativo)
-**Referência:** TCR v2.15.0
+**Referência:** TCR v2.23.0
 
 ---
 
@@ -181,19 +181,45 @@ owner_user_id = my_profile_id()
 ### B.5 Padrão no Frontend
 
 ```typescript
-// Hook para profile_id do usuário logado
-import { useMyProfileId } from "@/hooks/useMyProfileId";
+// Hook canônico para identidade (suporta impersonação)
+import { useIdentity } from "@/hooks/useIdentity";
 
-const { profileId, isLoading } = useMyProfileId();
+const { 
+  userId,           // auth.users.id do usuário efetivo (impersonado ou real)
+  profileId,        // profiles.id do usuário efetivo (impersonado ou real)
+  realUserId,       // auth.users.id do usuário REAL (sempre o logado)
+  realProfileId,    // profiles.id do usuário REAL (sempre o logado)
+  isLoading 
+} = useIdentity();
 
-// Usar profileId para ownership
+// ✅ CORRETO: Usar profileId para LEITURA (respeita impersonação)
+const { data } = useQuery({
+  queryKey: ["my-okrs", profileId],
+  queryFn: () => supabase.from("okr_initiatives").select("*").eq("owner_user_id", profileId),
+});
+
+// ✅ CORRETO: Usar realProfileId para MUTATIONS (sempre o usuário real)
 await supabase.from("okr_initiatives").insert({
-  owner_user_id: profileId, // profiles.id
+  owner_user_id: realProfileId, // Sempre o usuário real para criação
   ...data,
 });
 ```
 
-### B.6 Colunas de Domínio (armazenam profiles.id)
+### B.6 Impersonação e Identidade
+
+```typescript
+// ❌ ERRADO: Usar useAuth().user.id para dados de domínio
+import { useAuth } from "@/hooks/useAuth";
+const { user } = useAuth();
+// user.id é auth.users.id, ignora impersonação
+
+// ✅ CORRETO: Usar useIdentity() para tudo
+import { useIdentity } from "@/hooks/useIdentity";
+const { profileId, realProfileId } = useIdentity();
+// profileId respeita impersonação, realProfileId é sempre o real
+```
+
+### B.7 Colunas de Domínio (armazenam profiles.id)
 
 Todas estas colunas, apesar do nome `_user_id`, armazenam `profiles.id`:
 
