@@ -184,7 +184,7 @@ export function useCultureMessage(): UseCultureMessageReturn {
     
     const dayKey = DAY_NAMES[context.dayOfWeekIndex] as 'segunda' | 'terca' | 'quarta' | 'quinta' | 'sexta';
     
-    const selected = getContextualCultureMessage(
+    let selected = getContextualCultureMessage(
       {
         role: roleCategory as 'executive' | 'leader' | 'collaborator',
         dayOfWeek: dayKey,
@@ -195,6 +195,11 @@ export function useCultureMessage(): UseCultureMessageReturn {
       recentlyUsed,
       20
     );
+    
+    // Limitar a 60 caracteres
+    if (selected.length > 60) {
+      selected = selected.substring(0, 57) + '...';
+    }
     
     markAsUsed(selected);
     return selected;
@@ -239,7 +244,11 @@ export function useCultureMessage(): UseCultureMessageReturn {
       );
 
       if (response?.response) {
-        const aiMessage = response.response.trim();
+        // Limitar a 60 caracteres
+        let aiMessage = response.response.trim();
+        if (aiMessage.length > 60) {
+          aiMessage = aiMessage.substring(0, 57) + '...';
+        }
         setMessage(aiMessage);
         setIsFromAI(true);
         setCachedMessage(currentBuId, profile.id, aiMessage, true);
