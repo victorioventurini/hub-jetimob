@@ -60,6 +60,9 @@ const SURFACE_OPTIONS = [
   { value: 'restricted', label: 'Restricted', icon: Lock, color: 'bg-red-500/10 text-red-700' },
 ];
 
+// Radix SelectItem não permite value="" (string vazia)
+const MODULE_GLOBAL_VALUE = "__global__";
+
 interface TemplateEditorSheetProps {
   template: PermissionTemplateV2 | null;
   open: boolean;
@@ -94,7 +97,7 @@ export function TemplateEditorSheet({
     if (template) {
       setName(template.name);
       setDescription(template.description || "");
-      setModule(template.module || "");
+      setModule(template.module ?? MODULE_GLOBAL_VALUE);
       setSurface(template.surface || "");
     }
   }, [template?.id, template?.name, template?.description, template?.module, template?.surface]);
@@ -114,7 +117,7 @@ export function TemplateEditorSheet({
     return (
       name !== template.name ||
       description !== (template.description || "") ||
-      module !== (template.module || "") ||
+      module !== (template.module ?? MODULE_GLOBAL_VALUE) ||
       surface !== (template.surface || "")
     );
   }, [template, name, description, module, surface]);
@@ -198,7 +201,7 @@ export function TemplateEditorSheet({
           id: template.id,
           name,
           description: description || null,
-          module: module || null,
+          module: module === MODULE_GLOBAL_VALUE ? null : module,
           surface: (surface as PermissionTemplateV2['surface']) || null,
         });
       }
@@ -275,14 +278,14 @@ export function TemplateEditorSheet({
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o módulo" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Global</SelectItem>
-                    {modules.map((mod) => (
-                      <SelectItem key={mod} value={mod}>
-                        {mod}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                    <SelectContent>
+                      <SelectItem value={MODULE_GLOBAL_VALUE}>Global</SelectItem>
+                      {modules.map((mod) => (
+                        <SelectItem key={mod} value={mod}>
+                          {mod}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                 </Select>
               </div>
 
