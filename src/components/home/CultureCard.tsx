@@ -6,10 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { VicTypewriterText } from "@/modules/vic";
 
 const FALLBACK_MESSAGES = [
-  "Cultura não é o que dizemos, é o que fazemos no dia a dia.",
-  "Cada decisão reflete nossos valores. Faça escolhas que nos orgulhem.",
-  "Simplicidade é a sofisticação máxima. Menos ruído, mais resultado.",
-  "Compromisso não é cumprir tarefas, é entregar impacto.",
+  "Cultura é o que fazemos no dia a dia.",
+  "Cada decisão reflete nossos valores.",
+  "Simplicidade é a sofisticação máxima.",
+  "Compromisso é entregar impacto real.",
 ];
 
 export function CultureCard() {
@@ -22,7 +22,11 @@ export function CultureCard() {
   const [fallbackIndex] = useState(initialFallbackIndex);
   const [messageKey, setMessageKey] = useState(0);
 
-  const displayMessage = message || FALLBACK_MESSAGES[fallbackIndex];
+  // Garantir limite de 60 caracteres na exibição (defesa adicional)
+  const displayMessage = useMemo(() => {
+    const msg = message || FALLBACK_MESSAGES[fallbackIndex];
+    return msg.length > 60 ? msg.substring(0, 57) + '...' : msg;
+  }, [message, fallbackIndex]);
 
   // Reset typewriter when message changes
   useEffect(() => {
