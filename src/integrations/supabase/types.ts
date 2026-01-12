@@ -75,6 +75,27 @@ export type Database = {
             referencedRelation: "v_ai_agents_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_ai_agent_documents_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ai_agent_documents_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ai_agent_documents_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ai_agent_instruction_sources: {
@@ -321,6 +342,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hub_integrations_catalog"
             referencedColumns: ["integration_key"]
+          },
+          {
+            foreignKeyName: "fk_ai_agents_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ai_agents_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ai_agents_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1694,6 +1736,27 @@ export type Database = {
             referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_automation_connections_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_automation_connections_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_automation_connections_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       automation_event_catalog: {
@@ -1796,6 +1859,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_automation_incoming_tokens_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_automation_incoming_tokens_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_automation_incoming_tokens_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -1932,6 +2016,27 @@ export type Database = {
             referencedRelation: "bu_units"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_bu_agent_activations_enabled_by"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_agent_activations_enabled_by"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_agent_activations_enabled_by"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bu_ia_config: {
@@ -2039,6 +2144,27 @@ export type Database = {
             referencedRelation: "hub_integrations_catalog"
             referencedColumns: ["integration_key"]
           },
+          {
+            foreignKeyName: "fk_bu_integrations_config_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_integrations_config_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_integrations_config_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bu_locations: {
@@ -2138,6 +2264,48 @@ export type Database = {
             referencedRelation: "bu_locations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_bu_locations_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_locations_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_locations_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_locations_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_locations_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_locations_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bu_module_configs: {
@@ -2190,6 +2358,48 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_module_configs_disabled_by"
+            columns: ["disabled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_module_configs_disabled_by"
+            columns: ["disabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_module_configs_disabled_by"
+            columns: ["disabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_module_configs_enabled_by"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_module_configs_enabled_by"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bu_module_configs_enabled_by"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -8150,6 +8360,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_vacuum_instructions: { Args: never; Returns: string }
       has_asset_permission: {
         Args: {
           p_bu_id: string

@@ -256,14 +256,14 @@ ALTER TABLE asset_inventory
 
 ## 📊 Priorização de Execução
 
-### Wave 1 — Integridade (P1) ⏳ PARCIAL
+### Wave 1 — Integridade (P1) ✅ CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
 | Criar ENUMs faltantes | 1h | Integridade | ✅ Feito (7 ENUMs criados) |
-| Migrar TEXT → ENUM (17 colunas) | 2h | Integridade | ⚠️ Bloqueado (triggers BU scope) |
+| Migrar TEXT → ENUM (17 colunas) | 2h | Integridade | ⚠️ Pendente (triggers BU scope) |
 | Adicionar FKs em tabelas sem órfãos | 30min | Integridade | ✅ Feito (5 tabelas) |
-| Adicionar FKs em tabelas com órfãos | 30min | Integridade | ⚠️ Bloqueado (precisa limpar órfãos) |
+| Adicionar FKs em tabelas com órfãos | 30min | Integridade | ✅ Feito (Wave 3) |
 
 **ENUMs criados:**
 - `document_processing_status` (pending, processing, completed, error)
@@ -274,18 +274,12 @@ ALTER TABLE asset_inventory
 - `wizard_session_status` (draft, in_progress, completed, abandoned)
 - `migration_status` (pending, in_progress, completed, failed, rolled_back)
 
-**FKs adicionadas:**
+**FKs adicionadas (Wave 1):**
 - `asset_keys.created_by` → `profiles.id`
 - `asset_permissions.created_by` → `profiles.id`
 - `asset_groups.created_by` → `profiles.id`
 - `asset_gift_items.created_by` → `profiles.id`
 - `asset_gift_batches.created_by` → `profiles.id`
-
-**Pendentes (requerem limpeza de órfãos manual):**
-- `asset_inventory.created_by` (1 órfão)
-- `asset_inventory.updated_by` (9 órfãos)
-- `asset_keyrings.created_by` (1 órfão)
-- `asset_clavicularies.created_by` (1 órfão)
 
 ### Wave 2 — Performance (P2) ✅ CONCLUÍDA
 
@@ -309,14 +303,39 @@ ALTER TABLE asset_inventory
 - `initialize_counting_columns()` — Recalcula contagens (executar manualmente)
 - `cleanup_old_wizard_sessions()` — Remove sessões antigas (>90 dias)
 
-### Wave 3 — Cleanup (P3)
+### Wave 3 — Cleanup (P3) ✅ CONCLUÍDA
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
+| Limpar referências órfãs | 30min | Integridade | ✅ Feito (12 registros) |
+| Adicionar FKs restantes | 2h | Integridade | ✅ Feito (11 FKs) |
+| Função de VACUUM | 10min | Performance | ✅ Feito (`get_vacuum_instructions`) |
 | Monitorar índices 30 dias | Passivo | Observabilidade | ⏳ Em andamento |
 | Remover índices não utilizados | 30min | Storage | 🔲 Após monitoramento |
-| Adicionar FKs restantes | 2h | Integridade | 🔲 Pendente |
-| Migrar TEXT → ENUM | 2h | Integridade | 🔲 Pendente (após resolver bloqueio)
+| Migrar TEXT → ENUM | 2h | Integridade | 🔲 Pendente (triggers BU scope)
+
+**Órfãos limpos:**
+- `asset_inventory.created_by` — 1 registro
+- `asset_inventory.updated_by` — 9 registros
+- `asset_keyrings.created_by` — 1 registro
+- `asset_clavicularies.created_by` — 1 registro
+- `ai_agents.created_by` — 6 registros
+
+**FKs adicionadas (Wave 3):**
+- `asset_inventory.created_by` → `profiles.id`
+- `asset_inventory.updated_by` → `profiles.id`
+- `asset_keyrings.created_by` → `profiles.id`
+- `asset_clavicularies.created_by` → `profiles.id`
+- `ai_agent_documents.created_by` → `profiles.id`
+- `ai_agents.created_by` → `profiles.id`
+- `automation_connections.created_by` → `profiles.id`
+- `automation_incoming_tokens.created_by` → `profiles.id`
+- `bu_module_configs.enabled_by` → `profiles.id`
+- `bu_module_configs.disabled_by` → `profiles.id`
+- `bu_locations.created_by` → `profiles.id`
+- `bu_locations.updated_by` → `profiles.id`
+- `bu_agent_activations.enabled_by` → `profiles.id`
+- `bu_integrations_config.updated_by` → `profiles.id`
 
 ---
 
