@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target, Loader2 } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
+import { ErrorState } from '@/components/ui/error-state';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
@@ -34,16 +35,26 @@ export default function OkrsPage() {
   // Fetch real data from hooks
   const { 
     data: orgObjectives = [], 
-    isLoading: isLoadingOrg 
+    isLoading: isLoadingOrg,
+    error: orgError,
+    refetch: refetchOrg,
   } = useOrgObjectives({ buId, year: selectedYear });
 
   const { 
     data: teamObjectives = [], 
-    isLoading: isLoadingTeam 
+    isLoading: isLoadingTeam,
+    error: teamError,
+    refetch: refetchTeam,
   } = useTeamObjectives({ 
     buId, 
     teamId: selectedTeam === 'all' ? undefined : selectedTeam 
   });
+
+  const hasError = orgError || teamError;
+  const handleRetry = () => {
+    refetchOrg();
+    refetchTeam();
+  };
 
   // Calculate stats from real data
   const stats = useMemo(() => {
@@ -92,6 +103,16 @@ export default function OkrsPage() {
             </div>
           }
         />
+
+        {/* Error State */}
+        {hasError && (
+          <ErrorState
+            title="Erro ao carregar OKRs"
+            description="Não foi possível carregar os objetivos. Tente novamente."
+            onRetry={handleRetry}
+            compact
+          />
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
