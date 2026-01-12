@@ -52,16 +52,18 @@ import {
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { cn } from "@/lib/utils";
 
+// Radix SelectItem não permite value="" (string vazia)
+const MODULE_GLOBAL_VALUE = "__global__";
+const SURFACE_NONE_VALUE = "__none__";
+
 const SURFACE_OPTIONS = [
+  { value: SURFACE_NONE_VALUE, label: 'Nenhuma', icon: null, color: 'bg-muted text-muted-foreground' },
   { value: 'base', label: 'Base', icon: Eye, color: 'bg-gray-500/10 text-gray-700' },
   { value: 'view', label: 'View', icon: Eye, color: 'bg-blue-500/10 text-blue-700' },
   { value: 'operate', label: 'Operate', icon: Wrench, color: 'bg-green-500/10 text-green-700' },
   { value: 'administer', label: 'Administer', icon: Settings2, color: 'bg-orange-500/10 text-orange-700' },
   { value: 'restricted', label: 'Restricted', icon: Lock, color: 'bg-red-500/10 text-red-700' },
 ];
-
-// Radix SelectItem não permite value="" (string vazia)
-const MODULE_GLOBAL_VALUE = "__global__";
 
 interface TemplateEditorSheetProps {
   template: PermissionTemplateV2 | null;
@@ -83,7 +85,7 @@ export function TemplateEditorSheet({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [module, setModule] = useState("");
-  const [surface, setSurface] = useState<string>("");
+  const [surface, setSurface] = useState<string>(SURFACE_NONE_VALUE);
   
   // Permission keys state
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -98,7 +100,7 @@ export function TemplateEditorSheet({
       setName(template.name);
       setDescription(template.description || "");
       setModule(template.module ?? MODULE_GLOBAL_VALUE);
-      setSurface(template.surface || "");
+      setSurface(template.surface || SURFACE_NONE_VALUE);
     }
   }, [template?.id, template?.name, template?.description, template?.module, template?.surface]);
 
@@ -118,7 +120,7 @@ export function TemplateEditorSheet({
       name !== template.name ||
       description !== (template.description || "") ||
       module !== (template.module ?? MODULE_GLOBAL_VALUE) ||
-      surface !== (template.surface || "")
+      surface !== (template.surface || SURFACE_NONE_VALUE)
     );
   }, [template, name, description, module, surface]);
 
@@ -202,7 +204,7 @@ export function TemplateEditorSheet({
           name,
           description: description || null,
           module: module === MODULE_GLOBAL_VALUE ? null : module,
-          surface: (surface as PermissionTemplateV2['surface']) || null,
+          surface: surface === SURFACE_NONE_VALUE ? null : (surface as PermissionTemplateV2['surface']),
         });
       }
       
@@ -299,7 +301,7 @@ export function TemplateEditorSheet({
                     {SURFACE_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
                         <div className="flex items-center gap-2">
-                          <opt.icon className="h-4 w-4" />
+                          {opt.icon && <opt.icon className="h-4 w-4" />}
                           {opt.label}
                         </div>
                       </SelectItem>
