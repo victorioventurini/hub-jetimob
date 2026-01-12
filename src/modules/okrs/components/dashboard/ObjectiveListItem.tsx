@@ -163,24 +163,26 @@ export function ObjectiveListItem({
       )}>
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
           <CollapsibleTrigger asChild>
-            <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-              <div className="flex items-start gap-3">
+            <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+              <div className="flex items-start gap-2 sm:gap-3">
                 <ChevronRight className={cn(
-                  "w-4 h-4 mt-1 text-muted-foreground transition-transform duration-200",
+                  "w-4 h-4 mt-0.5 sm:mt-1 text-muted-foreground transition-transform duration-200 shrink-0",
                   isExpanded && "rotate-90"
                 )} />
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  {/* Mobile: Stack layout / Desktop: Side by side */}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                    <div className="min-w-0 flex-1">
+                      {/* Badges - scrollable on mobile */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-1 overflow-x-auto pb-0.5 -mx-1 px-1 sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap">
                         <OkrScopeBadge 
                           scope={type === 'org' ? 'org' : 'team'} 
                           teamName={teamName}
                         />
                         <Badge 
                           variant="outline" 
-                          className={cn("text-xs font-medium", statusConfig.color, statusConfig.borderColor)}
+                          className={cn("text-[10px] sm:text-xs font-medium shrink-0", statusConfig.color, statusConfig.borderColor)}
                         >
                           {statusConfig.label}
                         </Badge>
@@ -189,13 +191,13 @@ export function ObjectiveListItem({
                           <Badge 
                             variant="outline" 
                             className={cn(
-                              'text-xs',
+                              'text-[10px] sm:text-xs shrink-0',
                               status === 'on_track' && 'bg-green-500/10 text-green-600 border-green-200',
                               status === 'at_risk' && 'bg-yellow-500/10 text-yellow-600 border-yellow-200',
                               status === 'off_track' && 'bg-red-500/10 text-red-600 border-red-200',
                             )}
                           >
-                            <Heart className="w-3 h-3 mr-1" />
+                            <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                             {Math.round(progress)}%
                           </Badge>
                         )}
@@ -212,12 +214,16 @@ export function ObjectiveListItem({
                           />
                         )}
                       </div>
-                      <h3 className="font-medium leading-snug line-clamp-2">
+                      
+                      {/* Title */}
+                      <h3 className="font-medium text-sm sm:text-base leading-snug line-clamp-2">
                         {objective.title}
                       </h3>
-                      <div className="flex items-center gap-3 mt-1.5">
+                      
+                      {/* Year and RAG summary */}
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1 sm:mt-1.5">
                         {objective.year && (
-                          <span className="text-xs text-muted-foreground">{objective.year}</span>
+                          <span className="text-[10px] sm:text-xs text-muted-foreground">{objective.year}</span>
                         )}
                         <RagSummary
                           green={keyResults.filter(kr => kr.status === 'green').length}
@@ -227,18 +233,23 @@ export function ObjectiveListItem({
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 shrink-0">
+                    {/* Actions and Owner - Row on mobile, side on desktop */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 mt-2 sm:mt-0">
+                      {/* Status badge hidden on mobile (already shown above) */}
                       <Badge 
                         variant="outline" 
-                        className={cn("text-xs font-medium", statusConfig.color, statusConfig.borderColor)}
+                        className={cn("text-xs font-medium hidden sm:flex", statusConfig.color, statusConfig.borderColor)}
                       >
                         {statusConfig.label}
                       </Badge>
                       
+                      {/* Owner - shown first on mobile for context */}
+                      <OkrOwnerInfo owner={objective.owner} size="md" />
+                      
                       {canEdit && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
+                            <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -269,14 +280,13 @@ export function ObjectiveListItem({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
-                      
-                      <OkrOwnerInfo owner={objective.owner} size="md" />
                     </div>
                   </div>
                   
-                  <div className="mt-3 flex items-center gap-3">
-                    <Progress value={progress} className="h-2 flex-1" />
-                    <span className="text-sm font-medium w-12 text-right">
+                  {/* Progress bar */}
+                  <div className="mt-2 sm:mt-3 flex items-center gap-2 sm:gap-3">
+                    <Progress value={progress} className="h-1.5 sm:h-2 flex-1" />
+                    <span className="text-xs sm:text-sm font-medium w-10 sm:w-12 text-right">
                       {progress.toFixed(0)}%
                     </span>
                   </div>
@@ -288,7 +298,7 @@ export function ObjectiveListItem({
           <CollapsibleContent>
             <div className="border-t bg-muted/20">
               {keyResults.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
+                <div className="p-3 sm:p-4 text-center text-xs sm:text-sm text-muted-foreground">
                   Nenhum Key Result definido ainda
                 </div>
               ) : (
@@ -484,7 +494,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, onE
     <div className="border-b border-border/50 last:border-b-0">
       <div 
         className={cn(
-          "px-4 py-3 pl-7 hover:bg-muted/30 transition-colors",
+          "px-3 sm:px-4 py-2.5 sm:py-3 pl-5 sm:pl-7 hover:bg-muted/30 transition-colors",
           type === 'team' && "cursor-pointer"
         )}
         onClick={type === 'team' ? () => setShowInitiatives(!showInitiatives) : undefined}
@@ -493,103 +503,109 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, onE
           {/* Expand chevron for team KRs */}
           {type === 'team' ? (
             <ChevronRight className={cn(
-              "w-4 h-4 mt-0.5 text-muted-foreground transition-transform duration-200 shrink-0",
+              "w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-muted-foreground transition-transform duration-200 shrink-0",
               showInitiatives && "rotate-90"
             )} />
           ) : (
-            <div className="w-4" /> 
+            <div className="w-3.5 sm:w-4" /> 
           )}
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4">
+            {/* Mobile: Stack layout / Desktop: Row layout */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{kr.title}</p>
-                <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                <p className="text-xs sm:text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
+                <div className="mt-1 sm:mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                   <span className={cn("font-medium", statusConfig.color)}>
                     {statusConfig.label}
                   </span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>
                     {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
                   </span>
                   {type === 'team' && initiativesCount > 0 && (
                     <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 text-primary">
-                        <Lightbulb className="w-3 h-3" />
-                        {initiativesCount} iniciativa{initiativesCount !== 1 ? 's' : ''}
+                      <span className="hidden sm:inline">•</span>
+                      <span className="flex items-center gap-0.5 sm:gap-1 text-primary">
+                        <Lightbulb className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        {initiativesCount}
                       </span>
                     </>
                   )}
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-2 w-24">
+              {/* Progress and actions - row on all sizes */}
+              <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                {/* Progress bar */}
+                <div className="flex items-center gap-1.5 sm:gap-2 w-20 sm:w-24">
                   <Progress 
                     value={progress} 
-                    className="h-1.5 flex-1" 
+                    className="h-1 sm:h-1.5 flex-1" 
                   />
-                  <span className="text-xs font-medium w-8 text-right">
+                  <span className="text-[10px] sm:text-xs font-medium w-7 sm:w-8 text-right">
                     {progress.toFixed(0)}%
                   </span>
                 </div>
                 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onShowHistory();
-                  }}
-                  title="Ver histórico"
-                >
-                  <History className="w-3 h-3" />
-                </Button>
-                
-                {canEdit && (
+                {/* Action buttons */}
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-7 w-7 sm:h-6 sm:w-6"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEdit();
+                      onShowHistory();
                     }}
-                    title="Editar KR"
+                    title="Ver histórico"
                   >
-                    <Pencil className="w-3 h-3" />
+                    <History className="w-3 h-3" />
                   </Button>
-                )}
-                
-                {canEdit && type === 'team' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCheckin();
-                    }}
-                    title="Atualizar progresso"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                  </Button>
-                )}
-                
-                {kr.owner ? (
-                  <Avatar className="w-5 h-5">
-                    <AvatarImage src={kr.owner.photo_url || undefined} />
-                    <AvatarFallback className="text-[8px]">
-                      {kr.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
-                    <User className="w-3 h-3 text-muted-foreground" />
-                  </div>
-                )}
+                  
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 sm:h-6 sm:w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit();
+                      }}
+                      title="Editar KR"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
+                  
+                  {canEdit && type === 'team' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 sm:h-6 sm:w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCheckin();
+                      }}
+                      title="Atualizar progresso"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  )}
+                  
+                  {kr.owner ? (
+                    <Avatar className="w-5 h-5 hidden sm:flex">
+                      <AvatarImage src={kr.owner.photo_url || undefined} />
+                      <AvatarFallback className="text-[8px]">
+                        {kr.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-muted hidden sm:flex items-center justify-center">
+                      <User className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
