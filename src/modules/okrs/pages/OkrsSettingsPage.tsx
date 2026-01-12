@@ -22,7 +22,6 @@ export default function OkrsSettingsPage() {
       <PageHeader
         title="Configurações de OKRs"
         description="Configure ciclos, limites e regras de vínculo da metodologia OKR"
-        icon={<Settings className="h-6 w-6 text-primary" />}
         backTo="/okrs"
         backLabel="Voltar para OKRs"
       />

@@ -20,7 +20,6 @@ export default function TicketsSettingsPage() {
       <PageHeader
         title="Configurações de Tickets"
         description="Configure empresas parceiras, categorias e regras de roteamento de tickets."
-        icon={<Settings className="h-6 w-6 text-primary" />}
         backTo="/tickets"
         backLabel="Voltar para Tickets"
       />

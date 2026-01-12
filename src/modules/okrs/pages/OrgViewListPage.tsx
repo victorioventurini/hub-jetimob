@@ -66,7 +66,6 @@ export default function OrgViewListPage() {
         <PageHeader
           title="Visão Organizacional"
           description="Acompanhe como os OKRs dos times contribuem para os objetivos estratégicos"
-          icon={<Building2 className="h-6 w-6 text-primary" />}
           backTo="/okrs"
           backLabel="Voltar para OKRs"
           actions={

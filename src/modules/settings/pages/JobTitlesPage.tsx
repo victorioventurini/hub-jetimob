@@ -110,7 +110,6 @@ export default function JobTitlesPage() {
       <PageHeader
         title="Cargos"
         description="Gerencie a lista de cargos padronizados desta Business Unit"
-        icon={<Briefcase className="h-6 w-6 text-primary" />}
         backTo="/hub"
         backLabel="Voltar para Hub"
       />
