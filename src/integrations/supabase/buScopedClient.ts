@@ -34,8 +34,9 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
     },
   });
 
-  // Session is shared via localStorage with the global client.
-  // No need to hydrate here - the shared storage handles it.
+  // Hydrate auth state ASAP so PostgREST requests include the user's JWT (otherwise RLS will behave as anon).
+  // Intentionally fire-and-forget: we only need the side-effect of loading session into the auth client.
+  void client.auth.getSession();
 
   buClientCache.set(buId, client);
   return client;
