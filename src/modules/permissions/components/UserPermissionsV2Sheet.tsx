@@ -453,7 +453,7 @@ export function UserPermissionsV2Sheet({
               )}
             </ScrollArea>
 
-            {canEdit && !isAdmin && (
+            {canEdit && (
               <div className="flex items-center justify-between gap-2 pt-3 pb-4 border-t mt-auto shrink-0">
                 <div className="text-xs text-muted-foreground">
                   {selectedTemplateIds.size} template{selectedTemplateIds.size !== 1 ? "s" : ""}
