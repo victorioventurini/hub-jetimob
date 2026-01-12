@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
 import { UserImpersonationDialog } from "@/components/impersonation";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -29,10 +30,12 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
+  const { isImpersonating } = useOptionalImpersonation();
   
   // Admin de BU ou acesso administrativo podem acessar configurações
   // isAdmin já considera super_admin e admin via useAuth
-  const canAccessSettings = isAdmin || userRole === "admin";
+  // IMPORTANTE: Durante impersonação, NÃO mostrar acesso a configurações - simular experiência real
+  const canAccessSettings = !isImpersonating && (isAdmin || userRole === "admin");
 
   const displayName = profile?.display_name || "Jetimober";
   const email = profile?.work_email || "";

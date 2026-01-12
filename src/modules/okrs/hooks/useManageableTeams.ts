@@ -3,6 +3,7 @@ import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient
 import { useAuth } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
 import { FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 
 interface ManageableTeam {
   id: string;
@@ -18,18 +19,65 @@ interface ManageableTeam {
  * - Líder: time próprio + todos os descendentes (sub-times, squads)
  * - Colaborador comum: nenhum time (array vazio)
  * 
+ * IMPORTANTE: Durante impersonação, usa RPC especial para buscar times do usuário impersonado.
+ * 
  * SAFE for pre-BU: Uses useOptionalBuClient() and only queries when BU is selected.
  */
 export function useManageableTeams() {
   const { user } = useAuth();
   const { client, isReady, buId } = useOptionalBuClient();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
+
+  // Determine effective user for query key
+  const effectiveUserId = isImpersonating && impersonatedUserId 
+    ? impersonatedUserId 
+    : user?.id;
 
   const query = useQuery({
-    queryKey: queryKeys.okrs.manageableTeams(buId ?? null, user?.id ?? null),
+    queryKey: isImpersonating && impersonatedUserId
+      ? [...queryKeys.okrs.manageableTeams(buId ?? null, impersonatedUserId), 'impersonated']
+      : queryKeys.okrs.manageableTeams(buId ?? null, user?.id ?? null),
     queryFn: async (): Promise<ManageableTeam[]> => {
       if (!client || !buId) return [];
 
-      // Call the RPC to get manageable team IDs
+      // Use impersonation RPC when impersonating
+      if (isImpersonating && impersonatedUserId) {
+        const { data: teamIdsResult, error: rpcError } = await client.rpc(
+          "get_okr_manageable_team_ids_for_impersonation" as any,
+          { 
+            p_target_profile_id: impersonatedUserId,
+            p_bu_id: buId 
+          }
+        );
+
+        if (rpcError) {
+          console.error("Error fetching impersonated manageable team IDs:", rpcError);
+          return [];
+        }
+
+        const teamIds = (teamIdsResult as unknown as string[]) || [];
+        if (teamIds.length === 0) {
+          return [];
+        }
+
+        // Fetch team details for those IDs
+        const { data: teams, error: teamsError } = await client
+          .from("teams")
+          .select("id, name, parent_team_id")
+          .in("id", teamIds)
+          .is("deleted_at", null)
+          .eq("status", "active")
+          .order("name");
+
+        if (teamsError) {
+          console.error("Error fetching team details:", teamsError);
+          return [];
+        }
+
+        return teams || [];
+      }
+
+      // Normal flow
       const { data: teamIdsResult, error: rpcError } = await client.rpc(
         "get_okr_manageable_team_ids",
         { p_bu_id: buId }
@@ -61,7 +109,7 @@ export function useManageableTeams() {
 
       return teams || [];
     },
-    enabled: isReady && !!user?.id,
+    enabled: isReady && !!effectiveUserId,
     staleTime: 5 * 60 * 1000, // 5 min cache
   });
 
