@@ -1,0 +1,63 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Introdução" />
+
+# Hub da Jet — Design System
+
+Bem-vindo ao Design System do Hub da Jet. Este Storybook documenta os componentes canônicos,
+padrões de UI e diretrizes de design utilizados em todo o projeto.
+
+## Estrutura
+
+O Design System está organizado nas seguintes categorias:
+
+### 🧩 Componentes Base
+Componentes primitivos do sistema de design: Button, Input, Card, Badge, etc.
+
+### 📐 Layout
+Componentes de estrutura de página: PageHeader, EmptyState, LoadingState, etc.
+
+### 📊 Data Display
+Componentes para exibição de dados: Table, StatusBadge, VirtualizedList, etc.
+
+### 🎛️ Forms
+Componentes de formulário: Input, Select, Checkbox, RadioGroup, etc.
+
+### 💬 Feedback
+Componentes de feedback: Toast, Alert, ConfirmDialog, etc.
+
+---
+
+## Princípios de Design
+
+### Consistência
+Todos os componentes seguem os mesmos padrões de espaçamento, tipografia e cores.
+
+### Acessibilidade
+Componentes são construídos com a11y em mente, testados com `@storybook/addon-a11y`.
+
+### Performance
+Uso de virtualização para listas grandes, lazy loading e memoização onde necessário.
+
+### Temas
+Suporte completo a light/dark mode via CSS variables.
+
+---
+
+## Tokens de Design
+
+Todas as cores, espaçamentos e tipografias são definidos em `src/index.css` e `tailwind.config.ts`.
+
+**Nunca use cores hardcoded** — sempre utilize os tokens semânticos:
+- `text-foreground` (não `text-black`)
+- `bg-primary` (não `bg-blue-600`)
+- `border-border` (não `border-gray-200`)
+
+---
+
+## Como Contribuir
+
+1. Crie o componente em `src/components/ui/`
+2. Adicione a story em `src/stories/`
+3. Documente props e variantes
+4. Teste acessibilidade com o addon a11y
