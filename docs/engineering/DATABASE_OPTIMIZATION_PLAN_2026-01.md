@@ -1,9 +1,9 @@
 # 🗄️ Plano de Otimização do Banco de Dados — Hub da Jet
 
 **Data:** 2026-01-12  
-**Versão:** 1.1.0  
+**Versão:** 2.0.0  
 **Baseado em:** Análise de schema, estatísticas pg_stat e DATA_MODEL_REGISTRY  
-**Status:** Wave 1 parcialmente executada
+**Status:** ✅ CONCLUÍDO (Waves 1, 2 e 3 executadas)
 
 ---
 
@@ -261,7 +261,7 @@ ALTER TABLE asset_inventory
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
 | Criar ENUMs faltantes | 1h | Integridade | ✅ Feito (7 ENUMs criados) |
-| Migrar TEXT → ENUM (17 colunas) | 2h | Integridade | ⚠️ Pendente (triggers BU scope) |
+| Migrar TEXT → ENUM (6 tabelas) | 2h | Integridade | ✅ Feito |
 | Adicionar FKs em tabelas sem órfãos | 30min | Integridade | ✅ Feito (5 tabelas) |
 | Adicionar FKs em tabelas com órfãos | 30min | Integridade | ✅ Feito (Wave 3) |
 
@@ -269,10 +269,18 @@ ALTER TABLE asset_inventory
 - `document_processing_status` (pending, processing, completed, error)
 - `automation_log_type` (webhook, incoming, scheduled)
 - `automation_log_status` (pending, success, error, timeout)
-- `cron_status` (started, completed, failed, timeout)
-- `cycle_type` (annual, quarterly, monthly, custom)
+- `cron_status` (started, success, failed, error, timeout)
+- `cycle_type` (year, quarter, month, sprint, custom)
 - `wizard_session_status` (draft, in_progress, completed, abandoned)
 - `migration_status` (pending, in_progress, completed, failed, rolled_back)
+
+**Colunas migradas TEXT → ENUM:**
+- `asset_categories.status` → `catalog_status`
+- `asset_clavicularies.status` → `catalog_status`
+- `cycles.type` → `cycle_type`
+- `okr_wizard_sessions.status` → `wizard_session_status`
+- `cron_execution_logs.status` → `cron_status`
+- `ai_agent_documents.status` → `document_processing_status`
 
 **FKs adicionadas (Wave 1):**
 - `asset_keys.created_by` → `profiles.id`
@@ -307,12 +315,12 @@ ALTER TABLE asset_inventory
 
 | Item | Esforço | Impacto | Status |
 |------|---------|---------|--------|
-| Limpar referências órfãs | 30min | Integridade | ✅ Feito (12 registros) |
-| Adicionar FKs restantes | 2h | Integridade | ✅ Feito (11 FKs) |
+| Limpar referências órfãs | 30min | Integridade | ✅ Feito (18 registros) |
+| Adicionar FKs restantes | 2h | Integridade | ✅ Feito (14 FKs) |
 | Função de VACUUM | 10min | Performance | ✅ Feito (`get_vacuum_instructions`) |
+| Migrar TEXT → ENUM | 2h | Integridade | ✅ Feito (6 tabelas) |
 | Monitorar índices 30 dias | Passivo | Observabilidade | ⏳ Em andamento |
-| Remover índices não utilizados | 30min | Storage | 🔲 Após monitoramento |
-| Migrar TEXT → ENUM | 2h | Integridade | 🔲 Pendente (triggers BU scope)
+| Remover índices não utilizados | 30min | Storage | 🔲 Após monitoramento
 
 **Órfãos limpos:**
 - `asset_inventory.created_by` — 1 registro
