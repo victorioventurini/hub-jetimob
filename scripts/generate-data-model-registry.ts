@@ -270,7 +270,7 @@ function generateMarkdown(registry: DataModelRegistry): string {
     'profiles', 'squad_memberships', 'squads',
     'teams', 'ticket_attachments', 'ticket_categories',
     'ticket_messages', 'ticket_priority_rules', 'ticket_sla_configs', 'tickets',
-    'user_notification_preferences', 'user_roles', 'user_team_memberships',
+    'user_roles', 'user_team_memberships',
   ];
 
   lines.push('| Tabela | RLS | BU-Scoped |');
