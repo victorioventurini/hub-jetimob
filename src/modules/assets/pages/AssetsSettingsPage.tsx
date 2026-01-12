@@ -41,7 +41,6 @@ export default function AssetsSettingsPage() {
       <PageHeader
         title="Configurações de Ativos"
         description="Configure categorias, inventário e claviculários de ativos."
-        icon={<Settings className="h-6 w-6 text-primary" />}
         backTo="/assets"
         backLabel="Voltar para Ativos"
       />

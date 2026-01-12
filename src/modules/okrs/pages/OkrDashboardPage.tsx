@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Target, TrendingUp, Crosshair, RefreshCw, Building2 } from 'lucide-react';
+import { Plus, AlertTriangle, Target, TrendingUp, RefreshCw, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -163,35 +164,24 @@ export default function OkrDashboardPage() {
   return (
     <HubLayout>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        {/* Breadcrumb */}
-        <OkrDashboardBreadcrumb />
-        
-        {/* Header - Mobile optimized */}
-        <div className="space-y-4">
-          {/* Title Row */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-                <Crosshair className="h-5 w-5 sm:h-6 sm:w-6" />
-                OKRs
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5 hidden sm:block">
-                Acompanhe o progresso e alinhamento dos objetivos
-              </p>
-            </div>
-            
-            {/* Create button - always visible on mobile */}
-            {((activeView === 'company' && canCreateOrg) || 
+        {/* Header */}
+        <PageHeader
+          title="OKRs"
+          description="Acompanhe o progresso e alinhamento dos objetivos"
+          className="mb-0"
+          actions={
+            ((activeView === 'company' && canCreateOrg) || 
               (activeView !== 'company' && canCreateTeam)) && (
               <Button onClick={handleCreateClick} size="sm" className="shrink-0">
                 <Plus className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Novo Objetivo</span>
               </Button>
-            )}
-          </div>
+            )
+          }
+        />
           
-          {/* View Selector and Org View Button - scrollable on mobile */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
+        {/* View Selector and Org View Button - scrollable on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
             <OkrViewSelector 
               activeView={activeView} 
               onViewChange={setActiveView}
@@ -205,7 +195,6 @@ export default function OkrDashboardPage() {
               </Link>
             </Button>
           </div>
-        </div>
         
         {/* Filters - scrollable on mobile */}
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible pb-1">

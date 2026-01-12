@@ -180,11 +180,9 @@ export const AllVariations: Story = {
       </div>
       
       <div className="border-b pb-4">
-        <h3 className="text-sm font-medium mb-4 text-muted-foreground">Com ícone</h3>
+        <h3 className="text-sm font-medium mb-4 text-muted-foreground">Sem descrição</h3>
         <PageHeader 
-          title="Com Ícone" 
-          description="Ícones ajudam na identificação visual"
-          icon={<Settings className="w-8 h-8 text-primary" />}
+          title="Apenas Título" 
         />
       </div>
       
@@ -207,7 +205,6 @@ export const AllVariations: Story = {
         <PageHeader 
           title="Header Completo" 
           description="Todas as opções combinadas"
-          icon={<Users className="w-8 h-8 text-primary" />}
           backTo="/"
           actions={
             <>
