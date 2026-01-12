@@ -19,6 +19,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
 import { useVicAgent } from "@/modules/vic/hooks/useVicAgent";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const CACHE_KEY = "greeting_subtext_ai";
 
@@ -187,27 +190,60 @@ export function useGreetingSubtext({
 
   const { currentBuId, currentBu } = useBu();
   const { profile: authProfile } = useAuth();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
   const { role, okrSummary, focusItems, teamStatus, isLoading: dashboardLoading } = useHomeDashboard();
   const { isLeader, teams, isLoading: teamsLoading } = useLeaderTeams();
   const { invoke, isLoading: vicLoading } = useVicAgent();
+
+  // Fetch impersonated user's profile for birthday/anniversary checks
+  const { data: impersonatedProfile } = useQuery({
+    queryKey: ['greeting', 'impersonated-profile', impersonatedUserId],
+    queryFn: async () => {
+      if (!impersonatedUserId) return null;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, birth_day, birth_month, start_date")
+        .eq("id", impersonatedUserId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("[useGreetingSubtext] Error fetching impersonated profile:", error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: isImpersonating && !!impersonatedUserId,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // Use impersonated profile when impersonating, otherwise use auth profile
+  const effectiveProfile = isImpersonating && impersonatedProfile 
+    ? impersonatedProfile 
+    : authProfile;
+  
+  const effectiveUserId = isImpersonating && impersonatedUserId 
+    ? impersonatedUserId 
+    : authProfile?.id;
 
   const roleCategory = role || profile || 'collaborator';
 
   // Check if today is user's birthday
   const isBirthday = useCallback((): boolean => {
-    if (!authProfile) return false;
-    const birthDay = (authProfile as { birth_day?: number }).birth_day;
-    const birthMonth = (authProfile as { birth_month?: number }).birth_month;
+    if (!effectiveProfile) return false;
+    const birthDay = (effectiveProfile as { birth_day?: number }).birth_day;
+    const birthMonth = (effectiveProfile as { birth_month?: number }).birth_month;
     if (!birthDay || !birthMonth) return false;
     
     const today = new Date();
     return today.getDate() === birthDay && (today.getMonth() + 1) === birthMonth;
-  }, [authProfile]);
+  }, [effectiveProfile]);
 
   // Check if today is work anniversary and calculate years
   const getWorkAnniversary = useCallback((): { isAnniversary: boolean; years: number | null } => {
-    if (!authProfile) return { isAnniversary: false, years: null };
-    const startDate = (authProfile as { start_date?: string }).start_date;
+    if (!effectiveProfile) return { isAnniversary: false, years: null };
+    const startDate = (effectiveProfile as { start_date?: string }).start_date;
     if (!startDate) return { isAnniversary: false, years: null };
     
     const today = new Date();
@@ -218,7 +254,7 @@ export function useGreetingSubtext({
     
     const years = today.getFullYear() - start.getFullYear();
     return { isAnniversary: years > 0, years: years > 0 ? years : null };
-  }, [authProfile]);
+  }, [effectiveProfile]);
 
   const buildContext = useCallback((): SubtextAIContext => {
     const now = new Date();
@@ -270,7 +306,7 @@ export function useGreetingSubtext({
   }, [isBirthday, getWorkAnniversary, roleCategory]);
 
   const fetchSubtext = useCallback(async () => {
-    if (!currentBuId || !authProfile?.id) {
+    if (!currentBuId || !effectiveUserId) {
       const fallback = getStaticFallback();
       setSubtext(fallback);
       setIsFromAI(false);
@@ -279,7 +315,7 @@ export function useGreetingSubtext({
     }
 
     // Check cache first
-    const cached = getCachedSubtext(currentBuId, authProfile.id);
+    const cached = getCachedSubtext(currentBuId, effectiveUserId);
     if (cached) {
       setSubtext(cached.subtext);
       setIsFromAI(cached.isFromAI);
@@ -297,7 +333,7 @@ export function useGreetingSubtext({
         const specialMessage = getStaticFallback();
         setSubtext(specialMessage);
         setIsFromAI(false);
-        setCachedSubtext(currentBuId, authProfile.id, specialMessage, false);
+        setCachedSubtext(currentBuId, effectiveUserId!, specialMessage, false);
         setIsLoading(false);
         return;
       }
@@ -321,7 +357,7 @@ export function useGreetingSubtext({
         }
         setSubtext(aiSubtext);
         setIsFromAI(true);
-        setCachedSubtext(currentBuId, authProfile.id, aiSubtext, true);
+        setCachedSubtext(currentBuId, effectiveUserId!, aiSubtext, true);
       } else {
         throw new Error('No response from AI');
       }
@@ -330,11 +366,11 @@ export function useGreetingSubtext({
       const fallback = getStaticFallback();
       setSubtext(fallback);
       setIsFromAI(false);
-      setCachedSubtext(currentBuId, authProfile.id, fallback, false);
+      setCachedSubtext(currentBuId, effectiveUserId!, fallback, false);
     } finally {
       setIsLoading(false);
     }
-  }, [currentBuId, authProfile?.id, buildContext, invoke, getStaticFallback]);
+  }, [currentBuId, effectiveUserId, buildContext, invoke, getStaticFallback]);
 
   // Initial fetch when data is ready
   useEffect(() => {

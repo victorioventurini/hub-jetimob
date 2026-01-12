@@ -22,6 +22,7 @@ import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
 import { useGreetingSubtext } from "@/hooks/useGreetingSubtext";
 import { useBu } from "@/contexts/BuContext";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigate } from "react-router-dom";
 
@@ -29,6 +30,7 @@ const Index = () => {
   usePageTitle("Início");
   const { profile } = useAuth();
   const { currentBu } = useBu();
+  const { isImpersonating, impersonatedUser } = useOptionalImpersonation();
   const dashboardData = useHomeDashboard();
   const { isLeader, isLoading: isLeaderLoading, teams: leaderTeams } = useLeaderTeams();
   const { isExternal, isLoading: isExternalLoading } = useExternalUser();
@@ -37,8 +39,14 @@ const Index = () => {
   
   // Determine profile for greeting
   const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
+  
+  // Use impersonated user's first name when impersonating
+  const displayName = isImpersonating && impersonatedUser
+    ? impersonatedUser.displayName.split(' ')[0]
+    : profile?.first_name;
+  
   const { greeting } = useGreeting({ 
-    userName: profile?.first_name,
+    userName: displayName,
     profile: greetingProfile,
     buName: currentBu?.name,
     teamName: leaderTeams?.[0]?.team_name,
@@ -46,7 +54,7 @@ const Index = () => {
   
   // AI-powered contextual subtext
   const { subtext, isLoading: subtextLoading } = useGreetingSubtext({
-    userName: profile?.first_name,
+    userName: displayName,
     profile: greetingProfile,
     buName: currentBu?.name,
     teamName: leaderTeams?.[0]?.team_name,
