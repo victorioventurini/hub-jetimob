@@ -238,7 +238,7 @@ export const MESSAGES_BY_THEME = {
     "Líder carrega o guarda-chuva nas críticas.",
     "Feedback constante evita surpresas.",
     "Líder coach pergunta antes de responder.",
-    "Autonomia com alinhamento. Liberdade com responsabilidade.",
+    "Autonomia com alinhamento. Liberdade.",
     "O líder chega primeiro e come por último.",
     "Construa a escada enquanto sobe.",
     "Liderança sem título é a mais poderosa.",
@@ -412,7 +412,7 @@ export const MESSAGES_BY_THEME = {
   ],
 
   autonomia: [
-    "Autonomia com responsabilidade. Liberdade com resultado.",
+    "Autonomia com responsabilidade. Liberdade.",
     "Seja dono. Aja como se a empresa fosse sua.",
     "Não peça permissão pra fazer o certo.",
     "Contexto empodera mais que controle.",
@@ -473,7 +473,7 @@ export const MESSAGES_BY_THEME = {
     "Cada restart é chance de fazer diferente.",
     "O sucesso visita quem não desistiu.",
     "Burnout não é troféu. Descanse pra durar.",
-    "Consistência do resiliente > intensidade do impulsivo.",
+    "Consistência do resiliente > intensidade.",
     "Quem já caiu muito sabe levantar rápido.",
   ],
 };
