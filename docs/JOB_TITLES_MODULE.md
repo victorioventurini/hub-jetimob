@@ -14,7 +14,7 @@ O módulo de Cargos permite gerenciar uma lista padronizada de títulos de cargo
 
 ## Arquitetura
 
-### Modelo de Dados (Atualizado 2026-01-08)
+### Modelo de Dados (Atualizado 2026-01-12 - Wave 2.6)
 
 ```sql
 CREATE TABLE public.job_titles (
@@ -84,7 +84,7 @@ A coluna `job_title` (texto livre) é mantida temporariamente para compatibilida
 ### Rota
 
 ```
-/settings/job-titles
+/hub/job-titles
 ```
 
 ### Componentes
@@ -165,10 +165,17 @@ WHERE p.bu_id = jt.bu_id
 
 ## Checklist de Conformidade
 
-- [x] RLS bloqueia acesso cross-BU
-- [x] Nenhuma query sem bu_id
+- [x] RLS bloqueia acesso não autorizado
+- [x] Cargos globais com seleção multi-BU
+- [x] Unicidade global de nome (case-insensitive)
 - [x] Nenhum select('*') no módulo
-- [x] Hooks usam useBuScopedSupabase()
 - [x] Soft delete preserva histórico
-- [x] Unicidade case-insensitive por BU
+- [x] Tooltip na lista mostra BUs do cargo
 - [x] Permissões definidas no catálogo
+
+## Histórico de Versões
+
+| Versão | Data | Descrição |
+|--------|------|-----------|
+| 1.0 | 2026-01-08 | Modelo inicial com bu_id singular |
+| 2.0 | 2026-01-12 | Wave 2.6 - Convertido para bu_ids[] multi-BU |
