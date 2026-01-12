@@ -371,6 +371,76 @@ serve(async (req) => {
       }
     }
 
+    // Enforce hard limits for specific short-form contexts
+    if (aiContext?.type === "culture_message" && content) {
+      let normalized = normalizeCultureMessage(content);
+
+      if (normalized.length > MAX_CULTURE_MESSAGE_CHARS) {
+        // One retry: ask the model to rewrite under the hard limit.
+        try {
+          const retry = await llmComplete(
+            llmConfig,
+            [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content:
+                  `Reescreva a mensagem abaixo em até ${MAX_CULTURE_MESSAGE_CHARS} caracteres (incluindo espaços). ` +
+                  `Mantenha o sentido e o tom humano. ` +
+                  `Sem aspas, sem reticências, sem assinatura. ` +
+                  `Retorne APENAS a mensagem.\n\nMensagem: ${normalized}`,
+              },
+            ],
+            { maxTokens: 120, temperature: 0.2 }
+          );
+
+          const retryContent = normalizeCultureMessage(retry.content || "");
+
+          if (retryContent && retryContent.length <= MAX_CULTURE_MESSAGE_CHARS) {
+            normalized = retryContent;
+
+            if (retry.usage && usage) {
+              usage = {
+                promptTokens: usage.promptTokens + retry.usage.promptTokens,
+                completionTokens: usage.completionTokens + retry.usage.completionTokens,
+                totalTokens: usage.totalTokens + retry.usage.totalTokens,
+              };
+            }
+          } else {
+            // Still too long: return an error so the client can fallback without truncation.
+            const latencyMs = Date.now() - startTime;
+            await logAgentInvocation(serviceClient, {
+              agentId,
+              agentName,
+              scope: agent.scope,
+              buId,
+              userId,
+              integrationKey: agent.integration_key,
+              actionContext,
+              status: "error",
+              modelUsed: llmConfig.model,
+              inputTokens: usage?.promptTokens,
+              outputTokens: usage?.completionTokens,
+              totalTokens: usage?.totalTokens,
+              errorMessage: "AI_OUTPUT_TOO_LONG",
+              latencyMs,
+            });
+            logRequestCompletion(ctx, "error", "AI_OUTPUT_TOO_LONG");
+            return errorResponse("AI output too long", 502, {
+              requestId,
+              error: "AI_OUTPUT_TOO_LONG",
+              code: "AI_OUTPUT_TOO_LONG",
+            });
+          }
+        } catch (retryError) {
+          console.warn(`[${requestId}] Culture message rewrite retry failed:`, retryError);
+          // If retry fails, keep original content; client-side will still reject >60.
+        }
+      }
+
+      content = normalized;
+    }
+
     if (!content) {
       return errorResponse("Empty response from AI", 502, { requestId, error: "EMPTY_AI_RESPONSE" });
     }

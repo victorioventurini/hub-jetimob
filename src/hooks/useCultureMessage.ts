@@ -23,6 +23,24 @@ import { getContextualCultureMessage } from "@/data/cultureMessages";
 const CACHE_KEY = "culture_message_ai";
 const USED_MESSAGES_KEY = "culture_messages_used";
 const MAX_RECENTLY_USED = 30;
+const MAX_MESSAGE_LENGTH = 60;
+
+function normalizeCultureMessage(input: string): string {
+  return input
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(["'])|(["'])$/g, "")
+    .trim();
+}
+
+function isValidCultureMessage(input: string): boolean {
+  return input.length > 0 && input.length <= MAX_MESSAGE_LENGTH;
+}
 
 interface UseCultureMessageReturn {
   message: string | null;
@@ -106,15 +124,18 @@ function getCachedMessage(buId: string, userId: string): CachedMessage | null {
 }
 
 function setCachedMessage(
-  buId: string, 
-  userId: string, 
-  message: string, 
+  buId: string,
+  userId: string,
+  message: string,
   isFromAI: boolean
 ): void {
   try {
+    const normalized = normalizeCultureMessage(message);
+    if (!isValidCultureMessage(normalized)) return;
+
     const key = getCacheKey(buId, userId);
     const cached: CachedMessage = {
-      message,
+      message: normalized,
       isFromAI,
       timestamp: Date.now(),
       turno: getTimeOfDay(),
@@ -138,8 +159,11 @@ function getRecentlyUsed(): string[] {
 }
 
 function markAsUsed(msg: string): void {
+  const normalized = normalizeCultureMessage(msg);
+  if (!isValidCultureMessage(normalized)) return;
+
   const recent = getRecentlyUsed();
-  const updated = [msg, ...recent.filter((m) => m !== msg)].slice(0, MAX_RECENTLY_USED);
+  const updated = [normalized, ...recent.filter((m) => m !== normalized)].slice(0, MAX_RECENTLY_USED);
   localStorage.setItem(USED_MESSAGES_KEY, JSON.stringify(updated));
 }
 
@@ -209,9 +233,10 @@ export function useCultureMessage(): UseCultureMessageReturn {
       20
     );
     
-    // Limitar a 60 caracteres
-    if (selected.length > 60) {
-      selected = selected.substring(0, 57) + '...';
+    // Defesa: se (por algum motivo) vier > 60, cai num fallback seguro
+    selected = normalizeCultureMessage(selected);
+    if (!isValidCultureMessage(selected)) {
+      selected = "Cultura é o que fazemos no dia a dia.";
     }
     
     markAsUsed(selected);
@@ -257,11 +282,13 @@ export function useCultureMessage(): UseCultureMessageReturn {
       );
 
       if (response?.response) {
-        // Limitar a 60 caracteres
-        let aiMessage = response.response.trim();
-        if (aiMessage.length > 60) {
-          aiMessage = aiMessage.substring(0, 57) + '...';
+        const aiMessage = normalizeCultureMessage(response.response);
+
+        // Se vier fora do limite, não truncar (pra não cortar): cai no fallback
+        if (!isValidCultureMessage(aiMessage)) {
+          throw new Error("AI_MESSAGE_TOO_LONG");
         }
+
         setMessage(aiMessage);
         setIsFromAI(true);
         setCachedMessage(currentBuId, effectiveUserId, aiMessage, true);
