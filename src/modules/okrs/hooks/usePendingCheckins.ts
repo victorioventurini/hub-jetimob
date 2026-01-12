@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { useAuth } from '@/hooks/useAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 import { queryKeys } from '@/lib/queryKeys';
 
 export interface PendingCheckin {
@@ -62,23 +62,27 @@ export function isCheckinDueThisWeek(
 }
 
 /**
- * Hook to fetch pending check-ins for the current user
+ * Hook to fetch pending check-ins for the current user (or impersonated user)
  * Returns KRs that are owned by or co-responsible by the user and need check-ins
+ * 
+ * Suporta impersonação: quando super_admin está simulando, mostra check-ins do usuário impersonado
  */
 export function usePendingCheckins() {
-  const { user } = useAuth();
+  const { profileId, isImpersonating } = useIdentity();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.pendingCheckins(buId, undefined),
+    queryKey: isImpersonating 
+      ? [...queryKeys.okrs.pendingCheckins(buId, undefined), 'impersonated', profileId]
+      : queryKeys.okrs.pendingCheckins(buId, undefined),
     queryFn: async () => {
-      if (!user?.id || !supabase) return [];
+      if (!profileId || !supabase) return [];
 
       // Query the view for pending check-ins with explicit fields
       const { data, error } = await supabase
         .from('v_pending_checkins')
         .select('kr_id, kr_title, owner_user_id, co_responsibles, team_id, current_value, target, baseline, direction, unit, status, last_checkin_at, team_name, checkin_frequency, checkin_day, checkin_deadline_hour, objective_title, objective_id, is_overdue, days_since_checkin')
-        .or(`owner_user_id.eq.${user.id},co_responsibles.cs.{${user.id}}`);
+        .or(`owner_user_id.eq.${profileId},co_responsibles.cs.{${profileId}}`);
 
       if (error) {
         console.error('Error fetching pending checkins:', error);
@@ -87,7 +91,7 @@ export function usePendingCheckins() {
 
       return (data || []) as PendingCheckin[];
     },
-    enabled: !!user?.id && isReady && !!supabase,
+    enabled: !!profileId && isReady && !!supabase,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
