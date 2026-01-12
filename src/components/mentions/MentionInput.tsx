@@ -491,7 +491,11 @@ export function MentionInput({
             "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           )}
         >
-          {candidates.length > 0 ? (
+          {isLoadingCandidates ? (
+            <div className="px-3 py-4 text-center">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+            </div>
+          ) : candidates.length > 0 ? (
             <div className="max-h-64 overflow-y-auto py-1">
               {candidates.map((candidate, index) => {
                 const isExternal = candidate.entity_type === 'partner_contact';
@@ -551,15 +555,11 @@ export function MentionInput({
                 );
               })}
             </div>
-          ) : !isLoadingCandidates && searchTerm ? (
+          ) : (
             <div className="px-3 py-4 text-center">
               <p className="text-sm text-muted-foreground">Nenhum usuário encontrado</p>
             </div>
-          ) : isLoadingCandidates ? (
-            <div className="px-3 py-4 text-center">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-            </div>
-          ) : null}
+          )}
         </div>
       )}
     </div>
