@@ -27,7 +27,9 @@ export type Database = {
           id: string
           name: string
           processing_error: string | null
-          status: string
+          status:
+            | Database["public"]["Enums"]["document_processing_status"]
+            | null
           updated_at: string
         }
         Insert: {
@@ -42,7 +44,9 @@ export type Database = {
           id?: string
           name: string
           processing_error?: string | null
-          status?: string
+          status?:
+            | Database["public"]["Enums"]["document_processing_status"]
+            | null
           updated_at?: string
         }
         Update: {
@@ -57,7 +61,9 @@ export type Database = {
           id?: string
           name?: string
           processing_error?: string | null
-          status?: string
+          status?:
+            | Database["public"]["Enums"]["document_processing_status"]
+            | null
           updated_at?: string
         }
         Relationships: [
@@ -414,7 +420,7 @@ export type Database = {
           id: string
           name: string
           parent_id: string | null
-          status: string
+          status: Database["public"]["Enums"]["catalog_status"] | null
           updated_at: string
         }
         Insert: {
@@ -425,7 +431,7 @@ export type Database = {
           id?: string
           name: string
           parent_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"] | null
           updated_at?: string
         }
         Update: {
@@ -436,7 +442,7 @@ export type Database = {
           id?: string
           name?: string
           parent_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"] | null
           updated_at?: string
         }
         Relationships: [
@@ -466,7 +472,7 @@ export type Database = {
           location_id: string | null
           name: string
           notes: string | null
-          status: string
+          status: Database["public"]["Enums"]["catalog_status"] | null
           updated_at: string
         }
         Insert: {
@@ -478,7 +484,7 @@ export type Database = {
           location_id?: string | null
           name: string
           notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"] | null
           updated_at?: string
         }
         Update: {
@@ -490,7 +496,7 @@ export type Database = {
           location_id?: string | null
           name?: string
           notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"] | null
           updated_at?: string
         }
         Relationships: [
@@ -2739,7 +2745,7 @@ export type Database = {
           outbox_processed: number | null
           outbox_sent: number | null
           ran_at: string
-          status: string
+          status: Database["public"]["Enums"]["cron_status"]
         }
         Insert: {
           correlation_id?: string | null
@@ -2753,7 +2759,7 @@ export type Database = {
           outbox_processed?: number | null
           outbox_sent?: number | null
           ran_at?: string
-          status: string
+          status: Database["public"]["Enums"]["cron_status"]
         }
         Update: {
           correlation_id?: string | null
@@ -2767,7 +2773,7 @@ export type Database = {
           outbox_processed?: number | null
           outbox_sent?: number | null
           ran_at?: string
-          status?: string
+          status?: Database["public"]["Enums"]["cron_status"]
         }
         Relationships: []
       }
@@ -2783,7 +2789,7 @@ export type Database = {
           retro_date: string | null
           review_date: string | null
           start_date: string
-          type: string
+          type: Database["public"]["Enums"]["cycle_type"]
           updated_at: string
         }
         Insert: {
@@ -2797,7 +2803,7 @@ export type Database = {
           retro_date?: string | null
           review_date?: string | null
           start_date: string
-          type: string
+          type: Database["public"]["Enums"]["cycle_type"]
           updated_at?: string
         }
         Update: {
@@ -2811,7 +2817,7 @@ export type Database = {
           retro_date?: string | null
           review_date?: string | null
           start_date?: string
-          type?: string
+          type?: Database["public"]["Enums"]["cycle_type"]
           updated_at?: string
         }
         Relationships: [
@@ -5185,7 +5191,7 @@ export type Database = {
           reflection_data: Json | null
           started_at: string
           started_by: string
-          status: string
+          status: Database["public"]["Enums"]["wizard_session_status"] | null
           team_id: string | null
           updated_at: string
           wizard_type: string
@@ -5203,7 +5209,7 @@ export type Database = {
           reflection_data?: Json | null
           started_at?: string
           started_by: string
-          status?: string
+          status?: Database["public"]["Enums"]["wizard_session_status"] | null
           team_id?: string | null
           updated_at?: string
           wizard_type: string
@@ -5221,7 +5227,7 @@ export type Database = {
           reflection_data?: Json | null
           started_at?: string
           started_by?: string
-          status?: string
+          status?: Database["public"]["Enums"]["wizard_session_status"] | null
           team_id?: string | null
           updated_at?: string
           wizard_type?: string
@@ -8714,6 +8720,8 @@ export type Database = {
         | "gifts_admin"
         | "gifts_manager"
         | "viewer"
+      automation_log_status: "pending" | "success" | "error" | "timeout"
+      automation_log_type: "webhook" | "incoming" | "scheduled"
       bu_location_status: "active" | "inactive"
       bu_location_type:
         | "headquarters"
@@ -8724,6 +8732,13 @@ export type Database = {
         | "room"
       bu_status: "active" | "inactive"
       catalog_status: "active" | "inactive"
+      cron_status: "started" | "success" | "failed" | "error" | "timeout"
+      cycle_type: "year" | "quarter" | "month" | "sprint" | "custom"
+      document_processing_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "error"
       employment_status: "active" | "vacation" | "terminated" | "external"
       gift_destination_type: "event" | "campaign" | "person" | "other"
       gift_item_status: "active" | "inactive"
@@ -8748,6 +8763,12 @@ export type Database = {
       kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
       kpi_status: "active" | "inactive"
       kpi_value_source: "manual" | "integration" | "calculation"
+      migration_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "failed"
+        | "rolled_back"
       module_health: "healthy" | "degraded" | "down"
       module_status: "active" | "inactive" | "coming_soon"
       module_type: "global" | "operational"
@@ -8803,6 +8824,7 @@ export type Database = {
       ticket_status: "waiting" | "paused" | "in_progress" | "done" | "discarded"
       ticket_type: "internal" | "external"
       ticket_visibility: "bu_all" | "teams" | "users" | "private"
+      wizard_session_status: "draft" | "in_progress" | "completed" | "abandoned"
       work_mode: "onsite" | "hybrid" | "remote"
     }
     CompositeTypes: {
@@ -8962,6 +8984,8 @@ export const Constants = {
         "gifts_manager",
         "viewer",
       ],
+      automation_log_status: ["pending", "success", "error", "timeout"],
+      automation_log_type: ["webhook", "incoming", "scheduled"],
       bu_location_status: ["active", "inactive"],
       bu_location_type: [
         "headquarters",
@@ -8973,6 +8997,14 @@ export const Constants = {
       ],
       bu_status: ["active", "inactive"],
       catalog_status: ["active", "inactive"],
+      cron_status: ["started", "success", "failed", "error", "timeout"],
+      cycle_type: ["year", "quarter", "month", "sprint", "custom"],
+      document_processing_status: [
+        "pending",
+        "processing",
+        "completed",
+        "error",
+      ],
       employment_status: ["active", "vacation", "terminated", "external"],
       gift_destination_type: ["event", "campaign", "person", "other"],
       gift_item_status: ["active", "inactive"],
@@ -8998,6 +9030,13 @@ export const Constants = {
       kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
       kpi_status: ["active", "inactive"],
       kpi_value_source: ["manual", "integration", "calculation"],
+      migration_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "failed",
+        "rolled_back",
+      ],
       module_health: ["healthy", "degraded", "down"],
       module_status: ["active", "inactive", "coming_soon"],
       module_type: ["global", "operational"],
@@ -9056,6 +9095,7 @@ export const Constants = {
       ticket_status: ["waiting", "paused", "in_progress", "done", "discarded"],
       ticket_type: ["internal", "external"],
       ticket_visibility: ["bu_all", "teams", "users", "private"],
+      wizard_session_status: ["draft", "in_progress", "completed", "abandoned"],
       work_mode: ["onsite", "hybrid", "remote"],
     },
   },
