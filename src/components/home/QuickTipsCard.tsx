@@ -27,8 +27,7 @@ const QUICK_TIPS: Tip[] = [
   {
     id: "2",
     text: "Defina seu foco do dia para aumentar sua produtividade.",
-    linkTo: "/tasks",
-    linkLabel: "Ver tarefas",
+    // Link removido - página /tasks não existe ainda
   },
   {
     id: "3",
