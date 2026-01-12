@@ -7996,7 +7996,6 @@ export type Database = {
       }
     }
     Functions: {
-      _identity_dual_mode_deadline: { Args: never; Returns: string }
       acknowledge_health_alert: {
         Args: { p_alert_id: string; p_notes?: string }
         Returns: boolean
