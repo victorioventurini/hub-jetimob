@@ -57,24 +57,8 @@ function mapRoleToCategory(role?: string): "executive" | "leader" | "collaborato
   return "collaborator";
 }
 
-// Static mock data for KPIs (until KPI module is fully integrated)
-const mockKpisByRole: Record<string, KpiSummary[]> = {
-  executive: [
-    { label: "MRR", value: "R$ 1.180.000", change: "+4,2%", changeType: "positive" },
-    { label: "NRR", value: "99%", change: "+1pp", changeType: "positive" },
-    { label: "EBITDA", value: "R$ 320.000", changeType: "neutral" },
-    { label: "NPS", value: "56", change: "+3", changeType: "positive" },
-  ],
-  leader: [
-    { label: "Tickets Resolvidos", value: "142", change: "+12%", changeType: "positive" },
-    { label: "CSAT", value: "4.6", changeType: "neutral" },
-    { label: "Tempo Médio", value: "2.4h", change: "-18%", changeType: "positive" },
-  ],
-  collaborator: [
-    { label: "Tarefas Concluídas", value: "23", change: "+8%", changeType: "positive" },
-    { label: "Em Andamento", value: "5", changeType: "neutral" },
-  ],
-};
+// KPIs will be fetched from real data when KPI module is fully integrated
+// For now, return empty array to show empty state
 
 // Response type from RPC
 interface DashboardRpcResponse {
@@ -223,7 +207,7 @@ export function useHomeDashboard(): HomeDashboardData {
 
   return {
     role: roleCategory,
-    kpis: mockKpisByRole[roleCategory] || mockKpisByRole.collaborator,
+    kpis: [], // Empty until KPI module is fully integrated
     okrSummary: { 
       onTrack: okrCounts.on_track, 
       atRisk: okrCounts.at_risk, 

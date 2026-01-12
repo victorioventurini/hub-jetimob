@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface KpiItem {
@@ -36,6 +36,28 @@ export function KpiSummaryCard({ kpis, title = "KPIs Principais" }: KpiSummaryCa
         return "text-muted-foreground";
     }
   };
+
+  // Empty state when no KPIs
+  if (!kpis || kpis.length === 0) {
+    return (
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-4 text-center">
+            <BarChart3 className="h-8 w-8 text-muted-foreground/50 mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Nenhum KPI configurado
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Acompanhe métricas importantes aqui
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="animate-fade-in">
