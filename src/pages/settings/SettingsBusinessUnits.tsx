@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { queryKeys } from "@/lib/queryKeys";
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import { EditBuDialog } from "@/modules/bu/components/EditBuDialog";
 import { BuDetailDialog } from "@/modules/bu/components/BuDetailDialog";
 import { BuUnit } from "@/modules/bu/types";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useUrlSearch } from "@/shared/url";
+import { useLocalSearch } from "@/shared/url";
 
 export default function SettingsBusinessUnits() {
   usePageTitle("Business Units", { 
@@ -27,7 +27,7 @@ export default function SettingsBusinessUnits() {
     customDescription: "Gerencie as unidades de negócio cadastradas no Hub." 
   });
 
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  const { value: search, setValue: setSearch } = useLocalSearch("q");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);

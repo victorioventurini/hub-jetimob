@@ -60,6 +60,8 @@ export {
   useUrlDateRange,
 } from "./useUrlState";
 
+export { useLocalSearch } from "./useLocalSearch";
+
 // ============================================================
 // UTILITIES
 // ============================================================

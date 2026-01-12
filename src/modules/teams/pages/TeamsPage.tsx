@@ -24,15 +24,13 @@ import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState, useUrlTab, useUrlSearch, parsers } from "@/shared/url";
+import { useUrlState, useUrlTab, useLocalSearch, parsers } from "@/shared/url";
 
 export default function TeamsPage() {
   usePageTitle("Times");
   
-  // URL State - using object-based API
-  const searchState = useUrlSearch("q");
-  const search = searchState.value;
-  const setSearch = searchState.set;
+  // URL State - using local state for instant feedback
+  const { value: search, setValue: setSearch } = useLocalSearch("q");
   
   const parentTeamState = useUrlState<string | null>({ 
     key: 'parent_team_id', 

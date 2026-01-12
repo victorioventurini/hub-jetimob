@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useUrlTab, useUrlSearch } from "@/shared/url";
+import { useUrlTab, useLocalSearch } from "@/shared/url";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export default function GlobalPermissionsPage() {
   });
 
   const [activeTab, setActiveTab] = useUrlTab<GlobalPermissionTab>("catalog");
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  const { value: search, setValue: setSearch } = useLocalSearch("q");
 
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
