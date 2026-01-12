@@ -18,10 +18,12 @@ import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState } from "@/shared/url";
+import { useBu } from "@/contexts/BuContext";
 
 export default function KpiDashboardPage() {
   usePageTitle("KPIs");
   const { isAdmin } = useAuth();
+  const { currentBu } = useBu();
   
   // URL State
   const categoryState = useUrlState<KpiCategory | "all">({ 
@@ -79,7 +81,7 @@ export default function KpiDashboardPage() {
         <KpisBreadcrumb />
         <PageHeader
           title="KPIs"
-          description="Indicadores de saúde do negócio"
+          description={`Indicadores de saúde da ${currentBu?.name || 'organização'}`}
           actions={
             isAdmin && (
               <Button onClick={() => setCreateOpen(true)}>
@@ -130,7 +132,7 @@ export default function KpiDashboardPage() {
                 title="Nenhum KPI encontrado"
                 description={
                   isAdmin
-                    ? "Comece criando seu primeiro KPI para acompanhar a saúde do negócio."
+                    ? `Comece criando seu primeiro KPI para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
                     : "Nenhum KPI foi cadastrado ainda."
                 }
                 actionLabel={isAdmin ? "Criar KPI" : undefined}

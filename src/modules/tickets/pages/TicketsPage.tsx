@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { TicketsLayout } from "../components/TicketsLayout";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
+import { useBu } from "@/contexts/BuContext";
 
 export default function TicketsPage() {
+  const { currentBu } = useBu();
+  
   usePageTitle("Tickets", {
     customDescription: "Gerencie tickets internos e externos, acompanhe status, prazos e mensagens.",
   });
@@ -18,7 +21,7 @@ export default function TicketsPage() {
         <TicketsBreadcrumb />
         <PageHeader
           title="Tickets"
-          description="Gerencie demandas internas e externas da sua organização"
+          description={`Gerencie demandas internas e externas da ${currentBu?.name || 'organização'}`}
           actions={
             <Button asChild>
               <Link to="/tickets/new">
