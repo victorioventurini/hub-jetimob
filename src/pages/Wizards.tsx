@@ -211,11 +211,23 @@ export default function WizardsPage() {
 
   // Filter sections based on user access
   const visibleSections = useMemo(() => {
-    return WIZARD_SECTIONS.map(section => ({
-      ...section,
-      wizards: section.wizards.filter(canAccessWizard),
-    })).filter(section => section.wizards.length > 0);
-  }, [canAccessWizard]);
+    return WIZARD_SECTIONS
+      .filter(section => {
+        // Hide "Líderes de Time" section for non-leaders (unless admin)
+        if (section.title === 'OKRs - Líderes de Time' && !userRoles.has('leader') && !isAdmin) {
+          return false;
+        }
+        // Hide "Gestores e Executivos" section for non-managers (unless admin)
+        if (section.title === 'OKRs - Gestores e Executivos' && !userRoles.has('manager') && !isAdmin) {
+          return false;
+        }
+        return true;
+      })
+      .map(section => ({
+        ...section,
+        wizards: section.wizards.filter(canAccessWizard),
+      })).filter(section => section.wizards.length > 0);
+  }, [canAccessWizard, userRoles, isAdmin]);
 
   // Handle wizard open - navigate to full-page route
   const handleWizardOpen = useCallback((wizard: WizardDefinition) => {
