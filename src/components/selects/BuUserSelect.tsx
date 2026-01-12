@@ -88,10 +88,10 @@ export function BuUserSelect({
 
   // Separate query to fetch the selected profile when not in list
   // This ensures the selected value is always displayed correctly
-  const { data: selectedProfileData } = useQuery({
-    queryKey: queryKeys.profiles.detail(value ?? ""),
+  const { data: selectedProfileData, isLoading: isLoadingSelected } = useQuery({
+    queryKey: [...queryKeys.profiles.detail(value ?? ""), "bu-select", buId],
     queryFn: async () => {
-      if (!supabase || !buId || !value) return null;
+      if (!supabase || !buId || !value || value === NONE_VALUE) return null;
       
       const { data, error } = await supabase
         .from("v_bu_active_profiles")
@@ -117,10 +117,13 @@ export function BuUserSelect({
         .eq("id", value)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error("[BuUserSelect] Error fetching selected profile:", error);
+        return null;
+      }
       return data as DirectoryProfile | null;
     },
-    enabled: !!supabase && !!buId && !!value,
+    enabled: !!supabase && !!buId && !!value && value !== NONE_VALUE,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
