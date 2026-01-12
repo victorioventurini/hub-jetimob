@@ -2,9 +2,9 @@
 // GLOBAL USERS PAGE - Listagem de todos usuários do sistema
 // ============================================================
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useUrlSearch } from "@/shared/url";
+import { useLocalSearch } from "@/shared/url";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,7 @@ export default function GlobalUsersPage() {
   });
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  const { value: search, setValue: setSearch } = useLocalSearch("q");
   
   const buFilter = searchParams.get("bu") || "all";
   const onboardingFilter = searchParams.get("onboarding") || "all";

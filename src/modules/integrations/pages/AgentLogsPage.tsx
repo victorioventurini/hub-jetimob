@@ -1,4 +1,4 @@
-import { useUrlSearch, useUrlState } from '@/shared/url';
+import { useLocalSearch, useUrlState } from '@/shared/url';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ export default function AgentLogsPage() {
   const { data: agents } = useGlobalAgents(integrationKey);
   
   // URL State for filters
-  const { value: searchQuery, set: setSearchQuery } = useUrlSearch("q");
+  const { value: searchQuery, setValue: setSearchQuery } = useLocalSearch("q");
   const { value: selectedAgent, set: setSelectedAgent } = useUrlState<string>({ key: "agent", defaultValue: "all" });
   const { value: selectedStatus, set: setSelectedStatus } = useUrlState<string>({ key: "status", defaultValue: "all" });
   

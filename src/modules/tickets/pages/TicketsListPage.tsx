@@ -8,7 +8,7 @@ import { useTickets, useMyTickets } from "../hooks/useTickets";
 import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState, useUrlTab, useUrlSearch, parsers } from "@/shared/url";
+import { useUrlState, useUrlTab, useLocalSearch, parsers } from "@/shared/url";
 import type { TicketStatus, TicketType, Ticket } from "../types";
 
 type TicketTab = "mine" | "waiting" | "in_progress" | "done" | "discarded";
@@ -18,7 +18,7 @@ export default function TicketsListPage() {
   
   // URL State - object API
   const [activeTab, setActiveTab] = useUrlTab<TicketTab>("mine");
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  const { value: search, setValue: setSearch } = useLocalSearch("q");
   
   const typeState = useUrlState<TicketType | "all">({ key: "type", defaultValue: "all" });
   const typeFilter = typeState.value;

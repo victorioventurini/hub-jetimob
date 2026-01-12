@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useUrlSearch } from "@/shared/url";
+import { useState, useMemo } from "react";
+import { useLocalSearch } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,8 +52,9 @@ export default function JobTitlesPage() {
     customDescription: "Gerencie a lista de cargos padronizados da plataforma." 
   });
 
-  // URL State for search
-  const { value: search, set: setSearch } = useUrlSearch("q");
+  // Local state for instant feedback, synced with URL
+  const { value: localSearch, setValue: setLocalSearch } = useLocalSearch("q");
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJobTitle, setEditingJobTitle] = useState<JobTitleWithUsageCount | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -63,14 +64,15 @@ export default function JobTitlesPage() {
   const updateMutation = useUpdateJobTitle();
   const deleteMutation = useDeleteJobTitle();
 
-  const filteredJobTitles = (jobTitles || []).filter((jt) => {
-    if (!search) return true;
-    const lowerSearch = search.toLowerCase();
-    return (
+  // Filter using local state for instant feedback
+  const filteredJobTitles = useMemo(() => {
+    if (!localSearch) return jobTitles || [];
+    const lowerSearch = localSearch.toLowerCase();
+    return (jobTitles || []).filter((jt) =>
       jt.name.toLowerCase().includes(lowerSearch) ||
       jt.description?.toLowerCase().includes(lowerSearch)
     );
-  });
+  }, [jobTitles, localSearch]);
 
   const handleEdit = (jobTitle: JobTitleWithUsageCount) => {
     setEditingJobTitle(jobTitle);
@@ -121,8 +123,8 @@ export default function JobTitlesPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome ou descrição..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -142,14 +144,14 @@ export default function JobTitlesPage() {
               <div className="text-center py-12">
                 <Briefcase className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                 <h3 className="font-medium text-lg mb-1">
-                  {search ? "Nenhum cargo encontrado" : "Nenhum cargo cadastrado"}
+                  {localSearch ? "Nenhum cargo encontrado" : "Nenhum cargo cadastrado"}
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  {search
+                  {localSearch
                     ? "Tente buscar por outro termo"
                     : "Crie o primeiro cargo para começar a padronizar os títulos"}
                 </p>
-                {!search && (
+                {!localSearch && (
                   <Button onClick={() => setDialogOpen(true)} variant="outline" className="gap-2">
                     <Plus className="h-4 w-4" />
                     Criar primeiro cargo
