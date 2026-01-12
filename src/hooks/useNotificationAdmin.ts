@@ -139,6 +139,8 @@ export function useBuEventSettingMutation() {
 }
 
 // Hook for notification outbox (admin view)
+// Note: notification_outbox.user_id references auth.users.id, NOT profiles.id
+// We fetch profiles separately via user_id match
 export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
   const supabase = useBuScopedSupabase();
   
@@ -147,13 +149,13 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
     queryFn: async () => {
       if (!buId) return { data: [], count: 0 };
       
+      // Step 1: Fetch outbox items (without join since FK goes to auth.users, not profiles)
       let query = supabase
         .from('notification_outbox')
         .select(`
           id, bu_id, user_id, event_slug, channel_slug, 
           status, retries, max_retries, last_error, 
-          processed_at, created_at, dedupe_key,
-          recipient:profiles!notification_outbox_user_id_fkey(display_name, work_email)
+          processed_at, created_at, dedupe_key
         `)
         .eq('bu_id', buId)
         .order('created_at', { ascending: false })
@@ -170,20 +172,39 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
         query = query.eq('event_slug', filters.eventSlug);
       }
       
-      const { data, error } = await query;
+      const { data: outboxItems, error } = await query;
       
       if (error) throw error;
+      if (!outboxItems || outboxItems.length === 0) {
+        return { data: [], count: 0 };
+      }
       
-      // Map recipient data
-      const mappedData = (data ?? []).map(item => ({
-        ...item,
-        recipient: item.recipient 
-          ? { 
-              display_name: (item.recipient as any)?.display_name ?? null, 
-              email: (item.recipient as any)?.work_email ?? null 
-            }
-          : undefined,
-      })) as OutboxItem[];
+      // Step 2: Get unique auth user_ids and fetch profiles
+      const userIds = [...new Set(outboxItems.map(item => item.user_id).filter(Boolean))];
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, work_email')
+        .in('user_id', userIds);
+      
+      // Create lookup map: auth.users.id -> profile info
+      const profileMap = new Map<string, { display_name: string | null; work_email: string | null }>();
+      for (const p of profiles ?? []) {
+        if (p.user_id) {
+          profileMap.set(p.user_id, { display_name: p.display_name, work_email: p.work_email });
+        }
+      }
+      
+      // Step 3: Enrich outbox items with recipient info
+      const mappedData = outboxItems.map(item => {
+        const profile = item.user_id ? profileMap.get(item.user_id) : null;
+        return {
+          ...item,
+          recipient: profile 
+            ? { display_name: profile.display_name, email: profile.work_email }
+            : undefined,
+        };
+      }) as OutboxItem[];
       
       return { 
         data: mappedData, 
@@ -191,7 +212,7 @@ export function useNotificationOutbox(buId?: string, filters?: OutboxFilters) {
       };
     },
     enabled: !!buId,
-  })
+  });
 }
 
 // Hook for retrying failed outbox items
@@ -223,6 +244,8 @@ export function useRetryOutboxItem() {
 }
 
 // Hook for in-app notifications (admin view)
+// Note: notifications.user_id and actor_id reference auth.users.id, NOT profiles.id
+// We fetch profiles separately via user_id match
 export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
   const supabase = useBuScopedSupabase();
   
@@ -231,14 +254,13 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
     queryFn: async () => {
       if (!buId) return { data: [], count: 0 };
       
+      // Step 1: Fetch notifications (without join since FKs go to auth.users, not profiles)
       let query = supabase
         .from('notifications')
         .select(`
           id, user_id, bu_id, type, title, message,
           context_type, context_url, actor_id,
-          is_read, read_at, created_at, event_slug,
-          recipient:profiles!notifications_user_id_fkey(display_name),
-          actor:profiles!notifications_actor_id_fkey(display_name)
+          is_read, read_at, created_at, event_slug
         `)
         .eq('bu_id', buId)
         .order('created_at', { ascending: false })
@@ -249,18 +271,41 @@ export function useInAppNotifications(buId?: string, filters?: InAppFilters) {
         query = query.eq('is_read', filters.isRead);
       }
       
-      const { data, error } = await query;
+      const { data: notifications, error } = await query;
       
       if (error) throw error;
+      if (!notifications || notifications.length === 0) {
+        return { data: [], count: 0 };
+      }
       
-      // Map recipient/actor data
-      const mappedData = (data ?? []).map(item => ({
+      // Step 2: Get unique auth user_ids (both recipients and actors) and fetch profiles
+      const allUserIds = new Set<string>();
+      for (const n of notifications) {
+        if (n.user_id) allUserIds.add(n.user_id);
+        if (n.actor_id) allUserIds.add(n.actor_id);
+      }
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', [...allUserIds]);
+      
+      // Create lookup map: auth.users.id -> display_name
+      const profileMap = new Map<string, string | null>();
+      for (const p of profiles ?? []) {
+        if (p.user_id) {
+          profileMap.set(p.user_id, p.display_name);
+        }
+      }
+      
+      // Step 3: Enrich notifications with recipient/actor info
+      const mappedData = notifications.map(item => ({
         ...item,
-        recipient: item.recipient 
-          ? { display_name: (item.recipient as any)?.display_name ?? null }
+        recipient: item.user_id 
+          ? { display_name: profileMap.get(item.user_id) ?? null }
           : undefined,
-        actor: item.actor 
-          ? { display_name: (item.actor as any)?.display_name ?? null }
+        actor: item.actor_id 
+          ? { display_name: profileMap.get(item.actor_id) ?? null }
           : undefined,
       })) as InAppNotification[];
       
