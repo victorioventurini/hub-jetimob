@@ -14,7 +14,7 @@ import { useUrlState, parsers } from '@/shared/url';
 
 const statusConfig = {
   on_track: {
-    label: 'On Track',
+    label: 'No Ritmo',
     color: 'bg-green-500/10 text-green-700 border-green-200',
     icon: TrendingUp,
   },
@@ -24,7 +24,7 @@ const statusConfig = {
     icon: AlertTriangle,
   },
   off_track: {
-    label: 'Off Track',
+    label: 'Atrasado',
     color: 'bg-red-500/10 text-red-700 border-red-200',
     icon: XCircle,
   },
@@ -86,7 +86,7 @@ export default function OrgViewListPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-green-600">{stats.onTrack}</div>
-              <p className="text-sm text-muted-foreground">On Track</p>
+              <p className="text-sm text-muted-foreground">No Ritmo</p>
             </CardContent>
           </Card>
           <Card>
@@ -98,7 +98,7 @@ export default function OrgViewListPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-red-600">{stats.offTrack}</div>
-              <p className="text-sm text-muted-foreground">Off Track</p>
+              <p className="text-sm text-muted-foreground">Atrasado</p>
             </CardContent>
           </Card>
         </div>
