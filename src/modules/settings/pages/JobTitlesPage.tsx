@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useLocalSearch } from "@/shared/url";
+import { useLocalSearch, useUrlSearch } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HubPageHeader } from "@/components/hub/HubPageHeader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -60,6 +67,9 @@ export default function JobTitlesPage() {
 
   // Local state for instant feedback, synced with URL
   const { value: localSearch, setValue: setLocalSearch } = useLocalSearch("q");
+  const buFilterState = useUrlSearch("bu");
+  const buFilter = buFilterState.value || "all";
+  const setBuFilter = buFilterState.set;
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJobTitle, setEditingJobTitle] = useState<JobTitleWithUsageCount | null>(null);
@@ -85,13 +95,24 @@ export default function JobTitlesPage() {
 
   // Filter using local state for instant feedback
   const filteredJobTitles = useMemo(() => {
-    if (!localSearch) return jobTitles || [];
-    const lowerSearch = localSearch.toLowerCase();
-    return (jobTitles || []).filter((jt) =>
-      jt.name.toLowerCase().includes(lowerSearch) ||
-      jt.description?.toLowerCase().includes(lowerSearch)
-    );
-  }, [jobTitles, localSearch]);
+    let result = jobTitles || [];
+    
+    // Filter by BU
+    if (buFilter && buFilter !== "all") {
+      result = result.filter((jt) => jt.bu_ids?.includes(buFilter));
+    }
+    
+    // Filter by search term
+    if (localSearch) {
+      const lowerSearch = localSearch.toLowerCase();
+      result = result.filter((jt) =>
+        jt.name.toLowerCase().includes(lowerSearch) ||
+        jt.description?.toLowerCase().includes(lowerSearch)
+      );
+    }
+    
+    return result;
+  }, [jobTitles, localSearch, buFilter]);
 
   const handleEdit = (jobTitle: JobTitleWithUsageCount) => {
     setEditingJobTitle(jobTitle);
@@ -137,14 +158,29 @@ export default function JobTitlesPage() {
       <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between gap-4 mb-6">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou descrição..."
-                  value={localSearch}
-                  onChange={(e) => setLocalSearch(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex items-center gap-3 flex-1">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou descrição..."
+                    value={localSearch}
+                    onChange={(e) => setLocalSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={buFilter} onValueChange={setBuFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filtrar por BU" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as BUs</SelectItem>
+                    {allBus.map((bu) => (
+                      <SelectItem key={bu.id} value={bu.id}>
+                        {bu.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button onClick={() => setDialogOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -194,13 +230,24 @@ export default function JobTitlesPage() {
                       <TableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Badge variant="secondary" className="text-xs cursor-help">
-                              {jobTitle.bu_ids?.length || 0} BU{(jobTitle.bu_ids?.length || 0) !== 1 ? 's' : ''}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {(jobTitle.bu_ids || []).slice(0, 2).map((buId) => (
+                                <Badge key={buId} variant="secondary" className="text-xs">
+                                  {buNameMap[buId] || buId}
+                                </Badge>
+                              ))}
+                              {(jobTitle.bu_ids?.length || 0) > 2 && (
+                                <Badge variant="outline" className="text-xs cursor-help">
+                                  +{(jobTitle.bu_ids?.length || 0) - 2}
+                                </Badge>
+                              )}
+                            </div>
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-xs">
-                            <p className="text-sm">{getBuNames(jobTitle.bu_ids || [])}</p>
-                          </TooltipContent>
+                          {(jobTitle.bu_ids?.length || 0) > 2 && (
+                            <TooltipContent side="right" className="max-w-xs">
+                              <p className="text-sm">{getBuNames(jobTitle.bu_ids || [])}</p>
+                            </TooltipContent>
+                          )}
                         </Tooltip>
                       </TableCell>
                       <TableCell className="text-center">
