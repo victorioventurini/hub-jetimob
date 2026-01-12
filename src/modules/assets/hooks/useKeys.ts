@@ -199,6 +199,30 @@ export function useKeys(options: UseKeysOptions = {}) {
     },
   });
 
+  // Atualizar claviculário
+  const updateClavicularyMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; location_id?: string | null; notes?: string }) => {
+      const client = assertSupabaseClient(supabase, "updateClaviculary");
+      const { id, ...updateData } = data;
+      const { data: claviculary, error } = await client
+        .from("asset_clavicularies")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return claviculary;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      toast.success("Claviculário atualizado");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar claviculário");
+    },
+  });
+
   // Criar gancho
   const createHookMutation = useMutation({
     mutationFn: async (data: { claviculary_id: string; hook_number: number; notes?: string }) => {
@@ -381,12 +405,14 @@ export function useKeys(options: UseKeysOptions = {}) {
     getHooks,
     getKeyMovements,
     createClaviculary: createClavicularyMutation.mutate,
+    updateClaviculary: updateClavicularyMutation.mutate,
     createHook: createHookMutation.mutate,
     createHooks: createHooksMutation.mutate,
     createKeyring: createKeyringMutation.mutate,
     createKey: createKeyMutation.mutate,
     createKeyMovement: createKeyMovementMutation.mutate,
     isCreatingClaviculary: createClavicularyMutation.isPending,
+    isUpdatingClaviculary: updateClavicularyMutation.isPending,
     isCreatingHook: createHookMutation.isPending,
     isCreatingKeyring: createKeyringMutation.isPending,
     isCreatingKey: createKeyMutation.isPending,
