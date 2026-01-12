@@ -152,43 +152,12 @@ function PresetDetailSheet({
               Templates incluídos ({items.length})
             </h4>
 
-            {isLoading ? (
+          {isLoading ? (
               <LoadingState text="Carregando templates..." />
-            ) : items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum template configurado neste preset.
-              </p>
             ) : (
-              <ScrollArea className="h-64">
-                <div className="space-y-2">
-                  {items.map((item) => {
-                    const template = (item as unknown as { permission_templates_v2?: { name: string; slug: string; surface?: string; module?: string } }).permission_templates_v2;
-                    if (!template) return null;
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="border rounded-md p-3"
-                      >
-                        <div className="font-medium text-sm">{template.name}</div>
-                        <code className="text-xs text-muted-foreground font-mono">
-                          {template.slug}
-                        </code>
-                        <div className="flex gap-1 mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {template.module || "global"}
-                          </Badge>
-                          {template.surface && (
-                            <Badge variant="secondary" className="text-xs">
-                              {template.surface}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+              <p className="text-sm text-muted-foreground">
+                Sistema de preset-items em redesenho. Os templates serão vinculados diretamente via array no preset.
+              </p>
             )}
           </div>
         </div>
