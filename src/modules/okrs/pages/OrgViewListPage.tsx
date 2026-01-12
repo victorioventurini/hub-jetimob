@@ -111,7 +111,7 @@ export default function OrgViewListPage() {
             <Skeleton className="h-32 w-full" />
           </div>
         ) : objectives && objectives.length > 0 ? (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {objectives.map(objective => {
               const config = statusConfig[objective.aggregatedStatus];
               const StatusIcon = config.icon;

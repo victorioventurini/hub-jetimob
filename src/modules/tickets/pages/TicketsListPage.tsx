@@ -155,7 +155,7 @@ export default function TicketsListPage() {
               onAction={() => navigate("/tickets/new")}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {displayTickets.map((ticket) => (
                 <TicketCard key={ticket.id} ticket={ticket} />
               ))}
