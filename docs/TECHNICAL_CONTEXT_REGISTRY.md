@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.25.0  
+**Versão:** 2.26.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2148,6 +2148,32 @@ src/
 ### v2.23.0 (2026-01-12)
 - **Impersonation System v2.0** completo
 - **Identity Cutover v3.0** finalizado
+
+### v2.26.0 (2026-01-12)
+- **Sistema Vic Culture — Guardião da Cultura**:
+  - **Pool de mensagens reescrito**: Todas as 600+ frases agora limitadas a **60 caracteres**
+  - **`useCultureMessage` hook refatorado**:
+    - Usa agente IA "cultura" via `invoke("cultura", "dashboard-culture")` 
+    - Cache inteligente por turno (máx 3 chamadas/dia)
+    - Contexto rico: dia, turno, role, OKRs, pendências, ciclo
+    - Fallback robusto com seleção contextualizada do pool
+    - Truncamento automático para 60 caracteres
+  - **Novo hook `useGreetingSubtext`**:
+    - Gera subtexto contextualizado para saudação na home
+    - Considera: dia/turno, role, liderança, times, performance, aniversários
+    - Cache por turno + fallback inteligente
+    - Integra com agente IA para personalização
+  - **Arquivo `src/data/cultureMessages.ts`**:
+    - 14 categorias temáticas (simplicidade, cultura, execução, colaboração, etc.)
+    - 3 perfis (executive, leader, collaborator)
+    - Mensagens por momento (segunda-sexta, início/fim de ciclo)
+    - Mensagens por turno (manhã, tarde, noite)
+    - Função `getContextualCultureMessage()` com pool ponderado
+- **Leader Detection em Permissões**:
+  - `useBuUsers` hook atualizado: inclui `is_team_leader` e `led_teams[]`
+  - Badge "Líder" com tooltip mostrando times liderados
+  - Query busca `teams.leader_user_id` comparando com `profile_id`
+  - Ordenação: líderes aparecem mais acima na lista de permissões
 
 ### v2.25.0 (2026-01-12)
 - **Wave 2 - Deprecações CONCLUÍDO**:
