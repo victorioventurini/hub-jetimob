@@ -16,7 +16,7 @@ import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
-
+import { UserImpersonationDialog } from "@/components/impersonation";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -93,6 +93,9 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
               <BuSelector />
             </div>
           )}
+
+          {/* Impersonation (super_admin only) */}
+          {role === 'super_admin' && <UserImpersonationDialog />}
 
           {/* Notifications */}
           <NotificationCenter />

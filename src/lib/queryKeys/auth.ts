@@ -22,6 +22,8 @@ export const identityKeys = {
   profile: (userId: string | null) => ['identity', 'profile', userId] as const,
   permissions: (buId: string | null, userId: string | null) => 
     ['identity', 'permissions', buId, userId] as const,
+  impersonatedPermissions: (buId: string | null, targetUserId: string | null) => 
+    ['identity', 'permissions', 'impersonated', buId, targetUserId] as const,
   modules: (userId: string | null, buId: string | null) => 
     ['identity', 'modules', userId, buId] as const,
 } as const;
