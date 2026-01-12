@@ -14,6 +14,7 @@ export interface GlobalUser {
   user_id: string | null;
   display_name: string | null;
   work_email: string | null;
+  user_type: 'internal' | 'external' | null;
   onboarding_completed: boolean | null;
   primary_bu_id: string | null;
   primary_bu_name: string | null;
@@ -22,8 +23,11 @@ export interface GlobalUser {
   bu_accesses: BuAccess[];
 }
 
+export type UserTypeFilter = 'all' | 'internal' | 'external';
+
 export interface GlobalUserFilters {
   q?: string;
   buId?: string;
   onboardingStatus?: 'all' | 'completed' | 'pending';
+  userType?: UserTypeFilter;
 }
