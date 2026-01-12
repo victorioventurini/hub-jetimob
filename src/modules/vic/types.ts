@@ -7,7 +7,8 @@ export type VicAgentSlug =
   | "facilitador-decisoes"
   | "alinhamento-estrategico"
   | "revisor-comunicacao"
-  | "onboarding-buddy";
+  | "onboarding-buddy"
+  | "coach-produtividade";
 
 export type VicActionContext =
   | "dashboard-culture"
@@ -30,7 +31,8 @@ export type VicActionContext =
   | "onboarding-welcome"
   | "onboarding-questions"
   | "decision-structure"
-  | "vic-test-page";
+  | "vic-test-page"
+  | "dashboard-productivity";
 
 export interface VicContext {
   type: string;
@@ -130,5 +132,10 @@ export const VIC_AGENTS: Record<VicAgentSlug, { name: string; description: strin
     name: "Onboarding Buddy",
     description: "Ajuda novos Jetimobers a se integrar",
     icon: "Handshake",
+  },
+  "coach-produtividade": {
+    name: "Coach de Produtividade",
+    description: "Gera dicas personalizadas baseadas no contexto do usuário",
+    icon: "Lightbulb",
   },
 };
