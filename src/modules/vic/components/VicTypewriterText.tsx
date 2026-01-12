@@ -313,13 +313,14 @@ export function VicStreamingText({
 
         // Alvo: completar rápido quando veio tudo de uma vez,
         // e acompanhar suave quando está em streaming.
-        const targetTicks = isStreaming ? 15 : 100; // Aumentado para ~20% mais lento
+        // targetTicks maior = mais lento (mais ticks para completar)
+        const targetTicks = isStreaming ? 30 : 80; // Streaming mais lento e suave
         const step = Math.max(1, Math.ceil(remaining / targetTicks));
 
         const nextLen = Math.min(text.length, current.length + step);
         return text.slice(0, nextLen);
       });
-    }, 15); // Aumentado de 12 para 15 (~20% mais lento)
+    }, 25); // Intervalo maior para digitação mais natural (era 15ms)
 
     return () => {
       if (intervalRef.current) {
