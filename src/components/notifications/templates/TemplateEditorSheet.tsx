@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { 
   NotificationTemplate, 
   useNotificationTemplateVariables,
@@ -81,14 +82,17 @@ export function TemplateEditorSheet({
     return extractTemplateVariables((body || '') + ' ' + (subject || ''));
   }, [body, subject]);
   
-  // Preview rendering
+  // Preview rendering with DOMPurify sanitization for XSS protection
   const previewHtml = useMemo(() => {
     let preview = body;
     for (const v of variables) {
       const regex = new RegExp(`\\{\\{${v.variable_key}\\}\\}`, 'g');
       preview = preview.replace(regex, v.example_value || `[${v.variable_label}]`);
     }
-    return preview;
+    return DOMPurify.sanitize(preview, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'div', 'span', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote', 'pre', 'code', 'hr'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style', 'src', 'alt', 'width', 'height'],
+    });
   }, [body, variables]);
   
   const previewSubject = useMemo(() => {
