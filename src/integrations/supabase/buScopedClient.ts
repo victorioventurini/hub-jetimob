@@ -34,8 +34,8 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
     },
   });
 
-  // Hydrate auth state ASAP (avoid first-query unauth race).
-  void client.auth.getSession();
+  // Session is shared via localStorage with the global client.
+  // No need to hydrate here - the shared storage handles it.
 
   buClientCache.set(buId, client);
   return client;

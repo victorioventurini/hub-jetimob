@@ -1,6 +1,6 @@
 // Users page with BU filtering and server-side pagination
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
@@ -10,6 +10,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -99,7 +100,9 @@ export default function UsersPage() {
   
   const { isWildcard, has } = usePermissions();
   const { currentBu, isLoading: isBuLoading } = useBu();
+  const { user, isLoading: authLoading } = useAuth();
   const supabase = useBuScopedSupabase();
+  const queryClient = useQueryClient();
   
   // Admin de BU ou super_admin podem gerenciar usuários via permission key
   const canManageUsers = isWildcard || has("users.profile.manage:bu");
@@ -160,6 +163,12 @@ export default function UsersPage() {
       status: statusFilter,
     }),
     queryFn: async ({ queryKey }): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
+      // Ensure session is loaded before making the RPC call
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.');
+      }
+      
       if (!currentBu?.id) return { profiles: [], total: 0 };
       
       // Extract filters from queryKey to ensure fresh values
@@ -235,7 +244,7 @@ export default function UsersPage() {
 
       return { profiles, total: totalCount };
     },
-    enabled: !!currentBu?.id,
+    enabled: !!currentBu?.id && !!user && !authLoading,
   });
 
   const profiles = profilesData?.profiles ?? [];
@@ -330,8 +339,15 @@ export default function UsersPage() {
         {profilesError && (
           <ErrorState
             title="Erro ao carregar usuários"
-            description="Não foi possível carregar a lista de usuários. Tente novamente."
+            description={
+              profilesError.message.includes('Sessão') 
+                ? profilesError.message 
+                : "Não foi possível carregar a lista de usuários."
+            }
             compact
+            onRetry={() => queryClient.invalidateQueries({ 
+              queryKey: queryKeys.users.all() 
+            })}
           />
         )}
 
