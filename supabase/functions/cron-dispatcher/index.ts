@@ -21,6 +21,8 @@ interface HealthResult {
 interface MaintenanceResult {
   counting_columns_initialized: boolean;
   wizard_sessions_cleaned: number;
+  agent_logs_cleaned: number;
+  cron_logs_cleaned: number;
 }
 
 interface ExecutionResult {
@@ -109,7 +111,12 @@ async function evaluateHealth(supabase: any): Promise<HealthResult> {
 
 // Run database maintenance tasks
 async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
-  const result: MaintenanceResult = { counting_columns_initialized: false, wizard_sessions_cleaned: 0 };
+  const result: MaintenanceResult = { 
+    counting_columns_initialized: false, 
+    wizard_sessions_cleaned: 0,
+    agent_logs_cleaned: 0,
+    cron_logs_cleaned: 0
+  };
 
   try {
     // Initialize counting columns (runs only if needed)
@@ -123,13 +130,36 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
   }
 
   try {
-    // Cleanup old wizard sessions
-    const { error: cleanupError } = await supabase.rpc("cleanup_old_wizard_sessions");
-    if (!cleanupError) {
-      console.log("[cron-dispatcher] Old wizard sessions cleaned");
+    // Cleanup old wizard sessions (7 days)
+    const { data: wizardCount, error: wizardError } = await supabase.rpc("cleanup_old_wizard_sessions");
+    if (!wizardError) {
+      result.wizard_sessions_cleaned = wizardCount || 0;
+      console.log(`[cron-dispatcher] Cleaned ${result.wizard_sessions_cleaned} old wizard sessions`);
     }
   } catch {
     console.log("[cron-dispatcher] cleanup_old_wizard_sessions RPC not available");
+  }
+
+  try {
+    // Cleanup old agent logs (90 days)
+    const { data: agentCount, error: agentError } = await supabase.rpc("cleanup_old_agent_logs");
+    if (!agentError) {
+      result.agent_logs_cleaned = agentCount || 0;
+      console.log(`[cron-dispatcher] Cleaned ${result.agent_logs_cleaned} old agent logs`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] cleanup_old_agent_logs RPC not available");
+  }
+
+  try {
+    // Cleanup old cron logs (30 days)
+    const { data: cronCount, error: cronError } = await supabase.rpc("cleanup_old_cron_logs");
+    if (!cronError) {
+      result.cron_logs_cleaned = cronCount || 0;
+      console.log(`[cron-dispatcher] Cleaned ${result.cron_logs_cleaned} old cron logs`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] cleanup_old_cron_logs RPC not available");
   }
 
   return result;
@@ -215,7 +245,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: { processed: 0, sent: 0, failed: 0 },
       health: { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 },
-      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0 },
+      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0 },
       duration_ms: Date.now() - startTime,
       ran_at: new Date().toISOString(),
     };
