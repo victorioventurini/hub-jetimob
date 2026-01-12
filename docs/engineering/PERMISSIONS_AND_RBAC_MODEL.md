@@ -1,9 +1,9 @@
 # Permissions & RBAC Model — Hub da Jet
 
-**Versão:** 1.1.0  
-**Data:** 2026-01-11  
-**Status:** Normativo (V2-only mode)  
-**Referência:** TCR v2.15.0, RBAC_TEMPLATES_V3.md
+**Versão:** 1.2.0  
+**Data:** 2026-01-12  
+**Status:** Normativo (V2-only mode) | RLS 100% migrado  
+**Referência:** TCR v2.24.0, RBAC_TEMPLATES_V3.md
 
 ---
 
@@ -220,23 +220,37 @@ $$;
 
 ## 6. Avaliação de Permissões
 
-### 6.1 No Backend (RLS)
+### 6.1 No Backend (RLS) — 100% V2 Migrado
+
+Todas as 79 tabelas do Hub agora usam RLS V2 com `has_permission()`:
 
 ```sql
--- Função principal de avaliação
+-- Função principal de avaliação (OBRIGATÓRIA para RLS)
+-- IMPORTANTE: Recebe profile_id, NÃO auth.uid()!
 CREATE FUNCTION has_permission(
-  p_user_id uuid,
+  p_profile_id uuid,
   p_bu_id uuid,
   p_permission_key text
 ) RETURNS boolean AS $$
-DECLARE
-  v_profile_id uuid;
 BEGIN
-  -- Converte user_id para profile_id
-  v_profile_id := profile_id_from_user_id(p_user_id);
-  
   -- Admin tem tudo
-  IF is_platform_admin(p_user_id) OR is_bu_admin(p_user_id, p_bu_id) THEN
+  IF EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN profiles p ON p.user_id = ur.user_id
+    WHERE p.id = p_profile_id
+      AND ur.role IN ('super_admin', 'admin')
+  ) THEN
+    RETURN true;
+  END IF;
+  
+  -- BU Admin tem tudo na BU
+  IF EXISTS (
+    SELECT 1 FROM bu_user_memberships m
+    JOIN profiles p ON p.user_id = m.user_id
+    WHERE p.id = p_profile_id
+      AND m.bu_id = p_bu_id
+      AND m.role_in_bu = 'admin'
+  ) THEN
     RETURN true;
   END IF;
   
@@ -244,7 +258,7 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM bu_user_permission_overrides o
     JOIN permission_catalog pc ON o.permission_id = pc.id
-    WHERE o.user_id = v_profile_id
+    WHERE o.user_id = p_profile_id
       AND o.bu_id = p_bu_id
       AND pc.key = p_permission_key
       AND o.effect = 'deny'
@@ -257,12 +271,48 @@ BEGIN
     SELECT 1 FROM bu_user_permission_templates_v2 ut
     JOIN permission_template_permissions_v2 tp ON ut.template_id = tp.template_id
     JOIN permission_catalog pc ON tp.permission_id = pc.id
-    WHERE ut.user_id = v_profile_id
+    WHERE ut.user_id = p_profile_id
       AND ut.bu_id = p_bu_id
       AND pc.key = p_permission_key
   );
 END;
-$$;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+```
+
+#### Padrões RLS V2 (OBRIGATÓRIOS)
+
+```sql
+-- SELECT: Qualquer membro da BU pode ler
+CREATE POLICY "Members can view" ON public.tabela
+  FOR SELECT USING (is_profile_bu_member(my_profile_id(), bu_id));
+
+-- INSERT: Requer permissão específica
+CREATE POLICY "Users with create permission" ON public.tabela
+  FOR INSERT WITH CHECK (
+    has_permission(my_profile_id(), bu_id, 'module.entity.create:scope')
+  );
+
+-- UPDATE: Requer permissão específica
+CREATE POLICY "Users with update permission" ON public.tabela
+  FOR UPDATE USING (
+    has_permission(my_profile_id(), bu_id, 'module.entity.update:scope')
+  );
+
+-- DELETE: Requer permissão específica
+CREATE POLICY "Users with delete permission" ON public.tabela
+  FOR DELETE USING (
+    has_permission(my_profile_id(), bu_id, 'module.entity.delete:scope')
+  );
+```
+
+#### Tabelas Globais (sem bu_id)
+
+```sql
+-- Para tabelas globais, usar scope :global
+CREATE POLICY "Platform admins only" ON public.global_table
+  FOR ALL USING (
+    has_permission(my_profile_id(), null, 'admin.global_table.manage:global')
+  );
 ```
 
 ### 6.2 No Frontend
