@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, GitBranch, Building2, Users, Network, Layers3, Box } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { PageHeader } from "@/components/ui/page-header";
+import { TeamsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useTeams, useTeamTree, useTeamStats } from "../hooks/useTeams";
 import { useSquads } from "../hooks/useSquads";
 import { TeamFormDialog } from "../components/TeamFormDialog";
@@ -162,17 +164,12 @@ export default function TeamsPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Estrutura Organizacional</h1>
-            <p className="text-muted-foreground">
-              Times, Sub-times e Squads
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {canCreateTeams && <TeamFormDialog />}
-          </div>
-        </div>
+        <TeamsBreadcrumb />
+        <PageHeader
+          title="Estrutura Organizacional"
+          description="Times, Sub-times e Squads"
+          actions={canCreateTeams && <TeamFormDialog />}
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
