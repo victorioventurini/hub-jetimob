@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.23.0  
+**Versão:** 2.24.0  
 **Última atualização:** 2026-01-12
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Impersonation System v2.0 ativo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Impersonation System v2.0 ativo | RLS V2 100% migrado
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2115,6 +2115,33 @@ src/
   - `EmptyState` - Estado vazio com CTA
   - `FilterBar`, `FilterSection` - Barra de filtros reutilizável
   - `PageHeader` - Cabeçalho de página padronizado
+
+### v2.24.0 (2026-01-12)
+- **RLS V2 Migration - 100% Completo**:
+  - Todas as 79 tabelas migradas para RLS V2 usando `has_permission()` e `is_profile_bu_member()`
+  - **Módulos migrados**:
+    | Módulo | Tabelas | Status |
+    |--------|---------|--------|
+    | Assets | 14 | ✅ 100% |
+    | OKRs | 12 | ✅ 100% |
+    | KPIs | 2 | ✅ 100% |
+    | Tickets | 8 | ✅ 100% |
+    | Teams | 5 | ✅ 100% |
+    | Profiles | 1 | ✅ 100% |
+    | Notifications | 2 | ✅ 100% |
+    | Automations | 4 | ✅ 100% |
+    | Partners | 4 | ✅ 100% |
+    | AI/Agents | 6 | ✅ 100% |
+    | BU Config | 8 | ✅ 100% |
+    | Global/Infra | 13 | ✅ 100% |
+  - **Funções legadas removidas**: Todas as policies agora usam `has_permission(my_profile_id(), bu_id, 'key:scope')` em vez de `has_role()`, `is_bu_admin()`, `is_platform_admin()` direto
+  - **Padrão SELECT**: `is_profile_bu_member(my_profile_id(), bu_id)` para leitura
+  - **Padrão INSERT/UPDATE/DELETE**: `has_permission(my_profile_id(), bu_id, 'module.entity.action:scope')`
+  - Cleanup de policies legadas duplicadas
+
+### v2.23.0 (2026-01-12)
+- **Impersonation System v2.0** completo
+- **Identity Cutover v3.0** finalizado
 
 ### v2.22.0 (2026-01-12)
 - **Technical Debt Sprint P1-P3**:

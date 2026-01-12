@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.3.0  
+**Versão:** 1.4.0  
 **Última atualização:** 2026-01-12  
-**Status:** Normativo (V2-only mode ativo)
-**Referência:** TCR v2.23.0
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2
+**Referência:** TCR v2.24.0
 
 ---
 
@@ -354,23 +354,41 @@ if (hasAny([
 
 > ⚠️ O escopo real é aplicado por RLS + funções como `user_can_manage_team()`. A permission key indica a intenção, RLS garante o enforcement.
 
-### C.6 RLS: Usar has_permission()
+### C.6 RLS: Usar has_permission() — 100% V2 Migrado
+
+Todas as 79 tabelas do Hub agora usam RLS V2:
 
 ```sql
--- ✅ CORRETO: Verificar permissão via função
+-- ✅ CORRETO V2: SELECT com membership check
+CREATE POLICY "Members can view"
+ON public.okr_initiatives FOR SELECT
+USING (is_profile_bu_member(my_profile_id(), bu_id));
+
+-- ✅ CORRETO V2: INSERT/UPDATE/DELETE com permission check
+-- IMPORTANTE: Usar my_profile_id(), NÃO auth.uid()!
 CREATE POLICY "Users with create permission"
 ON public.okr_initiatives FOR INSERT
 WITH CHECK (
-  has_permission(auth.uid(), current_bu_id(), 'okrs.initiative.create')
+  has_permission(my_profile_id(), bu_id, 'okrs.initiative.create:bu')
 );
 
--- ❌ ERRADO: Verificar role diretamente
-WITH CHECK (
-  role_in_bu = 'admin' -- Hardcode!
-);
+-- ❌ ERRADO (LEGADO - NÃO USAR MAIS):
+WITH CHECK (is_bu_admin(auth.uid(), bu_id));  -- Função legada!
+WITH CHECK (has_role(auth.uid(), 'admin'));   -- Função legada!
+WITH CHECK (role_in_bu = 'admin');            -- Hardcode!
 ```
 
+#### Padrão de Permission Keys em RLS
+
+| Tipo | Padrão | Exemplo |
+|------|--------|---------|
+| BU-scoped | `module.entity.action:bu` | `okrs.initiative.create:bu` |
+| Team-scoped | `module.entity.action:team` | `okrs.team_kr.update:team` |
+| Self/Owner | `module.entity.action:self_or_owner` | `okrs.checkin.create:self_or_owner` |
+| Global | `module.entity.action:global` | `admin.settings.manage:global` |
+
 > 📚 Ver: [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md)
+> 📚 Ver: [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md)
 
 ---
 

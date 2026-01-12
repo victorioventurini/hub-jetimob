@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-01-12  
-**TCR Version:** 2.22.0
+**TCR Version:** 2.24.0
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.22.0 |
+| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.24.0 |
 
 ---
 
@@ -49,8 +49,9 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [HEALTH_REPORT_2026-01-11.md](./HEALTH_REPORT_2026-01-11.md) | **Relatório atual de saúde técnica** | ✅ Atual |
-| [AUDIT_REPORT_2026-01-11_v3.md](./AUDIT_REPORT_2026-01-11_v3.md) | Último relatório de auditoria completa | ✅ Atual |
+| [HEALTH_REPORT_2026-01-12.md](./HEALTH_REPORT_2026-01-12.md) | **Relatório atual de saúde técnica** | ✅ Atual |
+| [RLS_V2_MIGRATION_FINAL_REPORT.md](./RLS_V2_MIGRATION_FINAL_REPORT.md) | **Relatório final da migração RLS V2** | ✅ Atual |
+| [AUDIT_REPORT_2026-01-11_v3.md](./AUDIT_REPORT_2026-01-11_v3.md) | Último relatório de auditoria completa | ✅ Histórico |
 | [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts de audit | ✅ Normativo |
 | [FINAL_COMPLIANCE_CHECKLIST.md](./FINAL_COMPLIANCE_CHECKLIST.md) | Checklist final de conformidade | ✅ Ativo |
 | [SYSTEM_STATE_FINAL_REPORT.md](./SYSTEM_STATE_FINAL_REPORT.md) | Estado final do sistema após consolidação | ✅ Ativo |
