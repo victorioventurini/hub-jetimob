@@ -144,15 +144,33 @@ export function useCreateTeamOkrBundle() {
         }
       }
 
-      // 4. Create dependencies (if table exists)
+      // 4. Create dependencies
       if (input.dependencies && input.dependencies.length > 0) {
         for (const dep of input.dependencies) {
           const krId = krIds[dep.kr_index];
           if (!krId) continue;
 
-          // Note: okr_dependencies table might need to be created
-          // For now, we store as metadata
-          // TODO: Implement when okr_dependencies table is available
+          // Constraint: precisa de team OU kr
+          if (!dep.depends_on_team_id && !dep.depends_on_kr_id) continue;
+
+          const { data: depData, error: depError } = await supabase
+            .from('okr_dependencies')
+            .insert({
+              kr_id: krId,
+              depends_on_team_id: dep.depends_on_team_id || null,
+              depends_on_kr_id: dep.depends_on_kr_id || null,
+              description: dep.description || null,
+              status: 'ok',
+            })
+            .select('id')
+            .single();
+
+          if (depError) {
+            console.error('Error creating dependency:', depError);
+            // Non-blocking: continue with other deps
+          } else {
+            dependencyIds.push(depData.id);
+          }
         }
       }
 
@@ -190,12 +208,13 @@ export function useCreateTeamOkrBundle() {
         initiativeIds,
       };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       // Use prefix helpers for broad invalidation
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
+      queryClient.invalidateQueries({ queryKey: ['cross-dependencies'] });
       
       toast.success('OKRs do time criados com sucesso!');
     },
