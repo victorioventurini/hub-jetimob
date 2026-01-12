@@ -307,20 +307,7 @@ export function InventoryDetailView() {
       {/* Header - usando PageHeader canônico */}
       <PageHeader
         title={item.name}
-        description={
-          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-            <Tag className="h-4 w-4" />
-            <span>{item.internal_code}</span>
-            {item.category && (
-              <>
-                <span className="hidden sm:inline">•</span>
-                <span>{item.category.name}</span>
-              </>
-            )}
-          </div>
-        }
-        backTo="/assets/inventory"
-        backLabel="Inventário"
+        description={`${item.internal_code}${item.category ? ` • ${item.category.name}` : ''}`}
         actions={
           <div className="flex items-center gap-2">
             <Button
