@@ -1,643 +1,137 @@
 /**
+ * Query Keys - Re-export file
+ * 
+ * ============================================================
+ * MODULARIZED QUERY KEYS
+ * ============================================================
+ * 
+ * As chaves foram organizadas em arquivos separados por domínio:
+ * - auth.ts: Auth, Profiles, Identity, Onboarding
+ * - okrs.ts: OKRs, KPIs
+ * - assets.ts: Assets (Inventory, Keys, Gifts)
+ * - tickets.ts: Tickets
+ * - notifications.ts: Notifications
+ * - teams.ts: Teams, Squads
+ * - bu.ts: BU, Settings
+ * - integrations.ts: Integrations, Automations, Vic
+ * - permissions.ts: Permissions
+ * - misc.ts: Home, Search, External, Users, Mentions
+ * 
+ * Para uso direto de um módulo específico:
+ * import { okrsKeys } from '@/lib/queryKeys/okrs';
+ * 
+ * Para uso do objeto unificado (retrocompatível):
+ * import { queryKeys } from '@/lib/queryKeys';
+ */
+
+// Re-export individual modules for direct usage
+export * from './queryKeys/auth';
+export * from './queryKeys/okrs';
+export * from './queryKeys/assets';
+export * from './queryKeys/tickets';
+export * from './queryKeys/notifications';
+export * from './queryKeys/teams';
+export * from './queryKeys/bu';
+export * from './queryKeys/integrations';
+export * from './queryKeys/permissions';
+export * from './queryKeys/misc';
+
+// Import all modules for unified object
+import { 
+  authKeys, 
+  profilesKeys, 
+  identityKeys, 
+  onboardingKeys, 
+  myProfileKeys, 
+  publicProfileKeys 
+} from './queryKeys/auth';
+import { okrsKeys, kpisKeys } from './queryKeys/okrs';
+import { assetsKeys } from './queryKeys/assets';
+import { ticketsKeys } from './queryKeys/tickets';
+import { 
+  notificationsKeys, 
+  hubNotificationsKeys, 
+  notificationAdminKeys 
+} from './queryKeys/notifications';
+import { 
+  teamsKeys, 
+  squadsKeys, 
+  managersKeys, 
+  teamManagementKeys 
+} from './queryKeys/teams';
+import { buKeys, settingsKeys, modulesPageKeys } from './queryKeys/bu';
+import { 
+  integrationsKeys, 
+  automationsKeys, 
+  cronJobKeys, 
+  vicKeys 
+} from './queryKeys/integrations';
+import { permissionsKeys } from './queryKeys/permissions';
+import { 
+  homeKeys, 
+  searchKeys, 
+  externalKeys, 
+  usersKeys, 
+  mentionsKeys, 
+  cyclesKeys 
+} from './queryKeys/misc';
+
+/**
  * Centralized TanStack Query Keys
  * 
  * Pattern: ['module', 'entity', buId, ...filters]
  * Always include buId when the data is scoped by BU
+ * 
+ * @deprecated Para novos usos, importe diretamente os módulos específicos.
+ * Exemplo: import { okrsKeys } from '@/lib/queryKeys/okrs';
  */
-
 export const queryKeys = {
-  // ============= Auth & Profiles =============
-  auth: {
-    identity: (userId: string | null) => ['auth', 'identity', userId] as const,
-    onboardingCheck: (userId: string | null) => ['auth', 'onboarding-check', userId] as const,
-    userRole: (userId: string | null) => ['auth', 'user-role', userId] as const,
-  },
-
-  profiles: {
-    all: (buId: string | null) => ['profiles', buId] as const,
-    list: (buId: string | null, filters?: Record<string, unknown>) => 
-      ['profiles', 'list', buId, filters] as const,
-    detail: (userId: string) => ['profiles', 'detail', userId] as const,
-    hoverCard: (userId: string) => ['profiles', 'hover-card', userId] as const,
-    me: () => ['profiles', 'me'] as const,
-    buProfiles: (buId: string | null) => ['profiles', 'bu', buId] as const,
-    buMembers: (buId: string | null) => ['profiles', 'bu-members', buId] as const,
-  },
-
-  // ============= Notifications =============
-  notifications: {
-    all: (userId?: string | null) => userId ? ['notifications', userId] as const : ['notifications'] as const,
-    unread: (userId: string) => ['notifications', 'unread', userId] as const,
-    count: (userId: string) => ['notifications', 'count', userId] as const,
-    settings: (userId: string, buId: string) => ['notifications', 'settings', userId, buId] as const,
-    events: () => ['notifications', 'events'] as const,
-    channels: () => ['notifications', 'channels'] as const,
-    buChannels: (buId: string | null) => ['notifications', 'bu-channels', buId] as const,
-    buEventSettings: (buId: string | null) => ['notifications', 'bu-event-settings', buId] as const,
-    outbox: (buId: string | null, filters?: { status?: string; channel?: string }) => 
-      ['notifications', 'outbox', buId, filters] as const,
-    inAppLogs: (buId: string | null, filters?: { read?: boolean }) => 
-      ['notifications', 'in-app-logs', buId, filters] as const,
-    // Phase 4: SLO & Health
-    sloByChannel: (period: '7d' | '30d') => ['notifications', 'slo-by-channel', period] as const,
-    sloByEvent: (period: '7d' | '30d') => ['notifications', 'slo-by-event', period] as const,
-    sloSummary: () => ['notifications', 'slo-summary-7d'] as const,
-    healthAlerts: () => ['notifications', 'health-alerts'] as const,
-    healthRunbooks: () => ['notifications', 'health-runbooks'] as const,
-    alertActions: (alertId: string) => ['notifications', 'alert-actions', alertId] as const,
-    // Phase 5: Templates
-    templates: {
-      list: (buId: string | null, filters?: { channel?: string; eventSlug?: string }) => 
-        ['notifications', 'templates', 'list', buId, filters] as const,
-      detail: (templateId: string) => ['notifications', 'templates', 'detail', templateId] as const,
-      versions: (templateId: string) => ['notifications', 'templates', 'versions', templateId] as const,
-      variables: (eventSlug: string | null) => ['notifications', 'templates', 'variables', eventSlug] as const,
-      audit: (templateId: string) => ['notifications', 'templates', 'audit', templateId] as const,
-    },
-  },
-
-  // ============= Teams =============
-  teams: {
-    all: (buId: string | null) => ['teams', buId] as const,
-    list: (buId: string | null, includeInactive = false) => ['teams', 'list', buId, includeInactive] as const,
-    detail: (teamId: string | undefined) => ['team', teamId] as const,
-    members: (teamId: string) => ['teams', 'members', teamId] as const,
-    availableLeaders: (buId: string | null) => ['available-leaders', buId] as const,
-  },
-
-  squads: {
-    all: (buId: string | null) => ['squads', buId] as const,
-    byTeam: (teamId: string) => ['squads', 'byTeam', teamId] as const,
-    detail: (squadId: string) => ['squads', 'detail', squadId] as const,
-  },
-
-  // ============= OKRs =============
-  okrs: {
-    // ── Prefix helpers for broad invalidation ──
-    /** Invalidate all org objectives queries (all years, all BUs) */
-    orgObjectivesPrefix: () => ['okr-org-objectives'] as const,
-    /** Invalidate all org KRs queries */
-    orgKeyResultsPrefix: () => ['okr-org-key-results'] as const,
-    /** Invalidate all team objectives queries (all teams, all BUs) */
-    teamObjectivesPrefix: () => ['okr-team-objectives'] as const,
-    /** Invalidate all team KRs queries */
-    teamKeyResultsPrefix: () => ['okr-team-key-results'] as const,
-    /** Invalidate all dashboard data queries */
-    dashboardDataPrefix: () => ['okr-dashboard-data'] as const,
-    
-    // Org level
-    orgObjectives: (buId: string | null, year?: number) => 
-      ['okr-org-objectives', buId, year] as const,
-    orgObjectivesWithKrs: (buId: string | null, year?: number) => 
-      ['okr-org-objectives-with-krs', buId, year] as const,
-    orgObjective: (id: string) => ['okr-org-objective', id] as const,
-    orgObjectiveView: (objectiveId: string, buId: string | null) => 
-      ['org-objective-view', objectiveId, buId] as const,
-    orgKeyResults: (buId: string | null, objectiveId?: string) => 
-      ['okr-org-key-results', buId, objectiveId] as const,
-    orgKeyResultsAllBu: (buId: string | null) => 
-      ['okr-all-org-key-results', buId] as const,
-    allOrgObjectivesView: (year: number, buId: string | null) => 
-      ['all-org-objectives-view', year, buId] as const,
-    
-    // Team level
-    teamObjectives: (buId: string | null, teamId?: string) => 
-      ['okr-team-objectives', buId, teamId] as const,
-    teamObjectivesWithKrs: (buId: string | null, teamId?: string) => 
-      ['okr-team-objectives-with-krs', buId, teamId] as const,
-    teamObjectivesWithShared: (buId: string | null, teamId?: string) => 
-      ['okr-team-objectives-with-shared', buId, teamId] as const,
-    teamKeyResults: (buId: string | null, teamId?: string) => 
-      ['okr-team-key-results', buId, teamId] as const,
-    myTeamKeyResults: (buId: string | null, userId?: string) => 
-      ['okr-my-team-key-results', buId, userId] as const,
-    
-    // Check-ins
-    checkins: (krId: string) => ['okr-checkins', krId] as const,
-    latestCheckin: () => ['okr-latest-checkin'] as const,
-    pendingCheckins: (buId: string | null, teamId?: string) => 
-      ['pending-checkins', buId, teamId] as const,
-    checkinSummary: (buId: string | null) => 
-      ['checkin-summary', buId] as const,
-    
-    // Contributions
-    contributions: (entityType?: string, entityId?: string) => 
-      entityType && entityId 
-        ? ['okr-contributions', entityType, entityId] as const
-        : ['okr-contributions'] as const,
-    teamContributions: (teamId: string) => 
-      ['okr-team-contributions', teamId] as const,
-    teamContributedOkrs: (teamId: string | null) => 
-      ['team-contributed-okrs', teamId] as const,
-    teamContributionView: (teamId: string | null, buId: string | null) => 
-      ['team-contribution-view', teamId, buId] as const,
-    sharedSummary: () => 
-      ['shared-okrs-summary'] as const,
-    objectiveContributors: (objectiveId: string | null) =>
-      ['okr-objective-contributors', objectiveId] as const,
-    teamContributedObjectives: (teamId: string | null) =>
-      ['okr-team-contributed-objectives', teamId] as const,
-    teamObjectivesAll: () =>
-      ['okr-team-objectives'] as const,
-    teamObjectivesWithKrsAll: () =>
-      ['okr-team-objectives-with-krs'] as const,
-    
-    // KR Metrics
-    krMetrics: (krId: string, krType: string) => 
-      ['okr-kr-metrics', krId, krType] as const,
-    krMetricsRole: (role: string, krId: string, krType: string) => 
-      ['okr-kr-metrics', role, krId, krType] as const,
-    
-    // Initiatives
-    initiatives: (krId: string) => ['okr-initiatives', krId] as const,
-    initiativeDetail: (id: string) => ['okr-initiative', id] as const,
-    initiativesCount: (krId: string) => ['okr-initiatives', 'count', krId] as const,
-    initiativesByUser: (profileId: string | null) => ['okr-initiatives', 'user', profileId] as const,
-    initiativesByStatus: (buId: string | null, status?: string) => ['okr-initiatives', 'status', buId, status] as const,
-    initiativesAll: () => ['okr-initiatives'] as const,
-    initiativesByKrs: (krIds: string[]) => ['wizard-initiatives', krIds] as const,
-    
-    // Cycles & Settings
-    settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,
-    cyclesList: (buId: string | null) => ['cycles-list', buId] as const,
-    cycleDetail: (cycleId: string | null) => ['okr-cycle', cycleId] as const,
-    
-    // Health & Insights
-    health: (buId: string | null, objectiveType: string, objectiveId: string | null) =>
-      ['okr-health', buId, objectiveType, objectiveId] as const,
-    insights: (buId: string | null, scopeType?: string, scopeId?: string | null) =>
-      scopeType && scopeId 
-        ? ['okr-insights', buId, scopeType, scopeId] as const
-        : ['okr-insights', buId] as const,
-    riskObjectives: (buId: string | null, limit?: number) =>
-      ['okr-risk-objectives', buId, limit] as const,
-    dashboardInsights: (buId: string | null, limit?: number) =>
-      ['okr-dashboard-insights', buId, limit] as const,
-    
-    // Dashboard
-    dashboard: (buId: string | null, teamId?: string) => 
-      ['okr-dashboard', buId, teamId] as const,
-    dashboardData: (buId: string | null, year?: number, view?: string, teamId?: string) =>
-      ['okr-dashboard-data', buId, year, view, teamId] as const,
-    
-    // Cycle Check-ins Page
-    cycleCheckins: (buId: string | null, cycleId?: string, filters?: Record<string, unknown>) => 
-      ['okr-cycle-checkins', buId, cycleId, filters] as const,
-    
-    // Timeline
-    objectiveTimeline: (buId: string | null, objectiveId: string, objectiveType: string) =>
-      ['objective-timeline', buId, objectiveId, objectiveType] as const,
-    objectiveTimelineLast: (buId: string | null, objectiveId: string, objectiveType: string) =>
-      ['objective-timeline-last', buId, objectiveId, objectiveType] as const,
-    
-    // Cancellation reasons
-    cancellationReasons: (buId: string | null) =>
-      ['okr-cancellation-reasons', buId] as const,
-    
-    // User profile for check-in
-    userProfileForCheckin: (userId: string | null, buId: string | null) =>
-      ['user-profile-for-checkin', userId, buId] as const,
-    userProfileForWizard: (userId: string | null, buId: string | null) =>
-      ['user-profile-for-wizard', userId, buId] as const,
-    
-    // Team objective detail
-    teamObjectiveDetail: (objectiveId: string) =>
-      ['okr-team-objective', objectiveId] as const,
-    
-    // Org KRs for linking
-    orgKeyResultsForLinking: (orgObjectiveId: string | null) =>
-      ['okr-org-key-results', orgObjectiveId] as const,
-    
-    // Wizard sessions
-    wizardSession: (userId: string | null) =>
-      ['okr-wizard-session', userId] as const,
-
-    // Wizard drafts (global per user for team OKR creation)
-    wizardDraft: (userId: string) =>
-      ['okr-wizard-draft', userId] as const,
-
-    // Generic wizard drafts (global per user per wizard type)
-    wizardDraftGeneric: (userId: string, wizardType: string) =>
-      ['okr-wizard-draft-generic', userId, wizardType] as const,
-
-    // Wizard data
-    wizardUserKrs: (
-      buId: string | null,
-      cycleId: string | null,
-      userProfileId: string | null,
-      filter: string
-    ) => ['okr-wizard-user-krs', buId, cycleId, userProfileId, filter] as const,
-    wizardTeamKrs: (
-      buId: string | null, 
-      cycleId: string | null, 
-      teamIds: string[], 
-      filter: string
-    ) => ['okr-wizard-krs', buId, cycleId, teamIds, filter] as const,
-    
-    // Team Overview Metrics (Leader Wizard)
-    teamOverviewMetrics: (
-      buId: string | null, 
-      cycleId: string | null, 
-      teamIds: string[]
-    ) => ['okr-team-overview-metrics', buId, cycleId, teamIds] as const,
-    
-    // KR History
-    krCheckinHistory: (buId: string | null, krId: string | null) =>
-      ['kr-checkin-history', buId, krId] as const,
-    krLinkedKpis: (krId: string, krType: string) =>
-      ['kr-linked-kpis', krId, krType] as const,
-    krGuardrailHistories: (kpiIds: string[]) =>
-      ['kr-guardrail-histories', kpiIds] as const,
-    
-    // Manageable Teams
-    manageableTeams: (buId: string | null, userId: string | null) =>
-      ['okr-manageable-teams', buId, userId] as const,
-    myTeamId: (buId: string | null, userId: string | null) =>
-      ['my-team-id', buId, userId] as const,
-      
-    // Org KRs
-    orgKeyResultsAll: () => ['okr-org-key-results'] as const,
-  },
-
-
-  // ============= KPIs =============
-  kpis: {
-    all: (buId: string | null) => ['kpis', buId] as const,
-    list: (buId: string | null, filters?: Record<string, unknown>) => 
-      ['kpis', 'list', buId, filters] as const,
-    detail: (kpiId: string) => ['kpis', 'detail', kpiId] as const,
-    values: (kpiId: string) => ['kpis', 'values', kpiId] as const,
-    sources: (buId: string | null) => ['kpis', 'sources', buId] as const,
-    categories: (buId: string | null) => ['kpis', 'categories', buId] as const,
-  },
-
-  // ============= Assets =============
-  assets: {
-    // Inventory
-    inventory: {
-      all: (buId: string | null) => ['assets', 'inventory', buId] as const,
-      list: (buId: string | null, filters?: Record<string, unknown>) => 
-        ['assets', 'inventory', 'list', buId, filters] as const,
-      detail: (assetId: string) => ['assets', 'inventory', 'detail', assetId] as const,
-      movements: (assetId: string) => ['assets', 'inventory', 'movements', assetId] as const,
-    },
-    
-    // Groups/Kits
-    groups: {
-      all: (buId: string | null) => ['assets', 'groups', buId] as const,
-      detail: (groupId: string) => ['assets', 'groups', 'detail', groupId] as const,
-      items: (groupId: string) => ['assets', 'groups', 'items', groupId] as const,
-      byAsset: (assetId: string) => ['assets', 'groups', 'byAsset', assetId] as const,
-    },
-    
-    // Keys
-    keys: {
-      all: (buId: string | null) => ['asset-keys', buId] as const,
-      keyrings: (buId: string | null, filters?: { search?: string }) => 
-        ['asset-keyrings', buId, filters] as const,
-      clavicularies: (buId: string | null) => ['asset-clavicularies', buId] as const,
-      movements: (keyringId: string) => ['assets', 'keys', 'movements', keyringId] as const,
-    },
-    
-    // Gifts
-    gifts: {
-      all: (buId: string | null) => ['assets', 'gifts', buId] as const,
-      items: (buId: string | null, filters?: { search?: string }) => 
-        ['asset-gift-items', buId, filters] as const,
-      batches: (buId: string | null) => ['asset-gift-batches', buId] as const,
-      movements: (itemId: string) => ['assets', 'gifts', 'movements', itemId] as const,
-    },
-    
-    // Shared
-    categories: (buId: string | null) => ['assets', 'categories', buId] as const,
-    locations: (buId: string | null) => ['assets', 'locations', buId] as const,
-    locationsOptions: (buId: string | null) => ['assets', 'locations-options', buId] as const,
-    permissions: (buId: string | null) => ['assets', 'permissions', buId] as const,
-    profilesForPermissions: (buId: string | null) => ['profiles-for-assets-permissions', buId] as const,
-  },
-
-  // ============= Tickets =============
-  tickets: {
-    all: (buId: string | null) => ['tickets', buId] as const,
-
-    /** Prefix helper to invalidate all ticket lists for a BU (independente de filtros). */
-    listPrefix: (buId: string | null) => ['tickets', 'list', buId] as const,
-    list: (buId: string | null, filters?: Record<string, unknown>) =>
-      ['tickets', 'list', buId, filters] as const,
-
-    /** Prefix helper to invalidate all "my tickets" queries for a BU (independente do profile). */
-    myTicketsPrefix: (buId: string | null) => ['my-tickets', buId] as const,
-    myTickets: (buId: string | null, profileId?: string) => ['my-tickets', buId, profileId] as const,
-
-    detail: (ticketId: string | null) => ['ticket', ticketId] as const,
-    messages: (ticketId: string) => ['tickets', 'messages', ticketId] as const,
-    attachments: (ticketId: string | null) => ['ticket-attachments', ticketId] as const,
-    categories: (buId: string | null, scope?: string) => ['tickets', 'categories', buId, scope] as const,
-    subcategories: (buId: string | null, categoryId?: string) => ['tickets', 'subcategories', buId, categoryId] as const,
-    categoriesPrefix: (buId: string | null) => ['tickets', 'categories', buId] as const,
-    subcategoriesPrefix: (buId: string | null) => ['tickets', 'subcategories', buId] as const,
-    partners: (buId: string | null) => ['tickets', 'partners', buId] as const,
-    partnerCompany: (id: string | null) => ['tickets', 'partner-company', id] as const,
-    partnerContacts: (buId: string | null, companyId?: string) =>
-      ['partner-contacts', buId, companyId] as const,
-    partnerContact: (id: string | null) => ['partner-contact', id] as const,
-    partnerContactHover: (contactId: string | null) => ['partner-contact-hover', contactId] as const,
-    partnerServices: (buId: string | null, companyId?: string) =>
-      ['partner-services', buId, companyId] as const,
-    partnerCategories: (companyId?: string) => ['partner-categories', companyId] as const,
-    partnerSubcategories: (companyId?: string, categoryId?: string) =>
-      ['partner-subcategories', companyId, categoryId] as const,
-    partnerServiceMappings: (buId: string | null, companyId?: string) =>
-      ['partner-service-mappings', buId, companyId] as const,
-    partnerServicesPrefix: () => ['partner-services'] as const,
-    partnerCategoriesPrefix: () => ['partner-categories'] as const,
-    partnerSubcategoriesPrefix: () => ['partner-subcategories'] as const,
-    routingRules: (buId: string | null) => ['tickets', 'routing-rules', buId] as const,
-    internalRoutingRules: (buId: string | null) => ['tickets', 'internal-routing-rules', buId] as const,
-    contactCapabilities: (buId: string | null, contactId?: string) =>
-      ['tickets', 'contact-capabilities', buId, contactId] as const,
-    companyContactCapabilities: (buId: string | null, companyId?: string) =>
-      ['tickets', 'company-contact-capabilities', buId, companyId] as const,
-    partnerContactProfile: (contactId: string) =>
-      ['tickets', 'partner-contact-profile', contactId] as const,
-    contactCapabilitiesPrefix: () => ['contact-capabilities'] as const,
-    companyContactCapabilitiesPrefix: () => ['company-contact-capabilities'] as const,
-    
-    // Summary (aggregated dashboard data)
-    summary: (buId: string | null, teamId?: string) => 
-      ['tickets', 'summary', buId, teamId] as const,
-  },
-
-  // ============= Integrations =============
-  integrations: {
-    all: () => ['integrations'] as const,
-    catalog: () => ['integrations', 'catalog'] as const,
-    catalogByKey: (integrationKey: string) => ['integrations', 'catalog', integrationKey] as const,
-    global: () => ['integrations', 'global'] as const,
-    globalByKey: (integrationKey: string) => ['integrations', 'global', integrationKey] as const,
-    bu: (buId: string | null) => ['integrations', 'bu', buId] as const,
-    buByKey: (buId: string | null, integrationKey: string) => ['integrations', 'bu', buId, integrationKey] as const,
-    // Agents
-    agents: (buId: string | null) => ['integrations', 'agents', buId] as const,
-    globalAgents: (integrationKey?: string) => ['integrations', 'global-agents', integrationKey] as const,
-    buAgents: (buId: string | null, integrationKey?: string) => ['integrations', 'bu-agents', buId, integrationKey] as const,
-    agentDetail: (agentId: string) => ['integrations', 'agent', agentId] as const,
-    agentLogs: (agentId: string) => ['integrations', 'agent-logs', agentId] as const,
-    agentLogsFiltered: (filters?: { bu_id?: string; agent_id?: string; integration_key?: string; limit?: number }) => 
-      ['integrations', 'agent-logs', filters] as const,
-    agentDocuments: (agentId: string) => ['integrations', 'agent-documents', agentId] as const,
-    instructionSources: (agentId: string) => ['integrations', 'instruction-sources', agentId] as const,
-    instructionSourceDetail: (sourceId: string) => ['integrations', 'instruction-sources', 'detail', sourceId] as const,
-  },
-
-  // ============= Automations =============
-  automations: {
-    connections: (buId: string | null) => ['automations', 'connections', buId] as const,
-    logs: (buId: string | null) => ['automations', 'logs', buId] as const,
-    tokens: (buId: string | null) => ['automation-tokens', buId] as const,
-    events: () => ['automations', 'events'] as const,
-    actions: () => ['automations', 'actions'] as const,
-  },
-
-  // ============= Permissions =============
-  permissions: {
-    // Global catalog
-    catalog: () => ['permissions', 'catalog'] as const,
-    groups: () => ['permissions', 'groups'] as const,
-    groupPermissions: (groupId: string | null) => 
-      ['permissions', 'group-permissions', groupId] as const,
-    
-    // V2: Aliases
-    aliases: () => ['permissions', 'aliases'] as const,
-    
-    // V2: Templates
-    templatesV2: () => ['permissions', 'templates-v2'] as const,
-    templateItemsV2: (templateId: string | null) => 
-      ['permissions', 'template-items-v2', templateId] as const,
-    
-    // V2: User assignments
-    userTemplatesV2: (buId: string | null, userId: string | null) => 
-      ['permissions', 'user-templates-v2', buId, userId] as const,
-    
-    // V2: Effective preview
-    effectivePreview: (buId: string | null, userId: string | null, mode: string) => 
-      ['permissions', 'effective-preview', buId, userId, mode] as const,
-    
-    // BU-scoped
-    buConfigs: (buId: string | null) => 
-      ['permissions', 'bu-configs', buId] as const,
-    buUsers: (buId: string | null) => 
-      ['permissions', 'bu-users', buId] as const,
-    userGroups: (buId: string | null, userId: string | null) => 
-      ['permissions', 'user-groups', buId, userId] as const,
-    userOverrides: (buId: string | null, userId: string | null) => 
-      ['permissions', 'user-overrides', buId, userId] as const,
-    userEffective: (buId: string | null, userId: string | null) => 
-      ['permissions', 'user-effective', buId, userId] as const,
-    
-    // Migration tracking (Wave 7)
-    migrationStatus: (buId: string | null) => 
-      ['permissions', 'migration-status', buId] as const,
-    userMigration: (buId: string | null, userId: string | null) => 
-      ['permissions', 'user-migration', buId, userId] as const,
-    
-    // Current user
-    myPermissions: (buId: string | null, userId: string | null) => 
-      ['permissions', 'my', buId, userId] as const,
-    
-    // Audit
-    audit: (buId: string | null) => 
-      ['permissions', 'audit', buId] as const,
-  },
-
-  // ============= BU =============
-  bu: {
-    all: () => ['bu'] as const,
-    allBus: () => ['all-bus'] as const,
-    userBus: (userId: string | null) => ['user-bus', userId] as const,
-    unit: (buId: string | null) => ['bu-unit', buId] as const,
-    detail: (buId: string) => ['bu', 'detail', buId] as const,
-    locations: (buId: string | null) => ['bu', 'locations', buId] as const,
-    location: (locationId: string) => ['bu', 'location', locationId] as const,
-    memberships: (userId: string) => ['bu', 'memberships', userId] as const,
-    modules: (buId: string | null) => ['bu', 'modules', buId] as const,
-    allModules: (buId: string | null) => ['bu', 'all-modules', buId] as const,
-    allList: () => ['bu', 'all-list'] as const,
-  },
-
-  // ============= Settings =============
-  settings: {
-    modulesList: () => ['settings-modules-list'] as const,
-    busList: () => ['settings-bus-list'] as const,
-    moduleConfigs: () => ['settings-module-configs'] as const,
-    profilesCount: (buId: string | null) => ['settings', 'profiles-count', buId] as const,
-    teamsCount: (buId: string | null) => ['settings-teams-count', buId] as const,
-    busCount: () => ['settings-bus-count'] as const,
-    modulesCount: () => ['settings-modules-count'] as const,
-    integrationsCount: () => ['settings-integrations-count'] as const,
-    integrationsCatalog: () => ['settings', 'integrations-catalog'] as const,
-    jobTitles: (buId: string | null) => ['job-titles', buId] as const,
-    jobTitlesActive: (buId: string | null) => ['job-titles', buId, 'active'] as const,
-    jobTitlesPrefix: () => ['job-titles'] as const,
-    businessUnits: () => ['settings-business-units'] as const,
-    buMemberCounts: () => ['settings-bu-member-counts'] as const,
-    teamsList: (buId: string | null) => ['teams-list', buId] as const,
-    profilesList: (buId: string | null) => ['profiles-list', buId] as const,
-    kpiValuesBatch: (kpiIds?: string[]) => ['kpi-values-batch', kpiIds] as const,
-    kpiValuesBatchPrefix: () => ['kpi-values-batch'] as const,
-  },
-
-  // ============= Hub Notifications Admin =============
-  hubNotifications: {
-    outboxStatsGlobal: () => ['notification-outbox-stats-global'] as const,
-    outboxItems: () => ['notification-outbox-items'] as const,
-    healthAlertsGlobal: () => ['notification-health-alerts-global'] as const,
-    eventsPrefix: () => ['notification-events'] as const,
-    channelsPrefix: () => ['notification-channels'] as const,
-  },
-
-  // ============= Cron Integration =============
-  cronJob: {
-    globalConfig: () => ['integrations', 'global-config', 'cron-job'] as const,
-    executionLogs: () => ['cron-execution-logs'] as const,
-  },
-
-  // ============= Modules Page =============
-  modulesPage: {
-    all: (buId: string | null) => ['all-modules', buId] as const,
-    allPrefix: () => ['all-modules'] as const,
-    buModulesPrefix: () => ['bu-modules'] as const,
-  },
-
-  // ============= My Profile =============
-  myProfile: {
-    profile: (userId: string | null) => ['my-profile', userId] as const,
-    profilePrefix: () => ['my-profile'] as const,
-    team: (teamId: string | null) => ['profile-team', teamId] as const,
-  },
-
-  // ============= Home Dashboard =============
-  home: {
-    dashboard: (buId: string | null, userId: string) => 
-      ['home', 'dashboard', buId, userId] as const,
-    birthdays: (buId: string | null, month?: number) => ['birthdays', buId, month] as const,
-    anniversaries: (buId: string | null, month?: number) => ['work-anniversaries', buId, month] as const,
-    newJetimobers: (buId: string | null, limit?: number) => ['new-jetimobers', buId, limit] as const,
-    cultureMessage: () => ['home', 'culture-message'] as const,
-    leaderSummary: (buId: string | null, teamId: string | null) => 
-      ['home', 'leader-summary', buId, teamId] as const,
-    leaderFocus: (buId: string | null, teamId: string | null) => 
-      ['home', 'leader-focus', buId, teamId] as const,
-    leaderTeams: (buId: string | null, userId: string | null) => 
-      ['home', 'leader-teams', buId, userId] as const,
-  },
-
-  // ============= Public Profile =============
-  publicProfile: {
-    profile: (profileId: string | null, buId: string | null) => 
-      ['public-profile', profileId, buId] as const,
-    okrs: (userId: string | null, buId: string | null) => 
-      ['user-okrs', userId, buId] as const,
-    kpis: (userId: string | null, buId: string | null) => 
-      ['user-kpis', userId, buId] as const,
-    squads: (userId: string | null, buId: string | null) => 
-      ['user-squads', userId, buId] as const,
-    buMemberships: (profileId: string | null) => 
-      ['user-bu-memberships', profileId] as const,
-  },
-
-  // ============= Onboarding =============
-  onboarding: {
-    check: (userId: string | null) => ['onboarding-check', userId] as const,
-    page: (userId: string | null) => ['onboarding-page', userId] as const,
-    myProfile: () => ['my-profile'] as const,
-    teams: (buId: string | null) => ['onboarding', 'teams', buId] as const,
-  },
-
-  // ============= Managers/Leaders =============
-  managers: {
-    select: (buId: string | null) => ['managers-select', buId] as const,
-  },
-
-  // ============= Team Management =============
-  teamManagement: {
-    manageableTeams: (buId: string | null, userId: string | null) => 
-      ['manageable-teams', buId, userId] as const,
-  },
-
-  // ============= Cycles (Global) =============
-  cycles: {
-    list: () => ['cycles-list'] as const,
-  },
-
-  // ============= Notification Admin =============
-  notificationAdmin: {
-    outboxStats: () => ['notifications', 'outbox-stats'] as const,
-  },
-
-  // ============= Global Search =============
-  search: {
-    global: (buId: string | null, query: string) =>
-      ['search', 'global', buId, query] as const,
-    page: (buId: string | null, query: string, type: string) =>
-      ['search', 'page', buId, query, type] as const,
-  },
-
-  // ============= External =============
-  external: {
-    tickets: (contactId: string | null) => ['external', 'tickets', contactId] as const,
-    stats: (contactId: string | null) => ['external', 'stats', contactId] as const,
-    companyContext: (companyId: string | null) => ['external', 'company-context', companyId] as const,
-    userInfo: (userId: string | null) => ['external', 'user-info', userId] as const,
-  },
-
-  // ============= Vic (IA) =============
-  vic: {
-    buConfig: (buId: string | null) => ['vic', 'bu-config', buId] as const,
-    agentActivations: (buId: string | null) => ['vic', 'agent-activations', buId] as const,
-    globalAgents: () => ['vic', 'global-agents'] as const,
-    buUnitsForAudit: () => ['vic', 'bu-units-audit'] as const,
-    logs: (timeRange: string, buId: string | null) => ['vic', 'logs', timeRange, buId] as const,
-  },
-
-  // ============= Identity & Core =============
-  identity: {
-    profile: (userId: string | null) => ['identity', 'profile', userId] as const,
-    permissions: (buId: string | null, userId: string | null) => 
-      ['identity', 'permissions', buId, userId] as const,
-    modules: (userId: string | null, buId: string | null) => 
-      ['identity', 'modules', userId, buId] as const,
-  },
-
-  // ============= User Directory =============
-  users: {
-    all: () => ['users'] as const,
-    directory: (buId: string | null, filters?: { q?: string; teamId?: string; status?: string; includeTerminated?: boolean; page?: number; pageSize?: number }) => 
-      ['users', 'directory', buId, filters] as const,
-    selectOptions: (buId: string | null) => 
-      ['users', 'select-options', buId] as const,
-    mentionCandidates: (buId: string | null, q: string) =>
-      ['users', 'mention-candidates', buId, { q }] as const,
-    ticketMentionCandidates: (buId: string | null, partnerCompanyId: string | null, q: string) =>
-      ['users', 'ticket-mention-candidates', buId, partnerCompanyId, { q }] as const,
-    globalList: (filters?: { q?: string; buId?: string; onboardingStatus?: string }) =>
-      ['users', 'global-list', filters] as const,
-    globalDetail: (profileId: string) =>
-      ['users', 'global-detail', profileId] as const,
-  },
-
-  // ============= Mentions =============
-  mentions: {
-    /** Candidates for internal+external context */
-    candidates: (buId: string | null, context: string, partnerCompanyId: string | null, q: string) =>
-      ['mentions', 'candidates', buId, context, partnerCompanyId, { q }] as const,
-    /** Candidates for internal-only context */
-    internalCandidates: (buId: string | null, q: string) =>
-      ['mentions', 'internal-candidates', buId, { q }] as const,
-    /** Mentions by entity (for fetching mentions of a specific message/checkin/etc) */
-    byEntity: (entityType: string, entityId: string) =>
-      ['mentions', 'by-entity', entityType, entityId] as const,
-  },
+  // Auth & Profiles
+  auth: authKeys,
+  profiles: profilesKeys,
+  identity: identityKeys,
+  onboarding: onboardingKeys,
+  myProfile: myProfileKeys,
+  publicProfile: publicProfileKeys,
+  
+  // Core Modules
+  okrs: okrsKeys,
+  kpis: kpisKeys,
+  assets: assetsKeys,
+  tickets: ticketsKeys,
+  
+  // Notifications
+  notifications: notificationsKeys,
+  hubNotifications: hubNotificationsKeys,
+  notificationAdmin: notificationAdminKeys,
+  
+  // Teams & Organization
+  teams: teamsKeys,
+  squads: squadsKeys,
+  managers: managersKeys,
+  teamManagement: teamManagementKeys,
+  
+  // BU & Settings
+  bu: buKeys,
+  settings: settingsKeys,
+  modulesPage: modulesPageKeys,
+  
+  // Integrations
+  integrations: integrationsKeys,
+  automations: automationsKeys,
+  cronJob: cronJobKeys,
+  vic: vicKeys,
+  
+  // Permissions
+  permissions: permissionsKeys,
+  
+  // Miscellaneous
+  home: homeKeys,
+  search: searchKeys,
+  external: externalKeys,
+  users: usersKeys,
+  mentions: mentionsKeys,
+  cycles: cyclesKeys,
 } as const;
 
 // Helper type for extracting query key types
