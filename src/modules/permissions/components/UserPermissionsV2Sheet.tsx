@@ -83,8 +83,8 @@ export function UserPermissionsV2Sheet({
   const [showDiffDialog, setShowDiffDialog] = useState(false);
   const [showRevokeDialog, setShowRevokeDialog] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  // Effective permissions
-  const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.user_id || null);
+  // Effective permissions - must use profile_id, not user_id
+  const { effectivePermissions, isLoading: effectiveLoading } = useUserEffectivePermissions(user?.profile_id || null);
 
   // V2 hooks
   const { templates, isLoading: templatesLoading } = usePermissionTemplatesV2();
