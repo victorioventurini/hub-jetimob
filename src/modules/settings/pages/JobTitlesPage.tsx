@@ -8,6 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -43,6 +48,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { useJobTitles, useUpdateJobTitle, useDeleteJobTitle } from "../hooks/useJobTitles";
+import { useAllBus } from "@/modules/users-global/hooks/useAllBus";
 import { JobTitleDialog } from "../components/JobTitleDialog";
 import type { JobTitleWithUsageCount } from "../types";
 
@@ -61,8 +67,21 @@ export default function JobTitlesPage() {
   const [jobTitleToDelete, setJobTitleToDelete] = useState<JobTitleWithUsageCount | null>(null);
 
   const { data: jobTitles, isLoading } = useJobTitles();
+  const { data: allBus = [] } = useAllBus();
   const updateMutation = useUpdateJobTitle();
   const deleteMutation = useDeleteJobTitle();
+
+  // Criar mapa de BU id -> nome para tooltip
+  const buNameMap = useMemo(() => {
+    return allBus.reduce((acc, bu) => {
+      acc[bu.id] = bu.name;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [allBus]);
+
+  const getBuNames = (buIds: string[]) => {
+    return buIds.map(id => buNameMap[id] || id).join(", ");
+  };
 
   // Filter using local state for instant feedback
   const filteredJobTitles = useMemo(() => {
@@ -174,9 +193,16 @@ export default function JobTitlesPage() {
                     <TableRow key={jobTitle.id}>
                       <TableCell className="font-medium">{jobTitle.name}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs">
-                          {jobTitle.bu_ids?.length || 0} BU{(jobTitle.bu_ids?.length || 0) !== 1 ? 's' : ''}
-                        </Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="secondary" className="text-xs cursor-help">
+                              {jobTitle.bu_ids?.length || 0} BU{(jobTitle.bu_ids?.length || 0) !== 1 ? 's' : ''}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <p className="text-sm">{getBuNames(jobTitle.bu_ids || [])}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
