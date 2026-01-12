@@ -75,7 +75,7 @@ export function UserPermissionsV2Sheet({
   onOpenChange,
   user,
 }: UserPermissionsV2SheetProps) {
-  const { isAdmin: currentUserIsAdmin } = useAuth();
+  const { isAdmin: currentUserIsAdmin, role: currentUserRole } = useAuth();
   
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
@@ -267,8 +267,12 @@ export function UserPermissionsV2Sheet({
   const isLoading = templatesLoading || v2AssignmentsLoading;
   const isSaving = assignTemplate.isPending || removeTemplate.isPending || isApplying;
 
-  // Only admin (includes super_admin) can edit admin users
-  const canEdit = !isAdmin || currentUserIsAdmin;
+  // Permission management rules:
+  // - super_admin can edit admin and member permissions
+  // - admin can only edit member permissions (not other admins)
+  const isSuperAdmin = currentUserRole === 'super_admin';
+  const targetIsAdmin = user?.role_in_bu === 'admin';
+  const canEdit = isSuperAdmin || (currentUserIsAdmin && !targetIsAdmin);
 
   return (
     <>
