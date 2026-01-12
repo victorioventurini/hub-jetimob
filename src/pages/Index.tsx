@@ -8,6 +8,7 @@ import { KpiSummaryCard } from "@/components/home/KpiSummaryCard";
 import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
+import { QuickTipsCard } from "@/components/home/QuickTipsCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
@@ -134,7 +135,7 @@ const Index = () => {
             items={dashboardData.focusItems}
             title="Seu Foco"
           />
-          {dashboardData.teamStatus && (
+          {dashboardData.teamStatus ? (
             <TeamStatusCard
               teamName={dashboardData.teamStatus.teamName}
               onTrackPercent={dashboardData.teamStatus.onTrackPercent}
@@ -142,6 +143,8 @@ const Index = () => {
               offTrackPercent={dashboardData.teamStatus.offTrackPercent}
               title={isExecutive ? "Visão Geral" : "Meu Time"}
             />
+          ) : (
+            <QuickTipsCard />
           )}
         </section>
 
