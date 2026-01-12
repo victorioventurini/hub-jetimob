@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGifts } from "../hooks/useGifts";
-import { useAssetPermissions } from "../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 import { GiftItemCard } from "../components/gifts/GiftItemCard";
 import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
 import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
@@ -21,7 +21,7 @@ export default function GiftsPage() {
   const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts({
     search: search || undefined,
   });
-  const { canManageGifts, isGiftsAdmin, isLoading: isLoadingPermissions } = useAssetPermissions();
+  const { canManageGifts, isGiftsAdmin, isLoading: isLoadingPermissions } = useAssetPermissionsV2();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 

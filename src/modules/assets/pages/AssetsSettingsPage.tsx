@@ -4,7 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
-import { useAssetPermissions } from "../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { ClaviculariesTab } from "../components/settings/ClaviculariesTab";
 import { InventoryTab } from "../components/settings/InventoryTab";
@@ -14,7 +14,7 @@ export default function AssetsSettingsPage() {
   usePageTitle("Configurações de Ativos", {
     customDescription: "Configure categorias, inventário e claviculários de ativos."
   });
-  const { isAssetsAdmin, isLoading } = useAssetPermissions();
+  const { isAssetsAdmin, isLoading } = useAssetPermissionsV2();
   const [activeTab, setActiveTab] = useUrlTab("categories");
 
   if (!isAssetsAdmin) {

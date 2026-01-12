@@ -36,7 +36,7 @@ import { useLocations } from "../../hooks/useLocations";
 import { useAssetProfiles } from "../../hooks/useProfiles";
 import { useBuAdmins } from "../../hooks/useBuAdmins";
 import { useAuthorizers } from "../../hooks/useAuthorizers";
-import { useAssetPermissions } from "../../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import { useIdentity } from "@/hooks/useIdentity";
 import { KitCheckoutInfo } from "./KitCheckoutInfo";
 import type { AssetInventory, AssetMovementType } from "../../types";
@@ -101,7 +101,7 @@ export function InventoryMovementDialog({
   const { profiles } = useAssetProfiles();
   const { admins } = useBuAdmins();
   const { authorizers } = useAuthorizers();
-  const { isInventoryAdmin, canManageInventory } = useAssetPermissions();
+  const { isInventoryAdmin, canManageInventory } = useAssetPermissionsV2();
 
   const [movementType, setMovementType] = useState<AssetMovementType>(initialType || "checkout");
   const [includeKitAccessories, setIncludeKitAccessories] = useState(false);

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeys } from "../hooks/useKeys";
-import { useAssetPermissions } from "../hooks/useAssetPermissions";
+import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 import { KeyringsList } from "../components/keys/KeyringsList";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
 import { UrlSearchInput } from "@/shared/filters";
@@ -19,7 +19,7 @@ export default function KeysPage() {
   const { keyrings, isLoading: isLoadingKeys } = useKeys({
     search: search || undefined,
   });
-  const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissions();
+  const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissionsV2();
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
 
   const isLoading = isLoadingKeys || isLoadingPermissions;
