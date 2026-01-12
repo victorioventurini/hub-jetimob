@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import {
+  SearchCitiesQuerySchema,
+  parseRequestBody,
+  formatValidationErrors,
+} from "../_shared/validation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -141,14 +146,18 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
-
-    if (!query || query.length < 2) {
+    // Validate request body with Zod schema
+    const parseResult = await parseRequestBody(req, SearchCitiesQuerySchema);
+    
+    if (!parseResult.success) {
+      // Return empty predictions for validation errors (graceful degradation)
+      console.warn("Validation failed:", formatValidationErrors(parseResult.error));
       return new Response(JSON.stringify({ predictions: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    const { query } = parseResult.data;
     const cacheKey = normalizeQuery(query);
 
     // 1. Verificar cache de buscas recentes
