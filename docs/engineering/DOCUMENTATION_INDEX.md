@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-11  
-**TCR Version:** 2.15.0
+**Última atualização:** 2026-01-12  
+**TCR Version:** 2.21.0
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.15.0 |
+| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.21.0 |
 
 ---
 
@@ -70,9 +70,10 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
+| [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) | **Plano de Higienização e Otimização 2026-01** | ✅ Completo |
+| [TECHNICAL_DEBT_ANALYSIS_2026-01-12.md](./TECHNICAL_DEBT_ANALYSIS_2026-01-12.md) | **Análise de Débitos Técnicos** | ✅ Atual |
 | [CODEBASE_HYGIENE_ROADMAP.md](../CODEBASE_HYGIENE_ROADMAP.md) | Roadmap de limpeza de código (3 waves) | ✅ Wave 5 completo |
 | [LEGACY_CLASSIFICATION_MATRIX.md](../LEGACY_CLASSIFICATION_MATRIX.md) | Matriz de classificação de código legado | ✅ Atualizado |
-| [HYGIENE_AUDIT_2026-01-08.md](../HYGIENE_AUDIT_2026-01-08.md) | Auditoria de higiene do codebase | ✅ Histórico |
 
 ---
 
@@ -137,4 +138,4 @@
 
 ---
 
-*Documento mantido automaticamente. Última verificação: 2026-01-11*
+*Documento mantido automaticamente. Última verificação: 2026-01-12*
