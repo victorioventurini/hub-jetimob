@@ -25,6 +25,7 @@ import { TeamWithRelations, TeamFormData } from "../types";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import { BuUserSelect } from "@/components/selects/BuUserSelect";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 
 interface TeamFormDialogProps {
   /** Team to edit. If null/undefined, dialog is in create mode */
@@ -47,6 +48,13 @@ export function TeamFormDialog({
   defaultParentTeamId,
 }: TeamFormDialogProps) {
   const isEditing = !!team;
+  const { canManageTeam } = useTeamManagement();
+
+  // Defense in depth: don't render edit dialog if user can't manage this team
+  // This respects impersonation context via useTeamManagement
+  if (isEditing && team && !canManageTeam(team.id)) {
+    return null;
+  }
   
   // Internal state for uncontrolled mode (create)
   const [internalOpen, setInternalOpen] = useState(false);

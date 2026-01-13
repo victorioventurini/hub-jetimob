@@ -117,12 +117,15 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(userId);
     setImpersonatedUser(userInfo);
     
-    // Invalidar cache de permissões e OKRs manageable teams para forçar refetch
+    // Invalidar cache de permissões, teams e assets para forçar refetch
     // Invalidate both 'real' and 'impersonated' variants
     queryClient.invalidateQueries({ queryKey: ["identity"] });
     queryClient.invalidateQueries({ queryKey: ["permissions"] });
     queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
+    queryClient.invalidateQueries({ queryKey: ["manageable-teams"] });
+    queryClient.invalidateQueries({ queryKey: ["assets"] });
     queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "impersonated"] });
+    queryClient.refetchQueries({ queryKey: ["manageable-teams", "impersonated"] });
   }, [canImpersonate, queryClient]);
   
   const stopImpersonation = useCallback(() => {
@@ -130,11 +133,14 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(null);
     setImpersonatedUser(null);
     
-    // Invalidar cache de permissões e OKRs manageable teams
+    // Invalidar cache de permissões, teams e assets
     queryClient.invalidateQueries({ queryKey: ["identity"] });
     queryClient.invalidateQueries({ queryKey: ["permissions"] });
     queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
+    queryClient.invalidateQueries({ queryKey: ["manageable-teams"] });
+    queryClient.invalidateQueries({ queryKey: ["assets"] });
     queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "real"] });
+    queryClient.refetchQueries({ queryKey: ["manageable-teams", "real"] });
   }, [queryClient]);
   
   // Limpar impersonação quando usuário sair
