@@ -117,13 +117,16 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(userId);
     setImpersonatedUser(userInfo);
     
-    // Invalidar cache de permissões, teams e assets para forçar refetch
+    // Invalidar cache de permissões, teams, assets e tickets para forçar refetch
     // Invalidate both 'real' and 'impersonated' variants
     queryClient.invalidateQueries({ queryKey: ["identity"] });
     queryClient.invalidateQueries({ queryKey: ["permissions"] });
     queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
     queryClient.invalidateQueries({ queryKey: ["manageable-teams"] });
     queryClient.invalidateQueries({ queryKey: ["assets"] });
+    queryClient.invalidateQueries({ queryKey: ["tickets"] }); // Tickets list
+    queryClient.invalidateQueries({ queryKey: ["ticket"] }); // Ticket detail (singular)
+    queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
     queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "impersonated"] });
     queryClient.refetchQueries({ queryKey: ["manageable-teams", "impersonated"] });
   }, [canImpersonate, queryClient]);
@@ -133,12 +136,15 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(null);
     setImpersonatedUser(null);
     
-    // Invalidar cache de permissões, teams e assets
+    // Invalidar cache de permissões, teams, assets e tickets
     queryClient.invalidateQueries({ queryKey: ["identity"] });
     queryClient.invalidateQueries({ queryKey: ["permissions"] });
     queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
     queryClient.invalidateQueries({ queryKey: ["manageable-teams"] });
     queryClient.invalidateQueries({ queryKey: ["assets"] });
+    queryClient.invalidateQueries({ queryKey: ["tickets"] }); // Tickets list
+    queryClient.invalidateQueries({ queryKey: ["ticket"] }); // Ticket detail (singular)
+    queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
     queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "real"] });
     queryClient.refetchQueries({ queryKey: ["manageable-teams", "real"] });
   }, [queryClient]);

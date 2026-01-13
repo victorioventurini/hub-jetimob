@@ -32,12 +32,28 @@ export function useTickets(filters?: TicketFilters) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
   return useQuery({
-    queryKey: queryKeys.tickets.list(buId ?? null, filters as Record<string, unknown>),
+    queryKey: queryKeys.tickets.list(buId ?? null, { ...filters, impersonatedUserId: isImpersonating ? impersonatedUserId : undefined } as Record<string, unknown>),
     staleTime: 2 * 60 * 1000, // 2 minutes
     queryFn: async (): Promise<Ticket[]> => {
       if (!buId) return [];
+
+      // Durante impersonação, primeiro obter IDs de tickets visíveis
+      let visibleTicketIds: string[] | null = null;
+      if (isImpersonating && impersonatedUserId) {
+        const { data: rpcResult, error: rpcError } = await supabase
+          .rpc("get_visible_ticket_ids_for_impersonation", {
+            p_impersonated_profile_id: impersonatedUserId,
+          });
+        
+        if (rpcError) throw rpcError;
+        visibleTicketIds = (rpcResult || []).map((r: { ticket_id: string }) => r.ticket_id);
+        
+        // Se não há tickets visíveis, retornar lista vazia
+        if (visibleTicketIds.length === 0) return [];
+      }
 
       // Build base query with explicit fields (no select('*'))
       // Include creator, owner profiles and assigned_contact for external tickets
@@ -76,6 +92,11 @@ export function useTickets(filters?: TicketFilters) {
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(DEFAULT_LIMIT);
+
+      // Durante impersonação, filtrar apenas tickets visíveis
+      if (visibleTicketIds !== null) {
+        query = query.in("id", visibleTicketIds);
+      }
 
       // Apply filters
       if (filters?.type) {
