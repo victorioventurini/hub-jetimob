@@ -50,8 +50,8 @@ export function TicketDetailHeader({
           <span className={cn(
             "px-2 py-0.5 rounded text-xs font-medium",
             isExternal 
-              ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-              : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+              ? "bg-status-purple-muted text-status-purple"
+              : "bg-status-blue-muted text-status-blue"
           )}>
             {isExternal ? "Externo" : "Interno"}
           </span>

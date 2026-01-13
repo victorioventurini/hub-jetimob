@@ -55,8 +55,8 @@ export function KeyringsList({ keyrings }: KeyringsListProps) {
               >
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10 shrink-0">
-                      <Key className="h-4 w-4 text-amber-600" />
+                    <div className="p-2 rounded-lg bg-status-amber-muted shrink-0">
+                      <Key className="h-4 w-4 text-status-amber" />
                     </div>
                     <span className="font-medium">{keyring.tag_number}</span>
                   </div>

@@ -219,7 +219,7 @@ export default function SettingsModules() {
         );
       case "coming_soon":
         return (
-          <Badge variant="outline" className="text-amber-600 border-amber-300">
+          <Badge variant="outline" className="text-status-amber border-status-amber/30">
             <Clock className="h-3 w-3 mr-1" />
             Em breve
           </Badge>
@@ -231,11 +231,11 @@ export default function SettingsModules() {
 
   const getTypeBadge = (type: string) => {
     return type === "global" ? (
-      <Badge variant="outline" className="text-blue-600 border-blue-300">
+      <Badge variant="outline" className="text-status-blue border-status-blue/30">
         Global
       </Badge>
     ) : (
-      <Badge variant="outline" className="text-purple-600 border-purple-300">
+      <Badge variant="outline" className="text-status-purple border-status-purple/30">
         Operacional
       </Badge>
     );

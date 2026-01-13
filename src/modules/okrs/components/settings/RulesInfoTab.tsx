@@ -48,21 +48,21 @@ export function RulesInfoTab() {
     {
       type: "contribution",
       label: "Contribuição",
-      color: "bg-green-500/10 text-green-600 border-green-200",
+      color: "bg-status-green-muted text-status-green border-status-green/30",
       description: "Contribui diretamente para um KR organizacional",
       canLinkToOrg: true,
     },
     {
       type: "enabler",
       label: "Habilitador",
-      color: "bg-blue-500/10 text-blue-600 border-blue-200",
+      color: "bg-status-blue-muted text-status-blue border-status-blue/30",
       description: "Habilita outros KRs do time a serem alcançados",
       canLinkToOrg: false,
     },
     {
       type: "foundational",
       label: "Fundacional",
-      color: "bg-purple-500/10 text-purple-600 border-purple-200",
+      color: "bg-status-purple-muted text-status-purple border-status-purple/30",
       description: "Representa um pré-requisito fundamental do time",
       canLinkToOrg: false,
     },
@@ -81,7 +81,7 @@ export function RulesInfoTab() {
       {/* Allowed Links */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-green-600">
+          <CardTitle className="flex items-center gap-2 text-base text-status-green">
             <CheckCircle2 className="h-5 w-5" />
             Vínculos Permitidos
           </CardTitle>
@@ -94,12 +94,12 @@ export function RulesInfoTab() {
             {allowedLinks.map((link, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-status-green-muted border-status-green/30"
               >
                 <Badge variant="outline" className="shrink-0">
                   {link.from}
                 </Badge>
-                <ArrowRight className="h-4 w-4 text-green-600 shrink-0" />
+                <ArrowRight className="h-4 w-4 text-status-green shrink-0" />
                 <Badge variant="outline" className="shrink-0">
                   {link.to}
                 </Badge>

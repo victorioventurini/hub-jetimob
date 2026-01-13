@@ -251,14 +251,14 @@ export function calculateProgress(
 export function getRagStatusColor(status: OkrRagStatus): string {
   switch (status) {
     case 'green':
-      return 'bg-green-500';
+      return 'bg-status-green';
     case 'yellow':
-      return 'bg-yellow-500';
+      return 'bg-status-yellow';
     case 'red':
-      return 'bg-red-500';
+      return 'bg-status-red';
     case 'not_started':
     default:
-      return 'bg-gray-400';
+      return 'bg-status-gray';
   }
 }
 

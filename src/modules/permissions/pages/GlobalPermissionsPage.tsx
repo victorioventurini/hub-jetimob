@@ -78,9 +78,9 @@ export default function GlobalPermissionsPage() {
         breadcrumbs={[{ label: "Permissões" }]}
       />
 
-      <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
-        <AlertTriangle className="h-4 w-4 text-amber-500" />
-        <AlertDescription className="text-amber-700 dark:text-amber-300">
+      <Alert variant="default" className="border-status-amber/50 bg-status-amber-muted">
+        <AlertTriangle className="h-4 w-4 text-status-amber" />
+        <AlertDescription className="text-status-amber">
           Alterações nesta página afetam <strong>todas as Business Units</strong>.
         </AlertDescription>
       </Alert>

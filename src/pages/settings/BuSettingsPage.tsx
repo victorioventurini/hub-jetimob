@@ -56,14 +56,14 @@ export default function BuSettingsPage() {
               <SettingsCard
                 to="/settings/permissions"
                 icon={Shield}
-                iconBgColor="bg-blue-500/10 text-blue-500"
+                iconBgColor="bg-status-blue-muted text-status-blue"
                 title="Permissões"
                 description="Gerenciar templates de permissões e acessos dos usuários"
               />
               <SettingsCard
                 to="/settings/notifications"
                 icon={Bell}
-                iconBgColor="bg-amber-500/10 text-amber-500"
+                iconBgColor="bg-status-amber-muted text-status-amber"
                 title="Notificações"
                 description="Configurar canais e preferências de notificações da BU"
               />

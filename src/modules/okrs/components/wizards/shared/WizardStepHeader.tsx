@@ -63,24 +63,24 @@ const VARIANT_STYLES: Record<WizardHeaderVariant, {
     iconColor: 'text-primary',
   },
   amber: {
-    gradient: 'from-amber-500/10 to-transparent',
-    iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-    iconColor: 'text-amber-600',
+    gradient: 'from-status-amber/10 to-transparent',
+    iconBg: 'bg-status-amber-muted',
+    iconColor: 'text-status-amber',
   },
   green: {
-    gradient: 'from-green-500/10 to-transparent',
-    iconBg: 'bg-green-100 dark:bg-green-900/30',
-    iconColor: 'text-green-600',
+    gradient: 'from-status-green/10 to-transparent',
+    iconBg: 'bg-status-green-muted',
+    iconColor: 'text-status-green',
   },
   red: {
-    gradient: 'from-red-500/10 to-transparent',
-    iconBg: 'bg-red-100 dark:bg-red-900/30',
-    iconColor: 'text-red-600',
+    gradient: 'from-status-red/10 to-transparent',
+    iconBg: 'bg-status-red-muted',
+    iconColor: 'text-status-red',
   },
   purple: {
-    gradient: 'from-purple-500/10 to-transparent',
-    iconBg: 'bg-purple-100 dark:bg-purple-900/30',
-    iconColor: 'text-purple-600',
+    gradient: 'from-status-purple/10 to-transparent',
+    iconBg: 'bg-status-purple-muted',
+    iconColor: 'text-status-purple',
   },
 };
 

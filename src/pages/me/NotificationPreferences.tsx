@@ -36,7 +36,7 @@ const channelIcons: Record<string, React.ComponentType<{ className?: string }>> 
 
 const severityConfig = {
   info: { icon: Info, color: 'text-muted-foreground', bg: 'bg-muted' },
-  warning: { icon: AlertTriangle, color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/20' },
+  warning: { icon: AlertTriangle, color: 'text-status-yellow', bg: 'bg-status-yellow-muted' },
   critical: { icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/10' },
 };
 
