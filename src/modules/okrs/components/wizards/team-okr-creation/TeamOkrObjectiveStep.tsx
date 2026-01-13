@@ -110,7 +110,16 @@ export function TeamOkrObjectiveStep({
       );
 
       try {
-        const parsed = JSON.parse(response.response);
+        // Clean response - remove markdown code blocks if present
+        let cleanResponse = response.response.trim();
+        
+        // Remove ```json ... ``` or ``` ... ``` wrapper
+        const jsonBlockMatch = cleanResponse.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+        if (jsonBlockMatch) {
+          cleanResponse = jsonBlockMatch[1].trim();
+        }
+        
+        const parsed = JSON.parse(cleanResponse);
         onValidationFeedbackChange(parsed, new Date().toISOString());
       } catch {
         // If not JSON, treat as success with message
