@@ -65,26 +65,51 @@ export function useCyclesList() {
 
 /**
  * Perfil de um usuário específico (para exibição).
+ * Considera o override de cargo via bu_user_memberships para a BU atual.
+ * @updated Wave 2.6 - Prioriza job_title da membership sobre o do profile
  */
 export function useUserProfile(userId?: string) {
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBu } = useBu();
   
   return useQuery({
-    queryKey: queryKeys.profiles.detail(userId ?? ""),
+    queryKey: queryKeys.profiles.detail(userId ?? "", currentBu?.id ?? ""),
     queryFn: async () => {
       if (!supabase || !userId) return null;
 
-      const { data, error } = await supabase
+      // Buscar profile base
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("id, display_name, photo_url, team_id, job_title_id, job_title_rel:job_titles!job_title_id(name)")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (error) throw error;
-      return data ? {
-        ...data,
-        job_title: (data.job_title_rel as { name: string } | null)?.name || null,
-      } : null;
+      if (!profile) return null;
+
+      // Cargo default do profile
+      let jobTitle = (profile.job_title_rel as { name: string } | null)?.name || null;
+
+      // Verificar override de cargo na membership da BU atual
+      if (currentBu?.id) {
+        const { data: membership } = await supabase
+          .from("bu_user_memberships")
+          .select("job_title_id, job_title:job_titles!bu_user_memberships_job_title_id_fkey(name)")
+          .eq("user_id", userId)
+          .eq("bu_id", currentBu.id)
+          .is("deleted_at", null)
+          .maybeSingle();
+
+        // Se membership tem cargo específico, usar ele
+        if (membership?.job_title_id && membership?.job_title) {
+          jobTitle = (membership.job_title as { name: string }).name;
+        }
+      }
+
+      return {
+        ...profile,
+        job_title: jobTitle,
+      };
     },
     enabled: !!supabase && !!userId,
   });

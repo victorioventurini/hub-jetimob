@@ -17,31 +17,59 @@ export function useJobTitles() {
     queryKey: queryKeys.settings.jobTitles(buId ?? null),
     staleTime: 5 * 60 * 1000, // 5 minutes - job titles change rarely
     queryFn: async (): Promise<JobTitleWithUsageCount[]> => {
-      // Buscar todos os cargos que o usuário tem acesso (RLS filtra automaticamente)
+      if (!buId) return [];
+
+      // Buscar cargos que incluem a BU atual (multi-BU)
       const { data: jobTitles, error } = await supabase
         .from("job_titles")
         .select("id, bu_ids, name, description, is_active, created_at, updated_at, deleted_at")
         .is("deleted_at", null)
+        .contains("bu_ids", [buId])
         .order("name");
 
       if (error) throw error;
 
-      // Buscar contagem de profiles por cargo (global)
-      const { data: usageCounts, error: countError } = await supabase
+      // Buscar contagem de uso:
+      // 1. profiles.job_title_id (cargo default do perfil)
+      // 2. bu_user_memberships.job_title_id (override por BU)
+      const jobTitleIds = (jobTitles || []).map((jt) => jt.id);
+      
+      if (jobTitleIds.length === 0) {
+        return [];
+      }
+
+      // Contagem de profiles com esse cargo
+      const { data: profileCounts, error: profileError } = await supabase
         .from("profiles")
         .select("job_title_id")
         .is("deleted_at", null)
-        .not("job_title_id", "is", null);
+        .in("job_title_id", jobTitleIds);
 
-      if (countError) throw countError;
+      if (profileError) throw profileError;
 
-      // Criar mapa de contagem
-      const countMap = (usageCounts || []).reduce((acc, p) => {
+      // Contagem de memberships com override de cargo
+      const { data: membershipCounts, error: membershipError } = await supabase
+        .from("bu_user_memberships")
+        .select("job_title_id")
+        .is("deleted_at", null)
+        .in("job_title_id", jobTitleIds);
+
+      if (membershipError) throw membershipError;
+
+      // Criar mapa de contagem combinada
+      const countMap: Record<string, number> = {};
+      
+      for (const p of profileCounts || []) {
         if (p.job_title_id) {
-          acc[p.job_title_id] = (acc[p.job_title_id] || 0) + 1;
+          countMap[p.job_title_id] = (countMap[p.job_title_id] || 0) + 1;
         }
-        return acc;
-      }, {} as Record<string, number>);
+      }
+      
+      for (const m of membershipCounts || []) {
+        if (m.job_title_id) {
+          countMap[m.job_title_id] = (countMap[m.job_title_id] || 0) + 1;
+        }
+      }
 
       return (jobTitles || []).map((jt) => ({
         id: jt.id,
