@@ -13,6 +13,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
+import { BuAdminRoute } from "@/components/auth/BuAdminRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -678,11 +679,11 @@ const App = () => {
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
-                            <AdminRoute>
+                            <BuAdminRoute>
                               <ModuleRoute moduleSlug="okrs">
                                 <OrgAnalysisPage />
                               </ModuleRoute>
-                            </AdminRoute>
+                            </BuAdminRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>
                       }
