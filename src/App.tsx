@@ -487,17 +487,19 @@ const App = () => {
                       }
                     />
 
-                    {/* Vic Test Page - Isolated AI agent testing */}
-                    <Route
-                      path="/vic-test"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <VicTestPage />
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
+                    {/* Vic Test Page - Isolated AI agent testing (DEV ONLY) */}
+                    {import.meta.env.DEV && (
+                      <Route
+                        path="/vic-test"
+                        element={
+                          <ProtectedRoute>
+                            <BuRequiredRoute>
+                              <VicTestPage />
+                            </BuRequiredRoute>
+                          </ProtectedRoute>
+                        }
+                      />
+                    )}
                     {/* ===== LEGACY REDIRECTS (backwards compatibility) ===== */}
                     {/* Context Resolver - resolves BU from resource and redirects */}
                     <Route
