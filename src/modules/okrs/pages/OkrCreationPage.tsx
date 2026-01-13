@@ -44,7 +44,7 @@ import { VicTypewriterQueueProvider } from '@/modules/vic';
 // Loading/Error states
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { AlertCircle, Target } from 'lucide-react';
+import { Target } from 'lucide-react';
 
 // ============================================================
 // STEP DEFINITIONS
@@ -285,16 +285,45 @@ export default function OkrCreationPage() {
     return <LoadingState text="Carregando..." fullPage />;
   }
   
-  // No team selected
+  // No team selected - show team selector
   if (!teamIdParam || !selectedTeam) {
     return (
-      <EmptyState
-        icon={AlertCircle}
-        title="Time não selecionado"
-        description="Selecione um time para criar OKRs"
-        actionLabel="Voltar para Wizards"
-        onAction={() => navigate('/wizards')}
-      />
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full space-y-6 text-center">
+          <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+            <Target className="w-6 h-6 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-semibold">Criar Objetivo de Time</h1>
+            <p className="text-muted-foreground text-sm">
+              Selecione o time para o qual deseja criar um objetivo
+            </p>
+          </div>
+          
+          <div className="pt-2">
+            <HierarchyContextSwitcher
+              type="team"
+              currentLabel="Selecionar time"
+              selectedId={null}
+              onSelect={(newTeamId) => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('team', newTeamId);
+                setSearchParams(newParams, { replace: true });
+              }}
+              isLoading={isLoadingTeams}
+            />
+          </div>
+          
+          <div className="pt-4">
+            <button
+              onClick={() => navigate('/okrs')}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar para OKRs
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
   
