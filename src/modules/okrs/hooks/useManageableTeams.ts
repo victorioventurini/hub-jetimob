@@ -42,6 +42,8 @@ export function useManageableTeams() {
 
       // Use impersonation RPC when impersonating
       if (isImpersonating && impersonatedUserId) {
+        console.log('[useManageableTeams] Impersonation mode - fetching for:', impersonatedUserId);
+        
         const { data: teamIdsResult, error: rpcError } = await client.rpc(
           "get_okr_manageable_team_ids_for_impersonation" as any,
           { 
@@ -56,6 +58,8 @@ export function useManageableTeams() {
         }
 
         const teamIds = (teamIdsResult as unknown as string[]) || [];
+        console.log('[useManageableTeams] Impersonation RPC returned team IDs:', teamIds);
+        
         if (teamIds.length === 0) {
           return [];
         }
