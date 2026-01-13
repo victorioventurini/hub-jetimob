@@ -118,6 +118,7 @@ export function AdminContextSwitcher({
                 onValueChange={(id) => handleSelect(id)}
                 placeholder="Selecione um usuário"
                 showBadges
+                excludeExternal
                 showSearch
               />
             )}

@@ -203,6 +203,7 @@ export function TeamFormDialog({
             showSearch={false}
             showBadges={false}
             allowNone
+            excludeExternal
             noneLabel="Sem líder definido"
           />
         </div>

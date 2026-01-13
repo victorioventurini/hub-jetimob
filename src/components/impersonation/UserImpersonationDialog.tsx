@@ -29,6 +29,7 @@ export function UserImpersonationDialog() {
     q: searchTerm,
     pageSize: 100,
     enabled: open && canImpersonate && !!currentBuId,
+    excludeExternal: true,
   });
   
   const handleSelectUser = async (userId: string, displayName: string) => {

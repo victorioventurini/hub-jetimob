@@ -38,6 +38,8 @@ export interface BuUserMultiSelectProps {
   showBadges?: boolean;
   /** Filter by team ID */
   teamId?: string;
+  /** Exclude external users/contacts (default: false) */
+  excludeExternal?: boolean;
 }
 
 function getInitials(name: string | null | undefined): string {
@@ -59,6 +61,7 @@ export function BuUserMultiSelect({
   className,
   showBadges = false,
   teamId,
+  excludeExternal = false,
 }: BuUserMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -67,6 +70,7 @@ export function BuUserMultiSelect({
     q: open ? search : undefined, // Only search when popover is open
     teamId,
     pageSize: 200,
+    excludeExternal,
   });
 
   const filteredProfiles = useMemo(() => {
