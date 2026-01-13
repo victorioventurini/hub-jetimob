@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useInventory } from "../hooks/useInventory";
 import { useLocations } from "../hooks/useLocations";
+import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
@@ -42,8 +43,9 @@ export default function InventoryPage() {
   });
   const { locations } = useLocations();
   
-  // Allow any authenticated user to add items for now (permissions will be enforced on backend)
-  const canAddItem = true;
+  // Use V2 permission system - respects impersonation
+  const { canManageInventory } = useAssetPermissionsV2();
+  const canAddItem = canManageInventory;
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Get unique holders from items for the filter (client-side - small list)
