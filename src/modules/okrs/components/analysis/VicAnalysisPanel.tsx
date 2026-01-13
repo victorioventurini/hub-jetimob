@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useVicAgent } from "@/modules/vic/hooks/useVicAgent";
-import { useVicEnabled } from "@/modules/vic/hooks/useVicEnabled";
+import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks/useVicAgent";
 import { cn } from "@/lib/utils";
 import type { OrgOkrAnalysisData } from "../../hooks/useOrgOkrAnalysis";
 
@@ -25,7 +24,7 @@ export function VicAnalysisPanel({
   className 
 }: VicAnalysisPanelProps) {
   const { isEnabled, isLoading: isCheckingEnabled } = useVicEnabled();
-  const { invoke, isPending, lastResponse } = useVicAgent();
+  const { invoke, isLoading: isPending, response: lastResponse } = useVicAgent();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,10 +32,10 @@ export function VicAnalysisPanel({
     setError(null);
     
     try {
-      await invoke({
-        agentSlug: 'alinhamento-estrategico',
-        actionContext: 'okr-check-alignment',
-        context: {
+      await invoke(
+        'alinhamento-estrategico',
+        'okr-check-alignment',
+        {
           type: 'okr-org-analysis',
           title: 'Análise de OKRs Organizacionais',
           description: `Avaliação completa das OKRs da empresa com ${analysisData.totals.orgObjectives} objetivos organizacionais e ${analysisData.totals.totalTeams} times.`,
@@ -65,14 +64,14 @@ export function VicAnalysisPanel({
             })),
           },
         },
-        userQuestion: `Analise a estrutura das OKRs organizacionais considerando os 4 critérios:
+        `Analise a estrutura das OKRs organizacionais considerando os 4 critérios:
 1. Coesão entre OKRs org e times (score: ${analysisData.scores.cohesion.value}/10)
 2. Distribuição de responsabilidades (score: ${analysisData.scores.distribution.value}/10)
 3. Cobertura estratégica (score: ${analysisData.scores.coverage.value}/10)
 4. Transparência e rastreabilidade (score: ${analysisData.scores.traceability.value}/10)
 
-Identifique gaps e sugira melhorias específicas.`,
-      });
+Identifique gaps e sugira melhorias específicas.`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao analisar');
     }

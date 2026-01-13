@@ -192,6 +192,10 @@ export const okrsKeys = {
   // Team Quality
   teamQuality: (buId: string | null, teamId: string | null, cycleId: string | null) =>
     ['okr-team-quality', buId, teamId, cycleId] as const,
+    
+  // Org Analysis (Admin)
+  orgAnalysis: (buId: string | null, year: number, cycleId: string | null) =>
+    ['okr-org-analysis', buId, year, cycleId] as const,
 } as const;
 
 export const kpisKeys = {
