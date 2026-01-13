@@ -37,6 +37,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { useCancelOrgKeyResult } from '../hooks/useOkrMutations';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection } from '../types';
 
 interface OrgKrFormDialogProps {
@@ -53,6 +54,7 @@ interface OrgKrFormDialogProps {
     direction: OkrDirection;
     unit: string;
     status: OkrRagStatus;
+    owner_user_id?: string | null;
   };
 }
 
@@ -75,6 +77,7 @@ export function OrgKrFormDialog({
   const [unit, setUnit] = useState(kr?.unit || '%');
   const [direction, setDirection] = useState<OkrDirection>(kr?.direction || 'up');
   const [status, setStatus] = useState<OkrRagStatus>(kr?.status || 'not_started');
+  const [ownerUserId, setOwnerUserId] = useState<string | null>(kr?.owner_user_id || null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [placeholder] = useState(() => getRandomPlaceholder(true));
 
@@ -86,6 +89,7 @@ export function OrgKrFormDialog({
     setUnit(kr?.unit || '%');
     setDirection(kr?.direction || 'up');
     setStatus(kr?.status || 'not_started');
+    setOwnerUserId(kr?.owner_user_id || null);
   }, [kr]));
 
   const validation = useMemo(() => {
@@ -112,6 +116,7 @@ export function OrgKrFormDialog({
             direction,
             unit,
             status,
+            owner_user_id: ownerUserId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', kr.id);
@@ -130,6 +135,7 @@ export function OrgKrFormDialog({
             direction,
             status: 'not_started',
             bu_id: currentBuId,
+            owner_user_id: ownerUserId,
           });
         if (error) throw error;
       }
@@ -239,6 +245,20 @@ export function OrgKrFormDialog({
                   />
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="kr-owner">
+                  Responsável
+                  <span className="text-muted-foreground ml-1 font-normal">(opcional)</span>
+                </Label>
+                <BuUserSelect
+                  value={ownerUserId || undefined}
+                  onValueChange={(id) => setOwnerUserId(id || null)}
+                  placeholder="Selecione o responsável"
+                  allowNone={true}
+                  noneLabel="Nenhum"
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
