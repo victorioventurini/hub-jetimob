@@ -291,30 +291,19 @@ export function useObjectiveHealth(input: HealthCalculationInput): ObjectiveHeal
  * Get health level configuration
  */
 export function getHealthLevelConfig(level: HealthLevel) {
-  switch (level) {
-    case "healthy":
-      return {
-        label: "Saudável",
-        emoji: "🟢",
-        color: "text-green-600",
-        bgColor: "bg-green-100 dark:bg-green-900/30",
-        borderColor: "border-green-500",
-      };
-    case "at_risk":
-      return {
-        label: "Em risco",
-        emoji: "🟡",
-        color: "text-yellow-600",
-        bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
-        borderColor: "border-yellow-500",
-      };
-    case "critical":
-      return {
-        label: "Crítico",
-        emoji: "🔴",
-        color: "text-red-600",
-        bgColor: "bg-red-100 dark:bg-red-900/30",
-        borderColor: "border-red-500",
-      };
-  }
+  const statusMap: Record<HealthLevel, { label: string; emoji: string; colorKey: string }> = {
+    healthy: { label: 'Saudável', emoji: '🟢', colorKey: 'healthy' },
+    at_risk: { label: 'Em risco', emoji: '🟡', colorKey: 'at_risk' },
+    critical: { label: 'Crítico', emoji: '🔴', colorKey: 'critical' },
+  };
+  
+  const config = statusMap[level];
+  
+  return {
+    label: config.label,
+    emoji: config.emoji,
+    color: `text-status-${config.colorKey === 'healthy' ? 'green' : config.colorKey === 'at_risk' ? 'yellow' : 'red'}`,
+    bgColor: `bg-status-${config.colorKey === 'healthy' ? 'green' : config.colorKey === 'at_risk' ? 'yellow' : 'red'}-muted`,
+    borderColor: `border-status-${config.colorKey === 'healthy' ? 'green' : config.colorKey === 'at_risk' ? 'yellow' : 'red'}`,
+  };
 }
