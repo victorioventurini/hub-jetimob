@@ -11,6 +11,12 @@ export { VicTypewriterQueueProvider, useVicTypewriterQueue } from "./contexts/Vi
 export { useVicAgent, useVicEnabled, useVicConfig, useVicAgentActivations } from "./hooks/useVicAgent";
 export { useVicStream } from "./hooks/useVicStream";
 export { useAskToVic } from "./hooks/useAskToVic";
+export { 
+  useVicFeedbackDraft, 
+  cleanupExpiredVicDrafts,
+  type VicFeedbackDraft,
+  type VicFeedbackEntityType,
+} from "./hooks/useVicFeedbackDraft";
 
 // Components
 export { VicActionButton } from "./components/VicActionButton";

@@ -41,4 +41,6 @@ export const vicKeys = {
   globalAgents: () => ['vic', 'global-agents'] as const,
   buUnitsForAudit: () => ['vic', 'bu-units-audit'] as const,
   logs: (timeRange: string, buId: string | null) => ['vic', 'logs', timeRange, buId] as const,
+  /** Session history for sidepanel responses */
+  responseHistory: (contextKey: string) => ['vic', 'response-history', contextKey] as const,
 } as const;

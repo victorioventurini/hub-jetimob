@@ -8,16 +8,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { VicAgentSlug, VicActionContext, VicContext } from "../types";
+import type { VicAgentSlug, VicActionContext, VicContext, VicInvokeResponse } from "../types";
 
 interface VicActionButtonProps extends Omit<ButtonProps, "onClick"> {
   agentSlug: VicAgentSlug;
   actionContext: VicActionContext;
   context: VicContext;
   label?: string;
-  onApply?: (response: string) => void;
+  /** Called when user applies the response. Receives the text and full response object */
+  onApply?: (response: string, fullResponse?: VicInvokeResponse) => void;
   showIcon?: boolean;
   compact?: boolean;
+  /** Indicates there's saved feedback available */
+  hasSavedFeedback?: boolean;
 }
 
 export function VicActionButton({
@@ -28,6 +31,7 @@ export function VicActionButton({
   onApply,
   showIcon = true,
   compact = false,
+  hasSavedFeedback = false,
   className,
   variant = "outline",
   size = "sm",
@@ -43,7 +47,7 @@ export function VicActionButton({
       agentSlug,
       actionContext,
       context,
-      onApply,
+      onApply: onApply ? (response: string) => onApply(response) : undefined,
     });
   };
 
@@ -83,7 +87,7 @@ export function VicActionButton({
           variant={variant}
           size={size}
           className={cn(
-            "gap-1.5 text-primary hover:text-primary",
+            "gap-1.5 text-primary hover:text-primary relative",
             compact && "px-2",
             className
           )}
@@ -93,11 +97,17 @@ export function VicActionButton({
         >
           {showIcon && <Sparkles className="h-3.5 w-3.5" />}
           {!compact && <span>{label}</span>}
+          {hasSavedFeedback && (
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary animate-pulse" />
+          )}
         </Button>
       </TooltipTrigger>
       <TooltipContent>
         <p className="font-medium">{agentInfo.name}</p>
         <p className="text-xs text-muted-foreground">{agentInfo.description}</p>
+        {hasSavedFeedback && (
+          <p className="text-xs text-primary mt-1">Sugestão de IA disponível</p>
+        )}
       </TooltipContent>
     </Tooltip>
   );
