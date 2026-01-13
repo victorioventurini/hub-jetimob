@@ -1,7 +1,7 @@
 # 🎨 Auditoria de Front-End — UX, Consistência e Qualidade
 
 **Data:** 2026-01-13  
-**Atualizado:** 2026-01-13 (v2)  
+**Atualizado:** 2026-01-13 (v3)  
 **Objetivo:** Identificar inconsistências visuais, padrões quebrados, componentes duplicados, fricção de UX e oportunidades de simplificação.  
 **Escopo:** 86+ arquivos de componentes analisados
 
@@ -72,6 +72,87 @@ Tokens criados em `index.css` e `tailwind.config.ts`:
 
 ---
 
+### ✅ P3: DeleteConfirmDialog → ConfirmDialog — RESOLVIDO
+
+`DeleteConfirmDialog` agora é um alias para `ConfirmDialog` com `variant="destructive"`.
+
+```tsx
+// ANTES (ainda funciona, mas deprecated)
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+<DeleteConfirmDialog title="..." description="..." onConfirm={...} />
+
+// DEPOIS (recomendado)
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+<ConfirmDialog 
+  variant="destructive" 
+  title="..." 
+  description="..." 
+  onConfirm={...} 
+/>
+
+// Outras variantes disponíveis:
+<ConfirmDialog variant="warning" ... />  // Amarelo
+<ConfirmDialog variant="info" ... />     // Azul/Primary
+<ConfirmDialog variant="default" ... />  // Primary
+```
+
+---
+
+### ✅ P4: SectionHeader — IMPLEMENTADO
+
+Novo componente canônico para cabeçalhos de seção em Cards:
+
+```tsx
+import { SectionHeader } from "@/components/ui/section-header";
+import { CalendarDays, Plus } from "lucide-react";
+
+// Com ícone e ação
+<SectionHeader
+  title="Ciclos Anuais"
+  description="Ciclos anuais são usados para Objetivos Organizacionais"
+  icon={CalendarDays}
+  actions={<Button><Plus /> Novo</Button>}
+/>
+
+// Simples
+<SectionHeader title="Membros" badge={<Badge>12</Badge>} />
+```
+
+**Também disponível:** `SimpleSectionHeader` para uso inline fora de cards.
+
+---
+
+### ✅ P5: SkeletonPage — IMPLEMENTADO
+
+Novos componentes canônicos para skeletons de página/seção:
+
+```tsx
+import { 
+  SkeletonPage, 
+  SkeletonSection, 
+  SkeletonCardContent,
+  SkeletonGrid,
+  SkeletonWizardStep 
+} from "@/components/ui/skeleton-page";
+
+// Página completa
+<SkeletonPage blocks={3} variant="form" />
+
+// Seção (tabs, etc)
+<SkeletonSection rows={2} showTitle />
+
+// Card com conteúdo
+<SkeletonCardContent lines={3} showIcon showAction />
+
+// Grid de cards
+<SkeletonGrid count={4} columns={2} />
+
+// Wizard step
+<SkeletonWizardStep variant="form" />
+```
+
+---
+
 ## ⚠️ PENDÊNCIAS PARA MIGRAÇÃO GRADUAL
 
 ### Migração de Cores Hardcoded
@@ -131,6 +212,9 @@ import { StatusIndicator, StatusDot, statusStyles } from "@/components/ui/status
 | `LoadingState` | 86+ arquivos | ✅ Spinner, Skeleton, SkeletonCard, SkeletonList, SkeletonTable |
 | `PageHeader` | 20+ módulos | ✅ Title, description, actions, backTo, breadcrumbs |
 | `StatusIndicator` | Novo | ✅ Variants semânticos para status |
+| `ConfirmDialog` | Novo | ✅ 4 variants (destructive, warning, info, default) |
+| `SectionHeader` | Novo | ✅ Header canônico para Cards |
+| `SkeletonPage` | Novo | ✅ 5 variants para skeletons de página/seção |
 
 ### 3. Selects Canônicos
 Biblioteca consolidada em `src/components/selects/`:
@@ -225,9 +309,15 @@ O front-end do Hub está em **excelente estado de maturidade**:
 - **UX:** Estados de loading/empty/error bem padronizados
 - **Navegação:** URL state, breadcrumbs e links corretos
 
-**Ações implementadas nesta iteração:**
+**Ações implementadas (v2):**
 1. ✅ Tokens de status semânticos (`success`, `warning`, `info`, `danger`)
 2. ✅ Componente `StatusIndicator` para uso consistente
 3. ✅ `PageHeader` unificado (removido `HubPageHeader`)
 
-*Auditoria atualizada em: 2026-01-13*
+**Ações implementadas (v3):**
+4. ✅ `ConfirmDialog` genérico com 4 variants (destructive, warning, info, default)
+5. ✅ `DeleteConfirmDialog` convertido para alias de `ConfirmDialog`
+6. ✅ `SectionHeader` para padronizar CardHeader + CardTitle + actions
+7. ✅ `SkeletonPage` com 5 variants para skeletons de página/seção
+
+*Auditoria atualizada em: 2026-01-13 (v3)*
