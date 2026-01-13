@@ -40,6 +40,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { OkrRagStatus, calculateProgress } from '../types';
 import { useIdentity } from '@/hooks/useIdentity';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface CheckinDialogProps {
   open: boolean;
@@ -82,22 +83,22 @@ const statusConfig: Record<Status, {
     label: 'On Track',
     description: 'Progresso conforme esperado',
     icon: CheckCircle2,
-    colorClass: 'text-green-600 dark:text-green-400',
-    bgClass: 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800',
+    colorClass: RAG_STATUS_COLORS.green.text,
+    bgClass: `${RAG_STATUS_COLORS.green.badge} ${RAG_STATUS_COLORS.green.border}`,
   },
   yellow: {
     label: 'At Risk',
     description: 'Risco de não atingir a meta',
     icon: AlertTriangle,
-    colorClass: 'text-yellow-600 dark:text-yellow-400',
-    bgClass: 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800',
+    colorClass: RAG_STATUS_COLORS.yellow.text,
+    bgClass: `${RAG_STATUS_COLORS.yellow.badge} ${RAG_STATUS_COLORS.yellow.border}`,
   },
   red: {
     label: 'Off Track',
     description: 'Meta não será atingida sem mudança clara',
     icon: XCircle,
-    colorClass: 'text-red-600 dark:text-red-400',
-    bgClass: 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800',
+    colorClass: RAG_STATUS_COLORS.red.text,
+    bgClass: `${RAG_STATUS_COLORS.red.badge} ${RAG_STATUS_COLORS.red.border}`,
   },
 };
 
@@ -402,9 +403,9 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
                   variant="outline" 
                   className={cn(
                     "text-xs px-1.5 py-0",
-                    kr.status === 'green' && 'border-green-300 text-green-700 dark:text-green-400',
-                    kr.status === 'yellow' && 'border-yellow-300 text-yellow-700 dark:text-yellow-400',
-                    kr.status === 'red' && 'border-red-300 text-red-700 dark:text-red-400',
+                    kr.status === 'green' && `${RAG_STATUS_COLORS.green.border} ${RAG_STATUS_COLORS.green.text}`,
+                    kr.status === 'yellow' && `${RAG_STATUS_COLORS.yellow.border} ${RAG_STATUS_COLORS.yellow.text}`,
+                    kr.status === 'red' && `${RAG_STATUS_COLORS.red.border} ${RAG_STATUS_COLORS.red.text}`,
                     kr.status === 'not_started' && 'border-muted-foreground/30'
                   )}
                 >

@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { OrgKrContributionItem } from "./OrgKrContributionItem";
 import type { OrgObjectiveContribution } from "../../hooks/useTeamContributionView";
+import { RAG_STATUS_COLORS } from "@/lib/colors";
 
 interface OrgObjectiveContributionCardProps {
   contribution: OrgObjectiveContribution;
@@ -13,9 +14,9 @@ interface OrgObjectiveContributionCardProps {
 }
 
 const statusConfig = {
-  on_track: { label: 'No Caminho', className: 'bg-green-500/10 text-green-700 border-green-200' },
-  at_risk: { label: 'Em Risco', className: 'bg-yellow-500/10 text-yellow-700 border-yellow-200' },
-  off_track: { label: 'Fora do Caminho', className: 'bg-red-500/10 text-red-700 border-red-200' },
+  on_track: { label: 'No Caminho', className: `${RAG_STATUS_COLORS.green.badge} ${RAG_STATUS_COLORS.green.border}` },
+  at_risk: { label: 'Em Risco', className: `${RAG_STATUS_COLORS.yellow.badge} ${RAG_STATUS_COLORS.yellow.border}` },
+  off_track: { label: 'Fora do Caminho', className: `${RAG_STATUS_COLORS.red.badge} ${RAG_STATUS_COLORS.red.border}` },
 };
 
 export function OrgObjectiveContributionCard({ 

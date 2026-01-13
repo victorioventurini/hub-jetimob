@@ -254,6 +254,27 @@ export const OKR_HEALTH_STYLES = {
 export type OkrHealthStatus = keyof typeof OKR_HEALTH_STYLES;
 
 // ============================================
+// Initiative Status Colors
+// ============================================
+
+export const INITIATIVE_STATUS_COLORS = {
+  planned: {
+    badge: 'bg-muted text-muted-foreground',
+  },
+  in_progress: {
+    badge: 'bg-surface-view-muted text-surface-view-muted-foreground',
+  },
+  blocked: {
+    badge: 'bg-status-red-muted text-status-red-muted-foreground',
+  },
+  completed: {
+    badge: 'bg-status-green-muted text-status-green-muted-foreground',
+  },
+} as const;
+
+export type InitiativeStatusKey = keyof typeof INITIATIVE_STATUS_COLORS;
+
+// ============================================
 // Helper function for dynamic status lookup
 // ============================================
 

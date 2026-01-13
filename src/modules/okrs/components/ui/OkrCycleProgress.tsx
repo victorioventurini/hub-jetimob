@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Calendar, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface OkrCycleProgressProps {
   startDate: string | Date;
@@ -49,9 +50,9 @@ export function OkrCycleProgress({
             variant="outline" 
             className={cn(
               'text-xs cursor-help',
-              isOverdue && 'bg-red-500/10 text-red-700 border-red-200',
-              isAtRisk && 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
-              isOnTrack && !isOverdue && 'bg-green-500/10 text-green-700 border-green-200',
+              isOverdue && `${RAG_STATUS_COLORS.red.badge} ${RAG_STATUS_COLORS.red.border}`,
+              isAtRisk && `${RAG_STATUS_COLORS.yellow.badge} ${RAG_STATUS_COLORS.yellow.border}`,
+              isOnTrack && !isOverdue && `${RAG_STATUS_COLORS.green.badge} ${RAG_STATUS_COLORS.green.border}`,
               className
             )}
           >
@@ -145,9 +146,9 @@ export function OkrCycleProgress({
           variant="outline" 
           className={cn(
             'text-xs',
-            isOverdue && 'bg-red-500/10 text-red-700 border-red-200',
-            isAtRisk && 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
-            isOnTrack && !isOverdue && 'bg-green-500/10 text-green-700 border-green-200',
+            isOverdue && `${RAG_STATUS_COLORS.red.badge} ${RAG_STATUS_COLORS.red.border}`,
+            isAtRisk && `${RAG_STATUS_COLORS.yellow.badge} ${RAG_STATUS_COLORS.yellow.border}`,
+            isOnTrack && !isOverdue && `${RAG_STATUS_COLORS.green.badge} ${RAG_STATUS_COLORS.green.border}`,
           )}
         >
           {isOverdue ? 'Encerrado' : isAtRisk ? 'Atrasado' : 'No prazo'}
