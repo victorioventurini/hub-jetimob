@@ -5,13 +5,12 @@
  * - Analisa dependências automaticamente
  * - Mostra riscos potenciais
  * - Oferece opções de ação via Facilitador
+ * - AI insight persiste entre navegações
  */
 
-import { useEffect, useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -28,7 +27,7 @@ import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import type { VicInsight } from '@/modules/okrs/types/wizard';
+import type { WizardAiInsight, DetectedDependencyDraft } from '@/modules/okrs/hooks/useWizardDraft';
 import type { DraftTeamKr, DraftTeamDependency } from '@/modules/okrs/types/wizard';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
@@ -36,18 +35,14 @@ import { RAG_STATUS_COLORS } from '@/lib/colors';
 // TYPES
 // ============================================================
 
-export interface DetectedDependency {
-  krIndex: number;
-  krTitle: string;
-  dependsOnTeamName?: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-}
-
 export interface TeamOkrDependenciesStepProps {
   draftKrs: DraftTeamKr[];
   dependencies: DraftTeamDependency[];
+  detectedDependencies: DetectedDependencyDraft[];
+  aiInsight: WizardAiInsight | null;
   onDependenciesChange: (deps: DraftTeamDependency[]) => void;
+  onDetectedDependenciesChange: (deps: DetectedDependencyDraft[]) => void;
+  onAiInsightChange: (insight: WizardAiInsight | null) => void;
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
@@ -71,19 +66,29 @@ const DEPENDENCY_ACTIONS = [
 export function TeamOkrDependenciesStep({
   draftKrs,
   dependencies,
+  detectedDependencies,
+  aiInsight,
   onDependenciesChange,
+  onDetectedDependenciesChange,
+  onAiInsightChange,
   onContinue,
   onBack,
   onSkip,
 }: TeamOkrDependenciesStepProps) {
   const { invokeVic } = useWizardAI();
-  const [detectedDeps, setDetectedDeps] = useState<DetectedDependency[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(true);
-  const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedActions, setSelectedActions] = useState<Record<number, string>>({});
+  const hasAnalyzedRef = useRef(false);
 
-  // Analyze dependencies on mount
+  // Analyze dependencies on mount - only if not already analyzed
   useEffect(() => {
+    // Skip if already have detected dependencies or no KRs
+    if (detectedDependencies.length > 0 || draftKrs.length === 0 || hasAnalyzedRef.current) {
+      return;
+    }
+
+    hasAnalyzedRef.current = true;
+    
     const analyzeDependencies = async () => {
       setIsAnalyzing(true);
       try {
@@ -109,14 +114,14 @@ export function TeamOkrDependenciesStep({
 
         try {
           const parsed = JSON.parse(response.response);
-          const deps: DetectedDependency[] = (parsed.dependencies || []).map((d: any) => ({
+          const deps: DetectedDependencyDraft[] = (parsed.dependencies || []).map((d: any) => ({
             ...d,
             krTitle: draftKrs[d.krIndex]?.title || '',
           }));
-          setDetectedDeps(deps);
+          onDetectedDependenciesChange(deps);
           
           if (parsed.insight) {
-            setAiInsight({
+            onAiInsightChange({
               id: 'dep-insight',
               type: 'insight',
               content: parsed.insight,
@@ -126,20 +131,18 @@ export function TeamOkrDependenciesStep({
           }
         } catch {
           // If not JSON, no dependencies detected
-          setDetectedDeps([]);
+          onDetectedDependenciesChange([]);
         }
       } catch {
         // Silently fail - no dependencies detected
-        setDetectedDeps([]);
+        onDetectedDependenciesChange([]);
       } finally {
         setIsAnalyzing(false);
       }
     };
 
-    if (draftKrs.length > 0) {
-      analyzeDependencies();
-    }
-  }, [draftKrs, invokeVic]);
+    analyzeDependencies();
+  }, [draftKrs, detectedDependencies.length, onDetectedDependenciesChange, onAiInsightChange]);
 
   // Handle action selection
   const handleActionSelect = (depIndex: number, action: string) => {
@@ -150,7 +153,7 @@ export function TeamOkrDependenciesStep({
 
     // If registering as risk, add to dependencies
     if (action === 'register_risk') {
-      const dep = detectedDeps[depIndex];
+      const dep = detectedDependencies[depIndex];
       const newDep: DraftTeamDependency = {
         krIndex: dep.krIndex,
         description: dep.description,
@@ -168,7 +171,7 @@ export function TeamOkrDependenciesStep({
     }
   };
 
-  const noDependencies = !isAnalyzing && detectedDeps.length === 0;
+  const noDependencies = !isAnalyzing && detectedDependencies.length === 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -221,14 +224,14 @@ export function TeamOkrDependenciesStep({
           {aiInsight && <VicInsightCard insight={aiInsight} showSource />}
 
           {/* Detected Dependencies */}
-          {detectedDeps.length > 0 && (
+          {detectedDependencies.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
                 Dependências Detectadas
               </h3>
 
-              {detectedDeps.map((dep, index) => (
+              {detectedDependencies.map((dep, index) => (
                 <Card 
                   key={index}
                   className={cn(

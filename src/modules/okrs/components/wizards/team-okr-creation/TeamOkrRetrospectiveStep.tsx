@@ -5,11 +5,10 @@
  * - Mostra OKRs do ciclo anterior
  * - Taxa de atingimento
  * - KRs abandonados
- * - Insights sem julgamento
+ * - Insights sem julgamento (persistidos)
  */
 
-import { useEffect, useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -21,7 +20,7 @@ import { VicGeneratingCard } from '@/modules/vic';
 import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import type { VicInsight } from '@/modules/okrs/types/wizard';
+import type { WizardAiInsight } from '@/modules/okrs/hooks/useWizardDraft';
 import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
 import { RAG_STATUS_COLORS, TREND_COLORS } from '@/lib/colors';
 
@@ -33,6 +32,8 @@ export interface TeamOkrRetrospectiveStepProps {
   teamName: string;
   analysis: PreviousCycleAnalysis | null;
   isLoading?: boolean;
+  aiInsight: WizardAiInsight | null;
+  onAiInsightChange: (insight: WizardAiInsight | null) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -45,35 +46,21 @@ export function TeamOkrRetrospectiveStep({
   teamName,
   analysis,
   isLoading = false,
+  aiInsight,
+  onAiInsightChange,
   onContinue,
   onBack,
 }: TeamOkrRetrospectiveStepProps) {
   const { invokeVic } = useWizardAI();
-  const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
-  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
-  
-  // Guard to prevent multiple invocations
-  const hasInvokedRef = useRef(false);
-  const analysisIdRef = useRef<string | null>(null);
+  const isGeneratingRef = useRef(false);
 
-  // Generate retrospective insight - only once per analysis
+  // Generate retrospective insight - only if not already persisted
   useEffect(() => {
-    // Skip if no analysis or already invoked for this analysis
-    if (!analysis) return;
+    if (!analysis || aiInsight || isGeneratingRef.current) return;
     
-    // Create a stable ID for the analysis
-    const analysisId = `${analysis.objectives.length}-${analysis.avgCompletion}-${analysis.abandonedKrs.length}`;
-    
-    // Skip if already invoked for this exact analysis
-    if (hasInvokedRef.current && analysisIdRef.current === analysisId) {
-      return;
-    }
+    isGeneratingRef.current = true;
     
     const generateInsight = async () => {
-      hasInvokedRef.current = true;
-      analysisIdRef.current = analysisId;
-      setIsGeneratingInsight(true);
-      
       try {
         const response = await invokeVic(
           'analista-kpis',
@@ -91,7 +78,7 @@ export function TeamOkrRetrospectiveStep({
           { silent: true }
         );
 
-        setAiInsight({
+        onAiInsightChange({
           id: 'retro-insight',
           type: 'insight',
           content: response.response,
@@ -99,9 +86,9 @@ export function TeamOkrRetrospectiveStep({
           source: 'analista-kpis',
         });
       } catch {
-        // Fallback insight - don't flood with toasts since we use silent mode
+        // Fallback insight
         if (analysis.abandonedKrs.length > 0) {
-          setAiInsight({
+          onAiInsightChange({
             id: 'retro-insight-fallback',
             type: 'insight',
             content: `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com 3 KRs ativos tiveram 28% mais foco.`,
@@ -110,14 +97,15 @@ export function TeamOkrRetrospectiveStep({
           });
         }
       } finally {
-        setIsGeneratingInsight(false);
+        isGeneratingRef.current = false;
       }
     };
 
     generateInsight();
-  }, [analysis]); // Remove invokeVic from deps - it changes every render
+  }, [analysis, aiInsight, onAiInsightChange]);
 
   const hasData = analysis && (analysis.objectives.length > 0 || analysis.kpiTrends.length > 0);
+  const isGenerating = !aiInsight && analysis && isGeneratingRef.current;
 
   if (isLoading) {
     return (
@@ -287,7 +275,7 @@ export function TeamOkrRetrospectiveStep({
           )}
 
           {/* AI Insight */}
-          {isGeneratingInsight ? (
+          {isGenerating ? (
             <VicGeneratingCard text="Analisando ciclo anterior..." />
           ) : aiInsight ? (
             <VicInsightCard insight={aiInsight} showSource />

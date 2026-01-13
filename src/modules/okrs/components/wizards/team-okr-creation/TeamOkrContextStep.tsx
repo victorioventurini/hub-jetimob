@@ -5,10 +5,10 @@
  * - Exibe OKRs organizacionais
  * - Mostra KPIs estratégicos
  * - Pergunta sobre impacto potencial
+ * - AI insight persiste entre navegações
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -16,15 +16,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Target, TrendingUp, Building2, AlertTriangle } from 'lucide-react';
+import { Target, TrendingUp, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VicGeneratingCard } from '@/modules/vic';
 import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
-import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
+import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import type { VicInsight } from '@/modules/okrs/types/wizard';
+import type { WizardAiInsight } from '@/modules/okrs/hooks/useWizardDraft';
 
 // ============================================================
 // TYPES
@@ -53,7 +53,9 @@ export interface TeamOkrContextStepProps {
   strategicKpis: StrategicKpi[];
   isLoading?: boolean;
   impactReflection: string;
+  aiInsight: WizardAiInsight | null;
   onImpactReflectionChange: (value: string) => void;
+  onAiInsightChange: (insight: WizardAiInsight | null) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -79,44 +81,30 @@ export function TeamOkrContextStep({
   strategicKpis,
   isLoading = false,
   impactReflection,
+  aiInsight,
   onImpactReflectionChange,
+  onAiInsightChange,
   onContinue,
   onBack,
 }: TeamOkrContextStepProps) {
   const { invokeVic } = useWizardAI();
-  const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
-  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
-  
-  // Guard to prevent multiple invocations
-  const hasInvokedRef = useRef(false);
-  const contextIdRef = useRef<string | null>(null);
+  const isGeneratingRef = useRef(false);
 
-  // Generate strategic insight - only once per context
+  // Generate strategic insight - only if not already persisted
   useEffect(() => {
-    if (orgObjectives.length === 0) return;
+    // Skip if already have insight or no objectives
+    if (aiInsight || orgObjectives.length === 0 || isGeneratingRef.current) return;
     
-    // Create a stable ID for the context
-    const contextId = orgObjectives.map(o => o.id).sort().join('-');
-    
-    // Skip if already invoked for this exact context
-    if (hasInvokedRef.current && contextIdRef.current === contextId) {
-      return;
-    }
-    
-    // Set guard BEFORE starting async work to prevent race conditions
-    hasInvokedRef.current = true;
-    contextIdRef.current = contextId;
+    isGeneratingRef.current = true;
     
     let isCancelled = false;
     const timeoutId = setTimeout(() => {
       if (!isCancelled) {
-        setIsGeneratingInsight(false);
+        isGeneratingRef.current = false;
       }
-    }, 30000); // 30s timeout
+    }, 30000);
     
     const generateInsight = async () => {
-      setIsGeneratingInsight(true);
-      
       try {
         const response = await invokeVic(
           'alinhamento-estrategico',
@@ -133,7 +121,7 @@ export function TeamOkrContextStep({
         );
 
         if (!isCancelled) {
-          setAiInsight({
+          onAiInsightChange({
             id: 'context-insight',
             type: 'insight',
             content: response.response,
@@ -145,7 +133,7 @@ export function TeamOkrContextStep({
         // Silently fail - insight is optional
       } finally {
         if (!isCancelled) {
-          setIsGeneratingInsight(false);
+          isGeneratingRef.current = false;
         }
       }
     };
@@ -156,7 +144,9 @@ export function TeamOkrContextStep({
       isCancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [orgObjectives, strategicKpis]); // Remove invokeVic from deps - it changes every render
+  }, [orgObjectives, strategicKpis, aiInsight, onAiInsightChange]);
+
+  const isGenerating = !aiInsight && orgObjectives.length > 0;
 
   if (isLoading) {
     return (
@@ -268,7 +258,7 @@ export function TeamOkrContextStep({
           )}
 
           {/* AI Insight */}
-          {isGeneratingInsight ? (
+          {isGenerating && isGeneratingRef.current ? (
             <VicGeneratingCard text="Analisando contexto estratégico..." />
           ) : aiInsight ? (
             <VicInsightCard insight={aiInsight} showSource />
