@@ -17,6 +17,7 @@ import {
 import { OverdueKr, formatDaysSince } from '../../hooks/useCycleCheckins';
 import { KrHistoryDialog } from '../KrHistoryDialog';
 import { cn } from '@/lib/utils';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface CycleCheckinsOverdueProps {
   overdueKrs: OverdueKr[];
@@ -24,10 +25,10 @@ interface CycleCheckinsOverdueProps {
 }
 
 const statusColors = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-500',
-  red: 'bg-red-500',
-  not_started: 'bg-muted-foreground',
+  green: RAG_STATUS_COLORS.green.dot,
+  yellow: RAG_STATUS_COLORS.yellow.dot,
+  red: RAG_STATUS_COLORS.red.dot,
+  not_started: RAG_STATUS_COLORS.not_started.dot,
 };
 
 const statusLabels = {
@@ -79,7 +80,7 @@ export function CycleCheckinsOverdue({
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+          <CheckCircle2 className="h-12 w-12 mx-auto text-status-green mb-4" />
           <h3 className="text-lg font-medium mb-2">Todos os KRs em dia!</h3>
           <p className="text-muted-foreground text-sm">
             Não há KRs com check-ins atrasados neste ciclo.
@@ -92,14 +93,14 @@ export function CycleCheckinsOverdue({
   return (
     <div className="space-y-4">
       {/* Alert Banner */}
-      <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+      <div className="bg-status-yellow-muted dark:bg-status-yellow-muted/30 border border-status-yellow/30 dark:border-status-yellow/30 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-status-yellow shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
+            <h4 className="font-medium text-status-yellow-muted-foreground">
               {overdueKrs.length} KR{overdueKrs.length !== 1 ? 's' : ''} sem check-in recente
             </h4>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+            <p className="text-sm text-status-yellow-muted-foreground/80 mt-1">
               Os KRs abaixo não receberam check-in nos últimos 7 dias.
             </p>
           </div>
@@ -152,9 +153,9 @@ export function CycleCheckinsOverdue({
                 <div className="flex items-center gap-3 mt-2">
                   <Badge variant="secondary" className={cn(
                     "text-xs",
-                    kr.status === 'red' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                    kr.status === 'yellow' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-                    kr.status === 'green' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                    kr.status === 'red' && RAG_STATUS_COLORS.red.badge,
+                    kr.status === 'yellow' && RAG_STATUS_COLORS.yellow.badge,
+                    kr.status === 'green' && RAG_STATUS_COLORS.green.badge,
                   )}>
                     {statusLabels[kr.status]}
                   </Badge>

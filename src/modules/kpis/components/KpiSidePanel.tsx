@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useKpiData } from "../hooks/useKpiData";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "../types";
 import { cn } from "@/lib/utils";
-
+import { getKpiTrendColor } from "@/lib/colors";
 interface KpiSidePanelProps {
   className?: string;
 }
@@ -80,18 +80,7 @@ export function KpiSidePanel({ className }: KpiSidePanelProps) {
           const TrendIcon =
             kpi.trend === "up" ? TrendingUp : kpi.trend === "down" ? TrendingDown : Minus;
 
-          const trendColor =
-            kpi.direction === "up"
-              ? kpi.trend === "up"
-                ? "text-emerald-500"
-                : kpi.trend === "down"
-                ? "text-red-500"
-                : "text-muted-foreground"
-              : kpi.trend === "down"
-              ? "text-emerald-500"
-              : kpi.trend === "up"
-              ? "text-red-500"
-              : "text-muted-foreground";
+          const trendColor = getKpiTrendColor(kpi.trend || 'flat', kpi.direction || 'up');
 
           return (
             <div

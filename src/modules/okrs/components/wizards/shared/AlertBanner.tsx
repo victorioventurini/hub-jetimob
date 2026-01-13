@@ -19,6 +19,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ALERT_BANNER_STYLES } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -62,64 +63,64 @@ const ALERT_CONFIG: Record<AlertBannerType, AlertConfig> = {
     defaultTitle: 'Atualizado fora do prazo',
     defaultDescription: 'Este KR foi atualizado após o horário recomendado. Sem problema — mas sinalizamos para manter previsibilidade no check-in.',
     variant: 'default',
-    bgClass: 'border-orange-300 bg-orange-50/50 dark:bg-orange-950/20',
-    iconClass: 'text-orange-500',
+    bgClass: ALERT_BANNER_STYLES.overdue.bg,
+    iconClass: ALERT_BANNER_STYLES.overdue.icon,
   },
   no_update: {
     icon: AlertCircle,
     defaultTitle: 'Sem atualização',
     defaultDescription: 'Este KR não foi atualizado nesta semana. Ele será destacado para seu líder.',
     variant: 'destructive',
-    bgClass: 'border-destructive/30 bg-destructive/5 dark:bg-destructive/10',
-    iconClass: 'text-destructive',
+    bgClass: ALERT_BANNER_STYLES.no_update.bg,
+    iconClass: ALERT_BANNER_STYLES.no_update.icon,
   },
   blocked: {
     icon: Ban,
     defaultTitle: 'Bloqueado',
     defaultDescription: 'Esta iniciativa está bloqueada e pode impactar o progresso.',
     variant: 'destructive',
-    bgClass: 'border-destructive/30 bg-destructive/5 dark:bg-destructive/10',
-    iconClass: 'text-destructive',
+    bgClass: ALERT_BANNER_STYLES.blocked.bg,
+    iconClass: ALERT_BANNER_STYLES.blocked.icon,
   },
   at_risk: {
     icon: AlertTriangle,
     defaultTitle: 'Em risco',
     defaultDescription: 'Este KR está em risco e precisa de atenção.',
     variant: 'default',
-    bgClass: 'border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/20',
-    iconClass: 'text-yellow-600 dark:text-yellow-400',
+    bgClass: ALERT_BANNER_STYLES.at_risk.bg,
+    iconClass: ALERT_BANNER_STYLES.at_risk.icon,
   },
   stagnant: {
     icon: TrendingDown,
     defaultTitle: 'Progresso estagnado',
     defaultDescription: 'Este KR não apresentou avanço nas últimas 2+ semanas.',
     variant: 'default',
-    bgClass: 'border-orange-300 bg-orange-50/50 dark:bg-orange-950/20',
-    iconClass: 'text-orange-500',
+    bgClass: ALERT_BANNER_STYLES.stagnant.bg,
+    iconClass: ALERT_BANNER_STYLES.stagnant.icon,
   },
   info: {
     icon: Calendar,
     defaultTitle: 'Informação',
     defaultDescription: '',
     variant: 'default',
-    bgClass: 'border-primary/30 bg-primary/5 dark:bg-primary/10',
-    iconClass: 'text-primary',
+    bgClass: ALERT_BANNER_STYLES.info.bg,
+    iconClass: ALERT_BANNER_STYLES.info.icon,
   },
   warning: {
     icon: AlertTriangle,
     defaultTitle: 'Atenção',
     defaultDescription: '',
     variant: 'default',
-    bgClass: 'border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/20',
-    iconClass: 'text-yellow-600 dark:text-yellow-400',
+    bgClass: ALERT_BANNER_STYLES.warning.bg,
+    iconClass: ALERT_BANNER_STYLES.warning.icon,
   },
   success: {
     icon: Calendar,
     defaultTitle: 'Sucesso',
     defaultDescription: '',
     variant: 'default',
-    bgClass: 'border-green-300 bg-green-50/50 dark:bg-green-950/20',
-    iconClass: 'text-green-600 dark:text-green-400',
+    bgClass: ALERT_BANNER_STYLES.success.bg,
+    iconClass: ALERT_BANNER_STYLES.success.icon,
   },
 };
 

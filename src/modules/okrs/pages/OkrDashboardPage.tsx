@@ -349,7 +349,7 @@ export default function OkrDashboardPage() {
                 </>
               ) : (
                 <>
-                  <div className="text-3xl font-bold text-emerald-600">✓</div>
+                  <div className="text-3xl font-bold text-status-green">✓</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Todos os check-ins em dia
                   </p>

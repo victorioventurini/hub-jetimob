@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { LeaderOverviewMetrics } from '@/modules/okrs/types/wizard';
+import { METRIC_CARD_STYLES, getHealthScoreColor } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -142,21 +143,14 @@ export function LeaderOverviewStep({
             <span className="text-sm font-medium">Saúde das Atualizações</span>
             <span className={cn(
               "text-lg font-bold",
-              stats.healthScore >= 70 && "text-green-600",
-              stats.healthScore >= 40 && stats.healthScore < 70 && "text-yellow-600",
-              stats.healthScore < 40 && "text-red-600"
+              getHealthScoreColor(stats.healthScore).text
             )}>
               {stats.healthScore}%
             </span>
           </div>
           <Progress 
             value={stats.healthScore} 
-            className={cn(
-              "h-2",
-              stats.healthScore >= 70 && "[&>div]:bg-green-500",
-              stats.healthScore >= 40 && stats.healthScore < 70 && "[&>div]:bg-yellow-500",
-              stats.healthScore < 40 && "[&>div]:bg-red-500"
-            )}
+            className={cn("h-2", getHealthScoreColor(stats.healthScore).progress)}
           />
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
             <span>{stats.onTimePercent}% no prazo</span>
@@ -179,11 +173,11 @@ export function LeaderOverviewStep({
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {/* Updated on time */}
-            <Card className="border-green-200 dark:border-green-800/50">
+            <Card className={METRIC_CARD_STYLES.success.card}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <div className={cn("p-2 rounded-lg", METRIC_CARD_STYLES.success.iconBg)}>
+                    <CheckCircle2 className={cn("h-5 w-5", METRIC_CARD_STYLES.success.icon)} />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{metrics!.krsUpdatedOnTime}</p>
@@ -195,23 +189,17 @@ export function LeaderOverviewStep({
 
             {/* Updated late */}
             <Card className={cn(
-              metrics!.krsUpdatedLate > 0 
-                ? "border-orange-200 dark:border-orange-800/50" 
-                : ""
+              metrics!.krsUpdatedLate > 0 ? METRIC_CARD_STYLES.warning.card : ""
             )}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "p-2 rounded-lg",
-                    metrics!.krsUpdatedLate > 0 
-                      ? "bg-orange-100 dark:bg-orange-900/30" 
-                      : "bg-muted"
+                    metrics!.krsUpdatedLate > 0 ? METRIC_CARD_STYLES.warning.iconBg : METRIC_CARD_STYLES.neutral.iconBg
                   )}>
                     <Clock className={cn(
                       "h-5 w-5",
-                      metrics!.krsUpdatedLate > 0 
-                        ? "text-orange-600 dark:text-orange-400" 
-                        : "text-muted-foreground"
+                      metrics!.krsUpdatedLate > 0 ? METRIC_CARD_STYLES.warning.icon : METRIC_CARD_STYLES.neutral.icon
                     )} />
                   </div>
                   <div>
@@ -221,6 +209,99 @@ export function LeaderOverviewStep({
                 </div>
               </CardContent>
             </Card>
+
+            {/* No update */}
+            <Card className={cn(
+              metrics!.krsNoUpdate > 0 ? METRIC_CARD_STYLES.danger.card : ""
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    metrics!.krsNoUpdate > 0 ? METRIC_CARD_STYLES.danger.iconBg : METRIC_CARD_STYLES.neutral.iconBg
+                  )}>
+                    <XCircle className={cn(
+                      "h-5 w-5",
+                      metrics!.krsNoUpdate > 0 ? METRIC_CARD_STYLES.danger.icon : METRIC_CARD_STYLES.neutral.icon
+                    )} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{metrics!.krsNoUpdate}</p>
+                    <p className="text-xs text-muted-foreground">Sem update</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* At risk */}
+            <Card className={cn(
+              metrics!.krsAtRisk > 0 ? METRIC_CARD_STYLES.warning.card : ""
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    metrics!.krsAtRisk > 0 ? METRIC_CARD_STYLES.warning.iconBg : METRIC_CARD_STYLES.neutral.iconBg
+                  )}>
+                    <AlertTriangle className={cn(
+                      "h-5 w-5",
+                      metrics!.krsAtRisk > 0 ? METRIC_CARD_STYLES.warning.icon : METRIC_CARD_STYLES.neutral.icon
+                    )} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{metrics!.krsAtRisk}</p>
+                    <p className="text-xs text-muted-foreground">Em risco</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stagnant */}
+            <Card className={cn(
+              metrics!.krsStagnant > 0 ? METRIC_CARD_STYLES.purple.card : ""
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    metrics!.krsStagnant > 0 ? METRIC_CARD_STYLES.purple.iconBg : METRIC_CARD_STYLES.neutral.iconBg
+                  )}>
+                    <TrendingDown className={cn(
+                      "h-5 w-5",
+                      metrics!.krsStagnant > 0 ? METRIC_CARD_STYLES.purple.icon : METRIC_CARD_STYLES.neutral.icon
+                    )} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{metrics!.krsStagnant}</p>
+                    <p className="text-xs text-muted-foreground">Estagnados (14d+)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Critical initiatives */}
+            <Card className={cn(
+              metrics!.initiativesCritical > 0 ? METRIC_CARD_STYLES.danger.card : ""
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    metrics!.initiativesCritical > 0 ? METRIC_CARD_STYLES.danger.iconBg : METRIC_CARD_STYLES.neutral.iconBg
+                  )}>
+                    <Zap className={cn(
+                      "h-5 w-5",
+                      metrics!.initiativesCritical > 0 ? METRIC_CARD_STYLES.danger.icon : METRIC_CARD_STYLES.neutral.icon
+                    )} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{metrics!.initiativesCritical}</p>
+                    <p className="text-xs text-muted-foreground">Iniciativas bloq.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
             {/* No update */}
             <Card className={cn(

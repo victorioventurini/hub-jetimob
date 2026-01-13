@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle2, XCircle, AlertTriangle, Archive } from 'lucide-react';
+import { CYCLE_SUMMARY_COLORS } from '@/lib/colors';
 
 interface CycleRetrospectiveDialogProps {
   open: boolean;
@@ -112,19 +113,19 @@ export function CycleRetrospectiveDialog({
                 <h4 className="text-sm font-medium mb-3">Resumo do Ciclo</h4>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <CheckCircle2 className={`h-4 w-4 ${CYCLE_SUMMARY_COLORS.achieved}`} />
                     <span className="text-sm">
                       <strong>{completedCount}</strong> atingidos
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    <AlertTriangle className={`h-4 w-4 ${CYCLE_SUMMARY_COLORS.partial}`} />
                     <span className="text-sm">
                       <strong>{partialCount}</strong> parciais
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-red-500" />
+                    <XCircle className={`h-4 w-4 ${CYCLE_SUMMARY_COLORS.not_achieved}`} />
                     <span className="text-sm">
                       <strong>{notAchievedCount}</strong> não atingidos
                     </span>
@@ -152,7 +153,7 @@ export function CycleRetrospectiveDialog({
 
             {/* What worked */}
             <div className="space-y-2">
-              <Label htmlFor="whatWorked" className="flex items-center gap-1 text-emerald-600">
+              <Label htmlFor="whatWorked" className={`flex items-center gap-1 ${CYCLE_SUMMARY_COLORS.achieved}`}>
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 O que funcionou bem?
               </Label>
@@ -167,7 +168,7 @@ export function CycleRetrospectiveDialog({
 
             {/* What didn't work */}
             <div className="space-y-2">
-              <Label htmlFor="whatDidntWork" className="flex items-center gap-1 text-red-600">
+              <Label htmlFor="whatDidntWork" className={`flex items-center gap-1 ${CYCLE_SUMMARY_COLORS.not_achieved}`}>
                 <XCircle className="h-3.5 w-3.5" />
                 O que não funcionou?
               </Label>
