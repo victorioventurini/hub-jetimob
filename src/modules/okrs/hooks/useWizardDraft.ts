@@ -51,6 +51,31 @@ export interface ObjectiveValidationFeedback {
   alternatives?: string[];
 }
 
+/** AI insight type for wizard steps */
+export interface WizardAiInsight {
+  id: string;
+  type: 'insight' | 'warning' | 'suggestion';
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  source: string;
+}
+
+/** Detected dependency from AI analysis */
+export interface DetectedDependencyDraft {
+  krIndex: number;
+  krTitle: string;
+  dependsOnTeamName?: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+}
+
+/** Generated content for share step */
+export interface ShareStepContent {
+  summary: string;
+  closingMessage: string;
+  reflectionQuestions: string[];
+}
+
 export interface TeamOkrDraft {
   // Meta
   version: number;
@@ -66,6 +91,10 @@ export interface TeamOkrDraft {
   
   // Step 1 - Context
   impactReflection: string;
+  contextAiInsight: WizardAiInsight | null;
+  
+  // Step 2 - Retrospective
+  retrospectiveAiInsight: WizardAiInsight | null;
   
   // Step 3 - Objective
   objectiveTitle: string;
@@ -80,6 +109,7 @@ export interface TeamOkrDraft {
   ownerType: OwnerType;
   primaryTeamId: string;
   contributingTeamIds: string[];
+  sharingAiInsight: string | null;
   
   // Step 5/6 - KRs
   krPlan: KrPlan;
@@ -87,12 +117,17 @@ export interface TeamOkrDraft {
   
   // Step 7 - Dependencies
   dependencies: DraftTeamDependency[];
+  detectedDependencies: DetectedDependencyDraft[];
+  dependenciesAiInsight: WizardAiInsight | null;
   
   // Step 8 - Initiatives
   initiatives: DraftTeamInitiative[];
+  
+  // Step 9 - Share/Review
+  shareStepContent: ShareStepContent | null;
 }
 
-const DRAFT_VERSION = 3; // Bumped version for objective validation fields
+const DRAFT_VERSION = 4; // Bumped version for AI insight persistence
 
 const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft => ({
   version: DRAFT_VERSION,
@@ -102,6 +137,8 @@ const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft 
   cycleId,
   currentStep: 'intro',
   impactReflection: '',
+  contextAiInsight: null,
+  retrospectiveAiInsight: null,
   objectiveTitle: '',
   objectiveDescription: '',
   selectedOrgObjectiveId: null,
@@ -112,10 +149,14 @@ const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft 
   ownerType: 'my_team',
   primaryTeamId: teamId,
   contributingTeamIds: [],
+  sharingAiInsight: null,
   krPlan: { foundational: 1, contribution: 0, enabler: 0 },
   draftKrs: [],
   dependencies: [],
+  detectedDependencies: [],
+  dependenciesAiInsight: null,
   initiatives: [],
+  shareStepContent: null,
 });
 
 // ============================================================

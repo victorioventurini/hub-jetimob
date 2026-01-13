@@ -4,13 +4,13 @@
  * Cap. 8 e 9 do storytelling:
  * - Gera resumo para comunicação
  * - Mensagem cultural de encerramento
+ * - Conteúdo gerado persiste entre navegações
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,6 +20,7 @@ import { WizardLastStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { toast } from 'sonner';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
+import type { ShareStepContent } from '@/modules/okrs/hooks/useWizardDraft';
 
 // ============================================================
 // TYPES
@@ -30,7 +31,9 @@ export interface TeamOkrShareStepProps {
   objectiveTitle: string;
   draftKrs: DraftTeamKr[];
   initiatives: DraftTeamInitiative[];
+  shareStepContent: ShareStepContent | null;
   isSubmitting?: boolean;
+  onShareStepContentChange: (content: ShareStepContent | null) => void;
   onSubmit: () => void;
   onBack: () => void;
 }
@@ -44,19 +47,33 @@ export function TeamOkrShareStep({
   objectiveTitle,
   draftKrs,
   initiatives,
+  shareStepContent,
   isSubmitting = false,
+  onShareStepContentChange,
   onSubmit,
   onBack,
 }: TeamOkrShareStepProps) {
   const { invokeVic } = useWizardAI();
-  const [summary, setSummary] = useState<string>('');
-  const [closingMessage, setClosingMessage] = useState<string>('');
-  const [reflectionQuestions, setReflectionQuestions] = useState<string[]>([]);
-  const [isGenerating, setIsGenerating] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const hasGeneratedRef = useRef(false);
 
-  // Generate summary and messages
+  // Local state for editing
+  const [localSummary, setLocalSummary] = useState(shareStepContent?.summary || '');
+
+  // Sync local state with persisted content
   useEffect(() => {
+    if (shareStepContent?.summary) {
+      setLocalSummary(shareStepContent.summary);
+    }
+  }, [shareStepContent?.summary]);
+
+  // Generate summary and messages - only if not already persisted
+  useEffect(() => {
+    if (shareStepContent || hasGeneratedRef.current) return;
+    
+    hasGeneratedRef.current = true;
+
     const generateContent = async () => {
       setIsGenerating(true);
       try {
@@ -82,7 +99,6 @@ export function TeamOkrShareStep({
           Inclua: contexto do porquê dessas escolhas, os KRs de forma simples, e uma chamada para ação.
           Máximo 150 palavras, em linguagem simples e direta.`
         );
-        setSummary(summaryResponse.response);
 
         // Generate reflection questions
         const questionsResponse = await invokeVic(
@@ -100,7 +116,6 @@ export function TeamOkrShareStep({
           .split('\n')
           .filter(q => q.trim())
           .slice(0, 3);
-        setReflectionQuestions(questions);
 
         // Generate closing message
         const closingResponse = await invokeVic(
@@ -109,28 +124,51 @@ export function TeamOkrShareStep({
           { type: 'closing' },
           `Gere uma mensagem cultural curta (1-2 frases) sobre foco e priorização para encerrar a criação de OKRs.`
         );
-        setClosingMessage(closingResponse.response);
+
+        const content: ShareStepContent = {
+          summary: summaryResponse.response,
+          closingMessage: closingResponse.response,
+          reflectionQuestions: questions,
+        };
+
+        onShareStepContentChange(content);
+        setLocalSummary(summaryResponse.response);
       } catch {
         // Fallback content
-        setSummary(`O ${teamName} definiu um novo objetivo: "${objectiveTitle}". Este ciclo, vamos focar em ${draftKrs.length} resultados-chave que vão nos guiar para o sucesso.`);
-        setReflectionQuestions([
-          'O que cada um de nós pode fazer para contribuir com esses resultados?',
-          'Quais obstáculos precisamos remover juntos?',
-          'Como vamos medir nosso progresso semanalmente?',
-        ]);
-        setClosingMessage('Foco não é dizer sim para poucas coisas. É dizer não para muitas coisas boas.');
+        const fallbackContent: ShareStepContent = {
+          summary: `O ${teamName} definiu um novo objetivo: "${objectiveTitle}". Este ciclo, vamos focar em ${draftKrs.length} resultados-chave que vão nos guiar para o sucesso.`,
+          reflectionQuestions: [
+            'O que cada um de nós pode fazer para contribuir com esses resultados?',
+            'Quais obstáculos precisamos remover juntos?',
+            'Como vamos medir nosso progresso semanalmente?',
+          ],
+          closingMessage: 'Foco não é dizer sim para poucas coisas. É dizer não para muitas coisas boas.',
+        };
+        onShareStepContentChange(fallbackContent);
+        setLocalSummary(fallbackContent.summary);
       } finally {
         setIsGenerating(false);
       }
     };
 
     generateContent();
-  }, [invokeVic, teamName, objectiveTitle, draftKrs, initiatives]);
+  }, [shareStepContent, teamName, objectiveTitle, draftKrs, initiatives, onShareStepContentChange]);
+
+  // Update persisted content when local summary changes
+  const handleSummaryChange = (value: string) => {
+    setLocalSummary(value);
+    if (shareStepContent) {
+      onShareStepContentChange({
+        ...shareStepContent,
+        summary: value,
+      });
+    }
+  };
 
   // Copy summary to clipboard
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(summary);
+      await navigator.clipboard.writeText(localSummary);
       setCopied(true);
       toast.success('Resumo copiado!');
       setTimeout(() => setCopied(false), 2000);
@@ -138,6 +176,10 @@ export function TeamOkrShareStep({
       toast.error('Erro ao copiar');
     }
   };
+
+  const summary = localSummary || shareStepContent?.summary || '';
+  const closingMessage = shareStepContent?.closingMessage || '';
+  const reflectionQuestions = shareStepContent?.reflectionQuestions || [];
 
   return (
     <div className="flex flex-col h-full">
@@ -187,7 +229,7 @@ export function TeamOkrShareStep({
               ) : (
                 <Textarea
                   value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
+                  onChange={(e) => handleSummaryChange(e.target.value)}
                   className="min-h-[150px] resize-none"
                 />
               )}

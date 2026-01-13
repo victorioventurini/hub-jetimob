@@ -3,10 +3,10 @@
  * 
  * Pergunta se o objetivo é exclusivo ou compartilhado com outros times.
  * Guia o líder na definição do modelo de responsabilidade.
+ * AI insight persiste entre navegações.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -39,11 +39,13 @@ export interface TeamOkrSharingStepProps {
   contributingTeamIds: string[];
   availableTeams: FlatTeamItem[];
   isLoadingTeams: boolean;
+  aiInsight: string | null;
   onIsSharedChange: (isShared: boolean) => void;
   onResponsibilityModelChange: (model: ResponsibilityModel) => void;
   onOwnerTypeChange: (type: OwnerType) => void;
   onPrimaryTeamChange: (teamId: string) => void;
   onContributingTeamsChange: (teamIds: string[]) => void;
+  onAiInsightChange: (insight: string | null) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -63,23 +65,25 @@ export function TeamOkrSharingStep({
   contributingTeamIds,
   availableTeams,
   isLoadingTeams,
+  aiInsight,
   onIsSharedChange,
   onResponsibilityModelChange,
   onOwnerTypeChange,
   onPrimaryTeamChange,
   onContributingTeamsChange,
+  onAiInsightChange,
   onContinue,
   onBack,
 }: TeamOkrSharingStepProps) {
-  // AI insights
-  const { invokeVic, isVicLoading } = useWizardAI();
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+  const { invokeVic } = useWizardAI();
+  const isGeneratingRef = useRef(false);
 
-  // Generate AI insight on mount
+  // Generate AI insight - only if not already persisted
   const generateSharingInsight = useCallback(async () => {
-    if (!objectiveTitle) return;
-    setIsGeneratingInsight(true);
+    if (!objectiveTitle || aiInsight || isGeneratingRef.current) return;
+    
+    isGeneratingRef.current = true;
+    
     try {
       const response = await invokeVic(
         'alinhamento-estrategico',
@@ -94,15 +98,15 @@ export function TeamOkrSharingStep({
         },
         'Analise se este objetivo tipicamente requer colaboração entre times. Responda em 1-2 frases.'
       );
-      setAiInsight(response.response);
+      onAiInsightChange(response.response);
     } catch (error) {
       console.error('Error generating sharing insight:', error);
       // Fallback insight
-      setAiInsight('Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.');
+      onAiInsightChange('Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.');
     } finally {
-      setIsGeneratingInsight(false);
+      isGeneratingRef.current = false;
     }
-  }, [objectiveTitle, teamName, invokeVic]);
+  }, [objectiveTitle, teamName, aiInsight, invokeVic, onAiInsightChange]);
 
   useEffect(() => {
     generateSharingInsight();
@@ -144,6 +148,7 @@ export function TeamOkrSharingStep({
 
   // Get other teams (excluding current team)
   const otherTeams = availableTeams.filter(t => t.id !== teamId);
+  const isGenerating = !aiInsight && isGeneratingRef.current;
 
   return (
     <ScrollArea className="h-full">
@@ -169,7 +174,7 @@ export function TeamOkrSharingStep({
             </div>
           </CardHeader>
           <CardContent>
-            {isGeneratingInsight ? (
+            {isGenerating ? (
               <VicLoadingState 
                 text="Analisando contexto..." 
                 variant="inline" 
