@@ -117,7 +117,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(userId);
     setImpersonatedUser(userInfo);
     
-    // Invalidar cache de permissões, teams, assets e tickets para forçar refetch
+    // Invalidar cache de permissões, teams, assets, tickets e OKRs para forçar refetch
     // Invalidate both 'real' and 'impersonated' variants
     queryClient.invalidateQueries({ queryKey: ["identity"] });
     queryClient.invalidateQueries({ queryKey: ["permissions"] });
@@ -127,6 +127,9 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     queryClient.invalidateQueries({ queryKey: ["tickets"] }); // Tickets list
     queryClient.invalidateQueries({ queryKey: ["ticket"] }); // Ticket detail (singular)
     queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+    queryClient.invalidateQueries({ queryKey: ["okrs"] }); // OKRs list and check-ins
+    queryClient.invalidateQueries({ queryKey: ["home"] }); // Home dashboard
+    queryClient.invalidateQueries({ queryKey: ["kpis"] }); // KPIs
     queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "impersonated"] });
     queryClient.refetchQueries({ queryKey: ["manageable-teams", "impersonated"] });
   }, [canImpersonate, queryClient]);
@@ -136,7 +139,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(null);
     setImpersonatedUser(null);
     
-    // Invalidar cache de permissões, teams, assets e tickets
+    // Invalidar cache de permissões, teams, assets, tickets e OKRs
     queryClient.invalidateQueries({ queryKey: ["identity"] });
     queryClient.invalidateQueries({ queryKey: ["permissions"] });
     queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
@@ -145,6 +148,9 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     queryClient.invalidateQueries({ queryKey: ["tickets"] }); // Tickets list
     queryClient.invalidateQueries({ queryKey: ["ticket"] }); // Ticket detail (singular)
     queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+    queryClient.invalidateQueries({ queryKey: ["okrs"] }); // OKRs list and check-ins
+    queryClient.invalidateQueries({ queryKey: ["home"] }); // Home dashboard
+    queryClient.invalidateQueries({ queryKey: ["kpis"] }); // KPIs
     queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "real"] });
     queryClient.refetchQueries({ queryKey: ["manageable-teams", "real"] });
   }, [queryClient]);

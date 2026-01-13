@@ -10,6 +10,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { queryKeys } from "@/lib/queryKeys";
 
 // ============================================================
@@ -93,6 +94,7 @@ export function useCycleCheckins(
 ) {
   const supabase = useOptionalBuScopedSupabase();
   const { currentBuId } = useBu();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
   // Build filters object for RPC
   const rpcFilters = {
@@ -108,8 +110,13 @@ export function useCycleCheckins(
     page_size: filters.pageSize || 20,
   };
 
+  // Include impersonation context in query key for proper cache separation
+  const queryKey = isImpersonating && impersonatedUserId
+    ? [...queryKeys.okrs.cycleCheckins(currentBuId, cycleId || undefined, rpcFilters), 'impersonated', impersonatedUserId]
+    : queryKeys.okrs.cycleCheckins(currentBuId, cycleId || undefined, rpcFilters);
+
   return useQuery({
-    queryKey: queryKeys.okrs.cycleCheckins(currentBuId, cycleId || undefined, rpcFilters),
+    queryKey,
     queryFn: async (): Promise<CycleCheckinsResponse> => {
       if (!supabase || !cycleId) {
         return {
