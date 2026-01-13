@@ -103,9 +103,18 @@ export function TeamOkrContextStep({
       return;
     }
     
+    // Set guard BEFORE starting async work to prevent race conditions
+    hasInvokedRef.current = true;
+    contextIdRef.current = contextId;
+    
+    let isCancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (!isCancelled) {
+        setIsGeneratingInsight(false);
+      }
+    }, 30000); // 30s timeout
+    
     const generateInsight = async () => {
-      hasInvokedRef.current = true;
-      contextIdRef.current = contextId;
       setIsGeneratingInsight(true);
       
       try {
@@ -123,21 +132,30 @@ export function TeamOkrContextStep({
           { silent: true }
         );
 
-        setAiInsight({
-          id: 'context-insight',
-          type: 'insight',
-          content: response.response,
-          priority: 'medium',
-          source: 'alinhamento-estrategico',
-        });
+        if (!isCancelled) {
+          setAiInsight({
+            id: 'context-insight',
+            type: 'insight',
+            content: response.response,
+            priority: 'medium',
+            source: 'alinhamento-estrategico',
+          });
+        }
       } catch {
         // Silently fail - insight is optional
       } finally {
-        setIsGeneratingInsight(false);
+        if (!isCancelled) {
+          setIsGeneratingInsight(false);
+        }
       }
     };
 
     generateInsight();
+    
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [orgObjectives, strategicKpis]); // Remove invokeVic from deps - it changes every render
 
   if (isLoading) {
