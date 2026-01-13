@@ -15,6 +15,8 @@ import {
   useOrgObjectives, 
   useTeamObjectives, 
   useTeamKeyResults,
+  useMyTeamObjectives,
+  useMyTeamKeyResults,
   useTeams, 
   useOrgKeyResults,
   useLatestCheckinDate,
@@ -97,6 +99,16 @@ export default function OkrDashboardPage() {
   });
   const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBuId });
   const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, normalizedTeamId);
+  
+  // "Meus OKRs" queries - only fetch when in 'my' view
+  const { data: myObjectives, isLoading: myObjLoading } = useMyTeamObjectives(
+    activeView === 'my' ? currentBuId : undefined, 
+    activeView === 'my' ? userProfile?.id : undefined
+  );
+  const { data: myKrs, isLoading: myKrsLoading } = useMyTeamKeyResults(
+    activeView === 'my' ? currentBuId : undefined, 
+    activeView === 'my' ? userProfile?.id : undefined
+  );
 
   // Shared OKRs insights
   const sharedInsights = useSharedOkrsInsights();
@@ -109,16 +121,22 @@ export default function OkrDashboardPage() {
   // Calculate pending checkins count
   const pendingCheckinsCount = pendingCheckins?.filter(c => c.is_overdue).length || 0;
   
-  // Calculate status distribution
+  // Calculate status distribution - use myKrs for 'my' view
   const krsForDistribution = activeView === 'company' 
     ? allOrgKrs 
+    : activeView === 'my'
+    ? myKrs
     : allTeamKrs;
   
   const statusCounts = useKrStatusDistribution(krsForDistribution as any);
 
   // Calculate overall progress
   const overallProgress = useMemo(() => {
-    const krs = activeView === 'company' ? allOrgKrs : allTeamKrs;
+    const krs = activeView === 'company' 
+      ? allOrgKrs 
+      : activeView === 'my' 
+      ? myKrs 
+      : allTeamKrs;
     if (!krs || krs.length === 0) return 0;
     
     const totalProgress = krs.reduce((acc, kr) => {
@@ -131,18 +149,22 @@ export default function OkrDashboardPage() {
     }, 0);
     
     return totalProgress / krs.length;
-  }, [activeView, allOrgKrs, allTeamKrs]);
+  }, [activeView, allOrgKrs, allTeamKrs, myKrs]);
 
   // Determine what to display
-  const isLoading = orgLoading || teamLoading || krsLoading || teamsLoading;
+  const isLoading = orgLoading || teamLoading || krsLoading || teamsLoading || 
+    (activeView === 'my' && (myObjLoading || myKrsLoading));
   const years = [currentYear, currentYear + 1];
   
   const displayObjectives = useMemo(() => {
     if (activeView === 'company') {
       return orgObjectives || [];
     }
+    if (activeView === 'my') {
+      return myObjectives || [];
+    }
     return teamObjectives || [];
-  }, [activeView, orgObjectives, teamObjectives]);
+  }, [activeView, orgObjectives, teamObjectives, myObjectives]);
 
   // Risk count for alert
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
