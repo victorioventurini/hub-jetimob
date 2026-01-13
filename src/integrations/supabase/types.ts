@@ -8349,6 +8349,12 @@ export type Database = {
         Returns: string
       }
       get_vacuum_instructions: { Args: never; Returns: string }
+      get_visible_ticket_ids_for_impersonation: {
+        Args: { p_impersonated_profile_id: string }
+        Returns: {
+          ticket_id: string
+        }[]
+      }
       has_asset_permission: {
         Args: {
           p_bu_id: string

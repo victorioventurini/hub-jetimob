@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { CACHE_TIMES } from "@/lib/queryCacheConfig";
 
@@ -21,16 +22,93 @@ export interface TicketsSummaryData {
  * Hook to fetch tickets summary using aggregated RPC
  * 
  * Consolidates multiple queries into a single optimized call.
+ * Supports impersonation - during impersonation, shows summary only for visible tickets.
  * @see Wave 4 - Performance optimization
  */
 export function useTicketsSummary(teamId?: string) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
   return useQuery({
-    queryKey: queryKeys.tickets.summary(buId, teamId),
+    queryKey: [...queryKeys.tickets.summary(buId, teamId), isImpersonating ? impersonatedUserId : null],
     queryFn: async (): Promise<TicketsSummaryData | null> => {
       if (!buId || !supabase) return null;
 
+      // Durante impersonação, calcular summary baseado apenas em tickets visíveis
+      if (isImpersonating && impersonatedUserId) {
+        // Primeiro obter IDs de tickets visíveis
+        const { data: visibleIds, error: rpcError } = await supabase
+          .rpc("get_visible_ticket_ids_for_impersonation", {
+            p_impersonated_profile_id: impersonatedUserId,
+          });
+        
+        if (rpcError) throw rpcError;
+        
+        const ticketIds = (visibleIds || []).map((r: { ticket_id: string }) => r.ticket_id);
+        
+        if (ticketIds.length === 0) {
+          return {
+            status_counts: {},
+            priority_counts: {},
+            overdue_count: 0,
+            due_today_count: 0,
+            due_this_week_count: 0,
+            avg_resolution_hours: null,
+            total_open: 0,
+            total_closed: 0,
+          };
+        }
+
+        // Buscar tickets visíveis e calcular métricas
+        const { data: tickets, error: ticketsError } = await supabase
+          .from("tickets")
+          .select("id, status, expected_due_at")
+          .in("id", ticketIds)
+          .is("deleted_at", null);
+
+        if (ticketsError) throw ticketsError;
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        const statusCounts: Record<string, number> = {};
+        let overdueCount = 0;
+        let dueTodayCount = 0;
+        let dueThisWeekCount = 0;
+        let totalOpen = 0;
+        let totalClosed = 0;
+
+        (tickets || []).forEach((t) => {
+          statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
+          
+          const isOpen = !["done", "discarded"].includes(t.status);
+          if (isOpen) {
+            totalOpen++;
+            if (t.expected_due_at) {
+              const dueDate = new Date(t.expected_due_at);
+              if (dueDate < now) overdueCount++;
+              else if (dueDate.toDateString() === today.toDateString()) dueTodayCount++;
+              else if (dueDate <= nextWeek) dueThisWeekCount++;
+            }
+          } else {
+            totalClosed++;
+          }
+        });
+
+        return {
+          status_counts: statusCounts,
+          priority_counts: {}, // Simplificado para impersonação
+          overdue_count: overdueCount,
+          due_today_count: dueTodayCount,
+          due_this_week_count: dueThisWeekCount,
+          avg_resolution_hours: null, // Simplificado para impersonação
+          total_open: totalOpen,
+          total_closed: totalClosed,
+        };
+      }
+
+      // Normal mode - use optimized RPC
       const { data, error } = await supabase.rpc('rpc_tickets_summary', {
         p_bu_id: buId,
         p_team_id: teamId || null,
