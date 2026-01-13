@@ -47,10 +47,10 @@ interface KrHistoryDialogProps {
 }
 
 const statusColors = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-500',
-  red: 'bg-red-500',
-  not_started: 'bg-muted-foreground',
+  green: 'bg-status-green',
+  yellow: 'bg-status-yellow',
+  red: 'bg-status-red',
+  not_started: 'bg-status-gray',
 };
 
 const statusLabels = {
@@ -61,9 +61,9 @@ const statusLabels = {
 };
 
 const confidenceColors = {
-  high: 'text-green-600 bg-green-100 dark:bg-green-950',
-  medium: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-950',
-  low: 'text-red-600 bg-red-100 dark:bg-red-950',
+  high: 'text-status-green-muted-foreground bg-status-green-muted',
+  medium: 'text-status-yellow-muted-foreground bg-status-yellow-muted',
+  low: 'text-status-red-muted-foreground bg-status-red-muted',
 };
 
 const confidenceLabels = {

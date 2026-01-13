@@ -20,25 +20,25 @@ export function KpiStatusSummary({ total, onTrack, atRisk, offTrack, improving }
     { 
       label: 'On Track', 
       value: onTrack, 
-      color: 'text-emerald-600 dark:text-emerald-400',
+      color: 'text-status-green',
       percentage: total > 0 ? Math.round((onTrack / total) * 100) : 0,
     },
     { 
       label: 'Em Risco', 
       value: atRisk, 
-      color: 'text-amber-600 dark:text-amber-400',
+      color: 'text-status-yellow',
       percentage: total > 0 ? Math.round((atRisk / total) * 100) : 0,
     },
     { 
       label: 'Off Track', 
       value: offTrack, 
-      color: 'text-red-600 dark:text-red-400',
+      color: 'text-status-red',
       percentage: total > 0 ? Math.round((offTrack / total) * 100) : 0,
     },
     { 
       label: 'Melhorando', 
       value: improving, 
-      color: 'text-blue-600 dark:text-blue-400',
+      color: 'text-info',
       percentage: total > 0 ? Math.round((improving / total) * 100) : 0,
     },
   ];

@@ -29,9 +29,9 @@ export function KpiSummaryCard({ kpis, title = "KPIs Principais" }: KpiSummaryCa
   const getChangeColor = (type?: string) => {
     switch (type) {
       case "positive":
-        return "text-emerald-600 dark:text-emerald-400";
+        return "text-status-green";
       case "negative":
-        return "text-red-500 dark:text-red-400";
+        return "text-status-red";
       default:
         return "text-muted-foreground";
     }

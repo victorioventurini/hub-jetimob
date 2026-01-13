@@ -31,15 +31,15 @@ export function TeamStatusCard({
           {/* Progress bar */}
           <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="bg-emerald-500 transition-all"
+              className="bg-status-green transition-all"
               style={{ width: `${onTrackPercent}%` }}
             />
             <div
-              className="bg-amber-500 transition-all"
+              className="bg-status-yellow transition-all"
               style={{ width: `${atRiskPercent}%` }}
             />
             <div
-              className="bg-red-500 transition-all"
+              className="bg-status-red transition-all"
               style={{ width: `${offTrackPercent}%` }}
             />
           </div>
@@ -48,21 +48,21 @@ export function TeamStatusCard({
           <div className="grid grid-cols-3 gap-1 text-center text-xs">
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center justify-center gap-1">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-status-green" />
                 <span className="font-semibold text-foreground">{onTrackPercent}%</span>
               </div>
               <p className="text-muted-foreground truncate">No caminho</p>
             </div>
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center justify-center gap-1">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-status-yellow" />
                 <span className="font-semibold text-foreground">{atRiskPercent}%</span>
               </div>
               <p className="text-muted-foreground truncate">Em risco</p>
             </div>
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center justify-center gap-1">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-status-red" />
                 <span className="font-semibold text-foreground">{offTrackPercent}%</span>
               </div>
               <p className="text-muted-foreground truncate">Fora do caminho</p>

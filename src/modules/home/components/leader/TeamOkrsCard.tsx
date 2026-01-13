@@ -67,7 +67,7 @@ export function TeamOkrsCard({ okrs, teamId, isLoading }: TeamOkrsCardProps) {
             OKRs do meu time
           </CardTitle>
           {okrs.pending_checkins > 0 && (
-            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+            <Badge variant="outline" className="text-status-yellow border-status-yellow">
               {okrs.pending_checkins} check-in{okrs.pending_checkins > 1 ? 's' : ''} pendente{okrs.pending_checkins > 1 ? 's' : ''}
             </Badge>
           )}
@@ -79,19 +79,19 @@ export function TeamOkrsCard({ okrs, teamId, isLoading }: TeamOkrsCardProps) {
           <div className="flex h-3 rounded-full overflow-hidden bg-muted">
             {greenPercent > 0 && (
               <div
-                className="bg-green-500 transition-all"
+                className="bg-status-green transition-all"
                 style={{ width: `${greenPercent}%` }}
               />
             )}
             {yellowPercent > 0 && (
               <div
-                className="bg-yellow-500 transition-all"
+                className="bg-status-yellow transition-all"
                 style={{ width: `${yellowPercent}%` }}
               />
             )}
             {redPercent > 0 && (
               <div
-                className="bg-red-500 transition-all"
+                className="bg-status-red transition-all"
                 style={{ width: `${redPercent}%` }}
               />
             )}
@@ -101,15 +101,15 @@ export function TeamOkrsCard({ okrs, teamId, isLoading }: TeamOkrsCardProps) {
         {/* Counters */}
         <div className="grid grid-cols-4 gap-2 text-center">
           <div>
-            <div className="text-lg font-bold text-green-600">{okrs.green}</div>
+            <div className="text-lg font-bold text-status-green">{okrs.green}</div>
             <div className="text-xs text-muted-foreground">No caminho</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-yellow-600">{okrs.yellow}</div>
+            <div className="text-lg font-bold text-status-yellow">{okrs.yellow}</div>
             <div className="text-xs text-muted-foreground">Em risco</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-red-600">{okrs.red}</div>
+            <div className="text-lg font-bold text-status-red">{okrs.red}</div>
             <div className="text-xs text-muted-foreground">Fora</div>
           </div>
           <div>

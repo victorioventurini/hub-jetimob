@@ -21,15 +21,15 @@ export function OverallProgressCard({
 }: OverallProgressCardProps) {
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor = trend === 'up' 
-    ? 'text-emerald-600' 
+    ? 'text-status-green' 
     : trend === 'down' 
-    ? 'text-red-600' 
+    ? 'text-status-red' 
     : 'text-muted-foreground';
 
   const getProgressColor = () => {
-    if (progress >= 70) return 'bg-emerald-500';
-    if (progress >= 40) return 'bg-amber-500';
-    return 'bg-red-500';
+    if (progress >= 70) return 'bg-status-green';
+    if (progress >= 40) return 'bg-status-yellow';
+    return 'bg-status-red';
   };
 
   return (
