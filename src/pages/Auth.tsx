@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, type Location } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowRight, Loader2, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { checkEmailDomainAllowed } from "@/modules/bu/hooks/useBuData";
@@ -43,7 +43,7 @@ function saveEmail(email: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-type AuthState = "first-access" | "returning" | "otp-sent" | "otp-verify";
+type AuthState = "first-access" | "returning" | "link-sent";
 
 export default function Auth() {
   usePageTitle("Login", {
@@ -58,16 +58,10 @@ export default function Auth() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [authTimeout, setAuthTimeout] = useState(false);
   
-  // OTP verification state
-  const [otpCode, setOtpCode] = useState<string[]>(["", "", "", "", "", ""]);
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
   const {
     user,
     isLoading: authLoading,
     signInWithMagicLink,
-    verifyOtp
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -153,13 +147,8 @@ export default function Auth() {
 
     // Save email to localStorage
     saveEmail(email);
-    setAuthState("otp-verify");
+    setAuthState("link-sent");
     setResendCooldown(60);
-    
-    // Focus first OTP input
-    setTimeout(() => {
-      otpInputRefs.current[0]?.focus();
-    }, 100);
   };
 
   const handleResend = async () => {
@@ -172,78 +161,14 @@ export default function Auth() {
       toast.error("Não conseguimos reenviar. Tenta de novo?");
       return;
     }
-    toast.success("Código reenviado!");
+    toast.success("Link reenviado!");
     setResendCooldown(60);
-    setOtpCode(["", "", "", "", "", ""]);
-    setOtpError(null);
-    otpInputRefs.current[0]?.focus();
   };
 
   const handleChangeEmail = useCallback(() => {
     setAuthState("first-access");
     setEmail("");
-    setOtpCode(["", "", "", "", "", ""]);
-    setOtpError(null);
   }, []);
-
-  // OTP input handlers
-  const handleOtpChange = (index: number, value: string) => {
-    // Only allow digits
-    const digit = value.replace(/\D/g, "").slice(-1);
-    
-    const newOtp = [...otpCode];
-    newOtp[index] = digit;
-    setOtpCode(newOtp);
-    setOtpError(null);
-    
-    // Auto-focus next input
-    if (digit && index < 5) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-    
-    // Auto-submit when all digits are entered
-    if (digit && index === 5) {
-      const fullCode = newOtp.join("");
-      if (fullCode.length === 6) {
-        handleVerifyOtp(fullCode);
-      }
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otpCode[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length === 6) {
-      const newOtp = pasted.split("");
-      setOtpCode(newOtp);
-      setOtpError(null);
-      handleVerifyOtp(pasted);
-    }
-  };
-
-  const handleVerifyOtp = async (code: string) => {
-    setIsLoading(true);
-    setOtpError(null);
-    
-    const { error } = await verifyOtp(email, code);
-    setIsLoading(false);
-    
-    if (error) {
-      setOtpError("Código inválido ou expirado. Tenta de novo?");
-      setOtpCode(["", "", "", "", "", ""]);
-      otpInputRefs.current[0]?.focus();
-      return;
-    }
-    
-    // Success - auth state change will trigger redirect
-    toast.success("Login realizado com sucesso!");
-  };
 
   // Extract first name from email for personalized greeting
   const getFirstName = (): string | null => {
@@ -265,14 +190,14 @@ export default function Auth() {
     );
   }
 
-  // STATE 3: OTP Verification - User enters 6-digit code
-  if (authState === "otp-verify") {
+  // STATE: Link Sent - User should check email
+  if (authState === "link-sent") {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row">
         {/* Left side - Branding */}
         <BrandingSide />
 
-        {/* Right side - OTP input */}
+        {/* Right side - Link sent confirmation */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -289,57 +214,28 @@ export default function Auth() {
               />
             </div>
 
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Digite o código 🔐
-              </h1>
-              <p className="text-muted-foreground">
-                Enviamos um código de 6 dígitos para{" "}
-                <span className="font-medium text-foreground">{email}</span>.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* OTP Input Grid */}
-              <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
-                {otpCode.map((digit, index) => (
-                  <Input
-                    key={index}
-                    ref={(el) => (otpInputRefs.current[index] = el)}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                    className={`w-12 h-14 text-center text-2xl font-semibold ${
-                      otpError ? "border-destructive focus-visible:ring-destructive" : ""
-                    }`}
-                    disabled={isLoading}
-                    autoComplete="one-time-code"
-                  />
-                ))}
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Mail className="h-8 w-8 text-primary" />
               </div>
-
-              {otpError && (
-                <div className="flex items-center gap-2 text-destructive text-sm justify-center">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{otpError}</span>
-                </div>
-              )}
-
-              {isLoading && (
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Verificando...</span>
-                </div>
-              )}
+              
+              <div className="space-y-2">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  Verifique seu e-mail 📬
+                </h1>
+                <p className="text-muted-foreground">
+                  Enviamos um link de acesso para{" "}
+                  <span className="font-medium text-foreground">{email}</span>.
+                </p>
+              </div>
             </div>
 
-            <div className="p-4 bg-muted/50 rounded-lg border border-border">
+            <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
               <p className="text-sm text-muted-foreground">
-                O código expira em <strong>10 minutos</strong>. Não esquece de
-                olhar a caixa de spam.
+                Clique no link do e-mail para entrar. O link expira em <strong>10 minutos</strong>.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Não encontrou? Olhe na caixa de spam.
               </p>
             </div>
 
@@ -357,7 +253,7 @@ export default function Auth() {
                 )}
                 {resendCooldown > 0
                   ? `Reenviar em ${resendCooldown}s`
-                  : "Reenviar código"}
+                  : "Reenviar link"}
               </Button>
 
               <button
@@ -372,13 +268,6 @@ export default function Auth() {
         </div>
       </div>
     );
-  }
-
-  // Legacy STATE: OTP Sent (keeping for backward compatibility, redirects to verify)
-  if (authState === "otp-sent") {
-    // Redirect to OTP verify state
-    setAuthState("otp-verify");
-    return null;
   }
 
   const firstName = getFirstName();
@@ -413,7 +302,7 @@ export default function Auth() {
                 Buenas! 👋
               </h1>
               <p className="text-muted-foreground text-sm">
-                Digite seu e-mail @jet para receber o código de acesso.
+                Digite seu e-mail @jet para receber o link de acesso.
               </p>
             </div>
           )}
@@ -427,7 +316,7 @@ export default function Auth() {
                   : "Buenas! Bom te ver por aqui."}
               </h1>
               <p className="text-muted-foreground">
-                Vamos enviar o código para{" "}
+                Vamos enviar o link para{" "}
                 <span className="font-medium text-foreground">{savedEmail}</span>.
               </p>
             </div>
@@ -478,7 +367,7 @@ export default function Auth() {
                 </>
               ) : (
                 <>
-                  Receber código
+                  Receber link
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
