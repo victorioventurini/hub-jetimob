@@ -102,7 +102,7 @@ export default function OkrDashboardPage() {
   const sharedInsights = useSharedOkrsInsights();
   
   // Permission checks for editing
-  const { teams: manageableTeams } = useManageableTeams();
+  const { teams: manageableTeams, hasManageableTeams } = useManageableTeams();
   const { canManage: canManageOrg } = useCanManageOrgOkr();
   const manageableTeamIds = useMemo(() => new Set(manageableTeams.map(t => t.id)), [manageableTeams]);
   
@@ -147,9 +147,10 @@ export default function OkrDashboardPage() {
   // Risk count for alert
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
 
-  // Can create based on permission keys (centralized)
+  // Can create based on permission keys AND manageable teams
+  // User must have permission AND at least one team they can manage (leader/admin)
   const canCreateOrg = isWildcard || has('okrs.org_objective.create:bu');
-  const canCreateTeam = isWildcard || has('okrs.team_objective.create:team');
+  const canCreateTeam = (isWildcard || has('okrs.team_objective.create:team')) && hasManageableTeams;
 
   const handleCreateClick = () => {
     if (activeView === 'company' && canCreateOrg) {
