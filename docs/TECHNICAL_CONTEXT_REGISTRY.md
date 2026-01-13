@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.28.0  
+**Versão:** 2.29.0  
 **Última atualização:** 2026-01-13
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido | OKR Wizard Team Selection melhorado
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido | OKR Wizard Team Selection melhorado | **Auth OTP Code ativo (v2.29.0)**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -60,21 +60,24 @@
 | **Roteamento** | React Router DOM v6 |
 | **Backend** | Supabase (Lovable Cloud) |
 | **Banco de Dados** | PostgreSQL |
-| **Autenticação** | Supabase Auth (Magic Link via SendGrid) |
+| **Autenticação** | Supabase Auth (OTP Code via email) |
 | **Storage** | Supabase Storage |
 | **Funções Serverless** | Supabase Edge Functions (Deno) |
 | **IA** | Lovable AI (Google Gemini / OpenAI) |
 
 ### 1.2 Modelo de Autenticação
 
-- **Método:** Magic Link (OTP via email)
+- **Método:** OTP Code (código de 6 dígitos via email)
 - **Validação de Domínio:** Usuários só podem fazer login se o domínio do email estiver cadastrado em uma BU ativa
 - **Fluxo:**
   1. Usuário insere email
   2. Sistema valida se domínio pertence a uma BU ativa
-  3. Se válido, envia Magic Link via SendGrid
-  4. Usuário clica no link e é autenticado
-  5. Profile é criado automaticamente via trigger `handle_new_user()`
+  3. Se válido, envia código OTP de 6 dígitos via email (Supabase Auth)
+  4. Usuário insere o código na tela de verificação
+  5. Sistema verifica OTP e autentica o usuário
+  6. Profile é criado automaticamente via trigger `handle_new_user()`
+
+> **Nota (v2.29.0):** O sistema foi migrado de Magic Link para OTP Code para evitar problemas com scanners de email corporativos que invalidavam os links antes do usuário clicar.
 
 ### 1.3 Conceito Multi-BU (Business Units)
 
@@ -1566,7 +1569,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 | Integração | Status | Uso |
 |------------|--------|-----|
-| SendGrid | ✅ Ativo | Emails (magic link, notificações) |
+| SendGrid | ✅ Ativo | Emails (notificações) |
 | Google Maps | ✅ Ativo | Autocomplete de endereços e cidades |
 | Lovable AI | ✅ Ativo | Agentes Vic |
 
@@ -1591,7 +1594,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 ### 6.2 Limitações Atuais
 
-- **Sem SSO/SAML:** Apenas magic link
+- **Sem SSO/SAML:** Apenas OTP Code via email
 - **Sem mobile app:** Web responsivo apenas
 - **Sem modo offline:** Requer conexão constante
 - **Edge Functions:** Timeout de 60s
@@ -1600,7 +1603,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 | Decisão | Motivo | Quando revisar |
 |---------|--------|----------------|
-| Magic link único | Simplicidade de MVP | Quando precisar SSO |
+| OTP Code único | Simplicidade + compatibilidade com scanners de email | Quando precisar SSO |
 | Todos os módulos visíveis | Simplicidade | Quando tiver módulos pagos |
 
 ---
@@ -1619,8 +1622,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 | Função | Descrição |
 |--------|-----------|
-| `request-magic-link` | Solicita magic link via SendGrid |
-| `send-magic-link` | (Legado) Envio direto |
+| `request-magic-link` | Solicita OTP Code via Supabase Auth (nome histórico mantido) |
 | `auth-email-hook` | Hook para customização de emails |
 | `search-cities` | Autocomplete de cidades (Google Maps) |
 | `search-address` | Autocomplete de endereços (Google Places) |
@@ -2144,6 +2146,22 @@ src/
   - **Padrão SELECT**: `is_profile_bu_member(my_profile_id(), bu_id)` para leitura
   - **Padrão INSERT/UPDATE/DELETE**: `has_permission(my_profile_id(), bu_id, 'module.entity.action:scope')`
   - Cleanup de policies legadas duplicadas
+
+### v2.29.0 (2026-01-13)
+- **Auth OTP Code Migration**:
+  - Sistema de autenticação migrado de Magic Link para OTP Code (6 dígitos)
+  - **Motivo**: Scanners de email corporativos invalidavam Magic Links antes do usuário clicar
+  - **Fluxo novo**:
+    1. Usuário insere email → validação de domínio
+    2. Supabase Auth envia email com código de 6 dígitos
+    3. Usuário insere código na tela de verificação
+    4. Sistema verifica OTP e autentica
+  - **Arquivos alterados**:
+    - `supabase/functions/request-magic-link/index.ts` — Usa `signInWithOtp()` ao invés de `generateLink()`
+    - `src/hooks/useAuth.tsx` — Novo método `verifyOtp()`
+    - `src/pages/Auth.tsx` — UI de input de 6 dígitos com auto-focus e paste
+  - **Edge Function**: Nome `request-magic-link` mantido por compatibilidade (envia OTP Code)
+  - **Documentação atualizada**: TCR, GO_LIVE_CHECKLIST, MEMBERSHIP_RECOVERY_REPORT, tcr-content.ts
 
 ### v2.23.0 (2026-01-12)
 - **Impersonation System v2.0** completo
