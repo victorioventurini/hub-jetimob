@@ -92,13 +92,6 @@ export type Database = {
             foreignKeyName: "fk_ai_agent_documents_created_by"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_ai_agent_documents_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -183,13 +176,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_agent_instruction_sources_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -368,13 +354,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_ai_agents_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -612,13 +591,6 @@ export type Database = {
             foreignKeyName: "fk_asset_gift_batches_created_by"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_asset_gift_batches_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -681,13 +653,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_asset_gift_items_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -909,13 +874,6 @@ export type Database = {
             foreignKeyName: "fk_asset_groups_created_by"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_asset_groups_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -1081,13 +1039,6 @@ export type Database = {
             columns: ["current_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asset_inventory_current_user_profile_fkey"
-            columns: ["current_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1349,13 +1300,6 @@ export type Database = {
             foreignKeyName: "fk_asset_keys_created_by"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_asset_keys_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -1457,13 +1401,6 @@ export type Database = {
             foreignKeyName: "asset_movements_authorized_by_profile_fkey"
             columns: ["authorized_by_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asset_movements_authorized_by_profile_fkey"
-            columns: ["authorized_by_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -1499,13 +1436,6 @@ export type Database = {
             foreignKeyName: "asset_movements_from_user_profile_fkey"
             columns: ["from_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asset_movements_from_user_profile_fkey"
-            columns: ["from_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -1521,13 +1451,6 @@ export type Database = {
             columns: ["performed_by_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asset_movements_performed_by_profile_fkey"
-            columns: ["performed_by_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1556,13 +1479,6 @@ export type Database = {
             columns: ["to_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asset_movements_to_user_profile_fkey"
-            columns: ["to_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1622,13 +1538,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_asset_permissions_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1844,13 +1753,6 @@ export type Database = {
             foreignKeyName: "fk_automation_connections_created_by"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_automation_connections_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -1970,13 +1872,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_automation_incoming_tokens_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2138,13 +2033,6 @@ export type Database = {
             foreignKeyName: "fk_bu_agent_activations_enabled_by"
             columns: ["enabled_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bu_agent_activations_enabled_by"
-            columns: ["enabled_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -2273,13 +2161,6 @@ export type Database = {
             foreignKeyName: "fk_bu_integrations_config_updated_by"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bu_integrations_config_updated_by"
-            columns: ["updated_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -2400,13 +2281,6 @@ export type Database = {
             foreignKeyName: "fk_bu_locations_created_by"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bu_locations_created_by"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -2422,13 +2296,6 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bu_locations_updated_by"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2510,13 +2377,6 @@ export type Database = {
             foreignKeyName: "fk_bu_module_configs_disabled_by"
             columns: ["disabled_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bu_module_configs_disabled_by"
-            columns: ["disabled_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -2532,13 +2392,6 @@ export type Database = {
             columns: ["enabled_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bu_module_configs_enabled_by"
-            columns: ["enabled_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2751,13 +2604,6 @@ export type Database = {
             foreignKeyName: "bu_user_memberships_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -2856,13 +2702,6 @@ export type Database = {
             foreignKeyName: "bu_user_permission_templates_v2_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_permission_templates_v2_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -2885,13 +2724,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3226,13 +3058,6 @@ export type Database = {
             foreignKeyName: "kpi_metrics_owner_user_id_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "kpi_metrics_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -3289,13 +3114,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "kpi_values_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3371,13 +3189,6 @@ export type Database = {
             foreignKeyName: "mentions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -3400,13 +3211,6 @@ export type Database = {
             columns: ["mentioned_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3483,13 +3287,6 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "modules_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3667,13 +3464,6 @@ export type Database = {
             columns: ["actor_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notification_health_alert_actions_actor_profile_id_fkey"
-            columns: ["actor_profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -4225,13 +4015,6 @@ export type Database = {
             foreignKeyName: "okr_checkins_author_profile_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_checkins_author_profile_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -4540,13 +4323,6 @@ export type Database = {
             foreignKeyName: "okr_initiatives_owner_user_id_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_initiatives_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -4826,13 +4602,6 @@ export type Database = {
             foreignKeyName: "okr_org_key_results_owner_profile_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_org_key_results_owner_profile_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -4932,13 +4701,6 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_org_objectives_owner_profile_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -5101,13 +4863,6 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -5356,13 +5111,6 @@ export type Database = {
             foreignKeyName: "okr_team_objectives_owner_profile_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_objectives_owner_profile_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -5506,13 +5254,6 @@ export type Database = {
             columns: ["started_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_wizard_sessions_started_by_fkey"
-            columns: ["started_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -5957,13 +5698,6 @@ export type Database = {
             foreignKeyName: "permission_migrations_migrated_by_fkey"
             columns: ["migrated_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "permission_migrations_migrated_by_fkey"
-            columns: ["migrated_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -5985,13 +5719,6 @@ export type Database = {
             foreignKeyName: "permission_migrations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "permission_migrations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -6007,13 +5734,6 @@ export type Database = {
             columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "permission_migrations_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -6263,13 +5983,6 @@ export type Database = {
             foreignKeyName: "profiles_manager_user_id_fkey"
             columns: ["manager_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_manager_user_id_fkey"
-            columns: ["manager_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -6333,13 +6046,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "squad_memberships_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -6524,13 +6230,6 @@ export type Database = {
             columns: ["leader_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "teams_leader_user_id_fkey"
-            columns: ["leader_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -6748,13 +6447,6 @@ export type Database = {
             foreignKeyName: "ticket_internal_routing_rules_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_internal_routing_rules_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -6824,13 +6516,6 @@ export type Database = {
             columns: ["author_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_messages_author_profile_fkey"
-            columns: ["author_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -6917,13 +6602,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_participants_profile_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -7167,13 +6845,6 @@ export type Database = {
             foreignKeyName: "tickets_created_by_profile_fkey"
             columns: ["created_by_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tickets_created_by_profile_fkey"
-            columns: ["created_by_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -7189,13 +6860,6 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tickets_owner_profile_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -7387,13 +7051,6 @@ export type Database = {
             foreignKeyName: "user_team_memberships_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_team_memberships_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -7441,13 +7098,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -7551,50 +7201,7 @@ export type Database = {
           work_email: string | null
           work_mode: Database["public"]["Enums"]["work_mode"] | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "bu_user_memberships_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_profiles_team"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_manager_user_id_fkey"
-            columns: ["manager_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_manager_user_id_fkey"
-            columns: ["manager_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_manager_user_id_fkey"
-            columns: ["manager_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_all_profiles_admin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_manager_user_id_fkey"
-            columns: ["manager_user_id"]
-            isOneToOne: false
-            referencedRelation: "v_profiles_directory"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       v_bu_all_profiles_admin: {
         Row: {
@@ -7700,13 +7307,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -8046,13 +7646,6 @@ export type Database = {
             foreignKeyName: "okr_team_key_results_owner_profile_fkey"
             columns: ["owner_user_id"]
             isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_key_results_owner_profile_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
@@ -8104,13 +7697,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_permission_templates_v2_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -8316,13 +7902,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bu_user_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_bu_active_profiles"
             referencedColumns: ["id"]
           },
           {
