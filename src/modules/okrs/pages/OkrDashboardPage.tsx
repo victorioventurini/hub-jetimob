@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, AlertTriangle, Target, TrendingUp, RefreshCw, Building2, Info } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
@@ -55,6 +56,7 @@ export default function OkrDashboardPage() {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const { user } = useAuth();
+  const { userId: effectiveUserId, profileId: effectiveProfileId } = useIdentity(); // Respeita impersonação
   const { has, isWildcard } = usePermissions();
   const { currentBu, currentBuId } = useBu();
   
@@ -88,7 +90,7 @@ export default function OkrDashboardPage() {
 
   // Queries
   const { data: teams, isLoading: teamsLoading } = useTeams();
-  const { data: userProfile } = useUserProfile(user?.id);
+  const { data: userProfile } = useUserProfile(effectiveUserId ?? undefined); // Usa userId que respeita impersonação
   const { data: latestCheckinDate } = useLatestCheckinDate();
   const { data: pendingCheckins } = usePendingCheckins();
 
@@ -102,13 +104,14 @@ export default function OkrDashboardPage() {
   const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, normalizedTeamId);
   
   // "Meus OKRs" queries - only fetch when in 'my' view
+  // Usa effectiveProfileId diretamente para respeitar impersonação imediatamente
   const { data: myObjectives, isLoading: myObjLoading } = useMyTeamObjectives(
     activeView === 'my' ? currentBuId : undefined, 
-    activeView === 'my' ? userProfile?.id : undefined
+    activeView === 'my' ? effectiveProfileId ?? undefined : undefined
   );
   const { data: myKrs, isLoading: myKrsLoading } = useMyTeamKeyResults(
     activeView === 'my' ? currentBuId : undefined, 
-    activeView === 'my' ? userProfile?.id : undefined
+    activeView === 'my' ? effectiveProfileId ?? undefined : undefined
   );
 
   // Shared OKRs insights
@@ -452,7 +455,7 @@ export default function OkrDashboardPage() {
                   teamName={objective.team?.name}
                   canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
                   canCheckin={activeView === 'my'}
-                  filterInitiativesForUser={activeView === 'my' ? userProfile?.id : undefined}
+                  filterInitiativesForUser={activeView === 'my' ? effectiveProfileId ?? undefined : undefined}
                 />
               ))}
             </div>
