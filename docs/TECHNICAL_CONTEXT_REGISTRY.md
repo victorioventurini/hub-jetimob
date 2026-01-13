@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.29.0  
+**Versão:** 2.30.0  
 **Última atualização:** 2026-01-13
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido | OKR Wizard Team Selection melhorado | **Auth OTP Code ativo (v2.29.0)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido | OKR Wizard Team Selection melhorado | Auth OTP Code ativo | **Org KR Owner + Wizard Initiative Filter (v2.30.0)**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1418,7 +1418,51 @@ function calculateProgress(baseline, current, target, direction) {
 | `enabler` | Habilita/suporta outros KRs | ❌ Não diretamente |
 | `foundational` | Fundacional para o funcionamento | ❌ Nunca |
 
-### 4.7 Vínculo KR ↔ KPI
+### 4.7 Responsável (Owner) de KRs
+
+#### Org KRs e Team KRs
+
+Ambas as tabelas `okr_org_key_results` e `okr_team_key_results` possuem o campo `owner_user_id` (referenciando `profiles.id`):
+
+| Tabela | Campo | FK |
+|--------|-------|-----|
+| `okr_org_key_results` | `owner_user_id` | `okr_org_key_results_owner_profile_fkey` |
+| `okr_team_key_results` | `owner_user_id` | `okr_team_key_results_owner_profile_fkey` |
+
+**Queries com Owner Join:**
+
+```typescript
+// OKR_FIELDS em useOkrQueries.ts inclui owner para ambos
+orgObjectiveWithKrs: `..., key_results:okr_org_key_results(..., owner:profiles!okr_org_key_results_owner_profile_fkey(id, display_name, photo_url))`
+teamObjectiveWithKrs: `..., key_results:okr_team_key_results(..., owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name, photo_url))`
+```
+
+### 4.8 Wizard Colaborador — Filtro de KRs
+
+O wizard de check-in semanal (`/okrs/collaborator-checkin`) busca KRs onde o usuário efetivo:
+
+1. ✅ É **owner** da KR (`owner_user_id = effectiveUserId`)
+2. ✅ É **co-responsável** da KR (`co_responsibles` contém `effectiveUserId`)
+3. ✅ É **owner de pelo menos uma iniciativa** vinculada à KR
+
+**Hook:** `useUserKrsForWizard` (src/modules/okrs/hooks/useUserKrsForWizard.ts)
+
+```typescript
+// Busca KR IDs onde usuário tem iniciativas
+const { data: initiativeKrIds } = await supabase
+  .from('okr_initiatives')
+  .select('kr_id')
+  .eq('owner_user_id', effectiveUserId);
+
+// Combina com OR condition
+const conditions = [
+  `owner_user_id.eq.${effectiveUserId}`,
+  `co_responsibles.cs.{${effectiveUserId}}`,
+  `id.in.(${krIdsFromInitiatives.join(',')})`  // Novo!
+];
+```
+
+### 4.9 Vínculo KR ↔ KPI
 
 - KR deve ter **exatamente 1 KPI primary** (obrigatório)
 - KR pode ter **0..N KPIs guardrail** (alertas)
