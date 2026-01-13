@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
-import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/hooks/useIdentity";
+import { usePermissions } from "@/hooks/usePermissions";
 import { queryKeys } from "@/lib/queryKeys";
 
 /**
@@ -14,14 +14,18 @@ import { queryKeys } from "@/lib/queryKeys";
  * - The RPC `get_manageable_teams` handles the conversion from user_id → profile_id
  * - See docs/IDENTITY_CONVENTION.md for details
  * 
+ * IMPERSONATION-AWARE:
+ * - Uses usePermissions().isWildcard which respects impersonation context
+ * - When impersonating, isWildcard is false, so we rely on RPC results
+ * 
  * Regras:
- * - super_admin: pode gerenciar qualquer time
+ * - super_admin: pode gerenciar qualquer time (via isWildcard)
  * - admin da BU: pode gerenciar qualquer time da BU
  * - Líder direto: pode gerenciar APENAS o time onde é líder
  * - NÃO pode gerenciar time pai, irmão ou de outro ramo
  */
 export function useTeamManagement() {
-  const { isAdmin } = useAuth();
+  const { isWildcard } = usePermissions();
   const { userId, isReady: identityReady } = useIdentity();
   const { client, buId, isReady: buReady } = useOptionalBuClient();
 
@@ -51,10 +55,10 @@ export function useTeamManagement() {
 
   /**
    * Verifica se o usuário pode gerenciar um time específico.
-   * Admin/super_admin sempre podem.
+   * isWildcard respeita impersonação (retorna false quando impersonando).
    */
   const canManageTeam = (teamId: string): boolean => {
-    if (isAdmin) return true;
+    if (isWildcard) return true;
     
     const team = manageableTeams.find((t: any) => t.team_id === teamId);
     return team?.can_manage ?? false;
