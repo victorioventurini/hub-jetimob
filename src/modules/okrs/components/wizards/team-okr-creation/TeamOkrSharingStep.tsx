@@ -146,6 +146,16 @@ export function TeamOkrSharingStep({
     (ownerType === 'my_team' || ownerType === 'co_ownership' || (ownerType === 'other_team' && primaryTeamId !== teamId))
   );
 
+  // Debug: log validation state
+  console.log('[TeamOkrSharingStep] Validation:', {
+    isShared,
+    contributingTeamIds,
+    ownerType,
+    primaryTeamId,
+    teamId,
+    canContinue,
+  });
+
   // Get other teams (excluding current team)
   const otherTeams = availableTeams.filter(t => t.id !== teamId);
   const isGenerating = !aiInsight && isGeneratingRef.current;
