@@ -319,6 +319,7 @@ export function ObjectiveListItem({
                       canEdit={canEdit}
                       canCheckin={canCheckin || canEdit}
                       filterInitiativesForUser={filterInitiativesForUser}
+                      defaultInitiativesExpanded={!!filterInitiativesForUser}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
                       onShowHistory={() => setHistoryKr(kr)}
@@ -476,13 +477,15 @@ interface KeyResultRowProps {
   canCheckin?: boolean;
   /** Se presente, filtra iniciativas apenas deste usuário */
   filterInitiativesForUser?: string;
+  /** Se as iniciativas devem iniciar expandidas */
+  defaultInitiativesExpanded?: boolean;
   onEdit: () => void;
   onCheckin: () => void;
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
-  const [showInitiatives, setShowInitiatives] = useState(false);
+function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+  const [showInitiatives, setShowInitiatives] = useState(defaultInitiativesExpanded);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   
   const progress = calculateProgress(
@@ -636,7 +639,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
               objectiveTitle,
               teamName,
             }}
-            canEdit={canEdit}
+            canEdit={canEdit || canCheckin}
             filterForUserId={filterInitiativesForUser}
           />
         </div>
