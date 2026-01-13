@@ -83,12 +83,12 @@ const SQL_COLUMN_PATTERNS = [
 ];
 
 // ============================================
-// KNOWN SCHEMA (Update from types.ts or database)
+// KNOWN SCHEMA (Generated from database 2026-01-13)
+// Run: SELECT table_name, array_agg(column_name) FROM information_schema.columns WHERE table_schema = 'public' GROUP BY table_name
 // ============================================
 
-// This should be populated from the actual database
-// For now, we define known columns per table
 const KNOWN_SCHEMA: Record<string, string[]> = {
+  // Tickets Module
   tickets: [
     'id', 'bu_id', 'type', 'title', 'status', 'expected_due_at',
     'created_by_user_id', 'owner_user_id', 'visibility',
@@ -98,24 +98,120 @@ const KNOWN_SCHEMA: Record<string, string[]> = {
     'created_at', 'updated_at', 'deleted_at'
   ],
   ticket_messages: [
-    'id', 'bu_id', 'ticket_id', 'performed_by_user_id', 'body_richtext',
-    'message_type', 'created_at', 'updated_at', 'deleted_at'
+    'id', 'bu_id', 'ticket_id', 'author_type', 'author_user_id', 'author_contact_id',
+    'body_richtext', 'created_at', 'edited_at', 'deleted_at'
   ],
   ticket_participants: [
-    'id', 'bu_id', 'ticket_id', 'user_id', 'contact_id', 'role', 'is_active',
-    'created_at', 'updated_at'
+    'id', 'bu_id', 'ticket_id', 'participant_type', 'user_id', 'partner_contact_id',
+    'role', 'is_active', 'created_at'
   ],
+  ticket_categories: [
+    'id', 'bu_id', 'scope', 'name', 'description', 'status',
+    'created_at', 'created_by', 'updated_at', 'deleted_at'
+  ],
+  ticket_subcategories: [
+    'id', 'bu_id', 'category_id', 'name', 'status',
+    'created_at', 'created_by', 'updated_at', 'deleted_at'
+  ],
+  
+  // User & Identity
   profiles: [
-    'id', 'user_id', 'display_name', 'email', 'phone', 'photo_url',
-    'bio', 'status', 'created_at', 'updated_at'
+    'id', 'user_id', 'first_name', 'last_name', 'display_name', 'work_email', 'email',
+    'team_id', 'manager_user_id', 'work_mode', 'city', 'state', 'start_date',
+    'employment_status', 'photo_url', 'whatsapp_personal', 'birth_day', 'birth_month',
+    'created_at', 'updated_at', 'deleted_at', 'instagram_id', 'bu_id',
+    'onboarding_completed', 'discord_id', 'job_title_id', 'global_status', 'user_type'
   ],
-  // Add more tables as needed...
+  
+  // Teams & Squads
+  teams: [
+    'id', 'name', 'description', 'leader_user_id', 'parent_team_id', 'status',
+    'created_at', 'updated_at', 'deleted_at', 'bu_id',
+    'checkin_frequency', 'checkin_day', 'checkin_deadline_hour', 'member_count'
+  ],
+  squads: [
+    'id', 'name', 'description', 'bu_id', 'products', 'status',
+    'created_at', 'updated_at', 'deleted_at'
+  ],
+  squad_memberships: [
+    'id', 'squad_id', 'user_id', 'role', 'created_at', 'updated_at', 'bu_id', 'deleted_at'
+  ],
+  user_team_memberships: [
+    'id', 'user_id', 'team_id', 'is_primary', 'created_at', 'updated_at'
+  ],
+  
+  // OKRs
+  okr_checkins: [
+    'id', 'kr_id', 'date', 'previous_value', 'current_value', 'confidence',
+    'blockers', 'comments', 'user_id', 'created_at', 'team_id', 'bu_id'
+  ],
+  okr_initiatives: [
+    'id', 'name', 'description', 'kr_id', 'bu_id', 'owner_user_id', 'status',
+    'priority', 'start_date', 'expected_end_date', 'progress', 'contributors',
+    'notes', 'created_at', 'updated_at', 'deleted_at'
+  ],
+  
+  // KPIs
+  kpi_metrics: [
+    'id', 'name', 'description', 'category', 'owner_user_id', 'team_id', 'unit',
+    'direction', 'frequency', 'target_value', 'status', 'created_at', 'updated_at',
+    'deleted_at', 'bu_id', 'is_global'
+  ],
+  
+  // Assets
+  asset_inventory: [
+    'id', 'bu_id', 'internal_code', 'name', 'category_id', 'description', 'status',
+    'home_location_id', 'current_holder_type', 'current_location_id', 'current_user_id',
+    'assigned_at', 'last_moved_at', 'acquired_at', 'acquisition_value', 'serial_number',
+    'brand', 'model', 'quantity_total', 'quantity_available', 'photos', 'documents',
+    'notes', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at'
+  ],
+  asset_movements: [
+    'id', 'bu_id', 'asset_id', 'movement_type', 'from_holder_type', 'from_location_id',
+    'from_user_id', 'to_holder_type', 'to_location_id', 'to_user_id',
+    'authorized_by_user_id', 'performed_by_user_id', 'occurred_at', 'due_at',
+    'returned_at', 'notes', 'created_at'
+  ],
+  asset_categories: [
+    'id', 'bu_id', 'name', 'parent_id', 'description', 'created_at', 'deleted_at',
+    'updated_at', 'status'
+  ],
+  
+  // Partners
+  partner_companies: [
+    'id', 'bu_id', 'name', 'legal_name', 'allowed_domains', 'status', 'notes',
+    'created_at', 'created_by', 'updated_at', 'deleted_at'
+  ],
+  partner_contacts: [
+    'id', 'bu_id', 'partner_company_id', 'profile_user_id', 'name', 'email', 'phone',
+    'status', 'created_at', 'created_by', 'updated_at', 'deleted_at', 'user_id'
+  ],
+  
+  // BU Management
+  bu_units: [
+    'id', 'name', 'description', 'legal_entity', 'allowed_email_domains', 'status',
+    'created_at', 'updated_at', 'cnpj', 'logo_url', 'symbol_url', 'primary_color', 'secondary_color'
+  ],
+  bu_user_memberships: [
+    'id', 'user_id', 'bu_id', 'role_in_bu', 'is_default', 'created_at', 'updated_at',
+    'profile_id', 'deleted_at', 'job_title_id'
+  ],
+  bu_locations: [
+    'id', 'bu_id', 'name', 'type', 'status', 'is_default', 'formatted_address',
+    'address_line_1', 'address_line_2', 'district', 'city', 'state', 'country',
+    'postal_code', 'latitude', 'longitude', 'google_place_id', 'timezone', 'notes',
+    'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'parent_location_id'
+  ],
 };
 
-// Columns that existed before but were removed/renamed
+// ============================================
+// DEPRECATED COLUMNS (removed/renamed - will flag as errors)
+// ============================================
+
 const DEPRECATED_COLUMNS: Record<string, string[]> = {
   tickets: [
     'assigned_to_user_id',  // Renamed to owner_user_id
+    'assigned_user_id',     // Renamed to owner_user_id
     'priority',             // Removed
     'description',          // Removed (content in messages)
     'resolved_at',          // Removed
@@ -123,6 +219,20 @@ const DEPRECATED_COLUMNS: Record<string, string[]> = {
     'squad_id',             // Removed
     'tags',                 // Removed
     'metadata',             // Removed
+  ],
+  ticket_messages: [
+    'performed_by_user_id', // Renamed to author_user_id
+    'message_type',         // Renamed to author_type
+    'updated_at',           // Renamed to edited_at
+  ],
+  ticket_participants: [
+    'contact_id',           // Renamed to partner_contact_id
+    'updated_at',           // Removed
+  ],
+  profiles: [
+    'bio',                  // Removed
+    'phone',                // Renamed to whatsapp_personal
+    'status',               // Renamed to global_status
   ],
 };
 
