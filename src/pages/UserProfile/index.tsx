@@ -1,28 +1,21 @@
 import { useParams, Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
 import {
   User,
   Building2,
   MapPin,
-  Calendar,
   Briefcase,
-  Target,
   BarChart3,
   Users,
   ChevronRight,
-  Clock,
-  Lightbulb,
   Mail,
-  Phone,
   Cake,
   Instagram,
   MessageCircle,
@@ -32,17 +25,13 @@ import { PhoneLink } from "@/components/ui/phone-link";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   usePublicProfile,
-  useUserOkrs,
   useUserKpis,
   useUserSquads,
   useUserBuMemberships,
 } from "@/hooks/usePublicProfile";
 import { TeamLink } from "@/components/links";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { calculateProgress } from "@/modules/okrs/types";
-import { useUserInitiatives } from "@/modules/okrs/hooks/useInitiatives";
-import { InitiativeStatusBadge } from "@/modules/okrs/components/initiatives";
+import { useBu } from "@/contexts/BuContext";
+import { UserContributionsSection } from "./UserContributionsSection";
 
 const workModeLabels: Record<string, string> = {
   onsite: "Presencial",
@@ -62,26 +51,18 @@ const statusColors: Record<string, string> = {
   terminated: "bg-muted text-muted-foreground border-muted",
 };
 
-const ragStatusColors: Record<string, string> = {
-  green: "bg-success",
-  yellow: "bg-warning",
-  red: "bg-destructive",
-};
-
 const monthNames = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
 ];
 
-
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
   const { data: profile, isLoading } = usePublicProfile(id);
-  const { data: okrData } = useUserOkrs(profile?.id);
   const { data: kpis } = useUserKpis(profile?.id);
   const { data: squads } = useUserSquads(profile?.id);
   const { data: buMemberships } = useUserBuMemberships(profile?.id);
-  const { data: initiatives } = useUserInitiatives(profile?.id);
+  const { currentBu } = useBu();
 
   usePageTitle(profile?.display_name ? `${profile.display_name}` : "Perfil");
 
@@ -103,6 +84,9 @@ export default function UserProfile() {
       return dateStr;
     }
   };
+
+  // Extract first name for the title
+  const firstName = profile?.first_name || profile?.display_name?.split(" ")[0] || "Usuário";
 
   if (isLoading) {
     return (
@@ -241,109 +225,13 @@ export default function UserProfile() {
               </CardContent>
             </Card>
 
-            {/* OKRs */}
-            {okrData && (okrData.objectives.length > 0 || okrData.keyResults.length > 0) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    OKRs ({okrData.objectives.length} objetivos, {okrData.keyResults.length} KRs)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Objectives */}
-                  {okrData.objectives.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-muted-foreground">Objetivos</h4>
-                      {okrData.objectives.map((obj: any) => {
-                        const krs = obj.key_results || [];
-                        const avgProgress = krs.length > 0
-                          ? krs.reduce((acc: number, kr: any) => acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction), 0) / krs.length
-                          : 0;
-
-                        return (
-                          <Link
-                            key={obj.id}
-                            to={`/okrs?objective=${obj.id}`}
-                            className="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{obj.title}</span>
-                                {obj.is_shared && (
-                                  <Badge variant="outline" className="text-xs">Compartilhado</Badge>
-                                )}
-                              </div>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent" />
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Progress value={avgProgress} className="flex-1 h-2" />
-                              <span className="text-sm text-muted-foreground w-12 text-right">
-                                {Math.round(avgProgress)}%
-                              </span>
-                            </div>
-                            {obj.team && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {obj.team.name}
-                              </p>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {okrData.objectives.length > 0 && okrData.keyResults.length > 0 && (
-                    <Separator />
-                  )}
-
-                  {/* Key Results */}
-                  {okrData.keyResults.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-muted-foreground">Key Results</h4>
-                      {okrData.keyResults.slice(0, 5).map((kr: any) => {
-                        const progress = calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
-
-                        return (
-                          <div
-                            key={kr.id}
-                            className="p-3 rounded-lg bg-muted/50"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium text-sm">{kr.title}</span>
-                              <Badge variant="outline" className={ragStatusColors[kr.status] ? `${ragStatusColors[kr.status]} text-white border-0` : ""}>
-                                {kr.status}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Progress value={progress} className="flex-1 h-2" />
-                              <span className="text-sm text-muted-foreground w-12 text-right">
-                                {Math.round(progress)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between mt-1">
-                              <p className="text-xs text-muted-foreground">
-                                {kr.objective?.title} • {kr.team?.name}
-                              </p>
-                              {kr.last_checkin_at && (
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {format(new Date(kr.last_checkin_at), "dd/MM")}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {okrData.keyResults.length > 5 && (
-                        <p className="text-sm text-muted-foreground text-center">
-                          +{okrData.keyResults.length - 5} KRs
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            {/* User Contributions - OKRs and Initiatives (same filter as /okrs?view=my) */}
+            {profile.id && (
+              <UserContributionsSection 
+                profileId={profile.id}
+                firstName={firstName}
+                buName={currentBu?.name}
+              />
             )}
 
             {/* KPIs */}
@@ -388,51 +276,6 @@ export default function UserProfile() {
                     {kpis.length > 5 && (
                       <p className="text-sm text-muted-foreground text-center">
                         +{kpis.length - 5} KPIs
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Initiatives */}
-            {initiatives && initiatives.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4" />
-                    Iniciativas ({initiatives.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {initiatives.slice(0, 5).map((initiative: any) => (
-                      <div
-                        key={initiative.id}
-                        className="p-3 rounded-lg bg-muted/50"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{initiative.name}</span>
-                          <InitiativeStatusBadge status={initiative.status} showIcon={false} />
-                        </div>
-                        {initiative.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {initiative.description}
-                          </p>
-                        )}
-                        {initiative.progress !== null && initiative.progress > 0 && (
-                          <div className="flex items-center gap-3 mt-2">
-                            <Progress value={initiative.progress} className="flex-1 h-2" />
-                            <span className="text-sm text-muted-foreground w-12 text-right">
-                              {initiative.progress}%
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {initiatives.length > 5 && (
-                      <p className="text-sm text-muted-foreground text-center">
-                        +{initiatives.length - 5} iniciativas
                       </p>
                     )}
                   </div>
@@ -542,7 +385,6 @@ export default function UserProfile() {
                     <span>{profile.birth_day} de {monthNames[profile.birth_month - 1]}</span>
                   </div>
                 )}
-
 
                 {/* Location */}
                 {(profile.work_mode === "remote" || profile.work_mode === "hybrid") && profile.city && (
