@@ -12,6 +12,15 @@ interface VicPanelState {
   onApply?: (response: string) => void;
 }
 
+/**
+ * Generate a history key from context for session-based caching
+ */
+function getHistoryKeyFromContext(context: VicContext | null): string {
+  if (!context) return 'unknown';
+  const titleSlug = (context.title || 'untitled').slice(0, 30).toLowerCase().replace(/\s+/g, '-');
+  return `${context.type}-${titleSlug}`;
+}
+
 interface VicContextType {
   panelState: VicPanelState;
   openPanel: (params: {
@@ -24,6 +33,14 @@ interface VicContextType {
   setResponse: (response: VicInvokeResponse | null) => void;
   setLoading: (isLoading: boolean) => void;
   getAgentInfo: (slug: VicAgentSlug) => typeof VIC_AGENTS[VicAgentSlug];
+  /** Session-based response history (in memory) */
+  responseHistory: Map<string, VicInvokeResponse>;
+  /** Save response to session history */
+  saveToHistory: (context: VicContext, response: VicInvokeResponse) => void;
+  /** Get response from session history */
+  getFromHistory: (context: VicContext) => VicInvokeResponse | null;
+  /** Generate history key from context */
+  getHistoryKey: (context: VicContext) => string;
 }
 
 const VicContext = createContext<VicContextType | undefined>(undefined);
@@ -40,6 +57,7 @@ const initialState: VicPanelState = {
 
 export function VicProvider({ children }: { children: ReactNode }) {
   const [panelState, setPanelState] = useState<VicPanelState>(initialState);
+  const [responseHistory] = useState<Map<string, VicInvokeResponse>>(() => new Map());
 
   const openPanel = useCallback(
     ({
@@ -82,6 +100,20 @@ export function VicProvider({ children }: { children: ReactNode }) {
     return VIC_AGENTS[slug];
   }, []);
 
+  const getHistoryKey = useCallback((context: VicContext) => {
+    return getHistoryKeyFromContext(context);
+  }, []);
+
+  const saveToHistory = useCallback((context: VicContext, response: VicInvokeResponse) => {
+    const key = getHistoryKeyFromContext(context);
+    responseHistory.set(key, response);
+  }, [responseHistory]);
+
+  const getFromHistory = useCallback((context: VicContext): VicInvokeResponse | null => {
+    const key = getHistoryKeyFromContext(context);
+    return responseHistory.get(key) || null;
+  }, [responseHistory]);
+
   return (
     <VicContext.Provider
       value={{
@@ -91,6 +123,10 @@ export function VicProvider({ children }: { children: ReactNode }) {
         setResponse,
         setLoading,
         getAgentInfo,
+        responseHistory,
+        saveToHistory,
+        getFromHistory,
+        getHistoryKey,
       }}
     >
       {children}
