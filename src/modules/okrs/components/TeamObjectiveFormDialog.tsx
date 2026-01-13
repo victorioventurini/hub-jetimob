@@ -35,6 +35,7 @@ import { useObjectiveContributors, useManageContributors } from '../hooks/useSha
 import { useCycles } from '../hooks/useCycleData';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { useCancelTeamObjective } from '../hooks/useOkrMutations';
+import { useCanManageTeamOkr } from '../hooks/useCanManageTeamOkr';
 import type { OkrStatus } from '../types';
 
 interface TeamObjectiveFormDialogProps {
@@ -74,6 +75,16 @@ export function TeamObjectiveFormDialog({
   orgObjectives,
 }: TeamObjectiveFormDialogProps) {
   const isEditing = !!objective;
+  
+  // Defense in depth: check if user can manage this team's OKRs
+  const { canManage: canManageThisTeam, isLoading: isLoadingPermission } = useCanManageTeamOkr(
+    isEditing ? objective?.team_id : null
+  );
+  
+  // If editing and user can't manage this team, don't render
+  if (isEditing && !isLoadingPermission && !canManageThisTeam) {
+    return null;
+  }
   
   const queryClient = useQueryClient();
   const { client: supabase, buId } = useOptionalBuClient();

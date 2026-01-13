@@ -115,13 +115,19 @@ interface InventoryFormDialogProps {
 export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false }: InventoryFormDialogProps) {
   const { items, categories, createItemAsync, updateItemAsync, isCreatingItem, isUpdatingItem } = useInventory();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
-  const { isInventoryAdmin } = useAssetPermissionsV2();
+  const { isInventoryAdmin, canManageInventory } = useAssetPermissionsV2();
   const { profileId } = useIdentity();
   const { brands } = useBrands();
   const isEditing = !!item && !cloneMode;
   const isCloning = !!item && cloneMode;
   const itemId = item?.id ?? null;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+
+  // Defense in depth: don't render edit/create dialog if user can't manage inventory
+  // This respects impersonation context via useAssetPermissionsV2
+  if (!canManageInventory) {
+    return null;
+  }
 
   // Build subcategory list with parent names
   const subcategories = useMemo(() => buildSubcategoryList(categories), [categories]);
