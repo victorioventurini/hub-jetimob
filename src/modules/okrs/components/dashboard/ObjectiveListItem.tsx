@@ -79,6 +79,8 @@ interface ObjectiveListItemProps {
   teamName?: string;
   /** Se o usuário pode editar este objetivo (via useCanManageTeamOkr ou useCanManageOrgOkr) */
   canEdit?: boolean;
+  /** Se o usuário pode fazer check-in nas KRs (responsável mesmo sem ser líder) */
+  canCheckin?: boolean;
   /** Se presente, filtra iniciativas apenas deste usuário (profile.id) */
   filterInitiativesForUser?: string;
 }
@@ -90,6 +92,7 @@ export function ObjectiveListItem({
   type,
   teamName,
   canEdit = false,
+  canCheckin = false,
   filterInitiativesForUser,
 }: ObjectiveListItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -314,6 +317,7 @@ export function ObjectiveListItem({
                       objectiveTitle={objective.title}
                       teamName={teamName}
                       canEdit={canEdit}
+                      canCheckin={canCheckin || canEdit}
                       filterInitiativesForUser={filterInitiativesForUser}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
@@ -468,6 +472,8 @@ interface KeyResultRowProps {
   objectiveTitle?: string;
   teamName?: string;
   canEdit?: boolean;
+  /** Se o usuário pode fazer check-in (responsável mesmo sem ser líder) */
+  canCheckin?: boolean;
   /** Se presente, filtra iniciativas apenas deste usuário */
   filterInitiativesForUser?: string;
   onEdit: () => void;
@@ -475,7 +481,7 @@ interface KeyResultRowProps {
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, filterInitiativesForUser, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(false);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   
@@ -584,7 +590,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, fil
                     </Button>
                   )}
                   
-                  {canEdit && type === 'team' && (
+                  {canCheckin && type === 'team' && (
                     <Button
                       variant="ghost"
                       size="icon"
