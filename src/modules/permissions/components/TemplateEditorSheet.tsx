@@ -51,6 +51,7 @@ import {
 } from "../hooks/usePermissionsV2";
 import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
 import { cn } from "@/lib/utils";
+import { SURFACE_COLORS } from "@/lib/colors";
 
 // Radix SelectItem não permite value="" (string vazia)
 const MODULE_GLOBAL_VALUE = "__global__";
@@ -58,11 +59,11 @@ const SURFACE_NONE_VALUE = "__none__";
 
 const SURFACE_OPTIONS = [
   { value: SURFACE_NONE_VALUE, label: 'Nenhuma', icon: null, color: 'bg-muted text-muted-foreground' },
-  { value: 'base', label: 'Base', icon: Eye, color: 'bg-gray-500/10 text-gray-700' },
-  { value: 'view', label: 'View', icon: Eye, color: 'bg-blue-500/10 text-blue-700' },
-  { value: 'operate', label: 'Operate', icon: Wrench, color: 'bg-green-500/10 text-green-700' },
-  { value: 'administer', label: 'Administer', icon: Settings2, color: 'bg-orange-500/10 text-orange-700' },
-  { value: 'restricted', label: 'Restricted', icon: Lock, color: 'bg-red-500/10 text-red-700' },
+  { value: 'base', label: 'Base', icon: Eye, color: SURFACE_COLORS.base.badge },
+  { value: 'view', label: 'View', icon: Eye, color: SURFACE_COLORS.view.badge },
+  { value: 'operate', label: 'Operate', icon: Wrench, color: SURFACE_COLORS.operate.badge },
+  { value: 'administer', label: 'Administer', icon: Settings2, color: SURFACE_COLORS.administer.badge },
+  { value: 'restricted', label: 'Restricted', icon: Lock, color: SURFACE_COLORS.restricted.badge },
 ];
 
 interface TemplateEditorSheetProps {

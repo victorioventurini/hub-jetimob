@@ -20,13 +20,7 @@ import { KeyringMovementDialog } from "./KeyringMovementDialog";
 import type { AssetKeyring, AssetKeyMovement, KeyMovementType } from "../../types";
 import { KEYRING_STATUS_LABELS, KEY_MOVEMENT_TYPE_LABELS } from "../../types";
 import { useEffect } from "react";
-
-const statusColors: Record<string, string> = {
-  available: "bg-green-500/10 text-green-700 border-green-200",
-  loaned: "bg-blue-500/10 text-blue-700 border-blue-200",
-  lost: "bg-red-500/10 text-red-700 border-red-200",
-  retired: "bg-gray-500/10 text-gray-700 border-gray-200",
-};
+import { ASSET_STATUS_STYLES } from "@/lib/colors";
 
 interface KeyringDetailDialogProps {
   open: boolean;
@@ -74,7 +68,7 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
                   <DialogTitle className="text-lg">Chaveiro {keyring.tag_number}</DialogTitle>
                 </div>
               </div>
-              <Badge variant="outline" className={cn("shrink-0", statusColors[keyring.status])}>
+              <Badge variant="outline" className={cn("shrink-0", ASSET_STATUS_STYLES[keyring.status as keyof typeof ASSET_STATUS_STYLES]?.badge)}>
                 {KEYRING_STATUS_LABELS[keyring.status]}
               </Badge>
             </div>
