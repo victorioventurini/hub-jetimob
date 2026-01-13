@@ -96,12 +96,12 @@ export function useCycleCheckins(
   const { currentBuId } = useBu();
   const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
-  // Build filters object for RPC
+  // Build filters object for RPC - use 'status' not 'rag_status' to match RPC expected param
   const rpcFilters = {
     team_id: filters.teamId || null,
     owner_id: filters.ownerId || null,
     confidence: filters.confidence === 'all' ? null : filters.confidence,
-    rag_status: filters.ragStatus === 'all' ? null : filters.ragStatus,
+    status: filters.ragStatus === 'all' ? null : filters.ragStatus,
     date_from: filters.dateFrom || null,
     date_to: filters.dateTo || null,
     only_overdue: filters.onlyOverdue || false,
@@ -141,8 +141,28 @@ export function useCycleCheckins(
 
       if (error) throw error;
       
-      // The RPC returns JSONB, so data is already parsed
-      return data as unknown as CycleCheckinsResponse;
+      // Map RPC response shape to expected interface
+      // RPC returns: { feed, aggregates, overdue_krs, pagination: { page, page_size, total_count, total_pages } }
+      // We need: { checkins, aggregates, overdue_krs, pagination: { page, page_size, total, total_pages } }
+      const raw = data as Record<string, unknown>;
+      return {
+        checkins: (raw.feed ?? []) as CheckinFeedItem[],
+        aggregates: (raw.aggregates ?? {
+          total_checkins: 0,
+          krs_on_track_percent: 0,
+          krs_overdue_count: 0,
+          total_krs: 0,
+          krs_with_recent_checkin: 0,
+          avg_confidence: 'medium',
+        }) as CycleCheckinsAggregates,
+        overdue_krs: (raw.overdue_krs ?? []) as OverdueKr[],
+        pagination: {
+          page: (raw.pagination as Record<string, number>)?.page ?? 1,
+          page_size: (raw.pagination as Record<string, number>)?.page_size ?? 20,
+          total: (raw.pagination as Record<string, number>)?.total_count ?? 0,
+          total_pages: (raw.pagination as Record<string, number>)?.total_pages ?? 0,
+        },
+      };
     },
     enabled: !!supabase && !!cycleId && !!currentBuId,
     staleTime: 2 * 60 * 1000, // 2 minutes
