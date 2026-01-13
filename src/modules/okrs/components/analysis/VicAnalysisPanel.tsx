@@ -116,7 +116,7 @@ Identifique gaps e sugira melhorias específicas.`
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Análise da Vic
+            Análise do Vic
           </CardTitle>
           <div className="flex items-center gap-2">
             {lastResponse?.response && (
@@ -180,7 +180,7 @@ Identifique gaps e sugira melhorias específicas.`
               Clique em "Analisar" para gerar insights e recomendações
             </p>
             <p className="text-xs mt-1">
-              A Vic irá avaliar a estrutura das OKRs e sugerir melhorias
+              O Vic irá avaliar a estrutura das OKRs e sugerir melhorias
             </p>
           </div>
         )}

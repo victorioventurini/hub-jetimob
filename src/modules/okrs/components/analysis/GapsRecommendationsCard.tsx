@@ -2,29 +2,34 @@
  * GapsRecommendationsCard - Card com gaps identificados e recomendações
  */
 
-import { AlertTriangle, Users, Link2Off, Activity, Compass } from "lucide-react";
+import { AlertTriangle, Users, Link2Off, Activity, Compass, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AnalysisGaps } from "../../hooks/useOrgOkrAnalysis";
 
-interface GapsRecommendationsCardProps {
-  gaps: AnalysisGaps;
-  className?: string;
-}
-
-interface GapItem {
+export interface GapItem {
   icon: React.ElementType;
   title: string;
   description: string;
   severity: 'high' | 'medium' | 'low';
   count?: number;
+  type: string;
+}
+
+interface GapsRecommendationsCardProps {
+  gaps: AnalysisGaps;
+  className?: string;
+  onAskVicAboutGap?: (gapType: string, gapData: GapItem) => void;
 }
 
 export function GapsRecommendationsCard({ 
   gaps, 
-  className 
+  className,
+  onAskVicAboutGap,
 }: GapsRecommendationsCardProps) {
   const gapItems: GapItem[] = [];
 
@@ -36,6 +41,7 @@ export function GapsRecommendationsCard({
       description: gaps.teamsWithoutOkrs.map(t => t.name).join(', '),
       severity: 'high',
       count: gaps.teamsWithoutOkrs.length,
+      type: 'teams-without-okrs',
     });
   }
 
@@ -48,6 +54,7 @@ export function GapsRecommendationsCard({
         (gaps.orgKrsWithoutTeamLinks.length > 3 ? '...' : ''),
       severity: 'medium',
       count: gaps.orgKrsWithoutTeamLinks.length,
+      type: 'krs-without-links',
     });
   }
 
@@ -59,6 +66,7 @@ export function GapsRecommendationsCard({
       description: gaps.teamsWithLowHealth.map(t => `${t.name} (${t.healthScore}%)`).join(', '),
       severity: 'high',
       count: gaps.teamsWithLowHealth.length,
+      type: 'teams-low-health',
     });
   }
 
@@ -70,6 +78,7 @@ export function GapsRecommendationsCard({
       description: gaps.strategicAreasUncovered.join(', '),
       severity: 'medium',
       count: gaps.strategicAreasUncovered.length,
+      type: 'uncovered-areas',
     });
   }
 
@@ -137,6 +146,23 @@ export function GapsRecommendationsCard({
                         {item.description}
                       </p>
                     </div>
+                    {onAskVicAboutGap && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-primary"
+                            onClick={() => onAskVicAboutGap(item.type, item)}
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Pedir ações ao Vic</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 );
               })}

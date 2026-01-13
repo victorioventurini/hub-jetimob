@@ -2,8 +2,10 @@
  * OrgOkrOverviewCard - Visão geral das OKRs organizacionais
  */
 
-import { Target, TrendingUp, Link2, Users } from "lucide-react";
+import { Target, TrendingUp, Link2, Users, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface OrgOkrOverviewCardProps {
@@ -17,6 +19,7 @@ interface OrgOkrOverviewCardProps {
   };
   overallProgress?: number;
   className?: string;
+  onAnalyze?: () => void;
 }
 
 interface MetricItem {
@@ -30,7 +33,8 @@ interface MetricItem {
 export function OrgOkrOverviewCard({ 
   totals, 
   overallProgress,
-  className 
+  className,
+  onAnalyze,
 }: OrgOkrOverviewCardProps) {
   const linkagePercent = totals.orgKrs > 0 
     ? Math.round((totals.linkedKrs / totals.orgKrs) * 100) 
@@ -75,10 +79,29 @@ export function OrgOkrOverviewCard({
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Target className="h-4 w-4" />
-          OKRs Organizacionais
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            OKRs Organizacionais
+          </CardTitle>
+          {onAnalyze && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                  onClick={onAnalyze}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Pedir insights ao Vic</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
