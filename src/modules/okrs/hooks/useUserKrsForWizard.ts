@@ -60,6 +60,7 @@ export function useUserKrsForWizard(
           direction,
           status,
           last_checkin_at,
+          created_at,
           owner_user_id,
           co_responsibles,
           team_objective:okr_team_objectives!inner (
@@ -119,10 +120,11 @@ export function useUserKrsForWizard(
         const objective = kr.team_objective as any;
         const team = objective?.team as any;
 
-        // Calculate days since last check-in
-        const daysSinceCheckin = kr.last_checkin_at
-          ? differenceInDays(now, parseISO(kr.last_checkin_at))
-          : 999;
+        // Calculate days since last check-in (fallback to created_at if never checked in)
+        const referenceDate = kr.last_checkin_at || kr.created_at;
+        const daysSinceCheckin = referenceDate
+          ? differenceInDays(now, parseISO(referenceDate))
+          : 0;
 
         const isPending = daysSinceCheckin > PENDING_THRESHOLD_DAYS;
         const isAtRisk = kr.status === 'yellow' || kr.status === 'red';
