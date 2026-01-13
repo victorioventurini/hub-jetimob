@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,9 @@ import { queryKeys } from "@/lib/queryKeys";
 export default function Onboarding() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  // Flag para evitar race condition: quando onboarding completa, 
+  // não queremos que o redirect para "/" aconteça antes do navigate("/select-bu")
+  const [isCompleting, setIsCompleting] = useState(false);
 
   usePageTitle("Seja bem-vindo(a)", {
     skipBu: true,
@@ -35,6 +39,8 @@ export default function Onboarding() {
   });
 
   const handleOnboardingComplete = () => {
+    // Marcar que estamos completando para evitar redirect para "/"
+    setIsCompleting(true);
     navigate("/select-bu", { replace: true });
   };
 
@@ -68,7 +74,8 @@ export default function Onboarding() {
   }
 
   // Onboarding already completed - redirect to home
-  if (profile.onboarding_completed) {
+  // MAS se isCompleting=true, deixar o navigate("/select-bu") acontecer
+  if (profile.onboarding_completed && !isCompleting) {
     return <Navigate to="/" replace />;
   }
 
