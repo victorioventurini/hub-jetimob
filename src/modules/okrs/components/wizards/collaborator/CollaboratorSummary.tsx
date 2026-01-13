@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { CONFIDENCE_COLORS } from '@/lib/colors';
 import type { CollaboratorCheckinResult, CollaboratorReflection } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -192,8 +193,8 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
                               className={cn(
                                 "text-xs",
                                 isPositive 
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                  ? "bg-status-green-muted text-status-green-muted-foreground"
+                                  : "bg-status-red-muted text-status-red-muted-foreground"
                               )}
                             >
                               {isPositive ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
@@ -204,9 +205,7 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
                             variant="secondary"
                             className={cn(
                               "text-xs",
-                              result.confidence === 'high' && "bg-green-100 text-green-700 dark:bg-green-900/30",
-                              result.confidence === 'medium' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30",
-                              result.confidence === 'low' && "bg-red-100 text-red-700 dark:bg-red-900/30"
+                              result.confidence && CONFIDENCE_COLORS[result.confidence as keyof typeof CONFIDENCE_COLORS]?.badge
                             )}
                           >
                             {result.confidence === 'high' ? '🟢' : result.confidence === 'medium' ? '🟡' : '🔴'}

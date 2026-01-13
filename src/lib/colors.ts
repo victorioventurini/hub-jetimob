@@ -275,6 +275,120 @@ export const INITIATIVE_STATUS_COLORS = {
 export type InitiativeStatusKey = keyof typeof INITIATIVE_STATUS_COLORS;
 
 // ============================================
+// OKR Calculated Status Styles (useOkrStatus)
+// ============================================
+
+export const OKR_CALCULATED_STATUS_STYLES = {
+  on_track: {
+    label: 'No Caminho',
+    text: 'text-status-green-muted-foreground',
+    bg: 'bg-status-green',
+    border: 'border-status-green/30',
+  },
+  at_risk: {
+    label: 'Em Risco',
+    text: 'text-status-yellow-muted-foreground',
+    bg: 'bg-status-yellow',
+    border: 'border-status-yellow/30',
+  },
+  off_track: {
+    label: 'Fora do Caminho',
+    text: 'text-status-red-muted-foreground',
+    bg: 'bg-status-red',
+    border: 'border-status-red/30',
+  },
+  not_started: {
+    label: 'Não Iniciado',
+    text: 'text-status-gray-muted-foreground',
+    bg: 'bg-status-gray',
+    border: 'border-status-gray/30',
+  },
+  completed: {
+    label: 'Concluído',
+    text: 'text-info-muted-foreground',
+    bg: 'bg-info',
+    border: 'border-info/30',
+  },
+  dropped: {
+    label: 'Descontinuado',
+    text: 'text-status-gray-muted-foreground',
+    bg: 'bg-status-gray/60',
+    border: 'border-status-gray/20',
+  },
+} as const;
+
+export type OkrCalculatedStatusKey = keyof typeof OKR_CALCULATED_STATUS_STYLES;
+
+// ============================================
+// KPI RAG Status Styles
+// ============================================
+
+export const KPI_RAG_STATUS_STYLES = {
+  on_track: {
+    label: 'On Track',
+    text: 'text-status-green-muted-foreground',
+    bg: 'bg-status-green-muted',
+    progress: 'bg-status-green',
+  },
+  at_risk: {
+    label: 'Em Risco',
+    text: 'text-status-yellow-muted-foreground',
+    bg: 'bg-status-yellow-muted',
+    progress: 'bg-status-yellow',
+  },
+  off_track: {
+    label: 'Off Track',
+    text: 'text-status-red-muted-foreground',
+    bg: 'bg-status-red-muted',
+    progress: 'bg-status-red',
+  },
+  no_data: {
+    label: 'Sem Dados',
+    text: 'text-muted-foreground',
+    bg: 'bg-muted',
+    progress: 'bg-muted-foreground',
+  },
+} as const;
+
+export type KpiRagStatusKey = keyof typeof KPI_RAG_STATUS_STYLES;
+
+// ============================================
+// Focus Item Styles (Leader Dashboard)
+// ============================================
+
+export const FOCUS_ITEM_STYLES = {
+  warning: {
+    icon: 'text-status-yellow',
+    bg: 'bg-status-yellow-muted',
+  },
+  action: {
+    icon: 'text-info',
+    bg: 'bg-info-muted',
+  },
+  info: {
+    icon: 'text-muted-foreground',
+    bg: 'bg-muted',
+  },
+} as const;
+
+export type FocusItemType = keyof typeof FOCUS_ITEM_STYLES;
+
+// ============================================
+// KPI Category Colors
+// ============================================
+
+export const KPI_CATEGORY_COLORS = {
+  financeiro: 'bg-status-green',
+  growth: 'bg-info',
+  cs: 'bg-[hsl(var(--violet-500))]',
+  produto: 'bg-status-yellow',
+  operacoes: 'bg-status-red',
+  pessoas: 'bg-[hsl(var(--cyan-500))]',
+} as const;
+
+export type KpiCategoryKey = keyof typeof KPI_CATEGORY_COLORS;
+
+// ============================================
 // Helper function for dynamic status lookup
 // ============================================
 

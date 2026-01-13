@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { OkrRagStatus, OkrDirection, calculateProgress } from '../types';
+import { OKR_CALCULATED_STATUS_STYLES } from '@/lib/colors';
 
 export type OkrCalculatedStatus = 'on_track' | 'at_risk' | 'off_track' | 'not_started' | 'completed' | 'dropped';
 
@@ -10,42 +11,45 @@ interface StatusConfig {
   borderColor: string;
 }
 
+/**
+ * STATUS_CONFIG uses semantic tokens from src/lib/colors.ts
+ */
 export const STATUS_CONFIG: Record<OkrCalculatedStatus, StatusConfig> = {
   on_track: {
-    label: 'No Caminho',
-    color: 'text-emerald-700 dark:text-emerald-400',
-    bgColor: 'bg-emerald-500',
-    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    label: OKR_CALCULATED_STATUS_STYLES.on_track.label,
+    color: OKR_CALCULATED_STATUS_STYLES.on_track.text,
+    bgColor: OKR_CALCULATED_STATUS_STYLES.on_track.bg,
+    borderColor: OKR_CALCULATED_STATUS_STYLES.on_track.border,
   },
   at_risk: {
-    label: 'Em Risco',
-    color: 'text-amber-700 dark:text-amber-400',
-    bgColor: 'bg-amber-500',
-    borderColor: 'border-amber-200 dark:border-amber-800',
+    label: OKR_CALCULATED_STATUS_STYLES.at_risk.label,
+    color: OKR_CALCULATED_STATUS_STYLES.at_risk.text,
+    bgColor: OKR_CALCULATED_STATUS_STYLES.at_risk.bg,
+    borderColor: OKR_CALCULATED_STATUS_STYLES.at_risk.border,
   },
   off_track: {
-    label: 'Fora do Caminho',
-    color: 'text-red-700 dark:text-red-400',
-    bgColor: 'bg-red-500',
-    borderColor: 'border-red-200 dark:border-red-800',
+    label: OKR_CALCULATED_STATUS_STYLES.off_track.label,
+    color: OKR_CALCULATED_STATUS_STYLES.off_track.text,
+    bgColor: OKR_CALCULATED_STATUS_STYLES.off_track.bg,
+    borderColor: OKR_CALCULATED_STATUS_STYLES.off_track.border,
   },
   not_started: {
-    label: 'Não Iniciado',
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-400',
-    borderColor: 'border-slate-200 dark:border-slate-700',
+    label: OKR_CALCULATED_STATUS_STYLES.not_started.label,
+    color: OKR_CALCULATED_STATUS_STYLES.not_started.text,
+    bgColor: OKR_CALCULATED_STATUS_STYLES.not_started.bg,
+    borderColor: OKR_CALCULATED_STATUS_STYLES.not_started.border,
   },
   completed: {
-    label: 'Concluído',
-    color: 'text-blue-700 dark:text-blue-400',
-    bgColor: 'bg-blue-500',
-    borderColor: 'border-blue-200 dark:border-blue-800',
+    label: OKR_CALCULATED_STATUS_STYLES.completed.label,
+    color: OKR_CALCULATED_STATUS_STYLES.completed.text,
+    bgColor: OKR_CALCULATED_STATUS_STYLES.completed.bg,
+    borderColor: OKR_CALCULATED_STATUS_STYLES.completed.border,
   },
   dropped: {
-    label: 'Descontinuado',
-    color: 'text-slate-500 dark:text-slate-500',
-    bgColor: 'bg-slate-300',
-    borderColor: 'border-slate-200 dark:border-slate-700',
+    label: OKR_CALCULATED_STATUS_STYLES.dropped.label,
+    color: OKR_CALCULATED_STATUS_STYLES.dropped.text,
+    bgColor: OKR_CALCULATED_STATUS_STYLES.dropped.bg,
+    borderColor: OKR_CALCULATED_STATUS_STYLES.dropped.border,
   },
 };
 

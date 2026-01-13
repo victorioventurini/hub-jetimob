@@ -142,11 +142,13 @@ export const COMPARISON_RULE_LABELS: Record<KpiComparisonRule, string> = {
   equal_to_target: 'Igual ao alvo',
 };
 
+import { KPI_RAG_STATUS_STYLES } from '@/lib/colors';
+
 export const RAG_STATUS_CONFIG: Record<KpiRagStatus, { label: string; color: string; bgColor: string }> = {
-  on_track: { label: 'On Track', color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  at_risk: { label: 'Em Risco', color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
-  off_track: { label: 'Off Track', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
-  no_data: { label: 'Sem Dados', color: 'text-muted-foreground', bgColor: 'bg-muted' },
+  on_track: { label: KPI_RAG_STATUS_STYLES.on_track.label, color: KPI_RAG_STATUS_STYLES.on_track.text, bgColor: KPI_RAG_STATUS_STYLES.on_track.bg },
+  at_risk: { label: KPI_RAG_STATUS_STYLES.at_risk.label, color: KPI_RAG_STATUS_STYLES.at_risk.text, bgColor: KPI_RAG_STATUS_STYLES.at_risk.bg },
+  off_track: { label: KPI_RAG_STATUS_STYLES.off_track.label, color: KPI_RAG_STATUS_STYLES.off_track.text, bgColor: KPI_RAG_STATUS_STYLES.off_track.bg },
+  no_data: { label: KPI_RAG_STATUS_STYLES.no_data.label, color: KPI_RAG_STATUS_STYLES.no_data.text, bgColor: KPI_RAG_STATUS_STYLES.no_data.bg },
 };
 
 // Calculate RAG status based on current value, target, and direction

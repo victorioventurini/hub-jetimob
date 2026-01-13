@@ -29,15 +29,15 @@ export function OkrSummaryCard({
           {/* Progress bar */}
           <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
             <div 
-              className="bg-emerald-500 transition-all" 
+              className="bg-status-green transition-all" 
               style={{ width: `${(onTrack / total) * 100}%` }} 
             />
             <div 
-              className="bg-amber-500 transition-all" 
+              className="bg-status-yellow transition-all" 
               style={{ width: `${(atRisk / total) * 100}%` }} 
             />
             <div 
-              className="bg-red-500 transition-all" 
+              className="bg-status-red transition-all" 
               style={{ width: `${(offTrack / total) * 100}%` }} 
             />
           </div>
@@ -45,17 +45,17 @@ export function OkrSummaryCard({
           {/* Legend */}
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-status-green" />
               <span className="text-muted-foreground truncate">No caminho</span>
               <span className="font-semibold text-foreground shrink-0">{onTrack}</span>
             </div>
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-status-yellow" />
               <span className="text-muted-foreground truncate">Em risco</span>
               <span className="font-semibold text-foreground shrink-0">{atRisk}</span>
             </div>
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-status-red" />
               <span className="text-muted-foreground truncate">Fora</span>
               <span className="font-semibold text-foreground shrink-0">{offTrack}</span>
             </div>

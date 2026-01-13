@@ -180,8 +180,8 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
               <div 
                 className={cn(
                   "h-full rounded-full transition-all",
-                  kpi.rag_status === 'on_track' ? 'bg-emerald-500' :
-                  kpi.rag_status === 'at_risk' ? 'bg-amber-500' : 'bg-red-500'
+                  kpi.rag_status === 'on_track' ? 'bg-status-green' :
+                  kpi.rag_status === 'at_risk' ? 'bg-status-yellow' : 'bg-status-red'
                 )}
                 style={{ 
                   width: `${Math.min(100, (kpi.direction === 'up' 

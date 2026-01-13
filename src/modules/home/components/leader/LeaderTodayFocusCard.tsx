@@ -20,8 +20,8 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const typeStyles: Record<string, { icon: string; bg: string }> = {
-  warning: { icon: "text-yellow-600", bg: "bg-yellow-100 dark:bg-yellow-900/30" },
-  action: { icon: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-900/30" },
+  warning: { icon: "text-status-yellow", bg: "bg-status-yellow-muted" },
+  action: { icon: "text-info", bg: "bg-info-muted" },
   info: { icon: "text-muted-foreground", bg: "bg-muted" },
 };
 
@@ -59,8 +59,8 @@ export function LeaderTodayFocusCard({ items, isLoading }: LeaderTodayFocusCardP
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="h-12 w-12 rounded-full bg-status-green-muted flex items-center justify-center mb-3">
+              <CheckCircle2 className="h-6 w-6 text-status-green" />
             </div>
             <p className="text-sm font-medium text-foreground mb-1">
               Tudo em dia!
