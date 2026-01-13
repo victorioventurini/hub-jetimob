@@ -5,16 +5,17 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamOkrListItem } from "./TeamOkrListItem";
 import type { OrgKrContribution } from "../../hooks/useTeamContributionView";
+import { RAG_STATUS_COLORS } from "@/lib/colors";
 
 interface OrgKrContributionItemProps {
   orgKr: OrgKrContribution;
 }
 
 const statusConfig = {
-  green: { label: 'On Track', className: 'bg-green-500/10 text-green-700' },
-  yellow: { label: 'Em Risco', className: 'bg-yellow-500/10 text-yellow-700' },
-  red: { label: 'Off Track', className: 'bg-red-500/10 text-red-700' },
-  not_started: { label: 'Não Iniciado', className: 'bg-muted text-muted-foreground' },
+  green: { label: 'On Track', className: RAG_STATUS_COLORS.green.badge },
+  yellow: { label: 'Em Risco', className: RAG_STATUS_COLORS.yellow.badge },
+  red: { label: 'Off Track', className: RAG_STATUS_COLORS.red.badge },
+  not_started: { label: 'Não Iniciado', className: RAG_STATUS_COLORS.not_started.badge },
 };
 
 export function OrgKrContributionItem({ orgKr }: OrgKrContributionItemProps) {

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { AI_INSIGHT_STYLES, type AiInsightType } from "@/lib/colors";
 import {
   Sparkles,
   Lightbulb,
@@ -54,10 +55,10 @@ const insightIcons: Record<InsightType, typeof Lightbulb> = {
 };
 
 const insightColors: Record<InsightType, string> = {
-  suggestion: "text-blue-600 bg-blue-50 dark:bg-blue-950/30",
-  warning: "text-amber-600 bg-amber-50 dark:bg-amber-950/30",
-  opportunity: "text-green-600 bg-green-50 dark:bg-green-950/30",
-  tip: "text-purple-600 bg-purple-50 dark:bg-purple-950/30",
+  suggestion: AI_INSIGHT_STYLES.suggestion.container,
+  warning: AI_INSIGHT_STYLES.warning.container,
+  opportunity: AI_INSIGHT_STYLES.opportunity.container,
+  tip: AI_INSIGHT_STYLES.tip.container,
 };
 
 const priorityBadges: Record<InsightPriority, { label: string; variant: "default" | "secondary" | "outline" }> = {

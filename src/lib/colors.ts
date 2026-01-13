@@ -389,6 +389,100 @@ export const KPI_CATEGORY_COLORS = {
 export type KpiCategoryKey = keyof typeof KPI_CATEGORY_COLORS;
 
 // ============================================
+// Progress Bar Colors (based on percentage)
+// ============================================
+
+export const PROGRESS_BAR_STYLES = {
+  high: '[&>div]:bg-status-green',
+  medium: '[&>div]:bg-status-yellow',
+  low: '[&>div]:bg-status-red',
+} as const;
+
+export function getProgressBarStyle(progress: number): string {
+  if (progress >= 70) return PROGRESS_BAR_STYLES.high;
+  if (progress >= 40) return PROGRESS_BAR_STYLES.medium;
+  return PROGRESS_BAR_STYLES.low;
+}
+
+export function getProgressColor(progress: number): string {
+  if (progress >= 70) return 'bg-status-green';
+  if (progress >= 40) return 'bg-status-yellow';
+  return 'bg-status-red';
+}
+
+// ============================================
+// AI Insight Colors
+// ============================================
+
+export const AI_INSIGHT_STYLES = {
+  suggestion: {
+    container: 'text-info bg-info-muted dark:bg-info-muted/30',
+    icon: 'text-info',
+  },
+  warning: {
+    container: 'text-status-yellow bg-status-yellow-muted dark:bg-status-yellow-muted/30',
+    icon: 'text-status-yellow',
+  },
+  opportunity: {
+    container: 'text-status-green bg-status-green-muted dark:bg-status-green-muted/30',
+    icon: 'text-status-green',
+  },
+  tip: {
+    container: 'text-[hsl(var(--violet-500))] bg-[hsl(var(--violet-500)/0.1)] dark:bg-[hsl(var(--violet-500)/0.15)]',
+    icon: 'text-[hsl(var(--violet-500))]',
+  },
+} as const;
+
+export type AiInsightType = keyof typeof AI_INSIGHT_STYLES;
+
+// ============================================
+// Automation Log Status Colors
+// ============================================
+
+export const AUTOMATION_LOG_STATUS_STYLES = {
+  success: 'text-status-green bg-status-green-muted',
+  error: 'text-status-red bg-status-red-muted',
+  pending: 'text-status-yellow bg-status-yellow-muted',
+  retrying: 'text-status-yellow bg-status-yellow-muted',
+} as const;
+
+export type AutomationLogStatusKey = keyof typeof AUTOMATION_LOG_STATUS_STYLES;
+
+// ============================================
+// Trend Colors
+// ============================================
+
+export const TREND_COLORS = {
+  up: 'text-status-green',
+  down: 'text-status-red',
+  flat: 'text-muted-foreground',
+  improving: 'text-status-green',
+  declining: 'text-status-red',
+  stable: 'text-muted-foreground',
+} as const;
+
+export type TrendKey = keyof typeof TREND_COLORS;
+
+// ============================================
+// Configuration Status Colors (for setup pages)
+// ============================================
+
+export const CONFIG_STATUS_STYLES = {
+  configured: {
+    card: 'border-status-green/50 bg-status-green-muted',
+    icon: 'text-status-green',
+    text: 'text-status-green',
+  },
+  pending: {
+    card: 'border-status-yellow/50 bg-status-yellow-muted',
+    icon: 'text-status-yellow',
+    text: 'text-status-yellow',
+  },
+} as const;
+
+export type ConfigStatusKey = keyof typeof CONFIG_STATUS_STYLES;
+
+// ============================================
 // Helper function for dynamic status lookup
 // ============================================
 

@@ -3,6 +3,7 @@ import { Progress } from '@/components/ui/progress';
 import { calculateProgress } from '../types';
 import { formatValueWithUnit } from '../constants/krUnits';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { getProgressColor, TREND_COLORS } from '@/lib/colors';
 
 interface KrProgressPreviewProps {
   title: string;
@@ -26,9 +27,7 @@ export function KrProgressPreview({
   }, [baseline, currentValue, target, direction]);
 
   const progressColor = useMemo(() => {
-    if (progress >= 70) return 'bg-green-500';
-    if (progress >= 40) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return getProgressColor(progress);
   }, [progress]);
 
   if (!title.trim() || isNaN(target)) {
@@ -51,9 +50,9 @@ export function KrProgressPreview({
             {progress.toFixed(0)}%
           </span>
           {direction === 'up' ? (
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className={`h-4 w-4 ${TREND_COLORS.up}`} />
           ) : (
-            <TrendingDown className="h-4 w-4 text-blue-500" />
+            <TrendingDown className="h-4 w-4 text-info" />
           )}
         </div>
         
