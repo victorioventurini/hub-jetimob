@@ -13,6 +13,7 @@
 import { AlertTriangle, Lightbulb, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { InitiativeNameFeedback as FeedbackType, InitiativeNameFeedbackType } from '../../hooks/useInitiativeNameValidation';
+import { FEEDBACK_STYLES } from '@/lib/colors';
 
 interface InitiativeNameFeedbackProps {
   feedback: FeedbackType | null;
@@ -20,26 +21,10 @@ interface InitiativeNameFeedbackProps {
   className?: string;
 }
 
-const FEEDBACK_STYLES: Record<InitiativeNameFeedbackType, {
-  containerClass: string;
-  iconClass: string;
-  Icon: typeof AlertTriangle;
-}> = {
-  warning: {
-    containerClass: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800/50',
-    iconClass: 'text-yellow-600 dark:text-yellow-400',
-    Icon: AlertTriangle,
-  },
-  suggestion: {
-    containerClass: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50',
-    iconClass: 'text-blue-600 dark:text-blue-400',
-    Icon: Lightbulb,
-  },
-  success: {
-    containerClass: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800/50',
-    iconClass: 'text-green-600 dark:text-green-400',
-    Icon: CheckCircle,
-  },
+const FEEDBACK_ICONS: Record<InitiativeNameFeedbackType, typeof AlertTriangle> = {
+  warning: AlertTriangle,
+  suggestion: Lightbulb,
+  success: CheckCircle,
 };
 
 export function InitiativeNameFeedback({
@@ -65,15 +50,16 @@ export function InitiativeNameFeedback({
     return null;
   }
 
-  const { containerClass, iconClass, Icon } = FEEDBACK_STYLES[feedback.type];
+  const styles = FEEDBACK_STYLES[feedback.type];
+  const Icon = FEEDBACK_ICONS[feedback.type];
 
   return (
     <div className={cn(
       'flex items-start gap-2 text-xs rounded-md border p-2 mt-1.5',
-      containerClass,
+      styles.container,
       className
     )}>
-      <Icon className={cn('w-3.5 h-3.5 shrink-0 mt-0.5', iconClass)} />
+      <Icon className={cn('w-3.5 h-3.5 shrink-0 mt-0.5', styles.icon)} />
       <div className="space-y-0.5">
         <p className="text-foreground/80">{feedback.message}</p>
         {feedback.suggestion && feedback.type !== 'success' && (

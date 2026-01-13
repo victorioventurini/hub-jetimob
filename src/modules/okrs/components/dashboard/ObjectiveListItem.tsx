@@ -192,9 +192,9 @@ export function ObjectiveListItem({
                             variant="outline" 
                             className={cn(
                               'text-[10px] sm:text-xs shrink-0',
-                              status === 'on_track' && 'bg-green-500/10 text-green-600 border-green-200',
-                              status === 'at_risk' && 'bg-yellow-500/10 text-yellow-600 border-yellow-200',
-                              status === 'off_track' && 'bg-red-500/10 text-red-600 border-red-200',
+                              status === 'on_track' && 'bg-status-green-muted text-status-green-muted-foreground border-status-green/20',
+                              status === 'at_risk' && 'bg-status-yellow-muted text-status-yellow-muted-foreground border-status-yellow/20',
+                              status === 'off_track' && 'bg-status-red-muted text-status-red-muted-foreground border-status-red/20',
                             )}
                           >
                             <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />

@@ -35,6 +35,7 @@ import { PermissionDiffDialog } from "./PermissionDiffDialog";
 import { RevokeAccessDialog } from "./RevokeAccessDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
+import { SURFACE_COLORS } from "@/lib/colors";
 
 const SURFACE_ICONS = {
   view: Eye,
@@ -42,14 +43,6 @@ const SURFACE_ICONS = {
   administer: Settings2,
   base: Eye,
   restricted: Shield,
-};
-
-const SURFACE_COLORS: Record<string, string> = {
-  view: "bg-blue-500/10 text-blue-700 border-blue-500/30",
-  operate: "bg-green-500/10 text-green-700 border-green-500/30",
-  administer: "bg-orange-500/10 text-orange-700 border-orange-500/30",
-  base: "bg-gray-500/10 text-gray-700 border-gray-500/30",
-  restricted: "bg-red-500/10 text-red-700 border-red-500/30",
 };
 
 // Templates allowed for external users
@@ -415,7 +408,7 @@ export function UserPermissionsV2Sheet({
                       <div className="space-y-1.5">
                         {moduleTemplates.map(template => {
                           const SurfaceIcon = SURFACE_ICONS[template.surface as keyof typeof SURFACE_ICONS] || Eye;
-                          const surfaceColor = SURFACE_COLORS[template.surface || 'base'] || SURFACE_COLORS.base;
+                          const surfaceColor = SURFACE_COLORS[template.surface as keyof typeof SURFACE_COLORS]?.full || SURFACE_COLORS.base.full;
                           const isSelected = selectedTemplateIds.has(template.id);
                           
                           return (

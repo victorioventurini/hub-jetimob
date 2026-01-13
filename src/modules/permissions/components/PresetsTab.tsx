@@ -22,18 +22,13 @@ import {
   ChevronRight
 } from "lucide-react";
 import { usePermissionPresets, usePresetItems, type PermissionPreset } from "../hooks/usePermissionGovernance";
+import { SURFACE_COLORS } from "@/lib/colors";
 
 const SURFACE_ICONS = {
   view: Eye,
   operate: Wrench,
   administer: Settings2,
 } as const;
-
-const SURFACE_COLORS: Record<string, string> = {
-  view: "bg-blue-500/10 text-blue-700 border-blue-500/30",
-  operate: "bg-green-500/10 text-green-700 border-green-500/30",
-  administer: "bg-orange-500/10 text-orange-700 border-orange-500/30",
-};
 
 export function PresetsTab() {
   const { presets, presetsByModule, isLoading } = usePermissionPresets();
@@ -69,7 +64,8 @@ export function PresetsTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {modulePresets.map((preset) => {
               const SurfaceIcon = SURFACE_ICONS[preset.surface as keyof typeof SURFACE_ICONS] || Shield;
-              const surfaceColor = SURFACE_COLORS[preset.surface || ""] || "bg-gray-500/10 text-gray-700";
+              const surfaceKey = preset.surface as keyof typeof SURFACE_COLORS;
+              const surfaceColor = SURFACE_COLORS[surfaceKey]?.full || SURFACE_COLORS.base.full;
 
               return (
                 <Card 
@@ -140,7 +136,7 @@ function PresetDetailSheet({
           <div className="flex gap-2 flex-wrap">
             <Badge variant="outline">{preset?.module || "global"}</Badge>
             {preset?.surface && (
-              <Badge className={SURFACE_COLORS[preset.surface] || ""}>
+              <Badge className={SURFACE_COLORS[preset.surface as keyof typeof SURFACE_COLORS]?.full || ""}>
                 {preset.surface.toUpperCase()}
               </Badge>
             )}

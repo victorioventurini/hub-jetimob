@@ -8,17 +8,19 @@ import { Progress } from "@/components/ui/progress";
 import { usePermissionAudit } from "../hooks/usePermissionAudit";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AUDIT_STATUS_STYLES } from "@/lib/colors";
 
 function StatusBadge({ status }: { status: 'PASS' | 'FAIL' | 'PARTIAL' }) {
-  const variants = {
-    PASS: { className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', icon: CheckCircle2 },
-    FAIL: { className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', icon: XCircle },
-    PARTIAL: { className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', icon: AlertCircle },
+  const icons = {
+    PASS: CheckCircle2,
+    FAIL: XCircle,
+    PARTIAL: AlertCircle,
   };
-  const { className, icon: Icon } = variants[status];
+  const Icon = icons[status];
+  const styles = AUDIT_STATUS_STYLES[status];
   
   return (
-    <Badge variant="outline" className={className}>
+    <Badge variant="outline" className={styles.badge}>
       <Icon className="w-3 h-3 mr-1" />
       {status}
     </Badge>
@@ -27,9 +29,9 @@ function StatusBadge({ status }: { status: 'PASS' | 'FAIL' | 'PARTIAL' }) {
 
 function FunctionStatusIcon({ exists }: { exists: boolean }) {
   return exists ? (
-    <CheckCircle2 className="w-4 h-4 text-green-600" />
+    <CheckCircle2 className="w-4 h-4 text-status-green" />
   ) : (
-    <XCircle className="w-4 h-4 text-red-600" />
+    <XCircle className="w-4 h-4 text-status-red" />
   );
 }
 
@@ -165,9 +167,9 @@ export function AuditDashboard() {
             <Progress value={migrationProgress} className="h-2 mb-2" />
             <div className="text-xs text-muted-foreground">
               {audit.migrationStatus.pendingUsers === 0 ? (
-                <span className="text-green-600">Migração completa!</span>
+                <span className="text-status-green">Migração completa!</span>
               ) : (
-                <span className="text-yellow-600">
+                <span className="text-status-yellow">
                   {audit.migrationStatus.pendingUsers} usuários pendentes
                 </span>
               )}

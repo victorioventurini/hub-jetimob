@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -50,16 +51,12 @@ export interface LeaderAlignmentStepProps {
 // ============================================================
 
 function getStatusColor(status: string) {
-  switch (status) {
-    case 'green':
-      return 'bg-green-500';
-    case 'yellow':
-      return 'bg-yellow-500';
-    case 'red':
-      return 'bg-red-500';
-    default:
-      return 'bg-muted';
-  }
+  const colorMap: Record<string, string> = {
+    green: RAG_STATUS_COLORS.green.dot,
+    yellow: RAG_STATUS_COLORS.yellow.dot,
+    red: RAG_STATUS_COLORS.red.dot,
+  };
+  return colorMap[status] || 'bg-muted';
 }
 
 // ============================================================
@@ -153,9 +150,7 @@ export function LeaderAlignmentStep({
                         variant="secondary"
                         className={cn(
                           "text-xs",
-                          obj.status === 'green' && "bg-green-100 text-green-700",
-                          obj.status === 'yellow' && "bg-yellow-100 text-yellow-700",
-                          obj.status === 'red' && "bg-red-100 text-red-700"
+                          RAG_STATUS_COLORS[obj.status]?.badge
                         )}
                       >
                         {obj.progress}%
@@ -165,9 +160,9 @@ export function LeaderAlignmentStep({
                       value={obj.progress}
                       className={cn(
                         "h-1.5",
-                        obj.status === 'green' && "[&>div]:bg-green-500",
-                        obj.status === 'yellow' && "[&>div]:bg-yellow-500",
-                        obj.status === 'red' && "[&>div]:bg-red-500"
+                        obj.status === 'green' && "[&>div]:bg-status-green",
+                        obj.status === 'yellow' && "[&>div]:bg-status-yellow",
+                        obj.status === 'red' && "[&>div]:bg-status-red"
                       )}
                     />
                   </CardContent>

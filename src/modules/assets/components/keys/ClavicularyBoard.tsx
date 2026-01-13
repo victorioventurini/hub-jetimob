@@ -6,6 +6,7 @@ import { useKeys } from "../../hooks/useKeys";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin } from "lucide-react";
+import { ASSET_STATUS_STYLES } from "@/lib/colors";
 
 interface ClavicularyBoardProps {
   claviculary: AssetClaviculary;
@@ -43,10 +44,10 @@ export function ClavicularyBoard({ claviculary }: ClavicularyBoardProps) {
             )}
           </div>
           <div className="flex gap-2">
-            <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-200">
+            <Badge variant="outline" className={ASSET_STATUS_STYLES.available.badge}>
               {availableCount} livres
             </Badge>
-            <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-200">
+            <Badge variant="outline" className={ASSET_STATUS_STYLES.loaned.badge}>
               {occupiedCount} ocupados
             </Badge>
           </div>

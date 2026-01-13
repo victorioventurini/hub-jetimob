@@ -136,6 +136,69 @@ export const ASSET_STATUS_STYLES = {
 export type AssetStatusKey = keyof typeof ASSET_STATUS_STYLES;
 
 // ============================================
+// Feedback Types (AI validation, alerts)
+// ============================================
+
+export const FEEDBACK_STYLES = {
+  warning: {
+    container: 'bg-status-yellow-muted border-status-yellow/30',
+    icon: 'text-status-yellow',
+    text: 'text-status-yellow-muted-foreground',
+  },
+  suggestion: {
+    container: 'bg-info-muted border-info/30',
+    icon: 'text-info',
+    text: 'text-info-muted-foreground',
+  },
+  success: {
+    container: 'bg-status-green-muted border-status-green/30',
+    icon: 'text-status-green',
+    text: 'text-status-green-muted-foreground',
+  },
+} as const;
+
+export type FeedbackType = keyof typeof FEEDBACK_STYLES;
+
+// ============================================
+// Audit Status Colors
+// ============================================
+
+export const AUDIT_STATUS_STYLES = {
+  PASS: {
+    badge: 'bg-status-green-muted text-status-green-muted-foreground',
+  },
+  FAIL: {
+    badge: 'bg-status-red-muted text-status-red-muted-foreground',
+  },
+  PARTIAL: {
+    badge: 'bg-status-yellow-muted text-status-yellow-muted-foreground',
+  },
+} as const;
+
+export type AuditStatus = keyof typeof AUDIT_STATUS_STYLES;
+
+// ============================================
+// OKR Health Status (on_track, at_risk, off_track)
+// ============================================
+
+export const OKR_HEALTH_STYLES = {
+  on_track: {
+    badge: 'bg-status-green-muted text-status-green-muted-foreground border-status-green/20',
+    progress: '[&>div]:bg-status-green',
+  },
+  at_risk: {
+    badge: 'bg-status-yellow-muted text-status-yellow-muted-foreground border-status-yellow/20',
+    progress: '[&>div]:bg-status-yellow',
+  },
+  off_track: {
+    badge: 'bg-status-red-muted text-status-red-muted-foreground border-status-red/20',
+    progress: '[&>div]:bg-status-red',
+  },
+} as const;
+
+export type OkrHealthStatus = keyof typeof OKR_HEALTH_STYLES;
+
+// ============================================
 // Helper function for dynamic status lookup
 // ============================================
 

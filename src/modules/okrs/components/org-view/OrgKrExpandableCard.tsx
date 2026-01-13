@@ -4,20 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import { formatValueWithUnit } from '../../constants/krUnits';
 import { TeamKrListItem } from './TeamKrListItem';
 import type { OrgKrWithTeamKrs } from '../../hooks/useOrgObjectiveView';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface OrgKrExpandableCardProps {
   orgKr: OrgKrWithTeamKrs;
 }
-
-const statusColors = {
-  green: 'bg-green-500/10 text-green-700 border-green-200',
-  yellow: 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
-  red: 'bg-red-500/10 text-red-700 border-red-200',
-  not_started: 'bg-gray-500/10 text-gray-700 border-gray-200',
-};
 
 const statusLabels = {
   green: 'On Track',
@@ -33,9 +28,9 @@ const trendIcons = {
 };
 
 const trendColors = {
-  up: 'text-green-600',
+  up: 'text-status-green',
   stable: 'text-muted-foreground',
-  down: 'text-red-600',
+  down: 'text-status-red',
 };
 
 export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
@@ -61,7 +56,10 @@ export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <h3 className="font-medium leading-tight">{orgKr.title}</h3>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={statusColors[orgKr.status]}>
+                    <Badge variant="outline" className={cn(
+                      RAG_STATUS_COLORS[orgKr.status]?.badge,
+                      RAG_STATUS_COLORS[orgKr.status]?.border
+                    )}>
                       {statusLabels[orgKr.status]}
                     </Badge>
                     <TrendIcon className={`w-4 h-4 ${trendColors[orgKr.trend]}`} />
