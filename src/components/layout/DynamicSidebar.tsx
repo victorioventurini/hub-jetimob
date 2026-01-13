@@ -162,8 +162,10 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
 
     if (collapsed) {
       return (
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <div className="w-full">{linkContent}</div>
+          </TooltipTrigger>
           <TooltipContent side="right" className="font-medium">
             {name}
           </TooltipContent>
