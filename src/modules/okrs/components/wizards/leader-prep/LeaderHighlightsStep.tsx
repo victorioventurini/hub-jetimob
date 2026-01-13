@@ -29,6 +29,7 @@ import { VicInsightsList } from '../shared/VicInsightCard';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import type { LeaderHighlight, VicInsight } from '@/modules/okrs/types/wizard';
+import { HIGHLIGHT_CARD_STYLES, RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -47,32 +48,32 @@ const HIGHLIGHT_CONFIG = {
   stagnant: {
     icon: TrendingDown,
     label: 'Estagnado',
-    className: 'border-purple-200 bg-purple-50 dark:border-purple-800/50 dark:bg-purple-950/20',
-    iconClass: 'text-purple-600 dark:text-purple-400',
+    className: HIGHLIGHT_CARD_STYLES.stagnant.card,
+    iconClass: HIGHLIGHT_CARD_STYLES.stagnant.icon,
   },
   blocked: {
     icon: AlertTriangle,
     label: 'Bloqueado',
-    className: 'border-red-200 bg-red-50 dark:border-red-800/50 dark:bg-red-950/20',
-    iconClass: 'text-red-600 dark:text-red-400',
+    className: HIGHLIGHT_CARD_STYLES.blocked.card,
+    iconClass: HIGHLIGHT_CARD_STYLES.blocked.icon,
   },
   initiative_impact: {
     icon: Zap,
     label: 'Alto Impacto',
-    className: 'border-blue-200 bg-blue-50 dark:border-blue-800/50 dark:bg-blue-950/20',
-    iconClass: 'text-blue-600 dark:text-blue-400',
+    className: HIGHLIGHT_CARD_STYLES.initiative_impact.card,
+    iconClass: HIGHLIGHT_CARD_STYLES.initiative_impact.icon,
   },
   help_requested: {
     icon: HelpCircle,
     label: 'Pediu Ajuda',
-    className: 'border-orange-200 bg-orange-50 dark:border-orange-800/50 dark:bg-orange-950/20',
-    iconClass: 'text-orange-600 dark:text-orange-400',
+    className: HIGHLIGHT_CARD_STYLES.help_requested.card,
+    iconClass: HIGHLIGHT_CARD_STYLES.help_requested.icon,
   },
   overdue: {
     icon: Clock,
     label: 'Atrasado',
-    className: 'border-yellow-200 bg-yellow-50 dark:border-yellow-800/50 dark:bg-yellow-950/20',
-    iconClass: 'text-yellow-600 dark:text-yellow-400',
+    className: HIGHLIGHT_CARD_STYLES.overdue.card,
+    iconClass: HIGHLIGHT_CARD_STYLES.overdue.icon,
   },
 };
 
@@ -189,8 +190,8 @@ export function LeaderHighlightsStep({
                                   variant="secondary"
                                   className={cn(
                                     "text-xs",
-                                    highlight.priority === 'high' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                                    highlight.priority === 'medium' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+                                    highlight.priority === 'high' && RAG_STATUS_COLORS.red.badge,
+                                    highlight.priority === 'medium' && RAG_STATUS_COLORS.yellow.badge,
                                     highlight.priority === 'low' && "bg-muted text-muted-foreground"
                                   )}
                                 >

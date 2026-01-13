@@ -19,6 +19,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TIMELINE_EVENT_COLORS } from "@/lib/colors";
 
 interface TimelineEvent {
   id: string;
@@ -47,13 +48,13 @@ const eventIcons: Record<TimelineEvent["type"], typeof Target> = {
 };
 
 const eventColors: Record<TimelineEvent["type"], string> = {
-  created: "bg-blue-500",
-  activated: "bg-green-500",
-  reviewed: "bg-purple-500",
-  updated: "bg-yellow-500",
-  cancelled: "bg-red-500",
-  completed: "bg-green-600",
-  discarded: "bg-gray-500",
+  created: TIMELINE_EVENT_COLORS.created,
+  activated: TIMELINE_EVENT_COLORS.activated,
+  reviewed: TIMELINE_EVENT_COLORS.reviewed,
+  updated: TIMELINE_EVENT_COLORS.updated,
+  cancelled: TIMELINE_EVENT_COLORS.cancelled,
+  completed: TIMELINE_EVENT_COLORS.completed,
+  discarded: TIMELINE_EVENT_COLORS.discarded,
 };
 
 export function ObjectiveTimeline({
@@ -255,7 +256,7 @@ export function ObjectiveTimeline({
                         <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{event.description}</p>
                       )}
                       {event.type === "cancelled" && event.description && (
-                        <div className="mt-2 flex items-start gap-1.5 text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30 p-2 rounded">
+                        <div className="mt-2 flex items-start gap-1.5 text-xs text-status-yellow-muted-foreground bg-status-yellow-muted dark:bg-status-yellow-muted/30 p-2 rounded">
                           <Lightbulb className="w-3 h-3 mt-0.5 shrink-0" />
                           <span className="line-clamp-2">{event.description}</span>
                         </div>

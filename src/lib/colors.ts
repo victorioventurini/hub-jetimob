@@ -483,6 +483,172 @@ export const CONFIG_STATUS_STYLES = {
 export type ConfigStatusKey = keyof typeof CONFIG_STATUS_STYLES;
 
 // ============================================
+// Alert Banner Colors (Wizards)
+// ============================================
+
+export const ALERT_BANNER_STYLES = {
+  overdue: {
+    bg: 'border-status-yellow/50 bg-status-yellow-muted/50 dark:bg-status-yellow-muted/20',
+    icon: 'text-status-yellow',
+  },
+  no_update: {
+    bg: 'border-destructive/30 bg-destructive/5 dark:bg-destructive/10',
+    icon: 'text-destructive',
+  },
+  blocked: {
+    bg: 'border-destructive/30 bg-destructive/5 dark:bg-destructive/10',
+    icon: 'text-destructive',
+  },
+  at_risk: {
+    bg: 'border-status-yellow/50 bg-status-yellow-muted/50 dark:bg-status-yellow-muted/20',
+    icon: 'text-status-yellow',
+  },
+  stagnant: {
+    bg: 'border-status-yellow/50 bg-status-yellow-muted/50 dark:bg-status-yellow-muted/20',
+    icon: 'text-status-yellow',
+  },
+  info: {
+    bg: 'border-primary/30 bg-primary/5 dark:bg-primary/10',
+    icon: 'text-primary',
+  },
+  warning: {
+    bg: 'border-status-yellow/50 bg-status-yellow-muted/50 dark:bg-status-yellow-muted/20',
+    icon: 'text-status-yellow',
+  },
+  success: {
+    bg: 'border-status-green/50 bg-status-green-muted/50 dark:bg-status-green-muted/20',
+    icon: 'text-status-green',
+  },
+} as const;
+
+export type AlertBannerType = keyof typeof ALERT_BANNER_STYLES;
+
+// ============================================
+// Highlight Card Colors (Leader Prep Wizard)
+// ============================================
+
+export const HIGHLIGHT_CARD_STYLES = {
+  stagnant: {
+    card: 'border-[hsl(var(--violet-200))] bg-[hsl(var(--violet-50))] dark:border-[hsl(var(--violet-800)/0.5)] dark:bg-[hsl(var(--violet-950)/0.2)]',
+    icon: 'text-[hsl(var(--violet-600))] dark:text-[hsl(var(--violet-400))]',
+  },
+  blocked: {
+    card: 'border-status-red/30 bg-status-red-muted dark:border-status-red/30 dark:bg-status-red-muted/20',
+    icon: 'text-status-red',
+  },
+  initiative_impact: {
+    card: 'border-info/30 bg-info-muted dark:border-info/30 dark:bg-info-muted/20',
+    icon: 'text-info',
+  },
+  help_requested: {
+    card: 'border-status-yellow/30 bg-status-yellow-muted dark:border-status-yellow/30 dark:bg-status-yellow-muted/20',
+    icon: 'text-status-yellow',
+  },
+  overdue: {
+    card: 'border-status-yellow/30 bg-status-yellow-muted dark:border-status-yellow/30 dark:bg-status-yellow-muted/20',
+    icon: 'text-status-yellow',
+  },
+} as const;
+
+export type HighlightCardType = keyof typeof HIGHLIGHT_CARD_STYLES;
+
+// ============================================
+// Metric Card Colors (Leader Overview)
+// ============================================
+
+export const METRIC_CARD_STYLES = {
+  success: {
+    card: 'border-status-green/30 dark:border-status-green/30',
+    iconBg: 'bg-status-green-muted dark:bg-status-green-muted/30',
+    icon: 'text-status-green',
+  },
+  warning: {
+    card: 'border-status-yellow/30 dark:border-status-yellow/30',
+    iconBg: 'bg-status-yellow-muted dark:bg-status-yellow-muted/30',
+    icon: 'text-status-yellow',
+  },
+  danger: {
+    card: 'border-status-red/30 dark:border-status-red/30',
+    iconBg: 'bg-status-red-muted dark:bg-status-red-muted/30',
+    icon: 'text-status-red',
+  },
+  info: {
+    card: 'border-info/30 dark:border-info/30',
+    iconBg: 'bg-info-muted dark:bg-info-muted/30',
+    icon: 'text-info',
+  },
+  purple: {
+    card: 'border-[hsl(var(--violet-200))] dark:border-[hsl(var(--violet-800)/0.5)]',
+    iconBg: 'bg-[hsl(var(--violet-100))] dark:bg-[hsl(var(--violet-900)/0.3)]',
+    icon: 'text-[hsl(var(--violet-600))] dark:text-[hsl(var(--violet-400))]',
+  },
+  neutral: {
+    card: '',
+    iconBg: 'bg-muted',
+    icon: 'text-muted-foreground',
+  },
+} as const;
+
+export type MetricCardType = keyof typeof METRIC_CARD_STYLES;
+
+// ============================================
+// Timeline Event Colors
+// ============================================
+
+export const TIMELINE_EVENT_COLORS = {
+  created: 'bg-info',
+  activated: 'bg-status-green',
+  reviewed: 'bg-[hsl(var(--violet-500))]',
+  updated: 'bg-status-yellow',
+  cancelled: 'bg-status-red',
+  completed: 'bg-status-green',
+  discarded: 'bg-muted-foreground',
+} as const;
+
+export type TimelineEventType = keyof typeof TIMELINE_EVENT_COLORS;
+
+// ============================================
+// Cycle Summary Colors
+// ============================================
+
+export const CYCLE_SUMMARY_COLORS = {
+  achieved: 'text-status-green',
+  partial: 'text-status-yellow',
+  not_achieved: 'text-status-red',
+} as const;
+
+// ============================================
+// Health Score Colors
+// ============================================
+
+export function getHealthScoreColor(score: number): { text: string; progress: string } {
+  if (score >= 70) return { text: 'text-status-green', progress: '[&>div]:bg-status-green' };
+  if (score >= 40) return { text: 'text-status-yellow', progress: '[&>div]:bg-status-yellow' };
+  return { text: 'text-status-red', progress: '[&>div]:bg-status-red' };
+}
+
+// ============================================
+// KPI Trend Colors (with direction consideration)
+// ============================================
+
+export function getKpiTrendColor(trend: 'up' | 'down' | 'flat' | 'stable' | null, direction: 'up' | 'down'): string {
+  if (!trend || trend === 'flat' || trend === 'stable') return 'text-muted-foreground';
+  
+  // When direction is 'up', going up is good. When direction is 'down', going down is good.
+  const isGood = direction === 'up' ? trend === 'up' : trend === 'down';
+  return isGood ? 'text-status-green' : 'text-status-red';
+}
+
+// ============================================
+// External Mention Colors
+// ============================================
+
+export const MENTION_COLORS = {
+  external: 'bg-status-yellow-muted/50 text-status-yellow dark:text-status-yellow',
+  internal: 'bg-primary/15 text-primary',
+} as const;
+
+// ============================================
 // Helper function for dynamic status lookup
 // ============================================
 

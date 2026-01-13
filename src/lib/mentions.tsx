@@ -180,7 +180,7 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
         <TooltipProvider key={`${id}-${match.index}`}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 text-sm font-medium cursor-default">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-0.5 rounded bg-status-yellow-muted/50 text-status-yellow dark:text-status-yellow text-sm font-medium cursor-default">
                 <Building2 className="w-3 h-3" />
                 @{displayName}
               </span>
