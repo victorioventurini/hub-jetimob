@@ -30,13 +30,15 @@ export const OKR_FIELDS = {
     created_at, updated_at, deleted_at,
     key_results:okr_org_key_results(
       id, bu_id, org_objective_id, title, baseline, current_value, target,
-      direction, unit, status, created_at, updated_at, deleted_at, cancelled_at
+      direction, unit, status, owner_user_id, created_at, updated_at, deleted_at, cancelled_at,
+      owner:profiles!okr_org_key_results_owner_profile_fkey(id, display_name, photo_url)
     )
   ` as const,
   
   orgKr: `
     id, bu_id, org_objective_id, title, baseline, current_value, target,
-    direction, unit, status, created_at, updated_at, deleted_at, cancelled_at
+    direction, unit, status, owner_user_id, created_at, updated_at, deleted_at, cancelled_at,
+    owner:profiles!okr_org_key_results_owner_profile_fkey(id, display_name, photo_url)
   ` as const,
   
   teamObjective: `

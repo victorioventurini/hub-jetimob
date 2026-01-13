@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Target, Plus, MoreHorizontal, Pencil } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ChevronDown, ChevronRight, Target, Plus, MoreHorizontal, Pencil, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
@@ -45,6 +46,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
     direction: OkrDirection;
     unit: string;
     status: OkrRagStatus;
+    owner_user_id?: string | null;
   } | null>(null);
   const { data: keyResults, isLoading } = useOrgKeyResults(objective.bu_id || currentBu?.id, objective.id);
 
@@ -208,6 +210,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                       direction: kr.direction as OkrDirection,
                       unit: kr.unit,
                       status: kr.status as OkrRagStatus,
+                      owner_user_id: kr.owner_user_id,
                     })}
                   >
                     <div className="flex items-start gap-3">
@@ -227,7 +230,20 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                           className="mt-2"
                         />
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
+                        {/* Owner Avatar */}
+                        {kr.owner ? (
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={kr.owner.photo_url || undefined} />
+                            <AvatarFallback className="text-[10px]">
+                              {kr.owner.display_name?.slice(0, 2).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                            <User className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -244,6 +260,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                               direction: kr.direction as OkrDirection,
                               unit: kr.unit,
                               status: kr.status as OkrRagStatus,
+                              owner_user_id: kr.owner_user_id,
                             });
                           }}
                           title="Editar KR"
