@@ -50,8 +50,8 @@ export function BirthdaysBlock() {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
       <CardHeader className="flex flex-row items-center gap-3 pb-4">
-        <div className="p-2 rounded-lg bg-rose-500/10">
-          <Cake className="h-5 w-5 text-rose-500" />
+        <div className="p-2 rounded-lg bg-status-pink-muted">
+          <Cake className="h-5 w-5 text-status-pink" />
         </div>
         <CardTitle className="text-base">
           Aniversários de {currentMonthName}
@@ -63,7 +63,7 @@ export function BirthdaysBlock() {
             icon={Cake}
             title="Nenhum aniversário"
             description={`Não há aniversários em ${currentMonthName}.`}
-            iconClassName="text-rose-500"
+            iconClassName="text-status-pink"
             compact
           />
         ) : (

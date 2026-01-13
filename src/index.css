@@ -79,6 +79,22 @@
     --status-gray-muted: 220 14% 96%;
     --status-gray-muted-foreground: 220 9% 46%;
 
+    /* Additional Status Colors */
+    --status-blue: 217 91% 60%;
+    --status-blue-foreground: 0 0% 100%;
+    --status-blue-muted: 217 91% 95%;
+    --status-blue-muted-foreground: 217 91% 40%;
+
+    --status-purple: 271 91% 65%;
+    --status-purple-foreground: 0 0% 100%;
+    --status-purple-muted: 271 91% 95%;
+    --status-purple-muted-foreground: 271 91% 45%;
+
+    --status-pink: 350 89% 60%;
+    --status-pink-foreground: 0 0% 100%;
+    --status-pink-muted: 350 89% 95%;
+    --status-pink-muted-foreground: 350 89% 45%;
+
     /* Surface Permission Colors */
     --surface-view: 217 91% 60%;
     --surface-view-muted: 217 91% 95%;
@@ -190,6 +206,22 @@
     --status-gray-foreground: 0 0% 100%;
     --status-gray-muted: 220 14% 15%;
     --status-gray-muted-foreground: 220 9% 65%;
+
+    /* Additional Status Colors (Dark) */
+    --status-blue: 217 91% 65%;
+    --status-blue-foreground: 0 0% 100%;
+    --status-blue-muted: 217 60% 15%;
+    --status-blue-muted-foreground: 217 91% 70%;
+
+    --status-purple: 271 91% 70%;
+    --status-purple-foreground: 0 0% 100%;
+    --status-purple-muted: 271 60% 15%;
+    --status-purple-muted-foreground: 271 91% 70%;
+
+    --status-pink: 350 89% 65%;
+    --status-pink-foreground: 0 0% 100%;
+    --status-pink-muted: 350 60% 15%;
+    --status-pink-muted-foreground: 350 89% 70%;
 
     /* Surface Permission Colors (Dark) */
     --surface-view: 217 91% 65%;

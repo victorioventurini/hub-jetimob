@@ -29,9 +29,9 @@ export function FocusCard({ items, title = "Seu Foco" }: FocusCardProps) {
   const getItemColor = (type: string) => {
     switch (type) {
       case "warning":
-        return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+        return "bg-status-yellow-muted text-status-yellow";
       case "info":
-        return "bg-sky-500/10 text-sky-600 dark:text-sky-400";
+        return "bg-status-blue-muted text-status-blue";
       case "action":
         return "bg-primary/10 text-primary";
       default:

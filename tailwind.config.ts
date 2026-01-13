@@ -84,6 +84,24 @@ export default {
           muted: "hsl(var(--status-gray-muted))",
           "muted-foreground": "hsl(var(--status-gray-muted-foreground))",
         },
+        "status-blue": {
+          DEFAULT: "hsl(var(--status-blue))",
+          foreground: "hsl(var(--status-blue-foreground))",
+          muted: "hsl(var(--status-blue-muted))",
+          "muted-foreground": "hsl(var(--status-blue-muted-foreground))",
+        },
+        "status-purple": {
+          DEFAULT: "hsl(var(--status-purple))",
+          foreground: "hsl(var(--status-purple-foreground))",
+          muted: "hsl(var(--status-purple-muted))",
+          "muted-foreground": "hsl(var(--status-purple-muted-foreground))",
+        },
+        "status-pink": {
+          DEFAULT: "hsl(var(--status-pink))",
+          foreground: "hsl(var(--status-pink-foreground))",
+          muted: "hsl(var(--status-pink-muted))",
+          "muted-foreground": "hsl(var(--status-pink-muted-foreground))",
+        },
         // Surface Permission Colors
         "surface-view": {
           DEFAULT: "hsl(var(--surface-view))",

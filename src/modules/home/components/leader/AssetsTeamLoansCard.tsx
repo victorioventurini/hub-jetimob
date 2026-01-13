@@ -97,12 +97,12 @@ export function AssetsTeamLoansCard({ assets, teamId, isLoading }: AssetsTeamLoa
             <div className="text-lg font-bold text-foreground">{assets.active_loans}</div>
             <div className="text-xs text-muted-foreground">Ativos</div>
           </div>
-          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-            <div className="text-lg font-bold text-red-600">{assets.overdue}</div>
+          <div className="p-2 rounded-lg bg-status-red-muted">
+            <div className="text-lg font-bold text-status-red">{assets.overdue}</div>
             <div className="text-xs text-muted-foreground">Atrasados</div>
           </div>
-          <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-            <div className="text-lg font-bold text-yellow-600">{assets.due_soon}</div>
+          <div className="p-2 rounded-lg bg-status-yellow-muted">
+            <div className="text-lg font-bold text-status-yellow">{assets.due_soon}</div>
             <div className="text-xs text-muted-foreground">Vencendo</div>
           </div>
         </div>

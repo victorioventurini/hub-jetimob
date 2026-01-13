@@ -182,8 +182,8 @@ export function InitiativesSummary({
 
             {/* Recently started */}
             {recentlyStarted.length > 0 && (
-              <div className="p-3 rounded-md bg-green-50/50 dark:bg-green-950/20 border border-green-200/50">
-                <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-2">
+              <div className="p-3 rounded-md bg-status-green-muted border border-status-green/30">
+                <p className="text-xs font-medium text-status-green mb-2">
                   🚀 Iniciadas recentemente:
                 </p>
                 <ul className="space-y-1">

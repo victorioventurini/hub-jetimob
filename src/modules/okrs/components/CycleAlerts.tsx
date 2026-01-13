@@ -44,12 +44,12 @@ export function CycleProgressAlert({ cycle, actualProgress, className }: CycleTi
     <Alert 
       variant="default" 
       className={cn(
-        "border-yellow-500/50 bg-yellow-500/10",
+        "border-status-yellow/50 bg-status-yellow-muted",
         className
       )}
     >
-      <TrendingDown className="h-4 w-4 text-yellow-600" />
-      <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-200">
+      <TrendingDown className="h-4 w-4 text-status-yellow" />
+      <AlertDescription className="text-sm text-status-yellow">
         <span className="font-medium">Progresso abaixo do esperado.</span>
         {" "}
         Com {percentElapsed}% do ciclo decorrido, o esperado seria ~{expectedProgress}% de progresso.
