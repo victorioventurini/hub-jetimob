@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter } from '../shared';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -148,20 +149,20 @@ export function TeamKrReviewStep({
         <div className="p-6">
           <Card className={cn(
             "transition-colors",
-            isMarked && "border-orange-300 dark:border-orange-700",
-            isReviewed && "border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/20"
+            isMarked && "border-status-yellow/50 dark:border-status-yellow/50",
+            isReviewed && "border-status-green/50 dark:border-status-green/50 bg-status-green-muted/50 dark:bg-status-green-muted/20"
           )}>
             <CardContent className="p-5 space-y-4">
               {/* Status badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 {isMarked && (
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                  <Badge variant="secondary" className="bg-status-yellow-muted text-status-yellow-muted-foreground dark:bg-status-yellow-muted/30">
                     <MessageSquare className="h-3 w-3 mr-1" />
                     Para discussão
                   </Badge>
                 )}
                 {isReviewed && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  <Badge variant="secondary" className={RAG_STATUS_COLORS.green.badge}>
                     <CheckCircle2 className="h-3 w-3 mr-1" />
                     Revisado
                   </Badge>
@@ -170,9 +171,9 @@ export function TeamKrReviewStep({
                   variant="secondary"
                   className={cn(
                     "text-xs",
-                    currentKr.status === 'green' && "bg-green-100 text-green-700",
-                    currentKr.status === 'yellow' && "bg-yellow-100 text-yellow-700",
-                    currentKr.status === 'red' && "bg-red-100 text-red-700"
+                    currentKr.status === 'green' && RAG_STATUS_COLORS.green.badge,
+                    currentKr.status === 'yellow' && RAG_STATUS_COLORS.yellow.badge,
+                    currentKr.status === 'red' && RAG_STATUS_COLORS.red.badge
                   )}
                 >
                   {currentKr.status === 'green' && 'No caminho'}

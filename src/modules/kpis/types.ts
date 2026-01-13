@@ -84,12 +84,12 @@ export const CATEGORY_LABELS: Record<KpiCategory, string> = {
 };
 
 export const CATEGORY_COLORS: Record<KpiCategory, string> = {
-  financeiro: 'bg-emerald-500',
-  growth: 'bg-blue-500',
-  cs: 'bg-violet-500',
-  produto: 'bg-amber-500',
-  operacoes: 'bg-rose-500',
-  pessoas: 'bg-cyan-500',
+  financeiro: 'bg-status-green',
+  growth: 'bg-info',
+  cs: 'bg-surface-administer',
+  produto: 'bg-status-yellow',
+  operacoes: 'bg-status-red',
+  pessoas: 'bg-info',
 };
 
 export const CATEGORY_ICONS: Record<KpiCategory, string> = {

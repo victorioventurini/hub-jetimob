@@ -30,9 +30,9 @@ const TYPE_LABELS = {
 };
 
 const TYPE_COLORS = {
-  foundational: 'bg-green-100 text-green-700',
-  contribution: 'bg-blue-100 text-blue-700',
-  enabler: 'bg-orange-100 text-orange-700',
+  foundational: 'bg-status-green-muted text-status-green-muted-foreground',
+  contribution: 'bg-info-muted text-info-muted-foreground',
+  enabler: 'bg-status-yellow-muted text-status-yellow-muted-foreground',
 };
 
 export function KrReviewStep({

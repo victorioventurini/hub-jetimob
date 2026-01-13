@@ -326,7 +326,7 @@ function CategoryCard({
             )}
 
             {isGeneralist && (
-              <div className="flex items-center gap-2 text-xs text-emerald-600 mt-1">
+              <div className="flex items-center gap-2 text-xs text-status-green mt-1">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 Este contato receberá tickets de qualquer subcategoria desta categoria.
               </div>

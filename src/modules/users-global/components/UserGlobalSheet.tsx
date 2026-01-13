@@ -114,12 +114,12 @@ export function UserGlobalSheet({ open, onOpenChange, user }: UserGlobalSheetPro
                 <div className="flex items-center gap-2 text-sm">
                   {user.onboarding_completed ? (
                     <>
-                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                      <CheckCircle className="h-4 w-4 text-status-green" />
                       <span>Onboarding concluído</span>
                     </>
                   ) : (
                     <>
-                      <Clock className="h-4 w-4 text-amber-500" />
+                      <Clock className="h-4 w-4 text-status-yellow" />
                       <span>Onboarding pendente</span>
                     </>
                   )}

@@ -34,15 +34,15 @@ const SourceIcon = ({ type }: { type: string }) => {
 const getSourceColor = (type: string) => {
   switch (type) {
     case 'manual':
-      return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
+      return 'text-info bg-info-muted dark:bg-info-muted/20';
     case 'api':
-      return 'text-green-500 bg-green-50 dark:bg-green-900/20';
+      return 'text-status-green bg-status-green-muted dark:bg-status-green-muted/20';
     case 'webhook':
-      return 'text-purple-500 bg-purple-50 dark:bg-purple-900/20';
+      return 'text-surface-administer bg-surface-administer-muted dark:bg-surface-administer-muted/20';
     case 'spreadsheet':
-      return 'text-orange-500 bg-orange-50 dark:bg-orange-900/20';
+      return 'text-status-yellow bg-status-yellow-muted dark:bg-status-yellow-muted/20';
     case 'database':
-      return 'text-cyan-500 bg-cyan-50 dark:bg-cyan-900/20';
+      return 'text-info bg-info-muted dark:bg-info-muted/20';
     default:
       return 'text-muted-foreground bg-muted';
   }

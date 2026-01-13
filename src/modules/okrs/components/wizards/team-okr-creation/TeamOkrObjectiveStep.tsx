@@ -23,6 +23,7 @@ import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
+import { FEEDBACK_STYLES } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -236,13 +237,13 @@ export function TeamOkrObjectiveStep({
             {aiFeedback && !isAnalyzing && (
               <div className={cn(
                 "p-3 rounded-lg text-sm flex items-start gap-2",
-                aiFeedback.type === 'warning' && "bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400",
-                aiFeedback.type === 'suggestion' && "bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400",
-                aiFeedback.type === 'success' && "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400"
+                aiFeedback.type === 'warning' && FEEDBACK_STYLES.warning.container,
+                aiFeedback.type === 'suggestion' && FEEDBACK_STYLES.suggestion.container,
+                aiFeedback.type === 'success' && FEEDBACK_STYLES.success.container
               )}>
-                {aiFeedback.type === 'warning' && <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />}
-                {aiFeedback.type === 'suggestion' && <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />}
-                {aiFeedback.type === 'success' && <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />}
+                {aiFeedback.type === 'warning' && <AlertCircle className={cn("h-4 w-4 shrink-0 mt-0.5", FEEDBACK_STYLES.warning.icon)} />}
+                {aiFeedback.type === 'suggestion' && <Sparkles className={cn("h-4 w-4 shrink-0 mt-0.5", FEEDBACK_STYLES.suggestion.icon)} />}
+                {aiFeedback.type === 'success' && <CheckCircle2 className={cn("h-4 w-4 shrink-0 mt-0.5", FEEDBACK_STYLES.success.icon)} />}
                 <div className="space-y-2">
                   <p><VicTypewriterText text={aiFeedback.message} speed={18} priority={0} /></p>
                   {aiFeedback.alternatives && aiFeedback.alternatives.length > 0 && (

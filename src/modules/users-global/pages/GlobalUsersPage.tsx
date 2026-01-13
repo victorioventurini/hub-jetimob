@@ -221,7 +221,7 @@ export default function GlobalUsersPage() {
                     {user.onboarding_completed ? (
                       <Badge
                         variant="outline"
-                        className="text-emerald-600 border-emerald-600"
+                        className="text-status-green border-status-green"
                       >
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Concluído
@@ -229,7 +229,7 @@ export default function GlobalUsersPage() {
                     ) : (
                       <Badge
                         variant="outline"
-                        className="text-amber-600 border-amber-600"
+                        className="text-status-yellow border-status-yellow"
                       >
                         <Clock className="h-3 w-3 mr-1" />
                         Pendente
