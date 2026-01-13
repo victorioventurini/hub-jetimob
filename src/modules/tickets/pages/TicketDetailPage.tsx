@@ -11,7 +11,7 @@ import { Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { ErrorState } from "@/components/ui/error-state";
+import { VicErrorState } from "@/modules/vic/components/VicErrorState";
 import { useTicket, useUpdateTicketStatus } from "../hooks/useTickets";
 import { useTicketMessages, useTicketAttachments, useCreateMessage } from "../hooks/useTicketMessages";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -107,9 +107,9 @@ export default function TicketDetailPage() {
       <HubLayout>
         <div className="space-y-6">
           <TicketsBreadcrumb />
-          <ErrorState
-            title="Erro ao carregar ticket"
-            description="Não foi possível carregar os dados do ticket. Tente novamente."
+          <VicErrorState
+            title="Ops, esse ticket escapou! 🎫"
+            description="Não consegui acessar esse ticket. Pode ser que você não tenha permissão ou ele não existe mais."
             onBack={goBack}
           />
         </div>
@@ -122,8 +122,8 @@ export default function TicketDetailPage() {
       <HubLayout>
         <div className="space-y-6">
           <TicketsBreadcrumb />
-          <ErrorState
-            title="Ticket não encontrado"
+          <VicErrorState
+            title="Esse ticket sumiu! 👀"
             description="O ticket que você está procurando não existe ou foi removido."
             onBack={goBack}
             backLabel="Voltar para lista"
