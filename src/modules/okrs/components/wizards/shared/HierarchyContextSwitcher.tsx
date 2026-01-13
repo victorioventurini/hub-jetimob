@@ -30,7 +30,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Users, User, ChevronDown, Shield, Search, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useIdentity } from '@/hooks/useIdentity';
 import { useManageableTeamsFlat } from '@/modules/okrs/hooks/useManageableTeams';
 import type { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
@@ -82,8 +83,8 @@ function HierarchyTeamSelect({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
-  const { isAdmin } = useAuth();
-  const isAdminLevel = isAdmin;
+  const { isWildcard } = usePermissions();
+  const isAdminLevel = isWildcard; // Impersonation-aware
   
   // Use manageable teams for leaders, all teams for admins
   const { teams: manageableTeams, isLoading: isLoadingManageable } = useManageableTeamsFlat();
@@ -157,8 +158,9 @@ function HierarchyUserSelect({
   onClose: () => void;
   filterTeamIds?: string[];
 }) {
-  const { isAdmin, profile } = useAuth();
-  const isAdminLevel = isAdmin;
+  const { isWildcard } = usePermissions();
+  const { profileId } = useIdentity();
+  const isAdminLevel = isWildcard; // Impersonation-aware
   const [search, setSearch] = useState('');
   
   // For leaders, get only users from their manageable teams
@@ -230,7 +232,7 @@ function HierarchyUserSelect({
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
                     {user.display_name || 'Sem nome'}
-                    {user.id === profile?.id && (
+                    {user.id === profileId && (
                       <Badge variant="secondary" className="ml-2 text-[10px] h-4">
                         Você
                       </Badge>
@@ -265,8 +267,8 @@ export function HierarchyContextSwitcher({
   className,
   filterTeamIds,
 }: HierarchyContextSwitcherProps) {
-  const { isAdmin } = useAuth();
-  const isAdminLevel = isAdmin;
+  const { isWildcard } = usePermissions();
+  const isAdminLevel = isWildcard; // Impersonation-aware
   
   const [open, setOpen] = useState(false);
   
