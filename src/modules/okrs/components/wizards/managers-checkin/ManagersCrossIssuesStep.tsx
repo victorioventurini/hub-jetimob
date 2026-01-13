@@ -38,20 +38,20 @@ const STATUS_CONFIG = {
   healthy: { 
     label: 'Saudável', 
     icon: CheckCircle2, 
-    className: 'text-green-600 dark:text-green-400',
-    badgeClass: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    className: 'text-status-green',
+    badgeClass: 'bg-status-green-muted text-status-green',
   },
   at_risk: { 
     label: 'Em Risco', 
     icon: Clock, 
-    className: 'text-yellow-600 dark:text-yellow-400',
-    badgeClass: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    className: 'text-status-yellow',
+    badgeClass: 'bg-status-yellow-muted text-status-yellow',
   },
   blocked: { 
     label: 'Bloqueado', 
     icon: AlertTriangle, 
-    className: 'text-red-600 dark:text-red-400',
-    badgeClass: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    className: 'text-status-red',
+    badgeClass: 'bg-status-red-muted text-status-red',
   },
 };
 

@@ -42,15 +42,15 @@ export function RiskKrsList({ redKrs, yellowKrs, teams, isLoading }: RiskKrsList
         key={kr.id}
         className={`p-3 rounded-lg border ${
           isRed 
-            ? 'border-destructive/30 bg-destructive/5' 
-            : 'border-yellow-500/30 bg-yellow-500/5'
+            ? 'border-status-red/30 bg-status-red-muted' 
+            : 'border-status-yellow/30 bg-status-yellow-muted'
         }`}
       >
         <div className="flex items-start gap-3">
           {isRed ? (
-            <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-status-red mt-0.5 shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-status-yellow mt-0.5 shrink-0" />
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium leading-tight line-clamp-2">

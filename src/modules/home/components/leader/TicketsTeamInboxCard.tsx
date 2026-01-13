@@ -66,17 +66,17 @@ export function TicketsTeamInboxCard({ tickets, teamId, isLoading }: TicketsTeam
       icon: HourglassIcon,
       label: "Aguardando terceiros",
       value: tickets.awaiting_external,
-      color: "text-purple-600",
-      bg: "bg-purple-100 dark:bg-purple-900/30",
+      color: "text-status-purple",
+      bg: "bg-status-purple-muted",
     },
     {
       icon: AlertCircle,
       label: "Vencendo em 48h",
       value: tickets.due_soon + tickets.overdue,
-      color: tickets.overdue > 0 ? "text-red-600" : "text-yellow-600",
+      color: tickets.overdue > 0 ? "text-status-red" : "text-status-yellow",
       bg: tickets.overdue > 0 
-        ? "bg-red-100 dark:bg-red-900/30" 
-        : "bg-yellow-100 dark:bg-yellow-900/30",
+        ? "bg-status-red-muted" 
+        : "bg-status-yellow-muted",
     },
   ];
 

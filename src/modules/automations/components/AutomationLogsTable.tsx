@@ -203,7 +203,7 @@ export function AutomationLogsTable({ logs, isLoading }: AutomationLogsTableProp
                     <p className="text-sm font-medium text-muted-foreground mb-1">
                       Mensagem de Erro
                     </p>
-                    <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    <div className="rounded-lg bg-status-red-muted p-3 text-sm text-status-red">
                       {selectedLog.error_message}
                     </div>
                   </div>
