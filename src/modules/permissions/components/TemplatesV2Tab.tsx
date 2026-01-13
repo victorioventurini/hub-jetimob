@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Settings, Eye, Wrench, Settings2, Lock, Pencil } from "lucide-react";
 import { usePermissionTemplatesV2, PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 import { TemplateEditorSheet } from "./TemplateEditorSheet";
+import { SURFACE_COLORS, type PermissionSurface } from "@/lib/colors";
 
 const SURFACE_ICONS = {
   view: Eye,
@@ -23,12 +24,8 @@ const SURFACE_ICONS = {
   restricted: Lock,
 };
 
-const SURFACE_COLORS: Record<string, string> = {
-  view: "bg-blue-500/10 text-blue-700",
-  operate: "bg-green-500/10 text-green-700",
-  administer: "bg-orange-500/10 text-orange-700",
-  base: "bg-gray-500/10 text-gray-700",
-  restricted: "bg-red-500/10 text-red-700",
+const getSurfaceColor = (surface: string): string => {
+  return SURFACE_COLORS[surface as PermissionSurface]?.badge || SURFACE_COLORS.base.badge;
 };
 
 export function TemplatesV2Tab() {
@@ -70,7 +67,7 @@ export function TemplatesV2Tab() {
           <TableBody>
             {templates.map((template) => {
               const SurfaceIcon = SURFACE_ICONS[template.surface as keyof typeof SURFACE_ICONS] || Eye;
-              const surfaceColor = SURFACE_COLORS[template.surface || 'base'] || SURFACE_COLORS.base;
+              const surfaceColor = getSurfaceColor(template.surface || 'base');
               
               return (
                 <TableRow key={template.id}>

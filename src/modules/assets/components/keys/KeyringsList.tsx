@@ -14,16 +14,14 @@ import {
 import type { AssetKeyring } from "../../types";
 import { KEYRING_STATUS_LABELS } from "../../types";
 import { KeyringDetailDialog } from "./KeyringDetailDialog";
+import { ASSET_STATUS_STYLES, type AssetStatusKey } from "@/lib/colors";
 
 interface KeyringsListProps {
   keyrings: AssetKeyring[];
 }
 
-const statusColors: Record<string, string> = {
-  available: "bg-green-500/10 text-green-700 border-green-200",
-  loaned: "bg-blue-500/10 text-blue-700 border-blue-200",
-  lost: "bg-red-500/10 text-red-700 border-red-200",
-  retired: "bg-gray-500/10 text-gray-700 border-gray-200",
+const getStatusColor = (status: string): string => {
+  return ASSET_STATUS_STYLES[status as AssetStatusKey]?.badge || ASSET_STATUS_STYLES.retired.badge;
 };
 
 export function KeyringsList({ keyrings }: KeyringsListProps) {
@@ -92,7 +90,7 @@ export function KeyringsList({ keyrings }: KeyringsListProps) {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={cn(statusColors[keyring.status])}>
+                  <Badge variant="outline" className={cn(getStatusColor(keyring.status))}>
                     {KEYRING_STATUS_LABELS[keyring.status]}
                   </Badge>
                 </TableCell>
