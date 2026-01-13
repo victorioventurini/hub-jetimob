@@ -6,9 +6,8 @@ import { Loader2, AlertCircle } from "lucide-react";
 /**
  * AuthCallback
  * 
- * Finaliza login via link (implicit hash) ou PKCE (code param) e redireciona para o destino original.
- * 
- * Motivo: alguns navegadores/flows não persistem sessão automaticamente ao voltar do link.
+ * Aguarda a sessão ser detectada pelo listener global e redireciona para o destino.
+ * O SDK Supabase v2 processa automaticamente o hash/code da URL.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -17,45 +16,59 @@ export default function AuthCallback() {
 
   const next = useMemo(() => {
     const raw = searchParams.get("next") || "/";
-    // next pode vir como "/okrs/quality?team=..."
     return raw.startsWith("/") ? raw : "/";
   }, [searchParams]);
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
 
-    async function finalize() {
+    // O SDK já processa o hash/code automaticamente.
+    // Aguardamos a sessão ficar disponível via listener global.
+    const checkSession = async () => {
       try {
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
-
-        // PKCE flow
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        } else {
-          // Magic link (implicit)
-          // @ts-expect-error - método existe no SDK, mas tipos podem variar conforme build
-          const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-          if (error) throw error;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("[AuthCallback] Session error:", sessionError);
+          if (mounted) setError(sessionError.message);
+          return;
         }
 
-        // Garantir que a sessão foi persistida
-        await supabase.auth.getSession();
-
-        if (!mounted) return;
-        navigate(next, { replace: true });
+        if (session) {
+          console.log("[AuthCallback] Session found, redirecting to:", next);
+          if (mounted) navigate(next, { replace: true });
+        } else {
+          // Aguardar um pouco e tentar novamente (o listener pode ainda não ter processado)
+          timeoutId = setTimeout(() => {
+            if (mounted) {
+              supabase.auth.getSession().then(({ data: { session: s } }) => {
+                if (s && mounted) {
+                  navigate(next, { replace: true });
+                } else if (mounted) {
+                  // Após 2 tentativas, redirecionar para /auth
+                  console.warn("[AuthCallback] No session after retry, redirecting to /auth");
+                  navigate("/auth", { replace: true });
+                }
+              });
+            }
+          }, 1000);
+        }
       } catch (e: any) {
-        console.error("[AuthCallback] Failed to finalize auth:", e);
-        if (!mounted) return;
-        setError(e?.message || "Não foi possível finalizar o login.");
+        console.error("[AuthCallback] Error:", e);
+        if (mounted) setError(e?.message || "Erro ao finalizar login");
       }
-    }
+    };
 
-    finalize();
+    // Pequeno delay para dar tempo do SDK processar o hash
+    const initialDelay = setTimeout(() => {
+      checkSession();
+    }, 100);
 
     return () => {
       mounted = false;
+      clearTimeout(initialDelay);
+      clearTimeout(timeoutId);
     };
   }, [navigate, next]);
 
