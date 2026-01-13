@@ -11,6 +11,7 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { useAuth } from '@/hooks/useAuth';
+import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useUserKrsForWizard } from '@/modules/okrs/hooks/useUserKrsForWizard';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
@@ -65,9 +66,11 @@ export default function CollaboratorCheckinPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile, isAdmin } = useAuth();
+  const { isImpersonating } = useOptionalImpersonation();
   
   // Check if user is admin - isAdmin already includes super_admin
-  const canSwitchUser = isAdmin;
+  // During impersonation, disable user switch since it's redundant
+  const canSwitchUser = !isImpersonating && isAdmin;
   
   // URL param for user impersonation (admin only)
   const userIdParam = searchParams.get('user');

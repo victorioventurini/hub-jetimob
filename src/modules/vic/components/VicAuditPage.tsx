@@ -12,6 +12,7 @@ import { BarChart3, Bot, Clock, User, Building2, AlertCircle, CheckCircle2, XCir
 import { format, parseISO, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useUrlState } from "@/shared/url";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -34,6 +35,10 @@ interface AgentLog {
 
 export function VicAuditPage() {
   const { isAdmin } = useAuth();
+  const { isImpersonating } = useOptionalImpersonation();
+  
+  // During impersonation, hide audit page since it's not relevant for the impersonated user
+  const canViewAudit = !isImpersonating && isAdmin;
   const buScopedSupabase = useOptionalBuScopedSupabase();
   
   // URL State - object API
@@ -121,7 +126,7 @@ export function VicAuditPage() {
       }
     : null;
 
-  if (!isAdmin) {
+  if (!canViewAudit) {
     return (
       <EmptyState
         icon={AlertCircle}

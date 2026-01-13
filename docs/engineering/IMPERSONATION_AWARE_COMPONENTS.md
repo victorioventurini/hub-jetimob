@@ -225,6 +225,37 @@ export function MyFormDialog({ item, ...props }: MyFormDialogProps) {
 
 ---
 
+## 8. Áreas Administrativas Durante Impersonação
+
+### Convenção
+
+**Áreas administrativas** (rotas protegidas por `AdminRoute`, configurações do Hub, gestão de BUs) **mantêm acesso** do super_admin mesmo durante impersonação. A justificativa é que super_admins precisam poder fazer ajustes enquanto investigam problemas.
+
+**Funcionalidades operacionais de admin** (como switch de usuário em wizards, logs de auditoria) **devem ser ocultadas** durante impersonação, pois são redundantes ou irrelevantes para a experiência do usuário impersonado.
+
+### Padrão de Código
+
+```typescript
+// Para features que DEVEM ser ocultadas durante impersonação:
+const { isAdmin } = useAuth();
+const { isImpersonating } = useOptionalImpersonation();
+const canAccessFeature = !isImpersonating && isAdmin;
+
+// Para rotas que super_admin MANTÉM acesso:
+// Usar isAdmin diretamente (AdminRoute já faz isso)
+```
+
+### Exemplos
+
+| Feature | Comportamento | Código |
+|---------|---------------|--------|
+| `AdminRoute` | Mantém acesso | `isAdmin` (sem check de impersonação) |
+| `Sidebar` (seção Admin) | Mantém visível | `isAdmin` (já implementado) |
+| `VicAuditPage` | Ocultar | `!isImpersonating && isAdmin` |
+| Switch de usuário em Check-in | Desabilitar | `!isImpersonating && isAdmin` |
+
+---
+
 ## Referências
 
 - [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) — Padrões gerais
