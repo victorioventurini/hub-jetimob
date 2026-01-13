@@ -180,9 +180,14 @@ export default function OkrDashboardPage() {
       setShowCreateOrgDialog(true);
     } else if ((activeView === 'team' || activeView === 'my') && canCreateTeam) {
       // Navigate to fullpage wizard for team OKR creation
-      // Use normalizedTeamId from URL, fallback to user's own team, then first manageable team
+      // Use normalizedTeamId from URL, fallback to user's own team (if in current BU), then first manageable team
+      // IMPORTANT: Only use userProfile?.team_id if it's in the manageable teams list (same BU)
+      const userTeamInCurrentBu = userProfile?.team_id && manageableTeamIds.has(userProfile.team_id) 
+        ? userProfile.team_id 
+        : undefined;
+      
       const effectiveTeamId = normalizedTeamId 
-        || userProfile?.team_id 
+        || userTeamInCurrentBu
         || manageableTeams[0]?.id;
       
       if (!effectiveTeamId) {
@@ -406,7 +411,11 @@ export default function OkrDashboardPage() {
                   ? () => setShowCreateOrgDialog(true)
                   : activeView !== 'company' && canCreateTeam
                   ? () => {
-                      const effectiveTeamId = normalizedTeamId || userProfile?.team_id || manageableTeams[0]?.id;
+                      // Only use userProfile?.team_id if it's in the manageable teams list (same BU)
+                      const userTeamInCurrentBu = userProfile?.team_id && manageableTeamIds.has(userProfile.team_id)
+                        ? userProfile.team_id
+                        : undefined;
+                      const effectiveTeamId = normalizedTeamId || userTeamInCurrentBu || manageableTeams[0]?.id;
                       if (effectiveTeamId) {
                         navigate(`/okrs/create?team=${effectiveTeamId}`);
                       } else {
