@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePermissions } from "@/hooks/usePermissions";
-import { queryKeys } from "@/lib/queryKeys";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 
 /**
  * Hook para verificar se o usuário pode gerenciar um time específico.
@@ -26,19 +26,31 @@ import { queryKeys } from "@/lib/queryKeys";
  */
 export function useTeamManagement() {
   const { isWildcard } = usePermissions();
-  const { userId, isReady: identityReady } = useIdentity();
+  const { userId: realUserId, isReady: identityReady } = useIdentity();
   const { client, buId, isReady: buReady } = useOptionalBuClient();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
+
+  // Use impersonated user ID when impersonating, otherwise use real user ID
+  const effectiveUserId = isImpersonating && impersonatedUserId 
+    ? impersonatedUserId 
+    : realUserId;
+
+  // Query key includes impersonation flag to force refetch when switching
+  const queryKey = isImpersonating
+    ? ['manageable-teams', 'impersonated', buId, effectiveUserId] as const
+    : ['manageable-teams', 'real', buId, effectiveUserId] as const;
 
   const { data: manageableTeams = [], isLoading } = useQuery({
-    queryKey: queryKeys.teamManagement.manageableTeams(buId ?? null, userId ?? null),
+    queryKey,
     queryFn: async () => {
-      if (!buId || !userId || !client) {
+      if (!buId || !effectiveUserId || !client) {
         throw new Error("useTeamManagement: No BU client available");
       }
 
-      // RPC receives auth.uid() (user_id) and converts internally to profile_id
+      // RPC receives user_id and converts internally to profile_id
+      // When impersonating, we pass the impersonated user's ID
       const { data, error } = await client.rpc("get_manageable_teams", {
-        p_user_id: userId,
+        p_user_id: effectiveUserId,
         p_bu_id: buId,
       });
 
@@ -49,7 +61,7 @@ export function useTeamManagement() {
 
       return data || [];
     },
-    enabled: buReady && identityReady && !!userId,
+    enabled: buReady && identityReady && !!effectiveUserId,
     staleTime: 5 * 60 * 1000,
   });
 
