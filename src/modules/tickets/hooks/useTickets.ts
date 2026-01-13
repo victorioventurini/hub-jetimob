@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useIdentity } from "@/hooks/useIdentity";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { queryKeys } from "@/lib/queryKeys";
 import type {
   Ticket,
@@ -229,12 +230,32 @@ export function useTicket(ticketId: string | null) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
+  const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
   return useQuery({
     queryKey: queryKeys.tickets.detail(ticketId),
     staleTime: 60 * 1000, // 1 minute - detail pages may have updates
     queryFn: async () => {
       if (!ticketId) return null;
+
+      // Durante impersonação, verificar se o usuário impersonado pode ver o ticket
+      if (isImpersonating && impersonatedUserId) {
+        const { data: rpcResult, error: rpcError } = await supabase
+          .rpc("get_ticket_for_impersonation", {
+            p_ticket_id: ticketId,
+            p_impersonated_profile_id: impersonatedUserId,
+          });
+
+        if (rpcError) throw rpcError;
+
+        // Se não retornou nada ou can_view é false, o usuário impersonado não pode ver
+        if (!rpcResult || rpcResult.length === 0 || !rpcResult[0]?.can_view) {
+          return null;
+        }
+
+        // Agora busca o ticket completo com joins (já que passou na verificação)
+        // O admin pode ver, então a query normal funciona
+      }
 
       const { data, error } = await supabase
         .from("tickets")

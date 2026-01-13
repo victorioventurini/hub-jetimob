@@ -8292,6 +8292,27 @@ export type Database = {
         Args: { p_include_subtree?: boolean; p_team_id: string }
         Returns: string[]
       }
+      get_ticket_for_impersonation: {
+        Args: { p_impersonated_profile_id: string; p_ticket_id: string }
+        Returns: {
+          assigned_contact_id: string
+          bu_id: string
+          can_view: boolean
+          category_id: string
+          created_at: string
+          created_by_user_id: string
+          expected_due_at: string
+          id: string
+          owner_user_id: string
+          partner_company_id: string
+          status: string
+          subcategory_id: string
+          title: string
+          type: string
+          updated_at: string
+          visibility: string
+        }[]
+      }
       get_user_bus: { Args: { p_user_id: string }; Returns: string[] }
       get_user_default_bu: { Args: { p_user_id: string }; Returns: string }
       get_user_job_title_in_bu: {
