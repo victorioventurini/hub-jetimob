@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.27.0  
+**Versão:** 2.28.0  
 **Última atualização:** 2026-01-13
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido | OKR Wizard Team Selection melhorado
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2207,6 +2207,18 @@ src/
 - **Cleanup de código**:
   - Removidos arquivos: `LegacyAssetRedirect.tsx`, `TicketMentionInput.tsx`, `useDebouncedValue.ts`, `useDebouncedCallback.ts`
   - Imports atualizados para novos módulos consolidados
+
+### v2.28.0 (2026-01-13)
+- **OKR Wizard Team Selection Fix**:
+  - Wizard de criação de OKRs agora exibe seletor de times (`HierarchyContextSwitcher`) quando acessado sem `?team=` na URL
+  - Antes: erro "Time não selecionado" forçava voltar para página anterior
+  - Agora: usuário pode selecionar qualquer time gerenciável diretamente no wizard
+  - Melhora UX para admins que não têm um time pessoal atribuído
+- **OKR Dashboard Team Fallback Bugfix**:
+  - Corrigido bug onde `userProfile?.team_id` de outra BU era usado como fallback
+  - Novo comportamento: fallback só usa `team_id` se pertencer à BU atual (via `manageableTeamIds`)
+  - Ordem de fallback: `URL param → team_id na BU atual → primeiro time gerenciável`
+  - Afeta: botão "Novo Objetivo" no dashboard e empty state
 
 ### v2.27.0 (2026-01-13)
 - **CheckinWizard Legacy Removido**:

@@ -1,7 +1,7 @@
 # 📊 Relatório de Saúde Técnica - Hub da Jet
 
 > **Data:** 2026-01-13  
-> **TCR Version:** 2.27.0  
+> **TCR Version:** 2.28.0  
 > **Status Geral:** ✅ EXCELENTE
 
 ---
@@ -16,6 +16,8 @@ O Hub da Jet mantém **excelente estado de saúde técnica**. Limpeza de código
 |------|------|--------|
 | **RLS V2 Migration** | Segurança | ✅ 100% completo (79 tabelas) |
 | **CheckinWizard Legacy** | Cleanup | ✅ Removido (full-page padrão) |
+| **OKR Wizard Team Selection** | Bug Fix | ✅ Seletor inline para admins sem time |
+| **OKR Dashboard Team Fallback** | Bug Fix | ✅ Valida time na BU atual |
 | **useCycleCheckins Fix** | Bug Fix | ✅ Mapeamento RPC corrigido |
 | **useActiveCycles Fix** | Bug Fix | ✅ Prioriza quarter sobre year |
 | **Vic Culture System** | Feature | ✅ Ativo (60 chars limit) |
@@ -61,11 +63,14 @@ O Hub da Jet mantém **excelente estado de saúde técnica**. Limpeza de código
 
 | Componente | Descrição | Status |
 |------------|-----------|--------|
+| `OkrCreationPage` | Wizard full-page de criação de OKRs | ✅ Ativo |
+| `OkrDashboardPage` | Dashboard principal de OKRs | ✅ Ativo |
 | `CycleCheckinsPage` | Página consolidada de check-ins | ✅ Ativo |
 | `CycleCheckinsFeed` | Tab de feed cronológico | ✅ Ativo |
 | `CycleCheckinsOverdue` | Tab de pendências | ✅ Ativo |
 | `CycleCheckinsSummary` | Tab de resumo por time | ✅ Ativo |
 | `KrHistoryDialog` | Modal de histórico do KR | ✅ Ativo |
+| `HierarchyContextSwitcher` | Seletor de time respeitando hierarquia | ✅ Ativo |
 
 ### Componentes Removidos (2026-01-13)
 
@@ -77,12 +82,22 @@ O Hub da Jet mantém **excelente estado de saúde técnica**. Limpeza de código
 | `WizardCheckinStep` | Parte do wizard antigo | - |
 | `WizardSummary` | Parte do wizard antigo | - |
 
-### Hooks Corrigidos
+### Correções (2026-01-13)
 
-| Hook | Correção | Status |
+| Área | Correção | Status |
 |------|----------|--------|
+| `OkrCreationPage` | Seletor de time inline quando `?team=` ausente (admins) | ✅ |
+| `OkrDashboardPage` | Fallback de team_id valida pertencimento à BU atual | ✅ |
 | `useCycleCheckins` | Mapeamento `feed→checkins`, `total_count→total`, filtro `status` | ✅ |
 | `useActiveCycles` | Priorização: `quarter > semester > year` | ✅ |
+
+### Regras de Fallback para Team Selection
+
+Ao clicar em "Novo Objetivo" no dashboard:
+1. **URL param** (`team_id`) — se presente, usa direto
+2. **User's team_id** — apenas se pertencer à BU atual (via `manageableTeamIds`)
+3. **Primeiro time gerenciável** — `manageableTeams[0]?.id`
+4. **Nenhum** — abre wizard com seletor inline de times
 
 ---
 
