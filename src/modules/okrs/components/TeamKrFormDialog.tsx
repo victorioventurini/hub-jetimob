@@ -197,11 +197,11 @@ export function TeamKrFormDialog({
       }
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null), refetchType: 'active' });
       toast.success(isEditing ? 'KR atualizado com sucesso!' : 'Key Result criado com sucesso!');
       onOpenChange(false);
     },
