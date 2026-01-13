@@ -25,6 +25,7 @@ import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
 import { useCreateTeamOkrBundle } from '@/modules/okrs/hooks/useCreateTeamOkrBundle';
 import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
 
 // Step components
 import { TeamOkrIntroStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrIntroStep';
@@ -153,13 +154,20 @@ export default function OkrCreationPage() {
     }));
   }, [orgOkrsContext]);
   
-  // Mock data (same as original)
+  // Fetch all active team members (regardless of HUB login status)
+  const { data: teamMembersData = [] } = useBuUsersDirectory({
+    teamId: teamIdParam ?? undefined,
+    enabled: !!teamIdParam,
+  });
+  
   const strategicKpis: StrategicKpi[] = useMemo(() => [], []);
   const teamMembers: TeamMember[] = useMemo(() => {
-    if (!profileId || !profile) return [];
-    const fullName = profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Eu';
-    return [{ id: profileId, fullName }];
-  }, [profileId, profile]);
+    return teamMembersData.map(member => ({
+      id: member.id,
+      fullName: member.display_name || [member.first_name, member.last_name].filter(Boolean).join(' ') || 'Usuário',
+      avatarUrl: member.photo_url ?? undefined,
+    }));
+  }, [teamMembersData]);
   
   // Create bundle mutation
   const createBundle = useCreateTeamOkrBundle();
