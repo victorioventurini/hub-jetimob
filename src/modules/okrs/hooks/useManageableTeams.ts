@@ -28,6 +28,15 @@ export function useManageableTeams() {
   const { client, isReady, buId } = useOptionalBuClient();
   const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
+  // Log impersonation state for debugging
+  console.log('[useManageableTeams] State:', {
+    isImpersonating,
+    impersonatedUserId,
+    userId: user?.id,
+    buId,
+    isReady
+  });
+
   // Determine effective user for query key
   const effectiveUserId = isImpersonating && impersonatedUserId 
     ? impersonatedUserId 
@@ -38,6 +47,7 @@ export function useManageableTeams() {
       ? [...queryKeys.okrs.manageableTeams(buId ?? null, impersonatedUserId), 'impersonated']
       : queryKeys.okrs.manageableTeams(buId ?? null, user?.id ?? null),
     queryFn: async (): Promise<ManageableTeam[]> => {
+      console.log('[useManageableTeams] queryFn executing, isImpersonating:', isImpersonating, 'impersonatedUserId:', impersonatedUserId);
       if (!client || !buId) return [];
 
       // Use impersonation RPC when impersonating
