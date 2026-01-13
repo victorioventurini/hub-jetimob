@@ -7981,6 +7981,10 @@ export type Database = {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_manage_team_okr_by_profile: {
+        Args: { p_profile_id: string; p_team_id: string }
+        Returns: boolean
+      }
       can_view_ticket: {
         Args: { p_profile_id: string; p_ticket_id: string }
         Returns: boolean
