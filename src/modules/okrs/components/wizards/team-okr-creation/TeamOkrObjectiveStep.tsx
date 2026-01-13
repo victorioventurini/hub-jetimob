@@ -7,7 +7,7 @@
  * - Seleção de OKR organizacional pai
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -94,15 +94,35 @@ export function TeamOkrObjectiveStep({
   // Debounce objective title for AI analysis
   const debouncedTitle = useDebounce(objectiveTitle, 800);
 
+  // Track last analyzed title to avoid duplicate calls
+  const lastAnalyzedRef = useRef<string | null>(null);
+
   // Analyze objective with AI
   useEffect(() => {
-    const analyzeObjective = async () => {
-      if (!debouncedTitle || debouncedTitle.length < 10) {
-        setAiFeedback(null);
-        return;
-      }
+    // Skip if title is too short or same as last analyzed
+    if (!debouncedTitle || debouncedTitle.length < 10) {
+      setAiFeedback(null);
+      setIsAnalyzing(false);
+      return;
+    }
+    
+    // Skip if already analyzed this exact title
+    if (lastAnalyzedRef.current === debouncedTitle) {
+      return;
+    }
 
+    let isCancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (!isCancelled) {
+        setIsAnalyzing(false);
+        setAiFeedback(null);
+      }
+    }, 20000); // 20s timeout
+    
+    const analyzeObjective = async () => {
+      lastAnalyzedRef.current = debouncedTitle;
       setIsAnalyzing(true);
+      
       try {
         const response = await invokeVic(
           'coach-okrs',
@@ -119,6 +139,8 @@ export function TeamOkrObjectiveStep({
           Responda em JSON: { "type": "warning" | "suggestion" | "success", "message": "...", "alternatives": ["..."] }`
         );
 
+        if (isCancelled) return;
+
         try {
           const parsed = JSON.parse(response.response);
           setAiFeedback(parsed);
@@ -130,14 +152,23 @@ export function TeamOkrObjectiveStep({
           });
         }
       } catch {
-        setAiFeedback(null);
+        if (!isCancelled) {
+          setAiFeedback(null);
+        }
       } finally {
-        setIsAnalyzing(false);
+        if (!isCancelled) {
+          setIsAnalyzing(false);
+        }
       }
     };
 
     analyzeObjective();
-  }, [debouncedTitle, invokeVic, teamName]);
+    
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [debouncedTitle, teamName]); // Remove invokeVic - causes new ref each render
 
   // Handle alternative selection
   const handleSelectAlternative = useCallback((alt: string) => {
