@@ -1,4 +1,5 @@
 // Initiative Types
+import { INITIATIVE_STATUS_COLORS } from '@/lib/colors';
 
 export type InitiativeStatus = 'planned' | 'in_progress' | 'blocked' | 'completed';
 export type InitiativePriority = 'low' | 'medium' | 'high';
@@ -71,13 +72,7 @@ export function getInitiativeStatusLabel(status: InitiativeStatus): string {
 }
 
 export function getInitiativeStatusColor(status: InitiativeStatus): string {
-  const colors: Record<InitiativeStatus, string> = {
-    planned: 'bg-muted text-muted-foreground',
-    in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    blocked: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  };
-  return colors[status];
+  return INITIATIVE_STATUS_COLORS[status]?.badge ?? 'bg-muted text-muted-foreground';
 }
 
 export function getInitiativePriorityLabel(priority: InitiativePriority | null): string {

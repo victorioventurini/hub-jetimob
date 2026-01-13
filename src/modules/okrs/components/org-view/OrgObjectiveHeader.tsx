@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, AlertTriangle, XCircle } from 'lucide-react';
 import type { OrgObjectiveWithKrs } from '../../hooks/useOrgObjectiveView';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface OrgObjectiveHeaderProps {
   objective: OrgObjectiveWithKrs;
@@ -10,17 +11,17 @@ interface OrgObjectiveHeaderProps {
 const statusConfig = {
   on_track: {
     label: 'On Track',
-    color: 'bg-green-500/10 text-green-700 border-green-200',
+    color: `${RAG_STATUS_COLORS.green.badge} ${RAG_STATUS_COLORS.green.border}`,
     icon: TrendingUp,
   },
   at_risk: {
     label: 'Em Risco',
-    color: 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
+    color: `${RAG_STATUS_COLORS.yellow.badge} ${RAG_STATUS_COLORS.yellow.border}`,
     icon: AlertTriangle,
   },
   off_track: {
     label: 'Off Track',
-    color: 'bg-red-500/10 text-red-700 border-red-200',
+    color: `${RAG_STATUS_COLORS.red.badge} ${RAG_STATUS_COLORS.red.border}`,
     icon: XCircle,
   },
 };

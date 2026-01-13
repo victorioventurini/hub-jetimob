@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -61,10 +62,10 @@ function groupKrsByObjective(krs: WizardKr[]): Map<string, { title: string; team
 }
 
 const STATUS_CONFIG = {
-  green: { label: 'No caminho', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  yellow: { label: 'Em risco', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
-  red: { label: 'Em perigo', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-  not_started: { label: 'Não iniciado', className: 'bg-muted text-muted-foreground' },
+  green: { label: 'No caminho', className: RAG_STATUS_COLORS.green.badge },
+  yellow: { label: 'Em risco', className: RAG_STATUS_COLORS.yellow.badge },
+  red: { label: 'Em perigo', className: RAG_STATUS_COLORS.red.badge },
+  not_started: { label: 'Não iniciado', className: RAG_STATUS_COLORS.not_started.badge },
 };
 
 // ============================================================

@@ -317,10 +317,10 @@ export function CategoryImportDialog({ open, onOpenChange }: CategoryImportDialo
           {/* Result Summary */}
           {result && (
             <div className="space-y-4">
-              <Alert className="border-green-200 bg-green-50">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-800">Importação Concluída</AlertTitle>
-                <AlertDescription className="text-green-700">
+              <Alert className="border-status-green/30 bg-status-green-muted">
+                <CheckCircle2 className="h-4 w-4 text-status-green" />
+                <AlertTitle className="text-status-green-muted-foreground">Importação Concluída</AlertTitle>
+                <AlertDescription className="text-status-green-muted-foreground/80">
                   {result.totalRows} linhas processadas
                 </AlertDescription>
               </Alert>

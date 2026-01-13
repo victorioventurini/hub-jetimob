@@ -12,21 +12,22 @@ import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
 import { YearSelect } from '@/components/selects';
 import { useUrlState, parsers } from '@/shared/url';
 import { OkrOrgViewListBreadcrumb } from '../components/ui/OkrBreadcrumb';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 const statusConfig = {
   on_track: {
     label: 'No Ritmo',
-    color: 'bg-green-500/10 text-green-700 border-green-200',
+    color: `${RAG_STATUS_COLORS.green.badge} ${RAG_STATUS_COLORS.green.border}`,
     icon: TrendingUp,
   },
   at_risk: {
     label: 'Em Risco',
-    color: 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
+    color: `${RAG_STATUS_COLORS.yellow.badge} ${RAG_STATUS_COLORS.yellow.border}`,
     icon: AlertTriangle,
   },
   off_track: {
     label: 'Atrasado',
-    color: 'bg-red-500/10 text-red-700 border-red-200',
+    color: `${RAG_STATUS_COLORS.red.badge} ${RAG_STATUS_COLORS.red.border}`,
     icon: XCircle,
   },
 };
@@ -88,19 +89,19 @@ export default function OrgViewListPage() {
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{stats.onTrack}</div>
+              <div className={`text-2xl font-bold ${RAG_STATUS_COLORS.green.text}`}>{stats.onTrack}</div>
               <p className="text-sm text-muted-foreground">No Ritmo</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-yellow-600">{stats.atRisk}</div>
+              <div className={`text-2xl font-bold ${RAG_STATUS_COLORS.yellow.text}`}>{stats.atRisk}</div>
               <p className="text-sm text-muted-foreground">Em Risco</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">{stats.offTrack}</div>
+              <div className={`text-2xl font-bold ${RAG_STATUS_COLORS.red.text}`}>{stats.offTrack}</div>
               <p className="text-sm text-muted-foreground">Atrasado</p>
             </CardContent>
           </Card>
