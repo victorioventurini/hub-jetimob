@@ -82,18 +82,18 @@ export default function AssetsReportsPage() {
                   <span className="text-muted-foreground">Total de itens</span>
                   <span className="font-semibold">{inventoryStats.total}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Disponíveis</span>
-                  <span className="font-semibold text-green-600">{inventoryStats.available}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Emprestados</span>
-                  <span className="font-semibold text-blue-600">{inventoryStats.loaned}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Em manutenção</span>
-                  <span className="font-semibold text-amber-600">{inventoryStats.maintenance}</span>
-                </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Disponíveis</span>
+                    <span className="font-semibold text-status-green">{inventoryStats.available}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Emprestados</span>
+                    <span className="font-semibold text-status-blue">{inventoryStats.loaned}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Em manutenção</span>
+                    <span className="font-semibold text-status-amber">{inventoryStats.maintenance}</span>
+                  </div>
               </div>
             </CardContent>
           </Card>
@@ -104,8 +104,8 @@ export default function AssetsReportsPage() {
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Key className="h-5 w-5 text-amber-600" />
+                <div className="p-2 rounded-lg bg-status-amber-muted">
+                  <Key className="h-5 w-5 text-status-amber" />
                 </div>
                 <CardTitle className="text-lg">Chaves</CardTitle>
               </div>
@@ -119,11 +119,11 @@ export default function AssetsReportsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Disponíveis</span>
-                  <span className="font-semibold text-green-600">{keysStats.available}</span>
+                  <span className="font-semibold text-status-green">{keysStats.available}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Emprestados</span>
-                  <span className="font-semibold text-blue-600">{keysStats.loaned}</span>
+                  <span className="font-semibold text-status-blue">{keysStats.loaned}</span>
                 </div>
                 {keysStats.lost > 0 && (
                   <div className="flex justify-between items-center">
@@ -144,8 +144,8 @@ export default function AssetsReportsPage() {
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-pink-500/10">
-                  <Gift className="h-5 w-5 text-pink-600" />
+                <div className="p-2 rounded-lg bg-status-pink-muted">
+                  <Gift className="h-5 w-5 text-status-pink" />
                 </div>
                 <CardTitle className="text-lg">Brindes</CardTitle>
               </div>
@@ -159,15 +159,15 @@ export default function AssetsReportsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Total em estoque</span>
-                  <span className="font-semibold text-green-600">{giftStats.totalStock}</span>
+                  <span className="font-semibold text-status-green">{giftStats.totalStock}</span>
                 </div>
                 {giftStats.lowStock > 0 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-amber-600 flex items-center gap-1">
+                    <span className="text-status-amber flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       Estoque baixo
                     </span>
-                    <span className="font-semibold text-amber-600">{giftStats.lowStock}</span>
+                    <span className="font-semibold text-status-amber">{giftStats.lowStock}</span>
                   </div>
                 )}
               </div>

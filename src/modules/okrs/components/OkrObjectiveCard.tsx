@@ -77,16 +77,16 @@ export function OkrObjectiveCard({
   const redCount = keyResults.filter(kr => kr.status === 'red').length;
 
   const getBorderColor = () => {
-    if (redCount > 0) return 'border-l-red-500';
-    if (yellowCount > 0) return 'border-l-yellow-500';
-    if (greenCount > 0) return 'border-l-green-500';
+    if (redCount > 0) return 'border-l-status-red';
+    if (yellowCount > 0) return 'border-l-status-yellow';
+    if (greenCount > 0) return 'border-l-status-green';
     return 'border-l-muted';
   };
 
   const getProgressColor = () => {
-    if (redCount > 0) return 'bg-red-500';
-    if (yellowCount > 0) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (redCount > 0) return 'bg-status-red';
+    if (yellowCount > 0) return 'bg-status-yellow';
+    return 'bg-status-green';
   };
 
   return (
@@ -171,19 +171,19 @@ export function OkrObjectiveCard({
           <div className="flex items-center gap-3 text-xs">
             {greenCount > 0 && (
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="w-2 h-2 rounded-full bg-status-green" />
                 {greenCount}
               </span>
             )}
             {yellowCount > 0 && (
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                <span className="w-2 h-2 rounded-full bg-status-yellow" />
                 {yellowCount}
               </span>
             )}
             {redCount > 0 && (
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="w-2 h-2 rounded-full bg-status-red" />
                 {redCount}
               </span>
             )}

@@ -135,8 +135,8 @@ function SingleKpiChart({ history, compact = false }: SingleKpiChartProps) {
 
   const TrendIcon = history.trend === "up" ? TrendingUp : history.trend === "down" ? TrendingDown : Minus;
   const trendColor = history.kpi.direction === "up"
-    ? history.trend === "up" ? "text-green-500" : history.trend === "down" ? "text-red-500" : "text-muted-foreground"
-    : history.trend === "down" ? "text-green-500" : history.trend === "up" ? "text-red-500" : "text-muted-foreground";
+    ? history.trend === "up" ? "text-status-green" : history.trend === "down" ? "text-status-red" : "text-muted-foreground"
+    : history.trend === "down" ? "text-status-green" : history.trend === "up" ? "text-status-red" : "text-muted-foreground";
 
   const isOnTrack = history.kpi.target_value !== null && history.currentValue !== null && (
     history.kpi.direction === "up" 
@@ -185,7 +185,7 @@ function SingleKpiChart({ history, compact = false }: SingleKpiChartProps) {
           {!isOnTrack && targetLine !== null && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <AlertTriangle className="w-4 h-4 text-status-amber" />
               </TooltipTrigger>
               <TooltipContent>
                 Valor atual está {history.kpi.direction === "up" ? "abaixo" : "acima"} da meta

@@ -87,15 +87,15 @@ export function TeamOpeningStep({
       <div className="px-6 py-4 border-b">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <div className="w-3 h-3 rounded-full bg-status-green" />
             <span className="text-sm">{stats.onTrack} no caminho</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <div className="w-3 h-3 rounded-full bg-status-yellow" />
             <span className="text-sm">{stats.atRisk} em atenção</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <div className="w-3 h-3 rounded-full bg-status-red" />
             <span className="text-sm">{stats.offTrack} em risco</span>
           </div>
         </div>
@@ -108,7 +108,7 @@ export function TeamOpeningStep({
         {discussionKrs.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
+              <AlertTriangle className="h-4 w-4 text-status-orange" />
               Marcados para discussão ({discussionKrs.length})
             </h4>
             {discussionKrs.map((kr) => (
@@ -156,9 +156,9 @@ export function TeamOpeningStep({
                   <span className="text-xs text-muted-foreground">{Math.round(kr.progress)}%</span>
                   <div className={cn(
                     "w-2 h-2 rounded-full",
-                    kr.status === 'green' && "bg-green-500",
-                    kr.status === 'yellow' && "bg-yellow-500",
-                    kr.status === 'red' && "bg-red-500",
+                    kr.status === 'green' && "bg-status-green",
+                    kr.status === 'yellow' && "bg-status-yellow",
+                    kr.status === 'red' && "bg-status-red",
                     kr.status === 'not_started' && "bg-muted-foreground"
                   )} />
                 </div>

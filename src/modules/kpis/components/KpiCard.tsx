@@ -140,7 +140,7 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
             {(isStale || kpi.last_update_failed) && (
               <Tooltip>
                 <TooltipTrigger>
-                  <AlertCircle className={cn("h-4 w-4", kpi.last_update_failed ? "text-red-500" : "text-amber-500")} />
+                  <AlertCircle className={cn("h-4 w-4", kpi.last_update_failed ? "text-status-red" : "text-status-amber")} />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{kpi.last_update_failed ? 'Falha na última atualização' : 'KPI sem dados recentes'}</p>

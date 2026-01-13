@@ -144,7 +144,7 @@ export function CollaboratorContextStep({
           <p className="text-xs text-muted-foreground">Progresso médio</p>
         </div>
         <div className="text-center">
-          <p className={cn("text-2xl font-bold", stats.pending > 0 && "text-orange-500")}>
+          <p className={cn("text-2xl font-bold", stats.pending > 0 && "text-status-orange")}>
             {stats.pending}
           </p>
           <p className="text-xs text-muted-foreground">Pendentes</p>
@@ -195,7 +195,7 @@ export function CollaboratorContextStep({
                               {statusConfig.label}
                             </Badge>
                             {kr.is_pending && (
-                              <span className="flex items-center gap-1 text-xs text-orange-500">
+                              <span className="flex items-center gap-1 text-xs text-status-orange">
                                 <Clock className="h-3 w-3" />
                                 {kr.days_since_checkin}d sem update
                               </span>
@@ -217,8 +217,8 @@ export function CollaboratorContextStep({
                           value={kr.progress} 
                           className={cn(
                             "h-1.5",
-                            kr.status === 'red' && "[&>div]:bg-destructive",
-                            kr.status === 'yellow' && "[&>div]:bg-yellow-500"
+                            kr.status === 'red' && "[&>div]:bg-status-red",
+                            kr.status === 'yellow' && "[&>div]:bg-status-yellow"
                           )} 
                         />
                       </div>

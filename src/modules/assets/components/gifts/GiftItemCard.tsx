@@ -24,8 +24,8 @@ export function GiftItemCard({ item, batches, totals }: GiftItemCardProps) {
       <CardContent className="pt-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-pink-500/10 shrink-0">
-              <Gift className="h-5 w-5 text-pink-600" />
+            <div className="p-2 rounded-lg bg-status-pink-muted shrink-0">
+              <Gift className="h-5 w-5 text-status-pink" />
             </div>
             <div className="min-w-0">
               <h3 className="font-semibold text-foreground truncate">{item.name}</h3>

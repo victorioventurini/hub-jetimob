@@ -294,11 +294,11 @@ export function VicAuditPage() {
                         className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
                       >
                         {log.status === "success" ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-status-green flex-shrink-0" />
                         ) : log.status === "error" ? (
-                          <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                          <XCircle className="h-4 w-4 text-status-red flex-shrink-0" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                          <AlertCircle className="h-4 w-4 text-status-yellow flex-shrink-0" />
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 text-sm">
@@ -310,7 +310,7 @@ export function VicAuditPage() {
                             )}
                           </div>
                           {log.error_message && (
-                            <p className="text-xs text-red-500 truncate mt-0.5">
+                            <p className="text-xs text-status-red truncate mt-0.5">
                               {log.error_message}
                             </p>
                           )}
