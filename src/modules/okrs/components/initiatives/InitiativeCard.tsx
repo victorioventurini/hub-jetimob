@@ -36,40 +36,41 @@ export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, sh
     .toUpperCase();
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
+    <Card className="hover:shadow-sm transition-shadow border-border/50">
+      <CardContent className="p-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Status badge row */}
+            <div className="flex items-center gap-2">
               <InitiativeStatusBadge status={initiative.status} />
               {initiative.priority && initiative.priority !== 'medium' && (
                 <span className={`flex items-center text-xs ${getInitiativePriorityColor(initiative.priority)}`}>
-                  <Flag className="w-3 h-3 mr-1" />
+                  <Flag className="w-3 h-3 mr-0.5" />
                   {getInitiativePriorityLabel(initiative.priority)}
                 </span>
               )}
             </div>
             
-            <h4 className="text-xs sm:text-sm font-medium text-foreground truncate">{initiative.name}</h4>
-            
-            {initiative.description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {initiative.description}
-              </p>
-            )}
+            {/* Title - same style as ticket list */}
+            <h4 className="font-medium text-foreground text-sm leading-snug">
+              {initiative.name}
+            </h4>
 
-            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
+            {/* Metadata row - same style as ticket list */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {/* Owner */}
+              <div className="flex items-center gap-1.5">
+                <Avatar className="h-4 w-4">
                   <AvatarImage src={initiative.owner?.photo_url || undefined} />
-                  <AvatarFallback className="text-xs">{ownerInitials}</AvatarFallback>
+                  <AvatarFallback className="text-[9px]">{ownerInitials}</AvatarFallback>
                 </Avatar>
-                <UserLink userId={initiative.owner_user_id} displayName={ownerName} />
+                <UserLink userId={initiative.owner_user_id} displayName={ownerName} className="text-xs" />
               </div>
 
+              {/* Dates */}
               {(initiative.start_date || initiative.expected_end_date) && (
                 <div className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" />
+                  <Calendar className="w-3 h-3" />
                   <span>
                     {initiative.start_date && format(new Date(initiative.start_date), "dd MMM", { locale: ptBR })}
                     {initiative.start_date && initiative.expected_end_date && " - "}
@@ -79,13 +80,14 @@ export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, sh
               )}
             </div>
 
+            {/* Progress bar (if any) */}
             {typeof initiative.progress === 'number' && initiative.progress > 0 && (
-              <div className="mt-3">
+              <div className="pt-1">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                   <span>Progresso</span>
                   <span>{initiative.progress}%</span>
                 </div>
-                <Progress value={initiative.progress} className="h-1.5" />
+                <Progress value={initiative.progress} className="h-1" />
               </div>
             )}
           </div>

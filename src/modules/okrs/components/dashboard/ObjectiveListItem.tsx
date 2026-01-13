@@ -626,7 +626,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
       
       {/* Initiatives section - expandable for team KRs */}
       {type === 'team' && showInitiatives && (
-        <div className="pl-14 pr-4 pb-4 bg-muted/10 border-l-2 border-primary/20 ml-7">
+        <div className="px-4 sm:px-6 pb-4 pt-2 bg-muted/10">
           <InitiativesList 
             krId={kr.id} 
             krTitle={kr.title} 
