@@ -267,31 +267,65 @@ export function TeamOkrObjectiveStep({
             {/* AI Feedback */}
             {aiFeedback && !isAnalyzing && (
               <div className={cn(
-                "p-3 rounded-lg text-sm flex items-start gap-2",
+                "p-4 rounded-xl border text-sm space-y-3",
                 aiFeedback.type === 'warning' && FEEDBACK_STYLES.warning.container,
                 aiFeedback.type === 'suggestion' && FEEDBACK_STYLES.suggestion.container,
                 aiFeedback.type === 'success' && FEEDBACK_STYLES.success.container
               )}>
-                {aiFeedback.type === 'warning' && <AlertCircle className={cn("h-4 w-4 shrink-0 mt-0.5", FEEDBACK_STYLES.warning.icon)} />}
-                {aiFeedback.type === 'suggestion' && <Sparkles className={cn("h-4 w-4 shrink-0 mt-0.5", FEEDBACK_STYLES.suggestion.icon)} />}
-                {aiFeedback.type === 'success' && <CheckCircle2 className={cn("h-4 w-4 shrink-0 mt-0.5", FEEDBACK_STYLES.success.icon)} />}
-                <div className="space-y-2">
-                  <p><VicTypewriterText text={aiFeedback.message} speed={18} priority={0} /></p>
-                  {aiFeedback.alternatives && aiFeedback.alternatives.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium">Sugestões:</p>
+                {/* Header with icon */}
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "p-1.5 rounded-lg shrink-0",
+                    aiFeedback.type === 'warning' && "bg-status-yellow/20",
+                    aiFeedback.type === 'suggestion' && "bg-info/20",
+                    aiFeedback.type === 'success' && "bg-status-green/20"
+                  )}>
+                    {aiFeedback.type === 'warning' && <AlertCircle className={cn("h-4 w-4", FEEDBACK_STYLES.warning.icon)} />}
+                    {aiFeedback.type === 'suggestion' && <Sparkles className={cn("h-4 w-4", FEEDBACK_STYLES.suggestion.icon)} />}
+                    {aiFeedback.type === 'success' && <CheckCircle2 className={cn("h-4 w-4", FEEDBACK_STYLES.success.icon)} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "text-sm leading-relaxed",
+                      aiFeedback.type === 'warning' && FEEDBACK_STYLES.warning.text,
+                      aiFeedback.type === 'suggestion' && FEEDBACK_STYLES.suggestion.text,
+                      aiFeedback.type === 'success' && FEEDBACK_STYLES.success.text
+                    )}>
+                      <VicTypewriterText text={aiFeedback.message} speed={18} priority={0} />
+                    </p>
+                  </div>
+                </div>
+
+                {/* Alternatives */}
+                {aiFeedback.alternatives && aiFeedback.alternatives.length > 0 && (
+                  <div className="pt-2 border-t border-border/50 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Lightbulb className="h-3 w-3" />
+                      Sugestões alternativas
+                    </p>
+                    <div className="grid gap-2">
                       {aiFeedback.alternatives.map((alt, i) => (
                         <button
                           key={i}
                           onClick={() => handleSelectAlternative(alt)}
-                          className="block text-left w-full p-2 rounded bg-background/50 hover:bg-background text-xs"
+                          className={cn(
+                            "text-left w-full px-3 py-2.5 rounded-lg text-xs",
+                            "bg-background/80 hover:bg-background",
+                            "border border-border/50 hover:border-primary/50",
+                            "transition-all duration-200",
+                            "hover:shadow-sm hover:translate-x-0.5",
+                            "group flex items-center gap-2"
+                          )}
                         >
-                          {alt}
+                          <span className="flex-1">{alt}</span>
+                          <span className="text-muted-foreground group-hover:text-primary transition-colors text-[10px]">
+                            usar →
+                          </span>
                         </button>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
