@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { sendEmail, buildMagicLinkEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";
+import { sendEmail, buildOtpEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -161,21 +161,23 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const userType = isPartnerContact ? "partner contact" : "internal user";
-    console.log(`Generating magic link for ${email} (BU: ${buName}, type: ${userType})`);
+    console.log(`Generating OTP for ${email} (BU: ${buName}, type: ${userType})`);
 
-    // Generate magic link using admin API (this doesn't send email)
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
+    // Generate OTP code using signInWithOtp
+    // This generates a 6-digit code that must be verified via POST (not consumable by GET)
+    // This prevents email scanners from invalidating the token
+    const { error } = await supabaseAdmin.auth.signInWithOtp({
       email,
       options: {
-        redirectTo,
+        shouldCreateUser: true,
+        emailRedirectTo: redirectTo,
       },
     });
 
     if (error) {
-      console.error("Error generating magic link:", error);
+      console.error("Error generating OTP:", error);
       return new Response(
-        JSON.stringify({ error: "Erro ao gerar link de acesso. Tente novamente." }),
+        JSON.stringify({ error: "Erro ao gerar código de acesso. Tente novamente." }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -183,56 +185,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!data?.properties?.action_link) {
-      console.error("No action_link returned from generateLink");
-      return new Response(
-        JSON.stringify({ error: "Erro ao gerar link de acesso." }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    const magicLink = data.properties.action_link;
-    console.log("Magic link generated successfully for:", email);
+    console.log("OTP generated successfully for:", email);
 
     // Get display name from email
     const displayName = email.split('@')[0].split('.')[0];
 
-    // Build email HTML
-    const html = buildMagicLinkEmailHtml({
-      magicLink,
-      displayName,
-      buName: buName || undefined,
-    });
+    // Build email HTML with OTP code instructions
+    // Note: Supabase will send its own email with the OTP code
+    // We don't need to send a custom email since Supabase handles OTP delivery
+    
+    console.log(`OTP request completed for: ${email} (Supabase will send the OTP email)`);
 
-    // Send email via SendGrid (with Resend fallback)
-    const dateTime = formatEmailDateTime();
-    const result = await sendEmail({
-      to: email,
-      subject: `Seu link de acesso ao Hub - ${dateTime}`,
-      html,
-      from: {
-        email: "no-reply@hub.jetimob.com",
-        name: "Hub",
-      },
-    });
-
-    if (!result.success) {
-      console.error("Failed to send email:", result.error);
-      return new Response(
-        JSON.stringify({ error: result.error || "Erro ao enviar email." }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    console.log(`Email sent successfully via ${result.provider} to: ${email}`);
-
-    return new Response(JSON.stringify({ success: true, provider: result.provider }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      provider: "supabase-otp",
+      message: "OTP enviado via Supabase Auth" 
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

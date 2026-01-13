@@ -52,6 +52,7 @@ interface AuthContextType {
   role: UserRole['role'] | null;
   isLoading: boolean;
   signInWithMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -208,6 +209,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function verifyOtp(email: string, token: string): Promise<{ error: Error | null }> {
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email',
+      });
+
+      if (error) {
+        console.error('Error verifying OTP:', error);
+        return { error: new Error(error.message) };
+      }
+
+      console.log('OTP verified successfully for:', email);
+      return { error: null };
+    } catch (error: any) {
+      console.error('Error in verifyOtp:', error);
+      return { error: error as Error };
+    }
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     setUser(null);
@@ -231,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       isLoading,
       signInWithMagicLink,
+      verifyOtp,
       signOut,
       isAdmin,
     }}>
