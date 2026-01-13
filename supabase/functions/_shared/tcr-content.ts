@@ -8,8 +8,8 @@
  * Updated: 2026-01-08
  */
 
-export const TCR_VERSION = "2.10.0";
-export const TCR_UPDATED_AT = "2026-01-08";
+export const TCR_VERSION = "2.29.0";
+export const TCR_UPDATED_AT = "2026-01-13";
 
 export interface TcrSection {
   title: string;
@@ -30,21 +30,24 @@ export const TCR_SECTIONS: Record<string, TcrSection> = {
 | **Roteamento** | React Router DOM v6 |
 | **Backend** | Supabase (Lovable Cloud) |
 | **Banco de Dados** | PostgreSQL |
-| **Autenticação** | Supabase Auth (Magic Link via SendGrid) |
+| **Autenticação** | Supabase Auth (OTP Code via email) |
 | **Storage** | Supabase Storage |
 | **Funções Serverless** | Supabase Edge Functions (Deno) |
 | **IA** | Lovable AI (Google Gemini / OpenAI) |
 
 ### 1.2 Modelo de Autenticação
 
-- **Método:** Magic Link (OTP via email)
+- **Método:** OTP Code (código de 6 dígitos via email)
 - **Validação de Domínio:** Usuários só podem fazer login se o domínio do email estiver cadastrado em uma BU ativa
 - **Fluxo:**
   1. Usuário insere email
   2. Sistema valida se domínio pertence a uma BU ativa
-  3. Se válido, envia Magic Link via SendGrid
-  4. Usuário clica no link e é autenticado
-  5. Profile é criado automaticamente via trigger \`handle_new_user()\`
+  3. Se válido, envia código OTP de 6 dígitos via email (Supabase Auth)
+  4. Usuário insere o código na tela de verificação
+  5. Sistema verifica OTP e autentica o usuário
+  6. Profile é criado automaticamente via trigger \`handle_new_user()\`
+
+> **Nota (v2.29.0):** Migrado de Magic Link para OTP Code para evitar problemas com scanners de email corporativos.
 
 ### 1.3 Conceito Multi-BU (Business Units)
 

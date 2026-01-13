@@ -131,7 +131,7 @@ ON CONFLICT (user_id, bu_id) DO NOTHING;
 |----|--------------------------------|
 | Jetimob | 56 |
 
-**Nota:** Esses 56 profiles não possuem `user_id` (nunca fizeram login). Quando fizerem o primeiro login via magic link, o trigger `handle_new_user` criará o membership automaticamente.
+**Nota:** Esses 56 profiles não possuem `user_id` (nunca fizeram login). Quando fizerem o primeiro login via OTP Code, o trigger `handle_new_user` criará o membership automaticamente.
 
 ---
 
@@ -151,14 +151,14 @@ ON CONFLICT (user_id, bu_id) DO NOTHING;
 
 Esses usuários foram cadastrados mas nunca fizeram login. Para ativá-los:
 
-1. **Opção A (Manual):** Enviar email com magic link para cada usuário
-2. **Opção B (Self-service):** Usuário acessa `/auth`, insere email com domínio `@jetimob.com`, recebe magic link
+1. **Opção A (Manual):** Enviar email de convite para cada usuário
+2. **Opção B (Self-service):** Usuário acessa `/auth`, insere email com domínio `@jetimob.com`, recebe OTP Code por email
 
 ### 7.2 Melhoria Sugerida na UI
 
 Na tela de Users (`/users`):
 - Mostrar badge "Sem acesso" para profiles com `user_id IS NULL`
-- Botão "Convidar" para disparar magic link (implementação futura)
+- Botão "Convidar" para disparar convite (implementação futura)
 
 ---
 

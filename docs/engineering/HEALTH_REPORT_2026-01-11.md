@@ -68,7 +68,7 @@ Todas as tabelas identificadas como vazias pertencem a módulos ativos e são re
 | Função | Status | Uso |
 |--------|--------|-----|
 | `auth-email-hook` | ✅ Ativa | Validação de domínio no login |
-| `request-magic-link` | ✅ Ativa | Envio de magic link |
+| `request-magic-link` | ✅ Ativa | Envio de OTP Code (nome histórico) |
 | `invoke-vic` | ✅ Ativa | Agente IA Vic |
 | `culture-message` | ✅ Ativa | Mensagens de cultura (via useCultureMessage local) |
 | `get-tcr` | ✅ Ativa | API TCR para agentes IA |

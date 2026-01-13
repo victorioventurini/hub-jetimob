@@ -77,7 +77,7 @@ DROP TABLE IF EXISTS public.mentions CASCADE;
 | Função | Status | Notas |
 |--------|--------|-------|
 | `auth-email-hook` | ✅ Crítica | Validação de domínio |
-| `request-magic-link` | ✅ Crítica | Auth flow |
+| `request-magic-link` | ✅ Crítica | Auth flow (OTP Code) |
 | `invoke-vic` | ✅ Ativa | IA principal |
 | `culture-message` | ⚠️ Fallback | Frontend usa pool local |
 | `process-notification-outbox` | ✅ Crítica | Outbox pattern |

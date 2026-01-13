@@ -102,7 +102,7 @@ Execute cada teste e marque o resultado:
 
 | # | Teste | Passos | Esperado | ✅/❌ | Observação |
 |---|-------|--------|----------|-------|------------|
-| 1 | **Login** | Acessar /auth, inserir email, receber magic link | Login bem-sucedido | ⬜ | |
+| 1 | **Login** | Acessar /auth, inserir email, receber OTP Code | Login bem-sucedido | ⬜ | |
 | 2 | **Seleção de BU** | Após login, selecionar uma BU | Redireciona para dashboard | ⬜ | |
 | 3 | **Trocar BU** | No menu, trocar para outra BU | Troca sem erros | ⬜ | |
 | 4 | **OKRs - Criar Objetivo** | OKRs > Novo Objetivo | Objetivo criado | ⬜ | |
