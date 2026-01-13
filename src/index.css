@@ -37,10 +37,26 @@
     /* Success state */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
+    --success-muted: 142 76% 95%;
+    --success-muted-foreground: 142 76% 30%;
 
     /* Warning state */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 92% 95%;
+    --warning-muted-foreground: 38 92% 35%;
+
+    /* Info state */
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 217 91% 95%;
+    --info-muted-foreground: 217 91% 40%;
+
+    /* Danger state (alias for destructive with muted variants) */
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+    --danger-muted: 0 84% 95%;
+    --danger-muted-foreground: 0 84% 40%;
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
@@ -98,9 +114,23 @@
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
+    --success-muted: 142 50% 15%;
+    --success-muted-foreground: 142 76% 60%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 70% 15%;
+    --warning-muted-foreground: 38 92% 65%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 217 60% 15%;
+    --info-muted-foreground: 217 91% 70%;
+
+    --danger: 0 62% 30%;
+    --danger-foreground: 210 40% 98%;
+    --danger-muted: 0 50% 15%;
+    --danger-muted-foreground: 0 84% 65%;
 
     --border: 222 47% 18%;
     --input: 222 47% 18%;

@@ -1,6 +1,7 @@
 # 🎨 Auditoria de Front-End — UX, Consistência e Qualidade
 
 **Data:** 2026-01-13  
+**Atualizado:** 2026-01-13 (v2)  
 **Objetivo:** Identificar inconsistências visuais, padrões quebrados, componentes duplicados, fricção de UX e oportunidades de simplificação.  
 **Escopo:** 86+ arquivos de componentes analisados
 
@@ -21,10 +22,102 @@
 
 ---
 
+## ✅ MELHORIAS IMPLEMENTADAS (v2)
+
+### ✅ P1: Tokens de Status Semânticos — RESOLVIDO
+
+Tokens criados em `index.css` e `tailwind.config.ts`:
+
+```css
+/* Tokens disponíveis */
+--success / --success-muted / --success-muted-foreground
+--warning / --warning-muted / --warning-muted-foreground
+--info / --info-muted / --info-muted-foreground
+--danger / --danger-muted / --danger-muted-foreground
+```
+
+**Classes Tailwind disponíveis:**
+- `text-success`, `bg-success`, `bg-success-muted`, `text-success-muted-foreground`
+- `text-warning`, `bg-warning`, `bg-warning-muted`, `text-warning-muted-foreground`
+- `text-info`, `bg-info`, `bg-info-muted`, `text-info-muted-foreground`
+- `text-danger`, `bg-danger`, `bg-danger-muted`, `text-danger-muted-foreground`
+
+**Componente utilitário:** `src/components/ui/status-indicator.tsx`
+- `<StatusIndicator variant="success">Aprovado</StatusIndicator>`
+- `<StatusDot variant="warning" />`
+- `statusStyles.text.success` para uso com `cn()`
+
+---
+
+### ✅ P2: PageHeader Consolidado — RESOLVIDO
+
+`HubPageHeader` foi removido. Agora existe apenas `PageHeader` com suporte a breadcrumbs:
+
+```tsx
+// Com botão de voltar
+<PageHeader
+  title="Detalhes do Ticket"
+  backTo="/tickets"
+  backLabel="Voltar para Tickets"
+/>
+
+// Com breadcrumbs (Hub é adicionado automaticamente)
+<PageHeader
+  title="Business Units"
+  description="Gerencie as unidades de negócio"
+  breadcrumbs={[{ label: "Business Units" }]}
+  actions={<Button>Nova BU</Button>}
+/>
+```
+
+---
+
+## ⚠️ PENDÊNCIAS PARA MIGRAÇÃO GRADUAL
+
+### Migração de Cores Hardcoded
+
+**156 arquivos** ainda usam cores hardcoded como `text-green-600`, `bg-red-500`, etc.
+
+**Guia de Migração:**
+
+| Antes (hardcoded) | Depois (token) |
+|-------------------|----------------|
+| `text-green-600` | `text-success` |
+| `text-green-500` | `text-success` |
+| `bg-green-100 text-green-700` | `bg-success-muted text-success-muted-foreground` |
+| `text-red-600` | `text-danger` |
+| `text-red-500` | `text-danger` |
+| `bg-red-100 text-red-700` | `bg-danger-muted text-danger-muted-foreground` |
+| `text-yellow-600` | `text-warning` |
+| `text-yellow-500` | `text-warning` |
+| `bg-yellow-100 text-yellow-700` | `bg-warning-muted text-warning-muted-foreground` |
+| `text-blue-600` | `text-info` |
+| `text-blue-500` | `text-info` |
+| `bg-blue-100 text-blue-700` | `bg-info-muted text-info-muted-foreground` |
+
+**Para componentes de status, usar:**
+```tsx
+import { StatusIndicator, StatusDot, statusStyles } from "@/components/ui/status-indicator";
+
+// Opção 1: Componente
+<StatusIndicator variant="success">Aprovado</StatusIndicator>
+
+// Opção 2: Apenas dot
+<StatusDot variant="warning" />
+
+// Opção 3: Classes com cn()
+<span className={cn(statusStyles.text[status])}>
+  {label}
+</span>
+```
+
+---
+
 ## ✅ PONTOS FORTES (O que está funcionando)
 
 ### 1. Design System Sólido
-- **Design Tokens:** Tokens semânticos bem definidos em `index.css` (16 variáveis de cor, shadows, gradients)
+- **Design Tokens:** Tokens semânticos bem definidos em `index.css` (20+ variáveis de cor, shadows, gradients)
+- **Status Tokens:** `success`, `warning`, `info`, `danger` com variants muted
 - **Dark Mode:** Suporte completo com tokens dedicados
 - **Tipografia:** Plus Jakarta Sans consistente, heading weights padronizados
 - **Scrollbar:** Customizada para match com tema
@@ -36,7 +129,8 @@
 | `EmptyState` | 40+ arquivos | ✅ 5 variants contextuais (search, filter, firstUse, noPermission, default) |
 | `ErrorState` | 10+ arquivos | ✅ Retry/back actions, compact mode |
 | `LoadingState` | 86+ arquivos | ✅ Spinner, Skeleton, SkeletonCard, SkeletonList, SkeletonTable |
-| `PageHeader` | 16+ módulos | ✅ Title, description, actions, backTo |
+| `PageHeader` | 20+ módulos | ✅ Title, description, actions, backTo, breadcrumbs |
+| `StatusIndicator` | Novo | ✅ Variants semânticos para status |
 
 ### 3. Selects Canônicos
 Biblioteca consolidada em `src/components/selects/`:
@@ -47,7 +141,7 @@ Biblioteca consolidada em `src/components/selects/`:
 
 ### 4. Navegação Padrão
 - ✅ `<Link>` de react-router usado consistentemente (0 violações `onClick={navigate}` encontradas)
-- ✅ Breadcrumbs padronizados (`GlobalBreadcrumb`, `HubPageHeader`)
+- ✅ `PageHeader` unificado com suporte a breadcrumbs
 - ✅ URL state para filtros (`useUrlState`, `useUrlTab`)
 
 ### 5. Estados de UI Coesos
@@ -62,144 +156,11 @@ Biblioteca consolidada em `src/components/selects/`:
 
 ---
 
-## ⚠️ PROBLEMAS IDENTIFICADOS
-
-### P1: Cores Hardcoded (Média Prioridade)
-
-**Localização:** 9 arquivos em `src/components/`
-
-| Arquivo | Ocorrências | Cores |
-|---------|-------------|-------|
-| `DiagnosticsSloCard.tsx` | 8 | `text-green-600`, `text-yellow-600` |
-| `DiagnosticsHealthAlertsCard.tsx` | 3 | `text-green-500` |
-| `status-badge.tsx` | 12 | `bg-blue-500`, `text-blue-700`, etc. |
-| `AssetStatusSelect.tsx` | 4 | `bg-blue-500`, `bg-gray-500`, etc. |
-| `NotificationCenter.tsx` | 4 | `text-blue-500`, `text-green-500`, etc. |
-| `TemplateHistorySheet.tsx` | 2 | `text-green-500`, `bg-green-500` |
-| `TemplatesList.tsx` | 2 | `text-green-500`, `text-green-600` |
-
-**Impacto:** Quebra dark mode em alguns casos; dificulta rebrand.
-
-**Recomendação:**
-```css
-/* Adicionar em index.css */
---status-success: 142 76% 36%;
---status-warning: 38 92% 50%;
---status-info: 217 91% 60%;
-```
-
----
-
-### P2: Dois Headers de Página (Baixa Prioridade)
-
-**Situação:** Existem dois componentes de header:
-1. `PageHeader` (`src/components/ui/page-header.tsx`) — Simples, com backTo
-2. `HubPageHeader` (`src/components/hub/HubPageHeader.tsx`) — Com breadcrumbs automáticos
-
-**Uso Atual:**
-- `PageHeader`: 16 módulos (tickets, assets, okrs, permissions, teams, kpis)
-- `HubPageHeader`: 7 módulos (settings, users-global, automations, permissions global)
-
-**Impacto:** Inconsistência leve em navegação secundária.
-
-**Recomendação:** 
-- `PageHeader` para páginas com breadcrumb customizado (módulos operacionais)
-- `HubPageHeader` para páginas do /hub (administrativas)
-- Documentar uso no TCR
-
----
-
-### P3: Skeletons Ad-Hoc (Baixa Prioridade)
-
-**Situação:** 86 arquivos usam Skeleton, mas muitos criam estruturas inline:
-
-```tsx
-// Padrão ad-hoc encontrado em ~30% dos casos
-<div className="space-y-4">
-  <Skeleton className="h-10 flex-1" />
-  <Skeleton className="h-10 w-32" />
-</div>
-```
-
-**Impacto:** Duplicação de código; inconsistência visual entre módulos.
-
-**Recomendação:**
-- Criar variants em `SkeletonList`: `variant="form"`, `variant="header"`, `variant="stats"`
-- Documentar no UI Catalog
-
----
-
-### P4: VicErrorState vs ErrorState
-
-**Situação:** Dois componentes de erro:
-1. `ErrorState` — Genérico, usado em 10+ lugares
-2. `VicErrorState` — Com personalidade Vic, usado no ErrorBoundary
-
-**Impacto:** Potencial inconsistência se usado incorretamente.
-
-**Recomendação:** 
-- `VicErrorState` apenas para erros fatais (ErrorBoundary)
-- `ErrorState` para erros de carregamento em componentes
-
----
-
-## 🚀 OPORTUNIDADES DE MELHORIA
-
-### O1: Consolidar Status Colors (Alto Impacto)
-
-Criar tokens semânticos para status:
-
-```css
-/* index.css */
-:root {
-  --status-success: 142 76% 36%;
-  --status-success-muted: 142 76% 96%;
-  --status-warning: 38 92% 50%;
-  --status-warning-muted: 38 92% 96%;
-  --status-info: 217 91% 60%;
-  --status-info-muted: 217 91% 96%;
-}
-```
-
-**Esforço:** 2h | **Impacto:** Alto (maintainability)
-
----
-
-### O2: Skeleton Presets
-
-Adicionar presets ao `loading-state.tsx`:
-
-```tsx
-export function SkeletonPageHeader() { ... }
-export function SkeletonStatsGrid({ count = 4 }) { ... }
-export function SkeletonForm({ fields = 3 }) { ... }
-```
-
-**Esforço:** 1h | **Impacto:** Médio (consistência)
-
----
-
-### O3: Documentar PageHeader vs HubPageHeader
-
-Adicionar seção no DEVELOPMENT_STANDARDS.md:
-
-```markdown
-## Page Headers
-
-| Componente | Uso | Quando |
-|------------|-----|--------|
-| `PageHeader` | Módulos operacionais | Tickets, OKRs, Assets, KPIs |
-| `HubPageHeader` | Áreas administrativas | /hub/*, Settings |
-```
-
-**Esforço:** 15min | **Impacto:** Alto (clareza)
-
----
-
 ## 📋 CHECKLIST DE CONFORMIDADE
 
 ### Design System ✅
 - [x] Tokens semânticos definidos
+- [x] Status tokens (success, warning, info, danger)
 - [x] Dark mode suportado
 - [x] Tipografia consistente
 - [x] Spacing padronizado (Tailwind)
@@ -212,11 +173,12 @@ Adicionar seção no DEVELOPMENT_STANDARDS.md:
 - [x] Empty states contextuais
 - [x] Error states com retry
 - [x] Selects canônicos
-- [x] Page headers padronizados
+- [x] PageHeader unificado
+- [x] StatusIndicator para status semânticos
 
 ### Navegação ✅
 - [x] `<Link>` usado (sem onClick+navigate)
-- [x] Breadcrumbs padronizados
+- [x] Breadcrumbs via PageHeader
 - [x] URL state para filtros
 - [x] usePageTitle em todas as páginas
 
@@ -233,30 +195,23 @@ Adicionar seção no DEVELOPMENT_STANDARDS.md:
 
 | Métrica | Valor | Benchmark |
 |---------|-------|-----------|
-| Componentes UI core | 54 | Excelente |
+| Componentes UI core | 55 | Excelente |
 | Selects canônicos | 17 | Excelente |
 | Arquivos com EmptyState | 40+ | Ótimo |
 | Arquivos com LoadingState | 86+ | Ótimo |
-| Violações de cores | 9 | Aceitável |
-| PageHeaders inconsistentes | 0 | Excelente |
+| PageHeaders unificados | 1 | Perfeito |
 | onClick+navigate | 0 | Perfeito |
+| Cores hardcoded | 156 | Migração gradual |
 
 ---
 
-## 🎯 PLANO DE AÇÃO
+## 🎯 PRÓXIMOS PASSOS
 
-### Fase 1 — Quick Wins (1-2h)
-1. ~~Documentar PageHeader vs HubPageHeader~~ (TCR)
-2. Atualizar UI Catalog com guidelines
-
-### Fase 2 — Consolidação (4h)
-1. Criar tokens `--status-*` em index.css
-2. Migrar cores hardcoded para tokens
-3. Adicionar Skeleton presets
-
-### Fase 3 — Polimento (2h)
-1. Garantir VicErrorState apenas no ErrorBoundary
-2. Auditar dark mode nas áreas com cores hardcoded
+### Migração Gradual de Cores
+- [ ] Módulo OKRs (prioridade alta - muitos status)
+- [ ] Módulo Tickets (prioridade alta)
+- [ ] Módulo Assets (prioridade média)
+- [ ] Settings/Notifications (prioridade baixa)
 
 ---
 
@@ -264,15 +219,15 @@ Adicionar seção no DEVELOPMENT_STANDARDS.md:
 
 O front-end do Hub está em **excelente estado de maturidade**:
 
-- **Design System:** Sólido, com tokens semânticos bem definidos
-- **Componentes:** Biblioteca robusta de 54+ componentes UI
-- **Padrões:** Seguidos consistentemente em 90%+ do codebase
+- **Design System:** Tokens semânticos completos incluindo status
+- **Componentes:** Biblioteca robusta de 55+ componentes UI
+- **Padrões:** PageHeader unificado, StatusIndicator disponível
 - **UX:** Estados de loading/empty/error bem padronizados
 - **Navegação:** URL state, breadcrumbs e links corretos
 
-**Principais ações recomendadas:**
-1. Consolidar cores de status em tokens (P1)
-2. Documentar uso de PageHeader vs HubPageHeader (P2)
-3. Adicionar Skeleton presets (P3)
+**Ações implementadas nesta iteração:**
+1. ✅ Tokens de status semânticos (`success`, `warning`, `info`, `danger`)
+2. ✅ Componente `StatusIndicator` para uso consistente
+3. ✅ `PageHeader` unificado (removido `HubPageHeader`)
 
-*Auditoria concluída em: 2026-01-13*
+*Auditoria atualizada em: 2026-01-13*
