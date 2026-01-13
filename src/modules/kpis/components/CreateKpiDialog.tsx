@@ -315,6 +315,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         onValueChange={(val) => field.onChange(val ?? undefined)}
                         placeholder="Selecione..."
                         className="w-full"
+                        excludeExternal
                       />
                     </FormControl>
                     <FormMessage />

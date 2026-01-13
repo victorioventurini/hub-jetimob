@@ -994,6 +994,7 @@ export default function SettingsNotifications() {
                       placeholder="Selecione um usuário"
                       showSearch={false}
                       showBadges={false}
+                      excludeExternal
                     />
                   </div>
                   

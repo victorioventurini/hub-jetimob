@@ -74,6 +74,7 @@ export function AddSquadMemberDialog({
                 excludeUserIds={existingMemberIds}
                 showSearch={false}
                 showBadges={false}
+                excludeExternal
               />
             </div>
 
