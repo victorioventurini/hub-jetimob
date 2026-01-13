@@ -1,7 +1,15 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+/**
+ * Audit Permissions - Security-restricted endpoint for permission system audit
+ * 
+ * Access: Requires platform admin (super_admin or admin role)
+ */
+
 import { 
   corsHeaders, 
+  withMiddleware,
   createServiceClient,
+  jsonResponse,
+  errorResponse,
 } from "../_shared/middleware.ts";
 
 interface AuditResult {
@@ -42,36 +50,49 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    // Validate JWT manually
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Missing authorization header' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
+  const requestId = crypto.randomUUID().slice(0, 8);
+  console.log(`[${requestId}] audit-permissions: Starting request`);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
+  try {
+    // Use centralized middleware for authentication
+    const middlewareResult = await withMiddleware(req, {
+      requireAuth: true,
+      requireBu: false, // This is a platform-level audit, not BU-scoped
     });
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await authClient.auth.getUser(token);
-    
-    if (claimsError || !claimsData?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
+    if (!middlewareResult.success || !middlewareResult.context) {
+      console.warn(`[${requestId}] Middleware rejected request`);
+      return middlewareResult.error!;
     }
 
+    const { user } = middlewareResult.context;
+    const userId = user?.id;
+    
+    if (!userId) {
+      console.warn(`[${requestId}] No user ID in context`);
+      return errorResponse('Unauthorized', 401);
+    }
+    
     // Use service client for audit operations
-    // deno-lint-ignore no-explicit-any
-    const supabase = createServiceClient() as any;
+    const supabase = createServiceClient();
+
+    // Check if user is platform admin (super_admin or admin)
+    const { data: isAdmin, error: adminCheckError } = await supabase.rpc(
+      'is_platform_admin',
+      { user_id: userId }
+    );
+
+    if (adminCheckError) {
+      console.error(`[${requestId}] Error checking admin status:`, adminCheckError.message);
+      return errorResponse('Failed to verify permissions', 500);
+    }
+
+    if (!isAdmin) {
+      console.warn(`[${requestId}] Access denied for user ${userId} - not a platform admin`);
+      return errorResponse('Forbidden - Platform admin access required', 403);
+    }
+
+    console.log(`[${requestId}] Access granted for platform admin ${userId}`);
 
     // 1. Fetch all V2 templates with permission counts
     const { data: templates, error: templatesError } = await supabase
@@ -218,22 +239,17 @@ Deno.serve(async (req) => {
       migrationStatus,
     };
 
-    console.log('Audit V2 completed successfully:', {
+    console.log(`[${requestId}] Audit V2 completed successfully:`, {
       templatesCount: result.templates.length,
       catalogKeysCount: result.catalogStats.totalKeys,
       migrationStatus: result.migrationStatus,
     });
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse(result);
 
   } catch (error) {
-    console.error('Audit error:', error);
+    console.error(`[${requestId}] Audit error:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(errorMessage, 500);
   }
 });
