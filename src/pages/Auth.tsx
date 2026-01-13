@@ -108,11 +108,13 @@ export default function Auth() {
   // Build redirect URL preserving original destination
   const getRedirectUrl = useCallback(() => {
     const from = (location.state as { from?: Location } | null)?.from;
-    if (from && from.pathname && from.pathname !== "/auth") {
-      const target = `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
-      return `${window.location.origin}${target}`;
-    }
-    return `${window.location.origin}/`;
+
+    const target = from && from.pathname && from.pathname !== "/auth"
+      ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
+      : "/";
+
+    const next = encodeURIComponent(target);
+    return `${window.location.origin}/auth/callback?next=${next}`;
   }, [location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
