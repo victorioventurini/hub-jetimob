@@ -11,7 +11,7 @@ export const profilesKeys = {
   all: (buId: string | null) => ['profiles', buId] as const,
   list: (buId: string | null, filters?: Record<string, unknown>) => 
     ['profiles', 'list', buId, filters] as const,
-  detail: (userId: string) => ['profiles', 'detail', userId] as const,
+  detail: (userId: string, buId?: string | null) => ['profiles', 'detail', userId, buId] as const,
   hoverCard: (userId: string, buId?: string | null) => ['profiles', 'hover-card', userId, buId] as const,
   me: () => ['profiles', 'me'] as const,
   buProfiles: (buId: string | null) => ['profiles', 'bu', buId] as const,
