@@ -40,6 +40,8 @@ export const okrsKeys = {
     ['okr-team-key-results', buId, teamId] as const,
   myTeamKeyResults: (buId: string | null, userId?: string) => 
     ['okr-my-team-key-results', buId, userId] as const,
+  myTeamObjectives: (buId: string | null, userId?: string) => 
+    ['okr-my-team-objectives', buId, userId] as const,
   
   // Check-ins
   checkins: (krId: string) => ['okr-checkins', krId] as const,

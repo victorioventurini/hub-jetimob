@@ -392,6 +392,51 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
   });
 }
 
+/**
+ * Fetch team objectives where user is owner of a KR or co-responsible
+ * Used for "Meus OKRs" view
+ */
+export function useMyTeamObjectives(buId?: string | null, userId?: string) {
+  const { client: supabase } = useOptionalBuClient();
+  
+  return useQuery({
+    queryKey: queryKeys.okrs.myTeamObjectives(buId, userId),
+    queryFn: async () => {
+      if (!buId || !userId || !supabase) return [];
+      
+      // First, get KRs where user is owner or co-responsible
+      const { data: myKrs, error: krError } = await supabase
+        .from('okr_team_key_results')
+        .select('team_objective_id')
+        .eq('bu_id', buId)
+        .is('deleted_at', null)
+        .is('cancelled_at', null)
+        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`);
+
+      if (krError) throw krError;
+      
+      // Get unique objective IDs
+      const objectiveIds = [...new Set(myKrs?.map(kr => kr.team_objective_id).filter(Boolean) || [])];
+      
+      if (objectiveIds.length === 0) return [];
+      
+      // Fetch those objectives with their KRs
+      const { data, error } = await supabase
+        .from('okr_team_objectives')
+        .select(OKR_FIELDS.teamObjectiveWithKrs)
+        .eq('bu_id', buId)
+        .in('id', objectiveIds)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!buId && !!userId && !!supabase,
+    staleTime: STALE_TIME.list,
+  });
+}
+
 // ============================================================
 // CHECK-INS QUERIES
 // ============================================================
