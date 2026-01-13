@@ -99,11 +99,11 @@ export function SharedOkrInsights({
   const getInsightStyle = (type: Insight['type']) => {
     switch (type) {
       case 'warning':
-        return 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-200';
+        return 'bg-status-yellow-muted border-status-yellow/30 text-status-yellow-muted-foreground dark:bg-status-yellow-muted dark:border-status-yellow/30';
       case 'success':
-        return 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200';
+        return 'bg-status-green-muted border-status-green/30 text-status-green-muted-foreground dark:bg-status-green-muted dark:border-status-green/30';
       default:
-        return 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200';
+        return 'bg-info-muted border-info/30 text-info-muted-foreground dark:bg-info-muted dark:border-info/30';
     }
   };
 

@@ -349,7 +349,7 @@ export function WizardTipCard({
         'p-3 rounded-lg text-sm flex items-start gap-2',
         variant === 'default' && 'bg-muted/50 text-muted-foreground',
         variant === 'highlight' && 'bg-primary/5 border-l-4 border-primary text-foreground',
-        variant === 'warning' && 'bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400',
+        variant === 'warning' && 'bg-status-yellow-muted text-status-yellow-muted-foreground',
         className
       )}
     >

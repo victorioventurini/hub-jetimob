@@ -793,10 +793,10 @@ export default function HubNotifications() {
                                 variant="secondary" 
                                 className={cn(
                                   "capitalize text-xs",
-                                  item.provider === 'sendgrid' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                                  item.provider === 'resend' && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-                                  item.provider === 'slack' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                                  item.provider === 'webhook' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                                  item.provider === 'sendgrid' && "bg-info-muted text-info-muted-foreground",
+                                  item.provider === 'resend' && "bg-surface-administer-muted text-surface-administer-muted-foreground",
+                                  item.provider === 'slack' && "bg-status-green-muted text-status-green-muted-foreground",
+                                  item.provider === 'webhook' && "bg-status-yellow-muted text-status-yellow-muted-foreground",
                                 )}
                               >
                                 {item.provider}

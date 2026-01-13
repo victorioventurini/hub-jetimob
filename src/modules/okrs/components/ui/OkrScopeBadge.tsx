@@ -20,17 +20,17 @@ const scopeConfig: Record<OkrScope, { label: string; icon: typeof Building2; col
   team: {
     label: 'Time',
     icon: Users,
-    color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+    color: 'bg-info-muted text-info-muted-foreground border-info/20',
   },
   squad: {
     label: 'Squad',
     icon: Grid3X3,
-    color: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+    color: 'bg-surface-administer-muted text-surface-administer-muted-foreground border-surface-administer/20',
   },
   individual: {
     label: 'Individual',
     icon: User,
-    color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+    color: 'bg-status-green-muted text-status-green-muted-foreground border-status-green/20',
   },
 };
 

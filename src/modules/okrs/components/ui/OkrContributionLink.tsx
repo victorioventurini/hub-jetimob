@@ -17,17 +17,17 @@ const typeConfig = {
   contributes_to: {
     label: 'Contribui para',
     icon: ArrowUpRight,
-    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+    color: 'text-info bg-info-muted border-info/20',
   },
   enables: {
     label: 'Habilita',
     icon: Zap,
-    color: 'text-purple-600 bg-purple-500/10 border-purple-500/20',
+    color: 'text-surface-administer bg-surface-administer-muted border-surface-administer/20',
   },
   linked_to: {
     label: 'Vinculado a',
     icon: Link2,
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-status-green bg-status-green-muted border-status-green/20',
   },
 };
 
@@ -121,17 +121,17 @@ interface OkrKrTypeBadgeProps {
 const krTypeConfig = {
   contribution: {
     label: 'Contribuição',
-    color: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
+    color: 'bg-info-muted text-info-muted-foreground border-info/20',
     icon: ArrowUpRight,
   },
   enabler: {
     label: 'Habilitador',
-    color: 'bg-purple-500/10 text-purple-700 border-purple-500/20',
+    color: 'bg-surface-administer-muted text-surface-administer-muted-foreground border-surface-administer/20',
     icon: Zap,
   },
   foundational: {
     label: 'Fundacional',
-    color: 'bg-amber-500/10 text-amber-700 border-amber-500/20',
+    color: 'bg-status-yellow-muted text-status-yellow-muted-foreground border-status-yellow/20',
     icon: Target,
   },
 };

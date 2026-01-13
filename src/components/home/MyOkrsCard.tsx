@@ -70,7 +70,7 @@ export function MyOkrsCard() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
+            <CheckCircle2 className="h-8 w-8 text-status-green mb-2" />
             <p className="text-sm text-muted-foreground">
               Todos os seus OKRs estão em dia!
             </p>

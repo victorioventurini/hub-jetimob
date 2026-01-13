@@ -30,6 +30,7 @@ import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
 import type { DraftTeamKr, DraftTeamDependency } from '@/modules/okrs/types/wizard';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -253,9 +254,9 @@ export function TeamOkrDependenciesStep({
                       <Badge 
                         className={cn(
                           "text-xs",
-                          dep.severity === 'high' && "bg-red-100 text-red-700",
-                          dep.severity === 'medium' && "bg-orange-100 text-orange-700",
-                          dep.severity === 'low' && "bg-yellow-100 text-yellow-700"
+                          dep.severity === 'high' && RAG_STATUS_COLORS.red.badge,
+                          dep.severity === 'medium' && RAG_STATUS_COLORS.yellow.badge,
+                          dep.severity === 'low' && "bg-status-yellow-muted/70 text-status-yellow-muted-foreground"
                         )}
                       >
                         {dep.severity === 'high' ? 'Alto risco' : 
