@@ -15,14 +15,15 @@ import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
 import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
-import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function KpiDashboardPage() {
   usePageTitle("KPIs");
-  const { isAdmin } = useAuth();
+  const { has: hasPermission } = usePermissions();
+  const canManageKpis = hasPermission("kpis:manage");
   const { currentBu } = useBu();
   
   // URL State
@@ -83,7 +84,7 @@ export default function KpiDashboardPage() {
           title="KPIs"
           description={`Indicadores de saúde da ${currentBu?.name || 'organização'}`}
           actions={
-            isAdmin && (
+            canManageKpis && (
               <Button onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo KPI
@@ -131,12 +132,12 @@ export default function KpiDashboardPage() {
                 icon={BarChart3}
                 title="Nenhum KPI encontrado"
                 description={
-                  isAdmin
+                  canManageKpis
                     ? `Comece criando seu primeiro KPI para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
                     : "Nenhum KPI foi cadastrado ainda."
                 }
-                actionLabel={isAdmin ? "Criar KPI" : undefined}
-                onAction={isAdmin ? () => setCreateOpen(true) : undefined}
+                actionLabel={canManageKpis ? "Criar KPI" : undefined}
+                onAction={canManageKpis ? () => setCreateOpen(true) : undefined}
               />
             </CardContent>
           </Card>

@@ -188,6 +188,8 @@ export function MyFormDialog({ item, ...props }: MyFormDialogProps) {
 | `JetimoberDialog` | `src/components/users/JetimoberDialog.tsx` | Defense in Depth |
 | `LocationDialog` | `src/modules/bu/components/LocationDialog.tsx` | Defense in Depth |
 | `EditBuDialog` | `src/modules/bu/components/EditBuDialog.tsx` | Defense in Depth |
+| `CreateKpiDialog` | `src/modules/kpis/components/CreateKpiDialog.tsx` | Defense in Depth |
+| `KpiDashboardPage` | `src/modules/kpis/pages/KpiDashboardPage.tsx` | `usePermissions().has("kpis:manage")` |
 | `useTeamManagement` | `src/hooks/useTeamManagement.ts` | Impersonation-Aware Hook |
 | `useAssetPermissionsV2` | `src/modules/assets/hooks/useAssetPermissionsV2.ts` | Via `usePermissions().isWildcard` |
 | `useModuleAccess` | `src/hooks/useModuleAccess.ts` | Via `!isImpersonating && isAdmin` |

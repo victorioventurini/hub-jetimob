@@ -38,6 +38,7 @@ import {
   DIRECTION_LABELS,
 } from "../types";
 import { VicActionButton } from "@/modules/vic";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
@@ -63,6 +64,13 @@ interface CreateKpiDialogProps {
 export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createKpi } = useKpiData();
+  const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
+  const canManageKpis = hasPermission("kpis:manage");
+
+  // Defense in Depth: block render if no permission
+  if (!isLoadingPermission && !canManageKpis) {
+    return null;
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
