@@ -1,10 +1,12 @@
 /**
  * useUserKrsForWizard - Hook para buscar KRs atribuídos ao usuário atual para o Wizard Colaborador
  * 
- * Busca KRs onde o usuário é owner ou co-responsável:
- * - Filtra por ciclo ativo
- * - Calcula progresso e status
- * - Identifica pendências
+ * Busca KRs onde o usuário é:
+ * - Owner da KR
+ * - Co-responsável da KR
+ * - Owner de pelo menos uma iniciativa vinculada à KR
+ * 
+ * Filtra por ciclo ativo, calcula progresso e identifica pendências.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -36,8 +38,17 @@ export function useUserKrsForWizard(
     queryFn: async (): Promise<WizardKr[]> => {
       if (!cycleId || !effectiveUserId) return [];
 
-      // Fetch KRs where user is owner or co-responsible
-      const { data, error } = await supabase
+      // First, fetch KR IDs where user owns initiatives
+      const { data: initiativeKrIds } = await supabase
+        .from('okr_initiatives')
+        .select('kr_id')
+        .eq('owner_user_id', effectiveUserId)
+        .is('deleted_at', null);
+
+      const krIdsFromInitiatives = [...new Set((initiativeKrIds || []).map(i => i.kr_id).filter(Boolean))];
+
+      // Fetch KRs where user is owner, co-responsible, or has initiatives
+      let query = supabase
         .from('okr_team_key_results')
         .select(`
           id,
@@ -64,11 +75,23 @@ export function useUserKrsForWizard(
         `)
         .eq('team_objective.cycle_id', cycleId)
         .is('cancelled_at', null)
-        .is('deleted_at', null)
-        .or(`owner_user_id.eq.${effectiveUserId},co_responsibles.cs.{${effectiveUserId}}`)
-        .order('status', { ascending: false })
-        .order('last_checkin_at', { ascending: true, nullsFirst: true });
+        .is('deleted_at', null);
 
+      // Build OR condition: owner OR co-responsible OR has initiatives
+      const conditions = [
+        `owner_user_id.eq.${effectiveUserId}`,
+        `co_responsibles.cs.{${effectiveUserId}}`
+      ];
+      
+      if (krIdsFromInitiatives.length > 0) {
+        conditions.push(`id.in.(${krIdsFromInitiatives.join(',')})`);
+      }
+      
+      query = query.or(conditions.join(','));
+      query = query.order('status', { ascending: false });
+      query = query.order('last_checkin_at', { ascending: true, nullsFirst: true });
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
