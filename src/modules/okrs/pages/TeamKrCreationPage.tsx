@@ -379,7 +379,11 @@ export default function TeamKrCreationPage() {
           <TeamOkrDependenciesStep
             draftKrs={draft.draftKrs}
             dependencies={draft.dependencies}
+            detectedDependencies={draft.detectedDependencies}
+            aiInsight={draft.dependenciesAiInsight}
             onDependenciesChange={(deps) => updateDraft({ dependencies: deps })}
+            onDetectedDependenciesChange={(value) => updateDraft({ detectedDependencies: value })}
+            onAiInsightChange={(value) => updateDraft({ dependenciesAiInsight: value })}
             onContinue={goNext}
             onBack={goBack}
             onSkip={goNext}

@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { DraftTeamKr, DraftTeamDependency, DraftTeamInitiative } from '../types/wizard';
+import type { WizardAiInsight, DetectedDependencyDraft } from './useWizardDraft';
 
 // ============================================================
 // TYPES
@@ -49,6 +50,8 @@ export interface TeamKrDraft {
   
   // Step 6 - Dependencies
   dependencies: DraftTeamDependency[];
+  detectedDependencies: DetectedDependencyDraft[];
+  dependenciesAiInsight: WizardAiInsight | null;
   
   // Step 7 - Initiatives
   initiatives: DraftTeamInitiative[];
@@ -76,7 +79,7 @@ export interface UseKrWizardDraftReturn {
 // CONSTANTS
 // ============================================================
 
-const DRAFT_VERSION = 1;
+const DRAFT_VERSION = 2; // Bumped for AI insight persistence
 const STORAGE_KEY_PREFIX = 'okr-draft.team-kr-creation';
 
 function getStorageKey(objectiveId: string): string {
@@ -101,6 +104,8 @@ function createEmptyDraft(objectiveId: string, teamId: string, cycleId: string |
     },
     draftKrs: [],
     dependencies: [],
+    detectedDependencies: [],
+    dependenciesAiInsight: null,
     initiatives: [],
   };
 }

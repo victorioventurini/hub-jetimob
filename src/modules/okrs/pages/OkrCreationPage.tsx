@@ -363,6 +363,8 @@ export default function OkrCreationPage() {
             isLoading={isLoadingOrgOkrs}
             impactReflection={draft.impactReflection}
             onImpactReflectionChange={(value) => updateDraft({ impactReflection: value })}
+            aiInsight={draft.contextAiInsight}
+            onAiInsightChange={(value) => updateDraft({ contextAiInsight: value })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -374,6 +376,8 @@ export default function OkrCreationPage() {
             teamName={selectedTeam.name}
             analysis={previousCycleAnalysis || null}
             isLoading={isLoadingRetro}
+            aiInsight={draft.retrospectiveAiInsight}
+            onAiInsightChange={(value) => updateDraft({ retrospectiveAiInsight: value })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -419,6 +423,8 @@ export default function OkrCreationPage() {
             onOwnerTypeChange={(value) => updateDraft({ ownerType: value })}
             onPrimaryTeamChange={(value) => updateDraft({ primaryTeamId: value })}
             onContributingTeamsChange={(value) => updateDraft({ contributingTeamIds: value })}
+            aiInsight={draft.sharingAiInsight}
+            onAiInsightChange={(value) => updateDraft({ sharingAiInsight: value })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -453,7 +459,11 @@ export default function OkrCreationPage() {
           <TeamOkrDependenciesStep
             draftKrs={draft.draftKrs}
             dependencies={draft.dependencies}
+            detectedDependencies={draft.detectedDependencies}
+            aiInsight={draft.dependenciesAiInsight}
             onDependenciesChange={(value) => updateDraft({ dependencies: value })}
+            onDetectedDependenciesChange={(value) => updateDraft({ detectedDependencies: value })}
+            onAiInsightChange={(value) => updateDraft({ dependenciesAiInsight: value })}
             onContinue={goNext}
             onBack={goBack}
             onSkip={goNext}
@@ -481,6 +491,8 @@ export default function OkrCreationPage() {
             draftKrs={draft.draftKrs}
             initiatives={draft.initiatives}
             isSubmitting={createBundle.isPending}
+            shareStepContent={draft.shareStepContent}
+            onShareStepContentChange={(value) => updateDraft({ shareStepContent: value })}
             onSubmit={handleSubmit}
             onBack={goBack}
           />
