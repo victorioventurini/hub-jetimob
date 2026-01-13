@@ -7,7 +7,7 @@
  * - Meta tags para SEO
  */
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ShieldX, Heart } from "lucide-react";
@@ -49,7 +49,9 @@ export default function OkrQualityPage() {
     parse: (v) => v || '',
     serialize: (v) => v || '',
   });
-  const selectedTeamId = teamIdState.value || teams?.[0]?.team_id || '';
+  const teamParam = teamIdState.value;
+  const setTeamParam = teamIdState.set;
+  const selectedTeamId = teamParam || teams[0]?.team_id || '';
 
   // URL State - Cycle ID
   const cycleIdState = useUrlState<string>({
@@ -58,7 +60,22 @@ export default function OkrQualityPage() {
     parse: (v) => v || '',
     serialize: (v) => v || '',
   });
-  const selectedCycleId = cycleIdState.value || defaultCycleId;
+  const cycleParam = cycleIdState.value;
+  const setCycleParam = cycleIdState.set;
+  const selectedCycleId = cycleParam || defaultCycleId;
+
+  // Keep URL state shareable by setting defaults once data is available
+  useEffect(() => {
+    if (!teamParam && teams.length > 0) {
+      setTeamParam(teams[0].team_id);
+    }
+  }, [teamParam, teams, setTeamParam]);
+
+  useEffect(() => {
+    if (!cycleParam && defaultCycleId) {
+      setCycleParam(defaultCycleId);
+    }
+  }, [cycleParam, defaultCycleId, setCycleParam]);
 
   // Get selected team and cycle names
   const selectedTeam = useMemo(() => 
@@ -117,11 +134,6 @@ export default function OkrQualityPage() {
         </div>
       </div>
     );
-  }
-
-  // Auto-select first team if none selected
-  if (!selectedTeamId && teams.length > 0) {
-    teamIdState.set(teams[0].team_id);
   }
 
   return (
