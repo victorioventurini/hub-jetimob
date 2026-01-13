@@ -30,9 +30,9 @@ export function useCancelOrgObjective() {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation (all BUs, all years, all teams)
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Objetivo organizacional cancelado");
     },
     onError: () => {
@@ -64,9 +64,10 @@ export function useCancelOrgKeyResult() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Key Result cancelado");
     },
     onError: () => {
@@ -101,9 +102,10 @@ export function useCancelTeamObjective() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Objetivo de time cancelado");
     },
     onError: () => {
@@ -135,9 +137,10 @@ export function useCancelTeamKeyResult() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Key Result cancelado");
     },
     onError: () => {

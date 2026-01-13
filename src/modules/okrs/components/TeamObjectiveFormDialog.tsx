@@ -245,10 +245,10 @@ export function TeamObjectiveFormDialog({
       return createdObjective;
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success('Objetivo de time criado com sucesso!');
       onOpenChange(false);
     },
@@ -293,9 +293,9 @@ export function TeamObjectiveFormDialog({
       }
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       hookToast({
         title: 'Objetivo atualizado',
         description: 'O objetivo do time foi atualizado com sucesso.',

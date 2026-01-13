@@ -141,10 +141,10 @@ export function OrgKrFormDialog({
       }
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success(isEditing ? 'KR atualizado com sucesso!' : 'Key Result criado com sucesso!');
       onOpenChange(false);
     },

@@ -113,9 +113,9 @@ export function OrgObjectiveFormDialog({
       return data;
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success('Objetivo organizacional criado com sucesso!');
       onOpenChange(false);
     },
@@ -146,9 +146,9 @@ export function OrgObjectiveFormDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       hookToast({
         title: 'Objetivo atualizado',
         description: 'O objetivo organizacional foi atualizado com sucesso.',
