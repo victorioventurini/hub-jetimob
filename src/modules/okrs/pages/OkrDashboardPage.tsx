@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Target, TrendingUp, RefreshCw, Building2 } from 'lucide-react';
+import { Plus, AlertTriangle, Target, TrendingUp, RefreshCw, Building2, Info } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -162,10 +162,18 @@ export default function OkrDashboardPage() {
       return orgObjectives || [];
     }
     if (activeView === 'my') {
-      return myObjectives || [];
+      // Filter objectives to only include KRs where the user is responsible
+      const myKrIds = new Set(myKrs?.map(kr => kr.id) || []);
+      
+      return (myObjectives || [])
+        .map(objective => ({
+          ...objective,
+          key_results: (objective.key_results || []).filter((kr: any) => myKrIds.has(kr.id))
+        }))
+        .filter(obj => obj.key_results.length > 0);
     }
     return teamObjectives || [];
-  }, [activeView, orgObjectives, teamObjectives, myObjectives]);
+  }, [activeView, orgObjectives, teamObjectives, myObjectives, myKrs]);
 
   // Risk count for alert
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
@@ -379,6 +387,14 @@ export default function OkrDashboardPage() {
           <h2 className="text-lg font-semibold">
             Objetivos {activeView === 'company' ? (currentBu?.name || 'da Empresa') : activeView === 'team' ? 'do Time' : 'Pessoais'}
           </h2>
+
+          {/* Info banner for "my" view */}
+          {activeView === 'my' && (
+            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+              <Info className="w-4 h-4 shrink-0" />
+              <span>Exibindo apenas KRs e iniciativas onde você é responsável.</span>
+            </div>
+          )}
           
           {isLoading ? (
             <div className="space-y-3">
@@ -435,6 +451,7 @@ export default function OkrDashboardPage() {
                   type={activeView === 'company' ? 'org' : 'team'}
                   teamName={objective.team?.name}
                   canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
+                  filterInitiativesForUser={activeView === 'my' ? userProfile?.id : undefined}
                 />
               ))}
             </div>
