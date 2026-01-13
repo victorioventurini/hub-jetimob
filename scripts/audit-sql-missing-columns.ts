@@ -40,11 +40,11 @@ const CORE_TABLES: Record<string, string[]> = {
     'created_at', 'updated_at', 'deleted_at'
   ],
   tickets: [
-    'id', 'bu_id', 'title', 'description', 'status', 'priority', 'type',
-    'created_by_user_id', 'assigned_to_user_id', 'visibility',
+    'id', 'bu_id', 'title', 'description', 'status', 'type',
+    'created_by_user_id', 'owner_user_id', 'visibility',
     'visibility_team_ids', 'visibility_squad_ids', 'visibility_user_ids',
-    'created_at', 'updated_at', 'deleted_at', 'resolved_at', 'due_at',
-    'squad_id', 'category_id', 'tags', 'metadata'
+    'created_at', 'updated_at', 'deleted_at', 'expected_due_at',
+    'category_id', 'subcategory_id', 'partner_company_id', 'assigned_contact_id'
   ]
 };
 

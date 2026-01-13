@@ -98,9 +98,9 @@ LIMIT 5;
     description: "Ticket list with filters",
     sql: `
 SELECT 
-  t.id, t.title, t.type, t.status, t.priority, 
+  t.id, t.title, t.type, t.status,
   t.created_at, t.updated_at, t.expected_due_at,
-  t.owner_user_id, t.assigned_to_user_id,
+  t.created_by_user_id, t.owner_user_id,
   c.name as category_name,
   p.name as partner_name
 FROM tickets t
