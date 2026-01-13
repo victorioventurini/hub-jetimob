@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUrlState } from "@/shared/url/useUrlState";
-import { parsers } from "@/shared/url/parsers";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
 import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
@@ -47,15 +46,17 @@ export default function OkrQualityPage() {
   const teamIdState = useUrlState<string>({
     key: 'team',
     defaultValue: '',
-    parse: parsers.string,
+    parse: (v) => v || '',
+    serialize: (v) => v || '',
   });
   const selectedTeamId = teamIdState.value || teams?.[0]?.team_id || '';
 
   // URL State - Cycle ID
   const cycleIdState = useUrlState<string>({
     key: 'cycle',
-    defaultValue: defaultCycleId,
-    parse: parsers.string,
+    defaultValue: '',
+    parse: (v) => v || '',
+    serialize: (v) => v || '',
   });
   const selectedCycleId = cycleIdState.value || defaultCycleId;
 
