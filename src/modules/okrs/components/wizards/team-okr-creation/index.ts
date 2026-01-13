@@ -18,3 +18,6 @@ export { TeamOkrKrDetailStep } from './TeamOkrKrDetailStep';
 export { TeamOkrDependenciesStep } from './TeamOkrDependenciesStep';
 export { TeamOkrInitiativesStep } from './TeamOkrInitiativesStep';
 export { TeamOkrShareStep } from './TeamOkrShareStep';
+
+// Components (exported for composition)
+export { ObjectiveInputWithValidation } from './ObjectiveInputWithValidation';

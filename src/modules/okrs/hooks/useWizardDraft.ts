@@ -44,6 +44,13 @@ export type WizardStep =
   | 'initiatives' 
   | 'review';
 
+/** AI feedback type for objective validation */
+export interface ObjectiveValidationFeedback {
+  type: 'warning' | 'suggestion' | 'success';
+  message: string;
+  alternatives?: string[];
+}
+
 export interface TeamOkrDraft {
   // Meta
   version: number;
@@ -64,6 +71,8 @@ export interface TeamOkrDraft {
   objectiveTitle: string;
   objectiveDescription: string;
   selectedOrgObjectiveId: string | null;
+  objectiveValidationFeedback: ObjectiveValidationFeedback | null;
+  objectiveValidatedAt: string | null;
   
   // Step 4 - Sharing
   isShared: boolean;
@@ -83,7 +92,7 @@ export interface TeamOkrDraft {
   initiatives: DraftTeamInitiative[];
 }
 
-const DRAFT_VERSION = 2; // Bumped version for new schema
+const DRAFT_VERSION = 3; // Bumped version for objective validation fields
 
 const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft => ({
   version: DRAFT_VERSION,
@@ -96,6 +105,8 @@ const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft 
   objectiveTitle: '',
   objectiveDescription: '',
   selectedOrgObjectiveId: null,
+  objectiveValidationFeedback: null,
+  objectiveValidatedAt: null,
   isShared: false,
   responsibilityModel: 'primary_led',
   ownerType: 'my_team',

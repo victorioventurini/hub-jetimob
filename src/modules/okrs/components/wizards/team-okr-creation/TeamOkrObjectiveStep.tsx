@@ -3,27 +3,24 @@
  * 
  * Cap. 4 do storytelling:
  * - Perguntas guiadas sobre impacto
- * - Feedback em tempo real do Coach de OKRs
+ * - Validação manual com Coach de OKRs
  * - Seleção de OKR organizacional pai
+ * - Feedback persiste ao trocar de aba
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Lightbulb, Sparkles, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Lightbulb, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import { useDebounce } from '@/hooks/useDebounce';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
-import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
+import { ObjectiveInputWithValidation } from './ObjectiveInputWithValidation';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
-import { FEEDBACK_STYLES } from '@/lib/colors';
+import type { ObjectiveValidationFeedback } from '@/modules/okrs/hooks/useWizardDraft';
 
 // ============================================================
 // TYPES
@@ -35,17 +32,14 @@ export interface TeamOkrObjectiveStepProps {
   objectiveTitle: string;
   objectiveDescription: string;
   selectedOrgObjectiveId: string | null;
+  objectiveValidationFeedback: ObjectiveValidationFeedback | null;
+  objectiveValidatedAt: string | null;
   onObjectiveTitleChange: (value: string) => void;
   onObjectiveDescriptionChange: (value: string) => void;
   onOrgObjectiveSelect: (id: string | null) => void;
+  onValidationFeedbackChange: (feedback: ObjectiveValidationFeedback | null, validatedAt: string | null) => void;
   onContinue: () => void;
   onBack: () => void;
-}
-
-interface AIFeedback {
-  type: 'warning' | 'suggestion' | 'success';
-  message: string;
-  alternatives?: string[];
 }
 
 // ============================================================
@@ -80,105 +74,83 @@ export function TeamOkrObjectiveStep({
   objectiveTitle,
   objectiveDescription,
   selectedOrgObjectiveId,
+  objectiveValidationFeedback,
+  objectiveValidatedAt,
   onObjectiveTitleChange,
   onObjectiveDescriptionChange,
   onOrgObjectiveSelect,
+  onValidationFeedbackChange,
   onContinue,
   onBack,
 }: TeamOkrObjectiveStepProps) {
   const { invokeVic } = useWizardAI();
-  const [aiFeedback, setAiFeedback] = useState<AIFeedback | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  // Debounce objective title for AI analysis
-  const debouncedTitle = useDebounce(objectiveTitle, 800);
-
-  // Track last analyzed title to avoid duplicate calls
-  const lastAnalyzedRef = useRef<string | null>(null);
-
-  // Analyze objective with AI
-  useEffect(() => {
-    // Skip if title is too short or same as last analyzed
-    if (!debouncedTitle || debouncedTitle.length < 10) {
-      setAiFeedback(null);
-      setIsAnalyzing(false);
-      return;
-    }
+  // Handle validation with AI
+  const handleValidate = useCallback(async () => {
+    if (objectiveTitle.trim().length < 10) return;
     
-    // Skip if already analyzed this exact title
-    if (lastAnalyzedRef.current === debouncedTitle) {
-      return;
-    }
-
-    let isCancelled = false;
-    const timeoutId = setTimeout(() => {
-      if (!isCancelled) {
-        setIsAnalyzing(false);
-        setAiFeedback(null);
-      }
-    }, 20000); // 20s timeout
+    setIsValidating(true);
     
-    const analyzeObjective = async () => {
-      lastAnalyzedRef.current = debouncedTitle;
-      setIsAnalyzing(true);
-      
+    try {
+      const response = await invokeVic(
+        'coach-okrs',
+        'okr-review-quality',
+        {
+          type: 'objective-creation',
+          title: objectiveTitle,
+          additionalData: { teamName },
+        },
+        `Avalie este objetivo de time: "${objectiveTitle}". 
+        Se estiver operacional demais, diga brevemente o problema e sugira reformulação.
+        Se estiver amplo demais, sugira foco.
+        Se estiver bom, confirme brevemente.
+        Responda em JSON: { "type": "warning" | "suggestion" | "success", "message": "...", "alternatives": ["..."] }`
+      );
+
       try {
-        const response = await invokeVic(
-          'coach-okrs',
-          'okr-review-quality',
-          {
-            type: 'objective-creation',
-            title: debouncedTitle,
-            additionalData: { teamName },
-          },
-          `Avalie este objetivo de time: "${debouncedTitle}". 
-          Se estiver operacional demais, diga brevemente o problema e sugira reformulação.
-          Se estiver amplo demais, sugira foco.
-          Se estiver bom, confirme brevemente.
-          Responda em JSON: { "type": "warning" | "suggestion" | "success", "message": "...", "alternatives": ["..."] }`
-        );
-
-        if (isCancelled) return;
-
-        try {
-          const parsed = JSON.parse(response.response);
-          setAiFeedback(parsed);
-        } catch {
-          // If not JSON, treat as success with message
-          setAiFeedback({
-            type: 'suggestion',
-            message: response.response,
-          });
-        }
+        const parsed = JSON.parse(response.response);
+        onValidationFeedbackChange(parsed, new Date().toISOString());
       } catch {
-        if (!isCancelled) {
-          setAiFeedback(null);
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsAnalyzing(false);
-        }
+        // If not JSON, treat as success with message
+        onValidationFeedbackChange({
+          type: 'suggestion',
+          message: response.response,
+        }, new Date().toISOString());
       }
-    };
+    } catch (error) {
+      console.error('Failed to validate objective:', error);
+      // On error, still mark as validated to not block user
+      onValidationFeedbackChange({
+        type: 'success',
+        message: 'Objetivo registrado. Continue com a definição.',
+      }, new Date().toISOString());
+    } finally {
+      setIsValidating(false);
+    }
+  }, [objectiveTitle, teamName, invokeVic, onValidationFeedbackChange]);
 
-    analyzeObjective();
-    
-    return () => {
-      isCancelled = true;
-      clearTimeout(timeoutId);
-    };
-  }, [debouncedTitle, teamName]); // Remove invokeVic - causes new ref each render
+  // Handle edit - clear validation
+  const handleEdit = useCallback(() => {
+    onValidationFeedbackChange(null, null);
+  }, [onValidationFeedbackChange]);
 
   // Handle alternative selection
   const handleSelectAlternative = useCallback((alt: string) => {
     onObjectiveTitleChange(alt);
-  }, [onObjectiveTitleChange]);
+    // Clear validation so user needs to revalidate with new text
+    onValidationFeedbackChange(null, null);
+  }, [onObjectiveTitleChange, onValidationFeedbackChange]);
 
-  // Validation
+  // Validation - requires validated objective
   const canContinue = useMemo(() => {
-    return objectiveTitle.trim().length >= 10 && selectedOrgObjectiveId;
-  }, [objectiveTitle, selectedOrgObjectiveId]);
+    return (
+      objectiveTitle.trim().length >= 10 && 
+      selectedOrgObjectiveId && 
+      objectiveValidatedAt
+    );
+  }, [objectiveTitle, selectedOrgObjectiveId, objectiveValidatedAt]);
 
   return (
     <div className="flex flex-col h-full">
@@ -240,94 +212,22 @@ export function TeamOkrObjectiveStep({
             ))}
           </div>
 
-          {/* Objective Title */}
+          {/* Objective Title with Validation */}
           <div className="space-y-3">
-            <Label htmlFor="objective-title" className="text-sm font-medium">
+            <Label className="text-sm font-medium">
               Título do Objetivo
             </Label>
-            <div className="relative">
-              <Input
-                id="objective-title"
-                placeholder="Escreva um objetivo inspirador e claro..."
-                value={objectiveTitle}
-                onChange={(e) => onObjectiveTitleChange(e.target.value)}
-                className={cn(
-                  "pr-10",
-                  aiFeedback?.type === 'warning' && "border-orange-500",
-                  aiFeedback?.type === 'success' && "border-green-500"
-                )}
-              />
-              {isAnalyzing && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
-            
-            {/* AI Feedback */}
-            {aiFeedback && !isAnalyzing && (
-              <div className={cn(
-                "p-4 rounded-xl border text-sm space-y-3",
-                aiFeedback.type === 'warning' && FEEDBACK_STYLES.warning.container,
-                aiFeedback.type === 'suggestion' && FEEDBACK_STYLES.suggestion.container,
-                aiFeedback.type === 'success' && FEEDBACK_STYLES.success.container
-              )}>
-                {/* Header with icon */}
-                <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "p-1.5 rounded-lg shrink-0",
-                    aiFeedback.type === 'warning' && "bg-status-yellow/20",
-                    aiFeedback.type === 'suggestion' && "bg-info/20",
-                    aiFeedback.type === 'success' && "bg-status-green/20"
-                  )}>
-                    {aiFeedback.type === 'warning' && <AlertCircle className={cn("h-4 w-4", FEEDBACK_STYLES.warning.icon)} />}
-                    {aiFeedback.type === 'suggestion' && <Sparkles className={cn("h-4 w-4", FEEDBACK_STYLES.suggestion.icon)} />}
-                    {aiFeedback.type === 'success' && <CheckCircle2 className={cn("h-4 w-4", FEEDBACK_STYLES.success.icon)} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm leading-relaxed",
-                      aiFeedback.type === 'warning' && FEEDBACK_STYLES.warning.text,
-                      aiFeedback.type === 'suggestion' && FEEDBACK_STYLES.suggestion.text,
-                      aiFeedback.type === 'success' && FEEDBACK_STYLES.success.text
-                    )}>
-                      <VicTypewriterText text={aiFeedback.message} speed={18} priority={0} />
-                    </p>
-                  </div>
-                </div>
-
-                {/* Alternatives */}
-                {aiFeedback.alternatives && aiFeedback.alternatives.length > 0 && (
-                  <div className="pt-2 border-t border-border/50 space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                      <Lightbulb className="h-3 w-3" />
-                      Sugestões alternativas
-                    </p>
-                    <div className="grid gap-2">
-                      {aiFeedback.alternatives.map((alt, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSelectAlternative(alt)}
-                          className={cn(
-                            "text-left w-full px-3 py-2.5 rounded-lg text-xs",
-                            "bg-background/80 hover:bg-background",
-                            "border border-border/50 hover:border-primary/50",
-                            "transition-all duration-200",
-                            "hover:shadow-sm hover:translate-x-0.5",
-                            "group flex items-center gap-2"
-                          )}
-                        >
-                          <span className="flex-1">{alt}</span>
-                          <span className="text-muted-foreground group-hover:text-primary transition-colors text-[10px]">
-                            usar →
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <ObjectiveInputWithValidation
+              value={objectiveTitle}
+              onChange={onObjectiveTitleChange}
+              feedback={objectiveValidationFeedback}
+              validatedAt={objectiveValidatedAt}
+              isValidating={isValidating}
+              onValidate={handleValidate}
+              onEdit={handleEdit}
+              onSelectAlternative={handleSelectAlternative}
+              minLength={10}
+            />
           </div>
 
           {/* Description (optional) */}
