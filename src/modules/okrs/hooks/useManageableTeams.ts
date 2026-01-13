@@ -28,32 +28,23 @@ export function useManageableTeams() {
   const { client, isReady, buId } = useOptionalBuClient();
   const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
-  // Log impersonation state for debugging
-  console.log('[useManageableTeams] State:', {
-    isImpersonating,
-    impersonatedUserId,
-    userId: user?.id,
-    buId,
-    isReady
-  });
-
   // Determine effective user for query key
   const effectiveUserId = isImpersonating && impersonatedUserId 
     ? impersonatedUserId 
     : user?.id;
 
+  // Build query key with explicit impersonation flag for proper cache separation
+  const queryKey = isImpersonating && impersonatedUserId
+    ? ['okr-manageable-teams', 'impersonated', buId, impersonatedUserId] as const
+    : ['okr-manageable-teams', 'real', buId, user?.id] as const;
+
   const query = useQuery({
-    queryKey: isImpersonating && impersonatedUserId
-      ? [...queryKeys.okrs.manageableTeams(buId ?? null, impersonatedUserId), 'impersonated']
-      : queryKeys.okrs.manageableTeams(buId ?? null, user?.id ?? null),
+    queryKey,
     queryFn: async (): Promise<ManageableTeam[]> => {
-      console.log('[useManageableTeams] queryFn executing, isImpersonating:', isImpersonating, 'impersonatedUserId:', impersonatedUserId);
       if (!client || !buId) return [];
 
       // Use impersonation RPC when impersonating
       if (isImpersonating && impersonatedUserId) {
-        console.log('[useManageableTeams] Impersonation mode - fetching for:', impersonatedUserId);
-        
         const { data: teamIdsResult, error: rpcError } = await client.rpc(
           "get_okr_manageable_team_ids_for_impersonation" as any,
           { 
@@ -68,7 +59,6 @@ export function useManageableTeams() {
         }
 
         const teamIds = (teamIdsResult as unknown as string[]) || [];
-        console.log('[useManageableTeams] Impersonation RPC returned team IDs:', teamIds);
         
         if (teamIds.length === 0) {
           return [];
