@@ -375,7 +375,8 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
     queryFn: async () => {
       if (!buId || !userId || !supabase) return [];
       
-      const { data, error } = await supabase
+      // First, get KRs where user is owner or co-responsible
+      const { data: directKrs, error: directError } = await supabase
         .from('okr_team_key_results')
         .select(OKR_FIELDS.teamKr)
         .eq('bu_id', buId)
@@ -384,8 +385,46 @@ export function useMyTeamKeyResults(buId?: string | null, userId?: string) {
         .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (directError) throw directError;
+      
+      // Also get KRs that have initiatives where user is owner
+      const { data: initiativeKrIds, error: initError } = await supabase
+        .from('okr_initiatives')
+        .select('kr_id')
+        .eq('bu_id', buId)
+        .eq('owner_user_id', userId)
+        .is('deleted_at', null);
+      
+      if (initError) throw initError;
+      
+      const krIdsFromInitiatives = [...new Set(initiativeKrIds?.map(i => i.kr_id).filter(Boolean) || [])];
+      
+      // If there are KRs from initiatives, fetch them too
+      let initiativeKrs: typeof directKrs = [];
+      if (krIdsFromInitiatives.length > 0) {
+        const { data: krsData, error: krsError } = await supabase
+          .from('okr_team_key_results')
+          .select(OKR_FIELDS.teamKr)
+          .eq('bu_id', buId)
+          .in('id', krIdsFromInitiatives)
+          .is('deleted_at', null)
+          .is('cancelled_at', null)
+          .order('created_at', { ascending: false });
+        
+        if (krsError) throw krsError;
+        initiativeKrs = krsData || [];
+      }
+      
+      // Merge and dedupe KRs
+      const allKrs = [...(directKrs || []), ...initiativeKrs];
+      const uniqueKrIds = new Set<string>();
+      const uniqueKrs = allKrs.filter(kr => {
+        if (uniqueKrIds.has(kr.id)) return false;
+        uniqueKrIds.add(kr.id);
+        return true;
+      });
+      
+      return uniqueKrs;
     },
     enabled: !!buId && !!userId && !!supabase,
     staleTime: STALE_TIME.list,
@@ -415,8 +454,38 @@ export function useMyTeamObjectives(buId?: string | null, userId?: string) {
 
       if (krError) throw krError;
       
-      // Get unique objective IDs
-      const objectiveIds = [...new Set(myKrs?.map(kr => kr.team_objective_id).filter(Boolean) || [])];
+      // Also get KRs that have initiatives where user is owner
+      const { data: initiativeKrIds, error: initError } = await supabase
+        .from('okr_initiatives')
+        .select('kr_id')
+        .eq('bu_id', buId)
+        .eq('owner_user_id', userId)
+        .is('deleted_at', null);
+      
+      if (initError) throw initError;
+      
+      const krIdsFromInitiatives = [...new Set(initiativeKrIds?.map(i => i.kr_id).filter(Boolean) || [])];
+      
+      // Get objective IDs from those KRs
+      let objectiveIdsFromInitiatives: string[] = [];
+      if (krIdsFromInitiatives.length > 0) {
+        const { data: krsWithObj, error: krsObjError } = await supabase
+          .from('okr_team_key_results')
+          .select('team_objective_id')
+          .in('id', krIdsFromInitiatives)
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
+        
+        if (krsObjError) throw krsObjError;
+        objectiveIdsFromInitiatives = krsWithObj?.map(kr => kr.team_objective_id).filter(Boolean) || [];
+      }
+      
+      // Get unique objective IDs from both sources
+      const allObjectiveIds = [
+        ...(myKrs?.map(kr => kr.team_objective_id).filter(Boolean) || []),
+        ...objectiveIdsFromInitiatives
+      ];
+      const objectiveIds = [...new Set(allObjectiveIds)];
       
       if (objectiveIds.length === 0) return [];
       
