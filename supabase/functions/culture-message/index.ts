@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       .from("ai_agent_documents")
       .select("name, extracted_content")
       .eq("agent_id", typedAgent.id)
-      .eq("status", "ready");
+      .eq("status", "completed");
 
     // Build knowledge base context
     let knowledgeBase = "";

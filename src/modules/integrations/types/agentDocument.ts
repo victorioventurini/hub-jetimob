@@ -6,7 +6,7 @@ export interface AgentDocument {
   file_url: string;
   file_type: string;
   file_size: number | null;
-  status: 'pending' | 'processing' | 'ready' | 'error';
+  status: 'pending' | 'processing' | 'completed' | 'error';
   processing_error: string | null;
   extracted_content: string | null;
   created_by: string | null;

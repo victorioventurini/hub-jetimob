@@ -192,7 +192,7 @@ async function fetchDocumentSource(
     .from("ai_agent_documents")
     .select("name, extracted_content")
     .in("id", config.document_ids)
-    .eq("status", "ready");
+    .eq("status", "completed");
 
   if (error) {
     console.error("Error fetching documents:", error);
