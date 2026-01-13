@@ -56,8 +56,8 @@ const KR_TYPES: KrTypeInfo[] = [
     description: 'Prova que o objetivo aconteceu. É o resultado mais importante.',
     example: 'NPS acima de 72 pontos',
     icon: Target,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-status-green',
+    bgColor: 'bg-status-green-muted',
     required: true,
   },
   {
@@ -66,8 +66,8 @@ const KR_TYPES: KrTypeInfo[] = [
     description: 'Resultado do time que alimenta um objetivo maior.',
     example: 'Pipeline de R$ 2M gerado para meta de receita',
     icon: Link2,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-status-blue',
+    bgColor: 'bg-status-blue-muted',
     required: false,
   },
   {
@@ -76,8 +76,8 @@ const KR_TYPES: KrTypeInfo[] = [
     description: 'Entrega necessária para viabilizar os outros resultados.',
     example: 'Sistema de tracking implementado',
     icon: Wrench,
-    color: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-status-orange',
+    bgColor: 'bg-status-orange-muted',
     required: false,
   },
 ];
@@ -233,8 +233,8 @@ export function TeamOkrKrTypeStep({
               <Badge 
                 variant={totalKrs >= 1 && totalKrs <= 3 ? "default" : "outline"}
                 className={cn(
-                  totalKrs > 3 && totalKrs <= 5 && "bg-yellow-100 text-yellow-700 border-yellow-300",
-                  totalKrs > 5 && "bg-red-100 text-red-700 border-red-300"
+                  totalKrs > 3 && totalKrs <= 5 && "bg-status-yellow-muted text-status-yellow border-status-yellow/30",
+                  totalKrs > 5 && "bg-status-red-muted text-status-red border-status-red/30"
                 )}
               >
                 {totalKrs} / 5 máximo
@@ -246,7 +246,7 @@ export function TeamOkrKrTypeStep({
               </p>
             )}
             {!hasFoundational && (
-              <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+              <p className="text-xs text-status-red mt-2">
                 Adicione pelo menos 1 KR Fundacional para continuar.
               </p>
             )}

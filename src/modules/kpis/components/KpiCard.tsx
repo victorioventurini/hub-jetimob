@@ -92,7 +92,7 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
       className={cn(
         "cursor-pointer transition-all hover:shadow-md hover:border-accent/30 group h-full flex flex-col",
         onClick && "hover:-translate-y-0.5",
-        kpi.last_update_failed && "border-red-300 dark:border-red-800"
+        kpi.last_update_failed && "border-status-red"
       )}
       onClick={onClick}
     >

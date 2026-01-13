@@ -244,8 +244,8 @@ export function KrTypeStep({
               <Badge 
                 variant={totalKrs >= 1 && totalKrs <= 3 ? "default" : "outline"}
                 className={cn(
-                  totalKrs > 3 && totalKrs <= 5 && "bg-yellow-100 text-yellow-700 border-yellow-300",
-                  totalKrs > 5 && "bg-red-100 text-red-700 border-red-300"
+                  totalKrs > 3 && totalKrs <= 5 && "bg-status-yellow-muted text-status-yellow border-status-yellow/30",
+                  totalKrs > 5 && "bg-status-red-muted text-status-red border-status-red/30"
                 )}
               >
                 {totalKrs} / 5 máximo
@@ -257,7 +257,7 @@ export function KrTypeStep({
               </p>
             )}
             {!hasFoundational && (
-              <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+              <p className="text-xs text-status-red mt-2">
                 Adicione pelo menos 1 KR Fundacional para continuar.
               </p>
             )}

@@ -70,9 +70,9 @@ export function BirthdaysBlock() {
           <div className="space-y-4">
             {birthdays.map((person) => (
               <div key={person.id} className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border-2 border-rose-200">
+                <Avatar className="h-10 w-10 border-2 border-status-pink/30">
                   <AvatarImage src={person.photoUrl} />
-                  <AvatarFallback className="bg-rose-50 text-rose-500 text-sm font-semibold">
+                  <AvatarFallback className="bg-status-pink-muted text-status-pink text-sm font-semibold">
                     {getInitials(person.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -86,7 +86,7 @@ export function BirthdaysBlock() {
                     {person.jobTitle} • {person.team}
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-rose-500 shrink-0">
+                <span className="text-sm font-semibold text-status-pink shrink-0">
                   {person.birthDay}/{person.birthMonth.toString().padStart(2, "0")}
                 </span>
               </div>

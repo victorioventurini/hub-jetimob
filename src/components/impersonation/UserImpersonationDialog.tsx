@@ -49,7 +49,7 @@ export function UserImpersonationDialog() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+            className="gap-2 border-status-orange text-status-orange hover:bg-status-orange-muted"
             onClick={(e) => {
               e.preventDefault();
               stopImpersonation();
