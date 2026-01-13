@@ -117,8 +117,9 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(userId);
     setImpersonatedUser(userInfo);
     
-    // Invalidar cache de permissões para forçar refetch
+    // Invalidar cache de permissões e OKRs manageable teams para forçar refetch
     queryClient.invalidateQueries({ queryKey: ["identity", "permissions"] });
+    queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
   }, [canImpersonate, queryClient]);
   
   const stopImpersonation = useCallback(() => {
@@ -126,8 +127,9 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUserId(null);
     setImpersonatedUser(null);
     
-    // Invalidar cache de permissões
+    // Invalidar cache de permissões e OKRs manageable teams
     queryClient.invalidateQueries({ queryKey: ["identity", "permissions"] });
+    queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
   }, [queryClient]);
   
   // Limpar impersonação quando usuário sair
