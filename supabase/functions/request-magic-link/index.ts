@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { sendEmail, buildOtpEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";
+import { sendEmail, buildMagicLinkEmailHtml } from "../_shared/email-sender.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -161,23 +161,21 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const userType = isPartnerContact ? "partner contact" : "internal user";
-    console.log(`Generating OTP for ${email} (BU: ${buName}, type: ${userType})`);
+    console.log(`Generating magic link for ${email} (BU: ${buName}, type: ${userType})`);
 
-    // Generate OTP code using signInWithOtp
-    // This generates a 6-digit code that must be verified via POST (not consumable by GET)
-    // This prevents email scanners from invalidating the token
-    const { error } = await supabaseAdmin.auth.signInWithOtp({
+    // Generate magic link using admin API
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
       email,
       options: {
-        shouldCreateUser: true,
-        emailRedirectTo: redirectTo,
+        redirectTo,
       },
     });
 
-    if (error) {
-      console.error("Error generating OTP:", error);
+    if (linkError || !linkData?.properties?.action_link) {
+      console.error("Error generating magic link:", linkError);
       return new Response(
-        JSON.stringify({ error: "Erro ao gerar código de acesso. Tente novamente." }),
+        JSON.stringify({ error: "Erro ao gerar link de acesso. Tente novamente." }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -185,21 +183,42 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("OTP generated successfully for:", email);
+    const magicLink = linkData.properties.action_link;
+    console.log("Magic link generated successfully for:", email);
 
     // Get display name from email
     const displayName = email.split('@')[0].split('.')[0];
 
-    // Build email HTML with OTP code instructions
-    // Note: Supabase will send its own email with the OTP code
-    // We don't need to send a custom email since Supabase handles OTP delivery
-    
-    console.log(`OTP request completed for: ${email} (Supabase will send the OTP email)`);
+    // Build and send email via SendGrid
+    const emailHtml = buildMagicLinkEmailHtml({
+      magicLink,
+      displayName,
+      buName: buName || undefined,
+    });
+
+    const emailResult = await sendEmail({
+      to: email,
+      subject: "Seu link de acesso ao Hub",
+      html: emailHtml,
+    });
+
+    if (!emailResult.success) {
+      console.error("Error sending magic link email:", emailResult.error);
+      return new Response(
+        JSON.stringify({ error: "Erro ao enviar email. Tente novamente." }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`Magic link sent successfully to: ${email}`);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      provider: "supabase-otp",
-      message: "OTP enviado via Supabase Auth" 
+      provider: "sendgrid",
+      message: "Link de acesso enviado por email" 
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
