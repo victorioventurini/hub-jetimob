@@ -41,10 +41,24 @@ export function useManageableTeams() {
   const query = useQuery({
     queryKey,
     queryFn: async (): Promise<ManageableTeam[]> => {
-      if (!client || !buId) return [];
+      console.log("[useManageableTeams] queryFn called", {
+        isImpersonating,
+        impersonatedUserId,
+        buId,
+        isReady,
+        effectiveUserId,
+        queryKey,
+      });
+
+      if (!client || !buId) {
+        console.log("[useManageableTeams] Skipping - no client or buId");
+        return [];
+      }
 
       // Use impersonation RPC when impersonating
       if (isImpersonating && impersonatedUserId) {
+        console.log("[useManageableTeams] Using IMPERSONATION RPC with profile:", impersonatedUserId);
+        
         const { data: teamIdsResult, error: rpcError } = await client.rpc(
           "get_okr_manageable_team_ids_for_impersonation" as any,
           { 
@@ -52,6 +66,8 @@ export function useManageableTeams() {
             p_bu_id: buId 
           }
         );
+
+        console.log("[useManageableTeams] IMPERSONATION RPC result:", { teamIdsResult, rpcError });
 
         if (rpcError) {
           console.error("Error fetching impersonated manageable team IDs:", rpcError);
@@ -61,6 +77,7 @@ export function useManageableTeams() {
         const teamIds = (teamIdsResult as unknown as string[]) || [];
         
         if (teamIds.length === 0) {
+          console.log("[useManageableTeams] No manageable teams for impersonated user");
           return [];
         }
 
@@ -78,14 +95,19 @@ export function useManageableTeams() {
           return [];
         }
 
+        console.log("[useManageableTeams] Impersonated user can manage teams:", teams?.map(t => t.name));
         return teams || [];
       }
 
       // Normal flow
+      console.log("[useManageableTeams] Using NORMAL RPC for real user");
+      
       const { data: teamIdsResult, error: rpcError } = await client.rpc(
         "get_okr_manageable_team_ids",
         { p_bu_id: buId }
       );
+
+      console.log("[useManageableTeams] NORMAL RPC result:", { teamIdsResult, rpcError });
 
       if (rpcError) {
         console.error("Error fetching manageable team IDs:", rpcError);
@@ -94,6 +116,7 @@ export function useManageableTeams() {
 
       const teamIds = teamIdsResult as string[] | null;
       if (!teamIds || teamIds.length === 0) {
+        console.log("[useManageableTeams] No manageable teams for real user");
         return [];
       }
 
@@ -111,6 +134,7 @@ export function useManageableTeams() {
         return [];
       }
 
+      console.log("[useManageableTeams] Real user can manage teams:", teams?.map(t => t.name));
       return teams || [];
     },
     enabled: isReady && !!effectiveUserId,
