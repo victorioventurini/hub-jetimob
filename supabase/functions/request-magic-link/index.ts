@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { sendEmail, buildMagicLinkEmailHtml } from "../_shared/email-sender.ts";
+import { sendEmail, buildMagicLinkEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -198,7 +198,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResult = await sendEmail({
       to: email,
-      subject: "Seu link de acesso ao Hub",
+      subject: `Seu link de acesso ao Hub - ${formatEmailDateTime()}`,
       html: emailHtml,
     });
 
