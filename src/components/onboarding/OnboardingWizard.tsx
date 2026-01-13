@@ -58,6 +58,7 @@ type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 interface OnboardingWizardProps {
   profileId: string;
+  userId: string;
   initialData?: Partial<OnboardingFormData>;
   onComplete: () => void;
 }
@@ -68,7 +69,7 @@ const STEPS = [
   { id: "location", title: "Localização", icon: MapPin },
 ];
 
-export function OnboardingWizard({ profileId, initialData, onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({ profileId, userId, initialData, onComplete }: OnboardingWizardProps) {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
   
@@ -167,11 +168,11 @@ export function OnboardingWizard({ profileId, initialData, onComplete }: Onboard
     },
     onSuccess: () => {
       toast.success("Bem-vindo ao Hub Jetimob! 🚀");
-      // Invalidar TODAS as queries de profile/onboarding ANTES de navegar
+      // Invalidar TODAS as queries de profile/onboarding com o userId correto
       // para garantir que guards e páginas vejam o estado atualizado
       queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.myProfile() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page(userId) });
       // Navegar após invalidar queries
       onComplete();
     },

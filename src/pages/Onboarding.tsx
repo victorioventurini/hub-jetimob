@@ -83,6 +83,7 @@ export default function Onboarding() {
   return (
     <OnboardingWizard
       profileId={profile.id}
+      userId={user.id}
       initialData={{
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
