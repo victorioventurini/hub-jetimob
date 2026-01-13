@@ -100,6 +100,25 @@
     --status-orange-muted: 25 95% 95%;
     --status-orange-muted-foreground: 25 95% 40%;
 
+    --status-amber: 38 92% 50%;
+    --status-amber-foreground: 0 0% 0%;
+    --status-amber-muted: 38 92% 95%;
+    --status-amber-muted-foreground: 38 92% 35%;
+
+    --status-indigo: 234 89% 63%;
+    --status-indigo-foreground: 0 0% 100%;
+    --status-indigo-muted: 234 89% 95%;
+    --status-indigo-muted-foreground: 234 89% 45%;
+
+    --status-cyan: 186 94% 41%;
+    --status-cyan-foreground: 0 0% 100%;
+    --status-cyan-muted: 186 94% 95%;
+    --status-cyan-muted-foreground: 186 94% 35%;
+
+    --status-slate: 215 20% 45%;
+    --status-slate-foreground: 0 0% 100%;
+    --status-slate-muted: 215 20% 95%;
+    --status-slate-muted-foreground: 215 20% 40%;
     /* Surface Permission Colors */
     --surface-view: 217 91% 60%;
     --surface-view-muted: 217 91% 95%;
@@ -233,7 +252,25 @@
     --status-orange-muted: 25 70% 15%;
     --status-orange-muted-foreground: 25 95% 65%;
 
-    /* Surface Permission Colors (Dark) */
+    --status-amber: 38 92% 55%;
+    --status-amber-foreground: 0 0% 0%;
+    --status-amber-muted: 38 70% 15%;
+    --status-amber-muted-foreground: 38 92% 65%;
+
+    --status-indigo: 234 89% 68%;
+    --status-indigo-foreground: 0 0% 100%;
+    --status-indigo-muted: 234 60% 15%;
+    --status-indigo-muted-foreground: 234 89% 70%;
+
+    --status-cyan: 186 94% 50%;
+    --status-cyan-foreground: 0 0% 100%;
+    --status-cyan-muted: 186 60% 15%;
+    --status-cyan-muted-foreground: 186 94% 65%;
+
+    --status-slate: 215 20% 55%;
+    --status-slate-foreground: 0 0% 100%;
+    --status-slate-muted: 215 20% 15%;
+    --status-slate-muted-foreground: 215 20% 65%;
     --surface-view: 217 91% 65%;
     --surface-view-muted: 217 60% 15%;
     --surface-view-muted-foreground: 217 91% 70%;

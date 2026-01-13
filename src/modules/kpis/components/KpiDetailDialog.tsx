@@ -88,14 +88,14 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
   const trendColor =
     kpi.direction === "up"
       ? trend === "up"
-        ? "text-emerald-500"
+        ? "text-status-green"
         : trend === "down"
-        ? "text-red-500"
+        ? "text-status-red"
         : "text-muted-foreground"
       : trend === "down"
-      ? "text-emerald-500"
+      ? "text-status-green"
       : trend === "up"
-      ? "text-red-500"
+      ? "text-status-red"
       : "text-muted-foreground";
 
   const formatValue = (value: number | null) => {

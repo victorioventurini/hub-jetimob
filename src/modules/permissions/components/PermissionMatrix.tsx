@@ -20,15 +20,15 @@ interface PermissionMatrixProps {
 
 // Module display names and order
 const MODULE_CONFIG: Record<string, { label: string; order: number; color: string }> = {
-  home: { label: "Home", order: 0, color: "bg-slate-500" },
-  users: { label: "Usuários", order: 1, color: "bg-blue-500" },
-  teams: { label: "Times", order: 2, color: "bg-indigo-500" },
-  okrs: { label: "OKRs", order: 3, color: "bg-purple-500" },
-  kpis: { label: "KPIs", order: 4, color: "bg-pink-500" },
-  tickets: { label: "Tickets", order: 5, color: "bg-orange-500" },
-  assets: { label: "Assets", order: 6, color: "bg-green-500" },
-  hub: { label: "Hub/Config", order: 7, color: "bg-amber-500" },
-  platform: { label: "Plataforma", order: 8, color: "bg-red-500" },
+  home: { label: "Home", order: 0, color: "bg-status-slate" },
+  users: { label: "Usuários", order: 1, color: "bg-status-blue" },
+  teams: { label: "Times", order: 2, color: "bg-status-indigo" },
+  okrs: { label: "OKRs", order: 3, color: "bg-status-purple" },
+  kpis: { label: "KPIs", order: 4, color: "bg-status-pink" },
+  tickets: { label: "Tickets", order: 5, color: "bg-status-orange" },
+  assets: { label: "Assets", order: 6, color: "bg-status-green" },
+  hub: { label: "Hub/Config", order: 7, color: "bg-status-amber" },
+  platform: { label: "Plataforma", order: 8, color: "bg-status-red" },
 };
 
 // Action display names

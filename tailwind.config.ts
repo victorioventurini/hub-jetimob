@@ -108,6 +108,30 @@ export default {
           muted: "hsl(var(--status-orange-muted))",
           "muted-foreground": "hsl(var(--status-orange-muted-foreground))",
         },
+        "status-amber": {
+          DEFAULT: "hsl(var(--status-amber))",
+          foreground: "hsl(var(--status-amber-foreground))",
+          muted: "hsl(var(--status-amber-muted))",
+          "muted-foreground": "hsl(var(--status-amber-muted-foreground))",
+        },
+        "status-indigo": {
+          DEFAULT: "hsl(var(--status-indigo))",
+          foreground: "hsl(var(--status-indigo-foreground))",
+          muted: "hsl(var(--status-indigo-muted))",
+          "muted-foreground": "hsl(var(--status-indigo-muted-foreground))",
+        },
+        "status-cyan": {
+          DEFAULT: "hsl(var(--status-cyan))",
+          foreground: "hsl(var(--status-cyan-foreground))",
+          muted: "hsl(var(--status-cyan-muted))",
+          "muted-foreground": "hsl(var(--status-cyan-muted-foreground))",
+        },
+        "status-slate": {
+          DEFAULT: "hsl(var(--status-slate))",
+          foreground: "hsl(var(--status-slate-foreground))",
+          muted: "hsl(var(--status-slate-muted))",
+          "muted-foreground": "hsl(var(--status-slate-muted-foreground))",
+        },
         // Surface Permission Colors
         "surface-view": {
           DEFAULT: "hsl(var(--surface-view))",
