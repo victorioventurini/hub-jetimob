@@ -6,6 +6,7 @@ import { useKrInitiatives, useDeleteInitiative } from "../../hooks/useInitiative
 import { InitiativeCard } from "./InitiativeCard";
 import { InitiativeDialog } from "./InitiativeDialog";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { useProfileId } from "@/hooks/useIdentity";
 import type { Initiative } from "../../types/initiative";
 
 interface KrContext {
@@ -23,12 +24,18 @@ interface InitiativesListProps {
 }
 
 export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: InitiativesListProps) {
+  const profileId = useProfileId();
   const { data: initiatives, isLoading } = useKrInitiatives(krId);
   const deleteMutation = useDeleteInitiative();
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
   const [deletingInitiative, setDeletingInitiative] = useState<Initiative | null>(null);
+  
+  // Check if user can edit a specific initiative (owner or general canEdit)
+  const canEditInitiative = (initiative: Initiative) => {
+    return canEdit || initiative.owner_user_id === profileId;
+  };
 
   const handleEdit = (initiative: Initiative) => {
     setEditingInitiative(initiative);
@@ -119,14 +126,17 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
         </div>
       ) : (
         <div className="space-y-3">
-          {initiatives.map((initiative) => (
-            <InitiativeCard
-              key={initiative.id}
-              initiative={initiative}
-              onEdit={canEdit ? handleEdit : undefined}
-              onDelete={canEdit ? setDeletingInitiative : undefined}
-            />
-          ))}
+          {initiatives.map((initiative) => {
+            const canManageThis = canEditInitiative(initiative);
+            return (
+              <InitiativeCard
+                key={initiative.id}
+                initiative={initiative}
+                onEdit={canManageThis ? handleEdit : undefined}
+                onDelete={canManageThis ? setDeletingInitiative : undefined}
+              />
+            );
+          })}
         </div>
       )}
 
