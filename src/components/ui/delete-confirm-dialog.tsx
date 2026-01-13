@@ -1,54 +1,26 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+/**
+ * DeleteConfirmDialog - Re-exportado de ConfirmDialog
+ * 
+ * @deprecated Use ConfirmDialog com variant="destructive" diretamente.
+ * Este arquivo existe apenas para retrocompatibilidade.
+ */
 
-interface DeleteConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-  title: string;
-  description: string;
-  isLoading?: boolean;
+import { ConfirmDialog, type ConfirmDialogProps } from "./confirm-dialog";
+
+export interface DeleteConfirmDialogProps extends Omit<ConfirmDialogProps, "variant" | "confirmLabel"> {
+  /** @deprecated Use ConfirmDialog com variant="destructive" */
+  confirmLabel?: string;
 }
 
-export function DeleteConfirmDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-  title,
-  description,
-  isLoading = false,
-}: DeleteConfirmDialogProps) {
+/**
+ * @deprecated Use `<ConfirmDialog variant="destructive" />` diretamente.
+ */
+export function DeleteConfirmDialog(props: DeleteConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              onConfirm();
-            }}
-            disabled={isLoading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Excluir
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDialog 
+      {...props} 
+      variant="destructive"
+      confirmLabel={props.confirmLabel}
+    />
   );
 }
