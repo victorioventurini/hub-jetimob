@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { HubPageHeader } from '@/components/hub/HubPageHeader';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -109,7 +109,7 @@ export default function AutomationsPage() {
 
   return (
     <div className="space-y-6">
-      <HubPageHeader
+      <PageHeader
         title="Automações"
         description="Catálogo de eventos e ações disponíveis para automações do Hub"
         breadcrumbs={[{ label: "Automações" }]}

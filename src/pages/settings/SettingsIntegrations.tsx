@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useLocalSearch } from "@/shared/url";
 import { queryKeys } from "@/lib/queryKeys";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { HubPageHeader } from "@/components/hub/HubPageHeader";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function SettingsIntegrations() {
   usePageTitle("Integrações", { 
@@ -105,7 +105,7 @@ export default function SettingsIntegrations() {
 
   return (
     <div className="space-y-6">
-      <HubPageHeader
+      <PageHeader
         title="Integrações"
         description="Configure as integrações globais do Hub"
         breadcrumbs={[{ label: "Integrações" }]}

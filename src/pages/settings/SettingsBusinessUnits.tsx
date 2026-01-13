@@ -20,7 +20,7 @@ import { BuDetailDialog } from "@/modules/bu/components/BuDetailDialog";
 import { BuUnit } from "@/modules/bu/types";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLocalSearch } from "@/shared/url";
-import { HubPageHeader } from "@/components/hub/HubPageHeader";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function SettingsBusinessUnits() {
   usePageTitle("Business Units", { 
@@ -84,7 +84,7 @@ export default function SettingsBusinessUnits() {
 
   return (
     <div className="space-y-6">
-      <HubPageHeader
+      <PageHeader
         title="Business Units"
         description="Gerencie as unidades de negócio do Hub"
         breadcrumbs={[{ label: "Business Units" }]}
