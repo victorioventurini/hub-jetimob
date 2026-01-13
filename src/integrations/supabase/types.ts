@@ -7994,6 +7994,13 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_agent_logs: { Args: never; Returns: number }
+      cleanup_old_audit_logs: {
+        Args: { p_retention_days?: number }
+        Returns: {
+          deleted_count: number
+          table_name: string
+        }[]
+      }
       cleanup_old_cron_logs: { Args: never; Returns: undefined }
       cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }

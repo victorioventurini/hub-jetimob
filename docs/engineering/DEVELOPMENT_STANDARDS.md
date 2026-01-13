@@ -1,6 +1,6 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.5.0  
+**Versão:** 1.6.0  
 **Última atualização:** 2026-01-13  
 **Status:** Normativo (V2-only mode ativo) | RLS 100% V2
 **Referência:** TCR v2.27.0
@@ -20,6 +20,7 @@
 - [I. Anti-patterns (Proibidos)](#i-anti-patterns-proibidos)
 - [J. User Directory Global](#j-user-directory-global)
 - [L. Layout e Estados de Página](#l-layout-e-estados-de-página)
+- [M. Limites de Código e Sustentabilidade](#m-limites-de-código-e-sustentabilidade)
 
 ---
 
@@ -576,85 +577,67 @@ const { value, set, clear } = useUrlState({ key: "q", defaultValue: "" });
 
 ## F. Edge Functions
 
-### F.1 Estrutura Padrão
+### F.1 Limites Obrigatórios
+
+```
+⚠️ LIMITE: Edge Functions não devem exceder 500 linhas.
+```
+
+| Métrica | Limite | Ação se exceder |
+|---------|--------|-----------------|
+| Linhas por função | ≤500 | Extrair para `_shared/` |
+| Handlers por arquivo | ≤3 | Dividir em funções separadas |
+| Imports externos | Minimizar | Preferir `_shared/` |
+
+### F.2 Usar `withMiddleware` (Padrão Canônico)
 
 ```typescript
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+// ✅ CORRETO: Usar middleware compartilhado
+import { withMiddleware } from "../_shared/withMiddleware.ts";
+import { createJsonResponse } from "../_shared/responseUtils.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-current-bu-id, x-correlation-id",
-};
-
-serve(async (req) => {
-  // 1. CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+Deno.serve(async (req) => {
+  const middlewareResult = await withMiddleware(req);
+  if (!middlewareResult.success) {
+    return middlewareResult.error;
   }
 
-  // 2. Correlation ID (para logs)
-  const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+  const { supabase, user, correlationId } = middlewareResult;
 
-  // 3. Validar JWT
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-
-  const { data: authData, error: authError } = await supabase.auth.getClaims(
-    authHeader.replace("Bearer ", "")
-  );
-  if (authError || !authData?.claims) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // 4. Extrair BU (se necessário)
-  const buId = req.headers.get("x-current-bu-id");
-  if (!buId) {
-    return new Response(JSON.stringify({ error: "Missing BU context" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // 5. Lógica da função
   try {
-    const result = await processRequest(req, supabase, buId, authData.claims);
-
-    console.log(`[${correlationId}] Success`);
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const result = await processRequest(req, supabase, user);
+    return createJsonResponse({ success: true, data: result });
   } catch (error) {
     console.error(`[${correlationId}] Error:`, error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createJsonResponse({ error: error.message }, 500);
   }
 });
 ```
 
-### F.2 Idempotência
+### F.3 Restrição de Acesso por Role
+
+```typescript
+// ✅ CORRETO: Restringir funções dev-only
+const middlewareResult = await withMiddleware(req);
+if (!middlewareResult.success) return middlewareResult.error;
+
+const { supabase, user } = middlewareResult;
+
+// Verificar se é platform admin
+const { data: isAdmin } = await supabase.rpc("is_platform_admin", {
+  p_user_id: user.id
+});
+
+if (!isAdmin) {
+  return createJsonResponse({ error: "Forbidden" }, 403);
+}
+```
+
+### F.4 Idempotência
 
 Para operações que podem ser duplicadas (webhooks), usar `dedupe_key`:
 
 ```typescript
-// Verificar se já processou
 const { data: existing } = await supabase
   .from("processed_events")
   .select("id")
@@ -665,16 +648,15 @@ if (existing) {
   return { success: true, duplicate: true };
 }
 
-// Processar e registrar
 await supabase.from("processed_events").insert({ dedupe_key: dedupeKey });
 ```
 
-### F.3 Config TOML
+### F.5 Config TOML
 
 ```toml
 # supabase/config.toml
 [functions.my-function]
-verify_jwt = false  # Validar manualmente com getClaims()
+verify_jwt = false  # Validar manualmente via middleware
 ```
 
 ---
@@ -1102,6 +1084,68 @@ function MySettingsPage() {
 
 ---
 
+## M. Limites de Código e Sustentabilidade
+
+### M.1 Limites por Tipo de Arquivo
+
+```
+⚠️ REGRA: Arquivos que excedem limites DEVEM ser refatorados antes de adicionar funcionalidade.
+```
+
+| Tipo | Limite | Ação se exceder |
+|------|--------|-----------------|
+| Hooks (`use*.ts`) | ≤200 linhas | Extrair sub-hooks ou funções |
+| Edge Functions | ≤500 linhas | Extrair para `_shared/` |
+| Componentes | ≤300 linhas | Dividir em sub-componentes |
+| Páginas | ≤400 linhas | Extrair seções para componentes |
+| Utils/Helpers | ≤150 linhas | Agrupar por domínio |
+
+### M.2 Sinais de Complexidade
+
+Refatorar quando:
+
+- Hook mistura queries, mutations e side effects
+- Componente tem mais de 5 `useState`
+- Função tem mais de 4 níveis de indentação
+- Arquivo tem mais de 10 imports
+
+### M.3 Padrão de Extração
+
+```typescript
+// ❌ ANTES: Hook monolítico (400+ linhas)
+export function useNotificationCenter() {
+  // queries
+  // mutations
+  // handlers
+  // side effects
+}
+
+// ✅ DEPOIS: Hooks compostos
+export function useNotificationCenter() {
+  const queries = useNotificationQueries();
+  const mutations = useNotificationMutations();
+  const handlers = useNotificationHandlers(queries, mutations);
+  
+  return { ...queries, ...mutations, ...handlers };
+}
+```
+
+### M.4 Cleanup Automático de Logs
+
+O Hub possui função de cleanup para tabelas de log:
+
+```sql
+-- Executar semanalmente (via cron ou admin)
+SELECT * FROM cleanup_old_audit_logs(90);
+-- Retorna contagem de registros deletados por tabela
+```
+
+Tabelas limpas automaticamente:
+- `audit_logs` (retenção: 90 dias)
+- `ai_agent_logs` (retenção: 90 dias)
+
+---
+
 ## Referências
 
 | Documento | Descrição |
@@ -1112,5 +1156,4 @@ function MySettingsPage() {
 | [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md) | Padrão de URL state |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
-| [permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md](../permissions/WAVE9_SUNSET_V1_FINAL_REPORT.md) | Remoção V1 |
-| [WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md](../WAVE10_PERMISSION_UX_GOVERNANCE_REPORT.md) | Governance Gate |
+| [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | Auditoria sistêmica |
