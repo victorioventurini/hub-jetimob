@@ -59,6 +59,52 @@ export default {
           muted: "hsl(var(--danger-muted))",
           "muted-foreground": "hsl(var(--danger-muted-foreground))",
         },
+        // RAG Status Colors
+        "status-green": {
+          DEFAULT: "hsl(var(--status-green))",
+          foreground: "hsl(var(--status-green-foreground))",
+          muted: "hsl(var(--status-green-muted))",
+          "muted-foreground": "hsl(var(--status-green-muted-foreground))",
+        },
+        "status-yellow": {
+          DEFAULT: "hsl(var(--status-yellow))",
+          foreground: "hsl(var(--status-yellow-foreground))",
+          muted: "hsl(var(--status-yellow-muted))",
+          "muted-foreground": "hsl(var(--status-yellow-muted-foreground))",
+        },
+        "status-red": {
+          DEFAULT: "hsl(var(--status-red))",
+          foreground: "hsl(var(--status-red-foreground))",
+          muted: "hsl(var(--status-red-muted))",
+          "muted-foreground": "hsl(var(--status-red-muted-foreground))",
+        },
+        "status-gray": {
+          DEFAULT: "hsl(var(--status-gray))",
+          foreground: "hsl(var(--status-gray-foreground))",
+          muted: "hsl(var(--status-gray-muted))",
+          "muted-foreground": "hsl(var(--status-gray-muted-foreground))",
+        },
+        // Surface Permission Colors
+        "surface-view": {
+          DEFAULT: "hsl(var(--surface-view))",
+          muted: "hsl(var(--surface-view-muted))",
+          "muted-foreground": "hsl(var(--surface-view-muted-foreground))",
+        },
+        "surface-operate": {
+          DEFAULT: "hsl(var(--surface-operate))",
+          muted: "hsl(var(--surface-operate-muted))",
+          "muted-foreground": "hsl(var(--surface-operate-muted-foreground))",
+        },
+        "surface-administer": {
+          DEFAULT: "hsl(var(--surface-administer))",
+          muted: "hsl(var(--surface-administer-muted))",
+          "muted-foreground": "hsl(var(--surface-administer-muted-foreground))",
+        },
+        "surface-restricted": {
+          DEFAULT: "hsl(var(--surface-restricted))",
+          muted: "hsl(var(--surface-restricted-muted))",
+          "muted-foreground": "hsl(var(--surface-restricted-muted-foreground))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",

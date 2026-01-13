@@ -290,11 +290,11 @@ export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
 };
 
 export const TICKET_STATUS_COLORS: Record<TicketStatus, string> = {
-  waiting: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  paused: 'bg-gray-100 text-gray-800 border-gray-200',
-  in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
-  done: 'bg-green-100 text-green-800 border-green-200',
-  discarded: 'bg-red-100 text-red-800 border-red-200',
+  waiting: 'bg-status-yellow-muted text-status-yellow-muted-foreground border-status-yellow/20',
+  paused: 'bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20',
+  in_progress: 'bg-info-muted text-info-muted-foreground border-info/20',
+  done: 'bg-status-green-muted text-status-green-muted-foreground border-status-green/20',
+  discarded: 'bg-status-red-muted text-status-red-muted-foreground border-status-red/20',
 };
 
 export const TICKET_VISIBILITY_LABELS: Record<TicketVisibility, string> = {

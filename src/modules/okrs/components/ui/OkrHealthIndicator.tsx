@@ -25,22 +25,22 @@ const statusConfig: Record<HealthStatus, {
   healthy: {
     label: 'Saudável',
     emoji: '🟢',
-    color: 'text-green-600',
-    bgColor: 'bg-green-500/10 border-green-500/20',
+    color: 'text-status-green-muted-foreground',
+    bgColor: 'bg-status-green-muted border-status-green/20',
     icon: CheckCircle,
   },
   at_risk: {
     label: 'Em Risco',
     emoji: '🟡',
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-500/10 border-yellow-500/20',
+    color: 'text-status-yellow-muted-foreground',
+    bgColor: 'bg-status-yellow-muted border-status-yellow/20',
     icon: AlertTriangle,
   },
   critical: {
     label: 'Crítico',
     emoji: '🔴',
-    color: 'text-red-600',
-    bgColor: 'bg-red-500/10 border-red-500/20',
+    color: 'text-status-red-muted-foreground',
+    bgColor: 'bg-status-red-muted border-status-red/20',
     icon: XCircle,
   },
 };
@@ -156,10 +156,10 @@ interface RagStatusProps {
 }
 
 const ragConfig = {
-  green: { label: 'On Track', color: 'bg-green-500', textColor: 'text-green-600' },
-  yellow: { label: 'Em Risco', color: 'bg-yellow-500', textColor: 'text-yellow-600' },
-  red: { label: 'Off Track', color: 'bg-red-500', textColor: 'text-red-600' },
-  not_started: { label: 'Não Iniciado', color: 'bg-gray-400', textColor: 'text-muted-foreground' },
+  green: { label: 'On Track', color: 'bg-status-green', textColor: 'text-status-green-muted-foreground' },
+  yellow: { label: 'Em Risco', color: 'bg-status-yellow', textColor: 'text-status-yellow-muted-foreground' },
+  red: { label: 'Off Track', color: 'bg-status-red', textColor: 'text-status-red-muted-foreground' },
+  not_started: { label: 'Não Iniciado', color: 'bg-status-gray', textColor: 'text-muted-foreground' },
 };
 
 export function RagStatusDot({ status, label, className, showLabel = false }: RagStatusProps) {
@@ -193,19 +193,19 @@ export function RagSummary({ green, yellow, red, notStarted = 0, className }: Ra
     <div className={cn('flex items-center gap-2 text-xs', className)}>
       {green > 0 && (
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="w-2 h-2 rounded-full bg-status-green" />
           {green}
         </span>
       )}
       {yellow > 0 && (
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-yellow-500" />
+          <span className="w-2 h-2 rounded-full bg-status-yellow" />
           {yellow}
         </span>
       )}
       {red > 0 && (
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="w-2 h-2 rounded-full bg-status-red" />
           {red}
         </span>
       )}

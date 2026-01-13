@@ -1,15 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
-import { Eye, Wrench, Settings2 } from "lucide-react";
+import { Eye, Wrench, Settings2, Lock } from "lucide-react";
 import { usePermissionTemplatesV2 } from "../hooks/usePermissionsV2";
+import { SURFACE_COLORS, type PermissionSurface } from "@/lib/colors";
 
 const SURFACE_CONFIG = {
-  view: { icon: Eye, label: "VIEW", color: "bg-blue-500/10 text-blue-700 border-blue-500/30" },
-  operate: { icon: Wrench, label: "OPERATE", color: "bg-green-500/10 text-green-700 border-green-500/30" },
-  administer: { icon: Settings2, label: "ADMINISTER", color: "bg-orange-500/10 text-orange-700 border-orange-500/30" },
-  base: { icon: Eye, label: "BASE", color: "bg-gray-500/10 text-gray-700 border-gray-500/30" },
-  restricted: { icon: Eye, label: "RESTRICTED", color: "bg-red-500/10 text-red-700 border-red-500/30" },
+  view: { icon: Eye, label: "VIEW", color: SURFACE_COLORS.view.full },
+  operate: { icon: Wrench, label: "OPERATE", color: SURFACE_COLORS.operate.full },
+  administer: { icon: Settings2, label: "ADMINISTER", color: SURFACE_COLORS.administer.full },
+  base: { icon: Eye, label: "BASE", color: SURFACE_COLORS.base.full },
+  restricted: { icon: Lock, label: "RESTRICTED", color: SURFACE_COLORS.restricted.full },
 };
 
 const MODULES = [

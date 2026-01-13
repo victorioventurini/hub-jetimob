@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { TICKET_STATUS_STYLES, type TicketStatusKey } from "@/lib/colors";
 
 // Status types from tickets module
 export type TicketStatus = 'waiting' | 'paused' | 'in_progress' | 'done' | 'discarded';
@@ -7,13 +8,13 @@ export type TicketStatus = 'waiting' | 'paused' | 'in_progress' | 'done' | 'disc
 export const TICKET_STATUS_OPTIONS: Array<{
   value: TicketStatus;
   label: string;
-  color: string;
+  dotColor: string;
 }> = [
-  { value: 'waiting', label: 'Aguardando', color: 'bg-yellow-500' },
-  { value: 'paused', label: 'Pausado', color: 'bg-gray-500' },
-  { value: 'in_progress', label: 'Em Andamento', color: 'bg-blue-500' },
-  { value: 'done', label: 'Concluído', color: 'bg-emerald-500' },
-  { value: 'discarded', label: 'Descartado', color: 'bg-red-500' },
+  { value: 'waiting', label: 'Aguardando', dotColor: TICKET_STATUS_STYLES.waiting.dot },
+  { value: 'paused', label: 'Pausado', dotColor: TICKET_STATUS_STYLES.paused.dot },
+  { value: 'in_progress', label: 'Em Andamento', dotColor: TICKET_STATUS_STYLES.in_progress.dot },
+  { value: 'done', label: 'Concluído', dotColor: TICKET_STATUS_STYLES.done.dot },
+  { value: 'discarded', label: 'Descartado', dotColor: TICKET_STATUS_STYLES.discarded.dot },
 ];
 
 interface TicketStatusSelectProps {
@@ -61,7 +62,7 @@ export function TicketStatusSelect({
       <SelectTrigger className={cn("w-[160px]", triggerClassName, className)}>
         <span className="flex items-center gap-2">
           {showIndicator && selectedOption && (
-            <span className={cn("h-2 w-2 rounded-full shrink-0", selectedOption.color)} />
+            <span className={cn("h-2 w-2 rounded-full shrink-0", selectedOption.dotColor)} />
           )}
           <SelectValue placeholder={placeholder} />
         </span>
@@ -76,7 +77,7 @@ export function TicketStatusSelect({
           <SelectItem key={option.value} value={option.value}>
             <span className="flex items-center gap-2">
               {showIndicator && (
-                <span className={cn("h-2 w-2 rounded-full shrink-0", option.color)} />
+                <span className={cn("h-2 w-2 rounded-full shrink-0", option.dotColor)} />
               )}
               {option.label}
             </span>

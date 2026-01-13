@@ -58,6 +58,44 @@
     --danger-muted: 0 84% 95%;
     --danger-muted-foreground: 0 84% 40%;
 
+    /* RAG Status Colors */
+    --status-green: 142 76% 36%;
+    --status-green-foreground: 0 0% 100%;
+    --status-green-muted: 142 76% 95%;
+    --status-green-muted-foreground: 142 76% 30%;
+    
+    --status-yellow: 38 92% 50%;
+    --status-yellow-foreground: 0 0% 100%;
+    --status-yellow-muted: 38 92% 95%;
+    --status-yellow-muted-foreground: 38 92% 35%;
+    
+    --status-red: 0 84% 60%;
+    --status-red-foreground: 0 0% 100%;
+    --status-red-muted: 0 84% 95%;
+    --status-red-muted-foreground: 0 84% 40%;
+    
+    --status-gray: 220 9% 46%;
+    --status-gray-foreground: 0 0% 100%;
+    --status-gray-muted: 220 14% 96%;
+    --status-gray-muted-foreground: 220 9% 46%;
+
+    /* Surface Permission Colors */
+    --surface-view: 217 91% 60%;
+    --surface-view-muted: 217 91% 95%;
+    --surface-view-muted-foreground: 217 91% 40%;
+    
+    --surface-operate: 142 76% 36%;
+    --surface-operate-muted: 142 76% 95%;
+    --surface-operate-muted-foreground: 142 76% 30%;
+    
+    --surface-administer: 25 95% 53%;
+    --surface-administer-muted: 25 95% 95%;
+    --surface-administer-muted-foreground: 25 95% 40%;
+    
+    --surface-restricted: 0 84% 60%;
+    --surface-restricted-muted: 0 84% 95%;
+    --surface-restricted-muted-foreground: 0 84% 40%;
+
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 217 91% 60%;
@@ -131,6 +169,44 @@
     --danger-foreground: 210 40% 98%;
     --danger-muted: 0 50% 15%;
     --danger-muted-foreground: 0 84% 65%;
+
+    /* RAG Status Colors (Dark) */
+    --status-green: 142 76% 45%;
+    --status-green-foreground: 0 0% 100%;
+    --status-green-muted: 142 50% 15%;
+    --status-green-muted-foreground: 142 76% 60%;
+    
+    --status-yellow: 38 92% 55%;
+    --status-yellow-foreground: 0 0% 100%;
+    --status-yellow-muted: 38 70% 15%;
+    --status-yellow-muted-foreground: 38 92% 65%;
+    
+    --status-red: 0 84% 60%;
+    --status-red-foreground: 0 0% 100%;
+    --status-red-muted: 0 50% 15%;
+    --status-red-muted-foreground: 0 84% 65%;
+    
+    --status-gray: 220 9% 55%;
+    --status-gray-foreground: 0 0% 100%;
+    --status-gray-muted: 220 14% 15%;
+    --status-gray-muted-foreground: 220 9% 65%;
+
+    /* Surface Permission Colors (Dark) */
+    --surface-view: 217 91% 65%;
+    --surface-view-muted: 217 60% 15%;
+    --surface-view-muted-foreground: 217 91% 70%;
+    
+    --surface-operate: 142 76% 45%;
+    --surface-operate-muted: 142 50% 15%;
+    --surface-operate-muted-foreground: 142 76% 60%;
+    
+    --surface-administer: 25 95% 58%;
+    --surface-administer-muted: 25 70% 15%;
+    --surface-administer-muted-foreground: 25 95% 65%;
+    
+    --surface-restricted: 0 84% 60%;
+    --surface-restricted-muted: 0 50% 15%;
+    --surface-restricted-muted-foreground: 0 84% 65%;
 
     --border: 222 47% 18%;
     --input: 222 47% 18%;
