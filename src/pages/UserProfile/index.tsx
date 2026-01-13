@@ -31,7 +31,7 @@ import {
 } from "@/hooks/usePublicProfile";
 import { TeamLink } from "@/components/links";
 import { useBu } from "@/contexts/BuContext";
-import { UserContributionsSection } from "./UserContributionsSection";
+
 
 const workModeLabels: Record<string, string> = {
   onsite: "Presencial",
@@ -85,8 +85,6 @@ export default function UserProfile() {
     }
   };
 
-  // Extract first name for the title
-  const firstName = profile?.first_name || profile?.display_name?.split(" ")[0] || "Usuário";
 
   if (isLoading) {
     return (
@@ -225,14 +223,6 @@ export default function UserProfile() {
               </CardContent>
             </Card>
 
-            {/* User Contributions - OKRs and Initiatives (same filter as /okrs?view=my) */}
-            {profile.id && (
-              <UserContributionsSection 
-                profileId={profile.id}
-                firstName={firstName}
-                buName={currentBu?.name}
-              />
-            )}
 
             {/* KPIs */}
             {kpis && kpis.length > 0 && (
