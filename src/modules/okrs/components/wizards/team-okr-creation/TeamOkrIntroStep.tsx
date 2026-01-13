@@ -166,7 +166,7 @@ export function TeamOkrIntroStep({
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
-                      Vic, sua assistente de OKRs
+                      Vic, seu assistente de OKRs
                     </p>
                   </>
                 )}

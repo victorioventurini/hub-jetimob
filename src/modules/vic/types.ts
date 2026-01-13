@@ -23,6 +23,9 @@ export type VicActionContext =
   | "okr-review-quality"
   | "okr-check-alignment"
   | "okr-initiative-review"
+  | "okr-analysis-improvement"
+  | "okr-overview-insights"
+  | "okr-gap-resolution"
   | "kpi-create"
   | "kpi-edit"
   | "kpi-analyze-variation"
@@ -32,8 +35,7 @@ export type VicActionContext =
   | "onboarding-welcome"
   | "onboarding-questions"
   | "decision-structure"
-  | "vic-test-page"
-  | "dashboard-productivity";
+  | "vic-test-page";
 
 export interface VicContext {
   type: string;

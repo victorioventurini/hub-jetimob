@@ -2,8 +2,11 @@
  * AnalysisScoreCard - Card para exibir score de 0-10 com barra de progresso
  */
 
+import { Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AnalysisScore } from "../../hooks/useOrgOkrAnalysis";
 
@@ -12,6 +15,7 @@ interface AnalysisScoreCardProps {
   icon?: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  onAskVic?: () => void;
 }
 
 const statusColors = {
@@ -46,6 +50,7 @@ export function AnalysisScoreCard({
   icon, 
   className,
   onClick,
+  onAskVic,
 }: AnalysisScoreCardProps) {
   const colors = statusColors[score.status];
   const progressValue = (score.value / 10) * 100;
@@ -73,9 +78,31 @@ export function AnalysisScoreCard({
               {score.label}
             </span>
           </div>
-          <span className={cn("text-2xl font-bold", colors.text)}>
-            {score.value.toFixed(1)}
-          </span>
+          <div className="flex items-center gap-2">
+            {onAskVic && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAskVic();
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Pedir sugestões ao Vic</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <span className={cn("text-2xl font-bold", colors.text)}>
+              {score.value.toFixed(1)}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-2">
