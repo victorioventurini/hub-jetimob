@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.26.0  
-**Última atualização:** 2026-01-12
+**Versão:** 2.27.0  
+**Última atualização:** 2026-01-13
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -23,7 +23,7 @@
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
 >
 > ### Relatórios de Saúde e Compliance
-> - [HEALTH_REPORT_2026-01-11.md](./engineering/HEALTH_REPORT_2026-01-11.md) — **Relatório de saúde técnica atual**
+> - [HEALTH_REPORT_2026-01-13.md](./engineering/HEALTH_REPORT_2026-01-13.md) — **Relatório de saúde técnica atual**
 > - [COMPLIANCE_BASELINE.md](./engineering/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
 > - [FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
 > - [SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Estado final do sistema
@@ -2207,6 +2207,23 @@ src/
 - **Cleanup de código**:
   - Removidos arquivos: `LegacyAssetRedirect.tsx`, `TicketMentionInput.tsx`, `useDebouncedValue.ts`, `useDebouncedCallback.ts`
   - Imports atualizados para novos módulos consolidados
+
+### v2.27.0 (2026-01-13)
+- **CheckinWizard Legacy Removido**:
+  - Removido componente `CheckinWizard.tsx` (modal antigo de check-in)
+  - Removido diretório `wizard/` com componentes: `WizardSetup`, `WizardKrSelection`, `WizardCheckinStep`, `WizardSummary`
+  - Botão "Iniciar Check-in do Time" removido de `CycleCheckinsPage`
+  - Check-ins agora usam **formato full-page** (padrão adotado para todos wizards de OKRs)
+- **Correção useCycleCheckins**:
+  - Hook atualizado para mapear corretamente resposta da RPC `get_cycle_checkins`
+  - Mapeamento: `feed` → `checkins`, `total_count` → `total`
+  - Filtro `rag_status` renomeado para `status` (alinhamento com RPC)
+- **Correção useActiveCycles**:
+  - Priorização de ciclos por tipo: `quarter > semester > year`
+  - Ciclo default é agora o trimestre vigente (não mais o ano)
+- **Documentação removida**:
+  - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
+  - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
 ### v2.21.0 (2026-01-12)
 - **Technical Debt Analysis** criado em `docs/engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-12.md`

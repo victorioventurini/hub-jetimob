@@ -1,7 +1,8 @@
 # QA: Página de Check-ins do Ciclo (OKRs)
 
-> Versão: 1.0  
-> Última atualização: 2025-01-09
+> Versão: 1.1  
+> Última atualização: 2026-01-13
+> **Nota:** CheckinWizard modal foi removido em favor de full-page wizards
 
 ## Visão Geral
 

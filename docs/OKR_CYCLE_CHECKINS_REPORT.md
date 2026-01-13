@@ -1,5 +1,7 @@
 # Relatório de Check-ins do Ciclo (OKRs)
 
+> **Última atualização:** 2026-01-13
+
 ## Visão Geral
 
 A página de **Check-ins do Ciclo** oferece uma visão consolidada de todos os check-ins realizados durante um ciclo de OKRs, permitindo acompanhamento gerencial e diagnóstico de problemas.
@@ -15,7 +17,12 @@ A página de **Check-ins do Ciclo** oferece uma visão consolidada de todos os c
 
 ### Seletor de Ciclo
 
-No topo da página, um seletor permite escolher qual ciclo visualizar. O ciclo ativo é selecionado por padrão.
+No topo da página, um seletor permite escolher qual ciclo visualizar. O **ciclo trimestral vigente** é selecionado por padrão (ex: 2026-Q1).
+
+**Priorização de ciclos ativos:**
+1. Quarter (prioridade máxima)
+2. Semester
+3. Year
 
 ### Cards de Resumo
 
@@ -76,3 +83,11 @@ A página respeita o modelo de permissões existente:
 ## Integração com KrHistoryDialog
 
 O modal existente `KrHistoryDialog` é reutilizado como drill-down para detalhes de cada Key Result, evitando duplicação de código e mantendo consistência visual.
+
+## Changelog
+
+### 2026-01-13
+- Removido botão "Iniciar Check-in do Time" (wizard modal legacy)
+- Corrigido mapeamento da RPC `get_cycle_checkins` (`feed→checkins`, `total_count→total`)
+- Ciclo default agora prioriza quarter sobre year
+- Adotado padrão full-page para todos wizards de OKRs
