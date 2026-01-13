@@ -156,7 +156,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from("ai_agent_documents")
       .update({
-        status: extractedContent.startsWith("[") ? "error" : "ready",
+        status: extractedContent.startsWith("[") ? "error" : "completed",
         extracted_content: extractedContent.substring(0, 500000), // Limit to ~500KB
         processing_error: extractedContent.startsWith("[Erro") ? "Falha na extração de texto" : null,
       })

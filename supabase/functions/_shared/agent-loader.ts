@@ -287,7 +287,7 @@ export async function buildSystemPrompt(
     .from("ai_agent_documents")
     .select("name, extracted_content")
     .eq("agent_id", agent.id)
-    .eq("status", "ready");
+    .eq("status", "completed");
 
   if (documentsError) {
     console.error(`[${requestId}] Error fetching agent documents:`, documentsError.message);

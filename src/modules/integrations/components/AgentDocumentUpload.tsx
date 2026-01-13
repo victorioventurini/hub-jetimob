@@ -46,7 +46,7 @@ function formatFileSize(bytes: number | null): string {
 
 function StatusBadge({ status }: { status: AgentDocument['status'] }) {
   switch (status) {
-    case 'ready':
+    case 'completed':
       return (
         <Badge variant="default" className="bg-green-600">
           <CheckCircle2 className="h-3 w-3 mr-1" />
