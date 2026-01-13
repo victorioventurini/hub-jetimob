@@ -1,5 +1,9 @@
 /**
  * Agent Loader - Load and configure AI agents
+ * 
+ * Features:
+ * - SWR-style cache for agent configurations (TTL: 60s)
+ * - Reduces database queries for frequently-used agents
  */
 
 import { loadInstructionSources, assembleInstructionContent } from "../invoke-vic/instruction-sources.ts";
@@ -68,8 +72,82 @@ export interface AgentContext {
   additionalData?: Record<string, unknown>;
 }
 
+// =============================================
+// SWR-Style Cache for Agent Configurations
+// =============================================
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  stale: boolean;
+}
+
+const CACHE_TTL_MS = 60_000; // 60 seconds
+const agentCache = new Map<string, CacheEntry<LoadedAgent>>();
+
+function getCacheKey(agentSlug: string, buId: string): string {
+  return `${agentSlug}:${buId}`;
+}
+
+function getCachedAgent(agentSlug: string, buId: string): LoadedAgent | null {
+  const key = getCacheKey(agentSlug, buId);
+  const entry = agentCache.get(key);
+  
+  if (!entry) return null;
+  
+  const age = Date.now() - entry.timestamp;
+  
+  // If within TTL, return cached data
+  if (age < CACHE_TTL_MS) {
+    return entry.data;
+  }
+  
+  // Mark as stale for SWR pattern (return stale data, refresh in background)
+  entry.stale = true;
+  return entry.data;
+}
+
+function setCachedAgent(agentSlug: string, buId: string, agent: LoadedAgent): void {
+  const key = getCacheKey(agentSlug, buId);
+  agentCache.set(key, {
+    data: agent,
+    timestamp: Date.now(),
+    stale: false,
+  });
+}
+
+function isStale(agentSlug: string, buId: string): boolean {
+  const key = getCacheKey(agentSlug, buId);
+  const entry = agentCache.get(key);
+  return entry?.stale ?? true;
+}
+
+/**
+ * Clear cache for a specific agent or all agents
+ */
+export function clearAgentCache(agentSlug?: string, buId?: string): void {
+  if (agentSlug && buId) {
+    agentCache.delete(getCacheKey(agentSlug, buId));
+  } else if (agentSlug) {
+    // Clear all entries for this agent slug
+    for (const key of agentCache.keys()) {
+      if (key.startsWith(`${agentSlug}:`)) {
+        agentCache.delete(key);
+      }
+    }
+  } else {
+    // Clear entire cache
+    agentCache.clear();
+  }
+}
+
+// =============================================
+// Agent Loading Functions
+// =============================================
+
 /**
  * Load agent by slug with BU activation check
+ * Uses SWR caching to reduce database queries
  */
 export async function loadAgent(
   serviceClient: any,
@@ -77,6 +155,39 @@ export async function loadAgent(
   buId: string,
   requestId: string
 ): Promise<LoadedAgent | null> {
+  // Check cache first
+  const cached = getCachedAgent(agentSlug, buId);
+  
+  if (cached && !isStale(agentSlug, buId)) {
+    console.log(`[${requestId}] Agent ${agentSlug} loaded from cache`);
+    return cached;
+  }
+
+  // If stale, return cached while refreshing (SWR pattern)
+  if (cached) {
+    console.log(`[${requestId}] Agent ${agentSlug} returning stale cache, refreshing in background`);
+    // Refresh in background (fire-and-forget)
+    refreshAgentCache(serviceClient, agentSlug, buId, requestId).catch((err) => {
+      console.error(`[${requestId}] Background cache refresh failed:`, err);
+    });
+    return cached;
+  }
+
+  // No cache, fetch from database
+  return fetchAndCacheAgent(serviceClient, agentSlug, buId, requestId);
+}
+
+/**
+ * Fetch agent from database and update cache
+ */
+async function fetchAndCacheAgent(
+  serviceClient: any,
+  agentSlug: string,
+  buId: string,
+  requestId: string
+): Promise<LoadedAgent | null> {
+  console.log(`[${requestId}] Loading agent ${agentSlug} from database`);
+
   // Try by slug first
   let agent: AgentRow | null = null;
   const { data: agentBySlug, error: agentSlugError } = await serviceClient
@@ -120,12 +231,35 @@ export async function loadAgent(
     throw new Error("AGENT_ACTIVATION_FETCH_FAILED");
   }
 
-  return {
+  const loadedAgent: LoadedAgent = {
     agent,
     effectiveSystemPrompt: activation?.custom_system_prompt || agent.system_prompt,
     isEnabledInBu: activation?.is_enabled !== false, // Default to enabled
     customPrompt: activation?.custom_system_prompt || null,
   };
+
+  // Update cache
+  setCachedAgent(agentSlug, buId, loadedAgent);
+  console.log(`[${requestId}] Agent ${agentSlug} cached (TTL: ${CACHE_TTL_MS / 1000}s)`);
+
+  return loadedAgent;
+}
+
+/**
+ * Refresh agent cache in background
+ */
+async function refreshAgentCache(
+  serviceClient: any,
+  agentSlug: string,
+  buId: string,
+  requestId: string
+): Promise<void> {
+  try {
+    await fetchAndCacheAgent(serviceClient, agentSlug, buId, requestId);
+  } catch (error) {
+    // Log but don't throw - this is a background operation
+    console.warn(`[${requestId}] Failed to refresh agent cache:`, error);
+  }
 }
 
 /**
