@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -179,8 +180,17 @@ export default function OkrDashboardPage() {
       setShowCreateOrgDialog(true);
     } else if ((activeView === 'team' || activeView === 'my') && canCreateTeam) {
       // Navigate to fullpage wizard for team OKR creation
-      const teamParam = normalizedTeamId ? `?team=${normalizedTeamId}` : '';
-      navigate(`/okrs/create${teamParam}`);
+      // Use normalizedTeamId from URL, fallback to user's own team, then first manageable team
+      const effectiveTeamId = normalizedTeamId 
+        || userProfile?.team_id 
+        || manageableTeams[0]?.id;
+      
+      if (!effectiveTeamId) {
+        toast.error('Nenhum time disponível para criar OKRs');
+        return;
+      }
+      
+      navigate(`/okrs/create?team=${effectiveTeamId}`);
     }
   };
 
@@ -395,7 +405,14 @@ export default function OkrDashboardPage() {
                 activeView === 'company' && canCreateOrg
                   ? () => setShowCreateOrgDialog(true)
                   : activeView !== 'company' && canCreateTeam
-                  ? () => navigate(`/okrs/create${normalizedTeamId ? `?team=${normalizedTeamId}` : ''}`)
+                  ? () => {
+                      const effectiveTeamId = normalizedTeamId || userProfile?.team_id || manageableTeams[0]?.id;
+                      if (effectiveTeamId) {
+                        navigate(`/okrs/create?team=${effectiveTeamId}`);
+                      } else {
+                        toast.error('Nenhum time disponível para criar OKRs');
+                      }
+                    }
                   : undefined
               }
             />
