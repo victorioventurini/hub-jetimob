@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +75,15 @@ export function CycleFormDialog({
   const queryClient = useQueryClient();
   const { client: supabase, buId } = useOptionalBuClient();
   const isEditing = !!cycle;
+  
+  // Defense in depth: check if user can manage OKR settings
+  const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
+  const canManageCycles = isWildcard || has('okrs.settings.manage:bu');
+  
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermissions && !canManageCycles) {
+    return null;
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

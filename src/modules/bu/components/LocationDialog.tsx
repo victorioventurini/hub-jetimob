@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import {
   Dialog,
@@ -76,6 +77,15 @@ export function LocationDialog({ open, onOpenChange, buId, location, parentLocat
   const createMutation = useCreateBuLocation();
   const updateMutation = useUpdateBuLocation();
   const isLoading = createMutation.isPending || updateMutation.isPending;
+  
+  // Defense in depth: check if user can manage BU settings
+  const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
+  const canManageLocations = isWildcard || has('bu.location.manage:bu') || has('bu.settings.manage:bu');
+  
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermissions && !canManageLocations) {
+    return null;
+  }
   
   const { data: locations = [] } = useBuLocations(buId);
   const rootLocations = locations.filter(l => !l.parent_location_id);

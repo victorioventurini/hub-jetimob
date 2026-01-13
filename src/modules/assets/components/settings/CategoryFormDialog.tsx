@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
+import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 
 import {
   Dialog,
@@ -61,6 +62,14 @@ export function CategoryFormDialog({
   isLoading,
 }: CategoryFormDialogProps) {
   const isEditing = !!category;
+  
+  // Defense in depth: check if user can manage asset settings
+  const { canManageSettings, isLoading: isLoadingPermissions } = useAssetPermissionsV2();
+  
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermissions && !canManageSettings) {
+    return null;
+  }
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),

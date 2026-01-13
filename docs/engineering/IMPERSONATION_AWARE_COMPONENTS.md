@@ -173,7 +173,7 @@ export function MyFormDialog({ item, ...props }: MyFormDialogProps) {
 
 ---
 
-## 5. Componentes Já Corrigidos
+## 5. Componentes Corrigidos
 
 | Componente | Arquivo | Tipo de Proteção |
 |------------|---------|------------------|
@@ -181,6 +181,13 @@ export function MyFormDialog({ item, ...props }: MyFormDialogProps) {
 | `InventoryFormDialog` | `src/modules/assets/components/inventory/InventoryFormDialog.tsx` | Defense in Depth |
 | `TeamObjectiveFormDialog` | `src/modules/okrs/components/TeamObjectiveFormDialog.tsx` | Defense in Depth |
 | `TeamKrFormDialog` | `src/modules/okrs/components/TeamKrFormDialog.tsx` | Defense in Depth |
+| `CycleFormDialog` | `src/modules/okrs/components/settings/CycleFormDialog.tsx` | Defense in Depth |
+| `OrgObjectiveFormDialog` | `src/modules/okrs/components/OrgObjectiveFormDialog.tsx` | Defense in Depth |
+| `CategoryFormDialog` | `src/modules/assets/components/settings/CategoryFormDialog.tsx` | Defense in Depth |
+| `PermissionDialog` | `src/modules/permissions/components/PermissionDialog.tsx` | Defense in Depth |
+| `JetimoberDialog` | `src/components/users/JetimoberDialog.tsx` | Defense in Depth |
+| `LocationDialog` | `src/modules/bu/components/LocationDialog.tsx` | Defense in Depth |
+| `EditBuDialog` | `src/modules/bu/components/EditBuDialog.tsx` | Defense in Depth |
 | `useTeamManagement` | `src/hooks/useTeamManagement.ts` | Impersonation-Aware Hook |
 | `useAssetPermissionsV2` | `src/modules/assets/hooks/useAssetPermissionsV2.ts` | Via `usePermissions().isWildcard` |
 | `useModuleAccess` | `src/hooks/useModuleAccess.ts` | Via `!isImpersonating && isAdmin` |
@@ -188,23 +195,7 @@ export function MyFormDialog({ item, ...props }: MyFormDialogProps) {
 
 ---
 
-## 6. Componentes Pendentes
-
-Componentes que ainda precisam de defense in depth (implementar conforme tocar):
-
-| Componente | Arquivo | Prioridade |
-|------------|---------|------------|
-| `CycleFormDialog` | `src/modules/okrs/components/settings/CycleFormDialog.tsx` | Média |
-| `OrgObjectiveFormDialog` | `src/modules/okrs/components/OrgObjectiveFormDialog.tsx` | Média |
-| `CategoryFormDialog` | `src/modules/assets/components/settings/CategoryFormDialog.tsx` | Baixa |
-| `PermissionDialog` | `src/modules/permissions/components/PermissionDialog.tsx` | Baixa |
-| `JetimoberDialog` | `src/components/users/JetimoberDialog.tsx` | Baixa |
-| `LocationDialog` | `src/modules/bu/components/LocationDialog.tsx` | Baixa |
-| `EditBuDialog` | `src/modules/bu/components/EditBuDialog.tsx` | Baixa |
-
----
-
-## 7. Checklist para Novos Componentes
+## 6. Checklist para Novos Componentes
 
 ### Para Hooks de Permissão:
 

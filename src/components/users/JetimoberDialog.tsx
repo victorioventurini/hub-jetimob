@@ -4,6 +4,7 @@ import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { z } from "zod";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Dialog,
   DialogContent,
@@ -102,6 +103,15 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
   const isEditing = !!profile;
+  
+  // Defense in depth: check if user can manage users
+  const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
+  const canManageUsers = isWildcard || has('users.profile.manage:bu') || has('users.profile.create:bu');
+  
+  // Don't render if user doesn't have permission (for create mode or edit mode)
+  if (!isLoadingPermissions && !canManageUsers) {
+    return null;
+  }
   
   const [step, setStep] = useState<Step>("email");
   const [emailInput, setEmailInput] = useState("");
