@@ -228,6 +228,60 @@ export function buildMagicLinkEmailHtml(options: {
 }
 
 /**
+ * Build OTP code email HTML template
+ */
+export function buildOtpEmailHtml(options: {
+  otpCode: string;
+  displayName?: string;
+  buName?: string;
+}): string {
+  const { otpCode, displayName = "usuário", buName } = options;
+  const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
+      <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub</h1>
+        </div>
+        
+        <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+          Olá, ${formattedName}!
+        </p>
+        
+        <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+          Use o código abaixo para acessar o Hub.<br>
+          Este código é válido por 10 minutos.
+        </p>
+        
+        <div style="text-align: center; margin-bottom: 32px;">
+          <div style="display: inline-block; background-color: #f4f4f5; padding: 20px 40px; border-radius: 12px; border: 2px dashed #d4d4d8;">
+            <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #18181b; font-family: monospace;">${otpCode}</span>
+          </div>
+        </div>
+        
+        <p style="color: #71717a; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
+          Se você não solicitou este código, pode ignorar este e-mail com segurança.
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 24px 0;">
+        
+        <p style="color: #a1a1aa; font-size: 12px; text-align: center; margin: 0;">
+          O ponto de encontro para evoluir, executar e simplificar o morar.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
  * Format current date/time for email subject
  * Returns format: DD/MM às HH:MM
  */
