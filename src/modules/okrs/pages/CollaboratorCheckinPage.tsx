@@ -65,7 +65,7 @@ const DEFAULT_DATA: CollaboratorDraftData = {
 export default function CollaboratorCheckinPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, isLoading: isAuthLoading } = useAuth();
   const { isImpersonating } = useOptionalImpersonation();
   
   // Check if user is admin - isAdmin already includes super_admin
@@ -196,8 +196,8 @@ export default function CollaboratorCheckinPage() {
     navigate('/wizards');
   }, [clearDraft, navigate]);
   
-  // Loading
-  if (isLoadingCycles || isLoadingKrs) {
+  // Loading - include auth loading to ensure profile is available
+  if (isAuthLoading || isLoadingCycles || isLoadingKrs) {
     return <LoadingState text="Carregando..." fullPage />;
   }
   
