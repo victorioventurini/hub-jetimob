@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { AreaOkrSummary } from '@/modules/okrs/types/wizard';
+import { getProgressBarStyle, TREND_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -44,11 +45,11 @@ export interface ManagersPanoramaStepProps {
 function getTrendIcon(trend: AreaOkrSummary['trend']) {
   switch (trend) {
     case 'improving':
-      return <TrendingUp className="h-4 w-4 text-green-600" />;
+      return <TrendingUp className={`h-4 w-4 ${TREND_COLORS.improving}`} />;
     case 'declining':
-      return <TrendingDown className="h-4 w-4 text-red-600" />;
+      return <TrendingDown className={`h-4 w-4 ${TREND_COLORS.declining}`} />;
     default:
-      return <Minus className="h-4 w-4 text-muted-foreground" />;
+      return <Minus className={`h-4 w-4 ${TREND_COLORS.stable}`} />;
   }
 }
 
@@ -164,9 +165,7 @@ export function ManagersPanoramaStep({
                     value={area.avgProgress} 
                     className={cn(
                       "h-1.5",
-                      area.avgProgress >= 70 && "[&>div]:bg-green-500",
-                      area.avgProgress >= 40 && area.avgProgress < 70 && "[&>div]:bg-yellow-500",
-                      area.avgProgress < 40 && "[&>div]:bg-red-500"
+                      getProgressBarStyle(area.avgProgress)
                     )}
                   />
                   {area.atRiskCount > 0 && (

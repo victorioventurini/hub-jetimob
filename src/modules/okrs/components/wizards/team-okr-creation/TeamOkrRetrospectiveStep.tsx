@@ -23,6 +23,7 @@ import { VicInsightCard } from '../shared/VicInsightCard';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
 import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
+import { RAG_STATUS_COLORS, TREND_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -182,7 +183,7 @@ export function TeamOkrRetrospectiveStep({
                   <CardContent className="p-4 text-center">
                     <p className={cn(
                       "text-2xl font-bold",
-                      analysis.abandonedKrs.length > 0 ? "text-orange-500" : "text-green-500"
+                      analysis.abandonedKrs.length > 0 ? "text-status-yellow" : "text-status-green"
                     )}>
                       {analysis.abandonedKrs.length}
                     </p>
@@ -209,9 +210,9 @@ export function TeamOkrRetrospectiveStep({
                           <p className="text-sm font-medium">{obj.title}</p>
                           <Badge className={cn(
                             "shrink-0 text-xs",
-                            obj.progress >= 70 && "bg-green-100 text-green-700",
-                            obj.progress >= 40 && obj.progress < 70 && "bg-yellow-100 text-yellow-700",
-                            obj.progress < 40 && "bg-red-100 text-red-700"
+                            obj.progress >= 70 && RAG_STATUS_COLORS.green.badge,
+                            obj.progress >= 40 && obj.progress < 70 && RAG_STATUS_COLORS.yellow.badge,
+                            obj.progress < 40 && RAG_STATUS_COLORS.red.badge
                           )}>
                             {obj.progress}%
                           </Badge>
@@ -269,9 +270,7 @@ export function TeamOkrRetrospectiveStep({
                           <span className="text-sm">{kpi.name}</span>
                           <div className={cn(
                             "flex items-center gap-1 text-sm",
-                            kpi.trend === 'up' && "text-green-600",
-                            kpi.trend === 'down' && "text-red-600",
-                            kpi.trend === 'flat' && "text-muted-foreground"
+                            TREND_COLORS[kpi.trend]
                           )}>
                             {kpi.trend === 'up' && <TrendingUp className="h-4 w-4" />}
                             {kpi.trend === 'down' && <TrendingDown className="h-4 w-4" />}

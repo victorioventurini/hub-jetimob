@@ -126,12 +126,12 @@ export const actionCategoryLabels: Record<string, string> = {
   system: 'Sistema',
 };
 
-// Status colors
+// Status colors - using semantic tokens from design system
 export const logStatusColors: Record<AutomationLogStatus, string> = {
-  success: 'text-green-600 bg-green-50',
-  error: 'text-red-600 bg-red-50',
-  pending: 'text-yellow-600 bg-yellow-50',
-  retrying: 'text-orange-600 bg-orange-50',
+  success: 'text-status-green bg-status-green-muted',
+  error: 'text-status-red bg-status-red-muted',
+  pending: 'text-status-yellow bg-status-yellow-muted',
+  retrying: 'text-status-yellow bg-status-yellow-muted',
 };
 
 export const logStatusLabels: Record<AutomationLogStatus, string> = {

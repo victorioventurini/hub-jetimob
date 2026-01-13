@@ -216,7 +216,7 @@ export default function CronJobConfigPage() {
     return (
       <div className="flex items-start gap-3">
         <div className={`mt-0.5 flex-shrink-0 ${
-          status === 'complete' ? 'text-green-500' : 
+          status === 'complete' ? 'text-status-green' : 
           status === 'current' ? 'text-primary' : 
           'text-muted-foreground/50'
         }`}>
@@ -258,13 +258,13 @@ export default function CronJobConfigPage() {
       </div>
 
       {/* Status Overview */}
-      <Card className={isFullyConfigured ? 'border-green-500/50 bg-green-500/5' : 'border-amber-500/50 bg-amber-500/5'}>
+      <Card className={isFullyConfigured ? 'border-status-green/50 bg-status-green-muted' : 'border-status-yellow/50 bg-status-yellow-muted'}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             {isFullyConfigured ? (
-              <><CheckCircle2 className="h-5 w-5 text-green-500" />Sistema Operacional</>
+              <><CheckCircle2 className="h-5 w-5 text-status-green" />Sistema Operacional</>
             ) : (
-              <><Info className="h-5 w-5 text-amber-500" />Configuração Necessária</>
+              <><Info className="h-5 w-5 text-status-yellow" />Configuração Necessária</>
             )}
           </CardTitle>
         </CardHeader>
