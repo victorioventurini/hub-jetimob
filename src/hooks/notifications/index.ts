@@ -1,25 +1,31 @@
-// Re-export all notification hooks from the modular structure
-// This file is kept for backwards compatibility
-
+// Types
 export type {
   NotificationEvent,
   NotificationChannel,
   BuNotificationChannel,
   UserNotificationSetting,
-} from './notifications';
+  EmitNotificationParams,
+  UpsertChannelParams,
+  UpdatePreferenceParams,
+  SendTestNotificationParams,
+  TestNotificationResult,
+} from './types';
 
+// Queries
 export {
-  // Queries
   useNotificationEvents,
   useNotificationChannels,
   useBuNotificationChannels,
   useUserNotificationSettings,
-  // Mutations
+} from './useNotificationQueries';
+
+// Mutations
+export {
   useBuNotificationChannelMutations,
   useUserNotificationPreferenceMutation,
   useEmitNotificationEvent,
   useSendTestNotification,
-  // Utils
-  groupSettingsByModule,
-  moduleNames,
-} from './notifications';
+} from './useNotificationMutations';
+
+// Utils
+export { groupSettingsByModule, moduleNames } from './utils';
