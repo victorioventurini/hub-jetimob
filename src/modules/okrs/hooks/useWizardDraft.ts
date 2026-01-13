@@ -25,7 +25,10 @@ import type {
   DraftTeamInitiative,
   ResponsibilityModel,
   OwnerType,
+  VicInsightType,
+  VicInsightPriority,
 } from '@/modules/okrs/types/wizard';
+import type { VicAgentSlug } from '@/modules/vic/types';
 import type { KrPlan } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrTypeStep';
 
 // ============================================================
@@ -51,13 +54,13 @@ export interface ObjectiveValidationFeedback {
   alternatives?: string[];
 }
 
-/** AI insight type for wizard steps */
+/** AI insight type for wizard steps - compatible with VicInsight */
 export interface WizardAiInsight {
   id: string;
-  type: 'insight' | 'warning' | 'suggestion';
+  type: VicInsightType;
   content: string;
-  priority: 'low' | 'medium' | 'high';
-  source: string;
+  priority: VicInsightPriority;
+  source: VicAgentSlug;
 }
 
 /** Detected dependency from AI analysis */
