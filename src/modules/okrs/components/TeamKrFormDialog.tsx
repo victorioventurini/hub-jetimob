@@ -37,6 +37,7 @@ import { Separator } from '@/components/ui/separator';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { useCancelTeamKeyResult } from '../hooks/useOkrMutations';
+import { useCanManageTeamOkr } from '../hooks/useCanManageTeamOkr';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
 const NONE_LINKED_ORG_KR = '__none__';
@@ -74,6 +75,14 @@ export function TeamKrFormDialog({
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
   const cancelMutation = useCancelTeamKeyResult();
+  
+  // Defense in depth: check if user can manage this team's OKRs
+  const { canManage: canManageThisTeam, isLoading: isLoadingPermission } = useCanManageTeamOkr(teamId);
+  
+  // If user can't manage this team, don't render
+  if (!isLoadingPermission && !canManageThisTeam) {
+    return null;
+  }
 
   const [title, setTitle] = useState(kr?.title || '');
   const [description, setDescription] = useState('');

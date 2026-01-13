@@ -389,6 +389,7 @@ WITH CHECK (role_in_bu = 'admin');            -- Hardcode!
 
 > 📚 Ver: [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md)
 > 📚 Ver: [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md)
+> 📚 Ver: [IMPERSONATION_AWARE_COMPONENTS.md](./IMPERSONATION_AWARE_COMPONENTS.md) — **OBRIGATÓRIO para dialogs de edição**
 
 ---
 
