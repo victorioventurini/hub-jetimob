@@ -27,7 +27,6 @@ import {
   BarChart3,
   Settings2,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
@@ -171,54 +170,54 @@ export default function WizardsPage() {
     customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Hub.',
   });
 
-  const { isAdmin } = useAuth();
-  const { has } = usePermissions();
+  const { has, isWildcard } = usePermissions();
   const { isLeader, teams: leaderTeams } = useLeaderTeams();
   const { teams: allTeams } = useHierarchicalTeamList();
 
   // Determine user role hierarchy
+  // Use isWildcard (impersonation-aware) instead of isAdmin
   const userRoles = useMemo(() => {
     const roles: Set<string> = new Set(['collaborator']); // Everyone is at least a collaborator
     
     if (isLeader) roles.add('leader');
-    if (isAdmin) {
+    if (isWildcard) {
       roles.add('manager');
       roles.add('leader');
-      // isAdmin includes super_admin, so add executive and admin roles
+      // isWildcard = admin/super_admin NOT impersonating
       roles.add('executive');
       roles.add('admin');
     }
     
     return roles;
-  }, [isLeader, isAdmin]);
+  }, [isLeader, isWildcard]);
 
   // Check if user can access a wizard
   const canAccessWizard = useCallback((wizard: WizardDefinition): boolean => {
     // Check role requirement
     if (!userRoles.has(wizard.requiredRole)) {
-      // Admin (includes super_admin) can access all wizards
-      if (!isAdmin) return false;
+      // Wildcard (admin NOT impersonating) can access all wizards
+      if (!isWildcard) return false;
     }
     
     // Check specific permission if required
     if (wizard.permissionKey && !has(wizard.permissionKey)) {
-      // Admin bypass
-      if (!isAdmin) return false;
+      // Wildcard bypass
+      if (!isWildcard) return false;
     }
     
     return true;
-  }, [userRoles, has, isAdmin]);
+  }, [userRoles, has, isWildcard]);
 
   // Filter sections based on user access
   const visibleSections = useMemo(() => {
     return WIZARD_SECTIONS
       .filter(section => {
-        // Hide "Líderes de Time" section for non-leaders (unless admin)
-        if (section.title === 'OKRs - Líderes de Time' && !userRoles.has('leader') && !isAdmin) {
+        // Hide "Líderes de Time" section for non-leaders (unless wildcard)
+        if (section.title === 'OKRs - Líderes de Time' && !userRoles.has('leader') && !isWildcard) {
           return false;
         }
-        // Hide "Gestores e Executivos" section for non-managers (unless admin)
-        if (section.title === 'OKRs - Gestores e Executivos' && !userRoles.has('manager') && !isAdmin) {
+        // Hide "Gestores e Executivos" section for non-managers (unless wildcard)
+        if (section.title === 'OKRs - Gestores e Executivos' && !userRoles.has('manager') && !isWildcard) {
           return false;
         }
         return true;
@@ -227,7 +226,7 @@ export default function WizardsPage() {
         ...section,
         wizards: section.wizards.filter(canAccessWizard),
       })).filter(section => section.wizards.length > 0);
-  }, [canAccessWizard, userRoles, isAdmin]);
+  }, [canAccessWizard, userRoles, isWildcard]);
 
   // Handle wizard open - navigate to full-page route
   const handleWizardOpen = useCallback((wizard: WizardDefinition) => {
@@ -237,7 +236,7 @@ export default function WizardsPage() {
       const firstAnyTeam = allTeams?.[0];
       const teamToUse = firstLeaderTeam 
         ? firstLeaderTeam.team_id 
-        : (isAdmin && firstAnyTeam) 
+        : (isWildcard && firstAnyTeam) 
           ? firstAnyTeam.id 
           : null;
       
@@ -251,7 +250,7 @@ export default function WizardsPage() {
 
     // Navigate to the wizard's full-page route
     navigate(wizard.route);
-  }, [leaderTeams, allTeams, isAdmin, navigate]);
+  }, [leaderTeams, allTeams, isWildcard, navigate]);
 
   return (
     <HubLayout>
