@@ -38,6 +38,7 @@ import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { useCancelTeamKeyResult } from '../hooks/useOkrMutations';
 import { useCanManageTeamOkr } from '../hooks/useCanManageTeamOkr';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
 const NONE_LINKED_ORG_KR = '__none__';
@@ -60,6 +61,7 @@ interface TeamKrFormDialogProps {
     direction: OkrDirection;
     unit: string;
     status: OkrRagStatus;
+    owner_user_id?: string | null;
   };
 }
 
@@ -93,6 +95,7 @@ export function TeamKrFormDialog({
   const [direction, setDirection] = useState<OkrDirection>(kr?.direction || 'up');
   const [status, setStatus] = useState<OkrRagStatus>(kr?.status || 'not_started');
   const [linkedOrgKrId, setLinkedOrgKrId] = useState<string>(NONE_LINKED_ORG_KR);
+  const [ownerUserId, setOwnerUserId] = useState<string | null>(kr?.owner_user_id || null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [placeholder] = useState(() => getRandomPlaceholder(false));
 
@@ -106,6 +109,7 @@ export function TeamKrFormDialog({
     setDirection(kr?.direction || 'up');
     setStatus(kr?.status || 'not_started');
     setLinkedOrgKrId(NONE_LINKED_ORG_KR);
+    setOwnerUserId(kr?.owner_user_id || null);
   }, [kr]));
 
   const { data: teamObjective } = useQuery({
@@ -165,6 +169,7 @@ export function TeamKrFormDialog({
             direction,
             unit,
             status,
+            owner_user_id: ownerUserId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', kr.id);
@@ -186,6 +191,7 @@ export function TeamKrFormDialog({
             linked_org_kr_id: linkedOrgKrId === NONE_LINKED_ORG_KR ? null : linkedOrgKrId,
             status: 'not_started',
             co_responsibles: [],
+            owner_user_id: ownerUserId,
           });
         if (error) throw error;
       }
@@ -324,6 +330,21 @@ export function TeamKrFormDialog({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">{getTypeDescription(type)}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="kr-owner">
+                  Responsável
+                  <span className="text-muted-foreground ml-1 font-normal">(opcional)</span>
+                </Label>
+                <BuUserSelect
+                  value={ownerUserId || undefined}
+                  onValueChange={(id) => setOwnerUserId(id || null)}
+                  placeholder="Selecione o responsável"
+                  teamId={teamId}
+                  allowNone={true}
+                  noneLabel="Nenhum"
+                />
               </div>
 
               {!isEditing && <Separator />}
