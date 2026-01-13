@@ -19,6 +19,7 @@ export {
   useTeamObjectives,
   useTeamKeyResults,
   useMyTeamKeyResults,
+  useMyTeamObjectives,
   // Check-ins
   useKrCheckins,
   useLatestCheckinDate,
