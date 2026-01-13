@@ -41,6 +41,7 @@ export function useCycles() {
 
 /**
  * Fetches active/current cycles (where today is within start/end).
+ * Prioritizes smaller cycles (quarter > semester > year) for default selection.
  */
 export function useActiveCycles() {
   const { data: allCycles, ...rest } = useCycles();
@@ -49,10 +50,26 @@ export function useActiveCycles() {
     if (!allCycles) return [];
     
     const today = new Date();
-    return allCycles.filter(cycle => {
+    const active = allCycles.filter(cycle => {
       const start = parseISO(cycle.start_date);
       const end = parseISO(cycle.end_date);
       return isWithinInterval(today, { start, end });
+    });
+    
+    // Sort by cycle type priority: quarter > semester > year
+    // This ensures more specific cycles are selected as default
+    const typePriority: Record<string, number> = {
+      quarter: 1,
+      semester: 2,
+      year: 3,
+    };
+    
+    return active.sort((a, b) => {
+      const priorityA = typePriority[a.type] ?? 99;
+      const priorityB = typePriority[b.type] ?? 99;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      // If same type, prefer earlier start_date (current quarter first)
+      return parseISO(a.start_date).getTime() - parseISO(b.start_date).getTime();
     });
   }, [allCycles]);
 
