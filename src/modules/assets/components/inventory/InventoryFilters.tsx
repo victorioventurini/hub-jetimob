@@ -82,6 +82,7 @@ export function InventoryFilters({
         showSearch
         allowNone
         noneLabel="Todos os jetimobers"
+        excludeExternal
       />
     </div>
   );

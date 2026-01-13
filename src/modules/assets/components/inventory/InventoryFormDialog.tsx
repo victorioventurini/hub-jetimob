@@ -658,6 +658,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
                           allowNone
                           noneLabel="Nenhum (disponível)"
                           className="w-full"
+                          excludeExternal
                         />
                       </FormControl>
                       <FormDescription>

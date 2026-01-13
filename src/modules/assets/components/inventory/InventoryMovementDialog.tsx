@@ -39,6 +39,7 @@ import { useAuthorizers } from "../../hooks/useAuthorizers";
 import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
 import { useIdentity } from "@/hooks/useIdentity";
 import { KitCheckoutInfo } from "./KitCheckoutInfo";
+import { BuUserSelect } from "@/components/selects";
 import type { AssetInventory, AssetMovementType } from "../../types";
 import { MOVEMENT_TYPE_LABELS } from "../../types";
 
@@ -337,30 +338,15 @@ export function InventoryMovementDialog({
                           <User className="h-4 w-4" />
                           Emprestar para *
                         </FormLabel>
-                        <Select
-                          value={field.value ?? ""}
+                        <BuUserSelect
+                          value={field.value ?? undefined}
                           onValueChange={(v) => {
                             console.log("[assets][InventoryMovementDialog] to_user_id", v);
                             field.onChange(v);
                           }}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o colaborador..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {profiles.map((profile) => (
-                              <SelectItem 
-                                key={profile.id} 
-                                value={profile.id}
-                                textValue={profile.full_name}
-                              >
-                                {profile.full_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Selecione o colaborador..."
+                          excludeExternal
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -538,24 +524,12 @@ export function InventoryMovementDialog({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Colaborador de Destino *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {profiles.map((profile) => (
-                                <SelectItem 
-                                  key={profile.id} 
-                                  value={profile.id}
-                                  textValue={profile.full_name}
-                                >
-                                  {profile.full_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <BuUserSelect
+                            value={field.value ?? undefined}
+                            onValueChange={(v) => field.onChange(v)}
+                            placeholder="Selecione..."
+                            excludeExternal
+                          />
                           <FormMessage />
                         </FormItem>
                       )}

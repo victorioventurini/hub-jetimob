@@ -33,6 +33,8 @@ interface UseBuUsersDirectoryOptions {
   teamId?: string;
   /** Include terminated users (default: false) */
   includeTerminated?: boolean;
+  /** Exclude external users/contacts (default: false) */
+  excludeExternal?: boolean;
   /** Page size for pagination (default: 100) */
   pageSize?: number;
   /** Enable/disable the query */
@@ -55,7 +57,8 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
   const { 
     q, 
     teamId, 
-    includeTerminated = false, 
+    includeTerminated = false,
+    excludeExternal = false,
     pageSize = 100,
     enabled = true 
   } = options;
@@ -68,7 +71,7 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
   const debouncedQ = useDebouncedValue(q, 250);
 
   return useQuery({
-    queryKey: queryKeys.users.directory(buId ?? null, { q: debouncedQ, teamId, includeTerminated }),
+    queryKey: queryKeys.users.directory(buId ?? null, { q: debouncedQ, teamId, includeTerminated, excludeExternal }),
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
@@ -91,7 +94,8 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
           onboarding_completed,
           has_bu_membership,
           start_date,
-          created_at
+          created_at,
+          user_type
         `)
         .eq("bu_id", buId)
         .order("display_name")
@@ -100,6 +104,11 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
       // Filter by terminated status
       if (!includeTerminated) {
         query = query.neq("employment_status", "terminated");
+      }
+
+      // Filter out external users if requested
+      if (excludeExternal) {
+        query = query.eq("user_type", "internal");
       }
 
       // Filter by team if specified

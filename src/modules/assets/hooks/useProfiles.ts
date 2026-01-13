@@ -31,10 +31,12 @@ export function useAssetProfiles() {
     staleTime: 5 * 60 * 1000, // 5 minutes - profiles change rarely
     queryFn: async () => {
       // Use canonical view - shows ALL registered users, not just active/logged-in
+      // Exclude external users - they should only be visible in tickets module
       const { data, error } = await supabase
         .from("v_bu_active_profiles")
-        .select("id, user_id, display_name, first_name, last_name, photo_url, work_email, onboarding_completed, has_bu_membership")
+        .select("id, user_id, display_name, first_name, last_name, photo_url, work_email, onboarding_completed, has_bu_membership, user_type")
         .eq("bu_id", buId!)
+        .eq("user_type", "internal")
         .order("display_name");
 
       if (error) throw error;
