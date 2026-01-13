@@ -1,46 +1,49 @@
 # 🧹 Análise de Higienização — 2026-01-13
 
-**Objetivo:** Identificar código e arquivos desnecessários para remoção segura.
+**Objetivo:** Identificar código e arquivos desnecessários para remoção segura.  
+**Revisão:** v2 (corrigida após verificação do TCR e uso real no código)
 
 ---
 
 ## 📊 Sumário Executivo
 
-| Área | Itens Identificados | Prioridade | Esforço Total |
-|------|---------------------|------------|---------------|
-| 2.1 Banco de Dados | 6 items | P2-P3 | 2h |
+| Área | Itens Identificados | Ação | Esforço Total |
+|------|---------------------|------|---------------|
+| 2.1 Banco de Dados | 0 items | — | — |
 | 2.2 Backend (Edge Functions) | 0 items | — | — |
-| 2.3 Frontend | 3 items | P2 | 1h |
+| 2.3 Frontend | 1 item | P3 | 15 min |
+
+**Resultado:** Codebase está extremamente limpo. Apenas 1 item de baixa prioridade identificado.
 
 ---
 
 ## 2.1 BANCO DE DADOS
 
-### 2.1.1 Tabela `mentions` — CANDIDATA À REMOÇÃO ⚠️
+### ✅ Tabela `mentions` — MANTER (ATIVA)
 
 | Atributo | Valor |
 |----------|-------|
-| Registros | **0** (vazia) |
+| Registros | **0** (ainda não utilizada em produção, mas ativa) |
 | Colunas | 8 |
 | RLS | Ativo |
-| Dependências DB | Triggers `auto_add_mention_as_participant`, `auto_add_ticket_mention_as_participant`, `create_mention_notification` |
 
-**Análise:**
-- Tabela vazia, sistema de mentions migrou para parsing client-side (`@/lib/mentions`)
-- Frontend usa `MentionInput` que extrai mentions via regex, não persiste na tabela
-- Triggers ainda referenciam a tabela, mas não são executados (tabela vazia)
+**Uso no Código:**
+- `src/modules/tickets/hooks/useTickets.ts` — linhas 180, 397 (select), 539 (insert)
+- `src/modules/tickets/hooks/useTicketMessages.ts` — linha 144 (insert)
 
-**Ação Recomendada:**
-1. Remover triggers dependentes
-2. DROP TABLE mentions
-3. Verificar se `useMentionableUsers` precisa de ajuste (provavelmente não)
+**Referência:** Memory `global-contextual-mentions-v2` confirma que `mentions` é a tabela canônica global para todos os módulos (Tickets, OKRs, etc.).
 
-**Prioridade:** P2  
-**Esforço:** 30 min
+**Decisão:** ✅ MANTER — tabela ativa, sistema de mentions funciona, apenas sem dados de produção ainda.
 
 ---
 
-### 2.1.2 Views de Diagnóstico — MANTER (Monitoramento)
+### ✅ Tabela `ticket_mentions` — NÃO EXISTE
+
+Conforme verificado, a tabela `ticket_mentions` foi removida em migrações anteriores. A tabela `mentions` é a única fonte de dados para menções.
+
+---
+
+### ✅ Views de Diagnóstico — MANTER (Monitoramento)
 
 | View | Registros | Uso |
 |------|-----------|-----|
@@ -54,19 +57,18 @@
 
 ---
 
-### 2.1.3 Funções com Prefixo `auto_add_mention_*` — CANDIDATAS À REMOÇÃO
+### ✅ Funções `auto_add_mention_*` — MANTER
 
 | Função | Status |
 |--------|--------|
-| `auto_add_mention_as_participant` | ⚠️ Órfã (tabela mentions vazia) |
-| `auto_add_ticket_mention_as_participant` | ⚠️ Órfã (tabela mentions vazia) |
-| `create_mention_notification` | ⚠️ Órfã (tabela mentions vazia) |
+| `auto_add_mention_as_participant` | ✅ Ativa (trigger on mentions) |
+| `create_mention_notification` | ✅ Ativa (notificações de menções) |
 
-**Ação Recomendada:** Remover junto com tabela `mentions`
+**Decisão:** MANTER — suportam o sistema de mentions quando dados forem inseridos.
 
 ---
 
-### 2.1.4 Tabela `user_roles` — MANTER ✅
+### ✅ Tabela `user_roles` — MANTER
 
 | Atributo | Valor |
 |----------|-------|
@@ -106,7 +108,7 @@
 
 ## 2.3 FRONTEND
 
-### 2.3.1 Página `VicTestPage.tsx` — CANDIDATA À REMOÇÃO ⚠️
+### 2.3.1 Página `VicTestPage.tsx` — CANDIDATA À PROTEÇÃO ⚠️
 
 | Atributo | Valor |
 |----------|-------|
@@ -120,15 +122,15 @@
 - Rota registrada no `App.tsx`
 
 **Opções:**
-1. **Remover completamente** (se não for mais necessária)
-2. **Proteger com flag de ambiente** (manter apenas em dev)
+1. **Proteger com flag de ambiente** (manter apenas em dev)
+2. **Remover completamente** (se não for mais necessária)
 
 **Prioridade:** P3  
 **Esforço:** 15 min
 
 ---
 
-### 2.3.2 Diretório `src/components/mentions/` — MANTER ✅
+### ✅ Diretório `src/components/mentions/` — MANTER
 
 | Arquivo | Uso |
 |---------|-----|
@@ -137,11 +139,9 @@
 
 **Decisão:** MANTER — componentes ativos usados em Tickets e OKRs.
 
-**Nota:** O sistema de mentions migrou de persistência em banco (`mentions` table) para parsing client-side (`@/lib/mentions`). Os componentes frontend continuam ativos.
-
 ---
 
-### 2.3.3 Arquivo `Wizards.tsx` — MANTER ✅
+### ✅ Arquivo `Wizards.tsx` — MANTER
 
 **Análise:**
 - Página hub central para rituais de OKR
@@ -152,30 +152,17 @@
 
 ---
 
-## 📋 Plano de Ação
+## 📋 Conclusão Final
 
-### Fase 1 — Limpeza do Banco (P2)
+### Banco de Dados
+✅ **Nenhum item para remoção** — todas as tabelas, views e funções estão ativas.
 
-```sql
--- 1. Remover triggers órfãos
-DROP TRIGGER IF EXISTS auto_add_mention_as_participant ON mentions;
-DROP TRIGGER IF EXISTS auto_add_ticket_mention_as_participant ON ticket_messages;
+### Backend
+✅ **Nenhum item para remoção** — todas as Edge Functions estão ativas.
 
--- 2. Remover funções órfãs
-DROP FUNCTION IF EXISTS auto_add_mention_as_participant();
-DROP FUNCTION IF EXISTS auto_add_ticket_mention_as_participant();
-DROP FUNCTION IF EXISTS create_mention_notification();
-
--- 3. Remover tabela vazia
-DROP TABLE IF EXISTS mentions;
-```
-
-### Fase 2 — Limpeza do Frontend (P3)
-
-| Ação | Arquivo | Decisão |
-|------|---------|---------|
-| Proteger ou remover | `VicTestPage.tsx` | Discutir com time |
-| Remover rota | `App.tsx` (linha ~36, ~496) | Se remover página |
+### Frontend
+⚠️ **1 item de baixa prioridade:**
+- `VicTestPage.tsx` — proteger com flag de ambiente ou remover
 
 ---
 
@@ -183,6 +170,7 @@ DROP TABLE IF EXISTS mentions;
 
 | Item | Razão |
 |------|-------|
+| `mentions` | Tabela canônica para menções (usada em useTickets, useTicketMessages) |
 | `user_roles` | Crítico para RBAC |
 | Views de diagnóstico | Monitoramento ativo |
 | Edge Functions | Todas ativas |
@@ -191,14 +179,5 @@ DROP TABLE IF EXISTS mentions;
 
 ---
 
-## ✅ Próximos Passos
-
-1. **Aprovar plano** — Revisar com stakeholders
-2. **Executar Fase 1** — Migration para remover `mentions`
-3. **Decidir sobre VicTestPage** — Dev-only ou remover
-4. **Documentar no TCR** — Atualizar após execução
-
----
-
 *Análise concluída em: 2026-01-13*  
-*Autor: Sistema*
+*Revisão v2: Corrigida após consulta ao TCR v2.27.0 e verificação do uso real no código*
