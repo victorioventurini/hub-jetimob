@@ -147,8 +147,8 @@ const TEAM_OBJECTIVE_WITH_KRS_FIELDS = `
 ` as const;
 
 const SHARED_SUMMARY_FIELDS = `
-  objective_id, title, primary_team_id, primary_team_name,
-  contributor_count
+  id, title, primary_team_id, primary_team_name,
+  total_teams_count, is_shared, responsibility_model, status
 ` as const;
 
 // ============================================================

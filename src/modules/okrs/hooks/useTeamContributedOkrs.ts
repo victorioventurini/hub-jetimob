@@ -18,10 +18,10 @@ const TEAM_OBJECTIVE_FIELDS = `
   )
 ` as const;
 
-// Explicit fields for shared OKRs summary view
+// Explicit fields for shared OKRs summary view (matches actual view schema)
 const SHARED_SUMMARY_FIELDS = `
-  objective_id, title, primary_team_id, primary_team_name,
-  contributor_count
+  id, title, primary_team_id, primary_team_name,
+  total_teams_count, is_shared, responsibility_model, status
 ` as const;
 
 /**
