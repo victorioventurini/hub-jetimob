@@ -216,7 +216,7 @@ export function ObjectiveListItem({
                       </div>
                       
                       {/* Title */}
-                      <h3 className="font-medium text-sm sm:text-base leading-snug line-clamp-2">
+                      <h3 className="font-semibold text-base sm:text-lg leading-snug line-clamp-2">
                         {objective.title}
                       </h3>
                       
@@ -514,7 +514,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, onE
             {/* Mobile: Stack layout / Desktop: Row layout */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
+                <p className="text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
                 <div className="mt-1 sm:mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                   <span className={cn("font-medium", statusConfig.color)}>
                     {statusConfig.label}

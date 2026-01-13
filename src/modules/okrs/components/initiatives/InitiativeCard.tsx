@@ -50,7 +50,7 @@ export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, sh
               )}
             </div>
             
-            <h4 className="font-medium text-foreground truncate">{initiative.name}</h4>
+            <h4 className="text-xs sm:text-sm font-medium text-foreground truncate">{initiative.name}</h4>
             
             {initiative.description && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
