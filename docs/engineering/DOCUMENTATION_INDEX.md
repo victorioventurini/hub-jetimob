@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-12  
-**TCR Version:** 2.24.0
+**Última atualização:** 2026-01-13  
+**TCR Version:** 2.27.0
 
 ---
 
@@ -9,18 +9,17 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.24.0 |
+| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.27.0 |
 
 ---
 
-## 📐 Padrões de Desenvolvimento
+## 📐 Padrões de Desenvolvimento (Canônicos)
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) | Padrões obrigatórios: PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions | ✅ v1.2.0 |
-| [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys centralizadas (`src/lib/queryKeys.ts`) | ✅ Normativo |
+| [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) | **Padrões obrigatórios:** PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, Limites de Código | ✅ v1.6.0 |
+| [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys centralizadas | ✅ Normativo |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase (global vs bu-scoped) | ✅ Normativo |
-| [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md) | Padrão de URL state para filtros, busca e paginação | ✅ Normativo |
 | [SHARED_COMPONENTS_REGISTRY.md](./SHARED_COMPONENTS_REGISTRY.md) | Registro de componentes compartilhados | ✅ Ativo |
 
 ---
@@ -31,7 +30,6 @@
 |-----------|-----------|--------|
 | [DATA_MODEL_REGISTRY.md](./DATA_MODEL_REGISTRY.md) | **Fonte única de verdade** para schema (tabelas, views, funções, enums) | ✅ Canônico |
 | [DATA_MODEL_REGISTRY.json](./DATA_MODEL_REGISTRY.json) | Versão JSON para automação e scripts | ✅ Gerado |
-| [DATA_MODEL_REGISTRY_AUDIT.md](./DATA_MODEL_REGISTRY_AUDIT.md) | Auditoria do registry vs banco real | ✅ Ativo |
 
 ---
 
@@ -41,20 +39,21 @@
 |-----------|-----------|--------|
 | [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção `user_id` (auth) vs `profile_id` (domínio) | ✅ v2.0 |
 | [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md) | Modelo completo de permissões V2 | ✅ v1.1.0 |
-| [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de templates de permissão (collaborator_base, bu_admin, etc.) | ✅ v3.0 |
+| [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de templates de permissão | ✅ v3.0 |
+| [IMPERSONATION_AWARE_COMPONENTS.md](./IMPERSONATION_AWARE_COMPONENTS.md) | Componentes que suportam impersonação | ✅ Ativo |
 
 ---
 
-## 📊 Relatórios de Saúde e Compliance
+## 📊 Relatórios de Saúde (Atuais)
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [HEALTH_REPORT_2026-01-12.md](./HEALTH_REPORT_2026-01-12.md) | **Relatório atual de saúde técnica** | ✅ Atual |
-| [RLS_V2_MIGRATION_FINAL_REPORT.md](./RLS_V2_MIGRATION_FINAL_REPORT.md) | **Relatório final da migração RLS V2** | ✅ Atual |
-| [AUDIT_REPORT_2026-01-11_v3.md](./AUDIT_REPORT_2026-01-11_v3.md) | Último relatório de auditoria completa | ✅ Histórico |
-| [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts de audit | ✅ Normativo |
-| [FINAL_COMPLIANCE_CHECKLIST.md](./FINAL_COMPLIANCE_CHECKLIST.md) | Checklist final de conformidade | ✅ Ativo |
-| [SYSTEM_STATE_FINAL_REPORT.md](./SYSTEM_STATE_FINAL_REPORT.md) | Estado final do sistema após consolidação | ✅ Ativo |
+| [HEALTH_REPORT_2026-01-13.md](./HEALTH_REPORT_2026-01-13.md) | **Relatório atual de saúde técnica** | ✅ Atual |
+| [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | **Auditoria sistêmica completa** | ✅ Atual |
+| [BACKEND_AUDIT_2026-01-13.md](./BACKEND_AUDIT_2026-01-13.md) | Auditoria de backend (Edge Functions, RPCs) | ✅ Atual |
+| [FRONTEND_UX_AUDIT_2026-01-13.md](./FRONTEND_UX_AUDIT_2026-01-13.md) | Auditoria de frontend e UX | ✅ Atual |
+| [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) | Análise de débitos técnicos | ✅ Atual |
+| [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts | ✅ Normativo |
 
 ---
 
@@ -64,37 +63,6 @@
 |-----------|-----------|--------|
 | [BACKUP_RESTORE_PLAYBOOK.md](../ops/BACKUP_RESTORE_PLAYBOOK.md) | Playbook de backup e restore | ✅ Normativo |
 | [GO_LIVE_CHECKLIST.md](../ops/GO_LIVE_CHECKLIST.md) | Checklist de go-live | ✅ Normativo |
-
----
-
-## 🧹 Auditoria e Higienização
-
-| Documento | Descrição | Status |
-|-----------|-----------|--------|
-| [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) | **Plano de Higienização e Otimização 2026-01** | ✅ Completo |
-| [TECHNICAL_DEBT_ANALYSIS_2026-01-12.md](./TECHNICAL_DEBT_ANALYSIS_2026-01-12.md) | **Análise de Débitos Técnicos** | ✅ Atual |
-| [CODEBASE_HYGIENE_ROADMAP.md](../CODEBASE_HYGIENE_ROADMAP.md) | Roadmap de limpeza de código (3 waves) | ✅ Wave 5 completo |
-| [LEGACY_CLASSIFICATION_MATRIX.md](../LEGACY_CLASSIFICATION_MATRIX.md) | Matriz de classificação de código legado | ✅ Atualizado |
-
----
-
-## 📈 Performance
-
-| Documento | Descrição | Status |
-|-----------|-----------|--------|
-| [PERFORMANCE_SWEEP_FINAL_SUMMARY.md](./PERFORMANCE_SWEEP_FINAL_SUMMARY.md) | Resumo final do sweep de performance | ✅ Completo |
-| [PERFORMANCE_WAVE_P2_PLAN.md](./PERFORMANCE_WAVE_P2_PLAN.md) | Plano de performance wave P2 | ✅ Histórico |
-| [PERF_PLAYBOOK.md](../PERF_PLAYBOOK.md) | Playbook de performance | ✅ Normativo |
-
----
-
-## 🔄 Migrações e Reports Históricos
-
-| Documento | Descrição | Status |
-|-----------|-----------|--------|
-| [BU_SCOPED_MIGRATION_REPORT.md](../BU_SCOPED_MIGRATION_REPORT.md) | Migração para BU-scoped | ✅ Histórico |
-| [IDENTITY_MIGRATION_FINAL_REPORT.md](../IDENTITY_MIGRATION_FINAL_REPORT.md) | Migração de identity convention | ✅ Histórico |
-| [NOTIFICATIONS_PHASE5_TEMPLATES_REPORT.md](../NOTIFICATIONS_PHASE5_TEMPLATES_REPORT.md) | Templates de notificações | ✅ Histórico |
 
 ---
 
@@ -109,8 +77,44 @@
 | `audit-url-state.ts` | `npx tsx scripts/audit-url-state.ts` | useState para filtros |
 | `audit-rbac.ts` | `npx tsx scripts/audit-rbac.ts` | Hardcode de roles |
 | `audit-supabase-client.ts` | `npx tsx scripts/audit-supabase-client.ts` | Cliente global indevido |
-| `audit-prebu-buscoped.ts` | `npx tsx scripts/audit-prebu-buscoped.ts` | useBuScopedSupabase em PRE-BU |
 | `run-compliance-checks.ts` | `npx tsx scripts/run-compliance-checks.ts` | Todos os audits |
+
+---
+
+## 🗃️ Arquivados (Histórico)
+
+> Documentos abaixo são **históricos** e NÃO devem ser usados como referência para novas implementações.
+
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| `AUDIT_REPORT_2026-01-11.md` | Relatório de auditoria anterior | 📦 Histórico |
+| `AUDIT_REPORT_2026-01-11_v3.md` | Versão v3 do relatório | 📦 Histórico |
+| `HEALTH_REPORT_2026-01-11.md` | Health report anterior | 📦 Histórico |
+| `HEALTH_REPORT_2026-01-12.md` | Health report anterior | 📦 Histórico |
+| `TECHNICAL_DEBT_ANALYSIS_2026-01-12.md` | Análise anterior | 📦 Histórico |
+| `TECHNICAL_DEBT_ANALYSIS_2026-01-12_v2.md` | Versão v2 anterior | 📦 Histórico |
+| `FRONTEND_UX_AUDIT_2026-01.md` | Auditoria UX anterior | 📦 Histórico |
+| `HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md` | Plano de higienização anterior | 📦 Histórico |
+| `HYGIENE_ANALYSIS_2026-01-13.md` | Análise de higienização | 📦 Histórico |
+| `DATABASE_OPTIMIZATION_PLAN_2026-01.md` | Plano de otimização DB | 📦 Histórico |
+| `PERFORMANCE_SWEEP_REPORT.md` | Relatório de performance | 📦 Histórico |
+| `PERFORMANCE_SWEEP_FINAL_SUMMARY.md` | Resumo final performance | 📦 Histórico |
+| `PERFORMANCE_WAVE_P2_PLAN.md` | Plano P2 de performance | 📦 Histórico |
+| `PERFORMANCE_WAVE_P2_3_DB_INDEXES_REPORT.md` | Relatório de índices | 📦 Histórico |
+| `RLS_V2_MIGRATION_FINAL_REPORT.md` | Migração RLS V2 | 📦 Histórico |
+| `ENUM_MIGRATION_PLAN.md` | Plano de migração de enums | 📦 Histórico |
+| `DATA_MODEL_REGISTRY_AUDIT.md` | Auditoria do registry | 📦 Histórico |
+| `DATA_MODEL_REGISTRY_REPORT.md` | Relatório do registry | 📦 Histórico |
+| `BACKEND_ARCHITECTURE_REVIEW_2026-01.md` | Review de arquitetura | 📦 Histórico |
+| `CONSOLIDATION_AUDIT_REPORT.md` | Relatório de consolidação | 📦 Histórico |
+| `CONSISTENCY_REPORT.md` | Relatório de consistência | 📦 Histórico |
+| `COMPONENT_STANDARDIZATION_REPORT.md` | Padronização de componentes | 📦 Histórico |
+| `DOCS_CONSISTENCY_RULES.md` | Regras de consistência de docs | 📦 Histórico |
+| `DOCS_PR_GATE_REPORT.md` | Relatório de PR gate | 📦 Histórico |
+| `DOCS_REFRESH_FINAL_REPORT.md` | Relatório final de refresh | 📦 Histórico |
+| `FINAL_COMPLIANCE_CHECKLIST.md` | Checklist final | 📦 Histórico |
+| `MODULE_HEALTH_AUDIT_REPORT.md` | Auditoria de módulos | 📦 Histórico |
+| `SYSTEM_STATE_FINAL_REPORT.md` | Estado final do sistema | 📦 Histórico |
 
 ---
 
@@ -119,24 +123,26 @@
 ### Ao Criar Novos Documentos
 
 1. **Localização**: Colocar em `docs/engineering/` para docs técnicos
-2. **Header**: Incluir versão, data e referência ao TCR
-3. **Índice**: Adicionar ao `DOCUMENTATION_INDEX.md`
-4. **TCR**: Se for padrão normativo, referenciar no TCR
+2. **Nomenclatura**: `<TIPO>_<ASSUNTO>_<DATA>.md` (ex: `AUDIT_SECURITY_2026-01-15.md`)
+3. **Header**: Incluir versão, data e referência ao TCR
+4. **Índice**: Adicionar ao `DOCUMENTATION_INDEX.md`
+5. **TCR**: Se for padrão normativo, referenciar no TCR
 
-### Ao Modificar Schema
+### Regras de Retenção
 
-1. Rodar migration via Lovable
-2. Executar `npx tsx scripts/generate-data-model-registry.ts`
-3. Atualizar `DATA_MODEL_REGISTRY.md` se necessário
-4. Atualizar TCR changelog
+| Tipo | Retenção | Ação |
+|------|----------|------|
+| Padrões normativos | Permanente | Manter e versionar |
+| Health reports | 7 dias | Arquivar após novo relatório |
+| Audits pontuais | 30 dias | Arquivar após consolidação |
+| Planos executados | 30 dias | Arquivar após conclusão |
 
-### Ao Modificar Padrões
+### Ao Arquivar
 
-1. Atualizar o documento de padrão
-2. Incrementar versão
-3. Adicionar entrada no changelog do TCR
-4. Rodar scripts de audit para verificar compliance
+1. Mover para seção "Arquivados" deste índice
+2. **NÃO deletar** (manter histórico)
+3. Marcar como 📦 Histórico
 
 ---
 
-*Documento mantido automaticamente. Última verificação: 2026-01-12*
+*Documento mantido automaticamente. Última verificação: 2026-01-13*

@@ -1,11 +1,17 @@
 # 🏗️ Auditoria Sistêmica do Hub — Visão 360°
 
 **Data:** 2026-01-13  
-**Versão:** 1.0.0  
+**Versão:** 1.1.0 (Ações Imediatas Executadas)  
 **Objetivo:** Analisar o Hub como produto vivo, identificando dívidas, complexidade desnecessária e ajustes para escalabilidade sustentável  
 **Escopo:** Frontend, Backend, Banco, Fluxos, Documentação, Rituais
 
----
+### Changelog v1.1.0
+
+- ✅ `cleanup_old_audit_logs()` criada (retenção 90 dias para `audit_logs` e `ai_agent_logs`)
+- ✅ `DEVELOPMENT_STANDARDS.md` v1.6.0 com seção M (Limites de Código)
+- ✅ `DOCUMENTATION_INDEX.md` consolidado (23 docs arquivados como histórico)
+- ✅ Edge Functions padrão atualizado para `withMiddleware`
+
 
 ## 📊 DASHBOARD EXECUTIVO
 
@@ -44,7 +50,7 @@
 |--------|------|---------|---------|
 | ai_agent_logs | 59.759 | 24 MB | ✅ 90 dias |
 | cron_execution_logs | 4.788 | 1.4 MB | ✅ 30 dias |
-| audit_logs | 652 | 1.2 MB | ❌ Sem limite |
+| audit_logs | 652 | 1.2 MB | ✅ 90 dias (v1.1.0) |
 | okr_wizard_sessions | 498 | 464 KB | ✅ 7 dias |
 | profiles | 65 | 376 KB | N/A |
 
