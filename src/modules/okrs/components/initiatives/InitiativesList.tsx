@@ -5,6 +5,7 @@ import { Plus, Lightbulb, AlertCircle } from "lucide-react";
 import { useKrInitiatives, useDeleteInitiative } from "../../hooks/useInitiatives";
 import { InitiativeCard } from "./InitiativeCard";
 import { InitiativeDialog } from "./InitiativeDialog";
+import { InitiativeQuickUpdateDialog } from "./InitiativeQuickUpdateDialog";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { useProfileId } from "@/hooks/useIdentity";
 import type { Initiative } from "../../types/initiative";
@@ -31,6 +32,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
   const [deletingInitiative, setDeletingInitiative] = useState<Initiative | null>(null);
+  const [quickUpdateInitiative, setQuickUpdateInitiative] = useState<Initiative | null>(null);
   
   // Check if user can edit a specific initiative (owner or general canEdit)
   const canEditInitiative = (initiative: Initiative) => {
@@ -132,6 +134,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
               <InitiativeCard
                 key={initiative.id}
                 initiative={initiative}
+                onQuickUpdate={canManageThis ? setQuickUpdateInitiative : undefined}
                 onEdit={canManageThis ? handleEdit : undefined}
                 onDelete={canManageThis ? setDeletingInitiative : undefined}
               />
@@ -147,6 +150,13 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
         krId={krId}
         krContext={krContext || (krTitle ? { id: krId, title: krTitle } : undefined)}
         initiative={editingInitiative}
+      />
+
+      <InitiativeQuickUpdateDialog
+        open={!!quickUpdateInitiative}
+        onOpenChange={(open) => !open && setQuickUpdateInitiative(null)}
+        initiative={quickUpdateInitiative}
+        krContext={krContext || (krTitle ? { id: krId, title: krTitle } : undefined)}
       />
 
       <DeleteConfirmDialog

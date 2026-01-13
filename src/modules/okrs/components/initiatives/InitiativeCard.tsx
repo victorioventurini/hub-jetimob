@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Calendar, Flag } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Calendar, Flag, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { InitiativeStatusBadge } from "./InitiativeStatusBadge";
@@ -12,12 +12,13 @@ import { UserLink } from "@/components/links";
 
 interface InitiativeCardProps {
   initiative: Initiative;
+  onQuickUpdate?: (initiative: Initiative) => void;
   onEdit?: (initiative: Initiative) => void;
   onDelete?: (initiative: Initiative) => void;
   showKrInfo?: boolean;
 }
 
-export function InitiativeCard({ initiative, onEdit, onDelete, showKrInfo }: InitiativeCardProps) {
+export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, showKrInfo }: InitiativeCardProps) {
   const getOwnerName = () => {
     if (initiative.owner?.display_name) return initiative.owner.display_name;
     if (initiative.owner?.first_name) {
@@ -89,7 +90,7 @@ export function InitiativeCard({ initiative, onEdit, onDelete, showKrInfo }: Ini
             )}
           </div>
 
-          {(onEdit || onDelete) && (
+          {(onQuickUpdate || onEdit || onDelete) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -97,6 +98,12 @@ export function InitiativeCard({ initiative, onEdit, onDelete, showKrInfo }: Ini
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {onQuickUpdate && (
+                  <DropdownMenuItem onClick={() => onQuickUpdate(initiative)}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Atualizar
+                  </DropdownMenuItem>
+                )}
                 {onEdit && (
                   <DropdownMenuItem onClick={() => onEdit(initiative)}>
                     <Pencil className="w-4 h-4 mr-2" />
