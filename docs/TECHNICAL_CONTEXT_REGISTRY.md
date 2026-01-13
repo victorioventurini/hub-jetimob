@@ -34,7 +34,7 @@
 >
 > ### Auditoria e Higienização
 > - [AUDIT_REPORT_2026-01-11_v3.md](./engineering/AUDIT_REPORT_2026-01-11_v3.md) — Último relatório de auditoria
-> - [TECHNICAL_DEBT_ANALYSIS_2026-01-12.md](./engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-12.md) — **Análise de Débitos Técnicos** ⭐ NEW
+> - [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) — **Análise de Débitos Técnicos** ⭐ ATUALIZADO
 > - [CODEBASE_HYGIENE_ROADMAP.md](./CODEBASE_HYGIENE_ROADMAP.md) — Roadmap de limpeza de código
 > - [LEGACY_CLASSIFICATION_MATRIX.md](./LEGACY_CLASSIFICATION_MATRIX.md) — Matriz de classificação de código legado
 > - [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./engineering/HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) — **Plano de Higienização e Otimização 2026-01** ⭐

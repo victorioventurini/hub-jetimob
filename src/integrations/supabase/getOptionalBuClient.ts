@@ -20,7 +20,7 @@
  *   queryKey: ['my-data', buId],
  *   queryFn: async () => {
  *     if (!client) throw new Error('No BU client');
- *     return client.from('table').select('*');
+ *     return client.from('table').select('id, name, status'); // Explicit fields
  *   },
  *   enabled: isReady,
  * });
