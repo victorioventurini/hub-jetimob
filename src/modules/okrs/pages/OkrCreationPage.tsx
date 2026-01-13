@@ -387,9 +387,15 @@ export default function OkrCreationPage() {
             objectiveTitle={draft.objectiveTitle}
             objectiveDescription={draft.objectiveDescription}
             selectedOrgObjectiveId={draft.selectedOrgObjectiveId}
+            objectiveValidationFeedback={draft.objectiveValidationFeedback}
+            objectiveValidatedAt={draft.objectiveValidatedAt}
             onObjectiveTitleChange={(value) => updateDraft({ objectiveTitle: value })}
             onObjectiveDescriptionChange={(value) => updateDraft({ objectiveDescription: value })}
             onOrgObjectiveSelect={(value) => updateDraft({ selectedOrgObjectiveId: value })}
+            onValidationFeedbackChange={(feedback, validatedAt) => updateDraft({ 
+              objectiveValidationFeedback: feedback, 
+              objectiveValidatedAt: validatedAt 
+            })}
             onContinue={goNext}
             onBack={goBack}
           />
