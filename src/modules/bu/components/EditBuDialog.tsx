@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { Building2, Plus, X, Globe, Loader2, MapPin } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,6 +64,15 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
   const [domainInput, setDomainInput] = useState("");
   const { isAdmin } = useAuth();
   const updateBu = useUpdateBu();
+  
+  // Defense in depth: check if user can edit BU settings
+  const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
+  const canEditBu = isWildcard || has('bu.settings.manage:bu') || isAdmin;
+  
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermissions && !canEditBu) {
+    return null;
+  }
 
   const form = useForm<EditBuFormData>({
     resolver: zodResolver(editBuSchema),

@@ -4,6 +4,7 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { useCanManageOrgOkr } from '../hooks/useCanManageTeamOkr';
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,14 @@ export function OrgObjectiveFormDialog({
 }: OrgObjectiveFormDialogProps) {
   const isEditing = !!objective;
   const year = objective?.year ?? defaultYear ?? new Date().getFullYear();
+  
+  // Defense in depth: check if user can manage org OKRs
+  const { canManage: canManageOrgOkr, isLoading: isLoadingPermission } = useCanManageOrgOkr();
+  
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermission && !canManageOrgOkr) {
+    return null;
+  }
   
   const queryClient = useQueryClient();
   const { client: supabase, buId } = useOptionalBuClient();

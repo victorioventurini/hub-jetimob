@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,14 @@ export function PermissionDialog({
   onSave,
   isPending,
 }: PermissionDialogProps) {
+  // Defense in depth: only super_admin can manage permissions
+  const { isWildcard, isLoading: isLoadingPermissions } = usePermissions();
+  
+  // Don't render if user doesn't have wildcard (super_admin) permission
+  if (!isLoadingPermissions && !isWildcard) {
+    return null;
+  }
+  
   const [module, setModule] = useState(permission?.module || "");
   const [resource, setResource] = useState(permission?.resource || "");
   const [action, setAction] = useState(permission?.action || "");
