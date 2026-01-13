@@ -110,11 +110,11 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
                 <TooltipTrigger asChild>
                   <div className={cn(
                     "flex items-center gap-1 text-muted-foreground",
-                    kpi.source_type === 'manual' && "text-blue-500",
-                    kpi.source_type === 'api' && "text-green-500",
-                    kpi.source_type === 'webhook' && "text-purple-500",
-                    kpi.source_type === 'spreadsheet' && "text-orange-500",
-                    kpi.source_type === 'database' && "text-cyan-500",
+                    kpi.source_type === 'manual' && "text-status-blue",
+                    kpi.source_type === 'api' && "text-status-green",
+                    kpi.source_type === 'webhook' && "text-status-purple",
+                    kpi.source_type === 'spreadsheet' && "text-status-orange",
+                    kpi.source_type === 'database' && "text-status-cyan",
                   )}>
                     <SourceIcon type={kpi.source_type} />
                   </div>

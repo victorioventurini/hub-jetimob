@@ -22,7 +22,7 @@ export function ImpersonationBanner() {
     .slice(0, 2);
   
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950 py-2 px-4 shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-status-amber text-status-amber-foreground py-2 px-4 shadow-lg">
       <div className="flex items-center justify-center gap-3 max-w-7xl mx-auto">
         <Eye className="h-4 w-4 shrink-0" />
         
@@ -31,7 +31,7 @@ export function ImpersonationBanner() {
             src={impersonatedUser.photoUrl}
             fallback={initials}
             size="sm"
-            className="h-6 w-6 border border-amber-600"
+            className="h-6 w-6 border border-status-amber"
           />
           <span className="text-sm font-medium">
             Visualizando como: <strong>{impersonatedUser.displayName}</strong>
@@ -47,7 +47,7 @@ export function ImpersonationBanner() {
           variant="ghost"
           size="sm"
           onClick={stopImpersonation}
-          className="ml-2 h-7 px-2 text-amber-950 hover:bg-amber-600 hover:text-amber-950"
+          className="ml-2 h-7 px-2 text-status-amber-foreground hover:bg-status-amber/80"
         >
           <X className="h-4 w-4 mr-1" />
           <span className="hidden sm:inline">Encerrar simulação</span>

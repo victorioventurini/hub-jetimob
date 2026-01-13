@@ -99,11 +99,11 @@ export function OkrAlertsCard({ teamId, isLeader = false, className }: OkrAlerts
   const getAlertStyles = (type: Alert['type']) => {
     switch (type) {
       case 'error':
-        return 'bg-destructive/10 text-destructive border-destructive/30';
+        return 'bg-status-red-muted text-status-red border-status-red/30';
       case 'warning':
-        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
+        return 'bg-status-amber-muted text-status-amber border-status-amber/30';
       case 'info':
-        return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30';
+        return 'bg-status-blue-muted text-status-blue border-status-blue/30';
     }
   };
 
@@ -111,7 +111,7 @@ export function OkrAlertsCard({ teamId, isLeader = false, className }: OkrAlerts
     <Card className={cn('animate-fade-in', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base font-medium">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertTriangle className="h-4 w-4 text-status-amber" />
           Alertas
           <Badge variant="secondary" className="ml-1">
             {alerts.length}

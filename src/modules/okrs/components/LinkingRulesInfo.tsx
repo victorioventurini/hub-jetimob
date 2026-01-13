@@ -134,9 +134,9 @@ interface KrTypeBadgeProps {
  */
 export function KrTypeBadge({ type, showTooltip = true }: KrTypeBadgeProps) {
   const config = {
-    contribution: { label: "Contribuição", variant: "default" as const, color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-    enabler: { label: "Habilitador", variant: "secondary" as const, color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" },
-    foundational: { label: "Fundacional", variant: "outline" as const, color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" },
+    contribution: { label: "Contribuição", variant: "default" as const, color: "bg-status-blue-muted text-status-blue" },
+    enabler: { label: "Habilitador", variant: "secondary" as const, color: "bg-status-purple-muted text-status-purple" },
+    foundational: { label: "Fundacional", variant: "outline" as const, color: "bg-status-amber-muted text-status-amber" },
   };
 
   const { label, color } = config[type];
