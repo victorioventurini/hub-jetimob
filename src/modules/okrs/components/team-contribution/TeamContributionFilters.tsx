@@ -7,9 +7,9 @@ interface TeamContributionFiltersProps {
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os status' },
-  { value: 'on_track', label: 'No Caminho', color: 'bg-emerald-500' },
-  { value: 'at_risk', label: 'Em Risco', color: 'bg-amber-500' },
-  { value: 'off_track', label: 'Fora do Caminho', color: 'bg-red-500' },
+  { value: 'on_track', label: 'No Caminho', color: 'bg-status-green' },
+  { value: 'at_risk', label: 'Em Risco', color: 'bg-status-yellow' },
+  { value: 'off_track', label: 'Fora do Caminho', color: 'bg-status-red' },
 ];
 
 export function TeamContributionFilters({

@@ -206,9 +206,9 @@ export function TeamKrReviewStep({
                   value={currentKr.progress} 
                   className={cn(
                     "h-2",
-                    currentKr.status === 'green' && "[&>div]:bg-green-500",
-                    currentKr.status === 'yellow' && "[&>div]:bg-yellow-500",
-                    currentKr.status === 'red' && "[&>div]:bg-red-500"
+                    currentKr.status === 'green' && "[&>div]:bg-status-green",
+                    currentKr.status === 'yellow' && "[&>div]:bg-status-yellow",
+                    currentKr.status === 'red' && "[&>div]:bg-status-red"
                   )}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">

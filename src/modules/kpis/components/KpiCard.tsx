@@ -38,8 +38,8 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
 
   // Determine trend color based on direction
   const trendColor = kpi.direction === "up"
-    ? kpi.trend === "up" ? "text-emerald-500" : kpi.trend === "down" ? "text-red-500" : "text-muted-foreground"
-    : kpi.trend === "down" ? "text-emerald-500" : kpi.trend === "up" ? "text-red-500" : "text-muted-foreground";
+    ? kpi.trend === "up" ? "text-status-green" : kpi.trend === "down" ? "text-status-red" : "text-muted-foreground"
+    : kpi.trend === "down" ? "text-status-green" : kpi.trend === "up" ? "text-status-red" : "text-muted-foreground";
 
   const ragConfig = RAG_STATUS_CONFIG[kpi.rag_status];
   const needsAttention = kpi.rag_status === 'off_track' || kpi.rag_status === 'at_risk';

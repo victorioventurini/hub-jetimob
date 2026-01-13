@@ -14,17 +14,17 @@ import { useManageableTeamsFlat } from '../../hooks/useManageableTeams';
 // Confidence options for the filter
 const CONFIDENCE_OPTIONS = [
   { value: 'all', label: 'Todas' },
-  { value: 'high', label: 'Alta', color: 'bg-emerald-500' },
-  { value: 'medium', label: 'Média', color: 'bg-amber-500' },
-  { value: 'low', label: 'Baixa', color: 'bg-red-500' },
+  { value: 'high', label: 'Alta', color: 'bg-status-green' },
+  { value: 'medium', label: 'Média', color: 'bg-status-yellow' },
+  { value: 'low', label: 'Baixa', color: 'bg-status-red' },
 ];
 
 // RAG status options for the filter
 const RAG_OPTIONS = [
   { value: 'all', label: 'Todos' },
-  { value: 'green', label: 'No caminho', color: 'bg-emerald-500' },
-  { value: 'yellow', label: 'Em risco', color: 'bg-amber-500' },
-  { value: 'red', label: 'Atrasado', color: 'bg-red-500' },
+  { value: 'green', label: 'No caminho', color: 'bg-status-green' },
+  { value: 'yellow', label: 'Em risco', color: 'bg-status-yellow' },
+  { value: 'red', label: 'Atrasado', color: 'bg-status-red' },
 ];
 
 interface FiltersState {
