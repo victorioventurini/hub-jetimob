@@ -21,6 +21,7 @@ import { lazyWithRetry } from "@/lib/lazyWithRetry";
 // Páginas carregadas imediatamente (críticas para primeira renderização)
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
 const PublicAssetRedirect = lazy(() => import("./pages/PublicAssetRedirect"));
 const ResolveContextPage = lazy(() => import("./pages/ResolveContextPage"));
@@ -180,6 +181,7 @@ const App = () => {
                       <Routes>
                       {/* ===== ROTAS PÚBLICAS ===== */}
                       <Route path="/auth" element={<Auth />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/p/assets/:code" element={<PublicAsset />} />
 
                       {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
