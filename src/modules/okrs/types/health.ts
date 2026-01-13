@@ -1,5 +1,7 @@
 // OKR Health Score Types
 
+import { HEALTH_STATUS_COLORS } from '@/lib/colors';
+
 export type HealthStatus = 'healthy' | 'attention' | 'risk';
 
 export interface HealthComponents {
@@ -61,30 +63,20 @@ export interface OkrCoachingEvent {
 }
 
 export function getHealthStatusConfig(status: HealthStatus) {
-  switch (status) {
-    case 'healthy':
-      return {
-        label: 'Saudável',
-        emoji: '🟢',
-        color: 'text-green-600',
-        bgColor: 'bg-green-100 dark:bg-green-900/30',
-        borderColor: 'border-green-500',
-      };
-    case 'attention':
-      return {
-        label: 'Atenção',
-        emoji: '🟡',
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-        borderColor: 'border-yellow-500',
-      };
-    case 'risk':
-      return {
-        label: 'Em Risco',
-        emoji: '🔴',
-        color: 'text-red-600',
-        bgColor: 'bg-red-100 dark:bg-red-900/30',
-        borderColor: 'border-red-500',
-      };
-  }
+  const statusMap: Record<HealthStatus, { label: string; emoji: string }> = {
+    healthy: { label: 'Saudável', emoji: '🟢' },
+    attention: { label: 'Atenção', emoji: '🟡' },
+    risk: { label: 'Em Risco', emoji: '🔴' },
+  };
+  
+  const colors = HEALTH_STATUS_COLORS[status];
+  const config = statusMap[status];
+  
+  return {
+    label: config.label,
+    emoji: config.emoji,
+    color: colors.text,
+    bgColor: colors.bg,
+    borderColor: colors.border,
+  };
 }

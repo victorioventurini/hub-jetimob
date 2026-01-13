@@ -23,6 +23,7 @@ import { ptBR } from 'date-fns/locale';
 import { CheckinFeedItem } from '../../hooks/useCycleCheckins';
 import { KrHistoryDialog } from '../KrHistoryDialog';
 import { cn } from '@/lib/utils';
+import { CONFIDENCE_COLORS, RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface CycleCheckinsFeedProps {
   checkins: CheckinFeedItem[];
@@ -36,23 +37,10 @@ interface CycleCheckinsFeedProps {
   onPageChange: (page: number) => void;
 }
 
-const confidenceColors = {
-  high: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  low: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-};
-
 const confidenceLabels = {
   high: 'Alta',
   medium: 'Média',
   low: 'Baixa',
-};
-
-const statusColors = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-500',
-  red: 'bg-red-500',
-  not_started: 'bg-muted-foreground',
 };
 
 export function CycleCheckinsFeed({ 
@@ -149,7 +137,7 @@ export function CycleCheckinsFeed({
                   
                   {/* KR Title with status dot */}
                   <div className="flex items-center gap-2 mt-1">
-                    <div className={cn("w-2 h-2 rounded-full shrink-0", statusColors[checkin.kr_status])} />
+                    <div className={cn("w-2 h-2 rounded-full shrink-0", RAG_STATUS_COLORS[checkin.kr_status]?.dot)} />
                     <button 
                       onClick={() => setSelectedKr({
                         id: checkin.kr_id,
@@ -190,7 +178,7 @@ export function CycleCheckinsFeed({
                         </span>
                       )}
                     </div>
-                    <Badge variant="secondary" className={cn("text-xs", confidenceColors[checkin.confidence])}>
+                    <Badge variant="secondary" className={cn("text-xs", CONFIDENCE_COLORS[checkin.confidence]?.badge)}>
                       {confidenceLabels[checkin.confidence]}
                     </Badge>
                   </div>

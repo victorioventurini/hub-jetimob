@@ -48,6 +48,61 @@ export const RAG_STATUS_COLORS = {
 export type RagStatus = keyof typeof RAG_STATUS_COLORS;
 
 // ============================================
+// Confidence Colors (Check-ins)
+// ============================================
+
+export const CONFIDENCE_COLORS = {
+  high: {
+    badge: 'bg-status-green-muted text-status-green-muted-foreground',
+    selected: 'border-status-green bg-status-green-muted text-status-green-muted-foreground',
+  },
+  medium: {
+    badge: 'bg-status-yellow-muted text-status-yellow-muted-foreground',
+    selected: 'border-status-yellow bg-status-yellow-muted text-status-yellow-muted-foreground',
+  },
+  low: {
+    badge: 'bg-status-red-muted text-status-red-muted-foreground',
+    selected: 'border-status-red bg-status-red-muted text-status-red-muted-foreground',
+  },
+} as const;
+
+export type ConfidenceLevel = keyof typeof CONFIDENCE_COLORS;
+
+// ============================================
+// Health Status Colors (OKR Health Score)
+// ============================================
+
+export const HEALTH_STATUS_COLORS = {
+  healthy: {
+    text: 'text-status-green',
+    bg: 'bg-status-green-muted',
+    border: 'border-status-green',
+  },
+  attention: {
+    text: 'text-status-yellow',
+    bg: 'bg-status-yellow-muted',
+    border: 'border-status-yellow',
+  },
+  risk: {
+    text: 'text-status-red',
+    bg: 'bg-status-red-muted',
+    border: 'border-status-red',
+  },
+  at_risk: {
+    text: 'text-status-yellow',
+    bg: 'bg-status-yellow-muted',
+    border: 'border-status-yellow',
+  },
+  critical: {
+    text: 'text-status-red',
+    bg: 'bg-status-red-muted',
+    border: 'border-status-red',
+  },
+} as const;
+
+export type HealthStatusKey = keyof typeof HEALTH_STATUS_COLORS;
+
+// ============================================
 // Permission Surface Colors
 // ============================================
 

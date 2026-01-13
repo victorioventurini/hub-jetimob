@@ -71,21 +71,21 @@ const CONFIDENCE_OPTIONS: ConfidenceOption[] = [
     label: 'Alta',
     description: 'Confiante que vamos atingir',
     icon: ThumbsUp,
-    colorClass: 'border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400',
+    colorClass: 'border-status-green bg-status-green-muted text-status-green-muted-foreground',
   },
   {
     value: 'medium',
     label: 'Média',
     description: 'Precisamos de atenção',
     icon: Minus,
-    colorClass: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400',
+    colorClass: 'border-status-yellow bg-status-yellow-muted text-status-yellow-muted-foreground',
   },
   {
     value: 'low',
     label: 'Baixa',
     description: 'Em risco de não atingir',
     icon: ThumbsDown,
-    colorClass: 'border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400',
+    colorClass: 'border-status-red bg-status-red-muted text-status-red-muted-foreground',
   },
 ];
 

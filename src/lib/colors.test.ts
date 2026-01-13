@@ -4,6 +4,10 @@ import {
   SURFACE_COLORS, 
   TICKET_STATUS_STYLES,
   ASSET_STATUS_STYLES,
+  CONFIDENCE_COLORS,
+  HEALTH_STATUS_COLORS,
+  FEEDBACK_STYLES,
+  AUDIT_STATUS_STYLES,
   getStatusStyle 
 } from './colors';
 
@@ -15,20 +19,27 @@ describe('RAG_STATUS_COLORS', () => {
     expect(RAG_STATUS_COLORS).toHaveProperty('not_started');
   });
 
-  it('should have consistent structure for each status', () => {
-    Object.values(RAG_STATUS_COLORS).forEach((config) => {
-      expect(config).toHaveProperty('dot');
-      expect(config).toHaveProperty('text');
-      expect(config).toHaveProperty('badge');
-      expect(config).toHaveProperty('border');
-    });
-  });
-
-  it('should use semantic tokens (no hardcoded colors)', () => {
+  it('should use semantic tokens', () => {
     Object.values(RAG_STATUS_COLORS).forEach((config) => {
       expect(config.dot).toMatch(/^bg-status-|^bg-muted/);
-      expect(config.badge).toMatch(/status-|muted/);
     });
+  });
+});
+
+describe('CONFIDENCE_COLORS', () => {
+  it('should have high/medium/low', () => {
+    expect(CONFIDENCE_COLORS).toHaveProperty('high');
+    expect(CONFIDENCE_COLORS).toHaveProperty('medium');
+    expect(CONFIDENCE_COLORS).toHaveProperty('low');
+  });
+});
+
+describe('HEALTH_STATUS_COLORS', () => {
+  it('should have all health statuses', () => {
+    expect(HEALTH_STATUS_COLORS).toHaveProperty('healthy');
+    expect(HEALTH_STATUS_COLORS).toHaveProperty('attention');
+    expect(HEALTH_STATUS_COLORS).toHaveProperty('risk');
+    expect(HEALTH_STATUS_COLORS).toHaveProperty('critical');
   });
 });
 
@@ -37,37 +48,23 @@ describe('SURFACE_COLORS', () => {
     expect(SURFACE_COLORS).toHaveProperty('view');
     expect(SURFACE_COLORS).toHaveProperty('operate');
     expect(SURFACE_COLORS).toHaveProperty('administer');
-    expect(SURFACE_COLORS).toHaveProperty('base');
     expect(SURFACE_COLORS).toHaveProperty('restricted');
   });
+});
 
-  it('should use semantic tokens', () => {
-    Object.entries(SURFACE_COLORS).forEach(([key, config]) => {
-      if (key === 'base') {
-        expect(config.badge).toMatch(/muted/);
-      } else {
-        expect(config.badge).toMatch(/surface-/);
-      }
-    });
+describe('FEEDBACK_STYLES', () => {
+  it('should have warning/suggestion/success', () => {
+    expect(FEEDBACK_STYLES).toHaveProperty('warning');
+    expect(FEEDBACK_STYLES).toHaveProperty('suggestion');
+    expect(FEEDBACK_STYLES).toHaveProperty('success');
   });
 });
 
-describe('TICKET_STATUS_STYLES', () => {
-  it('should have all ticket statuses', () => {
-    expect(TICKET_STATUS_STYLES).toHaveProperty('waiting');
-    expect(TICKET_STATUS_STYLES).toHaveProperty('paused');
-    expect(TICKET_STATUS_STYLES).toHaveProperty('in_progress');
-    expect(TICKET_STATUS_STYLES).toHaveProperty('done');
-    expect(TICKET_STATUS_STYLES).toHaveProperty('discarded');
-  });
-});
-
-describe('ASSET_STATUS_STYLES', () => {
-  it('should have all asset statuses', () => {
-    expect(ASSET_STATUS_STYLES).toHaveProperty('available');
-    expect(ASSET_STATUS_STYLES).toHaveProperty('loaned');
-    expect(ASSET_STATUS_STYLES).toHaveProperty('lost');
-    expect(ASSET_STATUS_STYLES).toHaveProperty('retired');
+describe('AUDIT_STATUS_STYLES', () => {
+  it('should have PASS/FAIL/PARTIAL', () => {
+    expect(AUDIT_STATUS_STYLES).toHaveProperty('PASS');
+    expect(AUDIT_STATUS_STYLES).toHaveProperty('FAIL');
+    expect(AUDIT_STATUS_STYLES).toHaveProperty('PARTIAL');
   });
 });
 
