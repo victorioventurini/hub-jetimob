@@ -141,7 +141,7 @@ export function PermissionDiffDialog({
                     <div className="space-y-1">
                       {removals.map((diff, i) => (
                         <div key={i} className="flex items-center justify-between text-xs">
-                          <code className="bg-red-500/10 text-red-700 px-1.5 py-0.5 rounded font-mono line-through">
+                          <code className="bg-status-red-muted text-status-red px-1.5 py-0.5 rounded font-mono line-through">
                             {diff.permission_key}
                           </code>
                           <span className="text-muted-foreground">{diff.source_name}</span>

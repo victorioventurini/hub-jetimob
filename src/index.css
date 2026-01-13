@@ -95,6 +95,11 @@
     --status-pink-muted: 350 89% 95%;
     --status-pink-muted-foreground: 350 89% 45%;
 
+    --status-orange: 25 95% 53%;
+    --status-orange-foreground: 0 0% 100%;
+    --status-orange-muted: 25 95% 95%;
+    --status-orange-muted-foreground: 25 95% 40%;
+
     /* Surface Permission Colors */
     --surface-view: 217 91% 60%;
     --surface-view-muted: 217 91% 95%;
@@ -222,6 +227,11 @@
     --status-pink-foreground: 0 0% 100%;
     --status-pink-muted: 350 60% 15%;
     --status-pink-muted-foreground: 350 89% 70%;
+
+    --status-orange: 25 95% 58%;
+    --status-orange-foreground: 0 0% 100%;
+    --status-orange-muted: 25 70% 15%;
+    --status-orange-muted-foreground: 25 95% 65%;
 
     /* Surface Permission Colors (Dark) */
     --surface-view: 217 91% 65%;

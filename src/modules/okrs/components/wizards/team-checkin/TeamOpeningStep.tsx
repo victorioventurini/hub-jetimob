@@ -125,9 +125,9 @@ export function TeamOpeningStep({
                       variant="secondary"
                       className={cn(
                         "text-xs",
-                        kr.status === 'green' && "bg-green-100 text-green-700",
-                        kr.status === 'yellow' && "bg-yellow-100 text-yellow-700",
-                        kr.status === 'red' && "bg-red-100 text-red-700"
+                        kr.status === 'green' && "bg-status-green-muted text-status-green",
+                        kr.status === 'yellow' && "bg-status-yellow-muted text-status-yellow",
+                        kr.status === 'red' && "bg-status-red-muted text-status-red"
                       )}
                     >
                       {Math.round(kr.progress)}%

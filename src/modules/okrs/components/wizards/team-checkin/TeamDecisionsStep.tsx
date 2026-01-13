@@ -77,11 +77,11 @@ export function TeamDecisionsStep({
   const getCategoryConfig = (category: TeamCheckinDecision['category']) => {
     switch (category) {
       case 'decision':
-        return { label: 'Decisão', icon: Lightbulb, color: 'bg-blue-100 text-blue-700' };
+        return { label: 'Decisão', icon: Lightbulb, color: 'bg-status-blue-muted text-status-blue' };
       case 'focus_adjustment':
-        return { label: 'Ajuste de Foco', icon: Target, color: 'bg-purple-100 text-purple-700' };
+        return { label: 'Ajuste de Foco', icon: Target, color: 'bg-status-purple-muted text-status-purple' };
       case 'next_step':
-        return { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-green-100 text-green-700' };
+        return { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' };
     }
   };
 

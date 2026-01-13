@@ -102,6 +102,12 @@ export default {
           muted: "hsl(var(--status-pink-muted))",
           "muted-foreground": "hsl(var(--status-pink-muted-foreground))",
         },
+        "status-orange": {
+          DEFAULT: "hsl(var(--status-orange))",
+          foreground: "hsl(var(--status-orange-foreground))",
+          muted: "hsl(var(--status-orange-muted))",
+          "muted-foreground": "hsl(var(--status-orange-muted-foreground))",
+        },
         // Surface Permission Colors
         "surface-view": {
           DEFAULT: "hsl(var(--surface-view))",

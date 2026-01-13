@@ -101,13 +101,13 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
       {initiatives && initiatives.length > 0 && (blockedCount > 0 || (activeCount === 0 && completedCount < initiatives.length)) && (
         <div className="flex flex-wrap gap-2">
           {blockedCount > 0 && (
-            <div className="flex items-center gap-1.5 text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 px-2 py-1 rounded-md">
+            <div className="flex items-center gap-1.5 text-xs bg-status-red-muted text-status-red px-2 py-1 rounded-md">
               <AlertCircle className="w-3 h-3" />
               {blockedCount} iniciativa{blockedCount > 1 ? 's' : ''} bloqueada{blockedCount > 1 ? 's' : ''}
             </div>
           )}
           {activeCount === 0 && completedCount < initiatives.length && (
-            <div className="flex items-center gap-1.5 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 px-2 py-1 rounded-md">
+            <div className="flex items-center gap-1.5 text-xs bg-status-yellow-muted text-status-yellow px-2 py-1 rounded-md">
               <AlertCircle className="w-3 h-3" />
               Nenhuma iniciativa em progresso
             </div>
