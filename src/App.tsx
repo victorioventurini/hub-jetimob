@@ -16,6 +16,7 @@ import { AdminRoute } from "@/components/auth/AdminRoute";
 import { BuAdminRoute } from "@/components/auth/BuAdminRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
 // Páginas carregadas imediatamente (críticas para primeira renderização)
 import Auth from "./pages/Auth";
@@ -58,8 +59,8 @@ const LeaderPrepPage = lazy(() => import("./modules/okrs/pages/LeaderPrepPage"))
 const TeamCheckinPage = lazy(() => import("./modules/okrs/pages/TeamCheckinPage"));
 const ManagersCheckinPage = lazy(() => import("./modules/okrs/pages/ManagersCheckinPage"));
 const CLevelCheckinPage = lazy(() => import("./modules/okrs/pages/CLevelCheckinPage"));
-const OkrQualityPage = lazy(() => import("./modules/okrs/pages/OkrQualityPage"));
-const OrgAnalysisPage = lazy(() => import("./modules/okrs/pages/OrgAnalysisPage"));
+const OkrQualityPage = lazyWithRetry(() => import("./modules/okrs/pages/OkrQualityPage"));
+const OrgAnalysisPage = lazyWithRetry(() => import("./modules/okrs/pages/OrgAnalysisPage"));
 
 // Módulo KPIs
 const KpiDashboardPage = lazy(() => import("./modules/kpis/pages/KpiDashboardPage"));

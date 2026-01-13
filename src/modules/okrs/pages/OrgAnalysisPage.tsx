@@ -15,8 +15,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useBu } from "@/contexts/BuContext";
-import { useUrlState, yearConfig } from "@/shared/url";
 import { useOrgOkrAnalysis } from "../hooks/useOrgOkrAnalysis";
 import {
   AnalysisScoreCard,
