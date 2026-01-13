@@ -93,11 +93,11 @@ const notificationIcons: Record<string, React.ComponentType<{ className?: string
 };
 
 const notificationColors: Record<string, string> = {
-  mention: 'text-blue-500',
-  checkin_created: 'text-green-500',
-  checkin_overdue: 'text-orange-500',
-  kr_status_changed: 'text-yellow-500',
-  shared_okr_update: 'text-purple-500',
+  mention: 'text-status-blue',
+  checkin_created: 'text-status-green',
+  checkin_overdue: 'text-status-orange',
+  kr_status_changed: 'text-status-yellow',
+  shared_okr_update: 'text-status-purple',
   info: 'text-muted-foreground',
 };
 
@@ -111,7 +111,7 @@ const channelIcons: Record<string, React.ComponentType<{ className?: string }>> 
 
 const severityConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
   info: { icon: Info, color: 'text-muted-foreground' },
-  warning: { icon: AlertTriangle, color: 'text-yellow-600' },
+  warning: { icon: AlertTriangle, color: 'text-status-yellow' },
   critical: { icon: AlertCircle, color: 'text-destructive' },
 };
 

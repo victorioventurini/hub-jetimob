@@ -542,11 +542,11 @@ export default function CronJobConfigPage() {
           {logs && logs.length > 0 && (
             <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
+                <Check className="h-4 w-4 text-status-green" />
                 Último sucesso: {lastSuccessLog ? format(new Date(lastSuccessLog.ran_at), "dd/MM HH:mm", { locale: ptBR }) : 'N/A'}
               </div>
               <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-status-red" />
                 Último erro: {lastErrorLog ? format(new Date(lastErrorLog.ran_at), "dd/MM HH:mm", { locale: ptBR }) : 'Nenhum'}
               </div>
             </div>
