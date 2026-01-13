@@ -76,7 +76,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-medium text-foreground">Iniciativas</h3>
+          <h3 className="text-sm font-medium text-foreground">Iniciativas</h3>
           <span className="text-sm text-muted-foreground">
             ({initiatives?.length || 0})
           </span>
