@@ -2,7 +2,7 @@
 
 **Data:** 2026-01-13  
 **Versão TCR:** 2.27.0  
-**Status:** 🔄 EM ANÁLISE
+**Status:** ✅ P1-P2-P3 CONCLUÍDOS
 
 ---
 
@@ -196,23 +196,23 @@ Busca identificou **usos legítimos** de `select('*', { count: "exact", head: tr
 
 | Item | Esforço | Status |
 |------|---------|--------|
-| Atualizar referência TCR em DEVELOPMENT_STANDARDS.md | 5 min | 🔲 TODO |
-| Corrigir exemplo JSDoc em getOptionalBuClient.ts | 5 min | 🔲 TODO |
+| Atualizar referência TCR em DEVELOPMENT_STANDARDS.md | 5 min | ✅ Feito |
+| Corrigir exemplo JSDoc em getOptionalBuClient.ts | 5 min | ✅ Feito |
 
 ### P2 — Importante (Próximas 2 semanas)
 
 | Item | Esforço | Status |
 |------|---------|--------|
-| Criar índices para ticket_attachments/messages | 15 min | 🔲 Backlog |
+| Criar índices para ticket_attachments/messages | 15 min | ✅ Já existem |
 | Revisar índices com 0 scans (30 dias) | 30 min | 🔲 Monitorando |
 
 ### P3 — Desejável (Backlog)
 
-| Item | Esforço | Razão do Adiamento |
-|------|---------|-------------------|
-| Migração text→enum (health_status, status) | 2h | Views dependentes |
-| RPC rpc_assets_dashboard | 2h | Baixa demanda |
-| Particionamento de logs | 4h | Tamanho ainda gerenciável |
+| Item | Esforço | Status |
+|------|---------|--------|
+| Migração text→enum (health_status, status) | 2h | 📄 [Plano documentado](./ENUM_MIGRATION_PLAN.md) |
+| RPC rpc_assets_dashboard | 2h | ⏳ Baixa demanda |
+| Particionamento de logs | 4h | ⏳ Tamanho ainda gerenciável |
 
 ---
 
