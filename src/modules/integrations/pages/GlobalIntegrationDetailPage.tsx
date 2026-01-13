@@ -395,8 +395,8 @@ export default function GlobalIntegrationDetailPage() {
                       >
                         <div className="flex items-center gap-3">
                           <span className={`w-2 h-2 rounded-full ${
-                            log.status === 'success' ? 'bg-green-500' : 
-                            log.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                            log.status === 'success' ? 'bg-status-green' : 
+                            log.status === 'error' ? 'bg-status-red' : 'bg-status-yellow'
                           }`} />
                           <span className="font-medium">{log.agent_name}</span>
                           <span className="text-muted-foreground">

@@ -9,10 +9,10 @@ export const ASSET_STATUS_OPTIONS: Array<{
   label: string;
   color: string;
 }> = [
-  { value: 'available', label: 'Disponível', color: 'bg-emerald-500' },
-  { value: 'loaned', label: 'Emprestado', color: 'bg-blue-500' },
-  { value: 'maintenance', label: 'Em Manutenção', color: 'bg-amber-500' },
-  { value: 'written_off', label: 'Baixado', color: 'bg-gray-500' },
+  { value: 'available', label: 'Disponível', color: 'bg-status-green' },
+  { value: 'loaned', label: 'Emprestado', color: 'bg-info' },
+  { value: 'maintenance', label: 'Em Manutenção', color: 'bg-status-yellow' },
+  { value: 'written_off', label: 'Baixado', color: 'bg-status-gray' },
 ];
 
 interface AssetStatusSelectProps {
