@@ -1,6 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Building2, Users } from "lucide-react";
 
 // Type from tickets module
 export type TicketType = 'internal' | 'external';
@@ -8,10 +7,9 @@ export type TicketType = 'internal' | 'external';
 export const TICKET_TYPE_OPTIONS: Array<{
   value: TicketType;
   label: string;
-  icon: typeof Building2;
 }> = [
-  { value: 'internal', label: 'Interno', icon: Users },
-  { value: 'external', label: 'Externo', icon: Building2 },
+  { value: 'internal', label: 'Interno' },
+  { value: 'external', label: 'Externo' },
 ];
 
 interface TicketTypeSelectProps {
@@ -20,7 +18,6 @@ interface TicketTypeSelectProps {
   placeholder?: string;
   includeAll?: boolean;
   allLabel?: string;
-  showIcon?: boolean;
   disabled?: boolean;
   className?: string;
   triggerClassName?: string;
@@ -43,14 +40,10 @@ export function TicketTypeSelect({
   placeholder = "Tipo",
   includeAll = false,
   allLabel = "Todos os tipos",
-  showIcon = true,
   disabled = false,
   className,
   triggerClassName,
 }: TicketTypeSelectProps) {
-  const selectedOption = TICKET_TYPE_OPTIONS.find(opt => opt.value === value);
-  const Icon = selectedOption?.icon;
-
   return (
     <Select 
       value={value} 
@@ -58,12 +51,7 @@ export function TicketTypeSelect({
       disabled={disabled}
     >
       <SelectTrigger className={cn("w-[140px]", triggerClassName, className)}>
-        <span className="flex items-center gap-2">
-          {showIcon && Icon && (
-            <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-          )}
-          <SelectValue placeholder={placeholder} />
-        </span>
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {includeAll && (
@@ -71,19 +59,11 @@ export function TicketTypeSelect({
             {allLabel}
           </SelectItem>
         )}
-        {TICKET_TYPE_OPTIONS.map((option) => {
-          const OptionIcon = option.icon;
-          return (
-            <SelectItem key={option.value} value={option.value}>
-              <span className="flex items-center gap-2">
-                {showIcon && (
-                  <OptionIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                )}
-                {option.label}
-              </span>
-            </SelectItem>
-          );
-        })}
+        {TICKET_TYPE_OPTIONS.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
