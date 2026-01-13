@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Lightbulb, AlertCircle } from "lucide-react";
@@ -22,9 +22,11 @@ interface InitiativesListProps {
   krTitle?: string;
   krContext?: KrContext;
   canEdit?: boolean;
+  /** Se presente, filtra apenas iniciativas deste usuário (usado na view "Minhas OKRs") */
+  filterForUserId?: string;
 }
 
-export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: InitiativesListProps) {
+export function InitiativesList({ krId, krTitle, krContext, canEdit = true, filterForUserId }: InitiativesListProps) {
   const profileId = useProfileId();
   const { data: initiatives, isLoading } = useKrInitiatives(krId);
   const deleteMutation = useDeleteInitiative();
@@ -57,10 +59,16 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
     }
   };
 
-  // Calculate insights
-  const blockedCount = initiatives?.filter(i => i.status === 'blocked').length || 0;
-  const activeCount = initiatives?.filter(i => i.status === 'in_progress').length || 0;
-  const completedCount = initiatives?.filter(i => i.status === 'completed').length || 0;
+  // Filter initiatives by user if filterForUserId is provided
+  const filteredInitiatives = useMemo(() => {
+    if (!filterForUserId || !initiatives) return initiatives;
+    return initiatives.filter(i => i.owner_user_id === filterForUserId);
+  }, [initiatives, filterForUserId]);
+
+  // Calculate insights using filtered initiatives
+  const blockedCount = filteredInitiatives?.filter(i => i.status === 'blocked').length || 0;
+  const activeCount = filteredInitiatives?.filter(i => i.status === 'in_progress').length || 0;
+  const completedCount = filteredInitiatives?.filter(i => i.status === 'completed').length || 0;
 
   if (isLoading) {
     return (
@@ -78,7 +86,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
           <Lightbulb className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-sm font-medium text-foreground">Iniciativas</h3>
           <span className="text-sm text-muted-foreground">
-            ({initiatives?.length || 0})
+            ({filteredInitiatives?.length || 0})
           </span>
         </div>
         
@@ -98,7 +106,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
       </div>
 
       {/* Insights */}
-      {initiatives && initiatives.length > 0 && (blockedCount > 0 || (activeCount === 0 && completedCount < initiatives.length)) && (
+      {filteredInitiatives && filteredInitiatives.length > 0 && (blockedCount > 0 || (activeCount === 0 && completedCount < filteredInitiatives.length)) && (
         <div className="flex flex-wrap gap-2">
           {blockedCount > 0 && (
             <div className="flex items-center gap-1.5 text-xs bg-status-red-muted text-status-red px-2 py-1 rounded-md">
@@ -106,7 +114,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
               {blockedCount} iniciativa{blockedCount > 1 ? 's' : ''} bloqueada{blockedCount > 1 ? 's' : ''}
             </div>
           )}
-          {activeCount === 0 && completedCount < initiatives.length && (
+          {activeCount === 0 && completedCount < filteredInitiatives.length && (
             <div className="flex items-center gap-1.5 text-xs bg-status-yellow-muted text-status-yellow px-2 py-1 rounded-md">
               <AlertCircle className="w-3 h-3" />
               Nenhuma iniciativa em progresso
@@ -116,7 +124,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
       )}
 
       {/* List */}
-      {!initiatives || initiatives.length === 0 ? (
+      {!filteredInitiatives || filteredInitiatives.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">Nenhuma iniciativa cadastrada</p>
@@ -128,7 +136,7 @@ export function InitiativesList({ krId, krTitle, krContext, canEdit = true }: In
         </div>
       ) : (
         <div className="space-y-3">
-          {initiatives.map((initiative) => {
+          {filteredInitiatives.map((initiative) => {
             const canManageThis = canEditInitiative(initiative);
             return (
               <InitiativeCard

@@ -79,6 +79,8 @@ interface ObjectiveListItemProps {
   teamName?: string;
   /** Se o usuário pode editar este objetivo (via useCanManageTeamOkr ou useCanManageOrgOkr) */
   canEdit?: boolean;
+  /** Se presente, filtra iniciativas apenas deste usuário (profile.id) */
+  filterInitiativesForUser?: string;
 }
 
 export function ObjectiveListItem({ 
@@ -88,6 +90,7 @@ export function ObjectiveListItem({
   type,
   teamName,
   canEdit = false,
+  filterInitiativesForUser,
 }: ObjectiveListItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
@@ -311,6 +314,7 @@ export function ObjectiveListItem({
                       objectiveTitle={objective.title}
                       teamName={teamName}
                       canEdit={canEdit}
+                      filterInitiativesForUser={filterInitiativesForUser}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
                       onShowHistory={() => setHistoryKr(kr)}
@@ -464,12 +468,14 @@ interface KeyResultRowProps {
   objectiveTitle?: string;
   teamName?: string;
   canEdit?: boolean;
+  /** Se presente, filtra iniciativas apenas deste usuário */
+  filterInitiativesForUser?: string;
   onEdit: () => void;
   onCheckin: () => void;
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, filterInitiativesForUser, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(false);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   
@@ -625,6 +631,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, onE
               teamName,
             }}
             canEdit={canEdit}
+            filterForUserId={filterInitiativesForUser}
           />
         </div>
       )}
