@@ -25,7 +25,6 @@ import {
 } from "../components/analysis";
 
 export default function OrgAnalysisPage() {
-  const { currentBu } = useBu();
   
   // Current year
   const year = new Date().getFullYear();
