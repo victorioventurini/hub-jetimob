@@ -46,6 +46,8 @@ export interface BuUserSelectProps {
   allowNone?: boolean;
   /** Label for "none" option (default: "Nenhum") */
   noneLabel?: string;
+  /** Exclude external users/contacts (default: false) */
+  excludeExternal?: boolean;
 }
 
 function getInitials(name: string | null | undefined): string {
@@ -69,6 +71,7 @@ export function BuUserSelect({
   showSearch = true,
   allowNone = false,
   noneLabel = "Nenhum",
+  excludeExternal = false,
 }: BuUserSelectProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -84,6 +87,7 @@ export function BuUserSelect({
     q: showSearch ? search : undefined,
     teamId,
     pageSize: 200,
+    excludeExternal,
   });
 
   // Separate query to fetch the selected profile when not in list
