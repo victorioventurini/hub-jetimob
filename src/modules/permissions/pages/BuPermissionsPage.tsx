@@ -107,7 +107,7 @@ export default function BuPermissionsPage() {
       );
     }
     if (user.role_in_bu === "external") {
-      return <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-700"><ExternalLink className="h-3 w-3" />Externo</Badge>;
+      return <Badge variant="outline" className="gap-1 border-status-amber/50 text-status-amber"><ExternalLink className="h-3 w-3" />Externo</Badge>;
     }
     if (!user.role_in_bu) {
       return <Badge variant="secondary">Perfil</Badge>;
