@@ -451,6 +451,7 @@ export default function OkrDashboardPage() {
                   type={activeView === 'company' ? 'org' : 'team'}
                   teamName={objective.team?.name}
                   canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
+                  canCheckin={activeView === 'my'}
                   filterInitiativesForUser={activeView === 'my' ? userProfile?.id : undefined}
                 />
               ))}
