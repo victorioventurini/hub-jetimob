@@ -5,12 +5,17 @@
  */
 
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ClipboardCheck, Sparkles, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
+import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
 
 export interface OkrConstructionReviewCardProps {
   teamId: string | null;
@@ -23,10 +28,45 @@ export interface OkrConstructionReviewCardProps {
 export function OkrConstructionReviewCard({
   teamId,
   teamName,
-  hasActiveOkrs = false,
-  isLoading = false,
+  hasActiveOkrs: externalHasActiveOkrs,
+  isLoading: externalIsLoading = false,
   className,
 }: OkrConstructionReviewCardProps) {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const { data: activeCycles } = useActiveCycles();
+  
+  // Get active cycle ID
+  const activeCycleId = activeCycles?.[0]?.id ?? null;
+
+  // Query to check if team has objectives in active cycle
+  const { data: objectivesCount = 0, isLoading: isQueryLoading } = useQuery({
+    queryKey: [...queryKeys.okrs.teamObjectives(currentBuId, teamId), 'count', activeCycleId],
+    queryFn: async () => {
+      if (!teamId || !activeCycleId) return 0;
+      
+      const { count, error } = await supabase
+        .from('okr_team_objectives')
+        .select('*', { count: 'exact', head: true })
+        .eq('team_id', teamId)
+        .eq('cycle_id', activeCycleId)
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
+      
+      if (error) {
+        console.error('Error counting objectives:', error);
+        return 0;
+      }
+      
+      return count ?? 0;
+    },
+    enabled: !!supabase && !!currentBuId && !!teamId && !!activeCycleId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const isLoading = externalIsLoading || isQueryLoading;
+  const hasActiveOkrs = externalHasActiveOkrs || objectivesCount > 0;
+
   if (isLoading) {
     return (
       <Card className={cn("animate-fade-in", className)}>
