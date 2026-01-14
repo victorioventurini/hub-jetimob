@@ -152,9 +152,10 @@ serve(async (req) => {
 
   try {
     // Forward auth headers
-    const authHeader = req.headers.get("authorization");
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
     const buId = req.headers.get("x-current-bu-id");
-    
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
@@ -177,7 +178,7 @@ serve(async (req) => {
     console.log("[okr-construction-review] Using agent: coach-okrs");
 
     // Build context for the agent
-    const krList = (keyResults || []).map((kr, i) => 
+    const krList = (keyResults || []).map((kr, i) =>
       `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
     ).join('\n');
 
@@ -240,15 +241,18 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
 
     // Call invoke-vic with coach-okrs agent
     console.log("[okr-construction-review] Calling invoke-vic...");
-    
+
     const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
       method: "POST",
       headers: {
         "Authorization": authHeader,
         "Content-Type": "application/json",
         "x-current-bu-id": buId,
+        "x-correlation-id": correlationId,
       },
       body: JSON.stringify({
+        // IMPORTANT: invoke-vic middleware reads BU from body (bu_id/buId)
+        buId,
         agentSlug: "coach-okrs",
         actionContext: "okr_construction_review",
         context: contextData,
