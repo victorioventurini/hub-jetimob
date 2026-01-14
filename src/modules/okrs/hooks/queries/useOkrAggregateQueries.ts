@@ -183,25 +183,27 @@ export function useOrgObjectiveView(objectiveId: string) {
     queryFn: async (): Promise<OrgObjectiveWithKrs | null> => {
       if (!supabase) return null;
       
-      // Fetch org objective
+      // Fetch org objective (exclude cancelled)
       const { data: objective, error: objError } = await supabase
         .from('okr_org_objectives')
         .select(OKR_FIELDS.orgObjective)
         .eq('id', objectiveId)
         .is('deleted_at', null)
-        .single();
+        .is('cancelled_at', null)
+        .maybeSingle();
 
       if (objError || !objective) {
         console.error('Error fetching objective:', objError);
         return null;
       }
 
-      // Fetch org KRs
+      // Fetch org KRs (exclude cancelled)
       const { data: orgKrs, error: krsError } = await supabase
         .from('okr_org_key_results')
         .select(OKR_FIELDS.orgKr)
         .eq('org_objective_id', objectiveId)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at');
 
       if (krsError) {
@@ -218,7 +220,8 @@ export function useOrgObjectiveView(objectiveId: string) {
           .from('okr_team_key_results')
           .select(TEAM_KR_WITH_RELATIONS_FIELDS)
           .in('linked_org_kr_id', orgKrIds)
-          .is('deleted_at', null);
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
 
         if (teamKrsError) {
           console.error('Error fetching team KRs:', teamKrsError);
@@ -247,7 +250,7 @@ export function useOrgObjectiveView(objectiveId: string) {
         team_name: tobj.teams?.name || 'Time não encontrado',
         status: tobj.status,
         krs: (tobj.key_results || [])
-          .filter((kr: any) => !kr.deleted_at)
+          .filter((kr: any) => !kr.deleted_at && !kr.cancelled_at)
           .map((kr: any) => ({
             id: kr.id,
             title: kr.title,
@@ -342,6 +345,7 @@ export function useAllOrgObjectivesView(year?: number) {
         .eq('year', currentYear)
         .eq('status', 'active')
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at');
 
       if (currentBu?.id) {
@@ -362,7 +366,8 @@ export function useAllOrgObjectivesView(year?: number) {
         .from('okr_org_key_results')
         .select(OKR_FIELDS.orgKr)
         .in('org_objective_id', objectiveIds)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (krsError) {
         console.error('Error fetching org KRs:', krsError);
@@ -377,7 +382,8 @@ export function useAllOrgObjectivesView(year?: number) {
           .from('okr_team_key_results')
           .select(TEAM_KR_WITH_RELATIONS_FIELDS)
           .in('linked_org_kr_id', orgKrIds)
-          .is('deleted_at', null);
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
 
         if (!teamKrsError) {
           teamKrsData = teamKrs || [];
@@ -474,7 +480,8 @@ export function useTeamContributedOkrs(teamId?: string) {
         .from('okr_team_objectives')
         .select(TEAM_OBJECTIVE_WITH_KRS_FIELDS)
         .in('id', objectiveIds)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (objError) {
         console.error('Error fetching objective details:', objError);
@@ -599,12 +606,13 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
         .from('okr_team_objectives')
         .select(`
           id, bu_id, team_id, title, description, year, status, org_objective_id,
-          is_shared, responsibility_model, created_at, updated_at, deleted_at,
+          is_shared, responsibility_model, created_at, updated_at, deleted_at, cancelled_at,
           team:teams!okr_team_objectives_team_id_fkey(id, name)
         `)
         .in('id', objectiveIds)
         .neq('team_id', teamId)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (objError) throw objError;
       return objectives;
@@ -626,11 +634,12 @@ export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: s
         .from('okr_team_objectives')
         .select(`
           id, bu_id, team_id, title, description, year, status, org_objective_id,
-          is_shared, responsibility_model, created_at, updated_at, deleted_at,
+          is_shared, responsibility_model, created_at, updated_at, deleted_at, cancelled_at,
           team:teams!okr_team_objectives_team_id_fkey(id, name)
         `)
         .eq('bu_id', buId)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
 
       if (teamId) {
