@@ -54,6 +54,13 @@ interface RequestBody {
     id: string;
     title: string;
     description?: string;
+    keyResults?: Array<{
+      id: string;
+      title: string;
+      baseline: number | null;
+      target: number | null;
+      unit: string | null;
+    }>;
   }>;
   otherTeamsObjectives?: Array<{
     teamId: string;
@@ -303,9 +310,13 @@ ${obj.description ? `   Descrição: ${obj.description}` : ''}
 ${krList}`;
       }).join('\n\n');
 
-      const orgObjectivesList = (orgObjectives || []).map((org, i) => 
-        `${i + 1}. "${org.title}"`
-      ).join('\n') || 'Nenhum OKR organizacional definido';
+      const orgObjectivesList = (orgObjectives || []).map((org, i) => {
+        const orgKrList = (org.keyResults || []).map((kr, j) => 
+          `  - KR${j + 1}: "${kr.title}" | Baseline: ${kr.baseline ?? 'N/A'} → Target: ${kr.target ?? 'N/A'} ${kr.unit || ''}`
+        ).join('\n');
+        return `${i + 1}. **"${org.title}"**${org.description ? ` - ${org.description}` : ''}
+${orgKrList || '  (sem Key Results definidos)'}`;
+      }).join('\n\n') || 'Nenhum OKR organizacional definido';
 
       const otherTeamsList = (otherTeamsObjectives || []).map(team => 
         `**${team.teamName}** (Líder: ${team.leaderFirstName}):
