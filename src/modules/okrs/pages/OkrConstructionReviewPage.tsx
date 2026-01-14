@@ -1,11 +1,15 @@
 /**
  * OkrConstructionReviewPage - Página de avaliação AUTOMÁTICA de construção das OKRs por IA
+ * 
+ * Controle de acesso:
+ * - Admin/Super Admin: pode ver todos os times
+ * - Líder de time: pode ver APENAS seus próprios times (time que lidera diretamente)
  */
 
 import { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ChevronLeft, ShieldX, ClipboardCheck, Sparkles } from "lucide-react";
+import { ChevronLeft, ShieldX, ClipboardCheck, Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUrlState } from "@/shared/url/useUrlState";
@@ -28,10 +32,15 @@ export default function OkrConstructionReviewPage() {
   const { teams: allTeams, isLoading: isLoadingAllTeams } = useHierarchicalTeamList();
 
   const isAdmin = isWildcard;
-  const teams: FlatTeamItem[] = useMemo(() => {
+  
+  // Times que o usuário pode acessar (admin = todos, líder = apenas seus times)
+  const allowedTeams: FlatTeamItem[] = useMemo(() => {
     if (isAdmin) return allTeams;
     return leaderTeamsRaw.map(t => ({ id: t.team_id, name: t.team_name, level: 0, parentId: null }));
   }, [isAdmin, allTeams, leaderTeamsRaw]);
+
+  // IDs dos times permitidos para validação
+  const allowedTeamIds = useMemo(() => new Set(allowedTeams.map(t => t.id)), [allowedTeams]);
 
   const isLoadingTeams = isLoadingPermissions || (isAdmin ? isLoadingAllTeams : isLoadingLeaderTeams);
   const hasAccess = isAdmin || isLeader;
@@ -40,25 +49,42 @@ export default function OkrConstructionReviewPage() {
   const defaultCycleId = activeCycles?.[0]?.id || '';
 
   const teamIdState = useUrlState<string>({ key: 'team', defaultValue: '', parse: v => v || '', serialize: v => v || '' });
-  const selectedTeamId = teamIdState.value || teams[0]?.id || '';
-
   const cycleIdState = useUrlState<string>({ key: 'cycle', defaultValue: '', parse: v => v || '', serialize: v => v || '' });
+
+  // Validar se o time da URL é permitido para este usuário
+  const requestedTeamId = teamIdState.value;
+  const isTeamAccessDenied = !isLoadingTeams && requestedTeamId && !allowedTeamIds.has(requestedTeamId);
+
+  // Time selecionado: apenas se permitido
+  const selectedTeamId = useMemo(() => {
+    if (isTeamAccessDenied) return ''; // Acesso negado ao time solicitado
+    return requestedTeamId || allowedTeams[0]?.id || '';
+  }, [isTeamAccessDenied, requestedTeamId, allowedTeams]);
+
   const selectedCycleId = cycleIdState.value || defaultCycleId;
 
+  // Auto-select primeiro time permitido se nenhum selecionado
   useEffect(() => {
-    if (!teamIdState.value && teams.length > 0) teamIdState.set(teams[0].id);
-  }, [teamIdState.value, teams]);
+    if (!teamIdState.value && allowedTeams.length > 0 && !isLoadingTeams) {
+      teamIdState.set(allowedTeams[0].id);
+    }
+  }, [teamIdState.value, allowedTeams, isLoadingTeams]);
 
+  // Auto-select ciclo default
   useEffect(() => {
     if (!cycleIdState.value && defaultCycleId) cycleIdState.set(defaultCycleId);
   }, [cycleIdState.value, defaultCycleId]);
 
-  const selectedTeam = useMemo(() => teams?.find(t => t.id === selectedTeamId), [teams, selectedTeamId]);
+  const selectedTeam = useMemo(() => allowedTeams?.find(t => t.id === selectedTeamId), [allowedTeams, selectedTeamId]);
   const selectedCycle = useMemo(() => activeCycles?.find(c => c.id === selectedCycleId), [activeCycles, selectedCycleId]);
 
   usePageTitle(selectedTeam ? `Avaliação OKRs - ${selectedTeam.name}` : 'Avaliação de Construção');
 
-  const { teamReview, objectives, isLoading: isLoadingReview, reEvaluateObjective, criteria } = useConstructionReview(selectedTeamId || null, selectedCycleId || null);
+  // Só carrega dados se o time for permitido
+  const { teamReview, objectives, isLoading: isLoadingReview, reEvaluateObjective, criteria } = useConstructionReview(
+    isTeamAccessDenied ? null : selectedTeamId || null, 
+    selectedCycleId || null
+  );
 
   if (isLoadingTeams) {
     return (
@@ -85,6 +111,30 @@ export default function OkrConstructionReviewPage() {
     );
   }
 
+  // Acesso negado ao time específico (líder tentando acessar time de outro líder)
+  if (isTeamAccessDenied) {
+    return (
+      <div className="container max-w-7xl mx-auto py-6 px-4">
+        <Helmet>
+          <title>Acesso Negado | Hub Jetimob</title>
+        </Helmet>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="p-4 rounded-full bg-destructive/10 mb-4"><Lock className="w-12 h-12 text-destructive" /></div>
+          <h1 className="text-xl font-semibold mb-2">Acesso Negado</h1>
+          <p className="text-muted-foreground mb-6">Você só pode acessar a avaliação dos times que lidera.</p>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => navigate('/okrs')}><ChevronLeft className="w-4 h-4 mr-2" />Voltar</Button>
+            {allowedTeams.length > 0 && (
+              <Button onClick={() => teamIdState.set(allowedTeams[0].id)}>
+                Ver meu time
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
       <Helmet>
@@ -104,7 +154,7 @@ export default function OkrConstructionReviewPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <TeamSelect value={selectedTeamId} onValueChange={v => teamIdState.set(v || '')} teams={teams} placeholder="Selecione o time" triggerClassName="w-[220px]" />
+          <TeamSelect value={selectedTeamId} onValueChange={v => teamIdState.set(v || '')} teams={allowedTeams} placeholder="Selecione o time" triggerClassName="w-[220px]" />
           <Select value={selectedCycleId} onValueChange={v => cycleIdState.set(v)} disabled={isLoadingCycles}>
             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Ciclo" /></SelectTrigger>
             <SelectContent>
