@@ -34,22 +34,22 @@ export function OkrConstructionReviewCard({
 }: OkrConstructionReviewCardProps) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
-  const { data: activeCycles } = useActiveCycles();
+  const { data: activeCycles, isLoading: isCyclesLoading } = useActiveCycles();
   
-  // Get active cycle ID
-  const activeCycleId = activeCycles?.[0]?.id ?? null;
+  // Get active cycle IDs (can be multiple: quarter, semester, year)
+  const activeCycleIds = activeCycles?.map(c => c.id) ?? [];
 
-  // Query to check if team has objectives in active cycle
+  // Query to check if team has objectives in ANY active cycle
   const { data: objectivesCount = 0, isLoading: isQueryLoading } = useQuery({
-    queryKey: [...queryKeys.okrs.teamObjectives(currentBuId, teamId), 'count', activeCycleId],
+    queryKey: [...queryKeys.okrs.teamObjectives(currentBuId, teamId), 'count-any-active', activeCycleIds],
     queryFn: async () => {
-      if (!teamId || !activeCycleId) return 0;
+      if (!teamId || activeCycleIds.length === 0) return 0;
       
       const { count, error } = await supabase
         .from('okr_team_objectives')
         .select('*', { count: 'exact', head: true })
         .eq('team_id', teamId)
-        .eq('cycle_id', activeCycleId)
+        .in('cycle_id', activeCycleIds)
         .is('deleted_at', null)
         .is('cancelled_at', null);
       
@@ -60,11 +60,11 @@ export function OkrConstructionReviewCard({
       
       return count ?? 0;
     },
-    enabled: !!supabase && !!currentBuId && !!teamId && !!activeCycleId,
+    enabled: !!supabase && !!currentBuId && !!teamId && activeCycleIds.length > 0,
     staleTime: 2 * 60 * 1000,
   });
 
-  const isLoading = externalIsLoading || isQueryLoading;
+  const isLoading = externalIsLoading || isQueryLoading || isCyclesLoading;
   const hasActiveOkrs = externalHasActiveOkrs || objectivesCount > 0;
 
   if (isLoading) {
