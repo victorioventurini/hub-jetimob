@@ -3,6 +3,7 @@
  */
 import { useLeaderScope } from "../hooks/useLeaderScope";
 import { useLeaderDashboard } from "../hooks/useLeaderDashboard";
+import { useTeamHasActiveOkrs } from "../hooks/useTeamHasActiveOkrs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { LeaderScopeSelector } from "./LeaderScopeSelector";
 import {
@@ -39,6 +40,9 @@ export function LeaderDashboard() {
     criticalAlerts,
     isLoading: isDashboardLoading,
   } = useLeaderDashboard(selectedTeamId);
+
+  // Check if team has active OKRs (independent query for reliability)
+  const { hasActiveOkrs, isLoading: isOkrsCheckLoading } = useTeamHasActiveOkrs(selectedTeamId);
 
   const { has } = usePermissions();
 
@@ -90,12 +94,9 @@ export function LeaderDashboard() {
             <TeamOkrCreationWizardCard
               teamId={selectedTeamId || ''}
               teamName={selectedTeam.team_name}
-              hasActiveOkrs={Boolean(
-                summary?.okrs && 
-                (summary.okrs.green + summary.okrs.yellow + summary.okrs.red + summary.okrs.not_started) > 0
-              )}
+              hasActiveOkrs={hasActiveOkrs}
               cycleStartingSoon={false}
-              isLoading={isDashboardLoading}
+              isLoading={isDashboardLoading || isOkrsCheckLoading}
             />
           )}
 
@@ -104,11 +105,8 @@ export function LeaderDashboard() {
             <OkrConstructionReviewCard
               teamId={selectedTeamId}
               teamName={selectedTeam.team_name}
-              hasActiveOkrs={Boolean(
-                summary?.okrs && 
-                (summary.okrs.green + summary.okrs.yellow + summary.okrs.red + summary.okrs.not_started) > 0
-              )}
-              isLoading={isDashboardLoading}
+              hasActiveOkrs={hasActiveOkrs}
+              isLoading={isDashboardLoading || isOkrsCheckLoading}
             />
           )}
           
