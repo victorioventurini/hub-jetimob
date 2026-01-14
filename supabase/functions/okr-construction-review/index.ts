@@ -1,15 +1,15 @@
 /**
  * Edge Function: okr-construction-review
  * 
- * Avalia automaticamente a qualidade de construção de OKRs usando IA
- * Retorna sugestões detalhadas por KR, objetivo e alinhamento global
+ * Avalia automaticamente a qualidade de construção de OKRs
+ * Usa o agente "coach-okrs" configurado no Hub via invoke-vic
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-current-bu-id",
 };
 
 interface KeyResult {
@@ -37,7 +37,7 @@ interface KrFeedback {
   score: number;
   strengths: string[];
   improvements: string[];
-  isTask: boolean; // Se parece mais com task do que KR
+  isTask: boolean;
 }
 
 interface CriteriaScore {
@@ -50,7 +50,7 @@ interface AiAssessment {
   summary: string;
   strengths: string[];
   improvements: string[];
-  alignmentSuggestion: string; // Sugestão de alinhamento com OKRs organizacionais
+  alignmentSuggestion: string;
   criteriaScores: {
     clarity: CriteriaScore;
     measurability: CriteriaScore;
@@ -62,6 +62,87 @@ interface AiAssessment {
   generatedAt: string;
 }
 
+/**
+ * Parse AI text response into structured assessment
+ * Extracts JSON from markdown code blocks if present
+ */
+function parseAiResponse(content: string, keyResults: KeyResult[]): AiAssessment {
+  // Try to extract JSON from markdown code blocks
+  let jsonStr = content;
+  if (content.includes('```json')) {
+    jsonStr = content.split('```json')[1].split('```')[0].trim();
+  } else if (content.includes('```')) {
+    jsonStr = content.split('```')[1].split('```')[0].trim();
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return {
+      ...parsed,
+      generatedAt: new Date().toISOString(),
+    };
+  } catch {
+    // If JSON parsing fails, create structured assessment from text
+    console.log("[okr-construction-review] JSON parse failed, creating structured response from text");
+    return createTextBasedAssessment(content, keyResults);
+  }
+}
+
+/**
+ * Create assessment from text response when JSON is not available
+ */
+function createTextBasedAssessment(text: string, keyResults: KeyResult[]): AiAssessment {
+  // Extract score if mentioned (e.g., "Score: 75" or "75/100")
+  const scoreMatch = text.match(/(?:score|nota|pontuação)[:\s]*(\d+)/i) || text.match(/(\d+)\s*\/\s*100/);
+  const overallScore = scoreMatch ? Math.min(100, Math.max(0, parseInt(scoreMatch[1], 10))) : 65;
+
+  // Extract strengths (look for + or "ponto forte" patterns)
+  const strengths: string[] = [];
+  const strengthPatterns = text.match(/(?:\+|ponto\s+forte|destaque)[:\s]*([^\n]+)/gi);
+  if (strengthPatterns) {
+    strengths.push(...strengthPatterns.slice(0, 3).map(s => s.replace(/^(?:\+|ponto\s+forte|destaque)[:\s]*/i, '').trim()));
+  }
+
+  // Extract improvements (look for - or "melhoria" patterns)
+  const improvements: string[] = [];
+  const improvementPatterns = text.match(/(?:\-|melhoria|sugestão|melhorar)[:\s]*([^\n]+)/gi);
+  if (improvementPatterns) {
+    improvements.push(...improvementPatterns.slice(0, 3).map(s => s.replace(/^(?:\-|melhoria|sugestão|melhorar)[:\s]*/i, '').trim()));
+  }
+
+  // Create KR feedback
+  const krFeedback: KrFeedback[] = keyResults.map(kr => {
+    const isTask = kr.baseline === null && kr.target === null;
+    return {
+      krId: kr.id,
+      krTitle: kr.title,
+      score: isTask ? 40 : (kr.owner_user_id ? 70 : 55),
+      strengths: [],
+      improvements: isTask 
+        ? ["Este KR parece uma tarefa. Transforme em resultado mensurável."]
+        : (kr.owner_user_id ? [] : ["Definir responsável para este KR"]),
+      isTask,
+    };
+  });
+
+  return {
+    overallScore,
+    summary: text.substring(0, 300) + (text.length > 300 ? '...' : ''),
+    strengths: strengths.length > 0 ? strengths : ["Objetivo definido"],
+    improvements: improvements.length > 0 ? improvements : ["Revisar métricas dos KRs"],
+    alignmentSuggestion: "Verifique se os KRs contribuem diretamente para o objetivo organizacional.",
+    criteriaScores: {
+      clarity: { score: 70, feedback: "Avaliação baseada em análise textual" },
+      measurability: { score: 60, feedback: "Alguns KRs podem precisar de métricas mais claras" },
+      ambition: { score: 65, feedback: "Considere se as metas são desafiadoras mas alcançáveis" },
+      alignment: { score: 65, feedback: "Verifique conexão com objetivos organizacionais" },
+      ownership: { score: keyResults.every(kr => kr.owner_user_id) ? 85 : 50, feedback: keyResults.every(kr => kr.owner_user_id) ? "Todos KRs têm responsável" : "Alguns KRs sem responsável definido" },
+    },
+    krFeedback,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 serve(async (req) => {
   console.log("[okr-construction-review] Request received:", req.method);
   
@@ -70,51 +151,57 @@ serve(async (req) => {
   }
 
   try {
+    // Forward auth headers
+    const authHeader = req.headers.get("authorization");
+    const buId = req.headers.get("x-current-bu-id");
+    
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!buId) {
+      return new Response(
+        JSON.stringify({ error: "BU ID required (x-current-bu-id header)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body: RequestBody = await req.json();
     const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
 
     console.log("[okr-construction-review] Processing objective:", objectiveTitle);
     console.log("[okr-construction-review] Key Results count:", keyResults?.length || 0);
+    console.log("[okr-construction-review] Using agent: coach-okrs");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("[okr-construction-review] LOVABLE_API_KEY not found");
-      throw new Error("LOVABLE_API_KEY não configurada");
-    }
-
-    // Build prompt
+    // Build context for the agent
     const krList = (keyResults || []).map((kr, i) => 
-      `${i + 1}. ID: "${kr.id}" | Título: "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
+      `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
     ).join('\n');
 
-    const systemPrompt = `Você é um especialista em OKRs (Objectives and Key Results) com profundo conhecimento da metodologia. Sua tarefa é avaliar a qualidade de CONSTRUÇÃO de OKRs e fornecer feedback ACIONÁVEL.
+    const contextData = {
+      type: "okr_construction_review",
+      objective: {
+        id: objectiveId,
+        title: objectiveTitle,
+        description: objectiveDescription,
+      },
+      team: teamName,
+      orgObjective: orgObjectiveTitle,
+      keyResults: keyResults.map(kr => ({
+        id: kr.id,
+        title: kr.title,
+        type: kr.type,
+        baseline: kr.baseline,
+        target: kr.target,
+        unit: kr.unit,
+        hasOwner: !!kr.owner_user_id,
+      })),
+    };
 
-## CRITÉRIOS DE AVALIAÇÃO (0-100 cada):
-
-1. **Clareza (clarity)**: Linguagem clara, sem ambiguidades, qualquer pessoa entende
-2. **Mensurabilidade (measurability)**: KRs têm baseline, target e unidade definidos
-3. **Ambição vs Realismo (ambition)**: Metas stretch (70% = sucesso) mas alcançáveis
-4. **Alinhamento (alignment)**: Conectado com objetivo organizacional, faz sentido estratégico
-5. **Responsabilidade (ownership)**: Cada KR tem um dono definido
-
-## ANÁLISE DE KEY RESULTS:
-Para cada KR, identifique:
-- Se parece TASK (atividade) ao invés de KEY RESULT (resultado mensurável)
-- Pontos fortes específicos
-- Sugestões de melhoria concretas e acionáveis
-
-## ALINHAMENTO ESTRATÉGICO:
-Sugira como melhorar o alinhamento com o objetivo organizacional (se houver) ou como conectar melhor com a estratégia.
-
-## REGRAS:
-- Seja específico e construtivo
-- Dê exemplos concretos de como melhorar
-- Score 80+ = aprovado, 50-79 = precisa melhorar, <50 = revisar urgente
-- Identifique KRs que são na verdade tasks (atividades sem resultado mensurável)
-
-Responda APENAS com JSON válido no formato especificado.`;
-
-    const userPrompt = `Avalie este OKR:
+    const userQuestion = `Avalie a qualidade de CONSTRUÇÃO deste OKR e responda OBRIGATORIAMENTE em JSON:
 
 **OBJETIVO:** ${objectiveTitle}
 ${objectiveDescription ? `**DESCRIÇÃO:** ${objectiveDescription}` : ''}
@@ -126,98 +213,96 @@ ${krList || 'CRÍTICO: Nenhum KR definido!'}
 
 ---
 
-Responda com JSON no formato:
+Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS JSON):
 {
   "overallScore": number (0-100),
-  "summary": "Resumo executivo em 2-3 frases avaliando a OKR como um todo",
+  "summary": "Resumo executivo em 2-3 frases",
   "strengths": ["ponto forte 1", "ponto forte 2"],
-  "improvements": ["sugestão geral 1", "sugestão geral 2"],
-  "alignmentSuggestion": "Sugestão específica de como melhorar o alinhamento com ${orgObjectiveTitle || 'objetivos organizacionais'}",
+  "improvements": ["sugestão 1", "sugestão 2"],
+  "alignmentSuggestion": "Sugestão de alinhamento estratégico",
   "criteriaScores": {
-    "clarity": { "score": number, "feedback": "feedback específico" },
-    "measurability": { "score": number, "feedback": "feedback específico" },
-    "ambition": { "score": number, "feedback": "feedback específico" },
-    "alignment": { "score": number, "feedback": "feedback específico" },
-    "ownership": { "score": number, "feedback": "feedback específico" }
+    "clarity": { "score": number, "feedback": "texto" },
+    "measurability": { "score": number, "feedback": "texto" },
+    "ambition": { "score": number, "feedback": "texto" },
+    "alignment": { "score": number, "feedback": "texto" },
+    "ownership": { "score": number, "feedback": "texto" }
   },
   "krFeedback": [
-    {
-      "krId": "id do KR",
-      "krTitle": "título do KR",
-      "score": number (0-100),
-      "strengths": ["ponto forte"],
-      "improvements": ["sugestão de melhoria com exemplo concreto"],
-      "isTask": boolean (true se parecer mais task do que resultado)
-    }
+    { "krId": "${keyResults[0]?.id || 'id'}", "krTitle": "título", "score": number, "strengths": [], "improvements": [], "isTask": boolean }
   ]
 }`;
 
-    console.log("[okr-construction-review] Calling AI gateway...");
+    // Get Supabase URL from environment
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    if (!supabaseUrl) {
+      throw new Error("SUPABASE_URL não configurada");
+    }
+
+    // Call invoke-vic with coach-okrs agent
+    console.log("[okr-construction-review] Calling invoke-vic...");
     
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": authHeader,
         "Content-Type": "application/json",
+        "x-current-bu-id": buId,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.2,
+        agentSlug: "coach-okrs",
+        actionContext: "okr_construction_review",
+        context: contextData,
+        userQuestion,
+        stream: false,
       }),
     });
 
-    console.log("[okr-construction-review] AI response status:", response.status);
+    console.log("[okr-construction-review] invoke-vic response status:", vicResponse.status);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[okr-construction-review] AI gateway error:", response.status, errorText);
+    if (!vicResponse.ok) {
+      const errorText = await vicResponse.text();
+      console.error("[okr-construction-review] invoke-vic error:", vicResponse.status, errorText);
       
-      if (response.status === 429) {
+      // Forward specific error codes
+      if (vicResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (vicResponse.status === 402) {
         return new Response(
           JSON.stringify({ error: "Créditos de IA esgotados." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      throw new Error(`AI gateway error: ${response.status} - ${errorText}`);
+      if (vicResponse.status === 404) {
+        return new Response(
+          JSON.stringify({ error: "Agente coach-okrs não encontrado. Configure o agente em Integrações." }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (vicResponse.status === 403) {
+        return new Response(
+          JSON.stringify({ error: "Agente coach-okrs não está ativado para esta BU." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      throw new Error(`invoke-vic error: ${vicResponse.status}`);
     }
 
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
+    const vicData = await vicResponse.json();
+    const content = vicData.content || vicData.message;
 
     console.log("[okr-construction-review] AI content received, length:", content?.length || 0);
 
     if (!content) {
-      throw new Error("Resposta vazia da IA");
+      throw new Error("Resposta vazia do agente");
     }
 
-    // Parse JSON from response (handle markdown code blocks)
-    let jsonStr = content;
-    if (content.includes('```json')) {
-      jsonStr = content.split('```json')[1].split('```')[0].trim();
-    } else if (content.includes('```')) {
-      jsonStr = content.split('```')[1].split('```')[0].trim();
-    }
-
-    let assessment: AiAssessment;
-    try {
-      assessment = JSON.parse(jsonStr);
-    } catch (parseError) {
-      console.error("[okr-construction-review] JSON parse error:", parseError);
-      console.error("[okr-construction-review] Raw content:", content.substring(0, 500));
-      throw new Error("Erro ao processar resposta da IA");
-    }
-    
-    assessment.generatedAt = new Date().toISOString();
+    // Parse the response into structured assessment
+    const assessment = parseAiResponse(content, keyResults);
 
     console.log("[okr-construction-review] Assessment generated, score:", assessment.overallScore);
 
