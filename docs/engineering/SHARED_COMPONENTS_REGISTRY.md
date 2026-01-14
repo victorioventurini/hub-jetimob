@@ -1,9 +1,9 @@
 # Shared Components & Utilities Registry
 
-**Versão:** 1.1.0  
-**Última atualização:** 2026-01-12  
+**Versão:** 1.2.0  
+**Última atualização:** 2026-01-14  
 **Status:** Normativo  
-**Referência:** TCR v2.23.0
+**Referência:** TCR v2.31.0
 
 ---
 
