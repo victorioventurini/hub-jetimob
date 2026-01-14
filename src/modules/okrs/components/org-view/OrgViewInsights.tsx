@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { AlertTriangle, Info, CheckCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { OrgObjectiveWithKrs } from '../../hooks/useOrgObjectiveView';
+import type { OrgObjectiveWithKrs } from '../../hooks';
 
 interface OrgViewInsightsProps {
   objective: OrgObjectiveWithKrs;

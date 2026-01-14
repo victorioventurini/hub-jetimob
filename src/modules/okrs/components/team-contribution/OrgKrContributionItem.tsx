@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamOkrListItem } from "./TeamOkrListItem";
-import type { OrgKrContribution } from "../../hooks/useTeamContributionView";
+import type { OrgKrContribution } from "../../hooks";
 import { RAG_STATUS_COLORS } from "@/lib/colors";
 
 interface OrgKrContributionItemProps {

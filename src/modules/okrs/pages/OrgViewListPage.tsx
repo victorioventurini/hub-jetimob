@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useAllOrgObjectivesView } from '../hooks/useOrgObjectiveView';
+import { useAllOrgObjectivesView } from '../hooks';
 import { YearSelect } from '@/components/selects';
 import { useUrlState, parsers } from '@/shared/url';
 import { OkrOrgViewListBreadcrumb } from '../components/ui/OkrBreadcrumb';

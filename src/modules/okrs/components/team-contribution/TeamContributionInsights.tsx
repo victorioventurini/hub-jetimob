@@ -1,6 +1,6 @@
 import { Lightbulb, AlertTriangle, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { TeamContributionData } from "../../hooks/useTeamContributionView";
+import type { TeamContributionData } from "../../hooks";
 
 interface TeamContributionInsightsProps {
   data: TeamContributionData;

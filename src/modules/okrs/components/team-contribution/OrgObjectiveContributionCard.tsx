@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { OrgKrContributionItem } from "./OrgKrContributionItem";
-import type { OrgObjectiveContribution } from "../../hooks/useTeamContributionView";
+import type { OrgObjectiveContribution } from "../../hooks";
 import { RAG_STATUS_COLORS } from "@/lib/colors";
 
 interface OrgObjectiveContributionCardProps {

@@ -5,7 +5,6 @@ export * from './hooks/useOkrMutations';
 export * from './hooks/usePendingCheckins';
 export * from './hooks/useCycleCheckins';
 export * from './hooks/useSharedOkrData';
-export * from './hooks/useTeamContributedOkrs';
 export * from './hooks/useInitiatives';
 export * from './hooks/useOkrContributions';
 export * from './hooks/useOkrKrMetrics';
@@ -14,6 +13,13 @@ export * from './types';
 export * from './types/initiative';
 export * from './types/health';
 export * from './utils/krValidation';
+
+// Re-export consolidated queries
+export {
+  useTeamContributedOkrs,
+  useSharedOkrsSummary,
+  useSharedOkrsInsights,
+} from './hooks/queries';
 
 // Components
 export { CheckinDialog } from './components/CheckinDialog';

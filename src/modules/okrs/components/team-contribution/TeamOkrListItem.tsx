@@ -2,7 +2,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Circle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import type { TeamOkrContribution } from "../../hooks/useTeamContributionView";
+import type { TeamOkrContribution } from "../../hooks";
 
 interface TeamOkrListItemProps {
   okr: TeamOkrContribution;

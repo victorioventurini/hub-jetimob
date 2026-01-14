@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { useAllOrgObjectivesView, type OrgObjectiveWithKrs } from "./useOrgObjectiveView";
+import { useAllOrgObjectivesView, type OrgObjectiveWithKrs } from "./queries";
 import { useTeams } from "@/modules/teams/hooks/useTeams";
 import type { TeamWithRelations } from "@/modules/teams/types";
 import type { HealthStatus } from "../types/health";
