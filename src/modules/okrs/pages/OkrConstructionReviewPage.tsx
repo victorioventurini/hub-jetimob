@@ -1,11 +1,11 @@
 /**
- * OkrConstructionReviewPage - Página de avaliação de construção das OKRs
+ * OkrConstructionReviewPage - Página de avaliação AUTOMÁTICA de construção das OKRs por IA
  */
 
 import { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ChevronLeft, ShieldX, ClipboardCheck } from "lucide-react";
+import { ChevronLeft, ShieldX, ClipboardCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUrlState } from "@/shared/url/useUrlState";
@@ -58,7 +58,7 @@ export default function OkrConstructionReviewPage() {
 
   usePageTitle(selectedTeam ? `Avaliação OKRs - ${selectedTeam.name}` : 'Avaliação de Construção');
 
-  const { teamReview, objectives, isLoading: isLoadingReview, toggleCheckItem, requestAiAssessment, criteria } = useConstructionReview(selectedTeamId || null, selectedCycleId || null);
+  const { teamReview, objectives, isLoading: isLoadingReview, reEvaluateObjective, criteria } = useConstructionReview(selectedTeamId || null, selectedCycleId || null);
 
   if (isLoadingTeams) {
     return (
@@ -89,7 +89,7 @@ export default function OkrConstructionReviewPage() {
     <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
       <Helmet>
         <title>Avaliação de Construção{selectedTeam ? ` - ${selectedTeam.name}` : ''} | Hub Jetimob</title>
-        <meta name="description" content="Avalie a qualidade da construção das OKRs antes de iniciar o ciclo." />
+        <meta name="description" content="Avaliação automática por IA da qualidade de construção das OKRs." />
       </Helmet>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -97,10 +97,10 @@ export default function OkrConstructionReviewPage() {
           <Button variant="ghost" size="icon" onClick={() => navigate('/okrs')}><ChevronLeft className="w-5 h-5" /></Button>
           <div>
             <h1 className="text-xl font-semibold flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-primary" />
+              <Sparkles className="w-5 h-5 text-primary" />
               Avaliação de Construção
             </h1>
-            <p className="text-sm text-muted-foreground">Revise as OKRs antes de iniciar o ciclo</p>
+            <p className="text-sm text-muted-foreground">Análise automática por IA antes de iniciar o ciclo</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -115,18 +115,20 @@ export default function OkrConstructionReviewPage() {
       </div>
 
       {objectives.length === 0 && !isLoadingReview ? (
-        <Alert><AlertTitle>Nenhum objetivo encontrado</AlertTitle><AlertDescription>Este time não tem OKRs criadas para o ciclo selecionado.</AlertDescription></Alert>
+        <Alert>
+          <AlertTitle>Nenhum objetivo encontrado</AlertTitle>
+          <AlertDescription>Este time não tem OKRs criadas para o ciclo selecionado.</AlertDescription>
+        </Alert>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <ConstructionScoreCard
-              checklistScore={teamReview?.avgChecklistScore || 0}
-              aiScore={teamReview?.avgAiScore}
-              combinedScore={teamReview?.avgCombinedScore || 0}
+              avgScore={teamReview?.avgScore || 0}
               approvedCount={teamReview?.approvedCount || 0}
               needsImprovementCount={teamReview?.needsImprovementCount || 0}
               pendingCount={teamReview?.pendingCount || 0}
               totalObjectives={objectives.length}
+              globalAlignmentSuggestion={teamReview?.globalAlignmentSuggestion}
               isLoading={isLoadingReview}
             />
           </div>
@@ -136,8 +138,7 @@ export default function OkrConstructionReviewPage() {
                 key={obj.objectiveId}
                 review={obj}
                 criteria={criteria}
-                onToggleCheckItem={toggleCheckItem}
-                onRequestAiAssessment={requestAiAssessment}
+                onReEvaluate={reEvaluateObjective}
               />
             ))}
           </div>

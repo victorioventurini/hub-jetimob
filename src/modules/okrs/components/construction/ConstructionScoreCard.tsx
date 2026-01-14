@@ -1,32 +1,29 @@
 /**
- * ConstructionScoreCard - Card com score de qualidade de construção
+ * ConstructionScoreCard - Card com score de qualidade de construção (IA automática)
  */
 
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, AlertTriangle, XCircle, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ConstructionScoreCardProps {
-  checklistScore: number;
-  aiScore?: number;
-  combinedScore: number;
+  avgScore: number;
   approvedCount: number;
   needsImprovementCount: number;
   pendingCount: number;
   totalObjectives: number;
+  globalAlignmentSuggestion?: string;
   isLoading?: boolean;
 }
 
 export function ConstructionScoreCard({
-  checklistScore,
-  aiScore,
-  combinedScore,
+  avgScore,
   approvedCount,
   needsImprovementCount,
   pendingCount,
   totalObjectives,
+  globalAlignmentSuggestion,
   isLoading,
 }: ConstructionScoreCardProps) {
   if (isLoading) {
@@ -55,21 +52,30 @@ export function ConstructionScoreCard({
     return 'bg-red-500';
   };
 
+  const analyzingCount = pendingCount;
+  const hasAnalyzing = analyzingCount > 0;
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
-          Qualidade da Construção
+          Avaliação por IA
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Main Score */}
         <div className="text-center py-4">
-          <div className={cn("text-5xl font-bold", getScoreColor(combinedScore))}>
-            {combinedScore}
+          <div className={cn("text-5xl font-bold", getScoreColor(avgScore))}>
+            {avgScore || '—'}
           </div>
-          <p className="text-sm text-muted-foreground mt-1">Score Combinado</p>
+          <p className="text-sm text-muted-foreground mt-1">Score Médio</p>
+          {hasAnalyzing && (
+            <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-blue-600">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Analisando {analyzingCount} objetivo{analyzingCount > 1 ? 's' : ''}...
+            </div>
+          )}
         </div>
 
         {/* Progress bar */}
@@ -81,23 +87,9 @@ export function ConstructionScoreCard({
           </div>
           <div className="relative h-3 bg-muted rounded-full overflow-hidden">
             <div 
-              className={cn("h-full transition-all duration-500", getProgressColor(combinedScore))}
-              style={{ width: `${combinedScore}%` }}
+              className={cn("h-full transition-all duration-500", getProgressColor(avgScore))}
+              style={{ width: `${avgScore}%` }}
             />
-          </div>
-        </div>
-
-        {/* Score breakdown */}
-        <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-          <div className="text-center">
-            <div className="text-2xl font-semibold">{checklistScore}</div>
-            <p className="text-xs text-muted-foreground">Checklist</p>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold">
-              {aiScore !== undefined ? aiScore : '—'}
-            </div>
-            <p className="text-xs text-muted-foreground">Avaliação IA</p>
           </div>
         </div>
 
@@ -114,11 +106,21 @@ export function ConstructionScoreCard({
             <span className="text-xs text-muted-foreground">Melhorar</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <XCircle className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{pendingCount}</span>
+            <Loader2 className={cn("w-4 h-4 text-muted-foreground", hasAnalyzing && "animate-spin text-blue-600")} />
+            <span className="text-sm font-medium">{analyzingCount}</span>
             <span className="text-xs text-muted-foreground">Pendente</span>
           </div>
         </div>
+
+        {/* Global alignment suggestion */}
+        {globalAlignmentSuggestion && (
+          <div className="pt-3 border-t">
+            <h4 className="text-xs font-medium text-muted-foreground mb-1.5">💡 Sugestão de Alinhamento</h4>
+            <p className="text-xs text-foreground bg-muted/50 p-2.5 rounded-lg">
+              {globalAlignmentSuggestion}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

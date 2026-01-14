@@ -1,12 +1,12 @@
 /**
- * useConstructionReview - Hook para buscar e gerenciar avaliação de construção de OKRs
+ * useConstructionReview - Hook para avaliação AUTOMÁTICA de construção de OKRs por IA
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCycle } from "./useCycleData";
 import { 
@@ -14,7 +14,6 @@ import {
   type TeamConstructionReview,
   type AiAssessment,
   REVIEW_CRITERIA,
-  calculateChecklistScore,
   determineReviewStatus,
 } from "../types/construction-review";
 
@@ -55,18 +54,15 @@ export function useConstructionReview(
   const buSupabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
 
-  // Local state for checklist (not persisted)
-  const [checklistState, setChecklistState] = useState<Record<string, Record<string, boolean>>>({});
-  // objectiveId -> { checkItemId -> boolean }
-
-  // Local state for AI assessments
+  // AI assessments state
   const [aiAssessments, setAiAssessments] = useState<Record<string, AiAssessment>>({});
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
   const [aiErrors, setAiErrors] = useState<Record<string, string>>({});
+  const [autoEvaluateTriggered, setAutoEvaluateTriggered] = useState<Set<string>>(new Set());
 
   // Fetch objectives with KRs
   const { data: rawObjectives, isLoading, error } = useQuery({
-    queryKey: [...queryKeys.okrs.teamQuality(currentBuId, teamId, cycleId), 'construction'],
+    queryKey: [...queryKeys.okrs.teamQuality(currentBuId, teamId, cycleId), 'construction-v2'],
     queryFn: async (): Promise<RawObjective[]> => {
       if (!teamId || !cycleId) return [];
 
@@ -99,7 +95,6 @@ export function useConstructionReview(
 
       if (error) throw error;
       
-      // Type cast the result
       return (data || []).map(item => ({
         id: item.id,
         title: item.title,
@@ -116,106 +111,20 @@ export function useConstructionReview(
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch cycle info using existing hook
+  // Fetch cycle info
   const { data: cycleInfo } = useCycle(cycleId);
 
-  // Transform raw data into ObjectiveReview[]
-  const objectives: ObjectiveReview[] = useMemo(() => {
-    if (!rawObjectives) return [];
+  // Auto-evaluate objectives when data loads
+  const evaluateObjective = useCallback(async (obj: RawObjective) => {
+    if (aiLoading[obj.id] || aiAssessments[obj.id]) return;
 
-    return rawObjectives.map((obj) => {
-      const checklist = checklistState[obj.id] || {};
-      const checklistScore = calculateChecklistScore(checklist, REVIEW_CRITERIA);
-      const aiAssessment = aiAssessments[obj.id];
-      const aiScore = aiAssessment?.overallScore;
-      const combinedScore = aiScore !== undefined 
-        ? Math.round((checklistScore + aiScore) / 2) 
-        : checklistScore;
-
-      return {
-        objectiveId: obj.id,
-        objectiveTitle: obj.title,
-        teamId: obj.team_id,
-        teamName: obj.team?.name || 'Time',
-        krCount: obj.key_results?.length || 0,
-        checklist,
-        aiAssessment,
-        aiAssessmentLoading: aiLoading[obj.id] || false,
-        aiAssessmentError: aiErrors[obj.id],
-        checklistScore,
-        aiScore,
-        combinedScore,
-        status: determineReviewStatus(checklistScore, aiScore),
-      };
-    });
-  }, [rawObjectives, checklistState, aiAssessments, aiLoading, aiErrors]);
-
-  // Team-level aggregation
-  const teamReview: TeamConstructionReview | null = useMemo(() => {
-    if (!objectives.length || !teamId || !cycleId) return null;
-
-    const firstObj = objectives[0];
-    const avgChecklistScore = Math.round(
-      objectives.reduce((sum, o) => sum + o.checklistScore, 0) / objectives.length
-    );
-    const objsWithAi = objectives.filter(o => o.aiScore !== undefined);
-    const avgAiScore = objsWithAi.length > 0
-      ? Math.round(objsWithAi.reduce((sum, o) => sum + (o.aiScore || 0), 0) / objsWithAi.length)
-      : undefined;
-    const avgCombinedScore = Math.round(
-      objectives.reduce((sum, o) => sum + o.combinedScore, 0) / objectives.length
-    );
-
-    return {
-      teamId,
-      teamName: firstObj.teamName,
-      cycleId,
-      cycleName: cycleInfo?.name || 'Ciclo',
-      objectives,
-      avgChecklistScore,
-      avgAiScore,
-      avgCombinedScore,
-      approvedCount: objectives.filter(o => o.status === 'approved').length,
-      needsImprovementCount: objectives.filter(o => o.status === 'needs_improvement').length,
-      pendingCount: objectives.filter(o => o.status === 'pending' || o.status === 'in_review').length,
-    };
-  }, [objectives, teamId, cycleId, cycleInfo]);
-
-  // Toggle checklist item
-  const toggleCheckItem = useCallback((objectiveId: string, checkItemId: string) => {
-    setChecklistState(prev => ({
-      ...prev,
-      [objectiveId]: {
-        ...(prev[objectiveId] || {}),
-        [checkItemId]: !(prev[objectiveId]?.[checkItemId] || false),
-      },
-    }));
-  }, []);
-
-  // Set all items for an objective
-  const setAllCheckItems = useCallback((objectiveId: string, value: boolean) => {
-    const allItemIds = REVIEW_CRITERIA.flatMap(c => c.checkItems.map(i => i.id));
-    const newChecklist: Record<string, boolean> = {};
-    allItemIds.forEach(id => { newChecklist[id] = value; });
-    
-    setChecklistState(prev => ({
-      ...prev,
-      [objectiveId]: newChecklist,
-    }));
-  }, []);
-
-  // Request AI assessment for an objective
-  const requestAiAssessment = useCallback(async (objectiveId: string) => {
-    const obj = rawObjectives?.find(o => o.id === objectiveId);
-    if (!obj) return;
-
-    setAiLoading(prev => ({ ...prev, [objectiveId]: true }));
-    setAiErrors(prev => ({ ...prev, [objectiveId]: '' }));
+    setAiLoading(prev => ({ ...prev, [obj.id]: true }));
+    setAiErrors(prev => ({ ...prev, [obj.id]: '' }));
 
     try {
       const { data, error } = await supabase.functions.invoke('okr-construction-review', {
         body: { 
-          objectiveId,
+          objectiveId: obj.id,
           objectiveTitle: obj.title,
           objectiveDescription: obj.description,
           teamName: obj.team?.name,
@@ -225,28 +134,116 @@ export function useConstructionReview(
       });
 
       if (error) throw error;
-
-      const assessment: AiAssessment = data.assessment;
-      setAiAssessments(prev => ({ ...prev, [objectiveId]: assessment }));
+      if (data?.assessment) {
+        setAiAssessments(prev => ({ ...prev, [obj.id]: data.assessment }));
+      }
     } catch (err) {
       console.error('AI assessment error:', err);
       setAiErrors(prev => ({ 
         ...prev, 
-        [objectiveId]: err instanceof Error ? err.message : 'Erro ao avaliar com IA' 
+        [obj.id]: err instanceof Error ? err.message : 'Erro ao avaliar' 
       }));
     } finally {
-      setAiLoading(prev => ({ ...prev, [objectiveId]: false }));
+      setAiLoading(prev => ({ ...prev, [obj.id]: false }));
     }
-  }, [rawObjectives]);
+  }, [aiLoading, aiAssessments]);
+
+  // Trigger auto-evaluation when objectives load
+  useEffect(() => {
+    if (!rawObjectives?.length) return;
+
+    rawObjectives.forEach(obj => {
+      if (!autoEvaluateTriggered.has(obj.id) && !aiAssessments[obj.id] && !aiLoading[obj.id]) {
+        setAutoEvaluateTriggered(prev => new Set(prev).add(obj.id));
+        // Stagger requests to avoid rate limiting
+        const delay = Array.from(autoEvaluateTriggered).length * 1500;
+        setTimeout(() => evaluateObjective(obj), delay);
+      }
+    });
+  }, [rawObjectives, autoEvaluateTriggered, aiAssessments, aiLoading, evaluateObjective]);
+
+  // Transform raw data into ObjectiveReview[]
+  const objectives: ObjectiveReview[] = useMemo(() => {
+    if (!rawObjectives) return [];
+
+    return rawObjectives.map((obj) => {
+      const aiAssessment = aiAssessments[obj.id];
+      const score = aiAssessment?.overallScore ?? 0;
+
+      return {
+        objectiveId: obj.id,
+        objectiveTitle: obj.title,
+        objectiveDescription: obj.description || undefined,
+        teamId: obj.team_id,
+        teamName: obj.team?.name || 'Time',
+        orgObjectiveTitle: obj.org_objective?.title,
+        krCount: obj.key_results?.length || 0,
+        keyResults: obj.key_results.map(kr => ({
+          id: kr.id,
+          title: kr.title,
+          type: kr.type,
+          baseline: kr.baseline,
+          target: kr.target,
+          unit: kr.unit,
+          hasOwner: !!kr.owner_user_id,
+        })),
+        aiAssessment,
+        aiAssessmentLoading: aiLoading[obj.id] || false,
+        aiAssessmentError: aiErrors[obj.id],
+        score,
+        status: aiLoading[obj.id] ? 'analyzing' : determineReviewStatus(aiAssessment?.overallScore),
+      };
+    });
+  }, [rawObjectives, aiAssessments, aiLoading, aiErrors]);
+
+  // Team-level aggregation
+  const teamReview: TeamConstructionReview | null = useMemo(() => {
+    if (!objectives.length || !teamId || !cycleId) return null;
+
+    const firstObj = objectives[0];
+    const objsWithScore = objectives.filter(o => o.aiAssessment);
+    const avgScore = objsWithScore.length > 0
+      ? Math.round(objsWithScore.reduce((sum, o) => sum + o.score, 0) / objsWithScore.length)
+      : 0;
+
+    // Combine alignment suggestions
+    const alignmentSuggestions = objectives
+      .map(o => o.aiAssessment?.alignmentSuggestion)
+      .filter(Boolean);
+
+    return {
+      teamId,
+      teamName: firstObj.teamName,
+      cycleId,
+      cycleName: cycleInfo?.name || 'Ciclo',
+      objectives,
+      avgScore,
+      approvedCount: objectives.filter(o => o.status === 'approved').length,
+      needsImprovementCount: objectives.filter(o => o.status === 'needs_improvement').length,
+      pendingCount: objectives.filter(o => o.status === 'pending' || o.status === 'analyzing').length,
+      globalAlignmentSuggestion: alignmentSuggestions.length > 0 ? alignmentSuggestions[0] : undefined,
+    };
+  }, [objectives, teamId, cycleId, cycleInfo]);
+
+  // Manual re-evaluate
+  const reEvaluateObjective = useCallback((objectiveId: string) => {
+    const obj = rawObjectives?.find(o => o.id === objectiveId);
+    if (obj) {
+      setAiAssessments(prev => {
+        const copy = { ...prev };
+        delete copy[objectiveId];
+        return copy;
+      });
+      evaluateObjective(obj);
+    }
+  }, [rawObjectives, evaluateObjective]);
 
   return {
     teamReview,
     objectives,
     isLoading,
     error,
-    toggleCheckItem,
-    setAllCheckItems,
-    requestAiAssessment,
+    reEvaluateObjective,
     criteria: REVIEW_CRITERIA,
   };
 }

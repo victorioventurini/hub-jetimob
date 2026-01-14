@@ -1,7 +1,8 @@
 /**
  * Edge Function: okr-construction-review
  * 
- * Avalia a qualidade de construção de uma OKR usando IA
+ * Avalia automaticamente a qualidade de construção de OKRs usando IA
+ * Retorna sugestões detalhadas por KR, objetivo e alinhamento global
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -14,7 +15,7 @@ const corsHeaders = {
 interface KeyResult {
   id: string;
   title: string;
-  type: string;
+  type: string | null;
   baseline: number | null;
   target: number | null;
   unit: string | null;
@@ -30,6 +31,15 @@ interface RequestBody {
   keyResults: KeyResult[];
 }
 
+interface KrFeedback {
+  krId: string;
+  krTitle: string;
+  score: number;
+  strengths: string[];
+  improvements: string[];
+  isTask: boolean; // Se parece mais com task do que KR
+}
+
 interface CriteriaScore {
   score: number;
   feedback: string;
@@ -40,6 +50,7 @@ interface AiAssessment {
   summary: string;
   strengths: string[];
   improvements: string[];
+  alignmentSuggestion: string; // Sugestão de alinhamento com OKRs organizacionais
   criteriaScores: {
     clarity: CriteriaScore;
     measurability: CriteriaScore;
@@ -47,6 +58,7 @@ interface AiAssessment {
     alignment: CriteriaScore;
     ownership: CriteriaScore;
   };
+  krFeedback: KrFeedback[];
   generatedAt: string;
 }
 
@@ -57,7 +69,7 @@ serve(async (req) => {
 
   try {
     const body: RequestBody = await req.json();
-    const { objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
+    const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -66,50 +78,72 @@ serve(async (req) => {
 
     // Build prompt
     const krList = keyResults.map((kr, i) => 
-      `${i + 1}. "${kr.title}" - Tipo: ${kr.type || 'N/A'}, Baseline: ${kr.baseline ?? 'N/A'}, Target: ${kr.target ?? 'N/A'} ${kr.unit || ''}, Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
+      `${i + 1}. ID: "${kr.id}" | Título: "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
     ).join('\n');
 
-    const systemPrompt = `Você é um especialista em OKRs (Objectives and Key Results). Sua tarefa é avaliar a qualidade de CONSTRUÇÃO de OKRs antes do ciclo iniciar.
+    const systemPrompt = `Você é um especialista em OKRs (Objectives and Key Results) com profundo conhecimento da metodologia. Sua tarefa é avaliar a qualidade de CONSTRUÇÃO de OKRs e fornecer feedback ACIONÁVEL.
 
-Avalie nos seguintes critérios (0-100 cada):
+## CRITÉRIOS DE AVALIAÇÃO (0-100 cada):
 
-1. **Clareza**: O objetivo e KRs são claros, sem ambiguidades?
-2. **Mensurabilidade**: KRs têm métricas numéricas claras (baseline, target, unidade)?
-3. **Ambição vs Realismo**: Metas são desafiadoras (stretch) mas alcançáveis?
-4. **Alinhamento**: Conectado com objetivo organizacional? Faz sentido estratégico?
-5. **Responsabilidade**: Cada KR tem um dono definido?
+1. **Clareza (clarity)**: Linguagem clara, sem ambiguidades, qualquer pessoa entende
+2. **Mensurabilidade (measurability)**: KRs têm baseline, target e unidade definidos
+3. **Ambição vs Realismo (ambition)**: Metas stretch (70% = sucesso) mas alcançáveis
+4. **Alinhamento (alignment)**: Conectado com objetivo organizacional, faz sentido estratégico
+5. **Responsabilidade (ownership)**: Cada KR tem um dono definido
 
-IMPORTANTE:
-- Seja construtivo e específico nas sugestões
-- Identifique pontos fortes para reforçar
-- Sugira melhorias práticas e acionáveis
-- Score 70+ = bom, 50-69 = precisa melhorar, <50 = revisar
+## ANÁLISE DE KEY RESULTS:
+Para cada KR, identifique:
+- Se parece TASK (atividade) ao invés de KEY RESULT (resultado mensurável)
+- Pontos fortes específicos
+- Sugestões de melhoria concretas e acionáveis
+
+## ALINHAMENTO ESTRATÉGICO:
+Sugira como melhorar o alinhamento com o objetivo organizacional (se houver) ou como conectar melhor com a estratégia.
+
+## REGRAS:
+- Seja específico e construtivo
+- Dê exemplos concretos de como melhorar
+- Score 80+ = aprovado, 50-79 = precisa melhorar, <50 = revisar urgente
+- Identifique KRs que são na verdade tasks (atividades sem resultado mensurável)
 
 Responda APENAS com JSON válido no formato especificado.`;
 
     const userPrompt = `Avalie este OKR:
 
-**Objetivo:** ${objectiveTitle}
-${objectiveDescription ? `**Descrição:** ${objectiveDescription}` : ''}
-**Time:** ${teamName || 'Não especificado'}
-**Objetivo Organizacional:** ${orgObjectiveTitle || 'Não vinculado'}
+**OBJETIVO:** ${objectiveTitle}
+${objectiveDescription ? `**DESCRIÇÃO:** ${objectiveDescription}` : ''}
+**TIME:** ${teamName || 'Não especificado'}
+**OBJETIVO ORGANIZACIONAL:** ${orgObjectiveTitle || 'Não vinculado (problema de alinhamento!)'}
 
-**Key Results (${keyResults.length}):**
-${krList || 'Nenhum KR definido'}
+**KEY RESULTS (${keyResults.length}):**
+${krList || 'CRÍTICO: Nenhum KR definido!'}
 
-Responda com JSON:
+---
+
+Responda com JSON no formato:
 {
   "overallScore": number (0-100),
-  "summary": "Resumo em 1-2 frases",
+  "summary": "Resumo executivo em 2-3 frases avaliando a OKR como um todo",
   "strengths": ["ponto forte 1", "ponto forte 2"],
-  "improvements": ["sugestão 1", "sugestão 2", "sugestão 3"],
+  "improvements": ["sugestão geral 1", "sugestão geral 2"],
+  "alignmentSuggestion": "Sugestão específica de como melhorar o alinhamento com ${orgObjectiveTitle || 'objetivos organizacionais'}",
   "criteriaScores": {
-    "clarity": { "score": number, "feedback": "string" },
-    "measurability": { "score": number, "feedback": "string" },
-    "ambition": { "score": number, "feedback": "string" },
-    "alignment": { "score": number, "feedback": "string" },
-    "ownership": { "score": number, "feedback": "string" }
-  }
+    "clarity": { "score": number, "feedback": "feedback específico" },
+    "measurability": { "score": number, "feedback": "feedback específico" },
+    "ambition": { "score": number, "feedback": "feedback específico" },
+    "alignment": { "score": number, "feedback": "feedback específico" },
+    "ownership": { "score": number, "feedback": "feedback específico" }
+  },
+  "krFeedback": [
+    {
+      "krId": "id do KR",
+      "krTitle": "título do KR",
+      "score": number (0-100),
+      "strengths": ["ponto forte"],
+      "improvements": ["sugestão de melhoria com exemplo concreto"],
+      "isTask": boolean (true se parecer mais task do que resultado)
+    }
+  ]
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -124,7 +158,7 @@ Responda com JSON:
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
