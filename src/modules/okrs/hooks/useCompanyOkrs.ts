@@ -48,6 +48,7 @@ export function useCompanyOkrs(year?: number) {
         .eq('year', currentYear)
         .eq('status', 'active')
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at');
 
       if (objError) throw objError;
@@ -70,7 +71,8 @@ export function useCompanyOkrs(year?: number) {
           status
         `)
         .in('org_objective_id', objectiveIds)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (krsError) throw krsError;
 

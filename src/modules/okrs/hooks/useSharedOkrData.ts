@@ -74,7 +74,8 @@ export function useTeamContributedObjectives(teamId: string | undefined) {
         `)
         .in('id', objectiveIds)
         .neq('team_id', teamId) // Exclude objectives where this team is primary
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (objError) throw objError;
       return objectives;
@@ -162,6 +163,7 @@ export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: s
         `)
         .eq('bu_id', buId)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
 
       if (teamId) {

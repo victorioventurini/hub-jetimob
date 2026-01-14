@@ -136,7 +136,8 @@ export function TeamKrFormDialog({
         .from('okr_org_key_results')
         .select('id, title')
         .eq('org_objective_id', teamObjective.org_objective_id)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
       if (error) throw error;
       return data || [];
     },

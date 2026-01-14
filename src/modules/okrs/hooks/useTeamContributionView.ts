@@ -115,13 +115,14 @@ export const useTeamContributionView = (teamId: string | undefined) => {
         return null;
       }
 
-      // Fetch all team KRs that are linked to org KRs
+      // Fetch all team KRs that are linked to org KRs (exclude cancelled)
       const { data: teamKrs, error: krsError } = await supabase
         .from('okr_team_key_results')
         .select(TEAM_KR_FIELDS)
         .eq('team_id', teamId)
         .eq('bu_id', currentBu.id)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .not('linked_org_kr_id', 'is', null);
 
       if (krsError) {
@@ -150,12 +151,13 @@ export const useTeamContributionView = (teamId: string | undefined) => {
         };
       }
 
-      // Fetch org KRs
+      // Fetch org KRs (exclude cancelled)
       const { data: orgKrs, error: orgKrsError } = await supabase
         .from('okr_org_key_results')
         .select(ORG_KR_FIELDS)
         .in('id', orgKrIds)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (orgKrsError) {
         console.error('Error fetching org KRs:', orgKrsError);
@@ -165,12 +167,13 @@ export const useTeamContributionView = (teamId: string | undefined) => {
       // Get unique org objective ids
       const orgObjectiveIds = [...new Set(orgKrs?.map(kr => kr.org_objective_id) as string[])];
 
-      // Fetch org objectives
+      // Fetch org objectives (exclude cancelled)
       const { data: orgObjectives, error: objError } = await supabase
         .from('okr_org_objectives')
         .select(ORG_OBJECTIVE_FIELDS)
         .in('id', orgObjectiveIds)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (objError) {
         console.error('Error fetching org objectives:', objError);

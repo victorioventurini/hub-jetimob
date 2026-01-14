@@ -141,7 +141,8 @@ export function useOrgHealthReview(year?: number): OrgHealthReviewData {
           )
         `)
         .in('linked_org_kr_id', orgKrIds)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       if (error) throw error;
       
