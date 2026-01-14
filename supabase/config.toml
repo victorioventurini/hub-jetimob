@@ -44,4 +44,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.okr-construction-review]
-verify_jwt = true
+verify_jwt = false
