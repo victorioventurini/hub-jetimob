@@ -180,6 +180,8 @@ export default function OkrConstructionReviewPage() {
               totalObjectives={objectives.length}
               globalAlignmentSuggestion={teamReview?.globalAlignmentSuggestion}
               isLoading={isLoadingReview}
+              teamAnalysis={teamReview?.teamAnalysis}
+              teamAnalysisLoading={teamReview?.teamAnalysisLoading}
             />
           </div>
           <div className="lg:col-span-2 space-y-4">
