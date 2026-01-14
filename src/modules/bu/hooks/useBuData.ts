@@ -131,7 +131,7 @@ export function useCreateBu() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus(), refetchType: 'active' });
     },
   });
 }
@@ -154,9 +154,9 @@ export function useUpdateBu() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.bu.unit(variables.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBus(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.unit(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBus(null), refetchType: 'active' });
     },
   });
 }

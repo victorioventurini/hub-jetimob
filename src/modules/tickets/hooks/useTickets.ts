@@ -559,8 +559,8 @@ export function useCreateTicket(profileId: string | null) {
     },
     onSuccess: () => {
       // Invalidate ticket lists (all filters) + my tickets for this BU
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId ?? null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId ?? null), refetchType: 'active' });
     },
   });
 }
@@ -590,9 +590,9 @@ export function useUpdateTicket() {
       return ticket;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id), refetchType: 'active' });
     },
   });
 }
@@ -622,9 +622,9 @@ export function useUpdateTicketStatus() {
       return ticket;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id), refetchType: 'active' });
     },
   });
 }
@@ -645,8 +645,8 @@ export function useDeleteTicket() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId), refetchType: 'active' });
     },
   });
 }

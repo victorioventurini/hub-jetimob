@@ -84,7 +84,7 @@ export function useUploadAgentDocument() {
       return data as AgentDocument;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.agentDocuments(variables.agentId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.agentDocuments(variables.agentId), refetchType: 'active' });
     },
   });
 }
@@ -114,7 +114,7 @@ export function useDeleteAgentDocument() {
       return { documentId, agentId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.agentDocuments(data.agentId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.agentDocuments(data.agentId), refetchType: 'active' });
     },
   });
 }
