@@ -4,8 +4,9 @@
 
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, AlertTriangle, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Loader2, Sparkles, Users, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { TeamAnalysisResult } from "../../types/construction-review";
 
 interface ConstructionScoreCardProps {
   avgScore: number;
@@ -15,6 +16,9 @@ interface ConstructionScoreCardProps {
   totalObjectives: number;
   globalAlignmentSuggestion?: string;
   isLoading?: boolean;
+  // Análise consolidada
+  teamAnalysis?: TeamAnalysisResult;
+  teamAnalysisLoading?: boolean;
 }
 
 export function ConstructionScoreCard({
@@ -25,6 +29,8 @@ export function ConstructionScoreCard({
   totalObjectives,
   globalAlignmentSuggestion,
   isLoading,
+  teamAnalysis,
+  teamAnalysisLoading,
 }: ConstructionScoreCardProps) {
   if (isLoading) {
     return (
@@ -112,8 +118,63 @@ export function ConstructionScoreCard({
           </div>
         </div>
 
-        {/* Global alignment suggestion */}
-        {globalAlignmentSuggestion && (
+        {/* Team Analysis Loading */}
+        {teamAnalysisLoading && (
+          <div className="pt-3 border-t">
+            <div className="flex items-center gap-2 text-xs text-blue-600">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Analisando conjunto de OKRs e sinergias entre times...
+            </div>
+          </div>
+        )}
+
+        {/* Org Alignment Analysis */}
+        {teamAnalysis?.orgAlignmentAnalysis && (
+          <div className="pt-3 border-t">
+            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+              <Target className="w-3 h-3" />
+              Alinhamento Organizacional ({teamAnalysis.orgAlignmentAnalysis.score}%)
+            </h4>
+            <p className="text-xs text-foreground bg-muted/50 p-2.5 rounded-lg">
+              {teamAnalysis.orgAlignmentAnalysis.feedback}
+            </p>
+            {teamAnalysis.orgAlignmentAnalysis.uncoveredOrgObjectives?.length > 0 && (
+              <p className="text-[10px] text-amber-600 mt-1.5">
+                ⚠️ OKRs Org. não cobertos: {teamAnalysis.orgAlignmentAnalysis.uncoveredOrgObjectives.join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Shared Objectives Suggestions */}
+        {teamAnalysis?.sharedSuggestions && teamAnalysis.sharedSuggestions.length > 0 && (
+          <div className="pt-3 border-t">
+            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              Sugestões de Colaboração
+            </h4>
+            <div className="space-y-2">
+              {teamAnalysis.sharedSuggestions.slice(0, 3).map((suggestion, i) => (
+                <div key={i} className="bg-primary/5 p-2.5 rounded-lg">
+                  <p className="text-xs text-foreground">
+                    Troque uma ideia com <strong>{suggestion.suggestedLeaderFirstName}</strong> do 
+                    time <strong>{suggestion.suggestedTeamName}</strong>. O objetivo 
+                    "<span className="italic">{suggestion.suggestedObjectiveTitle}</span>" parece ter 
+                    sinergia com o seu "<span className="italic">{suggestion.objectiveTitle}</span>".
+                  </p>
+                  {suggestion.reason && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      💡 {suggestion.reason}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Global alignment suggestion (fallback) */}
+        {globalAlignmentSuggestion && !teamAnalysis?.orgAlignmentAnalysis && (
           <div className="pt-3 border-t">
             <h4 className="text-xs font-medium text-muted-foreground mb-1.5">💡 Sugestão de Alinhamento</h4>
             <p className="text-xs text-foreground bg-muted/50 p-2.5 rounded-lg">

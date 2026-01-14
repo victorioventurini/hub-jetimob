@@ -23,12 +23,47 @@ interface KeyResult {
 }
 
 interface RequestBody {
-  objectiveId: string;
-  objectiveTitle: string;
+  mode?: 'objective' | 'team-analysis';
+  // Modo objective (padrão)
+  objectiveId?: string;
+  objectiveTitle?: string;
   objectiveDescription?: string;
   teamName?: string;
   orgObjectiveTitle?: string;
-  keyResults: KeyResult[];
+  keyResults?: KeyResult[];
+  // Modo team-analysis
+  teamId?: string;
+  cycleId?: string;
+  objectives?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    orgObjectiveId?: string;
+    orgObjectiveTitle?: string;
+    keyResults: Array<{
+      id: string;
+      title: string;
+      type: string | null;
+      baseline: number | null;
+      target: number | null;
+      unit: string | null;
+      hasOwner: boolean;
+    }>;
+  }>;
+  orgObjectives?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+  }>;
+  otherTeamsObjectives?: Array<{
+    teamId: string;
+    teamName: string;
+    leaderFirstName: string;
+    objectives: Array<{
+      id: string;
+      title: string;
+    }>;
+  }>;
 }
 
 interface KrFeedback {
@@ -143,6 +178,72 @@ function createTextBasedAssessment(text: string, keyResults: KeyResult[]): AiAss
   };
 }
 
+// ============================================================
+// TEAM ANALYSIS TYPES
+// ============================================================
+
+interface SharedObjectiveSuggestion {
+  objectiveId: string;
+  objectiveTitle: string;
+  suggestedTeamId: string;
+  suggestedTeamName: string;
+  suggestedLeaderFirstName: string;
+  suggestedObjectiveId: string;
+  suggestedObjectiveTitle: string;
+  reason: string;
+}
+
+interface TeamAnalysisResult {
+  consolidatedScore: number;
+  consolidatedSummary: string;
+  orgAlignmentAnalysis: {
+    score: number;
+    coveredOrgObjectives: string[];
+    uncoveredOrgObjectives: string[];
+    feedback: string;
+  };
+  sharedSuggestions: SharedObjectiveSuggestion[];
+  generatedAt: string;
+}
+
+/**
+ * Parse team analysis response into structured format
+ */
+function parseTeamAnalysisResponse(content: string): TeamAnalysisResult {
+  let jsonStr = content;
+  if (content.includes('```json')) {
+    jsonStr = content.split('```json')[1].split('```')[0].trim();
+  } else if (content.includes('```')) {
+    jsonStr = content.split('```')[1].split('```')[0].trim();
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return {
+      ...parsed,
+      generatedAt: new Date().toISOString(),
+    };
+  } catch {
+    // Fallback
+    return {
+      consolidatedScore: 70,
+      consolidatedSummary: content.substring(0, 300),
+      orgAlignmentAnalysis: {
+        score: 70,
+        coveredOrgObjectives: [],
+        uncoveredOrgObjectives: [],
+        feedback: "Análise textual - verifique alinhamento manualmente",
+      },
+      sharedSuggestions: [],
+      generatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+// ============================================================
+// MAIN HANDLER
+// ============================================================
+
 serve(async (req) => {
   console.log("[okr-construction-review] Request received:", req.method);
   
@@ -171,14 +272,156 @@ serve(async (req) => {
     }
 
     const body: RequestBody = await req.json();
-    const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    if (!supabaseUrl) {
+      throw new Error("SUPABASE_URL não configurada");
+    }
 
+    // ────────────────────────────────────────────────────────────
+    // MODO: TEAM ANALYSIS (análise consolidada do time)
+    // ────────────────────────────────────────────────────────────
+    if (body.mode === 'team-analysis') {
+      console.log("[okr-construction-review] Mode: team-analysis");
+      const { teamId, teamName, objectives, orgObjectives, otherTeamsObjectives } = body;
+
+      if (!objectives?.length) {
+        return new Response(
+          JSON.stringify({ error: "Objectives required for team-analysis mode" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Build context for consolidated analysis
+      const objectivesList = objectives.map((obj, i) => {
+        const krList = (obj.keyResults || []).map((kr, j) => 
+          `  ${j + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.hasOwner ? 'Definido' : 'NÃO'}`
+        ).join('\n');
+        return `**${i + 1}. ${obj.title}**
+${obj.description ? `   Descrição: ${obj.description}` : ''}
+   Vinculado a: ${obj.orgObjectiveTitle || 'NÃO VINCULADO'}
+   Key Results (${obj.keyResults.length}):
+${krList}`;
+      }).join('\n\n');
+
+      const orgObjectivesList = (orgObjectives || []).map((org, i) => 
+        `${i + 1}. "${org.title}"`
+      ).join('\n') || 'Nenhum OKR organizacional definido';
+
+      const otherTeamsList = (otherTeamsObjectives || []).map(team => 
+        `**${team.teamName}** (Líder: ${team.leaderFirstName}):
+${team.objectives.map((obj, i) => `  ${i + 1}. "${obj.title}"`).join('\n')}`
+      ).join('\n\n') || 'Nenhum outro time com OKRs no ciclo';
+
+      const userQuestion = `Faça uma ANÁLISE CONSOLIDADA dos OKRs deste time e responda OBRIGATORIAMENTE em JSON:
+
+**TIME:** ${teamName || 'Não especificado'}
+
+=== OBJETIVOS DO TIME (${objectives.length}) ===
+${objectivesList}
+
+=== OKRs ORGANIZACIONAIS DO CICLO ===
+${orgObjectivesList}
+
+=== OBJETIVOS DE OUTROS TIMES (para identificar sinergias) ===
+${otherTeamsList}
+
+---
+
+Analise:
+1. Score consolidado de qualidade de construção (0-100)
+2. Resumo executivo da qualidade do conjunto de OKRs
+3. Alinhamento com OKRs organizacionais (quais estão cobertos, quais não)
+4. Sugestões de OBJETIVOS COMPARTILHADOS: identifique sinergias entre os objetivos deste time e de outros times. Para cada sinergia, sugira uma conversa no formato "Troque uma ideia com [nome] do time [time]. O objetivo [objetivo dele] parece ter sinergia com o seu [objetivo do time atual]."
+
+Responda com JSON válido no formato EXATO abaixo:
+{
+  "consolidatedScore": number (0-100),
+  "consolidatedSummary": "Resumo executivo em 3-4 frases sobre a qualidade geral",
+  "orgAlignmentAnalysis": {
+    "score": number (0-100),
+    "coveredOrgObjectives": ["título do objetivo org coberto 1", "título 2"],
+    "uncoveredOrgObjectives": ["título do objetivo org NÃO coberto"],
+    "feedback": "Análise do alinhamento estratégico"
+  },
+  "sharedSuggestions": [
+    {
+      "objectiveId": "id do objetivo deste time",
+      "objectiveTitle": "título do objetivo deste time",
+      "suggestedTeamId": "id do time sugerido",
+      "suggestedTeamName": "nome do time sugerido",
+      "suggestedLeaderFirstName": "primeiro nome do líder",
+      "suggestedObjectiveId": "id do objetivo do outro time",
+      "suggestedObjectiveTitle": "título do objetivo do outro time",
+      "reason": "Por que esses objetivos têm sinergia"
+    }
+  ]
+}`;
+
+      const contextData = {
+        type: "okr_team_analysis",
+        team: { id: teamId, name: teamName },
+        objectives: objectives.map(o => ({
+          id: o.id,
+          title: o.title,
+          orgObjectiveTitle: o.orgObjectiveTitle,
+          krCount: o.keyResults.length,
+        })),
+        orgObjectivesCount: orgObjectives?.length || 0,
+        otherTeamsCount: otherTeamsObjectives?.length || 0,
+      };
+
+      const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
+        method: "POST",
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json",
+          "x-current-bu-id": buId,
+          "x-correlation-id": correlationId,
+        },
+        body: JSON.stringify({
+          buId,
+          agentSlug: "coach-okrs",
+          actionContext: "okr_team_analysis",
+          context: contextData,
+          userQuestion,
+          stream: false,
+        }),
+      });
+
+      if (!vicResponse.ok) {
+        const errorText = await vicResponse.text();
+        console.error("[okr-construction-review] team-analysis error:", vicResponse.status, errorText);
+        throw new Error(`invoke-vic error: ${vicResponse.status}`);
+      }
+
+      const vicData = await vicResponse.json();
+      const content = vicData.content || vicData.message;
+
+      if (!content) {
+        throw new Error("Resposta vazia do agente");
+      }
+
+      const teamAnalysis = parseTeamAnalysisResponse(content);
+      console.log("[okr-construction-review] Team analysis generated, score:", teamAnalysis.consolidatedScore);
+
+      return new Response(
+        JSON.stringify({ teamAnalysis }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // MODO: OBJECTIVE (avaliação individual - padrão)
+    // ────────────────────────────────────────────────────────────
+    const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
+    const krs = keyResults || [];
+
+    console.log("[okr-construction-review] Mode: objective (default)");
     console.log("[okr-construction-review] Processing objective:", objectiveTitle);
-    console.log("[okr-construction-review] Key Results count:", keyResults?.length || 0);
-    console.log("[okr-construction-review] Using agent: coach-okrs");
+    console.log("[okr-construction-review] Key Results count:", krs.length);
 
     // Build context for the agent
-    const krList = (keyResults || []).map((kr, i) =>
+    const krList = krs.map((kr, i) =>
       `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
     ).join('\n');
 
@@ -191,7 +434,7 @@ serve(async (req) => {
       },
       team: teamName,
       orgObjective: orgObjectiveTitle,
-      keyResults: keyResults.map(kr => ({
+      keyResults: krs.map(kr => ({
         id: kr.id,
         title: kr.title,
         type: kr.type,
@@ -209,7 +452,7 @@ ${objectiveDescription ? `**DESCRIÇÃO:** ${objectiveDescription}` : ''}
 **TIME:** ${teamName || 'Não especificado'}
 **OBJETIVO ORGANIZACIONAL:** ${orgObjectiveTitle || 'Não vinculado (problema de alinhamento!)'}
 
-**KEY RESULTS (${keyResults.length}):**
+**KEY RESULTS (${krs.length}):**
 ${krList || 'CRÍTICO: Nenhum KR definido!'}
 
 ---
@@ -229,15 +472,9 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
     "ownership": { "score": number, "feedback": "texto" }
   },
   "krFeedback": [
-    { "krId": "${keyResults[0]?.id || 'id'}", "krTitle": "título", "score": number, "strengths": [], "improvements": [], "isTask": boolean }
+    { "krId": "${krs[0]?.id || 'id'}", "krTitle": "título", "score": number, "strengths": [], "improvements": [], "isTask": boolean }
   ]
 }`;
-
-    // Get Supabase URL from environment
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    if (!supabaseUrl) {
-      throw new Error("SUPABASE_URL não configurada");
-    }
 
     // Call invoke-vic with coach-okrs agent
     console.log("[okr-construction-review] Calling invoke-vic...");
@@ -251,7 +488,6 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
         "x-correlation-id": correlationId,
       },
       body: JSON.stringify({
-        // IMPORTANT: invoke-vic middleware reads BU from body (bu_id/buId)
         buId,
         agentSlug: "coach-okrs",
         actionContext: "okr_construction_review",
@@ -306,7 +542,7 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
     }
 
     // Parse the response into structured assessment
-    const assessment = parseAiResponse(content, keyResults);
+    const assessment = parseAiResponse(content, krs);
 
     console.log("[okr-construction-review] Assessment generated, score:", assessment.overallScore);
 

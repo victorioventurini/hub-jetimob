@@ -1,5 +1,11 @@
 /**
  * useConstructionReview - Hook para avaliação AUTOMÁTICA de construção de OKRs por IA
+ * 
+ * ESCOPO DE AVALIAÇÃO:
+ * 1. Avaliação individual de cada objetivo + KRs
+ * 2. Avaliação de cada KR individualmente
+ * 3. Avaliação do conjunto em relação às OKRs organizacionais
+ * 4. Sugestões de objetivos compartilhados entre times
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +18,9 @@ import {
   type ObjectiveReview, 
   type TeamConstructionReview,
   type AiAssessment,
+  type TeamAnalysisResult,
+  type OtherTeamObjectives,
+  type OrgObjective,
   REVIEW_CRITERIA,
   determineReviewStatus,
 } from "../types/construction-review";
@@ -58,6 +67,12 @@ export function useConstructionReview(
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
   const [aiErrors, setAiErrors] = useState<Record<string, string>>({});
   const [autoEvaluateTriggered, setAutoEvaluateTriggered] = useState<Set<string>>(new Set());
+  
+  // Team analysis state (análise consolidada)
+  const [teamAnalysis, setTeamAnalysis] = useState<TeamAnalysisResult | null>(null);
+  const [teamAnalysisLoading, setTeamAnalysisLoading] = useState(false);
+  const [teamAnalysisError, setTeamAnalysisError] = useState<string | null>(null);
+  const [teamAnalysisTriggered, setTeamAnalysisTriggered] = useState(false);
 
   // Fetch objectives with KRs
   const { data: rawObjectives, isLoading, error } = useQuery({
@@ -112,6 +127,101 @@ export function useConstructionReview(
 
   // Fetch cycle info
   const { data: cycleInfo } = useCycle(cycleId);
+
+  // ────────────────────────────────────────────────────────────
+  // BUSCAR CONTEXTO PARA ANÁLISE CONSOLIDADA
+  // ────────────────────────────────────────────────────────────
+  
+  // Buscar OKRs organizacionais do ciclo
+  const { data: orgObjectives } = useQuery({
+    queryKey: queryKeys.okrs.orgObjectivesByCycle(currentBuId, cycleId),
+    queryFn: async (): Promise<OrgObjective[]> => {
+      if (!cycleId) return [];
+      
+      const { data, error } = await buSupabase
+        .from('okr_org_objectives')
+        .select('id, title, description')
+        .eq('cycle_id', cycleId)
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
+
+      if (error) throw error;
+      return (data || []) as OrgObjective[];
+    },
+    enabled: !!buSupabase && !!currentBuId && !!cycleId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Buscar objetivos de outros times para sugestão de compartilhamento
+  const { data: otherTeamsObjectives } = useQuery({
+    queryKey: queryKeys.okrs.otherTeamsObjectives(currentBuId, cycleId, teamId),
+    queryFn: async (): Promise<OtherTeamObjectives[]> => {
+      if (!cycleId || !teamId) return [];
+      
+      const { data, error } = await buSupabase
+        .from('okr_team_objectives')
+        .select(`
+          id, 
+          title, 
+          team_id,
+          team:teams!inner (
+            id, 
+            name, 
+            leader_user_id
+          )
+        `)
+        .eq('cycle_id', cycleId)
+        .neq('team_id', teamId)
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
+
+      if (error) throw error;
+
+      // Buscar nomes dos líderes
+      const leaderIds = [...new Set((data || [])
+        .map(d => (d.team as any)?.leader_user_id)
+        .filter(Boolean))];
+      
+      let leaderNames: Record<string, string> = {};
+      if (leaderIds.length > 0) {
+        const { data: profiles } = await buSupabase
+          .from('profiles')
+          .select('id, first_name')
+          .in('id', leaderIds);
+        
+        leaderNames = (profiles || []).reduce((acc, p) => {
+          acc[p.id] = p.first_name || 'Líder';
+          return acc;
+        }, {} as Record<string, string>);
+      }
+
+      // Agrupar por time
+      const teamMap = new Map<string, OtherTeamObjectives>();
+      
+      for (const obj of (data || [])) {
+        const team = obj.team as any;
+        if (!team?.id) continue;
+        
+        if (!teamMap.has(team.id)) {
+          teamMap.set(team.id, {
+            teamId: team.id,
+            teamName: team.name || 'Time',
+            leaderFirstName: leaderNames[team.leader_user_id] || 'Líder',
+            objectives: [],
+          });
+        }
+        
+        teamMap.get(team.id)!.objectives.push({
+          id: obj.id,
+          title: obj.title,
+        });
+      }
+
+      return Array.from(teamMap.values());
+    },
+    enabled: !!buSupabase && !!currentBuId && !!cycleId && !!teamId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Auto-evaluate objectives when data loads
   const evaluateObjective = useCallback(async (obj: RawObjective) => {
@@ -198,6 +308,83 @@ export function useConstructionReview(
     });
   }, [rawObjectives, aiAssessments, aiLoading, aiErrors]);
 
+  // ────────────────────────────────────────────────────────────
+  // ANÁLISE CONSOLIDADA DO TIME (após avaliações individuais)
+  // ────────────────────────────────────────────────────────────
+  
+  const evaluateTeamAnalysis = useCallback(async () => {
+    if (teamAnalysisLoading || teamAnalysis || !currentBuId) return;
+    if (!rawObjectives?.length || !orgObjectives || !otherTeamsObjectives) return;
+    
+    // Só disparar análise consolidada quando todas as individuais terminarem
+    const allDone = rawObjectives.every(obj => 
+      aiAssessments[obj.id] || aiErrors[obj.id]
+    );
+    if (!allDone) return;
+
+    setTeamAnalysisLoading(true);
+    setTeamAnalysisError(null);
+
+    try {
+      const { data, error } = await buSupabase.functions.invoke('okr-construction-review', {
+        body: { 
+          mode: 'team-analysis',
+          teamId,
+          teamName: rawObjectives[0]?.team?.name,
+          cycleId,
+          objectives: rawObjectives.map(obj => ({
+            id: obj.id,
+            title: obj.title,
+            description: obj.description,
+            orgObjectiveId: obj.org_objective_id,
+            orgObjectiveTitle: obj.org_objective?.title,
+            keyResults: obj.key_results.map(kr => ({
+              id: kr.id,
+              title: kr.title,
+              type: kr.type,
+              baseline: kr.baseline,
+              target: kr.target,
+              unit: kr.unit,
+              hasOwner: !!kr.owner_user_id,
+            })),
+          })),
+          orgObjectives,
+          otherTeamsObjectives,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.teamAnalysis) {
+        setTeamAnalysis(data.teamAnalysis);
+      }
+    } catch (err) {
+      console.error('Team analysis error:', err);
+      setTeamAnalysisError(err instanceof Error ? err.message : 'Erro na análise consolidada');
+    } finally {
+      setTeamAnalysisLoading(false);
+    }
+  }, [
+    teamAnalysisLoading, teamAnalysis, currentBuId, rawObjectives, 
+    orgObjectives, otherTeamsObjectives, aiAssessments, aiErrors,
+    buSupabase, teamId, cycleId
+  ]);
+
+  // Disparar análise consolidada quando todas as individuais terminarem
+  useEffect(() => {
+    if (teamAnalysisTriggered) return;
+    if (!rawObjectives?.length) return;
+    
+    const allDone = rawObjectives.every(obj => 
+      aiAssessments[obj.id] || aiErrors[obj.id]
+    );
+    
+    if (allDone && orgObjectives && otherTeamsObjectives) {
+      setTeamAnalysisTriggered(true);
+      // Delay de 500ms para garantir que os states atualizaram
+      setTimeout(() => evaluateTeamAnalysis(), 500);
+    }
+  }, [rawObjectives, aiAssessments, aiErrors, orgObjectives, otherTeamsObjectives, teamAnalysisTriggered, evaluateTeamAnalysis]);
+
   // Team-level aggregation
   const teamReview: TeamConstructionReview | null = useMemo(() => {
     if (!objectives.length || !teamId || !cycleId) return null;
@@ -224,8 +411,12 @@ export function useConstructionReview(
       needsImprovementCount: objectives.filter(o => o.status === 'needs_improvement').length,
       pendingCount: objectives.filter(o => o.status === 'pending' || o.status === 'analyzing').length,
       globalAlignmentSuggestion: alignmentSuggestions.length > 0 ? alignmentSuggestions[0] : undefined,
+      // Análise consolidada
+      teamAnalysis: teamAnalysis || undefined,
+      teamAnalysisLoading,
+      teamAnalysisError: teamAnalysisError || undefined,
     };
-  }, [objectives, teamId, cycleId, cycleInfo]);
+  }, [objectives, teamId, cycleId, cycleInfo, teamAnalysis, teamAnalysisLoading, teamAnalysisError]);
 
   // Manual re-evaluate
   const reEvaluateObjective = useCallback((objectiveId: string) => {

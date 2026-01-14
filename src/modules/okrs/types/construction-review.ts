@@ -54,6 +54,66 @@ export interface AiAssessment {
 }
 
 // ============================================================
+// SUGESTÃO DE OBJETIVOS COMPARTILHADOS
+// ============================================================
+
+export interface SharedObjectiveSuggestion {
+  objectiveId: string;          // Objetivo do time sendo avaliado
+  objectiveTitle: string;
+  suggestedTeamId: string;      // Time com sinergia
+  suggestedTeamName: string;
+  suggestedLeaderFirstName: string;
+  suggestedObjectiveId: string;
+  suggestedObjectiveTitle: string;
+  reason: string;               // Por que a IA identificou sinergia
+}
+
+// ============================================================
+// ANÁLISE CONSOLIDADA DO TIME
+// ============================================================
+
+export interface OrgAlignmentAnalysis {
+  score: number;
+  coveredOrgObjectives: string[];   // Títulos dos objetivos org cobertos
+  uncoveredOrgObjectives: string[]; // Títulos sem cobertura
+  feedback: string;
+}
+
+export interface TeamAnalysisResult {
+  // Score consolidado do time
+  consolidatedScore: number;
+  consolidatedSummary: string;
+  
+  // Avaliação de alinhamento com OKRs organizacionais
+  orgAlignmentAnalysis: OrgAlignmentAnalysis;
+  
+  // Sugestões de objetivos compartilhados
+  sharedSuggestions: SharedObjectiveSuggestion[];
+  
+  generatedAt: string;
+}
+
+// ============================================================
+// DADOS DE CONTEXTO PARA ANÁLISE
+// ============================================================
+
+export interface OtherTeamObjectives {
+  teamId: string;
+  teamName: string;
+  leaderFirstName: string;
+  objectives: Array<{
+    id: string;
+    title: string;
+  }>;
+}
+
+export interface OrgObjective {
+  id: string;
+  title: string;
+  description?: string;
+}
+
+// ============================================================
 // AVALIAÇÃO DE UM OBJETIVO
 // ============================================================
 
@@ -108,6 +168,11 @@ export interface TeamConstructionReview {
   
   // Sugestão global de alinhamento
   globalAlignmentSuggestion?: string;
+  
+  // Análise consolidada por IA (nova)
+  teamAnalysis?: TeamAnalysisResult;
+  teamAnalysisLoading?: boolean;
+  teamAnalysisError?: string;
 }
 
 // ============================================================
