@@ -196,6 +196,12 @@ export const okrsKeys = {
   // Org Analysis (Admin)
   orgAnalysis: (buId: string | null, year: number, cycleId: string | null) =>
     ['okr-org-analysis', buId, year, cycleId] as const,
+    
+  // Construction Review - Context Data
+  orgObjectivesByCycle: (buId: string | null, cycleId: string | null) => 
+    ['okr-org-objectives-by-cycle', buId, cycleId] as const,
+  otherTeamsObjectives: (buId: string | null, cycleId: string | null, teamId: string | null) =>
+    ['okr-other-teams-objectives', buId, cycleId, teamId] as const,
 } as const;
 
 export const kpisKeys = {
