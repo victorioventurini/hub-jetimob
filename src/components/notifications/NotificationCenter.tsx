@@ -6,6 +6,7 @@ import { supabase as supabaseGlobal } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { useCloseOnRouteChange } from '@/hooks/useCloseOnRouteChange';
 import {
   Popover,
   PopoverContent,
@@ -73,6 +74,9 @@ export function NotificationCenter() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+
+  // Fecha o popover ao mudar de rota
+  useCloseOnRouteChange(open, setOpen);
 
   // NOTE: This component is mounted even on pre-BU routes (e.g. /auth).
   // Never call useBuScopedSupabase() here; instead create a BU client only when BU is selected.

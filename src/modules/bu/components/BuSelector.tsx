@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Building2, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
 
 export function BuSelector() {
   const { currentBu, userBus, hasMultipleBus, switchBu } = useBu();
   const { isAdmin } = useAuth();
+  const [open, setOpen] = useState(false);
+  
+  // Fecha o dropdown ao mudar de rota
+  useCloseOnRouteChange(open, setOpen);
 
   // Always show for admin (includes super_admin), otherwise only if user has multiple BUs
   if (!isAdmin && (!hasMultipleBus || !currentBu)) {
@@ -33,10 +39,11 @@ export function BuSelector() {
 
   const handleSwitchBu = (buId: string) => {
     switchBu(buId);
+    setOpen(false);
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           {currentBu.symbol_url ? (
