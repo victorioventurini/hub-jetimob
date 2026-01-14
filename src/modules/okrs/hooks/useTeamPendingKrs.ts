@@ -61,6 +61,7 @@ export function useTeamPendingKrs(
       if (!cycleId || teamIds.length === 0) return [];
 
       // Fetch KRs from team objectives in the selected cycle
+      // Filter out cancelled/deleted objectives and KRs
       const { data, error } = await supabase
         .from('okr_team_key_results')
         .select(`
@@ -79,6 +80,8 @@ export function useTeamPendingKrs(
             title,
             cycle_id,
             team_id,
+            cancelled_at,
+            deleted_at,
             team:teams (
               id,
               name
@@ -87,6 +90,8 @@ export function useTeamPendingKrs(
         `)
         .in('team_objective.team_id', teamIds)
         .eq('team_objective.cycle_id', cycleId)
+        .is('team_objective.cancelled_at', null)
+        .is('team_objective.deleted_at', null)
         .is('cancelled_at', null)
         .is('deleted_at', null)
         .order('status', { ascending: false }) // red first, then yellow, then green

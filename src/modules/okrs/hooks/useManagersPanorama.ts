@@ -71,7 +71,7 @@ export function useManagersPanorama(cycleId: string | null | undefined) {
 
       allTeams?.forEach(t => buildTeamToRootMap(t.id));
 
-      // 3. Fetch all KRs in the cycle
+      // 3. Fetch all KRs in the cycle (excluding cancelled/deleted objectives and KRs)
       const { data: krsData, error: krsError } = await supabase
         .from('okr_team_key_results')
         .select(`
@@ -85,10 +85,14 @@ export function useManagersPanorama(cycleId: string | null | undefined) {
           team_objective:okr_team_objectives!inner (
             id,
             cycle_id,
-            team_id
+            team_id,
+            cancelled_at,
+            deleted_at
           )
         `)
         .eq('team_objective.cycle_id', cycleId)
+        .is('team_objective.cancelled_at', null)
+        .is('team_objective.deleted_at', null)
         .is('cancelled_at', null)
         .is('deleted_at', null);
 
@@ -232,16 +236,24 @@ export function useCrossDependencies(cycleId: string | null | undefined) {
             id,
             title,
             status,
+            cancelled_at,
+            deleted_at,
             team_objective:okr_team_objectives!inner (
               cycle_id,
+              cancelled_at,
+              deleted_at,
               team:teams (id, name)
             )
           ),
           depends_on_kr:okr_team_key_results!okr_dependencies_depends_on_kr_id_fkey (
             id,
             title,
+            cancelled_at,
+            deleted_at,
             team_objective:okr_team_objectives!inner (
               cycle_id,
+              cancelled_at,
+              deleted_at,
               team:teams (id, name)
             )
           )
@@ -254,14 +266,16 @@ export function useCrossDependencies(cycleId: string | null | undefined) {
       }
 
       // Filter to only include dependencies where both KRs are in the current cycle
-      // and transform to CrossDependency format
+      // and are not cancelled/deleted - transform to CrossDependency format
       const dependencies: CrossDependency[] = [];
       
       for (const dep of depsData || []) {
         const kr = dep.kr as any;
         const dependsOnKr = dep.depends_on_kr as any;
         
+        // Skip if KRs are missing, cancelled, or deleted
         if (!kr?.team_objective || !dependsOnKr?.team_objective) continue;
+        if (kr.cancelled_at || kr.deleted_at || dependsOnKr.cancelled_at || dependsOnKr.deleted_at) continue;
         if (kr.team_objective.cycle_id !== cycleId || dependsOnKr.team_objective.cycle_id !== cycleId) continue;
         
         const fromTeam = kr.team_objective.team;
