@@ -179,7 +179,7 @@ export function ManagersCrossIssuesStep({
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>
-          <Button onClick={onContinue} className="flex-1">
+          <Button onClick={onContinue} className="flex-1" size="lg">
             Definir ajustes
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
