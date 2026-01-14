@@ -5,17 +5,18 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
-import { ArrowRight, ArrowLeft, Target, Lightbulb, CheckCircle2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+
+// Step components
+import {
+  CLevelCompanyOkrsStep,
+  CLevelInsightsStep,
+  CLevelDecisionsStep,
+  CLevelDirectivesStep,
+} from '@/modules/okrs/components/wizards/clevel-checkin';
 
 // ============================================================
 // TYPES
@@ -43,237 +44,6 @@ const DEFAULT_DATA: CLevelDraftData = {
   directives: '',
   reviewedOkrs: [],
 };
-
-// ============================================================
-// STEP COMPONENTS
-// ============================================================
-
-function CompanyOkrsStep({ 
-  okrs, 
-  isLoading,
-  onContinue 
-}: { 
-  okrs: { id: string; title: string; progress: number; trend: 'improving' | 'stable' | 'declining' }[]; 
-  isLoading?: boolean;
-  onContinue: () => void 
-}) {
-  const getTrendIcon = (trend: string) => {
-    if (trend === 'improving') return <TrendingUp className="h-4 w-4" />;
-    if (trend === 'declining') return <TrendingDown className="h-4 w-4" />;
-    return <Minus className="h-4 w-4" />;
-  };
-
-  const getTrendLabel = (trend: string) => {
-    if (trend === 'improving') return 'Melhorando';
-    if (trend === 'declining') return 'Em risco';
-    return 'Estável';
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-7 w-48 mb-2" />
-          <Skeleton className="h-5 w-72" />
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <Skeleton className="h-5 w-64 mb-3" />
-                <Skeleton className="h-4 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (okrs.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-2">OKRs da Empresa</h2>
-          <p className="text-muted-foreground">Nenhum objetivo organizacional encontrado para este ano.</p>
-        </div>
-        <div className="flex justify-end">
-          <Button onClick={onContinue} className="gap-2">
-            Continuar <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">OKRs da Empresa</h2>
-        <p className="text-muted-foreground">Visão geral dos objetivos estratégicos</p>
-      </div>
-      
-      <div className="space-y-4">
-        {okrs.map(okr => (
-          <Card key={okr.id}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{okr.title}</span>
-                </div>
-                <Badge variant={okr.trend === 'declining' ? 'destructive' : okr.trend === 'improving' ? 'default' : 'secondary'} className="gap-1">
-                  {getTrendIcon(okr.trend)}
-                  {getTrendLabel(okr.trend)}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-3">
-                <Progress value={okr.progress} className="flex-1" />
-                <span className="text-sm font-medium">{okr.progress}%</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      <div className="flex justify-end">
-        <Button onClick={onContinue} className="gap-2">
-          Continuar <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function InsightsStep({ 
-  onContinue, 
-  onBack 
-}: { 
-  onContinue: () => void; 
-  onBack: () => void 
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Insights Estratégicos</h2>
-        <p className="text-muted-foreground">Pontos de atenção identificados</p>
-      </div>
-      
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <Lightbulb className="h-5 w-5 text-amber-500 mt-0.5" />
-            <div>
-              <p className="font-medium">NPS precisa de atenção</p>
-              <p className="text-sm text-muted-foreground">
-                O indicador está abaixo da meta e com tendência estável. 
-                Recomenda-se revisar as iniciativas de satisfação do cliente.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <TrendingUp className="h-5 w-5 text-green-500 mt-0.5" />
-            <div>
-              <p className="font-medium">Receita em boa trajetória</p>
-              <p className="text-sm text-muted-foreground">
-                O OKR de receita está com tendência de melhoria. 
-                Manter o foco nas ações atuais.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
-        <Button onClick={onContinue} className="gap-2">
-          Continuar <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function DecisionsStep({ 
-  value, 
-  onChange, 
-  onContinue, 
-  onBack 
-}: { 
-  value: string;
-  onChange: (value: string) => void;
-  onContinue: () => void; 
-  onBack: () => void 
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Decisões Estratégicas</h2>
-        <p className="text-muted-foreground">Registre os direcionamentos definidos</p>
-      </div>
-      
-      <Textarea
-        placeholder="Quais decisões foram tomadas neste check-in?"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={6}
-      />
-      
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
-        <Button onClick={onContinue} className="gap-2">
-          Continuar <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function DirectivesStep({ 
-  value, 
-  onChange, 
-  onComplete, 
-  onBack 
-}: { 
-  value: string;
-  onChange: (value: string) => void;
-  onComplete: () => void; 
-  onBack: () => void 
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Diretrizes para a Organização</h2>
-        <p className="text-muted-foreground">Mensagem para comunicar aos times</p>
-      </div>
-      
-      <Textarea
-        placeholder="Quais diretrizes devem ser comunicadas?"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={6}
-      />
-      
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
-        <Button onClick={onComplete} className="gap-2">
-          <CheckCircle2 className="h-4 w-4" /> Concluir
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 // ============================================================
 // MAIN COMPONENT
@@ -369,14 +139,25 @@ export default function CLevelCheckinPage() {
   const renderStepContent = () => {
     switch (draft.currentStep) {
       case 'company-okrs':
-        return <CompanyOkrsStep okrs={okrs} isLoading={isLoadingOkrs} onContinue={goNext} />;
+        return (
+          <CLevelCompanyOkrsStep 
+            okrs={okrs} 
+            isLoading={isLoadingOkrs} 
+            onContinue={goNext} 
+          />
+        );
         
       case 'insights':
-        return <InsightsStep onContinue={goNext} onBack={goBack} />;
+        return (
+          <CLevelInsightsStep 
+            onContinue={goNext} 
+            onBack={goBack} 
+          />
+        );
         
       case 'decisions':
         return (
-          <DecisionsStep
+          <CLevelDecisionsStep
             value={draft.data.strategicDecisions}
             onChange={(v) => updateDraft({ strategicDecisions: v })}
             onContinue={goNext}
@@ -386,7 +167,7 @@ export default function CLevelCheckinPage() {
         
       case 'directives':
         return (
-          <DirectivesStep
+          <CLevelDirectivesStep
             value={draft.data.directives}
             onChange={(v) => updateDraft({ directives: v })}
             onComplete={handleComplete}

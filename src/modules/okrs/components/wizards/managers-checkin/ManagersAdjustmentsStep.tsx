@@ -145,7 +145,11 @@ export function ManagersAdjustmentsStep({
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>
-          <Button onClick={onComplete} className="flex-1" size="lg">
+          <Button 
+            onClick={onComplete} 
+            className="flex-1 bg-green-600 hover:bg-green-700" 
+            size="lg"
+          >
             <CheckCircle2 className="h-4 w-4 mr-2" />
             Concluir Check-in
           </Button>
