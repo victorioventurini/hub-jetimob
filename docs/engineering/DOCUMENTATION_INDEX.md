@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-13  
-**TCR Version:** 2.27.0
+**Última atualização:** 2026-01-14  
+**TCR Version:** 2.31.0
 
 ---
 
@@ -17,10 +17,11 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) | **Padrões obrigatórios:** PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, Limites de Código | ✅ v1.6.0 |
+| [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) | **Padrões obrigatórios:** PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, Hooks, Limites de Código | ✅ v1.8.0 |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys centralizadas | ✅ Normativo |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase (global vs bu-scoped) | ✅ Normativo |
-| [SHARED_COMPONENTS_REGISTRY.md](./SHARED_COMPONENTS_REGISTRY.md) | Registro de componentes compartilhados | ✅ Ativo |
+| [SHARED_COMPONENTS_REGISTRY.md](./SHARED_COMPONENTS_REGISTRY.md) | Registro de componentes compartilhados | ✅ v1.2.0 |
+| [HOOKS_CONSOLIDATION_REPORT.md](./HOOKS_CONSOLIDATION_REPORT.md) | Relatório de consolidação de hooks | ✅ v1.0.0 |
 
 ---
 

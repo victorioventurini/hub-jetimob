@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.30.0  
-**Última atualização:** 2026-01-13
+**Versão:** 2.31.0  
+**Última atualização:** 2026-01-14
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | Wave 2 concluído | RLS V2 100% migrado | Vic Culture System ativo | CheckinWizard Legacy removido | OKR Wizard Team Selection melhorado | Auth OTP Code ativo | **Org KR Owner + Wizard Initiative Filter (v2.30.0)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | **Hooks Consolidation Wave (v2.31.0)**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1772,7 +1772,10 @@ src/
 ├── modules/            # Módulos de negócio
 │   └── [module]/
 │       ├── components/ # Componentes do módulo
-│       ├── hooks/      # Hooks do módulo
+│       ├── hooks/      # Hooks do módulo (barrel file: hooks/index.ts)
+│       │   ├── queries/    # Hooks de query (opcional)
+│       │   ├── mutations/  # Hooks de mutation (opcional)
+│       │   └── index.ts    # BARREL FILE (re-exports tudo)
 │       ├── pages/      # Páginas do módulo
 │       ├── types.ts    # Tipos do módulo
 │       └── index.ts    # Exports públicos
@@ -1797,24 +1800,83 @@ src/
 - Componentes shadcn/ui como base
 - Variantes com `cva` quando necessário
 
+### 10.4 Barrel Files de Hooks (v2.31.0+)
+
+Cada módulo DEVE ter um `hooks/index.ts` que exporta TODOS os hooks do módulo:
+
+```typescript
+// src/modules/[module]/hooks/index.ts
+
+// ✅ CORRETO: Barrel file consolidado
+export * from './queries';  // Se existir subpasta
+export * from './useSpecificHook';
+export type { SomeType } from './types';
+```
+
+**Regras:**
+1. **Proibido** importar hooks direto do arquivo (ex: `from './hooks/useTeams'`)
+2. **Obrigatório** importar do barrel (ex: `from './hooks'` ou `from '@/modules/teams/hooks'`)
+3. Subpastas (`queries/`, `mutations/`) devem ter seu próprio `index.ts`
+4. O barrel file do módulo re-exporta tudo de subpastas
+
+**Módulos com barrel file consolidado:**
+| Módulo | Barrel File |
+|--------|-------------|
+| `okrs` | `src/modules/okrs/hooks/index.ts` |
+| `teams` | `src/modules/teams/hooks/index.ts` |
+| `assets` | `src/modules/assets/hooks/index.ts` |
+| `tickets` | `src/modules/tickets/hooks/index.ts` |
+| `permissions` | `src/modules/permissions/hooks/index.ts` |
+| `bu` | `src/modules/bu/hooks/index.ts` |
+| `automations` | `src/modules/automations/hooks/index.ts` |
+| `kpis` | `src/modules/kpis/hooks/index.ts` |
+| `settings` | `src/modules/settings/hooks/index.ts` |
+| `integrations` | `src/modules/integrations/hooks/index.ts` |
+| `home` | `src/modules/home/hooks/index.ts` |
+| `vic` | `src/modules/vic/hooks/index.ts` |
+
 ---
 
 ## 11. Versionamento
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.13.0 |
-| **Data da última atualização** | 2026-01-09 |
+| **Versão do TCR** | 2.31.0 |
+| **Data da última atualização** | 2026-01-14 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
 | **Permission Keys** | 160 |
 | **Permission Templates V2** | 27 |
 | **Permission Presets** | 12 |
+| **Módulos com Hooks Consolidados** | 12 ✅ |
 
 ---
 
 ## Changelog
+
+### v2.31.0 (2026-01-14) — Hooks Consolidation Wave
+- **Consolidação de Hooks em todos os módulos**:
+  - Criado/atualizado `hooks/index.ts` (barrel file) em 12 módulos
+  - Módulos consolidados: `okrs`, `teams`, `assets`, `tickets`, `permissions`, `bu`, `automations`, `kpis`, `settings`, `integrations`, `home`, `vic`
+  - Arquivos legados duplicados removidos (`useOrgObjectiveView.ts`, `useTeamContributedOkrs.ts`)
+  - Imports atualizados para usar barrel files centrais
+- **Estrutura padrão de hooks por módulo**:
+  - `hooks/index.ts` como ponto único de export
+  - Subpastas opcionais (`queries/`, `mutations/`) com seus próprios barrel files
+  - Proibido import direto de arquivos (sempre via barrel)
+- **OKRs Org-View Fix**:
+  - `LinkedTeamObjectivesSection` exibe objetivos de times vinculados a objetivos organizacionais
+  - Tipo `LinkedTeamObjective` adicionado ao módulo de queries
+  - Query `useOrgObjectiveView` atualizada para buscar `linkedTeamObjectives`
+- **Documentação atualizada**:
+  - TCR seção 10.4 com regras de barrel files
+  - DEVELOPMENT_STANDARDS seção K com imports de hooks
+  - SHARED_COMPONENTS_REGISTRY atualizado
+
+### v2.30.0 (2026-01-13) — Org KR Owner + Wizard Initiative Filter
+- **Org KR Owner implementado**
+- **Wizard Initiative Filter aprimorado**
 
 ### v2.19.0 (2026-01-12) — Mentions Global Restoration
 - **Correção Arquitetural**: Tabela `mentions` restaurada como tabela global canônica

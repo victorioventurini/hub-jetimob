@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.7.0  
-**Última atualização:** 2026-01-13  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2
-**Referência:** TCR v2.30.0
+**Versão:** 1.8.0  
+**Última atualização:** 2026-01-14  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados
+**Referência:** TCR v2.31.0
 
 ---
 
@@ -19,6 +19,7 @@
 - [H. Checklist de PR](#h-checklist-de-pr)
 - [I. Anti-patterns (Proibidos)](#i-anti-patterns-proibidos)
 - [J. User Directory Global](#j-user-directory-global)
+- [K. Hooks e Barrel Files](#k-hooks-e-barrel-files)
 - [L. Layout e Estados de Página](#l-layout-e-estados-de-página)
 - [M. Limites de Código e Sustentabilidade](#m-limites-de-código-e-sustentabilidade)
 
@@ -906,9 +907,94 @@ SELECT * FROM v_bu_active_profiles WHERE bu_id = current_bu_id();
 
 ---
 
-## K. Padrões de Nome e Saudações
+## K. Hooks e Barrel Files
 
-### K.1 Regra Universal: Primeiro Nome Apenas
+### K.1 Regra Fundamental
+
+```
+⚠️ REGRA INQUEBRÁVEL: Imports de hooks DEVEM vir do barrel file do módulo.
+❌ PROIBIDO: Import direto do arquivo de hook.
+```
+
+### K.2 Estrutura Padrão
+
+Cada módulo com hooks DEVE ter um `hooks/index.ts` que exporta todos os hooks:
+
+```
+src/modules/[module]/
+├── hooks/
+│   ├── index.ts          # ⭐ BARREL FILE (obrigatório)
+│   ├── queries/          # Opcional: subpasta para queries
+│   │   ├── index.ts      # Barrel da subpasta
+│   │   └── useMyQuery.ts
+│   ├── mutations/        # Opcional: subpasta para mutations
+│   │   ├── index.ts      # Barrel da subpasta
+│   │   └── useMyMutation.ts
+│   └── useOtherHook.ts   # Hooks soltos
+```
+
+### K.3 Import Pattern
+
+```typescript
+// ✅ CORRETO: Import do barrel file
+import { useTeams, useTeam, TeamWithRelations } from "@/modules/teams/hooks";
+import { useOrgObjective, OrgObjectiveWithKrs } from "@/modules/okrs/hooks";
+
+// ❌ PROIBIDO: Import direto do arquivo
+import { useTeams } from "@/modules/teams/hooks/useTeams";
+import { useOrgObjective } from "@/modules/okrs/hooks/queries/useOkrQueries";
+```
+
+### K.4 Módulos com Barrel Files Consolidados (v2.31.0+)
+
+| Módulo | Barrel File | Conteúdo |
+|--------|-------------|----------|
+| `okrs` | `hooks/index.ts` | Queries, mutations, aggregates, types |
+| `teams` | `hooks/index.ts` | Teams, squads, memberships |
+| `assets` | `hooks/index.ts` | Inventory, keys, gifts, categories, permissions |
+| `tickets` | `hooks/index.ts` | Tickets, messages, partners, categories, routing |
+| `permissions` | `hooks/index.ts` | Catalog, BU permissions, users, governance |
+| `bu` | `hooks/index.ts` | BU queries, memberships, branding, locations |
+| `automations` | `hooks/index.ts` | Events, actions, connections, tokens, logs |
+| `kpis` | `hooks/index.ts` | KPI data queries |
+| `settings` | `hooks/index.ts` | Job titles |
+| `integrations` | `hooks/index.ts` | Integrations, agents, documents, sources |
+| `home` | `hooks/index.ts` | Dashboard queries |
+| `vic` | `hooks/index.ts` | Vic agent, stream, feedback |
+
+### K.5 Criando Novo Módulo
+
+1. Criar `src/modules/[module]/hooks/index.ts`
+2. Exportar todos os hooks via re-export:
+   ```typescript
+   // hooks/index.ts
+   export * from './useMyQuery';
+   export * from './useMyMutation';
+   export type { MyType } from './types';
+   
+   // Se tiver subpastas:
+   export * from './queries';
+   export * from './mutations';
+   ```
+3. Documentar no TCR seção 10.4
+
+### K.6 Anti-pattern
+
+```typescript
+// ❌ PROIBIDO: Múltiplos imports do mesmo módulo
+import { useTeams } from "@/modules/teams/hooks/useTeams";
+import { useSquads } from "@/modules/teams/hooks/useSquads";
+import { useTeam } from "@/modules/teams/hooks/useTeamDetail";
+
+// ✅ CORRETO: Import único do barrel
+import { useTeams, useSquads, useTeam } from "@/modules/teams/hooks";
+```
+
+---
+
+## K2. Padrões de Nome e Saudações
+
+### K2.1 Regra Universal: Primeiro Nome Apenas
 
 Em saudações e contextos informais, **SEMPRE usar apenas o primeiro nome**. Ninguém diz "Olá, Nome Sobrenome".
 
@@ -923,7 +1009,7 @@ Em saudações e contextos informais, **SEMPRE usar apenas o primeiro nome**. Ni
 "Bom dia, Maria Silva Costa."
 ```
 
-### K.2 Implementação
+### K2.2 Implementação
 
 Use a função utilitária `getFirstName` de `@/lib/nameUtils.ts`:
 
@@ -937,13 +1023,13 @@ const firstName = getFirstName(profile.display_name); // "Victorio"
 const greeting = getGreetingName(profile.first_name, profile.display_name);
 ```
 
-### K.3 Prioridade de Fontes
+### K2.3 Prioridade de Fontes
 
 1. `profile.first_name` (preferido)
 2. Primeiro token de `profile.display_name`
 3. Fallback genérico (sem nome)
 
-### K.4 Instruções para IAs
+### K2.4 Instruções para IAs
 
 Todos os agentes de IA que geram saudações devem:
 
