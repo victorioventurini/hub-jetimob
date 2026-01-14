@@ -202,6 +202,14 @@ export const okrsKeys = {
     ['okr-org-objectives-by-cycle', buId, cycleId] as const,
   otherTeamsObjectives: (buId: string | null, cycleId: string | null, teamId: string | null) =>
     ['okr-other-teams-objectives', buId, cycleId, teamId] as const,
+    
+  // Org Health Review (execution analysis)
+  orgHealthReview: (buId: string | null, year: number) =>
+    ['okr-org-health-review', buId, year] as const,
+  orgKrTeamLinks: (buId: string | null, krIds: string[]) =>
+    ['okr-org-kr-team-links', buId, krIds] as const,
+  orgHealthConsolidated: (buId: string | null, year: number) =>
+    ['okr-org-health-consolidated', buId, year] as const,
 } as const;
 
 export const kpisKeys = {
