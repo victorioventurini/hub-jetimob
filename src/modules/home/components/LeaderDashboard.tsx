@@ -13,6 +13,7 @@ import {
   TicketsTeamInboxCard,
   AssetsTeamLoansCard,
   VicLeaderInsightsCard,
+  OkrConstructionReviewCard,
 } from "./leader";
 import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard";
 import { TeamCheckinWizardCard } from "@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard";
@@ -94,6 +95,19 @@ export function LeaderDashboard() {
                 (summary.okrs.green + summary.okrs.yellow + summary.okrs.red + summary.okrs.not_started) > 0
               )}
               cycleStartingSoon={false}
+              isLoading={isDashboardLoading}
+            />
+          )}
+
+          {/* OKR Construction Review - Show if user has OKRs */}
+          {canViewOkrs && (
+            <OkrConstructionReviewCard
+              teamId={selectedTeamId}
+              teamName={selectedTeam.team_name}
+              hasActiveOkrs={Boolean(
+                summary?.okrs && 
+                (summary.okrs.green + summary.okrs.yellow + summary.okrs.red + summary.okrs.not_started) > 0
+              )}
               isLoading={isDashboardLoading}
             />
           )}
