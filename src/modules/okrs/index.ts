@@ -33,3 +33,4 @@ export * from './components/initiatives';
 export { default as OkrDashboardPage } from './pages/OkrsPage';
 export { default as ExecutiveDashboardPage } from './pages/ExecutiveDashboardPage';
 export { default as CycleCheckinsPage } from './pages/CycleCheckinsPage';
+export { default as OkrHealthPage } from './pages/OkrHealthPage';
