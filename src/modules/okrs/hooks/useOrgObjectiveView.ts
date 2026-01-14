@@ -38,6 +38,15 @@ export interface OrgKrWithTeamKrs {
   linkedTeamKrs: TeamKrLinked[];
 }
 
+export interface LinkedTeamObjective {
+  id: string;
+  title: string;
+  team_id: string;
+  team_name: string;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  krs: TeamKrLinked[];
+}
+
 export interface OrgObjectiveWithKrs {
   id: string;
   title: string;
@@ -47,6 +56,7 @@ export interface OrgObjectiveWithKrs {
   aggregatedStatus: 'on_track' | 'at_risk' | 'off_track';
   aggregatedProgress: number;
   orgKrs: OrgKrWithTeamKrs[];
+  linkedTeamObjectives: LinkedTeamObjective[];
 }
 
 // Explicit fields - avoid select('*')
@@ -151,6 +161,53 @@ export function useOrgObjectiveView(objectiveId: string) {
         }
       }
 
+      // Fetch team objectives linked to this org objective
+      const { data: teamObjectivesData, error: teamObjError } = await supabase
+        .from('okr_team_objectives')
+        .select(`
+          id, title, status, team_id, org_objective_id,
+          teams:team_id (id, name),
+          key_results:okr_team_key_results (
+            id, title, baseline, current_value, target, direction, unit, status, 
+            last_checkin_at, owner_user_id, team_objective_id, team_id, type
+          )
+        `)
+        .eq('org_objective_id', objectiveId)
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
+
+      if (teamObjError) {
+        console.error('Error fetching team objectives:', teamObjError);
+      }
+
+      // Build linked team objectives
+      const linkedTeamObjectives: LinkedTeamObjective[] = (teamObjectivesData || []).map((tobj: any) => ({
+        id: tobj.id,
+        title: tobj.title,
+        team_id: tobj.team_id,
+        team_name: tobj.teams?.name || 'Time não encontrado',
+        status: tobj.status,
+        krs: (tobj.key_results || []).map((kr: any) => ({
+          id: kr.id,
+          title: kr.title,
+          team_id: kr.team_id,
+          team_name: tobj.teams?.name || 'Time não encontrado',
+          team_objective_id: kr.team_objective_id,
+          team_objective_title: tobj.title,
+          type: kr.type,
+          baseline: kr.baseline,
+          current_value: kr.current_value,
+          target: kr.target,
+          direction: kr.direction,
+          unit: kr.unit,
+          status: kr.status,
+          last_checkin_at: kr.last_checkin_at,
+          owner_user_id: kr.owner_user_id,
+          owner_name: null,
+          progress: calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction),
+        })),
+      }));
+
       // Build the response
       const orgKrsWithTeamKrs: OrgKrWithTeamKrs[] = (orgKrs || []).map(orgKr => {
         const progress = calculateProgress(orgKr.baseline, orgKr.current_value, orgKr.target, orgKr.direction);
@@ -200,6 +257,7 @@ export function useOrgObjectiveView(objectiveId: string) {
         aggregatedStatus: calculateAggregatedStatus(orgKrsWithTeamKrs),
         aggregatedProgress: calculateAggregatedProgress(orgKrsWithTeamKrs),
         orgKrs: orgKrsWithTeamKrs,
+        linkedTeamObjectives,
       };
     },
     enabled: !!objectiveId && isReady && !!supabase,
@@ -320,6 +378,7 @@ export function useAllOrgObjectivesView(year?: number) {
           aggregatedStatus: calculateAggregatedStatus(orgKrsWithTeamKrs),
           aggregatedProgress: calculateAggregatedProgress(orgKrsWithTeamKrs),
           orgKrs: orgKrsWithTeamKrs,
+          linkedTeamObjectives: [], // Not fetched in bulk view for performance
         };
       });
     },

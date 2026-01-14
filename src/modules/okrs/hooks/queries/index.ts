@@ -58,6 +58,7 @@ export {
   type OrgKrWithTeamKrs,
   type OrgObjectiveWithKrs,
   type OkrContributor,
+  type LinkedTeamObjective,
 } from './useOkrAggregateQueries';
 
 // Dashboard aggregate query
