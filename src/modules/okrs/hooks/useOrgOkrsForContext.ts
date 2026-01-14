@@ -57,7 +57,7 @@ export function useOrgOkrsForContext(cycleId: string | null | undefined) {
         .select('id, title, description, status, year')
         .eq('year', year)
         .is('deleted_at', null)
-        .neq('status', 'cancelled')
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
 
       if (objError) throw objError;

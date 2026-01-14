@@ -137,6 +137,7 @@ function useOrgObjectivesImpl(options: UseOrgObjectivesOptions = {}) {
         .select(OKR_FIELDS.orgObjectiveWithKrs)
         .eq('bu_id', buId)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
 
       if (year) {
@@ -175,6 +176,7 @@ export function useOrgObjective(id: string) {
         .from('okr_org_objectives')
         .select(OKR_FIELDS.orgObjective)
         .eq('id', id)
+        .is('cancelled_at', null)
         .maybeSingle();
 
       if (error) throw error;
@@ -283,6 +285,7 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
         .select(OKR_FIELDS.teamObjectiveWithKrs)
         .eq('bu_id', buId)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
 
       if (teamId) {
@@ -498,6 +501,7 @@ export function useMyTeamObjectives(buId?: string | null, userId?: string) {
         .eq('bu_id', buId)
         .in('id', objectiveIds)
         .is('deleted_at', null)
+        .is('cancelled_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

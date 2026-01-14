@@ -83,7 +83,8 @@ export default function TeamKrCreationPage() {
           cycle:cycle_id (name, year)
         `)
         .eq('id', objectiveId)
-        .single();
+        .is('cancelled_at', null)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
