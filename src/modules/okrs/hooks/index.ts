@@ -48,6 +48,7 @@ export {
   type OrgKrWithTeamKrs,
   type OrgObjectiveWithKrs,
   type OkrContributor,
+  type LinkedTeamObjective,
 } from './queries';
 
 // Dashboard queries
@@ -129,11 +130,17 @@ export {
 export { useInitiativeNameValidation } from './useInitiativeNameValidation';
 
 // =========================
-// CONTRIBUTIONS & METRICS (from useOkrContributions.ts - local hooks not in queries/)
+// CONTRIBUTIONS & METRICS
 // =========================
 export { useOkrContributions, useCreateOkrContribution, useDeleteOkrContribution } from './useOkrContributions';
 export { useOkrKrMetrics } from './useOkrKrMetrics';
-export { useTeamContributionView } from './useTeamContributionView';
+export { 
+  useTeamContributionView,
+  type TeamOkrContribution,
+  type OrgKrContribution,
+  type OrgObjectiveContribution,
+  type TeamContributionData,
+} from './useTeamContributionView';
 
 // =========================
 // TEAM-SPECIFIC
@@ -145,9 +152,8 @@ export { useTeamPendingKrs } from './useTeamPendingKrs';
 export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';
 
 // =========================
-// ORG VIEW
+// ORG VIEW - DEPRECATED: use useOrgObjectiveView from './queries' instead
 // =========================
-export { useOrgObjectiveView as useOrgView } from './useOrgObjectiveView';
 export { useOrgOkrsForContext } from './useOrgOkrsForContext';
 
 // =========================

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Target, User } from "lucide-react";
-import type { TeamContributionData } from "../../hooks/useTeamContributionView";
+import type { TeamContributionData } from "../../hooks";
 
 interface TeamContributionHeaderProps {
   data: TeamContributionData;

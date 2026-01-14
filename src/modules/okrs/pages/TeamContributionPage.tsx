@@ -6,7 +6,7 @@ import { HubLayout } from "@/components/layout/HubLayout";
 import { useBu } from "@/contexts/BuContext";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { useTeamContributionView } from "../hooks/useTeamContributionView";
+import { useTeamContributionView } from "../hooks";
 import { TeamContributionHeader } from "../components/team-contribution/TeamContributionHeader";
 import { OrgObjectiveContributionCard } from "../components/team-contribution/OrgObjectiveContributionCard";
 import { TeamContributionInsights } from "../components/team-contribution/TeamContributionInsights";

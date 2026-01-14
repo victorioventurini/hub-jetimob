@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useOrgObjectiveView } from '../hooks/useOrgObjectiveView';
+import { useOrgObjectiveView } from '../hooks';
 import { OrgObjectiveHeader } from '../components/org-view/OrgObjectiveHeader';
 import { OrgKrExpandableCard } from '../components/org-view/OrgKrExpandableCard';
 import { OrgViewInsights } from '../components/org-view/OrgViewInsights';

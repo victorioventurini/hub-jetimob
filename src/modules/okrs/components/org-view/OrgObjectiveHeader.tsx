@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, AlertTriangle, XCircle } from 'lucide-react';
-import type { OrgObjectiveWithKrs } from '../../hooks/useOrgObjectiveView';
+import type { OrgObjectiveWithKrs } from '../../hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface OrgObjectiveHeaderProps {

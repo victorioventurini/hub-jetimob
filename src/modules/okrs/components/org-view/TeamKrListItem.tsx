@@ -9,7 +9,7 @@ import { StatusDot } from '@/components/ui/status-badge';
 import { Users, Clock, History } from 'lucide-react';
 import { formatValueWithUnit } from '../../constants/krUnits';
 import { KrHistoryDialog } from '../KrHistoryDialog';
-import type { TeamKrLinked } from '../../hooks/useOrgObjectiveView';
+import type { TeamKrLinked } from '../../hooks';
 
 interface TeamKrListItemProps {
   teamKr: TeamKrLinked;

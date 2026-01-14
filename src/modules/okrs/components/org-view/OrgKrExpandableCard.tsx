@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { formatValueWithUnit } from '../../constants/krUnits';
 import { TeamKrListItem } from './TeamKrListItem';
-import type { OrgKrWithTeamKrs } from '../../hooks/useOrgObjectiveView';
+import type { OrgKrWithTeamKrs } from '../../hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 interface OrgKrExpandableCardProps {
