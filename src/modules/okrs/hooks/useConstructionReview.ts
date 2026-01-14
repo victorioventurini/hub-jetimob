@@ -7,7 +7,6 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useCycle } from "./useCycleData";
 import { 
   type ObjectiveReview, 
@@ -117,12 +116,14 @@ export function useConstructionReview(
   // Auto-evaluate objectives when data loads
   const evaluateObjective = useCallback(async (obj: RawObjective) => {
     if (aiLoading[obj.id] || aiAssessments[obj.id]) return;
+    if (!currentBuId) return;
 
     setAiLoading(prev => ({ ...prev, [obj.id]: true }));
     setAiErrors(prev => ({ ...prev, [obj.id]: '' }));
 
     try {
-      const { data, error } = await supabase.functions.invoke('okr-construction-review', {
+      // Use BU-scoped supabase to automatically include auth + BU headers
+      const { data, error } = await buSupabase.functions.invoke('okr-construction-review', {
         body: { 
           objectiveId: obj.id,
           objectiveTitle: obj.title,
@@ -139,14 +140,15 @@ export function useConstructionReview(
       }
     } catch (err) {
       console.error('AI assessment error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Erro ao avaliar';
       setAiErrors(prev => ({ 
         ...prev, 
-        [obj.id]: err instanceof Error ? err.message : 'Erro ao avaliar' 
+        [obj.id]: errorMsg.includes('non-2xx') ? 'Edge Function retornou erro. Tente novamente.' : errorMsg
       }));
     } finally {
       setAiLoading(prev => ({ ...prev, [obj.id]: false }));
     }
-  }, [aiLoading, aiAssessments]);
+  }, [aiLoading, aiAssessments, buSupabase, currentBuId]);
 
   // Trigger auto-evaluation when objectives load
   useEffect(() => {
