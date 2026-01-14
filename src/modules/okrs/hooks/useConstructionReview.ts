@@ -74,6 +74,18 @@ export function useConstructionReview(
   const [teamAnalysisError, setTeamAnalysisError] = useState<string | null>(null);
   const [teamAnalysisTriggered, setTeamAnalysisTriggered] = useState(false);
 
+  // Reset all state when team or cycle changes
+  useEffect(() => {
+    setAiAssessments({});
+    setAiLoading({});
+    setAiErrors({});
+    setAutoEvaluateTriggered(new Set());
+    setTeamAnalysis(null);
+    setTeamAnalysisLoading(false);
+    setTeamAnalysisError(null);
+    setTeamAnalysisTriggered(false);
+  }, [teamId, cycleId]);
+
   // Fetch objectives with KRs
   const { data: rawObjectives, isLoading, error } = useQuery({
     queryKey: [...queryKeys.okrs.teamQuality(currentBuId, teamId, cycleId), 'construction-v2'],
