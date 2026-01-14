@@ -45,3 +45,6 @@ verify_jwt = false
 
 [functions.okr-construction-review]
 verify_jwt = false
+
+[functions.okr-org-health-review]
+verify_jwt = false
