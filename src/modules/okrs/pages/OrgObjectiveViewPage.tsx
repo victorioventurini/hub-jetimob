@@ -10,6 +10,7 @@ import { OrgObjectiveHeader } from '../components/org-view/OrgObjectiveHeader';
 import { OrgKrExpandableCard } from '../components/org-view/OrgKrExpandableCard';
 import { OrgViewInsights } from '../components/org-view/OrgViewInsights';
 import { OrgViewFilters, StatusFilter, TeamFilter } from '../components/org-view/OrgViewFilters';
+import { LinkedTeamObjectivesSection } from '../components/org-view/LinkedTeamObjectivesSection';
 import { useUrlState } from '@/shared/url';
 import { OkrOrgObjectiveDetailBreadcrumb } from '../components/ui/OkrBreadcrumb';
 
@@ -135,6 +136,11 @@ export default function OrgObjectiveViewPage() {
             onTeamFilterChange={setTeamFilter}
           />
         </div>
+
+        {/* Linked Team Objectives Section */}
+        {objective.linkedTeamObjectives && objective.linkedTeamObjectives.length > 0 && (
+          <LinkedTeamObjectivesSection teamObjectives={objective.linkedTeamObjectives} />
+        )}
 
         {/* Org KRs List */}
         <div className="space-y-4">
