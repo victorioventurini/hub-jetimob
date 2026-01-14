@@ -16,6 +16,7 @@ import {
 import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History, Wand2 } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
 import { useKrInitiativesCount } from '../../hooks/useInitiatives';
+import { useProfileId } from '@/hooks/useIdentity';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
@@ -42,7 +43,10 @@ interface KeyResult {
   team_id?: string;
   team_objective_id?: string | null;
   org_objective_id?: string;
+  /** ID do profile do responsável pela KR */
+  owner_user_id?: string;
   owner?: {
+    id?: string;
     display_name: string;
     photo_url?: string | null;
   } | null;
@@ -487,6 +491,16 @@ interface KeyResultRowProps {
 function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(defaultInitiativesExpanded);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
+  const currentProfileId = useProfileId();
+  
+  // Verifica se o usuário atual é o responsável pela KR
+  const isKrOwner = currentProfileId && (
+    kr.owner_user_id === currentProfileId || 
+    kr.owner?.id === currentProfileId
+  );
+  
+  // Pode fazer check-in se: já tem permissão via prop OU é o responsável pela KR
+  const canDoCheckin = canCheckin || isKrOwner;
   
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
@@ -593,7 +607,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
                     </Button>
                   )}
                   
-                  {canCheckin && type === 'team' && (
+                  {canDoCheckin && type === 'team' && (
                     <Button
                       variant="ghost"
                       size="icon"
