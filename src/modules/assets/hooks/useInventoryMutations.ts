@@ -32,7 +32,7 @@ export function useAssetCategoryMutations() {
       return category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null), refetchType: 'active' });
       toast.success("Categoria criada");
     },
     onError: () => {
@@ -123,7 +123,7 @@ export function useAssetItemMutations() {
       return { item, assigned_to_user_id };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null), refetchType: 'active' });
       if (result.assigned_to_user_id) {
         toast.success("Item criado e atribuído ao colaborador");
       } else {
@@ -160,7 +160,7 @@ export function useAssetItemMutations() {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null), refetchType: 'active' });
       toast.success("Item atualizado");
     },
     onError: (error: { message?: string }) => {
@@ -207,7 +207,7 @@ export function useAssetItemMutations() {
       toast.error("Erro ao remover item");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null), refetchType: 'active' });
       toast.success("Item removido");
     },
   });
@@ -263,7 +263,7 @@ export function useAssetMovementMutations() {
       return movement;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(buId ?? null), refetchType: 'active' });
       toast.success("Movimentação registrada");
     },
     onError: () => {

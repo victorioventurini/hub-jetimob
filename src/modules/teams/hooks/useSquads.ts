@@ -199,7 +199,7 @@ export function useCreateSquad() {
       return squad;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null), refetchType: 'active' });
       toast.success("Squad criado com sucesso");
     },
     onError: (error: Error) => {
@@ -265,8 +265,8 @@ export function useUpdateSquad() {
       return squad;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.id), refetchType: 'active' });
       toast.success("Squad atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -313,8 +313,8 @@ export function useAddSquadMember() {
       return membership;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
       toast.success("Membro adicionado ao squad");
     },
     onError: (error: Error) => {
@@ -345,8 +345,8 @@ export function useUpdateSquadMember() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
       toast.success("Papel atualizado");
     },
     onError: () => {
@@ -376,8 +376,8 @@ export function useRemoveSquadMember() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
       toast.success("Membro removido do squad");
     },
     onError: () => {
@@ -424,7 +424,7 @@ export function useDeactivateSquad() {
       toast.error("Erro ao desativar squad");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
       toast.success("Squad desativado");
     },
   });
@@ -471,7 +471,7 @@ export function useDeleteSquad() {
       toast.error("Erro ao excluir squad");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
       toast.success("Squad excluído com sucesso");
     },
   });

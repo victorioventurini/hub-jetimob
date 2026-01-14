@@ -209,7 +209,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
       toast({
         title: "KPI criado",
         description: "O KPI foi criado com sucesso.",
@@ -252,7 +252,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
       toast({
         title: "Valor registrado",
         description: "O valor do KPI foi registrado com sucesso.",
