@@ -6,10 +6,10 @@
  * - Líder de time: pode ver APENAS seus próprios times (time que lidera diretamente)
  */
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ChevronLeft, ShieldX, ClipboardCheck, Sparkles, Lock } from "lucide-react";
+import { ChevronLeft, ShieldX, Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUrlState } from "@/shared/url/useUrlState";
@@ -19,14 +19,17 @@ import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
 import { useConstructionReview } from "../hooks/useConstructionReview";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import { useVic } from "@/modules/vic/contexts/VicContext";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import { ConstructionScoreCard, ObjectiveChecklistCard } from "../components/construction";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { SharedObjectiveSuggestion } from "../types/construction-review";
 
 export default function OkrConstructionReviewPage() {
   const navigate = useNavigate();
   const { isWildcard, isLoading: isLoadingPermissions } = usePermissions();
+  const { openPanel } = useVic();
 
   const { teams: leaderTeamsRaw, isLeader, isLoading: isLoadingLeaderTeams } = useLeaderTeams();
   const { teams: allTeams, isLoading: isLoadingAllTeams } = useHierarchicalTeamList();
@@ -85,6 +88,58 @@ export default function OkrConstructionReviewPage() {
     isTeamAccessDenied ? null : selectedTeamId || null, 
     selectedCycleId || null
   );
+
+  // Vic handler: Alignment analysis
+  const handleAskVicAboutAlignment = useCallback(() => {
+    if (!teamReview?.teamAnalysis?.orgAlignmentAnalysis || !selectedTeam) return;
+    
+    openPanel({
+      agentSlug: 'coach-okrs',
+      actionContext: 'okr-check-alignment',
+      context: {
+        type: 'alignment-analysis',
+        title: `Melhorar alinhamento: ${selectedTeam.name}`,
+        description: `Score de alinhamento: ${teamReview.teamAnalysis.orgAlignmentAnalysis.score}%`,
+        additionalData: {
+          teamId: selectedTeamId,
+          teamName: selectedTeam.name,
+          alignmentScore: teamReview.teamAnalysis.orgAlignmentAnalysis.score,
+          feedback: teamReview.teamAnalysis.orgAlignmentAnalysis.feedback,
+          coveredOrgObjectives: teamReview.teamAnalysis.orgAlignmentAnalysis.coveredOrgObjectives,
+          uncoveredOrgObjectives: teamReview.teamAnalysis.orgAlignmentAnalysis.uncoveredOrgObjectives,
+          cycleName: selectedCycle?.name,
+        },
+      },
+    });
+  }, [openPanel, teamReview, selectedTeam, selectedTeamId, selectedCycle]);
+
+  // Vic handler: Collaboration suggestion
+  const handleAskVicAboutCollaboration = useCallback((suggestion: SharedObjectiveSuggestion) => {
+    if (!selectedTeam) return;
+    
+    openPanel({
+      agentSlug: 'coach-okrs',
+      actionContext: 'okr-overview-insights',
+      context: {
+        type: 'collaboration-suggestion',
+        title: `Colaboração: ${selectedTeam.name} ↔ ${suggestion.suggestedTeamName}`,
+        description: `Sinergia identificada entre objetivos`,
+        additionalData: {
+          teamId: selectedTeamId,
+          teamName: selectedTeam.name,
+          objectiveId: suggestion.objectiveId,
+          objectiveTitle: suggestion.objectiveTitle,
+          suggestedTeamId: suggestion.suggestedTeamId,
+          suggestedTeamName: suggestion.suggestedTeamName,
+          suggestedLeaderFirstName: suggestion.suggestedLeaderFirstName,
+          suggestedObjectiveId: suggestion.suggestedObjectiveId,
+          suggestedObjectiveTitle: suggestion.suggestedObjectiveTitle,
+          reason: suggestion.reason,
+          cycleName: selectedCycle?.name,
+        },
+      },
+    });
+  }, [openPanel, selectedTeam, selectedTeamId, selectedCycle]);
 
   if (isLoadingTeams) {
     return (
@@ -182,6 +237,8 @@ export default function OkrConstructionReviewPage() {
               isLoading={isLoadingReview}
               teamAnalysis={teamReview?.teamAnalysis}
               teamAnalysisLoading={teamReview?.teamAnalysisLoading}
+              onAskVicAboutAlignment={handleAskVicAboutAlignment}
+              onAskVicAboutCollaboration={handleAskVicAboutCollaboration}
             />
           </div>
           <div className="lg:col-span-2 space-y-4">

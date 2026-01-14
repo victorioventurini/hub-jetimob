@@ -4,6 +4,8 @@
 
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CheckCircle2, AlertTriangle, Loader2, Sparkles, Users, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TeamAnalysisResult } from "../../types/construction-review";
@@ -19,6 +21,9 @@ interface ConstructionScoreCardProps {
   // Análise consolidada
   teamAnalysis?: TeamAnalysisResult;
   teamAnalysisLoading?: boolean;
+  // Vic integration
+  onAskVicAboutAlignment?: () => void;
+  onAskVicAboutCollaboration?: (suggestion: TeamAnalysisResult['sharedSuggestions'][0]) => void;
 }
 
 export function ConstructionScoreCard({
@@ -31,6 +36,8 @@ export function ConstructionScoreCard({
   isLoading,
   teamAnalysis,
   teamAnalysisLoading,
+  onAskVicAboutAlignment,
+  onAskVicAboutCollaboration,
 }: ConstructionScoreCardProps) {
   if (isLoading) {
     return (
@@ -130,10 +137,29 @@ export function ConstructionScoreCard({
         {/* Org Alignment Analysis */}
         {teamAnalysis?.orgAlignmentAnalysis && (
           <div className="pt-3 border-t">
-            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-              <Target className="w-3 h-3" />
-              Alinhamento Organizacional ({teamAnalysis.orgAlignmentAnalysis.score}%)
-            </h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <Target className="w-3 h-3" />
+                Alinhamento Organizacional ({teamAnalysis.orgAlignmentAnalysis.score}%)
+              </h4>
+              {onAskVicAboutAlignment && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-primary"
+                      onClick={onAskVicAboutAlignment}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Pedir ações ao Vic</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
             <p className="text-xs text-foreground bg-muted/50 p-2.5 rounded-lg">
               {teamAnalysis.orgAlignmentAnalysis.feedback}
             </p>
@@ -155,12 +181,31 @@ export function ConstructionScoreCard({
             <div className="space-y-2">
               {teamAnalysis.sharedSuggestions.slice(0, 3).map((suggestion, i) => (
                 <div key={i} className="bg-primary/5 p-2.5 rounded-lg">
-                  <p className="text-xs text-foreground">
-                    Troque uma ideia com <strong>{suggestion.suggestedLeaderFirstName}</strong> do 
-                    time <strong>{suggestion.suggestedTeamName}</strong>. O objetivo 
-                    "<span className="italic">{suggestion.suggestedObjectiveTitle}</span>" parece ter 
-                    sinergia com o seu "<span className="italic">{suggestion.objectiveTitle}</span>".
-                  </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs text-foreground flex-1">
+                      Troque uma ideia com <strong>{suggestion.suggestedLeaderFirstName}</strong> do 
+                      time <strong>{suggestion.suggestedTeamName}</strong>. O objetivo 
+                      "<span className="italic">{suggestion.suggestedObjectiveTitle}</span>" parece ter 
+                      sinergia com o seu "<span className="italic">{suggestion.objectiveTitle}</span>".
+                    </p>
+                    {onAskVicAboutCollaboration && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-primary"
+                            onClick={() => onAskVicAboutCollaboration(suggestion)}
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Pedir ações ao Vic</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                   {suggestion.reason && (
                     <p className="text-[10px] text-muted-foreground mt-1">
                       💡 {suggestion.reason}
