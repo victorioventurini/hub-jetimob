@@ -79,7 +79,7 @@ export function ConstructionScoreCard({
           {hasAnalyzing && (
             <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-blue-600">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Analisando {analyzingCount} objetivo{analyzingCount > 1 ? 's' : ''}...
+              Analisando OKR com IA...
             </div>
           )}
         </div>
@@ -118,12 +118,11 @@ export function ConstructionScoreCard({
           </div>
         </div>
 
-        {/* Team Analysis Loading */}
         {teamAnalysisLoading && (
           <div className="pt-3 border-t">
             <div className="flex items-center gap-2 text-xs text-blue-600">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Analisando conjunto de OKRs e sinergias entre times...
+              Analisando OKR com IA...
             </div>
           </div>
         )}

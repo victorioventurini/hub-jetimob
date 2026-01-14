@@ -395,9 +395,11 @@ Responda com JSON válido no formato EXATO abaixo:
       }
 
       const vicData = await vicResponse.json();
-      const content = vicData.content || vicData.message;
+      // invoke-vic returns { response: content, agentName, ... }
+      const content = vicData.response || vicData.content || vicData.message;
 
       if (!content) {
+        console.error("[okr-construction-review] team-analysis: empty response from agent", JSON.stringify(vicData));
         throw new Error("Resposta vazia do agente");
       }
 
@@ -533,11 +535,13 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
     }
 
     const vicData = await vicResponse.json();
-    const content = vicData.content || vicData.message;
+    // invoke-vic returns { response: content, agentName, ... }
+    const content = vicData.response || vicData.content || vicData.message;
 
     console.log("[okr-construction-review] AI content received, length:", content?.length || 0);
 
     if (!content) {
+      console.error("[okr-construction-review] objective: empty response from agent", JSON.stringify(vicData));
       throw new Error("Resposta vazia do agente");
     }
 

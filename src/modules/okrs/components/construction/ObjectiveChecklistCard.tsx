@@ -95,7 +95,7 @@ export function ObjectiveChecklistCard({
                 {isLoading ? (
                   <div className="flex items-center gap-2 text-blue-600">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span className="text-xs">Analisando...</span>
+                    <span className="text-xs">Analisando OKR com IA...</span>
                   </div>
                 ) : hasError ? (
                   <div className="flex items-center gap-1 text-destructive text-xs">
