@@ -1,145 +1,54 @@
 /**
- * OkrHealthPage - Página de Saúde das OKRs Organizacionais
+ * OkrHealthPage - Página de Saúde de Execução das OKRs Organizacionais
+ * 
+ * Estrutura similar ao Construction Review, mas focada em EXECUÇÃO:
+ * - Grid 1/3 (Score Card) + 2/3 (Objetivos)
+ * - Análise automática por IA de cada objetivo
+ * - Análise consolidada da organização
  * 
  * Acesso: Apenas Admin e Super Admin
- * Foco: Monitoramento da EXECUÇÃO e acompanhamento das OKRs
- * 
- * Critérios de avaliação (0-10):
- * - Coesão: % de KRs organizacionais com contribuição de times
- * - Distribuição: % de times com OKRs definidas
- * - Cobertura: Áreas estratégicas cobertas
- * - Rastreabilidade: % de KRs com check-ins recentes
  */
 
-import { useCallback } from "react";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, BarChart3, GitBranch, PieChart, Eye, Info } from "lucide-react";
+import { ArrowLeft, Info, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { usePageTitle } from "@/hooks/usePageTitle";
-import { useOrgOkrAnalysis, type AnalysisScore } from "../hooks/useOrgOkrAnalysis";
-import { useVic } from "@/modules/vic/contexts/VicContext";
 import {
-  AnalysisScoreCard,
-  TeamSummaryList,
-  VicAnalysisPanel,
-  GapsRecommendationsCard,
-  OrgOkrOverviewCard,
-  type GapItem,
-} from "../components/analysis";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useOrgHealthReview } from "../hooks/useOrgHealthReview";
+import { OrgHealthScoreCard, OrgObjectiveHealthCard } from "../components/health";
+import { useState } from "react";
 
 export default function OkrHealthPage() {
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   
-  // Current year
-  const year = new Date().getFullYear();
+  // Available years (current year + 1 year back)
+  const availableYears = [currentYear, currentYear - 1];
   
   usePageTitle('Saúde das OKRs Organizacionais');
 
-  // Fetch analysis data
-  const analysisData = useOrgOkrAnalysis(year);
-  const { openPanel } = useVic();
-
-  const { scores, isLoading } = analysisData;
-
-  // Handler for asking Vic about a specific score
-  const handleAskVicAboutScore = useCallback((
-    scoreType: 'cohesion' | 'distribution' | 'coverage' | 'traceability',
-    score: AnalysisScore
-  ) => {
-    const scoreLabels = {
-      cohesion: 'Coesão entre OKRs organizacionais e de times',
-      distribution: 'Distribuição de responsabilidades entre times',
-      coverage: 'Cobertura estratégica das OKRs',
-      traceability: 'Transparência e rastreabilidade',
-    };
-
-    openPanel({
-      agentSlug: 'alinhamento-estrategico',
-      actionContext: 'okr-analysis-improvement',
-      context: {
-        type: 'health-score-improvement',
-        title: `Como melhorar: ${score.label}`,
-        description: `Score atual: ${score.value.toFixed(1)}/10 - ${score.description}`,
-        additionalData: {
-          scoreType,
-          scoreName: scoreLabels[scoreType],
-          currentValue: score.value,
-          status: score.status,
-          description: score.description,
-          totals: analysisData.totals,
-          gaps: {
-            teamsWithoutOkrs: analysisData.gaps.teamsWithoutOkrs.map(t => t.name),
-            orgKrsWithoutLinks: analysisData.gaps.orgKrsWithoutTeamLinks.length,
-            teamsWithLowHealth: analysisData.gaps.teamsWithLowHealth.map(t => ({
-              name: t.name,
-              score: t.healthScore,
-            })),
-          },
-        },
-      },
-    });
-  }, [openPanel, analysisData]);
-
-  // Handler for asking Vic about overview
-  const handleAskVicAboutOverview = useCallback(() => {
-    openPanel({
-      agentSlug: 'alinhamento-estrategico',
-      actionContext: 'okr-overview-insights',
-      context: {
-        type: 'okr-health-overview',
-        title: 'Insights sobre saúde das OKRs',
-        description: `${analysisData.totals.orgObjectives} objetivos organizacionais, ${analysisData.totals.totalTeams} times`,
-        additionalData: {
-          totals: analysisData.totals,
-          linkagePercent: analysisData.totals.orgKrs > 0 
-            ? Math.round((analysisData.totals.linkedKrs / analysisData.totals.orgKrs) * 100) 
-            : 0,
-          teamsPercent: analysisData.totals.totalTeams > 0 
-            ? Math.round((analysisData.totals.teamsWithOkrs / analysisData.totals.totalTeams) * 100) 
-            : 0,
-          overallScore: scores.overall.value,
-        },
-      },
-    });
-  }, [openPanel, analysisData, scores]);
-
-  // Handler for asking Vic about a specific gap
-  const handleAskVicAboutGap = useCallback((gapType: string, gapData: GapItem) => {
-    openPanel({
-      agentSlug: 'alinhamento-estrategico',
-      actionContext: 'okr-gap-resolution',
-      context: {
-        type: 'health-gap-resolution',
-        title: `Resolver: ${gapData.title}`,
-        description: gapData.description,
-        additionalData: {
-          gapType,
-          severity: gapData.severity,
-          count: gapData.count,
-          details: gapData.description,
-          // Include specific data based on gap type
-          ...(gapType === 'teams-without-okrs' && {
-            teams: analysisData.gaps.teamsWithoutOkrs.map(t => ({ id: t.id, name: t.name })),
-          }),
-          ...(gapType === 'krs-without-links' && {
-            krs: analysisData.gaps.orgKrsWithoutTeamLinks.map(kr => ({ id: kr.id, title: kr.title })),
-          }),
-          ...(gapType === 'teams-low-health' && {
-            teams: analysisData.gaps.teamsWithLowHealth.map(t => ({ 
-              id: t.id, 
-              name: t.name, 
-              healthScore: t.healthScore 
-            })),
-          }),
-          ...(gapType === 'uncovered-areas' && {
-            areas: analysisData.gaps.strategicAreasUncovered,
-          }),
-        },
-      },
-    });
-  }, [openPanel, analysisData]);
+  // Fetch health review data
+  const {
+    objectives,
+    scores,
+    counts,
+    consolidatedAnalysis,
+    consolidatedAnalysisLoading,
+    consolidatedAnalysisError,
+    isLoading,
+    error,
+    reEvaluateObjective,
+    refreshConsolidatedAnalysis,
+  } = useOrgHealthReview(selectedYear);
 
   return (
     <>
@@ -147,13 +56,13 @@ export default function OkrHealthPage() {
         <title>Saúde das OKRs Organizacionais | Hub Jetimob</title>
         <meta 
           name="description" 
-          content="Monitore a execução e acompanhamento das OKRs: coesão, distribuição, cobertura e rastreabilidade" 
+          content="Monitore a execução das OKRs organizacionais: progresso, check-ins, contribuições de times e análise de saúde por IA" 
         />
       </Helmet>
 
       <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
               <Link to="/okrs">
@@ -167,6 +76,26 @@ export default function OkrHealthPage() {
               </p>
             </div>
           </div>
+
+          {/* Year Selector */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(val) => setSelectedYear(parseInt(val))}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Navigation Banner */}
@@ -174,104 +103,83 @@ export default function OkrHealthPage() {
           <Info className="h-4 w-4" />
           <AlertTitle>Esta página mostra a saúde da execução</AlertTitle>
           <AlertDescription>
-            Para avaliar a qualidade da criação das OKRs, acesse{" "}
-            <Link to="/okrs/analysis" className="underline font-medium hover:text-primary">
-              Análise de Qualidade
+            Para avaliar a qualidade da criação das OKRs de times, acesse{" "}
+            <Link to="/okrs/construction-review" className="underline font-medium hover:text-primary">
+              Avaliação de Construção
             </Link>
           </AlertDescription>
         </Alert>
 
+        {/* Loading State */}
         {isLoading ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Skeleton className="h-[500px]" />
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-32" />
               ))}
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Skeleton className="h-64" />
-              <Skeleton className="h-64" />
+          </div>
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertTitle>Erro ao carregar dados</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        ) : objectives.length === 0 ? (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Nenhum objetivo organizacional encontrado</AlertTitle>
+            <AlertDescription>
+              Não há objetivos organizacionais cadastrados para o ano de {selectedYear}.
+              Acesse{" "}
+              <Link to="/okrs/org" className="underline font-medium hover:text-primary">
+                OKRs Organizacionais
+              </Link>{" "}
+              para criar novos objetivos.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          /* Main Content - Grid Layout */
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Column - Score Card (1/3) */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-6">
+                <OrgHealthScoreCard
+                  overallScore={scores.overall}
+                  scores={{
+                    cohesion: scores.cohesion,
+                    distribution: scores.distribution,
+                    coverage: scores.coverage,
+                    traceability: scores.traceability,
+                  }}
+                  counts={counts}
+                  consolidatedAnalysis={consolidatedAnalysis}
+                  consolidatedLoading={consolidatedAnalysisLoading}
+                  consolidatedError={consolidatedAnalysisError}
+                  onRefreshAnalysis={refreshConsolidatedAnalysis}
+                />
+              </div>
+            </div>
+
+            {/* Right Column - Objectives List (2/3) */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">
+                  Objetivos Organizacionais ({objectives.length})
+                </h2>
+              </div>
+
+              {objectives.map((objective) => (
+                <OrgObjectiveHealthCard
+                  key={objective.objectiveId}
+                  review={objective}
+                  onReEvaluate={reEvaluateObjective}
+                />
+              ))}
             </div>
           </div>
-        ) : (
-          <>
-            {/* Overall Score */}
-            <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg border">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Score Geral de Saúde</p>
-                <p className={`text-4xl font-bold ${
-                  scores.overall.status === 'excellent' ? 'text-green-600' :
-                  scores.overall.status === 'good' ? 'text-blue-600' :
-                  scores.overall.status === 'warning' ? 'text-yellow-600' :
-                  'text-red-600'
-                }`}>
-                  {scores.overall.value.toFixed(1)}
-                  <span className="text-lg text-muted-foreground">/10</span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {scores.overall.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Score Cards Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <AnalysisScoreCard 
-                score={scores.cohesion}
-                icon={<GitBranch className="h-4 w-4 text-muted-foreground" />}
-                onAskVic={() => handleAskVicAboutScore('cohesion', scores.cohesion)}
-              />
-              <AnalysisScoreCard 
-                score={scores.distribution}
-                icon={<PieChart className="h-4 w-4 text-muted-foreground" />}
-                onAskVic={() => handleAskVicAboutScore('distribution', scores.distribution)}
-              />
-              <AnalysisScoreCard 
-                score={scores.coverage}
-                icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
-                onAskVic={() => handleAskVicAboutScore('coverage', scores.coverage)}
-              />
-              <AnalysisScoreCard 
-                score={scores.traceability}
-                icon={<Eye className="h-4 w-4 text-muted-foreground" />}
-                onAskVic={() => handleAskVicAboutScore('traceability', scores.traceability)}
-              />
-            </div>
-
-            {/* Two Column Layout */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <OrgOkrOverviewCard 
-                  totals={analysisData.totals}
-                  overallProgress={
-                    analysisData.orgObjectives.length > 0
-                      ? Math.round(
-                          analysisData.orgObjectives.reduce((sum, obj) => sum + obj.aggregatedProgress, 0) / 
-                          analysisData.orgObjectives.length
-                        )
-                      : undefined
-                  }
-                  onAnalyze={handleAskVicAboutOverview}
-                />
-                <GapsRecommendationsCard 
-                  gaps={analysisData.gaps}
-                  onAskVicAboutGap={handleAskVicAboutGap}
-                />
-              </div>
-
-              {/* Right Column */}
-              <div>
-                <VicAnalysisPanel analysisData={analysisData} />
-              </div>
-            </div>
-
-            {/* Teams Summary */}
-            <TeamSummaryList 
-              teams={analysisData.teamSummaries}
-              cycleId={null}
-            />
-          </>
         )}
       </div>
     </>
