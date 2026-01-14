@@ -101,3 +101,23 @@ export function useRemoveBuAccess() {
     },
   });
 }
+
+export function useReactivateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (profileId: string) => {
+      const { error } = await supabase.rpc("reactivate_user", {
+        target_profile_id: profileId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
+      toast.success("Usuário reativado com sucesso");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reativar usuário: " + error.message);
+    },
+  });
+}
