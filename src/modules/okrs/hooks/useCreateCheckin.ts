@@ -153,12 +153,12 @@ export function useCreateCheckin(options: CreateCheckinOptions = {}) {
       return checkinData.id;
     },
     onSuccess: (checkinId) => {
-      // Use prefix helpers for broad invalidation
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null) });
+      // Use prefix helpers for broad invalidation with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null), refetchType: 'active' });
 
       if (!options.skipToast) {
         toast({

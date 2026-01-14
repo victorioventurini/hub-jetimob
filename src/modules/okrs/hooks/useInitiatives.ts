@@ -200,9 +200,13 @@ export function useCreateInitiative() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(variables.kr_id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null) });
+      // Invalidate all initiatives queries with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(variables.kr_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null), refetchType: 'active' });
+      // Invalidate team KRs since initiatives affect KR display
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
       toast.success("Iniciativa criada com sucesso");
     },
     onError: () => {
@@ -236,12 +240,16 @@ export function useUpdateInitiative() {
       return data;
     },
     onSuccess: (data) => {
-      // Invalidate the specific KR initiatives list
+      // Invalidate all initiatives queries with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll(), refetchType: 'active' });
+      // Also invalidate the specific KR initiatives list
       if (data?.kr_id) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(data.kr_id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(data.kr_id), refetchType: 'active' });
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null), refetchType: 'active' });
+      // Invalidate team KRs since initiatives affect KR display
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
       toast.success("Iniciativa atualizada");
     },
     onError: () => {
@@ -290,10 +298,13 @@ export function useDeleteInitiative() {
       toast.error("Erro ao remover iniciativa");
     },
     onSuccess: (data) => {
-      // Invalidate the specific KR initiatives list
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(data.krId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null) });
+      // Invalidate all initiatives queries with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(data.krId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null), refetchType: 'active' });
+      // Invalidate team KRs since initiatives affect KR display
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
       toast.success("Iniciativa removida");
     },
   });
@@ -319,7 +330,12 @@ export function useUpdateInitiativeStatus() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
+      // Invalidate all initiatives queries with immediate refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByUser(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesByStatus(null), refetchType: 'active' });
+      // Invalidate team KRs since initiatives affect KR display
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
       toast.success("Status atualizado");
     },
     onError: () => {
