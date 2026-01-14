@@ -132,23 +132,70 @@ export function useConstructionReview(
   // BUSCAR CONTEXTO PARA ANÁLISE CONSOLIDADA
   // ────────────────────────────────────────────────────────────
   
-  // Buscar OKRs organizacionais do ciclo
+  // Buscar o ano do ciclo para depois buscar OKRs organizacionais
+  const { data: cycleData } = useQuery({
+    queryKey: ['cycle-year', cycleId],
+    queryFn: async () => {
+      if (!cycleId) return null;
+      
+      const { data, error } = await buSupabase
+        .from('cycles')
+        .select('id, name, start_date')
+        .eq('id', cycleId)
+        .single();
+
+      if (error) throw error;
+      // Extrair o ano do start_date ou do name (ex: "2026-Q1" -> 2026)
+      const year = data?.start_date 
+        ? new Date(data.start_date).getFullYear()
+        : parseInt(data?.name?.slice(0, 4) || '0');
+      return { ...data, year };
+    },
+    enabled: !!buSupabase && !!cycleId,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const cycleYear = cycleData?.year;
+
+  // Buscar OKRs organizacionais pelo ANO (não pelo cycle_id)
   const { data: orgObjectives } = useQuery({
-    queryKey: queryKeys.okrs.orgObjectivesByCycle(currentBuId, cycleId),
+    queryKey: queryKeys.okrs.orgObjectivesWithKrs(currentBuId, cycleYear),
     queryFn: async (): Promise<OrgObjective[]> => {
-      if (!cycleId) return [];
+      if (!cycleYear) return [];
       
       const { data, error } = await buSupabase
         .from('okr_org_objectives')
-        .select('id, title, description')
-        .eq('cycle_id', cycleId)
+        .select(`
+          id, 
+          title, 
+          description,
+          key_results:okr_org_key_results (
+            id,
+            title,
+            baseline,
+            target,
+            unit
+          )
+        `)
+        .eq('year', cycleYear)
         .is('deleted_at', null)
         .is('cancelled_at', null);
 
       if (error) throw error;
-      return (data || []) as OrgObjective[];
+      return (data || []).map(obj => ({
+        id: obj.id,
+        title: obj.title,
+        description: obj.description || undefined,
+        keyResults: (obj.key_results || []) as Array<{
+          id: string;
+          title: string;
+          baseline: number | null;
+          target: number | null;
+          unit: string | null;
+        }>,
+      }));
     },
-    enabled: !!buSupabase && !!currentBuId && !!cycleId,
+    enabled: !!buSupabase && !!currentBuId && !!cycleYear,
     staleTime: 5 * 60 * 1000,
   });
 

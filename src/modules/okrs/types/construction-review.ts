@@ -111,6 +111,13 @@ export interface OrgObjective {
   id: string;
   title: string;
   description?: string;
+  keyResults?: Array<{
+    id: string;
+    title: string;
+    baseline: number | null;
+    target: number | null;
+    unit: string | null;
+  }>;
 }
 
 // ============================================================
