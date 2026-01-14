@@ -48,6 +48,7 @@ export function useUserKrsForWizard(
       const krIdsFromInitiatives = [...new Set((initiativeKrIds || []).map(i => i.kr_id).filter(Boolean))];
 
       // Fetch KRs where user is owner, co-responsible, or has initiatives
+      // Filter out cancelled/deleted objectives and KRs
       let query = supabase
         .from('okr_team_key_results')
         .select(`
@@ -68,6 +69,8 @@ export function useUserKrsForWizard(
             title,
             cycle_id,
             team_id,
+            cancelled_at,
+            deleted_at,
             team:teams (
               id,
               name
@@ -75,6 +78,8 @@ export function useUserKrsForWizard(
           )
         `)
         .eq('team_objective.cycle_id', cycleId)
+        .is('team_objective.cancelled_at', null)
+        .is('team_objective.deleted_at', null)
         .is('cancelled_at', null)
         .is('deleted_at', null);
 

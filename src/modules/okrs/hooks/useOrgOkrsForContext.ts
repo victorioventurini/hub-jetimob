@@ -118,9 +118,9 @@ export function useOrgOkrsForContext(cycleId: string | null | undefined) {
         };
       });
 
-      // Extract top 3 priorities (active objectives with most KRs)
+      // Extract top 3 priorities (active objectives with most KRs, excluding cancelled/draft)
       const priorities = objectivesWithKrs
-        .filter(o => o.status === 'active')
+        .filter(o => o.status === 'active' && o.keyResults.length > 0)
         .sort((a, b) => b.keyResults.length - a.keyResults.length)
         .slice(0, 3)
         .map(o => o.title);
