@@ -9,6 +9,8 @@ export interface BuAccess {
   is_default: boolean;
 }
 
+export type EmploymentStatus = 'active' | 'vacation' | 'terminated' | 'external';
+
 export interface GlobalUser {
   profile_id: string;
   user_id: string | null;
@@ -21,13 +23,17 @@ export interface GlobalUser {
   last_sign_in_at: string | null;
   global_role: string | null;
   bu_accesses: BuAccess[];
+  employment_status: EmploymentStatus | null;
+  deleted_at: string | null;
 }
 
 export type UserTypeFilter = 'all' | 'internal' | 'external';
+export type StatusFilter = 'active' | 'terminated' | 'all';
 
 export interface GlobalUserFilters {
   q?: string;
   buId?: string;
   onboardingStatus?: 'all' | 'completed' | 'pending';
   userType?: UserTypeFilter;
+  includeTerminated?: boolean;
 }

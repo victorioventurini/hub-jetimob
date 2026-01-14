@@ -10,7 +10,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { GlobalUser, GlobalUserFilters } from "../types";
 
 export function useGlobalUsers(filters: GlobalUserFilters = {}) {
-  const { q, buId, onboardingStatus, userType } = filters;
+  const { q, buId, onboardingStatus, userType, includeTerminated = false } = filters;
 
   return useQuery({
     queryKey: queryKeys.users.globalList(filters),
@@ -21,6 +21,7 @@ export function useGlobalUsers(filters: GlobalUserFilters = {}) {
         p_bu_id: buId || null,
         p_onboarding_status: onboardingStatus === "all" ? null : onboardingStatus || null,
         p_user_type: userType === "all" ? null : userType || null,
+        p_include_terminated: includeTerminated,
       });
 
       if (error) throw error;
