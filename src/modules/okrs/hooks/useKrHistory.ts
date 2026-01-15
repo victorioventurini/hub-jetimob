@@ -30,6 +30,20 @@ export interface KrHistoryData {
   totalCheckins: number;
 }
 
+export interface KrWithHistoryData {
+  checkins: KrCheckinHistory[];
+  baseline: number;
+  target: number;
+  currentValue: number;
+  unit: string;
+  direction: 'up' | 'down' | 'maintain';
+  title: string;
+  status: string;
+  trend: 'up' | 'down' | 'stable';
+  variation: number | null;
+  totalCheckins: number;
+}
+
 /**
  * Fetches KR check-in history for visualization
  */
@@ -120,6 +134,120 @@ export function useKrHistory(krId: string | null | undefined) {
         previousValue,
         variation,
         totalCheckins: checkins.length,
+      };
+    },
+    enabled: !!krId && isReady && !!supabase,
+  });
+}
+
+/**
+ * Fetches KR details along with check-in history for charts
+ * Includes baseline, target, unit, direction needed for KrEvolutionChart
+ */
+export function useKrWithHistory(krId: string | null | undefined) {
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
+
+  return useQuery({
+    queryKey: ['kr-with-history', buId, krId] as const,
+    queryFn: async (): Promise<KrWithHistoryData | null> => {
+      if (!krId || !supabase) return null;
+
+      // Fetch KR details from team key results (most common case)
+      const { data: teamKr, error: teamKrError } = await supabase
+        .from('okr_team_key_results')
+        .select('id, title, baseline, current_value, target, direction, unit, status')
+        .eq('id', krId)
+        .maybeSingle();
+
+      // If not found in team KRs, try org KRs
+      let krData = teamKr;
+      if (!krData && !teamKrError) {
+        const { data: orgKr } = await supabase
+          .from('okr_org_key_results')
+          .select('id, title, baseline, current_value, target, direction, unit, status')
+          .eq('id', krId)
+          .maybeSingle();
+        krData = orgKr;
+      }
+
+      if (!krData) {
+        return null;
+      }
+
+      // Fetch checkins
+      const { data: checkins, error: checkinsError } = await supabase
+        .from('okr_checkins')
+        .select(`
+          id, date, previous_value, current_value, confidence,
+          comments, blockers, created_at, user_id
+        `)
+        .eq('kr_id', krId)
+        .order('date', { ascending: false })
+        .limit(50);
+
+      if (checkinsError) throw checkinsError;
+
+      // Get unique user IDs
+      const userIds = [...new Set((checkins || []).map(c => c.user_id).filter(Boolean))];
+      
+      // Fetch user profiles
+      let userMap: Record<string, { id: string; display_name: string; photo_url: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, photo_url')
+          .in('id', userIds);
+        
+        if (profiles) {
+          userMap = profiles.reduce((acc, p) => {
+            acc[p.id] = {
+              id: p.id,
+              display_name: p.display_name || 'Usuário',
+              photo_url: p.photo_url,
+            };
+            return acc;
+          }, {} as typeof userMap);
+        }
+      }
+
+      // Map checkins with user info
+      const mappedCheckins: KrCheckinHistory[] = (checkins || []).map(c => ({
+        id: c.id,
+        date: c.date,
+        previous_value: c.previous_value,
+        current_value: c.current_value,
+        confidence: c.confidence as 'high' | 'medium' | 'low',
+        comments: c.comments,
+        blockers: c.blockers,
+        created_at: c.created_at,
+        user: c.user_id ? userMap[c.user_id] || null : null,
+      }));
+
+      // Calculate trend
+      const currentValue = krData.current_value ?? 0;
+      const previousValue = mappedCheckins[1]?.current_value ?? mappedCheckins[0]?.previous_value ?? null;
+
+      let trend: 'up' | 'down' | 'stable' = 'stable';
+      let variation: number | null = null;
+
+      if (previousValue !== null && previousValue !== 0) {
+        variation = ((currentValue - previousValue) / Math.abs(previousValue)) * 100;
+        if (variation > 0.5) trend = 'up';
+        else if (variation < -0.5) trend = 'down';
+      }
+
+      return {
+        checkins: mappedCheckins,
+        baseline: krData.baseline ?? 0,
+        target: krData.target ?? 100,
+        currentValue: currentValue,
+        unit: krData.unit ?? '%',
+        direction: (krData.direction as 'up' | 'down' | 'maintain') ?? 'up',
+        title: krData.title ?? '',
+        status: krData.status ?? 'not_started',
+        trend,
+        variation,
+        totalCheckins: mappedCheckins.length,
       };
     },
     enabled: !!krId && isReady && !!supabase,
