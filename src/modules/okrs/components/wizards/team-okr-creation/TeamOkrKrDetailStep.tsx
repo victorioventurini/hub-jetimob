@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -275,12 +276,33 @@ export function TeamOkrKrDetailStep({
           {/* Metrics Row */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="kr-baseline">Baseline</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="kr-baseline">Baseline</Label>
+                <div className="flex items-center gap-1.5">
+                  <Checkbox
+                    id="no-baseline"
+                    checked={currentKr.noBaseline ?? false}
+                    onCheckedChange={(checked) => {
+                      updateKrField('noBaseline', !!checked);
+                      if (checked) {
+                        updateKrField('baseline', 0);
+                      }
+                    }}
+                  />
+                  <label 
+                    htmlFor="no-baseline" 
+                    className="text-xs text-muted-foreground cursor-pointer"
+                  >
+                    Sem baseline
+                  </label>
+                </div>
+              </div>
               <Input
                 id="kr-baseline"
                 type="number"
                 placeholder="0"
-                value={currentKr.baseline || ''}
+                disabled={currentKr.noBaseline}
+                value={currentKr.noBaseline ? '' : (currentKr.baseline || '')}
                 onChange={(e) => updateKrField('baseline', parseFloat(e.target.value) || 0)}
               />
             </div>
