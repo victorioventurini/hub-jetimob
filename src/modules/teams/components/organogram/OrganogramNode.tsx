@@ -58,10 +58,8 @@ const TYPE_CONFIG = {
 // CEO Card com avatar circular grande no estilo do organograma de referência
 const CeoCard = memo(function CeoCard({
   node,
-  isExpanded,
-  onToggle,
   hasChildren,
-}: Omit<OrganogramNodeCardProps, 'parentColor'>) {
+}: Omit<OrganogramNodeCardProps, 'parentColor' | 'isExpanded' | 'onToggle'> & { isExpanded?: boolean; onToggle?: () => void }) {
   return (
     <div className="flex flex-col items-center">
       {/* CEO card with same proportions as other cards */}
@@ -88,32 +86,10 @@ const CeoCard = memo(function CeoCard({
           <p className="font-medium text-sm truncate">{node.name}</p>
           <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">CEO</p>
         </div>
-
-        {/* Expand/Collapse */}
-        {hasChildren && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggle();
-            }}
-            className={cn(
-              "p-1 rounded-md hover:bg-accent transition-colors",
-              "focus:outline-none focus:ring-2 focus:ring-ring"
-            )}
-            aria-label={isExpanded ? "Recolher" : "Expandir"}
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-          </button>
-        )}
       </Link>
 
-      {/* Children (Areas) */}
-      {hasChildren && isExpanded && (
+      {/* Children (Areas) - always visible */}
+      {hasChildren && (
         <div className="flex flex-col items-center mt-3">
           {/* Connector line down */}
           <div className="w-px h-4 bg-border" />
