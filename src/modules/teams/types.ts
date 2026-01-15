@@ -39,6 +39,7 @@ export interface TeamFormData {
   description: string;
   leader_user_id: string | null;
   parent_team_id: string | null;
+  area_id: string | null;
   status: "active" | "inactive";
 }
 

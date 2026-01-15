@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.32.0  
+**Versão:** 2.33.0  
 **Última atualização:** 2026-01-15
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | **Automated Testing Framework v1.0 ativo**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.0 ativo | **Áreas (Strategic Layer) v1.0 implementado**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -91,6 +91,27 @@ O Hub é uma plataforma **multi-tenant** onde cada empresa/unidade de negócio o
 - Uma BU é definida por `is_default = true` como padrão do usuário
 - Dados são escopados por BU através de RLS policies
 - Cada BU pode ter cores, logo e configurações personalizadas
+
+### 1.3.1 Conceito de Áreas (v2.33.0)
+
+**Áreas** são entidades estratégicas que agrupam times sem criar "times fake":
+
+```
+BU (Business Unit)
+└── Área (responsabilidade estratégica: Revenue, Produto, Tecnologia...)
+    └── Time (execução operacional)
+        └── Subtime (opcional)
+            └── Pessoas
+```
+
+| Característica | Área | Time |
+|---------------|------|------|
+| Membros | Apenas líder/co-líder | Membros operacionais |
+| OKRs | **NÃO possui OKRs** | Possui OKRs de time |
+| Propósito | Agrupamento estratégico | Execução operacional |
+| Backlog | Não | Sim |
+
+**Tabela:** `public.areas` | **Rota:** `/areas` | **RFC:** [RFC_AREAS_IMPLEMENTATION.md](./engineering/RFC_AREAS_IMPLEMENTATION.md)
 
 ### 1.4 Controle de Permissões
 

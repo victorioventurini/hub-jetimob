@@ -1,10 +1,10 @@
 # RFC: Implementação do Conceito de Área no Hub
 
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Data:** 2026-01-15  
-**Status:** Draft  
+**Status:** ✅ Implementado  
 **Autor:** Lovable AI / Equipe de Engenharia  
-**Referência:** TCR v2.32.0
+**Referência:** TCR v2.33.0
 
 ---
 
@@ -25,7 +25,7 @@ O Hub atualmente usa "times fake" para representar responsabilidades estratégic
 Introduzir **Área** como entidade de primeira classe:
 - Representa responsabilidade estratégica ampla
 - Agrupa times operacionais
-- Suporta OKRs organizacionais por área
+- **NÃO possui OKRs próprias** (áreas são apenas agrupamentos)
 - NÃO possui membros operacionais
 - Possui apenas líder(es) responsável(eis)
 
