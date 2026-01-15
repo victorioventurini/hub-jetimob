@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.34.0  
+**Versão:** 2.35.0  
 **Última atualização:** 2026-01-15
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado** | **Performance Metrics Dashboard (P4) implementado**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2253,6 +2253,26 @@ export type { SomeType } from './types';
   - `EmptyState` - Estado vazio com CTA
   - `FilterBar`, `FilterSection` - Barra de filtros reutilizável
   - `PageHeader` - Cabeçalho de página padronizado
+
+### v2.35.0 (2026-01-15)
+- **Performance Metrics Dashboard (P4) - COMPLETO**:
+  - **Nova tabela:** `perf_metrics_snapshots` - Armazena snapshots de métricas de performance
+    - Campos: `id`, `bu_id`, `collected_at`, `metrics` (JSONB)
+    - RLS policies para admins apenas
+  - **Novas funções SQL:**
+    - `collect_perf_metrics()` - Coleta métricas de todas as tabelas (scans, tuplas, índices)
+    - `cleanup_old_perf_snapshots()` - Remove snapshots > 30 dias
+  - **Edge Function `cron-dispatcher` atualizada:**
+    - Integra coleta de métricas a cada execução (5 min)
+    - Cleanup diário de snapshots antigos (1x por dia)
+  - **Dashboard UI:** `/hub/performance`
+    - Cards com métricas: Snapshots, Tabelas monitoradas, Taxa de índice, Scans por segundo
+    - Gráficos de série temporal para table scans e index usage
+    - Top 10 tabelas com mais scans
+    - Hook: `usePerfMetrics.ts` para fetch de dados
+  - **Navegação:** Sidebar atualizada com link para Performance (ícone Activity)
+  - **Documentação:** `PERF_METRICS_DASHBOARD.md` v1.4.0
+- **Data Model Registry regenerado** - 107 tabelas, 23 views, 70 enums documentados
 
 ### v2.24.0 (2026-01-12)
 - **RLS V2 Migration - 100% Completo**:
