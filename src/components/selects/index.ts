@@ -49,3 +49,6 @@ export type { SelectOption } from "./SimpleSelect";
 // OKR Cycles
 export { CycleSelect, CycleBadge, CyclePeriodInfo } from "./CycleSelect";
 export type { Cycle } from "./CycleSelect";
+
+// Areas
+export { AreaSelect } from "./AreaSelect";

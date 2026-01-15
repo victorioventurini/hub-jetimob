@@ -8,7 +8,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
-import { YearSelect, TeamSelect } from '@/components/selects';
+import { YearSelect, TeamSelect, AreaSelect } from '@/components/selects';
 import { useUrlState, useUrlTab, parsers } from "@/shared/url";
 import { useOrgObjectives, useTeamObjectives } from '../hooks/queries';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
@@ -27,6 +27,10 @@ export default function OkrsPage() {
   const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   const selectedTeam = teamState.value;
   const setSelectedTeam = teamState.set;
+  
+  const areaState = useUrlState<string>({ key: 'area_id', defaultValue: 'all' });
+  const selectedArea = areaState.value;
+  const setSelectedArea = areaState.set;
   
   const [activeTab, setActiveTab] = useUrlTab<string>('org');
 
@@ -224,6 +228,13 @@ export default function OkrsPage() {
                 onValueChange={(v) => setSelectedTeam(v ?? "all")}
                 includeAll
                 allLabel="Todos os times"
+                triggerClassName="w-[180px]"
+              />
+              <AreaSelect
+                value={selectedArea === "all" ? undefined : selectedArea}
+                onValueChange={(v) => setSelectedArea(v ?? "all")}
+                includeAll
+                allLabel="Todas as áreas"
                 triggerClassName="w-[180px]"
               />
             </div>
