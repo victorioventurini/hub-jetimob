@@ -36,13 +36,20 @@ Três cards principais mostram métricas agregadas:
 
 #### Tab: Feed
 
-Visão cronológica de todos os check-ins com **toggle de visualização Cards/Tabela**.
+Visão cronológica de todos os check-ins com **toggle de visualização Cards/Tabela/Evolução**.
 
-**Toggle de Visualização (v2.40.0):**
+**Toggle de Visualização (v2.41.0):**
 - **Cards** (default): Visualização em cards individuais
 - **Tabela**: Visualização tabular com todas as informações
+- **Evolução**: Visualização de gráficos de evolução das KRs ⭐ NOVO
 
-**URL State:** `?view=cards` ou `?view=table` (persiste no refresh)
+**URL State:** `?view=cards`, `?view=table` ou `?view=evolution` (persiste no refresh)
+
+**Visualização Evolução:**
+- Se **uma única KR** está filtrada (via busca): Exibe gráfico expandido com progresso e histórico
+- Se **múltiplas KRs**: Exibe grid de mini-cards clicáveis com gráficos compactos
+- Clique em mini-card abre `KrHistoryDialog` com gráfico completo
+- Reutiliza `KrEvolutionChart` centralizado
 
 **Dados exibidos:**
 - Data e hora do check-in
@@ -54,9 +61,10 @@ Visão cronológica de todos os check-ins com **toggle de visualização Cards/T
 - Comentários e bloqueadores (quando presentes)
 
 **Componentes:**
-- `CycleCheckinsViewToggle` - Toggle Cards/Tabela
-- `CycleCheckinsFeed` - Renderização condicional cards/tabela
+- `CycleCheckinsViewToggle` - Toggle Cards/Tabela/Evolução
+- `CycleCheckinsFeed` - Renderização condicional cards/tabela/evolução
 - `CycleCheckinsTable` - Visualização tabular
+- `CycleCheckinsEvolution` - Visualização de gráficos ⭐ NOVO
 
 #### Tab: Pendências
 
@@ -91,7 +99,7 @@ Todos os filtros são sincronizados com a URL, permitindo compartilhar links com
 |-----------|------|---------|-----------|
 | `cycle_id` | uuid | ciclo ativo | ID do ciclo selecionado |
 | `tab` | enum | `feed` | Tab ativa: `feed`, `pending`, `summary` |
-| `view` | enum | `cards` | Modo de visualização: `cards`, `table` |
+| `view` | enum | `cards` | Modo de visualização: `cards`, `table`, `evolution` |
 | `team_id` | uuid | - | Filtro por time |
 | `confidence` | enum | `all` | Filtro por confiança |
 | `status` | enum | `all` | Filtro por status RAG |
@@ -116,14 +124,32 @@ O modal existente `KrHistoryDialog` é reutilizado como drill-down para detalhes
 | Componente | Caminho | Descrição |
 |------------|---------|-----------|
 | `CycleCheckinsPage` | `src/modules/okrs/pages/` | Página principal |
-| `CycleCheckinsFeed` | `src/modules/okrs/components/cycle-checkins/` | Feed com toggle cards/tabela |
+| `CycleCheckinsFeed` | `src/modules/okrs/components/cycle-checkins/` | Feed com toggle cards/tabela/evolução |
 | `CycleCheckinsTable` | `src/modules/okrs/components/cycle-checkins/` | Visualização tabular |
-| `CycleCheckinsViewToggle` | `src/modules/okrs/components/cycle-checkins/` | Toggle de visualização |
+| `CycleCheckinsEvolution` | `src/modules/okrs/components/cycle-checkins/` | Visualização de gráficos ⭐ NOVO |
+| `CycleCheckinsViewToggle` | `src/modules/okrs/components/cycle-checkins/` | Toggle de visualização (3 opções) |
 | `CycleCheckinsOverdue` | `src/modules/okrs/components/cycle-checkins/` | Tab Pendências |
 | `CycleCheckinsSummary` | `src/modules/okrs/components/cycle-checkins/` | Tab Resumo |
 | `CycleCheckinsFilters` | `src/modules/okrs/components/cycle-checkins/` | Barra de filtros |
 
+## Hooks
+
+| Hook | Caminho | Descrição |
+|------|---------|-----------|
+| `useCycleCheckins` | `src/modules/okrs/hooks/` | Dados de check-ins via RPC |
+| `useKrWithHistory` | `src/modules/okrs/hooks/useKrHistory.ts` | Busca KR + histórico para gráficos ⭐ NOVO |
+| `useKrHistory` | `src/modules/okrs/hooks/useKrHistory.ts` | Apenas histórico de check-ins |
+
 ## Changelog
+
+### 2026-01-15 (v2.41.0)
+- Adicionada visualização "Evolução" com gráficos
+- Novo componente `CycleCheckinsEvolution`
+- Novo hook `useKrWithHistory` (busca KR + histórico)
+- Toggle agora com 3 opções: Cards, Tabela, Evolução
+- URL state `?view=evolution` para nova visualização
+- Gráfico expandido para filtro de uma única KR
+- Grid de mini-cards para múltiplas KRs
 
 ### 2026-01-15
 - Adicionado toggle Cards/Tabela na tab Feed
