@@ -47,6 +47,14 @@ export default function TeamsPage() {
   });
   const leaderFilter = leaderState.value;
   const setLeaderFilter = leaderState.set;
+
+  const areaState = useUrlState<string | null>({ 
+    key: 'area_id', 
+    defaultValue: null,
+    parse: (v) => v || null,
+  });
+  const areaFilter = areaState.value;
+  const setAreaFilter = areaState.set;
   
   const [activeTab, setActiveTab] = useUrlTab<string>('sections');
   
@@ -108,6 +116,24 @@ export default function TeamsPage() {
     );
   }, [teams]);
 
+  // Get unique areas for filter
+  const areasForFilter = useMemo(() => {
+    if (!teams) return [];
+    const areaMap = new Map<string, { id: string; name: string; color: string | null }>();
+    teams.forEach((t) => {
+      if (t.area) {
+        areaMap.set(t.area.id, {
+          id: t.area.id,
+          name: t.area.name,
+          color: t.area.color,
+        });
+      }
+    });
+    return Array.from(areaMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [teams]);
+
   // Filter teams
   const filterTeams = (teamList: TeamWithRelations[]) => {
     return teamList.filter((team) => {
@@ -135,6 +161,13 @@ export default function TeamsPage() {
         if (team.leader) return false;
       } else if (leaderFilter) {
         if (team.leader?.id !== leaderFilter) return false;
+      }
+
+      // Area filter
+      if (areaFilter === "none") {
+        if (team.area) return false;
+      } else if (areaFilter) {
+        if (team.area?.id !== areaFilter) return false;
       }
 
       return true;
@@ -280,8 +313,11 @@ export default function TeamsPage() {
           onParentTeamChange={setParentTeamFilter}
           leaderId={leaderFilter}
           onLeaderChange={setLeaderFilter}
+          areaId={areaFilter}
+          onAreaChange={setAreaFilter}
           parentTeams={parentTeamsForFilter}
           leaders={leaders}
+          areas={areasForFilter}
         />
 
         {/* View Toggle */}

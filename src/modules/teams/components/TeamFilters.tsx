@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X } from "lucide-react";
+import { X, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
 
@@ -16,8 +16,11 @@ interface TeamFiltersProps {
   onParentTeamChange: (value: string | null) => void;
   leaderId: string | null;
   onLeaderChange: (value: string | null) => void;
+  areaId: string | null;
+  onAreaChange: (value: string | null) => void;
   parentTeams: { id: string; name: string }[];
   leaders: { id: string; display_name: string }[];
+  areas: { id: string; name: string; color: string | null }[];
 }
 
 export function TeamFilters({
@@ -27,19 +30,23 @@ export function TeamFilters({
   onParentTeamChange,
   leaderId,
   onLeaderChange,
+  areaId,
+  onAreaChange,
   parentTeams,
   leaders,
+  areas,
 }: TeamFiltersProps) {
-  const hasFilters = search || parentTeamId || leaderId;
+  const hasFilters = search || parentTeamId || leaderId || areaId;
 
   const clearFilters = () => {
     onSearchChange("");
     onParentTeamChange(null);
     onLeaderChange(null);
+    onAreaChange(null);
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
       {/* Search */}
       <UrlSearchInput
         value={search}
@@ -48,6 +55,31 @@ export function TeamFilters({
         className="flex-1 max-w-xs"
         debounceMs={300}
       />
+
+      {/* Area Filter */}
+      <Select
+        value={areaId || "all"}
+        onValueChange={(v) => onAreaChange(v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Área" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas as áreas</SelectItem>
+          <SelectItem value="none">Sem área</SelectItem>
+          {areas.map((area) => (
+            <SelectItem key={area.id} value={area.id}>
+              <div className="flex items-center gap-2">
+                <Building2
+                  className="h-3.5 w-3.5"
+                  style={{ color: area.color || "currentColor" }}
+                />
+                <span>{area.name}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Parent Team Filter */}
       <Select

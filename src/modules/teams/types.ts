@@ -17,6 +17,11 @@ export interface TeamWithRelations extends Team {
     name: string;
     status: string;
   }[];
+  area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
   // member_count now comes from Team base type
 }
 

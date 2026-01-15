@@ -32,7 +32,8 @@ export function useTeams(optionsOrIncludeInactive: UseTeamsOptions | boolean = f
         .from("teams")
         .select(`
           id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id, area_id,
-          leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
+          leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url),
+          area:areas!teams_area_id_fkey(id, name, color)
         `)
         .order("name");
 
