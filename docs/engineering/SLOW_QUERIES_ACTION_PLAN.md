@@ -1,8 +1,8 @@
 # Slow Queries — Relatório e Plano de Ação
 
-**Versão:** 1.1.0  
+**Versão:** 1.2.0  
 **Data:** 2026-01-15  
-**Status:** ✅ P3.1 COMPLETO
+**Status:** ✅ P3.1 + P3.2 COMPLETO
 
 ---
 
@@ -99,14 +99,17 @@ Análise das métricas de performance do banco Supabase identificou:
 | `idx_ai_agent_logs_bu_created` | ai_agent_logs | (bu_id, created_at DESC) |
 | `idx_ai_agent_logs_agent_created` | ai_agent_logs | (agent_id, created_at DESC) |
 
-### Wave P3.2 — Limpeza de Índices (Prioridade Média)
+### Wave P3.2 — Limpeza de Índices ✅ COMPLETO (2026-01-15)
 
-```sql
--- Executar após 30 dias de monitoramento para confirmar não uso
--- DROP INDEX IF EXISTS idx_ai_agent_logs_user_bu_created;
--- DROP INDEX IF EXISTS idx_profiles_employment_status;
--- DROP INDEX IF EXISTS idx_teams_status;
-```
+**3 índices removidos (0 scans cada):**
+
+| Índice | Tabela | Tamanho |
+|--------|--------|---------|
+| `idx_ai_agent_logs_user_bu_created` | ai_agent_logs | 8.5 MB |
+| `idx_profiles_employment_status` | profiles | 16 KB |
+| `idx_teams_status` | teams | 16 KB |
+
+**Espaço recuperado:** ~8.6 MB
 
 ### Wave P3.3 — Otimizações de Query (Prioridade Média)
 
@@ -155,10 +158,11 @@ WHERE schemaname = 'public' AND idx_scan = 0;
 
 ## 8. Próximos Passos
 
-- [ ] **P3.1:** Criar índices para `okr_wizard_sessions` e `permission_template_items_v2`
-- [ ] **P3.1:** Analisar padrão de queries em `ai_agent_logs`
-- [ ] **P3.2:** Após 30 dias, remover índices confirmados como não usados
+- [x] **P3.1:** Criar índices para `okr_wizard_sessions` e `permission_template_items_v2` ✅
+- [x] **P3.1:** Analisar padrão de queries em `ai_agent_logs` ✅
+- [x] **P3.2:** Remover índices confirmados como não usados ✅
 - [ ] **P3.3:** Implementar monitoramento periódico de métricas
+- [ ] **P3.3:** Revisar queries nos módulos Permissions/AI Agents/OKR
 
 ---
 
