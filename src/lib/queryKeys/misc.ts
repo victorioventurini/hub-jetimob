@@ -32,7 +32,7 @@ export const externalKeys = {
 
 export const usersKeys = {
   all: () => ['users'] as const,
-  directory: (buId: string | null, filters?: { q?: string; teamId?: string; status?: string; includeTerminated?: boolean; excludeExternal?: boolean; page?: number; pageSize?: number }) => 
+  directory: (buId: string | null, filters?: { q?: string; areaId?: string; teamId?: string; status?: string; includeTerminated?: boolean; excludeExternal?: boolean; page?: number; pageSize?: number }) => 
     ['users', 'directory', buId, filters] as const,
   selectOptions: (buId: string | null) => 
     ['users', 'select-options', buId] as const,
