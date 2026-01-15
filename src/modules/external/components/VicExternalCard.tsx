@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, MessageSquare, Clock, HelpCircle, ArrowRight } from "lucide-react";
 import { useVic } from "@/modules/vic/contexts/VicContext";
-import { useVicEnabled } from "@/modules/vic/hooks/useVicAgent";
+import { useVicEnabled } from "@/modules/vic/hooks";
 
 interface VicSuggestion {
   id: string;

@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useKeys } from "../../hooks/useKeys";
+import { useKeys } from "../../hooks";
 import { ClavicularyDialog } from "../keys/ClavicularyDialog";
 import type { AssetClaviculary } from "../../types";
 

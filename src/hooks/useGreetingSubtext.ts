@@ -18,7 +18,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
-import { useVicAgent } from "@/modules/vic/hooks/useVicAgent";
+import { useVicAgent } from "@/modules/vic/hooks";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

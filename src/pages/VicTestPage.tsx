@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, XCircle, Send, RefreshCw, Clock } from "lucide-react";
-import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks/useVicAgent";
+import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks";
 import { VIC_AGENTS, type VicAgentSlug } from "@/modules/vic/types";
 import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";

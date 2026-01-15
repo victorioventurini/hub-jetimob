@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks/useVicAgent";
+import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks";
 import { cn } from "@/lib/utils";
 import type { OrgOkrAnalysisData } from "../../hooks/useOrgOkrAnalysis";
 

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Target, BarChart3, MessageSquare, ArrowRight, Users, TrendingUp, Calendar } from "lucide-react";
 import { useVic } from "@/modules/vic/contexts/VicContext";
-import { useVicEnabled } from "@/modules/vic/hooks/useVicAgent";
+import { useVicEnabled } from "@/modules/vic/hooks";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import type { VicAgentSlug, VicActionContext, VicContext } from "@/modules/vic/types";
 
