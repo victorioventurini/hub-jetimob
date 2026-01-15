@@ -42,6 +42,7 @@ import { OkrEmptyState } from '../components/OkrEmptyState';
 import { OkrAlertsCard } from '../components/OkrAlertsCard';
 import { SharedOkrInsights } from '../components/SharedOkrInsights';
 import { OkrDashboardBreadcrumb } from '../components/ui/OkrBreadcrumb';
+import { SavedLinksPopover } from '@/shared/saved-links';
 
 interface OkrFiltersState {
   year: number;
@@ -219,13 +220,16 @@ export default function OkrDashboardPage() {
           description="Acompanhe o progresso e alinhamento dos objetivos"
           className="mb-0"
           actions={
-            ((activeView === 'company' && canCreateOrg) || 
-              (activeView !== 'company' && canCreateTeam)) && (
-              <Button onClick={handleCreateClick} size="sm" className="shrink-0">
-                <Plus className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Novo Objetivo</span>
-              </Button>
-            )
+            <div className="flex items-center gap-2">
+              <SavedLinksPopover moduleSlug="okrs" />
+              {((activeView === 'company' && canCreateOrg) || 
+                (activeView !== 'company' && canCreateTeam)) && (
+                <Button onClick={handleCreateClick} size="sm" className="shrink-0">
+                  <Plus className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Novo Objetivo</span>
+                </Button>
+              )}
+            </div>
           }
         />
           

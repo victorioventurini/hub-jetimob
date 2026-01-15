@@ -7136,6 +7136,71 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_links: {
+        Row: {
+          bu_id: string
+          created_at: string
+          id: string
+          is_favorite: boolean
+          label: string
+          module_slug: string
+          path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          label: string
+          module_slug: string
+          path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          label?: string
+          module_slug?: string
+          path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_links_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_saved_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_saved_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_saved_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_team_memberships: {
         Row: {
           created_at: string
