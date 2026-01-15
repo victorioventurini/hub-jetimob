@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, GitBranch, Building2, Users, Network, Layers3, Box } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, Users, Network, Layers3, Box } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
 import { TeamsBreadcrumb } from "@/components/ui/global-breadcrumb";
@@ -14,17 +14,14 @@ import { useTeams, useTeamTree, useTeamStats } from "../hooks/useTeams";
 import { useSquads } from "../hooks/useSquads";
 import { TeamFormDialog } from "../components/TeamFormDialog";
 import { TeamCard } from "../components/TeamCard";
-import { TeamTreeView } from "../components/TeamTreeView";
 import { TeamFilters } from "../components/TeamFilters";
 import { SquadCard } from "../components/SquadCard";
 import { SquadDetailDialog } from "../components/SquadDetailDialog";
 import { TeamWithRelations } from "../types";
 import { SquadWithRelations } from "../types/squad";
-import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState, useUrlTab, useLocalSearch, parsers } from "@/shared/url";
+import { useUrlState, useLocalSearch, parsers } from "@/shared/url";
 
 export default function TeamsPage() {
   usePageTitle("Times");
@@ -56,7 +53,7 @@ export default function TeamsPage() {
   const areaFilter = areaState.value;
   const setAreaFilter = areaState.set;
   
-  const [activeTab, setActiveTab] = useUrlTab<string>('sections');
+  
   
   const showInactiveState = useUrlState<boolean>({ 
     key: 'show_inactive', 
@@ -72,10 +69,8 @@ export default function TeamsPage() {
 
   const { data: teams, isLoading } = useTeams(showInactive);
   const { data: squads, isLoading: isLoadingSquads } = useSquads();
-  const { tree } = useTeamTree(showInactive);
+  useTeamTree(showInactive); // keep for potential future use
   const stats = useTeamStats();
-  const navigate = useNavigate();
-  const { canManageTeam } = useTeamManagement();
   const { has, isWildcard } = usePermissions();
   
   // BU admin ou super_admin podem criar times via permission key
@@ -184,10 +179,6 @@ export default function TeamsPage() {
       squad.name.toLowerCase().includes(searchLower)
     );
   }, [squads, search]);
-
-  const filteredTree = showInactive
-    ? tree
-    : tree.filter((node) => node.status === "active");
 
   const totalSquads = squads?.length || 0;
 
@@ -320,203 +311,166 @@ export default function TeamsPage() {
           areas={areasForFilter}
         />
 
-        {/* View Toggle */}
         <div className="flex items-center justify-between">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="flex items-center justify-between mb-4">
-              <TabsList>
-                <TabsTrigger value="sections" className="gap-2">
-                  <LayoutGrid className="h-4 w-4" />
-                  Seções
-                </TabsTrigger>
-                <TabsTrigger value="tree" className="gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  Hierarquia
-                </TabsTrigger>
-              </TabsList>
+          <Button variant="outline" asChild>
+            <Link to="/teams/org-chart">
+              <Network className="w-4 h-4 mr-2" />
+              Ver Organograma
+            </Link>
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-inactive"
+              checked={showInactive}
+              onCheckedChange={setShowInactive}
+            />
+            <Label htmlFor="show-inactive" className="text-sm cursor-pointer">
+              Mostrar inativos
+            </Label>
+          </div>
+        </div>
 
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="show-inactive"
-                  checked={showInactive}
-                  onCheckedChange={setShowInactive}
-                />
-                <Label htmlFor="show-inactive" className="text-sm cursor-pointer">
-                  Mostrar inativos
-                </Label>
-              </div>
+        {/* Content */}
+        <div className="space-y-8">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6 space-y-4">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-4 w-full" />
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-
-            {/* Sections View */}
-            <TabsContent value="sections" className="space-y-8">
-              {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[...Array(6)].map((_, i) => (
-                    <Card key={i}>
-                      <CardContent className="p-6 space-y-4">
-                        <Skeleton className="h-6 w-32" />
-                        <Skeleton className="h-4 w-full" />
-                        <div className="flex items-center gap-3">
-                          <Skeleton className="h-8 w-8 rounded-full" />
-                          <div className="space-y-1">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-3 w-12" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+          ) : (
+            <>
+              {/* TIMES SECTION */}
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Times</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Estrutura organizacional principal • {filteredMainTeams.length} time{filteredMainTeams.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  {/* TIMES SECTION */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground">Times</h2>
-                        <p className="text-sm text-muted-foreground">
-                          Estrutura organizacional principal • {filteredMainTeams.length} time{filteredMainTeams.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
 
-                    {filteredMainTeams.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredMainTeams.map((team) => (
-                          <TeamCard
-                            key={team.id}
-                            team={team}
-                            variant="team"
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <Card className="bg-muted/30">
-                        <CardContent className="py-8">
-                          <EmptyState
-                            icon={Building2}
-                            title="Nenhum time encontrado"
-                            description={search ? "Nenhum time corresponde à busca." : "Não há times cadastrados."}
-                          />
+                {filteredMainTeams.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredMainTeams.map((team) => (
+                      <TeamCard
+                        key={team.id}
+                        team={team}
+                        variant="team"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-muted/30">
+                    <CardContent className="py-8">
+                      <EmptyState
+                        icon={Building2}
+                        title="Nenhum time encontrado"
+                        description={search ? "Nenhum time corresponde à busca." : "Não há times cadastrados."}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+
+              {/* SUB-TIMES SECTION */}
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Layers3 className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Sub-times</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Times subordinados a outros times • {filteredSubTeams.length} sub-time{filteredSubTeams.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {filteredSubTeams.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredSubTeams.map((team) => (
+                      <TeamCard
+                        key={team.id}
+                        team={team}
+                        variant="subteam"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-muted/30">
+                    <CardContent className="py-6 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        {search ? "Nenhum sub-time corresponde à busca." : "Não há sub-times cadastrados."}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+
+              {/* SQUADS SECTION */}
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <Box className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Squads</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Estruturas operacionais de entrega • {filteredSquads.length} squad{filteredSquads.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {isLoadingSquads ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(3)].map((_, i) => (
+                      <Card key={i}>
+                        <CardContent className="p-6 space-y-4">
+                          <Skeleton className="h-6 w-32" />
+                          <Skeleton className="h-4 w-full" />
                         </CardContent>
                       </Card>
-                    )}
-                  </section>
-
-                  {/* SUB-TIMES SECTION */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <Layers3 className="h-4 w-4 text-blue-500" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground">Sub-times</h2>
-                        <p className="text-sm text-muted-foreground">
-                          Times subordinados a outros times • {filteredSubTeams.length} sub-time{filteredSubTeams.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-
-                    {filteredSubTeams.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredSubTeams.map((team) => (
-                          <TeamCard
-                            key={team.id}
-                            team={team}
-                            variant="subteam"
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <Card className="bg-muted/30">
-                        <CardContent className="py-6 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            {search ? "Nenhum sub-time corresponde à busca." : "Não há sub-times cadastrados."}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </section>
-
-                  {/* SQUADS SECTION */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                        <Box className="h-4 w-4 text-purple-500" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground">Squads</h2>
-                        <p className="text-sm text-muted-foreground">
-                          Estruturas operacionais de entrega • {filteredSquads.length} squad{filteredSquads.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-
-                    {isLoadingSquads ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[...Array(3)].map((_, i) => (
-                          <Card key={i}>
-                            <CardContent className="p-6 space-y-4">
-                              <Skeleton className="h-6 w-32" />
-                              <Skeleton className="h-4 w-full" />
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : filteredSquads.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredSquads.map((squad) => (
-                          <SquadCard
-                            key={squad.id}
-                            squad={squad}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <Card className="bg-muted/30">
-                        <CardContent className="py-6 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            {search ? "Nenhum squad corresponde à busca." : "Não há squads cadastrados."}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </section>
-                </>
-              )}
-            </TabsContent>
-
-            {/* Tree View */}
-            <TabsContent value="tree">
-              <Card>
-                <CardContent className="p-4">
-                  {isLoading ? (
-                    <div className="space-y-2">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <Skeleton className="h-5 w-5" />
-                          <Skeleton className="h-5 w-40" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : filteredTree.length > 0 ? (
-                    <TeamTreeView
-                      nodes={filteredTree}
-                      onSelectTeam={(id) => navigate(`/teams/${id}`)}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8">
-                      <GitBranch className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">Nenhum time para exibir</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                    ))}
+                  </div>
+                ) : filteredSquads.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredSquads.map((squad) => (
+                      <SquadCard
+                        key={squad.id}
+                        squad={squad}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-muted/30">
+                    <CardContent className="py-6 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        {search ? "Nenhum squad corresponde à busca." : "Não há squads cadastrados."}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+            </>
+          )}
         </div>
       </div>
 

@@ -41,7 +41,7 @@ export default function OrganogramPage() {
   }, []);
 
   const handleOpenFullscreen = useCallback(() => {
-    window.open("/organograma?fullscreen=true", "_blank");
+    window.open("/teams/org-chart?fullscreen=true", "_blank");
   }, []);
 
   const handleCloseFullscreen = useCallback(() => {
