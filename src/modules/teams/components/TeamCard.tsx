@@ -62,6 +62,22 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
         )}
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Area Badge */}
+        {team.area && (
+          <div className="flex items-center gap-2 text-xs w-fit">
+            <Building2
+              className="h-3.5 w-3.5"
+              style={{ color: team.area.color || "currentColor" }}
+            />
+            <span 
+              className="font-medium"
+              style={{ color: team.area.color || "inherit" }}
+            >
+              {team.area.name}
+            </span>
+          </div>
+        )}
+
         {/* Parent Team (for sub-teams) */}
         {isSubteam && team.parent_team && (
           <div className="flex items-center gap-2 text-xs bg-muted/50 rounded-md px-2 py-1.5 w-fit">
