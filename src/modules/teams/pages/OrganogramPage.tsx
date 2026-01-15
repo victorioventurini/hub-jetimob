@@ -12,8 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OrganogramChart, OrganogramControls } from "../components/organogram";
 import { useOrganogramData } from "../hooks/useOrganogramData";
 import { OrganogramFilters, OrganogramControlsState } from "../types/organogram";
+import { useBu } from "@/contexts/BuContext";
 
 export default function OrganogramPage() {
+  const { currentBu } = useBu();
   const { data, isLoading, error } = useOrganogramData();
 
   // Filters state
@@ -68,7 +70,7 @@ export default function OrganogramPage() {
           actions={
             <div className="flex items-center gap-2 text-muted-foreground">
               <Network className="w-5 h-5" />
-              <span className="text-sm">Estrutura da BU</span>
+              <span className="text-sm">Estrutura da {currentBu?.name || 'BU'}</span>
             </div>
           }
         />
