@@ -53,6 +53,7 @@ export {
   useObjectiveContributors,
   useTeamContributedObjectives,
   useTeamObjectivesWithSharedInfo,
+  useManageContributors,
   // Types
   type TeamKrLinked,
   type OrgKrWithTeamKrs,

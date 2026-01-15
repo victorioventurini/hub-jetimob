@@ -1,5 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useHierarchicalTeamList, FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks";
 import { cn } from "@/lib/utils";
 
 interface TeamSelectProps {

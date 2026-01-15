@@ -31,7 +31,7 @@ import { VicActionButton } from '@/modules/vic';
 import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
 import { FlatTeamItem, useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
 import { useManageableTeamsFlat } from '../hooks/useManageableTeams';
-import { useObjectiveContributors, useManageContributors } from '../hooks/useSharedOkrData';
+import { useObjectiveContributors, useManageContributors } from '../hooks';
 import { useCycles } from '../hooks/useCycleData';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { useCancelTeamObjective } from '../hooks/useOkrMutations';

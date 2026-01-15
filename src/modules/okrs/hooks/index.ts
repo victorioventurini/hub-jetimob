@@ -44,6 +44,7 @@ export {
   useObjectiveContributors,
   useTeamContributedObjectives,
   useTeamObjectivesWithSharedInfo,
+  useManageContributors,
   type TeamKrLinked,
   type OrgKrWithTeamKrs,
   type OrgObjectiveWithKrs,

@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight, Target, Plus, MoreHorizontal, Pencil, User }
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
-import { useOrgKeyResults } from '../hooks/useOkrData';
+import { useOrgKeyResults } from '../hooks';
 import { useBu } from '@/contexts/BuContext';
 import { OrgKrFormDialog } from './OrgKrFormDialog';
 import { OrgObjectiveFormDialog } from './OrgObjectiveFormDialog';

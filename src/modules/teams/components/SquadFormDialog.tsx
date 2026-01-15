@@ -21,8 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
-import { useCreateSquad, useUpdateSquad, useDeleteSquad } from "../hooks/useSquads";
-import { useTeams } from "../hooks/useTeams";
+import { useCreateSquad, useUpdateSquad, useDeleteSquad, useTeams } from "../hooks";
 import { 
   SquadWithRelations, 
   SquadProduct, 
