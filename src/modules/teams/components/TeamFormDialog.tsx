@@ -26,6 +26,7 @@ import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import { BuUserSelect } from "@/components/selects/BuUserSelect";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { AreaSelect } from "@/modules/areas/components";
 
 interface TeamFormDialogProps {
   /** Team to edit. If null/undefined, dialog is in create mode */
@@ -68,6 +69,7 @@ export function TeamFormDialog({
     description: "",
     leader_user_id: null,
     parent_team_id: defaultParentTeamId || null,
+    area_id: null,
     status: "active",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -108,6 +110,7 @@ export function TeamFormDialog({
         description: team.description || "",
         leader_user_id: team.leader_user_id,
         parent_team_id: team.parent_team_id,
+        area_id: team.area_id || null,
         status: team.status as "active" | "inactive",
       });
     } else {
@@ -116,6 +119,7 @@ export function TeamFormDialog({
         description: "",
         leader_user_id: null,
         parent_team_id: defaultParentTeamId || null,
+        area_id: null,
         status: "active",
       });
     }
@@ -214,6 +218,24 @@ export function TeamFormDialog({
             excludeExternal
             noneLabel="Sem líder definido"
           />
+        </div>
+
+        {/* Área */}
+        <div className="space-y-2">
+          <Label htmlFor="area">Área</Label>
+          <AreaSelect
+            value={formData.area_id}
+            onChange={(value) =>
+              setFormData({
+                ...formData,
+                area_id: value,
+              })
+            }
+            placeholder="Selecione uma área (opcional)"
+          />
+          <p className="text-xs text-muted-foreground">
+            Áreas agrupam times estrategicamente (ex: Revenue, Produto).
+          </p>
         </div>
 
         {/* Parent Team */}

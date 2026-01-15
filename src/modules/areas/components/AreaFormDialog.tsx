@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { BuUserSelect } from "@/components/shared/BuUserSelect";
+import { BuUserSelect } from "@/components/selects/BuUserSelect";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { useCreateArea, useUpdateArea, useDeleteArea } from "../hooks";
 import { AreaWithRelations, AreaFormData } from "../types";
@@ -186,22 +186,26 @@ export function AreaFormDialog({ open, setOpen, area }: AreaFormDialogProps) {
               <div className="space-y-2">
                 <Label>Líder</Label>
                 <BuUserSelect
-                  value={formData.leader_user_id}
-                  onChange={(value) =>
+                  value={formData.leader_user_id ?? undefined}
+                  onValueChange={(value) =>
                     setFormData({ ...formData, leader_user_id: value })
                   }
                   placeholder="Selecione o líder"
+                  allowNone
+                  noneLabel="Sem líder"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Co-líder</Label>
                 <BuUserSelect
-                  value={formData.co_leader_user_id}
-                  onChange={(value) =>
+                  value={formData.co_leader_user_id ?? undefined}
+                  onValueChange={(value) =>
                     setFormData({ ...formData, co_leader_user_id: value })
                   }
                   placeholder="Selecione o co-líder"
+                  allowNone
+                  noneLabel="Sem co-líder"
                 />
               </div>
             </div>

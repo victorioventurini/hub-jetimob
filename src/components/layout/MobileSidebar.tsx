@@ -25,6 +25,7 @@ import {
   Bell,
   Rocket,
   X,
+  Layers,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ const iconMap: Record<string, LucideIcon> = {
   audit: Shield,
   integrations: Plug,
   teams: Building2,
+  areas: Layers,
   okrs: Target,
   metrics: BarChart3,
   kpis: BarChart3,
@@ -77,6 +79,7 @@ const buMenuItems = [
   { name: "Tickets", href: "/tickets", icon: FileText, slug: "tickets" },
   { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
+  { name: "Áreas", href: "/areas", icon: Layers, slug: "teams" },
 ];
 
 // Módulos globais que aparecem sempre (mesmo com BU selecionada)

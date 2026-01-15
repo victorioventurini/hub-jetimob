@@ -44,6 +44,9 @@ const TeamsPage = lazy(() => import("./modules/teams/pages/TeamsPage"));
 const TeamDetailPage = lazy(() => import("./modules/teams/pages/TeamDetailPage"));
 const SquadDetailPage = lazy(() => import("./modules/teams/pages/SquadDetailPage"));
 
+// Módulo Areas
+const AreasPage = lazy(() => import("./modules/areas/pages/AreasPage"));
+
 // Módulo OKRs
 const OkrsPage = lazy(() => import("./modules/okrs/pages/OkrsPage"));
 const OkrDashboardPage = lazy(() => import("./modules/okrs/pages/OkrDashboardPage"));
@@ -576,6 +579,20 @@ const App = () => {
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="teams">
                               <SquadDetailPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Áreas */}
+                    <Route
+                      path="/areas"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="teams">
+                              <AreasPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>
