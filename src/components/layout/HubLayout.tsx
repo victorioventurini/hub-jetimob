@@ -17,17 +17,33 @@ export function HubLayout({ children }: HubLayoutProps) {
   const { isImpersonating } = useOptionalImpersonation();
   const location = useLocation();
 
-  // Fix: Limpa pointer-events residual após navegação
-  // Dialogs/Sheets do Radix podem deixar pointer-events:none no body
+  // Fix: ao navegar entre páginas, garantimos que o menu mobile fecha
+  // e que qualquer lock residual do Radix (pointer-events:none) seja removido.
   useEffect(() => {
-    // Pequeno delay para garantir que transições completaram
-    const timer = setTimeout(() => {
-      if (document.body.style.pointerEvents === 'none') {
-        document.body.style.pointerEvents = '';
+    setMobileMenuOpen(false);
+
+    const cleanup = () => {
+      const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
+      const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
+
+      // Se o computed ficou travado em 'none', força override inline.
+      if (bodyComputed === "none") {
+        document.body.style.pointerEvents = "auto";
+      } else if (document.body.style.pointerEvents === "none") {
+        document.body.style.pointerEvents = "";
       }
-    }, 100);
-    
-    return () => clearTimeout(timer);
+
+      if (htmlComputed === "none") {
+        document.documentElement.style.pointerEvents = "auto";
+      } else if (document.documentElement.style.pointerEvents === "none") {
+        document.documentElement.style.pointerEvents = "";
+      }
+    };
+
+    // Rodar mais de uma vez para cobrir animações do Sheet/Dialog (closed duration ~300ms)
+    const timers = [0, 250, 550, 900].map((delay) => window.setTimeout(cleanup, delay));
+
+    return () => timers.forEach((t) => window.clearTimeout(t));
   }, [location.pathname]);
 
   return (

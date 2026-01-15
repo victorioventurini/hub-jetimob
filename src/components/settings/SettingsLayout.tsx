@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { HubGlobalSidebar } from "../layout/HubGlobalSidebar";
 import { HubGlobalMobileSidebar } from "../layout/HubGlobalMobileSidebar";
 import { Menu } from "lucide-react";
@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
@@ -154,7 +154,32 @@ function SettingsHeader({ sidebarCollapsed, onMobileMenuToggle }: SettingsHeader
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
+  // Fix: remove lock residual do Radix após navegação (Sheet/Dialog)
+  useEffect(() => {
+    setMobileMenuOpen(false);
+
+    const cleanup = () => {
+      const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
+      const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
+
+      if (bodyComputed === "none") {
+        document.body.style.pointerEvents = "auto";
+      } else if (document.body.style.pointerEvents === "none") {
+        document.body.style.pointerEvents = "";
+      }
+
+      if (htmlComputed === "none") {
+        document.documentElement.style.pointerEvents = "auto";
+      } else if (document.documentElement.style.pointerEvents === "none") {
+        document.documentElement.style.pointerEvents = "";
+      }
+    };
+
+    const timers = [0, 250, 550, 900].map((delay) => window.setTimeout(cleanup, delay));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [location.pathname]);
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
