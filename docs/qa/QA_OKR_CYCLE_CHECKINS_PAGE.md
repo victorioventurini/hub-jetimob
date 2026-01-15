@@ -1,6 +1,6 @@
 # QA: Página de Check-ins do Ciclo (OKRs)
 
-> Versão: 1.2  
+> Versão: 1.3  
 > Última atualização: 2026-01-15
 > **Nota:** CheckinWizard modal foi removido em favor de full-page wizards
 
@@ -20,7 +20,7 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 |-----------|------|---------|-----------|
 | `cycle_id` | uuid | ciclo ativo | ID do ciclo selecionado |
 | `tab` | enum | `feed` | Tab ativa: `feed`, `pending`, `summary` |
-| `view` | enum | `cards` | Modo visualização: `cards`, `table` |
+| `view` | enum | `cards` | Modo visualização: `cards`, `table`, `evolution` |
 | `team_id` | uuid | - | Filtro por time |
 | `owner_id` | uuid | - | Filtro por owner |
 | `confidence` | enum | `all` | Filtro por confiança: `high`, `medium`, `low`, `all` |
@@ -36,10 +36,16 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 
 ### Tab: Feed
 
-**Toggle de Visualização (v1.2):**
+**Toggle de Visualização (v1.3):**
 - **Cards** (default): Visualização em cards individuais
 - **Tabela**: Visualização tabular com todas as informações
-- Toggle persiste na URL (`?view=cards` ou `?view=table`)
+- **Evolução**: Visualização de gráficos de evolução ⭐ NOVO
+- Toggle persiste na URL (`?view=cards`, `?view=table` ou `?view=evolution`)
+
+**Visualização Evolução:**
+- **1 KR filtrada**: Gráfico expandido com progresso, baseline, target e histórico
+- **Múltiplas KRs**: Grid de mini-cards clicáveis com gráficos compactos
+- Clique em mini-card abre `KrHistoryDialog`
 
 **Dados exibidos:**
 - Data, KR, objetivo, time, usuário, valor, tendência, confiança
@@ -70,10 +76,10 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 - [ ] **View mode (`?view=`) persiste no refresh**
 - [ ] Troca de ciclo reseta paginação
 
-### Toggle Cards/Tabela
-- [ ] Toggle visível na tab Feed
-- [ ] Alterna corretamente entre Cards e Tabela
-- [ ] URL atualiza com `?view=cards` ou `?view=table`
+### Toggle Cards/Tabela/Evolução
+- [ ] Toggle visível na tab Feed com 3 opções
+- [ ] Alterna corretamente entre Cards, Tabela e Evolução
+- [ ] URL atualiza com `?view=cards`, `?view=table` ou `?view=evolution`
 - [ ] Preference mantida ao trocar de página
 - [ ] Loading skeleton correto em cada modo
 - [ ] Empty state correto em cada modo
@@ -84,6 +90,15 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 - [ ] Tooltips funcionam para comentários/bloqueadores
 - [ ] Scroll horizontal em mobile
 - [ ] Ordenação por data (cronológica)
+
+### Visualização Evolução ⭐ NOVO
+- [ ] 1 KR filtrada: Gráfico expandido com progresso e histórico
+- [ ] Múltiplas KRs: Grid de mini-cards com gráficos compactos
+- [ ] Progress bar mostra baseline → target
+- [ ] Gráfico exibe linha de meta e baseline
+- [ ] Clique em mini-card abre `KrHistoryDialog`
+- [ ] Loading skeleton nos gráficos
+- [ ] Empty state quando sem KRs
 
 ### Permissões (RBAC)
 - [ ] Líder vê apenas times próprios + descendentes
@@ -136,17 +151,20 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 - `CycleCheckinsPage` - Página principal
 - `CycleCheckinsFeed` - Tab Feed (com toggle e renderização condicional)
 - `CycleCheckinsTable` - Visualização tabular
-- `CycleCheckinsViewToggle` - Toggle Cards/Tabela
+- `CycleCheckinsEvolution` - Visualização de gráficos ⭐ NOVO
+- `CycleCheckinsViewToggle` - Toggle Cards/Tabela/Evolução
 - `CycleCheckinsOverdue` - Tab Pendências
 - `CycleCheckinsSummary` - Tab Resumo
 - `CycleCheckinsFilters` - Barra de filtros
 - `KrHistoryDialog` - Modal de histórico (reutilizado)
+- `KrEvolutionChart` - Gráfico de evolução (reutilizado)
 
 ## Hooks
 
 - `useCycleCheckins` - Dados de check-ins via RPC
 - `useCycles` / `useActiveCycles` - Lista de ciclos
 - `useManageableTeamsFlat` - Times para filtro
+- `useKrWithHistory` - Busca KR + histórico para gráficos ⭐ NOVO
 
 ## Backend
 
