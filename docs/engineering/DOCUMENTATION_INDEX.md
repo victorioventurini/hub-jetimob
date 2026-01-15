@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-01-15  
-**TCR Version:** 2.32.0
+**TCR Version:** 2.34.0
 
 ---
 
@@ -55,8 +55,8 @@
 | [FRONTEND_UX_AUDIT_2026-01-13.md](./FRONTEND_UX_AUDIT_2026-01-13.md) | Auditoria de frontend e UX | ✅ Atual |
 | [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) | Análise de débitos técnicos | ✅ Atual |
 | [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts | ✅ Normativo |
-| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **Guia completo de testes automatizados** | ✅ v1.0.0 |
-| [RFC_AREAS_IMPLEMENTATION.md](./RFC_AREAS_IMPLEMENTATION.md) | **RFC: Implementação de Áreas** | 📋 Draft |
+| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **Guia completo de testes automatizados** (inclui Teams/Areas) | ✅ v1.1.0 |
+| [RFC_AREAS_IMPLEMENTATION.md](./RFC_AREAS_IMPLEMENTATION.md) | **RFC: Implementação de Áreas** (estratégicas) | ✅ Implementado |
 
 ---
 

@@ -1,10 +1,15 @@
 # RFC: Implementação do Conceito de Área no Hub
 
-**Versão:** 1.1.0  
+**Versão:** 1.2.0  
 **Data:** 2026-01-15  
-**Status:** ✅ Implementado  
+**Status:** ✅ Implementado | Testes Unitários Adicionados  
 **Autor:** Lovable AI / Equipe de Engenharia  
-**Referência:** TCR v2.33.0
+**Referência:** TCR v2.34.0
+
+### Changelog
+- **v1.2.0** (2026-01-15): Testes unitários adicionados (`useAreas.test.ts`, `useTeams.test.ts`, query keys tests, MSW handlers)
+- **v1.1.0** (2026-01-15): Implementação completa (schema, RLS, UI, integração com times)
+- **v1.0.0** (2026-01-14): RFC inicial
 
 ---
 
