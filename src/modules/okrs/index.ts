@@ -51,6 +51,9 @@ export { TeamCheckinSettings } from './components/TeamCheckinSettings';
 export { CycleRetrospectiveDialog } from './components/CycleRetrospectiveDialog';
 export { SharedOkrBadge } from './components/SharedOkrBadge';
 export { SharedOkrInsights } from './components/SharedOkrInsights';
+export { KrHistoryDialog } from './components/KrHistoryDialog';
+export { KrCheckinsTable } from './components/KrCheckinsTable';
+export { KrEvolutionChart } from './components/KrEvolutionChart';
 export * from './components/team-view';
 export * from './components/initiatives';
 

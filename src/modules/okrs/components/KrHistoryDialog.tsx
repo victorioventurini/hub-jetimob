@@ -6,23 +6,24 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp,
   TrendingDown,
   Minus,
   Target,
-  User,
-  Calendar,
-  ArrowRight,
   ChartLine,
   ExternalLink,
+  Table as TableIcon,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useKrHistory } from "../hooks/useKrHistory";
 import { KrEvolutionChart } from "./KrEvolutionChart";
+import { KrCheckinsTable } from "./KrCheckinsTable";
 import { formatValueWithUnit } from "../constants/krUnits";
 import { cn } from "@/lib/utils";
+import type { OkrDirection } from "../types";
 
 interface KrData {
   id: string;
@@ -31,7 +32,7 @@ interface KrData {
   current_value: number;
   target: number;
   unit: string;
-  direction: 'up' | 'down' | 'maintain';
+  direction: OkrDirection;
   status: 'green' | 'yellow' | 'red' | 'not_started';
   type: 'contribution' | 'enabler' | 'foundational';
   owner_name?: string | null;
@@ -60,22 +61,16 @@ const statusLabels = {
   not_started: 'Não iniciado',
 };
 
-const confidenceColors = {
-  high: 'text-status-green-muted-foreground bg-status-green-muted',
-  medium: 'text-status-yellow-muted-foreground bg-status-yellow-muted',
-  low: 'text-status-red-muted-foreground bg-status-red-muted',
-};
-
-const confidenceLabels = {
-  high: 'Alta',
-  medium: 'Média',
-  low: 'Baixa',
-};
-
 const typeLabels = {
   contribution: 'Contribuição',
   enabler: 'Habilitador',
   foundational: 'Fundacional',
+};
+
+const directionLabels: Record<OkrDirection, string> = {
+  up: '↑ Maior é melhor',
+  down: '↓ Menor é melhor',
+  maintain: '= Manter valor',
 };
 
 export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps) {
@@ -85,7 +80,9 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
 
   const progress = kr.target !== kr.baseline
     ? Math.min(100, Math.max(0, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100))
-    : 0;
+    : kr.direction === 'maintain' && kr.current_value >= kr.target
+      ? 100
+      : 0;
 
   const ownerInitials = kr.owner_name
     ?.split(' ')
@@ -95,13 +92,20 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
     .toUpperCase() || '?';
 
   const TrendIcon = historyData?.trend === 'up' ? TrendingUp : historyData?.trend === 'down' ? TrendingDown : Minus;
-  const trendColor = kr.direction === 'up'
-    ? historyData?.trend === 'up' ? 'text-green-500' : historyData?.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'
-    : historyData?.trend === 'down' ? 'text-green-500' : historyData?.trend === 'up' ? 'text-red-500' : 'text-muted-foreground';
+  
+  const getTrendColor = () => {
+    if (kr.direction === 'maintain') return 'text-muted-foreground';
+    if (kr.direction === 'up') {
+      return historyData?.trend === 'up' ? 'text-green-500' : historyData?.trend === 'down' ? 'text-red-500' : 'text-muted-foreground';
+    }
+    return historyData?.trend === 'down' ? 'text-green-500' : historyData?.trend === 'up' ? 'text-red-500' : 'text-muted-foreground';
+  };
+  
+  const trendColor = getTrendColor();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader className="space-y-3">
           {/* Header with title and badges */}
           <div className="flex items-start gap-3">
@@ -181,56 +185,75 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
               </div>
             )}
             <div className="flex items-center gap-1">
-              <span>Direção: {kr.direction === 'up' ? '↑ Maior é melhor' : '↓ Menor é melhor'}</span>
+              <span>Direção: {directionLabels[kr.direction]}</span>
             </div>
           </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-6 pb-4">
-            {/* Evolution Chart */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium flex items-center gap-2">
-                <ChartLine className="w-4 h-4" />
-                Evolução
-              </h3>
-              {isLoading ? (
-                <Skeleton className="h-48 w-full" />
-              ) : historyData?.checkins ? (
-                <KrEvolutionChart
-                  checkins={historyData.checkins}
-                  baseline={kr.baseline}
-                  target={kr.target}
+          <div className="space-y-4 pb-4">
+            <Tabs defaultValue="chart" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="chart" className="gap-2">
+                  <ChartLine className="h-4 w-4" />
+                  <span className="hidden sm:inline">Evolução</span>
+                </TabsTrigger>
+                <TabsTrigger value="table" className="gap-2">
+                  <TableIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Histórico Completo</span>
+                  {historyData?.totalCheckins ? (
+                    <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
+                      {historyData.totalCheckins}
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="chart" className="mt-4">
+                {isLoading ? (
+                  <Skeleton className="h-48 w-full" />
+                ) : historyData?.checkins?.length ? (
+                  <KrEvolutionChart
+                    checkins={historyData.checkins}
+                    baseline={kr.baseline}
+                    target={kr.target}
+                    unit={kr.unit}
+                    direction={kr.direction}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                    <ChartLine className="h-12 w-12 opacity-30 mb-3" />
+                    <p className="text-sm">Nenhum check-in registrado ainda.</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="table" className="mt-4">
+                <KrCheckinsTable
+                  checkins={historyData?.checkins || []}
                   unit={kr.unit}
                   direction={kr.direction}
+                  isLoading={isLoading}
                 />
-              ) : null}
-            </div>
+              </TabsContent>
+            </Tabs>
 
-            {/* Link to Full Check-ins Page */}
+            {/* Link to context page (optional) */}
             {historyData?.checkins?.length ? (
               <div className="pt-2 border-t">
                 <Button
-                  variant="outline"
-                  className="w-full"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground hover:text-foreground"
                   asChild
                 >
                   <Link to={`/okrs/checkins?q=${encodeURIComponent(kr.title)}`}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Ver histórico completo de check-ins
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      {historyData.totalCheckins}
-                    </Badge>
-                    <ExternalLink className="w-3.5 h-3.5 ml-auto" />
+                    Ver no contexto do ciclo
+                    <ExternalLink className="w-3.5 h-3.5 ml-2" />
                   </Link>
                 </Button>
               </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground text-sm border-t">
-                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                Nenhum check-in registrado ainda.
-              </div>
-            )}
+            ) : null}
           </div>
         </ScrollArea>
       </DialogContent>
