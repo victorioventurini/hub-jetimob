@@ -39,14 +39,14 @@ export function AreasPage() {
   return (
     <>
       <Helmet>
-        <title>Áreas | Hub Jetimob</title>
+        <title>Áreas | Configurações | Hub Jetimob</title>
         <meta
           name="description"
           content="Gerencie as áreas estratégicas que agrupam os times da organização."
         />
       </Helmet>
 
-      <div className="container py-6 space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

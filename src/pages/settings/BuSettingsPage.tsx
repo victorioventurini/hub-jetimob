@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
-import { Shield, Bell, ChevronRight } from "lucide-react";
+import { Shield, Bell, ChevronRight, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -66,6 +66,13 @@ export default function BuSettingsPage() {
                 iconBgColor="bg-status-amber-muted text-status-amber"
                 title="Notificações"
                 description="Configurar canais e preferências de notificações da BU"
+              />
+              <SettingsCard
+                to="/settings/areas"
+                icon={Building2}
+                iconBgColor="bg-status-emerald-muted text-status-emerald"
+                title="Áreas"
+                description="Gerenciar áreas estratégicas que agrupam os times"
               />
             </div>
           </div>

@@ -1,13 +1,12 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AssetsLayout } from "../components/AssetsLayout";
 import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useBu } from "@/contexts/BuContext";
+import { SavedLinksPopover } from "@/shared/saved-links";
 
 export default function AssetsPage() {
   usePageTitle("Assets");
@@ -29,6 +28,7 @@ export default function AssetsPage() {
         <PageHeader
           title="Assets"
           description={`Gerencie inventário, chaves e brindes da ${currentBu?.name || 'organização'}`}
+          actions={<SavedLinksPopover moduleSlug="assets" />}
         />
         <AssetsLayout />
       </div>
