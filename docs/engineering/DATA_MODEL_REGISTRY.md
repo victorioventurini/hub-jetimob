@@ -1,8 +1,8 @@
 # Data Model Registry — Hub da Jet
 
-**Gerado em:** 2026-01-10T21:40:00.000Z  
-**Versão do Generator:** 1.1.0  
-**Versão do TCR:** 2.14.0  
+**Gerado em:** 2026-01-15T11:47:00.000Z  
+**Versão do Generator:** 1.2.0  
+**Versão do TCR:** 2.35.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
 > ⚠️ **FONTE ÚNICA DE VERDADE**
@@ -25,6 +25,7 @@ Lista completa das tabelas no schema `public`:
 | `ai_agent_logs` | ✅ | ✅ | Logs de execução de agentes |
 | `ai_agents` | ✅ | ✅ | Configuração de agentes IA |
 | `app_error_logs` | ✅ | ✅ | Logs de erros da aplicação |
+| `areas` | ✅ | ✅ | Áreas organizacionais |
 | `asset_categories` | ✅ | ✅ | Categorias de ativos |
 | `asset_clavicularies` | ✅ | ✅ | Claviculários (porta-chaves) |
 | `asset_gift_batches` | ✅ | ✅ | Lotes de brindes |
@@ -64,7 +65,7 @@ Lista completa das tabelas no schema `public`:
 | `job_titles` | ✅ | ✅ | Cargos |
 | `kpi_metrics` | ✅ | ✅ | Métricas KPI |
 | `kpi_values` | ✅ | ✅ | Valores de KPI |
-| `mentions` | ✅ | ✅ | Menções globais (entity_type + entity_id) |
+| `mentions` | ✅ | ✅ | Menções (entity_type + entity_id) |
 | `modules` | ✅ | ❌ | Módulos do sistema |
 | `notification_channels` | ✅ | ❌ | Canais de notificação |
 | `notification_deliveries` | ✅ | ✅ | Entregas de notificação |
@@ -101,26 +102,33 @@ Lista completa das tabelas no schema `public`:
 | `partner_contact_capabilities` | ✅ | ✅ | Capacidades de contatos |
 | `partner_contacts` | ✅ | ✅ | Contatos de parceiros |
 | `partner_service_mappings` | ✅ | ✅ | Mapeamento de serviços |
+| `perf_metrics_snapshots` | ❌ | ❌ | Snapshots de métricas de performance (P4) |
 | `permission_audit_log` | ✅ | ✅ | Audit log de permissões |
 | `permission_catalog` | ✅ | ❌ | Catálogo de permissões |
 | `permission_migrations` | ✅ | ✅ | Migrações de permissões |
-| `permission_template_permissions_v2` | ✅ | ❌ | Permissões por template |
+| `permission_presets` | ✅ | ❌ | Presets de permissões |
+| `permission_template_items_v2` | ✅ | ❌ | Items de template de permissão |
 | `permission_templates_v2` | ✅ | ❌ | Templates de permissão V2 |
 | `profiles` | ✅ | ✅ | Perfis de usuários |
 | `squad_memberships` | ✅ | ✅ | Membros de squads |
+| `squad_teams` | ✅ | ✅ | Relacionamento squad ↔ teams |
 | `squads` | ✅ | ✅ | Squads |
+| `system_settings` | ✅ | ❌ | Configurações do sistema |
 | `teams` | ✅ | ✅ | Times |
 | `ticket_attachments` | ✅ | ✅ | Anexos de tickets |
 | `ticket_categories` | ✅ | ✅ | Categorias de tickets |
+| `ticket_internal_routing_rules` | ✅ | ✅ | Regras de roteamento interno |
 | `ticket_messages` | ✅ | ✅ | Mensagens de tickets |
-| `ticket_priority_rules` | ✅ | ✅ | Regras de prioridade |
-| `ticket_sla_configs` | ✅ | ✅ | Configurações de SLA |
+| `ticket_participants` | ✅ | ✅ | Participantes de tickets |
+| `ticket_routing_rules` | ✅ | ✅ | Regras de roteamento |
+| `ticket_subcategories` | ✅ | ✅ | Subcategorias de tickets |
 | `tickets` | ✅ | ✅ | Tickets |
-| `user_notification_preferences` | ✅ | ✅ | Preferências de notificação |
+| `user_notification_preferences_v2` | ✅ | ✅ | Preferências de notificação V2 |
+| `user_preferences` | ✅ | ✅ | Preferências do usuário |
 | `user_roles` | ✅ | ❌ | Roles globais |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 99 tabelas (ticket_mentions removida, centralizada em mentions)
+**Total:** 107 tabelas
 
 ---
 
@@ -170,10 +178,15 @@ Lista completa das tabelas no schema `public`:
 | `asset_inventory_status` | `available`, `loaned`, `maintenance`, `written_off` |
 | `asset_movement_type` | `checkout`, `return`, `transfer`, `maintenance_start`, `maintenance_end`, `write_off` |
 | `asset_permission_role` | `assets_admin`, `inventory_admin`, `inventory_manager`, `keys_admin`, `keys_manager`, `gifts_admin`, `gifts_manager`, `viewer` |
+| `automation_log_status` | `pending`, `success`, `error`, `timeout` |
+| `automation_log_type` | `webhook`, `incoming`, `scheduled` |
 | `bu_location_status` | `active`, `inactive` |
 | `bu_location_type` | `headquarters`, `office`, `warehouse`, `remote_hub`, `other`, `room` |
 | `bu_status` | `active`, `inactive` |
 | `catalog_status` | `active`, `inactive` |
+| `cron_status` | `started`, `success`, `failed`, `error`, `timeout` |
+| `cycle_type` | `year`, `quarter`, `month`, `sprint`, `custom` |
+| `document_processing_status` | `pending`, `processing`, `completed`, `error` |
 | `employment_status` | `active`, `vacation`, `terminated`, `external` |
 | `gift_destination_type` | `event`, `campaign`, `person`, `other` |
 | `gift_item_status` | `active`, `inactive` |
@@ -183,27 +196,51 @@ Lista completa das tabelas no schema `public`:
 | `instruction_source_type` | `api`, `document`, `hub_context`, `template` |
 | `integration_config_mode` | `use_global`, `override` |
 | `integration_test_status` | `ok`, `error`, `pending` |
-| `key_access_type` | `door` |
-| `key_movement_type` | `checkout`, `return`, `transfer` |
-| `key_status` | `available`, `loaned`, `lost` |
-| `keyring_status` | `available`, `loaned` |
-| `kr_rag_status` | `not_started`, `green`, `yellow`, `red`, `completed`, `cancelled` |
-| `kr_type` | `contribution`, `enabler`, `foundational` |
-| `objective_status` | `draft`, `active`, `completed`, `cancelled` |
-| `okr_confidence_level` | `high`, `medium`, `low` |
-| `okr_contribution_type` | `objective`, `kr` |
+| `key_access_type` | `door`, `padlock`, `gate`, `other` |
+| `key_movement_type` | `checkout`, `return`, `transfer`, `lost`, `retired` |
+| `key_status` | `in_claviculary`, `loaned`, `lost`, `retired` |
+| `keyring_status` | `available`, `loaned`, `lost`, `retired` |
+| `kpi_category` | `financeiro`, `growth`, `cs`, `produto`, `operacoes`, `pessoas` |
+| `kpi_direction` | `up`, `down` |
+| `kpi_frequency` | `daily`, `weekly`, `monthly`, `quarterly` |
+| `kpi_status` | `active`, `inactive` |
+| `kpi_value_source` | `manual`, `integration`, `calculation` |
+| `migration_status` | `pending`, `in_progress`, `completed`, `failed`, `rolled_back` |
+| `module_health` | `healthy`, `degraded`, `down` |
+| `module_status` | `active`, `inactive`, `coming_soon` |
+| `module_type` | `global`, `operational` |
+| `notification_audience` | `internal`, `external`, `both` |
+| `notification_channel` | `internal`, `email`, `slack`, `whatsapp` |
+| `notification_delivery_status` | `pending`, `sent`, `failed`, `skipped` |
+| `notification_outbox_status` | `pending`, `processing`, `sent`, `failed`, `cancelled` |
+| `notification_severity` | `info`, `warning`, `critical` |
+| `notification_type` | `mention`, `checkin_created`, `checkin_overdue`, `kr_status_changed`, `shared_okr_update`, `info`, `system`, `alert` |
+| `okr_channel` | `email`, `slack`, `both` |
+| `okr_confidence` | `high`, `medium`, `low` |
+| `okr_contribution_entity_type` | `objective`, `kr` |
+| `okr_dependency_status` | `ok`, `blocked`, `at_risk` |
 | `okr_direction` | `up`, `down` |
-| `okr_insight_category` | `risk`, `progress`, `blockers`, `coaching` |
-| `okr_insight_status` | `open`, `acknowledged`, `resolved` |
-| `partner_service_scope` | `all`, `team`, `location` |
+| `okr_kr_type` | `contribution`, `enabler`, `foundational` |
+| `okr_metric_role` | `primary`, `guardrail` |
+| `okr_rag_status` | `green`, `yellow`, `red`, `not_started` |
+| `okr_report_frequency` | `weekly`, `monthly`, `quarterly`, `event` |
+| `okr_status` | `draft`, `active`, `completed`, `cancelled`, `discarded` |
+| `partner_company_status` | `active`, `inactive` |
+| `partner_contact_status` | `active`, `inactive` |
+| `partner_service_status` | `active`, `inactive` |
 | `permission_effect` | `allow`, `deny` |
-| `squad_membership_role` | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
-| `ticket_priority` | `low`, `medium`, `high`, `urgent` |
-| `ticket_source` | `internal`, `external`, `email`, `chat` |
-| `ticket_status` | `open`, `in_progress`, `waiting`, `resolved`, `closed` |
+| `permission_scope` | `self`, `self_or_owner`, `team`, `team_tree`, `squad`, `bu`, `global`, `public` |
+| `squad_product` | `crm`, `cms`, `erp` |
+| `squad_role` | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
+| `team_status` | `active`, `inactive` |
+| `ticket_author_type` | `internal_user`, `partner_contact` |
+| `ticket_category_scope` | `internal`, `external`, `both` |
+| `ticket_participant_role` | `requester`, `assignee`, `watcher` |
+| `ticket_participant_type` | `internal_user`, `partner_contact` |
+| `ticket_status` | `waiting_client`, `open`, `in_progress`, `waiting`, `resolved`, `closed` |
 | `work_mode` | `remote`, `hybrid`, `onsite` |
 
-**Total:** 42 enums
+**Total:** 70 enums
 
 ---
 
@@ -212,10 +249,12 @@ Lista completa das tabelas no schema `public`:
 ### Colunas que armazenam `profiles.id` (PROFILE_ID)
 
 > ⚠️ **ATENÇÃO:** Apesar do nome `_user_id`, estas colunas referenciam `profiles.id`, NÃO `auth.users.id`.
-> Ver: [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md)
+> Ver: [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)
 
 | Tabela | Coluna | FK Explícita | Notas |
 |--------|--------|--------------|-------|
+| `areas` | `leader_user_id` | ✅ → `profiles.id` | Líder da área |
+| `areas` | `co_leader_user_id` | ✅ → `profiles.id` | Co-líder da área |
 | `teams` | `leader_user_id` | ✅ → `profiles.id` | Líder do time |
 | `squads` | `leader_user_id` | ✅ → `profiles.id` | Líder do squad |
 | `squad_memberships` | `user_id` | ✅ → `profiles.id` | Membro do squad |
@@ -243,7 +282,6 @@ Lista completa das tabelas no schema `public`:
 | `asset_key_movements` | `authorized_by_user_id` | ❌ (inferido) | Autorizador |
 | `asset_gift_movements` | `performed_by_user_id` | ❌ (inferido) | Executor |
 | `mentions` | `mentioned_user_id` | ✅ → `profiles.id` | Usuário mencionado |
-| `ticket_mentions` | `mentioned_user_id` | ✅ → `profiles.id` | Usuário mencionado |
 | `profiles` | `manager_user_id` | ❌ (inferido) | Gestor direto |
 | `partner_contacts` | `profile_user_id` | ❌ (inferido) | Perfil vinculado |
 | `notification_health_alert_actions` | `actor_profile_id` | ✅ → `profiles.id` | Ator |
@@ -349,6 +387,13 @@ Lista completa das tabelas no schema `public`:
 |--------|---------|-----------|
 | `can_view_ticket(uuid, uuid)` | `boolean` | Pode ver ticket |
 
+### Performance (P4)
+
+| Função | Retorno | Descrição |
+|--------|---------|-----------|
+| `collect_perf_metrics()` | `jsonb` | Coleta métricas de performance |
+| `cleanup_old_perf_snapshots()` | `integer` | Remove snapshots antigos (>90 dias) |
+
 ---
 
 ## Triggers Padrão
@@ -397,4 +442,4 @@ O script:
 
 ---
 
-*Gerado automaticamente do banco de dados. Não edite manualmente.*
+*Gerado automaticamente do banco de dados em 2026-01-15. Não edite manualmente.*
