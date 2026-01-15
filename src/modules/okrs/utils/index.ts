@@ -4,6 +4,13 @@
  * Consolidates all OKR utility functions and validation logic.
  */
 
+// Progress Calculation (FONTE DE VERDADE)
+export {
+  calculateProgress,
+  calculateAggregatedProgress,
+  calculateProgressFromNullable,
+} from './progressCalculation';
+
 // KR Validation
 export {
   validateKrTitle,

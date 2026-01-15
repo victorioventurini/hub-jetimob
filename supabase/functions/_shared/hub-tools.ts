@@ -511,23 +511,35 @@ export async function getHubContextData(
 // HELPERS
 // =============================================================================
 
+/**
+ * Calculate KR progress with correct formula
+ * 
+ * FORMULA: Progress = (current - baseline) / (target - baseline) × 100
+ * For direction=down: Progress = (baseline - current) / (baseline - target) × 100
+ * For maintenance KRs (baseline = target): binary 0% or 100%
+ */
 function calculateProgress(
   baseline: number,
   current: number,
   target: number,
   direction: string
 ): number {
-  const totalRange = target - baseline;
-  if (totalRange === 0) return 100;
-  
-  const achieved = current - baseline;
-  let progress = (achieved / totalRange) * 100;
-  
-  if (direction === "down") {
-    progress = 100 - progress;
+  if (direction === "up") {
+    // Maintenance KR (baseline = target): binary
+    if (target === baseline) {
+      return current >= target ? 100 : 0;
+    }
+    const progress = ((current - baseline) / (target - baseline)) * 100;
+    return Math.max(0, Math.min(100, Math.round(progress)));
+  } else {
+    // Maintenance KR for reduction
+    if (baseline === target) {
+      return current <= target ? 100 : 0;
+    }
+    // Correct formula for reduction: (baseline - current) / (baseline - target)
+    const progress = ((baseline - current) / (baseline - target)) * 100;
+    return Math.max(0, Math.min(100, Math.round(progress)));
   }
-  
-  return Math.max(0, Math.min(100, Math.round(progress)));
 }
 
 function getStatusEmoji(status: string): string {

@@ -226,27 +226,9 @@ export interface OkrKrMetric {
   };
 }
 
-// Utility functions
-export function calculateProgress(
-  baseline: number,
-  current: number,
-  target: number,
-  direction: OkrDirection
-): number {
-  if (direction === 'up') {
-    if (target === baseline) {
-      return current >= target ? 100 : 0;
-    }
-    const progress = ((current - baseline) / (target - baseline)) * 100;
-    return Math.max(0, Math.min(100, progress));
-  } else {
-    if (baseline === target) {
-      return current <= target ? 100 : 0;
-    }
-    const progress = ((baseline - current) / (baseline - target)) * 100;
-    return Math.max(0, Math.min(100, progress));
-  }
-}
+// Re-export calculateProgress from utils for backwards compatibility
+// FONTE DE VERDADE: src/modules/okrs/utils/progressCalculation.ts
+export { calculateProgress } from './utils/progressCalculation';
 
 export function getRagStatusColor(status: OkrRagStatus): string {
   switch (status) {

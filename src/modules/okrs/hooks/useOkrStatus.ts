@@ -125,6 +125,7 @@ export function useKrStatusDistribution(
     baseline: number;
     current_value: number;
     target: number;
+    direction?: OkrDirection;
   }> | undefined
 ) {
   return useMemo(() => {
@@ -155,7 +156,7 @@ export function useKrStatusDistribution(
         Number(kr.baseline) || 0,
         Number(kr.current_value) || 0,
         Number(kr.target) || 0,
-        'up'
+        kr.direction || 'up'
       );
       
       // Map RAG status but also check for completion

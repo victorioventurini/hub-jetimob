@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { calculateProgress } from "../utils/progressCalculation";
+import type { OkrDirection } from "../types";
 
 export interface TeamOkrContribution {
   id: string;
@@ -47,16 +49,6 @@ export interface TeamContributionData {
   contributions: OrgObjectiveContribution[];
 }
 
-const calculateProgress = (baseline: number, current: number, target: number, direction: string): number => {
-  if (direction === 'down') {
-    if (baseline === target) return current <= target ? 100 : 0;
-    const progress = ((baseline - current) / (baseline - target)) * 100;
-    return Math.max(0, Math.min(100, progress));
-  }
-  if (baseline === target) return current >= target ? 100 : 0;
-  const progress = ((current - baseline) / (target - baseline)) * 100;
-  return Math.max(0, Math.min(100, progress));
-};
 
 const ragToStatus = (rag: string): 'on_track' | 'at_risk' | 'off_track' => {
   switch (rag) {
