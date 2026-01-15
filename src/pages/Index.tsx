@@ -13,7 +13,7 @@ import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
 import { ManagersCheckinWizardCard } from "@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard";
 import { CLevelCheckinWizardCard } from "@/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard";
-import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
+import { useLeaderTeams } from "@/modules/home/hooks";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
