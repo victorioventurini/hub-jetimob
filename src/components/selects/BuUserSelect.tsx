@@ -177,6 +177,8 @@ export function BuUserSelect({
                 {selectedProfile.display_name || "Sem nome"}
               </span>
             </div>
+          ) : value && isLoadingSelected ? (
+            <span className="text-muted-foreground">Carregando...</span>
           ) : null}
         </SelectValue>
       </SelectTrigger>
