@@ -23,14 +23,14 @@ export default function OrganogramPage() {
     searchTerm: "",
   });
 
-  // Controls state - start at 70% to fit all 3 areas in view
+  // Controls state - start at 100% for best fit
   const [controls, setControls] = useState<OrganogramControlsState>({
-    zoom: 70,
+    zoom: 100,
     orientation: "vertical",
   });
 
   const handleFitToScreen = useCallback(() => {
-    setControls(prev => ({ ...prev, zoom: 70 }));
+    setControls(prev => ({ ...prev, zoom: 100 }));
   }, []);
 
   const handleOpenFullscreen = useCallback(() => {

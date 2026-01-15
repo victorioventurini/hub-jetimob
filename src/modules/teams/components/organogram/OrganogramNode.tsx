@@ -162,9 +162,9 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
       <Link
         to={node.path}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg border shadow-sm transition-all",
+          "flex items-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all",
           "hover:shadow-md hover:border-accent focus:outline-none focus:ring-2 focus:ring-ring",
-          "min-w-[160px] max-w-[280px]",
+          "min-w-[140px] max-w-[200px]",
           config.bgClass,
           config.borderClass
         )}
@@ -180,15 +180,16 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
             alt={node.name}
             fallback={node.name.slice(0, 2).toUpperCase()}
             size="sm"
+            className="w-7 h-7"
           />
         ) : (
           <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center",
+            "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
             "bg-muted"
           )}
           style={node.color ? { backgroundColor: `${node.color}20` } : undefined}
           >
-            <Icon className={cn("w-4 h-4", config.iconClass)} 
+            <Icon className={cn("w-3.5 h-3.5", config.iconClass)} 
                   style={node.color ? { color: node.color } : undefined} />
           </div>
         )}
@@ -239,12 +240,12 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="flex flex-col items-center mt-4">
+        <div className="flex flex-col items-center mt-3">
           {/* Connector line down */}
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-4 bg-border" />
           
           {/* Children container */}
-          <div className="flex flex-nowrap justify-center gap-6 relative">
+          <div className="flex flex-nowrap justify-center gap-3 relative">
             {/* Horizontal line connecting children */}
             {node.children.length > 1 && (
               <div 
@@ -260,7 +261,7 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
             {node.children.map((child) => (
               <div key={child.id} className="flex flex-col items-center">
                 {/* Connector line up */}
-                <div className="w-px h-6 bg-border" />
+                <div className="w-px h-4 bg-border" />
                 <OrganogramNodeWrapper 
                   node={child} 
                   parentColor={areaColor}
