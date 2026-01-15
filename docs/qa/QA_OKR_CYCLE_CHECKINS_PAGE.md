@@ -1,7 +1,7 @@
 # QA: Página de Check-ins do Ciclo (OKRs)
 
-> Versão: 1.1  
-> Última atualização: 2026-01-13
+> Versão: 1.2  
+> Última atualização: 2026-01-15
 > **Nota:** CheckinWizard modal foi removido em favor de full-page wizards
 
 ## Visão Geral
@@ -20,6 +20,7 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 |-----------|------|---------|-----------|
 | `cycle_id` | uuid | ciclo ativo | ID do ciclo selecionado |
 | `tab` | enum | `feed` | Tab ativa: `feed`, `pending`, `summary` |
+| `view` | enum | `cards` | Modo visualização: `cards`, `table` |
 | `team_id` | uuid | - | Filtro por time |
 | `owner_id` | uuid | - | Filtro por owner |
 | `confidence` | enum | `all` | Filtro por confiança: `high`, `medium`, `low`, `all` |
@@ -34,8 +35,14 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 ## Funcionalidades
 
 ### Tab: Feed
-- Lista cronológica de check-ins
-- Mostra: data, KR, objetivo, time, usuário, valor, tendência, confiança
+
+**Toggle de Visualização (v1.2):**
+- **Cards** (default): Visualização em cards individuais
+- **Tabela**: Visualização tabular com todas as informações
+- Toggle persiste na URL (`?view=cards` ou `?view=table`)
+
+**Dados exibidos:**
+- Data, KR, objetivo, time, usuário, valor, tendência, confiança
 - Comentários e bloqueadores inline
 - Paginação
 - Clique em KR abre `KrHistoryDialog`
@@ -60,7 +67,23 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 - [ ] Parâmetros são atualizados ao mudar filtros
 - [ ] URL é compartilhável (abre com mesmos filtros)
 - [ ] Tab persiste na URL
+- [ ] **View mode (`?view=`) persiste no refresh**
 - [ ] Troca de ciclo reseta paginação
+
+### Toggle Cards/Tabela
+- [ ] Toggle visível na tab Feed
+- [ ] Alterna corretamente entre Cards e Tabela
+- [ ] URL atualiza com `?view=cards` ou `?view=table`
+- [ ] Preference mantida ao trocar de página
+- [ ] Loading skeleton correto em cada modo
+- [ ] Empty state correto em cada modo
+
+### Visualização Tabela
+- [ ] Colunas: Data, Usuário, KR, Objetivo, Time, Valor, Confiança, Info
+- [ ] Clique em KR abre `KrHistoryDialog`
+- [ ] Tooltips funcionam para comentários/bloqueadores
+- [ ] Scroll horizontal em mobile
+- [ ] Ordenação por data (cronológica)
 
 ### Permissões (RBAC)
 - [ ] Líder vê apenas times próprios + descendentes
@@ -77,7 +100,8 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 - [ ] Resumo: clique em time filtra corretamente
 
 ### KrHistoryDialog
-- [ ] Abre corretamente do Feed
+- [ ] Abre corretamente do Feed (Cards)
+- [ ] Abre corretamente do Feed (Tabela)
 - [ ] Abre corretamente das Pendências
 - [ ] Dados do KR são carregados
 - [ ] Gráfico de evolução funciona
@@ -104,11 +128,15 @@ Página consolidada (`/okrs/checkins`) que exibe todos os check-ins de um ciclo 
 - [ ] Layout mobile funciona
 - [ ] Tabs compactas em mobile
 - [ ] Cards empilham verticalmente
+- [ ] Toggle responsivo (ícones em mobile)
+- [ ] Tabela com scroll horizontal em mobile
 
 ## Componentes Utilizados
 
 - `CycleCheckinsPage` - Página principal
-- `CycleCheckinsFeed` - Tab Feed
+- `CycleCheckinsFeed` - Tab Feed (com toggle e renderização condicional)
+- `CycleCheckinsTable` - Visualização tabular
+- `CycleCheckinsViewToggle` - Toggle Cards/Tabela
 - `CycleCheckinsOverdue` - Tab Pendências
 - `CycleCheckinsSummary` - Tab Resumo
 - `CycleCheckinsFilters` - Barra de filtros
