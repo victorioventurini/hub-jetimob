@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.8.0  
-**Última atualização:** 2026-01-14  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados
-**Referência:** TCR v2.31.0
+**Versão:** 1.9.0  
+**Última atualização:** 2026-01-15  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos**
+**Referência:** TCR v2.32.0
 
 ---
 
@@ -22,6 +22,7 @@
 - [K. Hooks e Barrel Files](#k-hooks-e-barrel-files)
 - [L. Layout e Estados de Página](#l-layout-e-estados-de-página)
 - [M. Limites de Código e Sustentabilidade](#m-limites-de-código-e-sustentabilidade)
+- [N. Testes Automatizados](#n-testes-automatizados)
 
 ---
 
@@ -1232,6 +1233,113 @@ Tabelas limpas automaticamente:
 
 ---
 
+## N. Testes Automatizados
+
+O Hub implementa uma estratégia completa de testes seguindo roadmap de 6 fases:
+
+### N.1 Stack de Testes
+
+| Tipo | Ferramenta | Propósito |
+|------|------------|-----------|
+| Unit | Vitest | Funções puras, utils, validações |
+| Integration | Vitest + MSW | Hooks, React Query, API mocks |
+| Component | Vitest + Testing Library | Componentes React |
+| E2E | Playwright | Fluxos críticos completos |
+
+### N.2 Estrutura de Arquivos
+
+```
+src/
+├── test/
+│   ├── mocks/
+│   │   ├── fixtures/     # Dados de teste (OKRs, profiles)
+│   │   ├── handlers.ts   # MSW handlers para Supabase
+│   │   └── supabase.ts   # Mock do cliente Supabase
+│   ├── setup.ts          # Setup global do Vitest
+│   └── test-utils.tsx    # Providers e helpers
+├── **/*.test.ts          # Testes unitários e integração
+
+e2e/
+├── fixtures/             # Fixtures E2E
+├── *.spec.ts            # Testes Playwright
+└── README.md            # Docs E2E
+```
+
+### N.3 Comandos
+
+```bash
+# Unit/Integration tests
+npm run test              # Watch mode
+npm run test -- --run     # Single run
+npm run test -- --coverage # Com cobertura
+
+# E2E tests
+npx playwright test       # Todos os testes
+npx playwright test --ui  # Modo interativo
+```
+
+### N.4 Metas de Cobertura
+
+| Área | Meta | Prioridade |
+|------|------|------------|
+| Pure Utils | 90% | Alta |
+| Validation Logic | 85% | Alta |
+| Business Hooks | 80% | Alta |
+| Components | 70% | Média |
+
+### N.5 CI/CD
+
+Workflows configurados em `.github/workflows/`:
+
+| Workflow | Trigger | Jobs |
+|----------|---------|------|
+| `test.yml` | Push/PR para main/develop | unit-tests, e2e-tests, lint, type-check |
+| `test-quick.yml` | Push em feature branches | unit-tests, type-check |
+
+### N.6 Padrões de Teste
+
+```typescript
+// ✅ Unit test
+import { describe, it, expect } from 'vitest';
+import { validateKrTitle } from './krValidation';
+
+describe('validateKrTitle', () => {
+  it('should reject empty titles', () => {
+    const result = validateKrTitle('');
+    expect(result.isValid).toBe(false);
+  });
+});
+
+// ✅ Hook test com MSW
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const wrapper = ({ children }) => (
+  <QueryClientProvider client={new QueryClient()}>
+    {children}
+  </QueryClientProvider>
+);
+
+it('should fetch data', async () => {
+  const { result } = renderHook(() => useMyHook(), { wrapper });
+  await waitFor(() => expect(result.current.isSuccess).toBe(true));
+});
+
+// ✅ E2E test
+import { test, expect } from '@playwright/test';
+
+test('should complete login flow', async ({ page }) => {
+  await page.goto('/auth');
+  await page.fill('input[type="email"]', 'test@example.com');
+  await page.click('button[type="submit"]');
+  await expect(page).toHaveURL(/\/dashboard/);
+});
+```
+
+> 📚 **Guia Completo:** [TESTING_GUIDE.md](./TESTING_GUIDE.md)
+
+---
+
 ## Referências
 
 | Documento | Descrição |
@@ -1242,4 +1350,6 @@ Tabelas limpas automaticamente:
 | [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md) | Padrão de URL state |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
+| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Guia de testes automatizados |
+| [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | Auditoria sistêmica |
 | [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | Auditoria sistêmica |
