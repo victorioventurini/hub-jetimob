@@ -19,19 +19,31 @@ Este projeto implementa uma estratégia completa de testes automatizados seguind
 src/
 ├── test/
 │   ├── mocks/
-│   │   ├── fixtures/     # Dados de teste (OKRs, profiles, etc.)
+│   │   ├── fixtures/     # Dados de teste (OKRs, profiles, teams, areas)
+│   │   │   ├── okrs.ts
+│   │   │   ├── profiles.ts
+│   │   │   ├── teams.ts   # ⭐ Teams & Areas fixtures
+│   │   │   └── index.ts
 │   │   ├── handlers.ts   # MSW handlers para Supabase
 │   │   └── supabase.ts   # Mock do cliente Supabase
 │   ├── setup.ts          # Setup global do Vitest
 │   └── test-utils.tsx    # Providers e helpers
 ├── lib/
-│   └── **/*.test.ts      # Testes de utils
+│   └── queryKeys/
+│       ├── *.ts          # Query keys centralizadas
+│       ├── okrs.test.ts  # Testes de query keys OKRs
+│       ├── teams.test.ts # ⭐ Testes de query keys Teams/Squads
+│       └── areas.test.ts # ⭐ Testes de query keys Areas
 └── modules/
-    └── okrs/
-        ├── types/*.test.ts       # Testes de tipos
-        ├── utils/*.test.ts       # Testes de validação
-        ├── hooks/*.test.ts       # Testes de hooks
-        └── components/*.test.tsx # Testes de componentes
+    ├── okrs/
+    │   ├── types/*.test.ts       # Testes de tipos
+    │   ├── utils/*.test.ts       # Testes de validação
+    │   ├── hooks/*.test.ts       # Testes de hooks
+    │   └── components/*.test.tsx # Testes de componentes
+    ├── teams/
+    │   └── hooks/useTeams.test.ts # ⭐ Testes de times + area_id
+    └── areas/
+        └── hooks/useAreas.test.ts # ⭐ Testes de áreas
 
 e2e/
 ├── fixtures/             # Fixtures E2E
@@ -100,6 +112,44 @@ FIXTURES.lateInitiative
 FIXTURES.currentCycle
 FIXTURES.pastCycle
 ```
+
+### Teams & Areas Fixtures (`src/test/mocks/fixtures/teams.ts`) ⭐ NOVO
+```typescript
+import { 
+  createMockArea, 
+  createMockTeam,
+  createMockAreaFormData,
+  createMockTeamFormData,
+  AREAS_FIXTURES,
+  TEAMS_FIXTURES 
+} from '@/test/mocks/fixtures';
+
+// Criar área com valores customizados
+const area = createMockArea({
+  id: 'area-revenue',
+  name: 'Revenue',
+  color: '#22C55E',
+  leader_user_id: 'user-123',
+});
+
+// Criar time com area_id
+const team = createMockTeam({
+  id: 'team-sales',
+  name: 'Sales',
+  area_id: 'area-revenue',
+  member_count: 8,
+});
+
+// Fixtures pré-definidas
+AREAS_FIXTURES.revenue   // Área Revenue
+AREAS_FIXTURES.product   // Área Produto
+AREAS_FIXTURES.technology // Área Tecnologia
+
+TEAMS_FIXTURES.engineering // Time Engineering (area: technology)
+TEAMS_FIXTURES.sales       // Time Sales (area: revenue)
+TEAMS_FIXTURES.frontend    // Sub-time Frontend (parent: engineering)
+```
+
 
 ### MSW Handlers (`src/test/mocks/handlers.ts`)
 ```typescript
