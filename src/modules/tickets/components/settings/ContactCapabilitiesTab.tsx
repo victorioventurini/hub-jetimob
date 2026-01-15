@@ -8,7 +8,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { Plus, Search, Users, Trash2, FolderTree } from "lucide-react";
-import { usePartnerCompanies, usePartnerContacts } from "../../hooks/usePartners";
+import { usePartnerCompanies, usePartnerContacts, useContactCapabilities } from "../../hooks";
 import { useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks/useContactCapabilities";
 import { ContactCapabilityDialog } from "./ContactCapabilityDialog";
 import { toast } from "sonner";

@@ -22,8 +22,8 @@ import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import {
   useInternalRoutingRules,
   useDeleteInternalRoutingRule,
-} from "../../hooks/useInternalRoutingRules";
-import { useTicketCategories } from "../../hooks/useTicketCategories";
+  useTicketCategories,
+} from "../../hooks";
 import { InternalRoutingRuleDialog } from "./InternalRoutingRuleDialog";
 import { TicketInternalRoutingRule } from "../../types";
 

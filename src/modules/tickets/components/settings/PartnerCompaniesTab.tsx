@@ -21,8 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { usePartnerCompanies, useDeletePartnerCompany } from "../../hooks/usePartners";
-import { usePartnerServices } from "../../hooks/usePartnerServices";
+import { usePartnerCompanies, useDeletePartnerCompany, usePartnerServices } from "../../hooks";
 import { PartnerCompanyDialog } from "./PartnerCompanyDialog";
 import { PartnerServicesTab } from "./PartnerServicesTab";
 import { PartnerCompany } from "../../types";

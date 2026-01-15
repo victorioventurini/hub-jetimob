@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Lightbulb, AlertCircle } from "lucide-react";
-import { useKrInitiatives, useDeleteInitiative } from "../../hooks/useInitiatives";
+import { useKrInitiatives, useDeleteInitiative } from "../../hooks";
 import { InitiativeCard } from "./InitiativeCard";
 import { InitiativeDialog } from "./InitiativeDialog";
 import { InitiativeQuickUpdateDialog } from "./InitiativeQuickUpdateDialog";

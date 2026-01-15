@@ -44,7 +44,7 @@ import { Users, Building2, Target } from "lucide-react";
 import {
   useCreateInternalRoutingRule,
   useUpdateInternalRoutingRule,
-} from "../../hooks/useInternalRoutingRules";
+} from "../../hooks";
 import { TicketCategory, TicketInternalRoutingRule, TicketSubcategory } from "../../types";
 import { useTeams, useSquads } from "@/modules/teams/hooks";
 import { useBuProfiles } from "@/hooks/useNotificationAdmin";

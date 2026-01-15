@@ -65,7 +65,12 @@ export {
 } from './useRoutingRules';
 
 // Internal routing
-export { useInternalRoutingRules } from './useInternalRoutingRules';
+export { 
+  useInternalRoutingRules,
+  useCreateInternalRoutingRule,
+  useUpdateInternalRoutingRule,
+  useDeleteInternalRoutingRule,
+} from './useInternalRoutingRules';
 
 // Contact capabilities
 export { useContactCapabilities } from './useContactCapabilities';

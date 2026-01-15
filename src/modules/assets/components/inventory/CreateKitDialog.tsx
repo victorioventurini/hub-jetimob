@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Package } from "lucide-react";
-import { useAssetGroups } from "../../hooks/useAssetGroups";
+import { useAssetGroups } from "../../hooks";
 import type { AssetInventory, AssetGroupType } from "../../types";
 import { GROUP_TYPE_LABELS } from "../../types";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
