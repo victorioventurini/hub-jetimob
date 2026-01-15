@@ -2,40 +2,53 @@
  * useOrganogramData - Hook para buscar dados do organograma
  */
 import { useQuery } from "@tanstack/react-query";
-import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { OrganogramNode, OrganogramData } from "../types/organogram";
 import { organogramKeys } from "@/lib/queryKeys/organogram";
 
+type CeoData = { id: string; display_name: string; photo_url: string | null; work_email: string | null };
+type AreaRow = { id: string; name: string; color: string | null; leader_user_id: string | null };
+type TeamRow = { id: string; name: string; parent_team_id: string | null; area_id: string | null; leader_user_id: string | null };
+type MemberRow = { id: string; display_name: string; photo_url: string | null; work_email: string | null; team_id: string | null };
+type SquadRow = { id: string; name: string };
+type SquadTeamRow = { squad_id: string; team_id: string };
+
 export function useOrganogramData() {
-  const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
+  const buId = currentBu?.id ?? null;
 
   return useQuery({
-    queryKey: organogramKeys.data(buId ?? null),
+    queryKey: organogramKeys.data(buId),
     queryFn: async (): Promise<OrganogramData> => {
-      if (!supabase || !buId) {
-        return { ceo: null, areas: [] };
-      }
+      if (!buId) return { ceo: null, areas: [] };
+
+      // Use any to avoid deep type instantiation issues
+      const db = supabase as any;
 
       // 1. Buscar CEO (primeiro admin da BU)
-      const { data: adminUsers } = await supabase
+      const { data: adminData } = await db
         .from("user_roles")
         .select("user_id")
         .eq("bu_id", buId)
         .eq("role", "admin")
         .limit(1);
 
-      let ceoData: { id: string; display_name: string; photo_url: string | null; work_email: string | null } | null = null;
-      if (adminUsers?.[0]?.user_id) {
-        const { data } = await supabase
+      const adminUsers = (adminData ?? []) as { user_id: string }[];
+
+      let ceoData: CeoData | null = null;
+      if (adminUsers[0]?.user_id) {
+        const { data } = await db
           .from("profiles")
           .select("id, display_name, photo_url, work_email")
           .eq("id", adminUsers[0].user_id)
           .maybeSingle();
-        ceoData = data;
+        ceoData = data as CeoData | null;
       }
 
       // 2. Buscar áreas
-      const { data: areasData } = await supabase
+      const { data: areasData } = await db
         .from("areas")
         .select("id, name, color, leader_user_id")
         .eq("bu_id", buId)
@@ -43,8 +56,10 @@ export function useOrganogramData() {
         .is("deleted_at", null)
         .order("name");
 
+      const areas = (areasData ?? []) as AreaRow[];
+
       // 3. Buscar times
-      const { data: teamsData } = await supabase
+      const { data: teamsData } = await db
         .from("teams")
         .select("id, name, parent_team_id, area_id, leader_user_id")
         .eq("bu_id", buId)
@@ -52,8 +67,10 @@ export function useOrganogramData() {
         .is("deleted_at", null)
         .order("name");
 
+      const teams = (teamsData ?? []) as TeamRow[];
+
       // 4. Buscar membros
-      const { data: membersData } = await supabase
+      const { data: membersData } = await db
         .from("profiles")
         .select("id, display_name, photo_url, work_email, team_id")
         .eq("bu_id", buId)
@@ -61,8 +78,10 @@ export function useOrganogramData() {
         .not("team_id", "is", null)
         .order("display_name");
 
+      const members = (membersData ?? []) as MemberRow[];
+
       // 5. Buscar squads
-      const { data: squadsData } = await supabase
+      const { data: squadsData } = await db
         .from("squads")
         .select("id, name")
         .eq("bu_id", buId)
@@ -70,21 +89,21 @@ export function useOrganogramData() {
         .is("deleted_at", null)
         .order("name");
 
-      // 6. Squad-team links
-      const squadIds = (squadsData || []).map(s => s.id);
-      const { data: squadTeamsData } = squadIds.length > 0 
-        ? await supabase.from("squad_teams").select("squad_id, team_id").in("squad_id", squadIds)
-        : { data: [] };
+      const squads = (squadsData ?? []) as SquadRow[];
 
-      // Build hierarchy
-      const areas = areasData || [];
-      const teams = teamsData || [];
-      const members = membersData || [];
-      const squads = squadsData || [];
-      const squadTeams = squadTeamsData || [];
+      // 6. Squad-team links
+      const squadIds = squads.map(s => s.id);
+      let squadTeams: SquadTeamRow[] = [];
+      if (squadIds.length > 0) {
+        const { data: stData } = await db
+          .from("squad_teams")
+          .select("squad_id, team_id")
+          .in("squad_id", squadIds);
+        squadTeams = (stData ?? []) as SquadTeamRow[];
+      }
 
       // Group members by team
-      const membersByTeam = new Map<string, typeof members>();
+      const membersByTeam = new Map<string, MemberRow[]>();
       members.forEach(m => {
         if (m.team_id) {
           const arr = membersByTeam.get(m.team_id) || [];
@@ -94,7 +113,7 @@ export function useOrganogramData() {
       });
 
       // Group squads by team
-      const squadsByTeam = new Map<string, typeof squads>();
+      const squadsByTeam = new Map<string, SquadRow[]>();
       squadTeams.forEach(st => {
         const squad = squads.find(s => s.id === st.squad_id);
         if (squad) {
@@ -105,7 +124,7 @@ export function useOrganogramData() {
       });
 
       // Build team nodes
-      const buildTeamNode = (team: typeof teams[0], isSubteam: boolean): OrganogramNode => {
+      const buildTeamNode = (team: TeamRow, isSubteam: boolean): OrganogramNode => {
         const teamMembers = membersByTeam.get(team.id) || [];
         const teamSquads = squadsByTeam.get(team.id) || [];
         const subteams = teams.filter(t => t.parent_team_id === team.id);
@@ -186,7 +205,7 @@ export function useOrganogramData() {
 
       return { ceo: ceoNode, areas: ceoNode ? [] : areaNodes };
     },
-    enabled: isReady && !!buId && !!supabase,
+    enabled: !!buId,
     staleTime: 2 * 60 * 1000,
   });
 }
