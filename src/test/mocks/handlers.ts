@@ -6,7 +6,7 @@
  */
 
 import { http, HttpResponse, delay } from 'msw';
-import { createMockCycle, OKR_FIXTURES } from './fixtures';
+import { createMockCycle, OKR_FIXTURES, AREAS_FIXTURES, TEAMS_FIXTURES } from './fixtures';
 
 // Base URL for Supabase REST API
 const SUPABASE_URL = 'https://oiwnghihyqdsinouwmga.supabase.co';
@@ -189,23 +189,84 @@ export const initiativesHandlers = [
 ];
 
 
-// Teams handlers
+// Teams handlers (updated with fixtures)
 export const teamsHandlers = [
-  http.get(`${REST_URL}/teams`, async () => {
-    return HttpResponse.json([
-      {
-        id: 'team-1',
-        name: 'Engineering',
-        slug: 'engineering',
-        bu_id: 'bu-test-123',
-      },
-      {
-        id: 'team-2',
-        name: 'Product',
-        slug: 'product',
-        bu_id: 'bu-test-123',
-      },
-    ]);
+  // GET /teams - List all teams
+  http.get(`${REST_URL}/teams`, async ({ request }) => {
+    const url = new URL(request.url);
+    const teams = Object.values(TEAMS_FIXTURES);
+    
+    // Filter by bu_id
+    const buIdFilter = url.searchParams.get('bu_id');
+    let result = [...teams];
+    if (buIdFilter && buIdFilter.startsWith('eq.')) {
+      const buId = buIdFilter.replace('eq.', '');
+      result = result.filter(t => t.bu_id === buId);
+    }
+    
+    // Filter by status
+    const statusFilter = url.searchParams.get('status');
+    if (statusFilter && statusFilter.startsWith('eq.')) {
+      const status = statusFilter.replace('eq.', '');
+      result = result.filter(t => t.status === status);
+    }
+    
+    // Filter by area_id
+    const areaIdFilter = url.searchParams.get('area_id');
+    if (areaIdFilter && areaIdFilter.startsWith('eq.')) {
+      const areaId = areaIdFilter.replace('eq.', '');
+      result = result.filter(t => t.area_id === areaId);
+    }
+    
+    return HttpResponse.json(result);
+  }),
+  
+  // POST /teams
+  http.post(`${REST_URL}/teams`, async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({
+      id: `team-${Date.now()}`,
+      ...body,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { status: 201 });
+  }),
+];
+
+// Areas handlers
+export const areasHandlers = [
+  // GET /areas - List all areas
+  http.get(`${REST_URL}/areas`, async ({ request }) => {
+    const url = new URL(request.url);
+    const areas = Object.values(AREAS_FIXTURES);
+    
+    // Filter by bu_id
+    const buIdFilter = url.searchParams.get('bu_id');
+    let result = [...areas];
+    if (buIdFilter && buIdFilter.startsWith('eq.')) {
+      const buId = buIdFilter.replace('eq.', '');
+      result = result.filter(a => a.bu_id === buId);
+    }
+    
+    // Filter by status
+    const statusFilter = url.searchParams.get('status');
+    if (statusFilter && statusFilter.startsWith('eq.')) {
+      const status = statusFilter.replace('eq.', '');
+      result = result.filter(a => a.status === status);
+    }
+    
+    return HttpResponse.json(result);
+  }),
+  
+  // POST /areas
+  http.post(`${REST_URL}/areas`, async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({
+      id: `area-${Date.now()}`,
+      ...body,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { status: 201 });
   }),
 ];
 
@@ -245,6 +306,7 @@ export const handlers = [
   ...checkinsHandlers,
   ...initiativesHandlers,
   ...teamsHandlers,
+  ...areasHandlers,
   ...profilesHandlers,
 ];
 
