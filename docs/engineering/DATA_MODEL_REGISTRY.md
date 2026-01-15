@@ -126,9 +126,10 @@ Lista completa das tabelas no schema `public`:
 | `user_notification_preferences_v2` | ✅ | ✅ | Preferências de notificação V2 |
 | `user_preferences` | ✅ | ✅ | Preferências do usuário |
 | `user_roles` | ✅ | ❌ | Roles globais |
+| `user_saved_links` | ✅ | ✅ | Links salvos por usuário/módulo (v2.36.0) |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 107 tabelas
+**Total:** 108 tabelas
 
 ---
 

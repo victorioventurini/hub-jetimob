@@ -1,9 +1,9 @@
 # Shared Components & Utilities Registry
 
-**Versão:** 1.2.0  
-**Última atualização:** 2026-01-14  
+**Versão:** 1.3.0  
+**Última atualização:** 2026-01-15  
 **Status:** Normativo  
-**Referência:** TCR v2.31.0
+**Referência:** TCR v2.36.0
 
 ---
 
@@ -33,7 +33,8 @@ Este documento define **TODOS** os componentes e utilitários canônicos do Hub 
 9. [Utilitários de URL State](#9-utilitários-de-url-state)
 10. [Utilitários de Links Compartilháveis](#10-utilitários-de-links-compartilháveis)
 11. [Utilitários de Telefone](#11-utilitários-de-telefone)
-12. [Anti-Patterns Proibidos](#12-anti-patterns-proibidos)
+12. [Sistema de Links Salvos](#12-sistema-de-links-salvos)
+13. [Anti-Patterns Proibidos](#13-anti-patterns-proibidos)
 
 ---
 
@@ -585,7 +586,58 @@ const phoneToStore = normalizePhone(userInput); // "5551999999999"
 
 ---
 
-## 12. Anti-Patterns Proibidos
+## 12. Sistema de Links Salvos
+
+**Caminho:** `src/shared/saved-links/`
+
+**Barrel export:** `src/shared/saved-links/index.ts`
+
+### Hooks
+
+| Hook | Descrição |
+|------|-----------|
+| `useSavedLinks({ moduleSlug })` | CRUD de links salvos do módulo |
+| `useModuleFavoriteLink({ moduleSlug })` | Busca apenas o favorito (leve) |
+| `useFavoriteLinks()` | Busca todos os favoritos (usado pelo sidebar) |
+
+### Componentes
+
+| Componente | Descrição |
+|------------|-----------|
+| `SavedLinksPopover` | Popover para gerenciar links salvos |
+| `SaveLinkDialog` | Modal para criar novo link |
+
+### Uso
+
+```tsx
+import { SavedLinksPopover, useSavedLinks, useFavoriteLinks } from "@/shared/saved-links";
+
+// No header de uma página de módulo
+<PageHeader
+  title="OKRs"
+  actions={
+    <div className="flex gap-2">
+      <SavedLinksPopover moduleSlug="okrs" />
+      <Button>Novo</Button>
+    </div>
+  }
+/>
+
+// No sidebar para obter href favorito
+const { getFavoriteHref } = useFavoriteLinks();
+const href = getFavoriteHref("okrs", "/okrs"); // retorna path favorito ou fallback
+```
+
+### Regras
+
+- **Só 1 favorito por módulo/BU** (enforced por trigger no banco)
+- Link favorito se torna destino padrão no sidebar
+- Usuário pode criar quantos links quiser
+- RLS: usuário só vê seus próprios links
+
+---
+
+## 13. Anti-Patterns Proibidos
 
 ### Reimplementação de Componentes
 
@@ -675,4 +727,6 @@ const { data } = await supabase.from("tickets").select("id, title");
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.3.0 | 2026-01-15 | Sistema de Links Salvos adicionado |
+| 1.2.0 | 2026-01-14 | Hooks Consolidation Wave |
 | 1.0.0 | 2026-01-09 | Versão inicial |
