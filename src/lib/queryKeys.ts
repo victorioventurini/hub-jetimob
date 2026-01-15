@@ -31,6 +31,7 @@ export * from './queryKeys/assets';
 export * from './queryKeys/tickets';
 export * from './queryKeys/notifications';
 export * from './queryKeys/teams';
+export * from './queryKeys/areas';
 export * from './queryKeys/bu';
 export * from './queryKeys/integrations';
 export * from './queryKeys/permissions';
@@ -59,6 +60,7 @@ import {
   managersKeys, 
   teamManagementKeys 
 } from './queryKeys/teams';
+import { areasKeys } from './queryKeys/areas';
 import { buKeys, settingsKeys, modulesPageKeys } from './queryKeys/bu';
 import { 
   integrationsKeys, 
@@ -110,6 +112,7 @@ export const queryKeys = {
   squads: squadsKeys,
   managers: managersKeys,
   teamManagement: teamManagementKeys,
+  areas: areasKeys,
   
   // BU & Settings
   bu: buKeys,
