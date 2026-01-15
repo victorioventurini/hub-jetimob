@@ -93,13 +93,15 @@ export function useTeamPreviousCycleAnalysis(
         };
       }
 
-      // Fetch team objectives from previous cycle
+      // Fetch team objectives from previous cycle (exclude cancelled)
       const { data: objectives, error: objError } = await supabase
         .from('okr_team_objectives')
         .select('id, title, status, team_id')
         .eq('team_id', teamId)
         .eq('cycle_id', previousCycle.id)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null)
+        .neq('status', 'cancelled');
 
       if (objError) throw objError;
 

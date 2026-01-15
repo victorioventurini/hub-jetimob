@@ -5014,7 +5014,7 @@ export type Database = {
             columns: ["team_objective_id"]
             isOneToOne: false
             referencedRelation: "v_shared_okrs_summary"
-            referencedColumns: ["id"]
+            referencedColumns: ["objective_id"]
           },
           {
             foreignKeyName: "okr_team_key_results_team_objective_id_fkey"
@@ -5064,7 +5064,7 @@ export type Database = {
             columns: ["objective_id"]
             isOneToOne: false
             referencedRelation: "v_shared_okrs_summary"
-            referencedColumns: ["id"]
+            referencedColumns: ["objective_id"]
           },
           {
             foreignKeyName: "okr_team_objective_contributors_objective_id_fkey"
@@ -7905,45 +7905,22 @@ export type Database = {
       }
       v_shared_okrs_summary: {
         Row: {
-          bu_id: string | null
-          contributing_team_ids: string[] | null
-          contributing_team_names: string[] | null
+          contributor_count: number | null
+          contributor_team_ids: string[] | null
+          contributor_team_names: string[] | null
           created_at: string | null
-          cycle_id: string | null
           description: string | null
-          id: string | null
           is_shared: boolean | null
-          org_objective_id: string | null
+          objective_id: string | null
           primary_team_id: string | null
           primary_team_name: string | null
           responsibility_model: string | null
           status: Database["public"]["Enums"]["okr_status"] | null
           title: string | null
-          total_teams_count: number | null
           updated_at: string | null
+          year: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "okr_team_objectives_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_objectives_cycle_id_fkey"
-            columns: ["cycle_id"]
-            isOneToOne: false
-            referencedRelation: "cycles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_objectives_org_objective_id_fkey"
-            columns: ["org_objective_id"]
-            isOneToOne: false
-            referencedRelation: "okr_org_objectives"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
             columns: ["primary_team_id"]
@@ -7955,20 +7932,16 @@ export type Database = {
       }
       v_team_contributed_okrs: {
         Row: {
-          bu_id: string | null
           contributor_team_id: string | null
           contributor_team_name: string | null
           created_at: string | null
-          cycle_id: string | null
-          description: string | null
           is_shared: boolean | null
           objective_id: string | null
-          org_objective_id: string | null
+          objective_status: Database["public"]["Enums"]["okr_status"] | null
+          objective_title: string | null
           primary_team_id: string | null
           primary_team_name: string | null
           responsibility_model: string | null
-          status: Database["public"]["Enums"]["okr_status"] | null
-          title: string | null
           updated_at: string | null
         }
         Relationships: [
@@ -7977,27 +7950,6 @@ export type Database = {
             columns: ["contributor_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_objectives_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_objectives_cycle_id_fkey"
-            columns: ["cycle_id"]
-            isOneToOne: false
-            referencedRelation: "cycles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "okr_team_objectives_org_objective_id_fkey"
-            columns: ["org_objective_id"]
-            isOneToOne: false
-            referencedRelation: "okr_org_objectives"
             referencedColumns: ["id"]
           },
           {

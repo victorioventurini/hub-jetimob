@@ -25,6 +25,7 @@ export function useKrInitiatives(krId: string | undefined) {
         .select(INITIATIVE_FIELDS)
         .eq("kr_id", krId)
         .is("deleted_at", null)
+        .is("cancelled_at", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -65,7 +66,8 @@ export function useKrInitiativesCount(krId: string | undefined) {
         .from("okr_initiatives")
         .select("id", { count: 'exact', head: true })
         .eq("kr_id", krId)
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .is("cancelled_at", null);
 
       if (error) throw error;
       return count || 0;
@@ -89,6 +91,7 @@ export function useUserInitiatives(profileId: string | undefined) {
         .select(INITIATIVE_FIELDS)
         .eq("owner_user_id", profileId)
         .is("deleted_at", null)
+        .is("cancelled_at", null)
         .order("updated_at", { ascending: false })
         .limit(100);
 
@@ -129,7 +132,8 @@ export function useInitiativesByStatus(buId: string | undefined, status?: Initia
       let query = supabase
         .from("okr_initiatives")
         .select(INITIATIVE_FIELDS)
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .is("cancelled_at", null);
 
       if (buId) {
         query = query.eq("bu_id", buId);
