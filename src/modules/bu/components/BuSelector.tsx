@@ -11,6 +11,7 @@ import {
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
+import { BuSymbol } from "./BuSymbol";
 
 export function BuSelector() {
   const { currentBu, userBus, hasMultipleBus, switchBu } = useBu();
@@ -46,15 +47,12 @@ export function BuSelector() {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          {currentBu.symbol_url ? (
-            <img 
-              src={currentBu.symbol_url} 
-              alt={currentBu.name} 
-              className="h-4 w-4 object-contain"
-            />
-          ) : (
-            <Building2 className="h-4 w-4" />
-          )}
+          <BuSymbol
+            symbolUrl={currentBu.symbol_url}
+            primaryColor={currentBu.primary_color}
+            name={currentBu.name}
+            size="sm"
+          />
           <span className="max-w-[150px] truncate">{currentBu.name}</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
@@ -67,15 +65,12 @@ export function BuSelector() {
             className="flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              {membership.bu_unit?.symbol_url ? (
-                <img 
-                  src={membership.bu_unit.symbol_url} 
-                  alt={membership.bu_unit.name} 
-                  className="h-4 w-4 object-contain"
-                />
-              ) : (
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              )}
+              <BuSymbol
+                symbolUrl={membership.bu_unit?.symbol_url}
+                primaryColor={membership.bu_unit?.primary_color}
+                name={membership.bu_unit?.name || ''}
+                size="sm"
+              />
               <span className="truncate">{membership.bu_unit?.name}</span>
             </div>
             {membership.bu_id === currentBu.id && (
