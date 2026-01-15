@@ -56,6 +56,7 @@
 | [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) | Análise de débitos técnicos | ✅ Atual |
 | [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts | ✅ Normativo |
 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **Guia completo de testes automatizados** | ✅ v1.0.0 |
+| [RFC_AREAS_IMPLEMENTATION.md](./RFC_AREAS_IMPLEMENTATION.md) | **RFC: Implementação de Áreas** | 📋 Draft |
 
 ---
 
