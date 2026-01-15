@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.35.0  
+**Versão:** 2.36.0  
 **Última atualização:** 2026-01-15
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado** | **Performance Metrics Dashboard (P4) implementado**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.0 implementado**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1107,6 +1107,37 @@ Sistema de menções em comentários.
 
 ---
 
+#### **user_saved_links** — Links Salvos
+Links personalizados por usuário/módulo com suporte a favoritos.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| user_id | uuid | FK para profiles.id (owner do link) |
+| bu_id | uuid | FK para bu_units |
+| module_slug | text | Slug do módulo (okrs, tickets, etc.) |
+| label | text | Nome do link (max 50 chars) |
+| path | text | Path completo com query params (max 500 chars) |
+| is_favorite | bool | Se é o link favorito do módulo |
+
+**Escopo:** Por usuário + BU
+
+**Regras críticas:**
+- RLS: `user_id = my_profile_id()` (usuário só vê seus próprios links)
+- Apenas **1 link favorito por módulo/BU** (trigger `ensure_single_favorite_link()`)
+- Link favorito é usado como destino padrão no sidebar
+
+**Hooks canônicos:**
+- `useSavedLinks({ moduleSlug })` — CRUD de links do módulo
+- `useModuleFavoriteLink({ moduleSlug })` — Busca apenas o favorito (leve)
+- `useFavoriteLinks()` — Busca todos os favoritos (usado pelo sidebar)
+
+**Componentes:**
+- `SavedLinksPopover` — UI para gerenciar links salvos
+- `SaveLinkDialog` — Modal para criar novo link
+
+---
+
 ## 3. Módulos do Hub
 
 ### 3.1 Módulos Ativos
@@ -1865,8 +1896,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.31.0 |
-| **Data da última atualização** | 2026-01-14 |
+| **Versão do TCR** | 2.36.0 |
+| **Data da última atualização** | 2026-01-15 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -1874,10 +1905,35 @@ export type { SomeType } from './types';
 | **Permission Templates V2** | 27 |
 | **Permission Presets** | 12 |
 | **Módulos com Hooks Consolidados** | 12 ✅ |
+| **Módulos com Saved Links** | 1 (OKRs) ✅ |
 
 ---
 
 ## Changelog
+
+### v2.36.0 (2026-01-15) — Saved Links System
+- **Sistema de Links Salvos implementado**:
+  - Nova tabela `user_saved_links` para armazenar links personalizados por módulo
+  - Usuário pode salvar quantos links quiser com filtros preservados
+  - Um link pode ser marcado como **favorito** por módulo (único por módulo/BU)
+  - Link favorito torna-se o destino padrão ao clicar no menu lateral
+- **Arquitetura**:
+  - Tabela: `user_saved_links` (RLS por `user_id = my_profile_id()`)
+  - Query Keys: `src/lib/queryKeys/savedLinks.ts`
+  - Hooks: `useSavedLinks`, `useModuleFavoriteLink`, `useFavoriteLinks`
+  - Componentes: `SaveLinkDialog`, `SavedLinksPopover`
+  - Barrel: `src/shared/saved-links/index.ts`
+- **Integração com Sidebar**:
+  - `DynamicSidebar.tsx` e `MobileSidebar.tsx` usam `useFavoriteLinks()`
+  - Função `getFavoriteHref(moduleSlug, defaultHref)` retorna path favorito ou fallback
+- **Primeiro módulo integrado**: OKRs (`/okrs`)
+- **Expansão planejada**: Tickets, KPIs, Assets, Teams
+
+### v2.35.0 (2026-01-15) — Cancel Filter Fix
+- **Filtro de cancelados corrigido em todo sistema OKRs**:
+  - Views `v_shared_okrs_summary` e `v_team_contributed_okrs` atualizadas
+  - RPC `get_cycle_checkins` filtrado por `cancelled_at IS NULL` e `status != 'cancelled'`
+  - Hooks frontend atualizados para excluir objetivos/KRs/iniciativas cancelados
 
 ### v2.31.0 (2026-01-14) — Hooks Consolidation Wave
 - **Consolidação de Hooks em todos os módulos**:
