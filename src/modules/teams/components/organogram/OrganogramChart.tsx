@@ -97,10 +97,15 @@ export function OrganogramChart({ data, filters, controls }: OrganogramChartProp
           width: zoomScale < 1 ? `${100 / zoomScale}%` : '100%',
         }}
       >
-        <div className="inline-flex flex-col items-center">
+        <div className="inline-flex flex-col items-center" key={controls.expansionKey}>
           {/* Render CEO at top with areas as children */}
           {filteredData.ceo ? (
-            <OrganogramNodeWrapper node={filteredData.ceo} defaultExpanded />
+            <OrganogramNodeWrapper 
+              node={filteredData.ceo} 
+              defaultExpanded 
+              depth={0}
+              expansionMode={controls.expansionMode}
+            />
           ) : (
             /* Render areas without CEO - always in horizontal row */
             <div className="flex flex-nowrap justify-center gap-6">
@@ -110,6 +115,8 @@ export function OrganogramChart({ data, filters, controls }: OrganogramChartProp
                   node={area} 
                   parentColor={area.color}
                   defaultExpanded 
+                  depth={0}
+                  expansionMode={controls.expansionMode}
                 />
               ))}
             </div>

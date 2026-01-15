@@ -30,10 +30,12 @@ export default function OrganogramPage() {
     searchTerm: "",
   });
 
-  // Controls state - start at 100% for best fit
+  // Controls state - start at 100% for best fit, default expansion mode
   const [controls, setControls] = useState<OrganogramControlsState>({
     zoom: 100,
     orientation: "vertical",
+    expansionKey: 0,
+    expansionMode: "default",
   });
 
   const handleFitToScreen = useCallback(() => {

@@ -14,6 +14,8 @@ interface OrganogramNodeCardProps {
   onToggle: () => void;
   hasChildren: boolean;
   parentColor?: string | null;
+  depth?: number;
+  expansionMode?: 'default' | 'all' | 'none';
 }
 
 const TYPE_CONFIG = {
@@ -59,7 +61,9 @@ const TYPE_CONFIG = {
 const CeoCard = memo(function CeoCard({
   node,
   hasChildren,
-}: Omit<OrganogramNodeCardProps, 'parentColor' | 'isExpanded' | 'onToggle'> & { isExpanded?: boolean; onToggle?: () => void }) {
+  depth = 0,
+  expansionMode = 'default',
+}: Pick<OrganogramNodeCardProps, 'node' | 'hasChildren' | 'depth' | 'expansionMode'>) {
   return (
     <div className="flex flex-col items-center">
       {/* CEO card with same proportions as other cards */}
@@ -117,6 +121,8 @@ const CeoCard = memo(function CeoCard({
                 <OrganogramNodeWrapper 
                   node={child} 
                   parentColor={child.color}
+                  depth={depth + 1}
+                  expansionMode={expansionMode}
                 />
               </div>
             ))}
@@ -134,15 +140,17 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
   onToggle,
   hasChildren,
   parentColor,
+  depth = 0,
+  expansionMode = 'default',
 }: OrganogramNodeCardProps) {
   // CEO tem card especial
   if (node.type === 'ceo') {
     return (
       <CeoCard
         node={node}
-        isExpanded={isExpanded}
-        onToggle={onToggle}
         hasChildren={hasChildren}
+        depth={depth}
+        expansionMode={expansionMode}
       />
     );
   }
@@ -278,6 +286,8 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
                 <OrganogramNodeWrapper 
                   node={child} 
                   parentColor={areaColor}
+                  depth={depth + 1}
+                  expansionMode={expansionMode}
                 />
               </div>
             ))}
@@ -293,18 +303,34 @@ interface OrganogramNodeWrapperProps {
   node: OrganogramNodeType;
   parentColor?: string | null;
   defaultExpanded?: boolean;
+  /** Current depth in the tree (0 = root) */
+  depth?: number;
+  /** Global expansion mode from controls */
+  expansionMode?: 'default' | 'all' | 'none';
 }
 
 export function OrganogramNodeWrapper({ 
   node, 
   parentColor,
-  defaultExpanded 
+  defaultExpanded,
+  depth = 0,
+  expansionMode = 'default',
 }: OrganogramNodeWrapperProps) {
-  // Default expand state - all nodes expanded by default
+  // Default expand state based on node type and depth
   const getDefaultExpanded = () => {
     if (defaultExpanded !== undefined) return defaultExpanded;
-    // Expand all node types by default
-    return true;
+    
+    // Apply global expansion mode
+    if (expansionMode === 'all') return true;
+    if (expansionMode === 'none') return false;
+    
+    // Default mode: expand CEO, areas, and first-level teams
+    // Subtimes (depth > 1 for teams) stay collapsed
+    if (node.type === 'ceo' || node.type === 'area') return true;
+    if (node.type === 'team' && depth === 0) return true;
+    
+    // Subteams and deeper teams stay collapsed
+    return false;
   };
 
   const [isExpanded, setIsExpanded] = useState(getDefaultExpanded);
@@ -317,6 +343,8 @@ export function OrganogramNodeWrapper({
       onToggle={() => setIsExpanded(!isExpanded)}
       hasChildren={hasChildren}
       parentColor={parentColor}
+      depth={depth}
+      expansionMode={expansionMode}
     />
   );
 }

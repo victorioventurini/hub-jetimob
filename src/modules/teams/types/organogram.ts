@@ -40,4 +40,8 @@ export interface OrganogramFilters {
 export interface OrganogramControlsState {
   zoom: number;
   orientation: 'vertical' | 'horizontal';
+  /** Key to force re-render when expansion changes */
+  expansionKey: number;
+  /** Global expansion state: 'default' = teams expanded, 'all' = all expanded, 'none' = all collapsed */
+  expansionMode: 'default' | 'all' | 'none';
 }
