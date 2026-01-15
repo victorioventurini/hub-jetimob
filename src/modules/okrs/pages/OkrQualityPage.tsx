@@ -26,7 +26,7 @@ import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
 import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
 import { useTeamOkrQuality } from "../hooks/useTeamOkrQuality";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import {
   QualityOverviewCard,
