@@ -145,7 +145,7 @@ function useOrgObjectivesImpl(options: UseOrgObjectivesOptions = {}) {
       }
       
       if (!includeAllStatuses) {
-        query = query.neq('status', 'cancelled');
+        query = query.neq('status', 'cancelled').neq('status', 'discarded');
       }
 
       const { data, error } = await query;
@@ -293,7 +293,7 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
       }
       
       if (!includeAllStatuses) {
-        query = query.neq('status', 'cancelled');
+        query = query.neq('status', 'cancelled').neq('status', 'discarded');
       }
 
       const { data, error } = await query;

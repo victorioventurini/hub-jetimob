@@ -26,7 +26,7 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
     <Link to={`/teams/${team.id}`} className="block">
       <Card
         className={cn(
-          "group hover:shadow-lg transition-all duration-200 cursor-pointer relative",
+          "group hover:shadow-lg transition-all duration-200 cursor-pointer relative h-full flex flex-col",
           isSubteam 
             ? "hover:border-blue-500/30 border-l-4 border-l-blue-500/50" 
             : "hover:border-primary/30 border-l-4 border-l-primary/50"
@@ -61,7 +61,7 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
           </p>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1 flex flex-col">
         {/* Area Badge */}
         {team.area && (
           <div className="flex items-center gap-2 text-xs w-fit">
@@ -116,7 +116,7 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
         )}
 
         {/* Stats */}
-        <div className="flex items-center justify-between pt-3 border-t border-border">
+        <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
             <span>{team.member_count || 0} pessoas</span>
