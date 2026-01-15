@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
-import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 // ============================================================

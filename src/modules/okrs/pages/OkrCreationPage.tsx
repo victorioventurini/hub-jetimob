@@ -21,7 +21,7 @@ import { useIdentity } from '@/hooks/useIdentity';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useTeamPreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
 import { useOrgOkrsForContext } from '@/modules/okrs/hooks/useOrgOkrsForContext';
-import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useCreateTeamOkrBundle } from '@/modules/okrs/hooks/useCreateTeamOkrBundle';
 import { useWizardSession } from '@/modules/okrs/hooks/useWizardSession';
 import { usePageTitle } from '@/hooks/usePageTitle';

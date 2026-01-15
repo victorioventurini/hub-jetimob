@@ -33,8 +33,7 @@ import { cn } from '@/lib/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useManageableTeamsFlat } from '@/modules/okrs/hooks/useManageableTeams';
-import type { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
-import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useHierarchicalTeamList, type FlatTeamItem } from '@/modules/teams/hooks';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
 
 // ============================================================
