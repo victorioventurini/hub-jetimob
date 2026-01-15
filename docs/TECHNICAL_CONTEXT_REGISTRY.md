@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.31.0  
-**Última atualização:** 2026-01-14
+**Versão:** 2.32.0  
+**Última atualização:** 2026-01-15
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | **Hooks Consolidation Wave (v2.31.0)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | **Automated Testing Framework v1.0 ativo**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -28,16 +28,19 @@
 > - [FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
 > - [SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Estado final do sistema
 >
+> ### Testes Automatizados
+> - [TESTING_GUIDE.md](./engineering/TESTING_GUIDE.md) — **Guia completo de testes (Vitest + Playwright)** ⭐ NOVO
+>
 > ### Operações
 > - [BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook de backup e restore
 > - [GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist de go-live
 >
 > ### Auditoria e Higienização
 > - [AUDIT_REPORT_2026-01-11_v3.md](./engineering/AUDIT_REPORT_2026-01-11_v3.md) — Último relatório de auditoria
-> - [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) — **Análise de Débitos Técnicos** ⭐ ATUALIZADO
+> - [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) — **Análise de Débitos Técnicos**
 > - [CODEBASE_HYGIENE_ROADMAP.md](./CODEBASE_HYGIENE_ROADMAP.md) — Roadmap de limpeza de código
 > - [LEGACY_CLASSIFICATION_MATRIX.md](./LEGACY_CLASSIFICATION_MATRIX.md) — Matriz de classificação de código legado
-> - [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./engineering/HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) — **Plano de Higienização e Otimização 2026-01** ⭐
+> - [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./engineering/HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) — **Plano de Higienização e Otimização 2026-01**
 
 > ⚠️ **Data Model Registry (Canonical)**
 > - Arquivo: `docs/engineering/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)
