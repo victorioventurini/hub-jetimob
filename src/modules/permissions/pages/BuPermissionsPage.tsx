@@ -1,8 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useUrlTab, useUrlSearch } from "@/shared/url";
+import { useUrlSearch } from "@/shared/url";
 import { PageHeader } from "@/components/ui/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +21,7 @@ import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
 import { UserPermissionsV2Sheet } from "../components/UserPermissionsV2Sheet";
 import { cn } from "@/lib/utils";
 
-type PermissionTab = "users";
+
 
 /**
  * BuPermissionsPage - Gerenciamento de permissões de usuários por BU
@@ -32,7 +31,6 @@ export default function BuPermissionsPage() {
     customDescription: "Gerencie as permissões de usuários desta unidade de negócio."
   });
 
-  const [activeTab, setActiveTab] = useUrlTab<PermissionTab>("users");
   const { value: urlSearch, set: setUrlSearch } = useUrlSearch("q", 300);
   
   // Estado local para input responsivo - sincroniza com URL após debounce
@@ -133,93 +131,84 @@ export default function BuPermissionsPage() {
           backLabel="Voltar para Configurações"
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <TabsList>
-              <TabsTrigger value="users" className="gap-2">
-                <Users className="h-4 w-4" />
-                Usuários
-              </TabsTrigger>
-            </TabsList>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, email, cargo ou time..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                className="pl-10 w-80"
-              />
-            </div>
+        <div className="flex items-center justify-end gap-4 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, email, cargo ou time..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="pl-10 w-80"
+            />
           </div>
+        </div>
 
-          <TabsContent value="users" className="mt-6">
-            {usersLoading ? (
-              <LoadingState text="Carregando usuários..." />
-            ) : sortedUsers.length === 0 ? (
-              <EmptyState
-                icon={Users}
-                title="Nenhum usuário encontrado"
-                description={localSearch ? "Tente ajustar a busca" : "Nenhum usuário nesta BU"}
-              />
-            ) : (
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>Cargo</TableHead>
-                      <TableHead>Times</TableHead>
-                      <TableHead>Papel</TableHead>
-                      <TableHead>Permissões</TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedUsers.map((user) => (
-                      <TableRow
-                        key={user.user_id}
-                        className={cn(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
-                          user.role_in_bu === "admin" && "bg-primary/5",
-                          user.role_in_bu === "external" && "bg-amber-500/5"
-                        )}
-                        onClick={() => setSelectedUser(user)}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.profiles.photo_url || undefined} />
-                              <AvatarFallback>{getInitials(user.profiles.display_name)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <span className="font-medium block">{user.profiles.display_name}</span>
-                              <span className="text-xs text-muted-foreground">{user.profiles.work_email}</span>
-                            </div>
+        <div className="mt-6">
+          {usersLoading ? (
+            <LoadingState text="Carregando usuários..." />
+          ) : sortedUsers.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Nenhum usuário encontrado"
+              description={localSearch ? "Tente ajustar a busca" : "Nenhum usuário nesta BU"}
+            />
+          ) : (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Times</TableHead>
+                    <TableHead>Papel</TableHead>
+                    <TableHead>Permissões</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedUsers.map((user) => (
+                    <TableRow
+                      key={user.user_id}
+                      className={cn(
+                        "cursor-pointer hover:bg-muted/50 transition-colors",
+                        user.role_in_bu === "admin" && "bg-primary/5",
+                        user.role_in_bu === "external" && "bg-amber-500/5"
+                      )}
+                      onClick={() => setSelectedUser(user)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.profiles.photo_url || undefined} />
+                            <AvatarFallback>{getInitials(user.profiles.display_name)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <span className="font-medium block">{user.profiles.display_name}</span>
+                            <span className="text-xs text-muted-foreground">{user.profiles.work_email}</span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{user.profiles.job_title_name || "—"}</TableCell>
-                        <TableCell>
-                          {user.teams.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {user.teams.slice(0, 2).map((team) => (
-                                <Badge key={team.id} variant="outline" className="text-xs">{team.name}</Badge>
-                              ))}
-                              {user.teams.length > 2 && <Badge variant="outline" className="text-xs">+{user.teams.length - 2}</Badge>}
-                            </div>
-                          ) : <span className="text-muted-foreground text-sm">—</span>}
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user)}</TableCell>
-                        <TableCell>{getPermissionIndicator(user)}</TableCell>
-                        <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.profiles.job_title_name || "—"}</TableCell>
+                      <TableCell>
+                        {user.teams.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {user.teams.slice(0, 2).map((team) => (
+                              <Badge key={team.id} variant="outline" className="text-xs">{team.name}</Badge>
+                            ))}
+                            {user.teams.length > 2 && <Badge variant="outline" className="text-xs">+{user.teams.length - 2}</Badge>}
+                          </div>
+                        ) : <span className="text-muted-foreground text-sm">—</span>}
+                      </TableCell>
+                      <TableCell>{getRoleBadge(user)}</TableCell>
+                      <TableCell>{getPermissionIndicator(user)}</TableCell>
+                      <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
 
         <UserPermissionsV2Sheet
           open={!!selectedUser}
