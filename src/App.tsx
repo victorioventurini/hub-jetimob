@@ -90,6 +90,7 @@ const CronJobConfigPage = lazy(() => import("./modules/integrations/pages/CronJo
 const AgentsListPage = lazy(() => import("./modules/integrations/pages/AgentsListPage"));
 const AgentFormPage = lazy(() => import("./modules/integrations/pages/AgentFormPage"));
 const AgentLogsPage = lazy(() => import("./modules/integrations/pages/AgentLogsPage"));
+const PerfDashboardPage = lazy(() => import("./modules/integrations/pages/PerfDashboardPage"));
 
 // Módulo Automações
 const AutomationsPage = lazy(() => import("./modules/automations/pages/AutomationsPage"));
@@ -386,6 +387,18 @@ const App = () => {
                           <AdminRoute>
                             <SettingsLayout>
                               <AgentLogsPage />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/hub/performance"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <PerfDashboardPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>

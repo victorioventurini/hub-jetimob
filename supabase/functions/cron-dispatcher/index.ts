@@ -23,6 +23,8 @@ interface MaintenanceResult {
   wizard_sessions_cleaned: number;
   agent_logs_cleaned: number;
   cron_logs_cleaned: number;
+  perf_snapshots_cleaned: number;
+  perf_metrics_collected: boolean;
 }
 
 interface ExecutionResult {
@@ -115,7 +117,9 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     counting_columns_initialized: false, 
     wizard_sessions_cleaned: 0,
     agent_logs_cleaned: 0,
-    cron_logs_cleaned: 0
+    cron_logs_cleaned: 0,
+    perf_snapshots_cleaned: 0,
+    perf_metrics_collected: false
   };
 
   try {
@@ -160,6 +164,28 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     }
   } catch {
     console.log("[cron-dispatcher] cleanup_old_cron_logs RPC not available");
+  }
+
+  // P4: Collect performance metrics
+  try {
+    const { data, error } = await supabase.rpc("collect_perf_metrics");
+    if (!error) {
+      result.perf_metrics_collected = true;
+      console.log("[cron-dispatcher] Performance metrics collected:", JSON.stringify(data));
+    }
+  } catch {
+    console.log("[cron-dispatcher] collect_perf_metrics RPC not available");
+  }
+
+  // P4: Cleanup old performance snapshots (90 days)
+  try {
+    const { data: perfCount, error: perfError } = await supabase.rpc("cleanup_old_perf_snapshots");
+    if (!perfError) {
+      result.perf_snapshots_cleaned = perfCount || 0;
+      console.log(`[cron-dispatcher] Cleaned ${result.perf_snapshots_cleaned} old perf snapshots`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] cleanup_old_perf_snapshots RPC not available");
   }
 
   return result;
@@ -245,7 +271,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: { processed: 0, sent: 0, failed: 0 },
       health: { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 },
-      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0 },
+      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false },
       duration_ms: Date.now() - startTime,
       ran_at: new Date().toISOString(),
     };

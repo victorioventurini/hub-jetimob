@@ -5636,6 +5636,30 @@ export type Database = {
           },
         ]
       }
+      perf_metrics_snapshots: {
+        Row: {
+          collected_at: string
+          created_by: string
+          id: string
+          metrics: Json
+          summary: Json
+        }
+        Insert: {
+          collected_at?: string
+          created_by?: string
+          id?: string
+          metrics: Json
+          summary: Json
+        }
+        Update: {
+          collected_at?: string
+          created_by?: string
+          id?: string
+          metrics?: Json
+          summary?: Json
+        }
+        Relationships: []
+      }
       permission_audit_log: {
         Row: {
           action: string
@@ -8107,7 +8131,9 @@ export type Database = {
         }[]
       }
       cleanup_old_cron_logs: { Args: never; Returns: undefined }
+      cleanup_old_perf_snapshots: { Args: never; Returns: number }
       cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
+      collect_perf_metrics: { Args: never; Returns: Json }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
