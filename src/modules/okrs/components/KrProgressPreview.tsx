@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { calculateProgress } from '../types';
 import { formatValueWithUnit } from '../constants/krUnits';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Equal } from 'lucide-react';
 import { getProgressColor, TREND_COLORS } from '@/lib/colors';
+import type { OkrDirection } from '../types';
 
 interface KrProgressPreviewProps {
   title: string;
@@ -11,7 +12,7 @@ interface KrProgressPreviewProps {
   currentValue: number;
   target: number;
   unit: string;
-  direction: 'up' | 'down';
+  direction: OkrDirection;
 }
 
 export function KrProgressPreview({
@@ -51,8 +52,10 @@ export function KrProgressPreview({
           </span>
           {direction === 'up' ? (
             <TrendingUp className={`h-4 w-4 ${TREND_COLORS.up}`} />
-          ) : (
+          ) : direction === 'down' ? (
             <TrendingDown className="h-4 w-4 text-info" />
+          ) : (
+            <Equal className="h-4 w-4 text-purple-500" />
           )}
         </div>
         

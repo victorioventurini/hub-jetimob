@@ -80,7 +80,7 @@ export function validateKrTitle(title: string): KrValidationResult {
 export function validateKrValues(
   baseline: number,
   target: number,
-  direction: 'up' | 'down'
+  direction: 'up' | 'down' | 'maintain'
 ): KrValidationResult {
   const result: KrValidationResult = {
     isValid: true,
@@ -88,10 +88,19 @@ export function validateKrValues(
     warnings: [],
   };
 
-  // Check if baseline equals target
+  // Validation for 'maintain' direction
+  if (direction === 'maintain') {
+    if (baseline !== target) {
+      result.isValid = false;
+      result.errors.push('Para KRs de manutenção, baseline e meta devem ser iguais.');
+    }
+    return result;
+  }
+
+  // For up/down directions: baseline cannot equal target
   if (baseline === target) {
     result.isValid = false;
-    result.errors.push('A meta não pode ser igual ao valor inicial.');
+    result.errors.push('A meta não pode ser igual ao valor inicial. Use direção "Manter" para KRs de manutenção.');
   }
 
   // Check direction coherence
@@ -139,7 +148,7 @@ export function validateTeamKr(
   title: string,
   baseline: number,
   target: number,
-  direction: 'up' | 'down',
+  direction: 'up' | 'down' | 'maintain',
   hasOrgObjective: boolean,
   krType?: OkrKrType,
   linkedOrgKrId?: string | null
@@ -178,7 +187,7 @@ export function validateOrgKr(
   title: string,
   baseline: number,
   target: number,
-  direction: 'up' | 'down'
+  direction: 'up' | 'down' | 'maintain'
 ): KrValidationResult {
   const titleValidation = validateKrTitle(title);
   const valueValidation = validateKrValues(baseline, target, direction);

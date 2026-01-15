@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, AlertCircle, Users } from 'lucide-react';
 import { calculateProgress } from '../types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { OkrDirection } from '../types';
 
 interface RiskKr {
   id: string;
@@ -13,7 +14,7 @@ interface RiskKr {
   baseline: number;
   current_value: number;
   target: number;
-  direction: 'up' | 'down';
+  direction: OkrDirection;
   unit: string;
 }
 

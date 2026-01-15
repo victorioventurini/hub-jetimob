@@ -51,7 +51,7 @@ interface CheckinDialogProps {
     baseline: number;
     current_value: number;
     target: number;
-    direction: 'up' | 'down';
+    direction: 'up' | 'down' | 'maintain';
     unit: string;
     status: OkrRagStatus;
     team_id: string;

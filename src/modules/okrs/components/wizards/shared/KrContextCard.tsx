@@ -12,6 +12,7 @@ import {
   Target, 
   TrendingUp, 
   TrendingDown,
+  Equal,
   Calendar,
   User,
 } from 'lucide-react';
@@ -31,7 +32,7 @@ export interface KrContextCardProps {
   currentValue: number;
   target: number;
   unit?: string;
-  direction: 'up' | 'down';
+  direction: 'up' | 'down' | 'maintain';
   status: 'green' | 'yellow' | 'red' | 'not_started';
   progress: number;
   lastCheckinAt?: string | null;
@@ -92,7 +93,7 @@ export function KrContextCard({
   compact = false,
 }: KrContextCardProps) {
   const statusConfig = STATUS_CONFIG[status];
-  const DirectionIcon = direction === 'up' ? TrendingUp : TrendingDown;
+  const DirectionIcon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : Equal;
 
   if (compact) {
     return (

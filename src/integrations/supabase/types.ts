@@ -9000,7 +9000,7 @@ export type Database = {
       okr_confidence: "high" | "medium" | "low"
       okr_contribution_entity_type: "objective" | "kr"
       okr_dependency_status: "ok" | "blocked" | "at_risk"
-      okr_direction: "up" | "down"
+      okr_direction: "up" | "down" | "maintain"
       okr_kr_type: "contribution" | "enabler" | "foundational"
       okr_metric_role: "primary" | "guardrail"
       okr_rag_status: "green" | "yellow" | "red" | "not_started"
@@ -9270,7 +9270,7 @@ export const Constants = {
       okr_confidence: ["high", "medium", "low"],
       okr_contribution_entity_type: ["objective", "kr"],
       okr_dependency_status: ["ok", "blocked", "at_risk"],
-      okr_direction: ["up", "down"],
+      okr_direction: ["up", "down", "maintain"],
       okr_kr_type: ["contribution", "enabler", "foundational"],
       okr_metric_role: ["primary", "guardrail"],
       okr_rag_status: ["green", "yellow", "red", "not_started"],
