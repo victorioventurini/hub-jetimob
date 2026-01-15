@@ -331,27 +331,24 @@ export function useOrgObjectiveView(objectiveId: string) {
 }
 
 export function useAllOrgObjectivesView(year?: number) {
-  const { currentBu } = useBu();
   const currentYear = year || new Date().getFullYear();
-  const { client: supabase, isReady } = useOptionalBuClient();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, currentBu?.id ?? null),
+    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, buId ?? null),
     queryFn: async (): Promise<OrgObjectiveWithKrs[]> => {
-      if (!supabase) return [];
+      if (!supabase || !buId) return [];
       
-      let query = supabase
+      const query = supabase
         .from('okr_org_objectives')
         .select(OKR_FIELDS.orgObjective)
+        .eq('bu_id', buId)
         .eq('year', currentYear)
-        .eq('status', 'active')
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded')
         .is('deleted_at', null)
         .is('cancelled_at', null)
         .order('created_at');
-
-      if (currentBu?.id) {
-        query = query.eq('bu_id', currentBu.id);
-      }
 
       const { data: objectives, error: objError } = await query;
 
@@ -446,7 +443,7 @@ export function useAllOrgObjectivesView(year?: number) {
         };
       });
     },
-    enabled: isReady && !!supabase,
+    enabled: isReady && !!supabase && !!buId,
     staleTime: 2 * 60 * 1000,
   });
 }
