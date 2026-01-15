@@ -1,7 +1,7 @@
 /**
  * OrganogramControls - Controles de zoom, filtros e orientação
  */
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, ExternalLink, Search } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, ExternalLink, Search, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -56,6 +56,17 @@ export function OrganogramControls({
     });
   };
 
+  const handleToggleExpansion = () => {
+    const nextMode = controls.expansionMode === 'all' ? 'none' : 'all';
+    onControlsChange({
+      ...controls,
+      expansionMode: nextMode,
+      expansionKey: controls.expansionKey + 1,
+    });
+  };
+
+  const isAllExpanded = controls.expansionMode === 'all';
+
   // Compact mode for fullscreen header
   if (compact) {
     return (
@@ -90,6 +101,29 @@ export function OrganogramControls({
             </Label>
           </div>
         </div>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Expand/Collapse toggle */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleToggleExpansion}
+            >
+              {isAllExpanded ? (
+                <ChevronsDownUp className="w-4 h-4" />
+              ) : (
+                <ChevronsUpDown className="w-4 h-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isAllExpanded ? 'Recolher tudo' : 'Expandir tudo'}
+          </TooltipContent>
+        </Tooltip>
 
         <Separator orientation="vertical" className="h-6" />
 
@@ -189,6 +223,30 @@ export function OrganogramControls({
             Squads
           </Label>
         </div>
+
+        {/* Expand/Collapse toggle */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleExpansion}
+              className="gap-1.5"
+            >
+              {isAllExpanded ? (
+                <ChevronsDownUp className="w-4 h-4" />
+              ) : (
+                <ChevronsUpDown className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">
+                {isAllExpanded ? 'Recolher' : 'Expandir'}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isAllExpanded ? 'Recolher tudo' : 'Expandir tudo'}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <Separator orientation="vertical" className="h-8 hidden sm:block" />
