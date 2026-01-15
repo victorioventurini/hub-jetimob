@@ -6,6 +6,7 @@ import { useModules } from "@/contexts/ModuleContext";
 import { useBu } from "@/contexts/BuContext";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
+import { useFavoriteLinks } from "@/shared/saved-links";
 import {
   Home,
   Users,
@@ -104,6 +105,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
   const { hasModuleAccess, isLoading: permissionsLoading } = useModuleAccess();
   const { isImpersonating } = useOptionalImpersonation();
+  const { getFavoriteHref } = useFavoriteLinks();
   
   // Check if user is BU admin or higher
   // IMPORTANTE: Durante impersonação, NÃO conceder acesso admin - simular experiência real
@@ -240,7 +242,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                       hasModuleAccess(item.slug)
                     )
                     .map((item) => (
-                      <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                      <NavItem key={item.href} name={item.name} href={getFavoriteHref(item.slug, item.href)} icon={item.icon} />
                     ))}
                   {/* Módulos globais que aparecem dentro da BU + permissão V2 */}
                   {globalBuItems
