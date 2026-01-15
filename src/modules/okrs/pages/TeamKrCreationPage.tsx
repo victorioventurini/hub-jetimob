@@ -16,7 +16,7 @@ import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizard
 import { WIZARD_CONFIGS } from '../types/wizard';
 import { useKrWizardDraft, type KrWizardStep } from '../hooks/useKrWizardDraft';
 import { useCreateTeamKrBundle } from '../hooks/useCreateTeamKrBundle';
-import { useTeam } from '@/modules/teams/hooks/useTeams';
+import { useTeam } from '@/modules/teams/hooks';
 
 // Steps
 import {

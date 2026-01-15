@@ -26,7 +26,7 @@ import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import { BuUserSelect } from "@/components/selects/BuUserSelect";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
-import { AreaSelect } from "@/modules/areas/components";
+import { AreaSelect } from "@/components/selects";
 
 interface TeamFormDialogProps {
   /** Team to edit. If null/undefined, dialog is in create mode */
@@ -225,12 +225,14 @@ export function TeamFormDialog({
           <Label htmlFor="area">Área</Label>
           <AreaSelect
             value={formData.area_id}
-            onChange={(value) =>
+            onValueChange={(value) =>
               setFormData({
                 ...formData,
                 area_id: value,
               })
             }
+            includeNone
+            noneLabel="Nenhuma área"
             placeholder="Selecione uma área (opcional)"
           />
           <p className="text-xs text-muted-foreground">

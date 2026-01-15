@@ -29,7 +29,7 @@ import { Loader2, Users, Ban, Lock } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { VicActionButton } from '@/modules/vic';
 import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
-import { FlatTeamItem, useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useHierarchicalTeamList, type FlatTeamItem } from '@/modules/teams/hooks';
 import { useManageableTeamsFlat } from '../hooks/useManageableTeams';
 import { useObjectiveContributors, useManageContributors } from '../hooks';
 import { useCycles } from '../hooks/useCycleData';

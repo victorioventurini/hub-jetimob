@@ -3,4 +3,4 @@
  */
 export { AreaCard } from "./AreaCard";
 export { AreaFormDialog } from "./AreaFormDialog";
-export { AreaSelect } from "./AreaSelect";
+// AreaSelect is now centralized in src/components/selects/AreaSelect.tsx

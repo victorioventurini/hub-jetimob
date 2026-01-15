@@ -10,7 +10,7 @@ import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shar
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useTeamPendingKrs } from '@/modules/okrs/hooks/useTeamPendingKrs';
-import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';

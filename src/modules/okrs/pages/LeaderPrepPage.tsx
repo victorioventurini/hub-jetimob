@@ -11,7 +11,7 @@ import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraf
 import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
 import { useTeamOverviewMetrics } from '@/modules/okrs/hooks/useTeamOverviewMetrics';
 import { useTeamPendingKrs } from '@/modules/okrs/hooks/useTeamPendingKrs';
-import { useHierarchicalTeamList } from '@/modules/teams/hooks/useTeams';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';

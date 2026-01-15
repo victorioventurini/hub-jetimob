@@ -6,7 +6,7 @@ import { Filter, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CONFIG, OkrCalculatedStatus } from '../../hooks/useOkrStatus';
 import { YearSelect, TeamSelect } from '@/components/selects';
-import { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
+import type { FlatTeamItem } from '@/modules/teams/hooks';
 
 interface Team {
   id: string;
