@@ -142,11 +142,10 @@ export function useCycleCheckins(
       if (error) throw error;
       
       // Map RPC response shape to expected interface
-      // RPC returns: { feed, aggregates, overdue_krs, pagination: { page, page_size, total_count, total_pages } }
-      // We need: { checkins, aggregates, overdue_krs, pagination: { page, page_size, total, total_pages } }
+      // RPC returns: { checkins, aggregates, overdue_krs, pagination: { page, page_size, total, total_pages } }
       const raw = data as Record<string, unknown>;
       return {
-        checkins: (raw.feed ?? []) as CheckinFeedItem[],
+        checkins: (raw.checkins ?? []) as CheckinFeedItem[],
         aggregates: (raw.aggregates ?? {
           total_checkins: 0,
           krs_on_track_percent: 0,
@@ -159,7 +158,7 @@ export function useCycleCheckins(
         pagination: {
           page: (raw.pagination as Record<string, number>)?.page ?? 1,
           page_size: (raw.pagination as Record<string, number>)?.page_size ?? 20,
-          total: (raw.pagination as Record<string, number>)?.total_count ?? 0,
+          total: (raw.pagination as Record<string, number>)?.total ?? 0,
           total_pages: (raw.pagination as Record<string, number>)?.total_pages ?? 0,
         },
       };
