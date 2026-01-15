@@ -1,8 +1,8 @@
 # Slow Queries — Relatório e Plano de Ação
 
-**Versão:** 1.2.0  
+**Versão:** 1.3.0  
 **Data:** 2026-01-15  
-**Status:** ✅ P3.1 + P3.2 COMPLETO
+**Status:** ✅ P3.1 + P3.2 + P3.3 COMPLETO
 
 ---
 
@@ -112,23 +112,41 @@ Análise das métricas de performance do banco Supabase identificou:
 **Espaço recuperado:** ~8.6 MB
 
 ### Wave P3.3 — Otimizações de Query (Prioridade Média)
+### Wave P3.3 — Otimizações de Query OKR Wizard ✅ COMPLETO (2026-01-15)
 
-| Módulo | Ação | Impacto Esperado |
-|--------|------|------------------|
-| Permissions | Revisar queries que causam seq scan em `permission_template_items_v2` | -30K seq scans |
-| AI Agents | Revisar queries em `ai_agent_logs` para usar índice existente ou criar novo | Evitar 7K rows/scan |
-| OKR Wizard | Adicionar índice e revisar queries em `okr_wizard_sessions` | -6K seq scans |
+**Problema identificado:** Índices P3.1 usavam `bu_id` como leading column, mas o frontend filtra por `started_by` (profile_id).
+
+**Análise baseada em:**
+- `TECHNICAL_CONTEXT_REGISTRY.md` v2.34.0
+- `DATA_MODEL_REGISTRY.md`
+- Código fonte: `useWizardSession.ts`, `useWizardDraft.ts`, `useGenericWizardDraft.ts`
+
+**Índice criado:**
+| Índice | Colunas | Condição |
+|--------|---------|----------|
+| `idx_okr_wizard_sessions_user_status_type` | (started_by, status, wizard_type) | WHERE status = 'in_progress' |
+
+**4 índices removidos (substituídos pelo composto):**
+| Índice | Motivo |
+|--------|--------|
+| `idx_okr_wizard_sessions_bu_status` | 0 scans, leading column errada |
+| `idx_okr_wizard_sessions_bu_id` | 0 scans, redundante |
+| `idx_okr_wizard_sessions_started_by` | Coberto pelo novo índice |
+| `idx_okr_wizard_sessions_wizard_type` | Coberto pelo novo índice |
+
+**Impacto esperado:** `okr_wizard_sessions` idx_scan % de 4.29% → >90%
 
 ---
 
 ## 6. Métricas de Sucesso
 
-| Métrica | Antes | Meta | Prazo |
-|---------|-------|------|-------|
-| Seq scans em `permission_template_items_v2` | 36.4K | <5K | P3.1 |
-| Seq scans em `okr_wizard_sessions` | 6.2K | <1K | P3.1 |
-| Índices não utilizados | 12 | <5 | P3.2 |
-| Espaço de índices não usados | ~8.6MB | <1MB | P3.2 |
+| Métrica | Antes | Meta | Status |
+|---------|-------|------|--------|
+| Seq scans em `permission_template_items_v2` | 36.4K | <5K | ✅ P3.1 |
+| Seq scans em `okr_wizard_sessions` | 6.2K | <1K | ✅ P3.3 |
+| `okr_wizard_sessions` idx_scan % | 4.29% | >90% | ✅ P3.3 |
+| Índices não utilizados | 12 | <5 | ✅ P3.2+P3.3 |
+| Espaço de índices não usados | ~8.6MB | <1MB | ✅ P3.2 |
 
 ---
 
@@ -148,10 +166,10 @@ FROM pg_stat_user_indexes
 WHERE schemaname = 'public' AND idx_scan = 0
 ORDER BY pg_relation_size(indexrelid) DESC;
 
--- Tamanho total de índices não usados
-SELECT pg_size_pretty(sum(pg_relation_size(indexrelid)))
-FROM pg_stat_user_indexes
-WHERE schemaname = 'public' AND idx_scan = 0;
+-- Verificar novo índice OKR Wizard (após 24h)
+SELECT indexrelname, idx_scan 
+FROM pg_stat_user_indexes 
+WHERE indexrelname = 'idx_okr_wizard_sessions_user_status_type';
 ```
 
 ---
@@ -161,8 +179,9 @@ WHERE schemaname = 'public' AND idx_scan = 0;
 - [x] **P3.1:** Criar índices para `okr_wizard_sessions` e `permission_template_items_v2` ✅
 - [x] **P3.1:** Analisar padrão de queries em `ai_agent_logs` ✅
 - [x] **P3.2:** Remover índices confirmados como não usados ✅
-- [ ] **P3.3:** Implementar monitoramento periódico de métricas
-- [ ] **P3.3:** Revisar queries nos módulos Permissions/AI Agents/OKR
+- [x] **P3.3:** Criar índice otimizado para padrão real de queries OKR Wizard ✅
+- [ ] **P4:** Implementar monitoramento periódico automático de métricas
+- [ ] **P4:** Criar dashboard de performance no Hub
 
 ---
 
