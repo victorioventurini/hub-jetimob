@@ -1,8 +1,8 @@
 # Plano de Ação de Performance — Wave P5
 
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Data:** 2026-01-15  
-**Status:** 🚧 Em planejamento  
+**Status:** ✅ P5.1 COMPLETO  
 **Baseado em:** Snapshot de 2026-01-15 16:13 UTC
 
 ---
@@ -226,36 +226,33 @@ WHERE deleted_at IS NULL;
 
 ## 5. Plano de Execução
 
-### Wave P5.1 — Índices Críticos (Prioridade IMEDIATA)
+### Wave P5.1 — Índices Críticos ✅ COMPLETO (2026-01-15)
 
 **Impacto:** Redução estimada de **~15M seq scans**
 
+**7 índices criados:**
+
+| Índice | Tabela | Colunas |
+|--------|--------|---------|
+| `idx_user_roles_user_id` | user_roles | (user_id) |
+| `idx_user_roles_user_role` | user_roles | (user_id, role) |
+| `idx_profiles_bu_active` | profiles | (bu_id) WHERE deleted_at IS NULL |
+| `idx_ai_agent_documents_agent` | ai_agent_documents | (agent_id) |
+| `idx_bu_locations_bu` | bu_locations | (bu_id) WHERE deleted_at IS NULL |
+| `idx_asset_movements_asset` | asset_movements | (asset_id, occurred_at DESC) |
+| `idx_asset_movements_bu_date` | asset_movements | (bu_id, occurred_at DESC) |
+
+**Impacto esperado:**
+- `user_roles`: 0% → >90% idx usage (-10M seq scans)
+- `profiles`: 4% → >70% idx usage (-6M seq scans)
+- `ai_agent_documents`: 0% → >90% idx usage (-63K seq scans)
+- `bu_locations`: 11% → >80% idx usage (-100K seq scans)
+- `asset_movements`: 6.5% → >80% idx usage (-180K seq scans)
+
+### Wave P5.2 — Índices Secundários (Próximo sprint)
+
 ```sql
--- Executar sequencialmente para evitar lock contention
-
--- 1. user_roles (MAIOR IMPACTO)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_user_id 
-ON public.user_roles(user_id);
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_user_role 
-ON public.user_roles(user_id, role);
-
--- 2. profiles (SEGUNDO MAIOR IMPACTO)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_bu_id 
-ON public.profiles(bu_id) 
-WHERE deleted_at IS NULL;
-
--- 3. ai_agent_documents
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ai_agent_documents_agent 
-ON public.ai_agent_documents(agent_id);
-```
-
-### Wave P5.2 — Índices Secundários (Próxima semana)
-
-```sql
--- asset_movements
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_asset_movements_asset 
-ON public.asset_movements(asset_id, occurred_at DESC);
+-- OKR tables
 
 -- notification_outbox
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notification_outbox_pending 
@@ -316,12 +313,13 @@ WHERE indexrelname LIKE 'idx_user_roles%'
 
 ## 8. Próximos Passos
 
-- [ ] **P5.1:** Criar índices críticos para `user_roles` e `profiles`
-- [ ] **P5.1:** Criar índice para `ai_agent_documents`
-- [ ] **P5.2:** Criar índices secundários para OKRs e assets
+- [x] **P5.1:** Criar índices críticos para `user_roles` e `profiles` ✅
+- [x] **P5.1:** Criar índice para `ai_agent_documents` ✅
+- [x] **P5.1:** Criar índices para `bu_locations` e `asset_movements` ✅
+- [ ] **P5.2:** Criar índices secundários para OKRs e notifications
 - [ ] **P5.3:** Avaliar remoção de índices não usados
 - [ ] **P5.3:** Implementar cache optimization no frontend
-- [ ] **Monitorar:** Dashboard de performance após 24h de cada wave
+- [ ] **Monitorar:** Dashboard de performance após 24h
 
 ---
 
