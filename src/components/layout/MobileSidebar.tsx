@@ -176,7 +176,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent side="left" className="w-[280px] p-0">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="flex items-center gap-3">

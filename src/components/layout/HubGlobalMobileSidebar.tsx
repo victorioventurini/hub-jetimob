@@ -113,7 +113,7 @@ export function HubGlobalMobileSidebar({ open, onOpenChange }: HubGlobalMobileSi
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent side="left" className="w-[280px] p-0 bg-background">
         <SheetHeader className="h-16 border-b border-border px-4 flex flex-row items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg shrink-0">
