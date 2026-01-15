@@ -57,6 +57,7 @@
 | [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts | ✅ Normativo |
 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **Guia completo de testes automatizados** (inclui Teams/Areas) | ✅ v1.1.0 |
 | [RFC_AREAS_IMPLEMENTATION.md](./RFC_AREAS_IMPLEMENTATION.md) | **RFC: Implementação de Áreas** (estratégicas) | ✅ Implementado |
+| [SLOW_QUERIES_ACTION_PLAN.md](./SLOW_QUERIES_ACTION_PLAN.md) | **Plano de otimização de queries lentas** (P3.x) | 📋 Planejado |
 
 ---
 
