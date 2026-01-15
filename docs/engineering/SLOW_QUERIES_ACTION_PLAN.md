@@ -1,8 +1,8 @@
 # Slow Queries — Relatório e Plano de Ação
 
-**Versão:** 1.3.0  
+**Versão:** 1.4.0  
 **Data:** 2026-01-15  
-**Status:** ✅ P3.1 + P3.2 + P3.3 COMPLETO
+**Status:** ✅ P3 + P4 COMPLETO
 
 ---
 
@@ -180,8 +180,21 @@ WHERE indexrelname = 'idx_okr_wizard_sessions_user_status_type';
 - [x] **P3.1:** Analisar padrão de queries em `ai_agent_logs` ✅
 - [x] **P3.2:** Remover índices confirmados como não usados ✅
 - [x] **P3.3:** Criar índice otimizado para padrão real de queries OKR Wizard ✅
-- [ ] **P4:** Implementar monitoramento periódico automático de métricas
-- [ ] **P4:** Criar dashboard de performance no Hub
+- [x] **P4:** Implementar monitoramento periódico automático de métricas ✅
+- [x] **P4:** Criar dashboard de performance no Hub ✅
+
+### P4 — Monitoramento Automático ✅ COMPLETO (2026-01-15)
+
+**Implementado:**
+- Tabela `perf_metrics_snapshots` para armazenar snapshots de métricas
+- RPC `collect_perf_metrics()` coleta métricas de `pg_stat_user_tables` e `pg_stat_user_indexes`
+- RPC `cleanup_old_perf_snapshots()` remove snapshots com mais de 90 dias
+- `cron-dispatcher` atualizado para coletar métricas a cada execução (5 min)
+- Dashboard em `/hub/performance` com:
+  - Cards de resumo (tabelas críticas, warning, ok, índices não usados)
+  - Gráfico de tendência (30 dias)
+  - Lista de tabelas monitoradas com status
+  - Lista de índices não utilizados
 
 ---
 

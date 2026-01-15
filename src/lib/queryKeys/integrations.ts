@@ -35,6 +35,12 @@ export const cronJobKeys = {
   executionLogs: () => ['cron-execution-logs'] as const,
 } as const;
 
+export const perfMetricsKeys = {
+  latest: () => ['perf-metrics', 'latest'] as const,
+  history: (days: number) => ['perf-metrics', 'history', days] as const,
+  snapshots: (limit: number) => ['perf-metrics', 'snapshots', limit] as const,
+} as const;
+
 export const vicKeys = {
   buConfig: (buId: string | null) => ['vic', 'bu-config', buId] as const,
   agentActivations: (buId: string | null) => ['vic', 'agent-activations', buId] as const,
