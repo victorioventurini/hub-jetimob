@@ -8,7 +8,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { calculateProgress } from '../utils/progressCalculation';
 import type { CompanyOkrSummary } from '@/modules/okrs/types/wizard';
+import type { OkrDirection } from '../types';
 
 interface CompanyOkr {
   id: string;
@@ -88,16 +90,9 @@ export function useCompanyOkrs(year?: number) {
           const baseline = kr.baseline ?? 0;
           const current = kr.current_value ?? 0;
           const target = kr.target ?? 100;
-          const direction = kr.direction ?? 'up';
+          const direction = (kr.direction ?? 'up') as OkrDirection;
 
-          let progress: number;
-          if (direction === 'up') {
-            progress = target === baseline ? (current >= target ? 100 : 0)
-              : Math.max(0, Math.min(100, ((current - baseline) / (target - baseline)) * 100));
-          } else {
-            progress = baseline === target ? (current <= target ? 100 : 0)
-              : Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100));
-          }
+          const progress = calculateProgress(baseline, current, target, direction);
           totalProgress += progress;
 
           if (kr.status === 'yellow' || kr.status === 'red') {

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import type { OkrRagStatus, OkrConfidence } from "../types";
+import { calculateProgress } from "./progressCalculation";
+import type { OkrRagStatus, OkrConfidence, OkrDirection } from "../types";
 import type { Cycle } from "../hooks/useCycleData";
 import type { Initiative, InitiativeStatus } from "../types/initiative";
 
@@ -27,7 +28,7 @@ interface KrData {
   current_value: number;
   baseline: number;
   target: number;
-  direction: "up" | "down";
+  direction: OkrDirection;
   lastCheckinDate?: string | null;
 }
 
@@ -45,16 +46,10 @@ interface HealthCalculationInput {
 }
 
 /**
- * Calculate progress for a single KR
+ * Calculate progress for a single KR using centralized utility
  */
 function calculateKrProgress(kr: KrData): number {
-  if (kr.direction === "up") {
-    if (kr.target === kr.baseline) return kr.current_value >= kr.target ? 100 : 0;
-    return Math.max(0, Math.min(100, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100));
-  } else {
-    if (kr.baseline === kr.target) return kr.current_value <= kr.target ? 100 : 0;
-    return Math.max(0, Math.min(100, ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100));
-  }
+  return calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
 }
 
 /**

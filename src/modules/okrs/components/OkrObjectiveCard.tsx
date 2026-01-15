@@ -6,6 +6,7 @@ import { Target, Users, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
+import { calculateProgress } from '../utils/progressCalculation';
 import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 import {
   DropdownMenu,
@@ -42,17 +43,11 @@ interface OkrObjectiveCardProps {
   isDeleting?: boolean;
 }
 
-const calculateProgress = (krs: KeyResult[]): number => {
+const calculateObjectiveProgress = (krs: KeyResult[]): number => {
   if (krs.length === 0) return 0;
   
   return krs.reduce((acc, kr) => {
-    if (kr.direction === 'up') {
-      if (kr.target === kr.baseline) return acc + (kr.current_value >= kr.target ? 100 : 0);
-      return acc + Math.max(0, Math.min(100, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100));
-    } else {
-      if (kr.baseline === kr.target) return acc + (kr.current_value <= kr.target ? 100 : 0);
-      return acc + Math.max(0, Math.min(100, ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100));
-    }
+    return acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
   }, 0) / krs.length;
 };
 
@@ -69,7 +64,7 @@ export function OkrObjectiveCard({
   onAddKr,
   isDeleting = false,
 }: OkrObjectiveCardProps) {
-  const avgProgress = calculateProgress(keyResults);
+  const avgProgress = calculateObjectiveProgress(keyResults);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const greenCount = keyResults.filter(kr => kr.status === 'green').length;

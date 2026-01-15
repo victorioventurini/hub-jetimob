@@ -127,34 +127,23 @@ export function deriveStatusCounts(krs: { status: string }[]) {
 
 /**
  * Calculate overall progress from KRs
+ * Uses the centralized calculateProgress utility
  */
 export function calculateOverallProgress(
   krs: { baseline?: number | string | null; current_value?: number | string | null; target?: number | string | null; direction?: string | null }[]
 ): number {
   if (!krs || krs.length === 0) return 0;
 
+  const { calculateProgressFromNullable } = require('../../utils/progressCalculation');
+  
   let totalProgress = 0;
   for (const kr of krs) {
-    const baseline = Number(kr.baseline) || 0;
-    const current = Number(kr.current_value) || 0;
-    const target = Number(kr.target) || 0;
-    const direction = kr.direction || 'up';
-
-    if (direction === 'up') {
-      const range = target - baseline;
-      if (range <= 0) {
-        totalProgress += current >= target ? 100 : 0;
-      } else {
-        totalProgress += Math.min(100, Math.max(0, ((current - baseline) / range) * 100));
-      }
-    } else {
-      const range = baseline - target;
-      if (range <= 0) {
-        totalProgress += current <= target ? 100 : 0;
-      } else {
-        totalProgress += Math.min(100, Math.max(0, ((baseline - current) / range) * 100));
-      }
-    }
+    totalProgress += calculateProgressFromNullable(
+      kr.baseline,
+      kr.current_value,
+      kr.target,
+      kr.direction
+    );
   }
 
   return totalProgress / krs.length;
