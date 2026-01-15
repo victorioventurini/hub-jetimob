@@ -411,6 +411,101 @@ export type Database = {
         }
         Relationships: []
       }
+      areas: {
+        Row: {
+          bu_id: string
+          co_leader_user_id: string | null
+          color: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          leader_user_id: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          co_leader_user_id?: string | null
+          color?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          leader_user_id?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          co_leader_user_id?: string | null
+          color?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          leader_user_id?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_co_leader_user_id_fkey"
+            columns: ["co_leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_co_leader_user_id_fkey"
+            columns: ["co_leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_co_leader_user_id_fkey"
+            columns: ["co_leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_leader_user_id_fkey"
+            columns: ["leader_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_categories: {
         Row: {
           bu_id: string
@@ -6170,6 +6265,7 @@ export type Database = {
       }
       teams: {
         Row: {
+          area_id: string | null
           bu_id: string
           checkin_day: number
           checkin_deadline_hour: number
@@ -6186,6 +6282,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           bu_id: string
           checkin_day?: number
           checkin_deadline_hour?: number
@@ -6202,6 +6299,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           bu_id?: string
           checkin_day?: number
           checkin_deadline_hour?: number
@@ -6218,6 +6316,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "teams_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "teams_bu_id_fkey"
             columns: ["bu_id"]
