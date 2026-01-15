@@ -1,9 +1,9 @@
 # Shared Components & Utilities Registry
 
-**Versão:** 1.3.0  
+**Versão:** 1.4.0  
 **Última atualização:** 2026-01-15  
 **Status:** Normativo  
-**Referência:** TCR v2.36.0
+**Referência:** TCR v2.37.0
 
 ---
 
@@ -727,6 +727,7 @@ const { data } = await supabase.from("tickets").select("id, title");
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.4.0 | 2026-01-15 | Saved Links expandido para Assets; Áreas movido para /settings/areas |
 | 1.3.0 | 2026-01-15 | Sistema de Links Salvos adicionado |
 | 1.2.0 | 2026-01-14 | Hooks Consolidation Wave |
 | 1.0.0 | 2026-01-09 | Versão inicial |
