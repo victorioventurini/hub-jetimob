@@ -55,6 +55,7 @@
 | [FRONTEND_UX_AUDIT_2026-01-13.md](./FRONTEND_UX_AUDIT_2026-01-13.md) | Auditoria de frontend e UX | ✅ Atual |
 | [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) | Análise de débitos técnicos | ✅ Atual |
 | [COMPLIANCE_BASELINE.md](./COMPLIANCE_BASELINE.md) | Baseline de compliance e scripts | ✅ Normativo |
+| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | **Guia completo de testes automatizados** | ✅ v1.0.0 |
 
 ---
 
@@ -79,6 +80,28 @@
 | `audit-rbac.ts` | `npx tsx scripts/audit-rbac.ts` | Hardcode de roles |
 | `audit-supabase-client.ts` | `npx tsx scripts/audit-supabase-client.ts` | Cliente global indevido |
 | `run-compliance-checks.ts` | `npx tsx scripts/run-compliance-checks.ts` | Todos os audits |
+
+---
+
+## 🧪 Testes Automatizados
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run test` | Executa testes unitários (Vitest) em watch mode |
+| `npm run test -- --run` | Executa testes unitários uma vez |
+| `npm run test -- --coverage` | Executa testes com relatório de cobertura |
+| `npx playwright test` | Executa testes E2E (Playwright) |
+| `npx playwright test --ui` | Executa testes E2E em modo interativo |
+| `npx playwright show-report` | Exibe relatório HTML dos testes E2E |
+
+### Estrutura de Testes
+
+| Diretório | Conteúdo |
+|-----------|----------|
+| `src/test/` | Setup, mocks e fixtures para Vitest |
+| `src/**/*.test.ts` | Testes unitários e de integração |
+| `e2e/` | Testes E2E com Playwright |
+| `.github/workflows/test.yml` | CI/CD para testes automatizados |
 
 ---
 
