@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.38.0  
+**Versão:** 2.39.0  
 **Última atualização:** 2026-01-15
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **OKR Status Filter v1.1 (discarded exclusion)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1918,6 +1918,24 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.39.0 (2026-01-15) — Security Fixes & Performance Wave P5.1
+- **Security Fixes (2 error-level issues)**:
+  - RLS habilitado em `perf_metrics_snapshots` com política deny-all para authenticated
+  - 3 views convertidas de SECURITY DEFINER para SECURITY INVOKER:
+    - `v_pending_checkins`, `v_shared_okrs_summary`, `v_team_contributed_okrs`
+- **Performance Wave P5.1 — 7 índices críticos**:
+  - `idx_user_roles_user_id` — lookup por user_id (-90% seq scans)
+  - `idx_user_roles_user_role` — validação has_role() composta
+  - `idx_profiles_bu_active` — filtro por bu_id onde não deletado (-80% seq scans)
+  - `idx_ai_agent_documents_agent` — filtro por agent_id (-100% seq scans)
+  - `idx_bu_locations_bu` — filtro por bu_id onde não deletado
+  - `idx_asset_movements_asset` — histórico por asset ordenado por data
+  - `idx_asset_movements_bu_date` — listagem por BU ordenada por data
+  - Impacto estimado: **-16M sequential scans**
+- **Documentação**:
+  - Novo: `docs/engineering/PERFORMANCE_ACTION_PLAN_P5.md` — Plano Wave P5
+  - Atualizado: `SLOW_QUERIES_ACTION_PLAN.md` → v1.5.0
 
 ### v2.38.0 (2026-01-15) — OKR Status Filter & UI Polish
 - **Filtro de status `discarded` em OKRs**:
