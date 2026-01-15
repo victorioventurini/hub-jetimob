@@ -1,6 +1,6 @@
 # Relatório de Check-ins do Ciclo (OKRs)
 
-> **Última atualização:** 2026-01-13
+> **Última atualização:** 2026-01-15
 
 ## Visão Geral
 
@@ -36,14 +36,27 @@ Três cards principais mostram métricas agregadas:
 
 #### Tab: Feed
 
-Visão cronológica de todos os check-ins, mostrando:
+Visão cronológica de todos os check-ins com **toggle de visualização Cards/Tabela**.
+
+**Toggle de Visualização (v2.40.0):**
+- **Cards** (default): Visualização em cards individuais
+- **Tabela**: Visualização tabular com todas as informações
+
+**URL State:** `?view=cards` ou `?view=table` (persiste no refresh)
+
+**Dados exibidos:**
 - Data e hora do check-in
 - Título do Key Result (clicável para ver histórico)
 - Objetivo e time associados
 - Usuário que realizou o check-in
-- Valor registrado e variação
+- Valor registrado e variação (anterior → atual)
 - Nível de confiança (Alta/Média/Baixa)
 - Comentários e bloqueadores (quando presentes)
+
+**Componentes:**
+- `CycleCheckinsViewToggle` - Toggle Cards/Tabela
+- `CycleCheckinsFeed` - Renderização condicional cards/tabela
+- `CycleCheckinsTable` - Visualização tabular
 
 #### Tab: Pendências
 
@@ -72,6 +85,20 @@ Clicar em um time aplica o filtro e redireciona para o Feed.
 
 Todos os filtros são sincronizados com a URL, permitindo compartilhar links com filtros aplicados.
 
+## URL State Completo
+
+| Parâmetro | Tipo | Default | Descrição |
+|-----------|------|---------|-----------|
+| `cycle_id` | uuid | ciclo ativo | ID do ciclo selecionado |
+| `tab` | enum | `feed` | Tab ativa: `feed`, `pending`, `summary` |
+| `view` | enum | `cards` | Modo de visualização: `cards`, `table` |
+| `team_id` | uuid | - | Filtro por time |
+| `confidence` | enum | `all` | Filtro por confiança |
+| `status` | enum | `all` | Filtro por status RAG |
+| `q` | string | - | Busca textual |
+| `page` | number | `1` | Página atual |
+| `page_size` | number | `20` | Itens por página |
+
 ## Permissões
 
 A página respeita o modelo de permissões existente:
@@ -84,7 +111,25 @@ A página respeita o modelo de permissões existente:
 
 O modal existente `KrHistoryDialog` é reutilizado como drill-down para detalhes de cada Key Result, evitando duplicação de código e mantendo consistência visual.
 
+## Componentes
+
+| Componente | Caminho | Descrição |
+|------------|---------|-----------|
+| `CycleCheckinsPage` | `src/modules/okrs/pages/` | Página principal |
+| `CycleCheckinsFeed` | `src/modules/okrs/components/cycle-checkins/` | Feed com toggle cards/tabela |
+| `CycleCheckinsTable` | `src/modules/okrs/components/cycle-checkins/` | Visualização tabular |
+| `CycleCheckinsViewToggle` | `src/modules/okrs/components/cycle-checkins/` | Toggle de visualização |
+| `CycleCheckinsOverdue` | `src/modules/okrs/components/cycle-checkins/` | Tab Pendências |
+| `CycleCheckinsSummary` | `src/modules/okrs/components/cycle-checkins/` | Tab Resumo |
+| `CycleCheckinsFilters` | `src/modules/okrs/components/cycle-checkins/` | Barra de filtros |
+
 ## Changelog
+
+### 2026-01-15
+- Adicionado toggle Cards/Tabela na tab Feed
+- Novo componente `CycleCheckinsViewToggle`
+- Novo componente `CycleCheckinsTable`
+- URL state `?view=` para persistir visualização
 
 ### 2026-01-13
 - Removido botão "Iniciar Check-in do Time" (wizard modal legacy)
