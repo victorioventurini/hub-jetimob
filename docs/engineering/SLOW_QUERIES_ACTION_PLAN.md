@@ -1,8 +1,8 @@
 # Slow Queries — Relatório e Plano de Ação
 
-**Versão:** 1.4.0  
+**Versão:** 1.5.0  
 **Data:** 2026-01-15  
-**Status:** ✅ P3 + P4 COMPLETO
+**Status:** ✅ P3 + P4 + P5.1 COMPLETO
 
 ---
 
@@ -195,6 +195,22 @@ WHERE indexrelname = 'idx_okr_wizard_sessions_user_status_type';
   - Gráfico de tendência (30 dias)
   - Lista de tabelas monitoradas com status
   - Lista de índices não utilizados
+
+### P5.1 — Índices Críticos de Performance ✅ COMPLETO (2026-01-15)
+
+**7 índices criados para tabelas com maior volume de seq scans:**
+
+| Índice | Tabela | Impacto Esperado |
+|--------|--------|------------------|
+| `idx_user_roles_user_id` | user_roles | -90% seq scans (~10M) |
+| `idx_user_roles_user_role` | user_roles | Validação has_role() |
+| `idx_profiles_bu_active` | profiles | -80% seq scans (~6M) |
+| `idx_ai_agent_documents_agent` | ai_agent_documents | -100% seq scans (63K) |
+| `idx_bu_locations_bu` | bu_locations | -80% seq scans (132K) |
+| `idx_asset_movements_asset` | asset_movements | Histórico por asset |
+| `idx_asset_movements_bu_date` | asset_movements | Listagem por BU |
+
+**Plano completo:** [PERFORMANCE_ACTION_PLAN_P5.md](./PERFORMANCE_ACTION_PLAN_P5.md)
 
 ---
 
