@@ -598,19 +598,7 @@ const App = () => {
                       }
                     />
 
-                    {/* Áreas */}
-                    <Route
-                      path="/areas"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <ModuleRoute moduleSlug="teams">
-                              <AreasPage />
-                            </ModuleRoute>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
+                    {/* OKRs */}
 
                     {/* OKRs */}
                     <Route
@@ -949,6 +937,20 @@ const App = () => {
                           <BuRequiredRoute>
                             <HubLayout>
                               <SettingsNotifications />
+                            </HubLayout>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* BU Areas Settings */}
+                    <Route
+                      path="/settings/areas"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <HubLayout>
+                              <AreasPage />
                             </HubLayout>
                           </BuRequiredRoute>
                         </ProtectedRoute>
