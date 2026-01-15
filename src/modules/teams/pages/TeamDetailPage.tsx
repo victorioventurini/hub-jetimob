@@ -28,8 +28,8 @@ import {
   Target,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useTeam, useDeleteTeam } from "../hooks/useTeams";
-import { useSquads } from "../hooks/useSquads";
+import { useTeam, useDeleteTeam } from "../hooks";
+import { useSquads } from "../hooks";
 import { TeamFormDialog } from "../components/TeamFormDialog";
 import { SquadSection } from "../components/SquadSection";
 import { useAuth } from "@/hooks/useAuth";

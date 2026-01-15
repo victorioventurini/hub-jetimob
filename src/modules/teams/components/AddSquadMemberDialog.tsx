@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAddSquadMember } from "../hooks/useSquads";
+import { useAddSquadMember } from "../hooks";
 import { BuUserSelect } from "@/components/selects/BuUserSelect";
 import { SquadRole, SQUAD_ROLE_LABELS } from "../types/squad";
 

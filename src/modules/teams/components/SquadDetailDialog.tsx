@@ -24,7 +24,7 @@ import {
   UserMinus,
   Layers
 } from "lucide-react";
-import { useSquad, useUpdateSquadMember, useRemoveSquadMember } from "../hooks/useSquads";
+import { useSquad, useUpdateSquadMember, useRemoveSquadMember } from "../hooks";
 import { 
   SquadWithRelations, 
   SQUAD_PRODUCT_LABELS, 

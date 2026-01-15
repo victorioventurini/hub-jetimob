@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
-import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams, useOrgKeyResults } from '../hooks/useOkrData';
+import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams, useOrgKeyResults } from '../hooks';
 import { calculateProgress, getRagStatusColor } from '../types';
 import { RiskKrsList } from '../components/RiskKrsList';
 import { AlignmentMap } from '../components/AlignmentMap';

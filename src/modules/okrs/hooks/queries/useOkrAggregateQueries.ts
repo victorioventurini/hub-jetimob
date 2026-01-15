@@ -11,7 +11,8 @@
  * @see TECHNICAL_CONTEXT_REGISTRY.md for standards
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
@@ -681,5 +682,66 @@ export function useTeamObjectivesWithSharedInfo(buId?: string | null, teamId?: s
     },
     enabled: !!buId && isReady && !!supabase,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+// ============================================================
+// CONTRIBUTOR MUTATIONS
+// ============================================================
+
+/**
+ * Manage contributors for an objective
+ */
+export function useManageContributors() {
+  const queryClient = useQueryClient();
+  const { client: supabase } = useOptionalBuClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      objectiveId, 
+      teamIds 
+    }: { 
+      objectiveId: string; 
+      teamIds: string[] 
+    }) => {
+      if (!supabase) throw new Error('Cliente não disponível');
+      
+      // First, delete existing contributors
+      const { error: deleteError } = await supabase
+        .from('okr_team_objective_contributors')
+        .delete()
+        .eq('objective_id', objectiveId);
+
+      if (deleteError) throw deleteError;
+
+      // Then insert new contributors
+      if (teamIds.length > 0) {
+        const contributors = teamIds.map(teamId => ({
+          objective_id: objectiveId,
+          team_id: teamId,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('okr_team_objective_contributors')
+          .insert(contributors);
+
+        if (insertError) throw insertError;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.okrs.objectiveContributors(variables.objectiveId) 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.okrs.teamObjectivesAll() 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.okrs.teamObjectivesWithKrsAll() 
+      });
+    },
+    onError: (error) => {
+      console.error('Error managing contributors:', error);
+      toast.error('Erro ao atualizar times contribuidores');
+    },
   });
 }

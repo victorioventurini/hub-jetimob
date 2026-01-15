@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, AlertTriangle, Trash2 } from "lucide-react";
-import { useCreateTeam, useUpdateTeam, useTeams, useDeleteTeam } from "../hooks/useTeams";
+import { useCreateTeam, useUpdateTeam, useTeams, useDeleteTeam } from "../hooks";
 import { TeamWithRelations, TeamFormData } from "../types";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamSelect } from "@/components/selects/TeamSelect";

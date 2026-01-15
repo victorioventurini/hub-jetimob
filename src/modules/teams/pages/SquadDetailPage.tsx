@@ -25,7 +25,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useSquad, useUpdateSquadMember, useRemoveSquadMember } from "../hooks/useSquads";
+import { useSquad, useUpdateSquadMember, useRemoveSquadMember } from "../hooks";
 import { 
   SQUAD_PRODUCT_LABELS, 
   SQUAD_PRODUCT_COLORS,

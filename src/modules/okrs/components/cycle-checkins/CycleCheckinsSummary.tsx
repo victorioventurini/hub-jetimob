@@ -16,7 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useCycleCheckins } from '../../hooks/useCycleCheckins';
-import { useTeams } from '../../hooks/useOkrData';
+import { useTeams } from '../../hooks';
 import { cn } from '@/lib/utils';
 
 interface CycleCheckinsSummaryProps {

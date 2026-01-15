@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Layers } from "lucide-react";
-import { useSquads } from "../hooks/useSquads";
+import { useSquads } from "../hooks";
 import { SquadCard } from "./SquadCard";
 import { SquadFormDialog } from "./SquadFormDialog";
 import { SquadDetailDialog } from "./SquadDetailDialog";

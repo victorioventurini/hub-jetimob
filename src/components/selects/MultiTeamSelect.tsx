@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useHierarchicalTeamList, FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks";
 import { cn } from "@/lib/utils";
 import { ChevronDown, X } from "lucide-react";
 
