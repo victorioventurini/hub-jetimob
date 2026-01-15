@@ -313,7 +313,7 @@ export default function TeamsPage() {
 
         <div className="flex items-center justify-between">
           <Button variant="outline" asChild>
-            <Link to="/teams/org-chart">
+            <Link to="/teams/org-chart?fullscreen=true" target="_blank" rel="noopener noreferrer">
               <Network className="w-4 h-4 mr-2" />
               Ver Organograma
             </Link>
