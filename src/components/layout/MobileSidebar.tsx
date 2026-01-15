@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useBuBranding } from "@/modules/bu/hooks";
+import { BuSymbol } from "@/modules/bu/components/BuSymbol";
 import { useModules } from "@/contexts/ModuleContext";
 import { useBu } from "@/contexts/BuContext";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
@@ -180,19 +181,17 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
       <SheetContent side="left" className="w-[280px] p-0">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="flex items-center gap-3">
-            <Avatar className="w-10 h-10 rounded-xl">
-              <AvatarImage
-                src={symbolUrl || undefined}
-                alt={buName}
-                className="object-contain"
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: `${primaryColor}20` }}
+            >
+              <BuSymbol
+                symbolUrl={symbolUrl}
+                primaryColor={primaryColor}
+                name={buName}
+                size="lg"
               />
-              <AvatarFallback
-                className="rounded-xl text-xl font-bold text-white"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {buName.slice(0, 1).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            </div>
             <div className="flex flex-col text-left">
               <span className="text-lg font-bold">Hub</span>
               <span className="text-xs text-muted-foreground font-normal">{buName}</span>
