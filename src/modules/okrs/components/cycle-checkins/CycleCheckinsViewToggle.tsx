@@ -1,12 +1,12 @@
 /**
- * CycleCheckinsViewToggle - Toggle entre visualização Cards e Tabela
+ * CycleCheckinsViewToggle - Toggle entre visualização Cards, Tabela e Evolução
  */
 
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Table2 } from 'lucide-react';
+import { LayoutGrid, Table2, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type CheckinsViewMode = 'cards' | 'table';
+export type CheckinsViewMode = 'cards' | 'table' | 'evolution';
 
 interface CycleCheckinsViewToggleProps {
   viewMode: CheckinsViewMode;
@@ -16,6 +16,7 @@ interface CycleCheckinsViewToggleProps {
 const views = [
   { id: 'cards' as const, label: 'Cards', icon: LayoutGrid },
   { id: 'table' as const, label: 'Tabela', icon: Table2 },
+  { id: 'evolution' as const, label: 'Evolução', icon: TrendingUp },
 ] as const;
 
 export function CycleCheckinsViewToggle({ 

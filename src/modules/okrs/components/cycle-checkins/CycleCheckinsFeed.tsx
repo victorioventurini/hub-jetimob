@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { CONFIDENCE_COLORS, RAG_STATUS_COLORS } from '@/lib/colors';
 import { CycleCheckinsViewToggle, type CheckinsViewMode } from './CycleCheckinsViewToggle';
 import { CycleCheckinsTable } from './CycleCheckinsTable';
+import { CycleCheckinsEvolution } from './CycleCheckinsEvolution';
 
 export type { CheckinsViewMode };
 
@@ -138,8 +139,13 @@ export function CycleCheckinsFeed({
         </div>
       )}
       
-      {/* Conditional content: Table or Cards */}
-      {viewMode === 'table' ? (
+      {/* Conditional content: Evolution, Table or Cards */}
+      {viewMode === 'evolution' ? (
+        <CycleCheckinsEvolution 
+          checkins={checkins} 
+          isLoading={false}
+        />
+      ) : viewMode === 'table' ? (
         <CycleCheckinsTable 
           checkins={checkins} 
           isLoading={false} 
