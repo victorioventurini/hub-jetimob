@@ -1,0 +1,35 @@
+# Quick Test Workflow
+# Runs only unit tests for fast feedback on feature branches
+
+name: Quick Tests
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  quick-test:
+    name: Quick Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vitest (no coverage)
+        run: npm run test -- --run
+
+      - name: Type check
+        run: npx tsc --noEmit
