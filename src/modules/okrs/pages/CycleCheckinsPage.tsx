@@ -25,7 +25,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, useUrlStates, useUrlTab, parsers } from '@/shared/url';
 import { idConfig, searchConfig, paginationSchema } from '@/shared/url/schemas';
 import { useCycles, useActiveCycles, useCycleCheckins, type CycleCheckinsFilters, useManageableTeamsFlat } from '../hooks';
-import { CycleCheckinsFeed } from '../components/cycle-checkins/CycleCheckinsFeed';
+import { CycleCheckinsFeed, type CheckinsViewMode } from '../components/cycle-checkins/CycleCheckinsFeed';
 import { CycleCheckinsOverdue } from '../components/cycle-checkins/CycleCheckinsOverdue';
 import { CycleCheckinsSummary } from '../components/cycle-checkins/CycleCheckinsSummary';
 import { CycleCheckinsFilters as FiltersBar } from '../components/cycle-checkins/CycleCheckinsFilters';
@@ -70,6 +70,7 @@ export default function CycleCheckinsPage() {
     search: { key: 'q', defaultValue: '', parse: parsers.string },
     page: { key: 'page', defaultValue: 1, parse: parsers.number },
     pageSize: { key: 'page_size', defaultValue: 20, parse: parsers.number },
+    viewMode: { key: 'view', defaultValue: 'cards', parse: parsers.string },
   });
   
   const filters = filtersResult.values;
@@ -249,6 +250,8 @@ export default function CycleCheckinsPage() {
               isLoading={checkinsLoading}
               pagination={pagination}
               onPageChange={handlePageChange}
+              viewMode={filters.viewMode as CheckinsViewMode}
+              onViewModeChange={(mode) => filtersResult.set({ ...filters, viewMode: mode })}
             />
           </TabsContent>
           
