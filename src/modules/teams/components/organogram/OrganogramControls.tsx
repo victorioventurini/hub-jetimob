@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { OrganogramFilters, OrganogramControlsState } from "../../types/organogram";
+import { cn } from "@/lib/utils";
 
 interface OrganogramControlsProps {
   filters: OrganogramFilters;
@@ -22,6 +23,7 @@ interface OrganogramControlsProps {
   onControlsChange: (controls: OrganogramControlsState) => void;
   onFitToScreen: () => void;
   onOpenFullscreen: () => void;
+  compact?: boolean;
 }
 
 export function OrganogramControls({
@@ -31,6 +33,7 @@ export function OrganogramControls({
   onControlsChange,
   onFitToScreen,
   onOpenFullscreen,
+  compact = false,
 }: OrganogramControlsProps) {
   const handleZoomIn = () => {
     onControlsChange({
@@ -52,6 +55,97 @@ export function OrganogramControls({
       zoom: 100,
     });
   };
+
+  // Compact mode for fullscreen header
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3">
+        {/* Toggles */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Switch
+              id="show-members-compact"
+              checked={filters.showMembers}
+              onCheckedChange={(checked) => 
+                onFiltersChange({ ...filters, showMembers: checked })
+              }
+              className="scale-90"
+            />
+            <Label htmlFor="show-members-compact" className="text-xs cursor-pointer">
+              Membros
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Switch
+              id="show-squads-compact"
+              checked={filters.showSquads}
+              onCheckedChange={(checked) => 
+                onFiltersChange({ ...filters, showSquads: checked })
+              }
+              className="scale-90"
+            />
+            <Label htmlFor="show-squads-compact" className="text-xs cursor-pointer">
+              Squads
+            </Label>
+          </div>
+        </div>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Zoom controls */}
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleZoomOut}
+                disabled={controls.zoom <= 50}
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Diminuir zoom</TooltipContent>
+          </Tooltip>
+
+          <span className="text-xs text-muted-foreground w-10 text-center">
+            {controls.zoom}%
+          </span>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleZoomIn}
+                disabled={controls.zoom >= 150}
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Aumentar zoom</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleResetZoom}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Resetar zoom</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
