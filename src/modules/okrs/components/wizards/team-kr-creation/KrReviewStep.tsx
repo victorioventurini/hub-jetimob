@@ -105,7 +105,7 @@ export function KrReviewStep({
                       </div>
                       <p className="text-sm font-medium">{kr.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {kr.direction === 'up' ? 'Aumentar' : 'Diminuir'} de {kr.baseline} para {kr.target} {kr.unit}
+                        {kr.direction === 'up' ? 'Aumentar' : kr.direction === 'down' ? 'Diminuir' : 'Manter'} de {kr.baseline} para {kr.target} {kr.unit}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">

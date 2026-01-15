@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -89,6 +90,7 @@ export function TeamKrFormDialog({
   const [description, setDescription] = useState('');
   const [type, setType] = useState<OkrKrType>(kr?.type || 'contribution');
   const [baseline, setBaseline] = useState(kr?.baseline?.toString() || '0');
+  const [noBaseline, setNoBaseline] = useState(false);
   const [target, setTarget] = useState(kr?.target?.toString() || '');
   const [unit, setUnit] = useState(kr?.unit || '%');
   const [direction, setDirection] = useState<OkrDirection>(kr?.direction || 'up');
@@ -98,11 +100,19 @@ export function TeamKrFormDialog({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [placeholder] = useState(() => getRandomPlaceholder(false));
 
+  // Auto-fill target when direction is "maintain"
+  useEffect(() => {
+    if (direction === 'maintain') {
+      setTarget(baseline);
+    }
+  }, [direction, baseline]);
+
   useDialogFormReset(open, useCallback(() => {
     setTitle(kr?.title || '');
     setDescription('');
     setType(kr?.type || 'contribution');
     setBaseline(kr?.baseline?.toString() || '0');
+    setNoBaseline(false);
     setTarget(kr?.target?.toString() || '');
     setUnit(kr?.unit || '%');
     setDirection(kr?.direction || 'up');
@@ -351,14 +361,38 @@ export function TeamKrFormDialog({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="baseline">Valor inicial *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="baseline">
+                      Valor inicial {!noBaseline && <span className="text-destructive">*</span>}
+                    </Label>
+                    <div className="flex items-center gap-1.5">
+                      <Checkbox
+                        id="no-baseline"
+                        checked={noBaseline}
+                        onCheckedChange={(checked) => {
+                          setNoBaseline(!!checked);
+                          if (checked) {
+                            setBaseline('0');
+                          }
+                        }}
+                        disabled={mutation.isPending}
+                      />
+                      <label 
+                        htmlFor="no-baseline" 
+                        className="text-xs text-muted-foreground cursor-pointer"
+                      >
+                        Sem baseline
+                      </label>
+                    </div>
+                  </div>
                   <Input
                     id="baseline"
                     type="number"
                     step="any"
-                    value={baseline}
+                    value={noBaseline ? '' : baseline}
+                    placeholder={noBaseline ? '—' : '0'}
                     onChange={(e) => setBaseline(e.target.value)}
-                    disabled={mutation.isPending}
+                    disabled={mutation.isPending || noBaseline}
                   />
                 </div>
                 <div className="space-y-2">
@@ -370,8 +404,13 @@ export function TeamKrFormDialog({
                     placeholder="100"
                     value={target}
                     onChange={(e) => setTarget(e.target.value)}
-                    disabled={mutation.isPending}
+                    disabled={mutation.isPending || direction === 'maintain'}
                   />
+                  {direction === 'maintain' && (
+                    <p className="text-xs text-muted-foreground">
+                      Meta é igual ao baseline para KRs de manutenção
+                    </p>
+                  )}
                 </div>
               </div>
 
