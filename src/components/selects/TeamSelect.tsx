@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface TeamSelectProps {
   value: string | undefined | null;
-  onValueChange: (value: string | undefined) => void;
+  onValueChange: (value: string | null) => void;
   placeholder?: string;
   includeAll?: boolean;
   allLabel?: string;
@@ -45,10 +45,8 @@ export function TeamSelect({
   );
 
   const handleValueChange = (newValue: string) => {
-    if (newValue === "all") {
-      onValueChange(undefined);
-    } else if (newValue === "none") {
-      onValueChange(undefined);
+    if (newValue === "all" || newValue === "none") {
+      onValueChange(null);
     } else {
       onValueChange(newValue);
     }
