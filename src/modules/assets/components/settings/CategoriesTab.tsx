@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-import { useCategories } from "../../hooks/useCategories";
+import { useAssetCategoriesQuery, useAssetCategoryMutations } from "../../hooks";
 import { CategoryFormDialog } from "./CategoryFormDialog";
 import { CategoryImportDialog } from "./CategoryImportDialog";
 import type { AssetCategory } from "../../types";
@@ -196,16 +196,15 @@ function CategoryRow({
 }
 
 export function CategoriesTab() {
+  const { data: categories = [], isLoading } = useAssetCategoriesQuery();
   const {
-    categories,
-    isLoading,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    isCreating,
-    isUpdating,
-    isDeleting,
-  } = useCategories();
+    createCategoryAsync: createCategory,
+    updateCategoryAsync: updateCategory,
+    deleteCategoryAsync: deleteCategory,
+    isCreatingCategory: isCreating,
+    isUpdatingCategory: isUpdating,
+    isDeletingCategory: isDeleting,
+  } = useAssetCategoryMutations();
 
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
