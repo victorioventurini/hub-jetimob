@@ -24,11 +24,7 @@ import {
   useLatestCheckinDate,
   useUserProfile,
 } from '../hooks/queries';
-import { useKrStatusDistribution, OkrCalculatedStatus } from '../hooks/useOkrStatus';
-import { usePendingCheckins } from '../hooks/usePendingCheckins';
-import { useSharedOkrsInsights } from '../hooks';
-import { useManageableTeams } from '../hooks/useManageableTeams';
-import { useCanManageOrgOkr } from '../hooks/useCanManageTeamOkr';
+import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr } from '../hooks';
 import { calculateProgress } from '../types';
 
 import { OkrViewSelector, OkrView } from '../components/dashboard/OkrViewSelector';

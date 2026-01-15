@@ -111,8 +111,8 @@ export {
 // =========================
 // CHECK-INS
 // =========================
-export { usePendingCheckins } from './usePendingCheckins';
-export { useCycleCheckins } from './useCycleCheckins';
+export { usePendingCheckins, useTeamPendingCheckins, getDayName, type PendingCheckin } from './usePendingCheckins';
+export { useCycleCheckins, type CycleCheckinsFilters } from './useCycleCheckins';
 export { useCreateCheckin } from './useCreateCheckin';
 
 // =========================
@@ -146,7 +146,7 @@ export {
 // =========================
 // TEAM-SPECIFIC
 // =========================
-export { useManageableTeams } from './useManageableTeams';
+export { useManageableTeams, useManageableTeamsFlat } from './useManageableTeams';
 export { useCanManageTeamOkr, useCanManageOrgOkr } from './useCanManageTeamOkr';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useBuBranding } from "@/modules/bu/hooks/useBuBranding";
+import { useBuBranding } from "@/modules/bu/hooks";
 import {
   Home,
   Users,
