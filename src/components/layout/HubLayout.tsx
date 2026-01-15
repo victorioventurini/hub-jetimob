@@ -1,4 +1,5 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { DynamicSidebar } from "./DynamicSidebar";
 import { MobileSidebar } from "./MobileSidebar";
 import { Header } from "./Header";
@@ -14,6 +15,20 @@ export function HubLayout({ children }: HubLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isImpersonating } = useOptionalImpersonation();
+  const location = useLocation();
+
+  // Fix: Limpa pointer-events residual após navegação
+  // Dialogs/Sheets do Radix podem deixar pointer-events:none no body
+  useEffect(() => {
+    // Pequeno delay para garantir que transições completaram
+    const timer = setTimeout(() => {
+      if (document.body.style.pointerEvents === 'none') {
+        document.body.style.pointerEvents = '';
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background">
