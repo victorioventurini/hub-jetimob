@@ -36,8 +36,15 @@ export function calculateProgress(
   target: number,
   direction: OkrDirection
 ): number {
+  // Direção 'maintain': tratado explicitamente como binário
+  // - Se current >= target: 100%
+  // - Se current < target: 0%
+  if (direction === 'maintain') {
+    return current >= target ? 100 : 0;
+  }
+
   if (direction === 'up') {
-    // KR de manutenção (baseline = meta): tratamento binário
+    // KR de manutenção implícita (baseline = meta): tratamento binário (compatibilidade)
     if (target === baseline) {
       return current >= target ? 100 : 0;
     }

@@ -31,7 +31,7 @@ interface KrData {
   current_value: number;
   target: number;
   unit: string;
-  direction: 'up' | 'down';
+  direction: 'up' | 'down' | 'maintain';
   status: 'green' | 'yellow' | 'red' | 'not_started';
   type: 'contribution' | 'enabler' | 'foundational';
   owner_name?: string | null;

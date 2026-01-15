@@ -4,6 +4,7 @@ import { TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { calculateProgress } from '../types';
+import type { OkrDirection } from '../types';
 
 interface OrgObjective {
   id: string;
@@ -15,7 +16,7 @@ interface TeamKeyResult {
   baseline: number;
   current_value: number;
   target: number;
-  direction: 'up' | 'down';
+  direction: OkrDirection;
   linked_org_kr_id?: string | null;
 }
 

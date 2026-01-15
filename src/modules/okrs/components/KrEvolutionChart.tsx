@@ -18,7 +18,7 @@ interface KrEvolutionChartProps {
   baseline: number;
   target: number;
   unit: string;
-  direction: 'up' | 'down';
+  direction: 'up' | 'down' | 'maintain';
   className?: string;
   compact?: boolean;
 }

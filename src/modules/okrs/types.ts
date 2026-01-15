@@ -3,7 +3,7 @@
 export type OkrStatus = 'draft' | 'active' | 'completed' | 'cancelled' | 'discarded';
 export type OkrRagStatus = 'green' | 'yellow' | 'red' | 'not_started';
 export type OkrKrType = 'contribution' | 'enabler' | 'foundational';
-export type OkrDirection = 'up' | 'down';
+export type OkrDirection = 'up' | 'down' | 'maintain';
 export type OkrConfidence = 'high' | 'medium' | 'low';
 export type OkrDependencyStatus = 'ok' | 'blocked' | 'at_risk';
 export type OkrReportFrequency = 'weekly' | 'monthly' | 'quarterly' | 'event';

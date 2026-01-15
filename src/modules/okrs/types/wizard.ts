@@ -222,7 +222,7 @@ export interface CLevelWizardState {
 // ============================================================
 
 export type OkrKrType = 'foundational' | 'contribution' | 'enabler';
-export type OkrDirection = 'up' | 'down';
+export type OkrDirection = 'up' | 'down' | 'maintain';
 export type ResponsibilityModel = 'collaborative' | 'primary_led';
 export type OwnerType = 'my_team' | 'other_team' | 'co_ownership';
 
@@ -231,6 +231,7 @@ export interface DraftTeamKr {
   type: OkrKrType;
   title: string;
   baseline: number;
+  noBaseline?: boolean;
   target: number;
   unit: string;
   direction: OkrDirection;

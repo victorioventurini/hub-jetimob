@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Target, Link2, Wrench, TrendingUp, TrendingDown, User, CheckCircle2 } from 'lucide-react';
+import { Target, Link2, Wrench, TrendingUp, TrendingDown, Equal, User, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
@@ -315,7 +315,7 @@ export function TeamOkrKrDetailStep({
           {/* Direction */}
           <div className="space-y-2">
             <Label>Direção</Label>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant={currentKr.direction === 'up' ? 'default' : 'outline'}
@@ -333,6 +333,18 @@ export function TeamOkrKrDetailStep({
               >
                 <TrendingDown className="h-4 w-4" />
                 Diminuir
+              </Button>
+              <Button
+                type="button"
+                variant={currentKr.direction === 'maintain' ? 'default' : 'outline'}
+                className="flex-1 gap-2"
+                onClick={() => {
+                  updateKrField('direction', 'maintain');
+                  updateKrField('target', currentKr.baseline);
+                }}
+              >
+                <Equal className="h-4 w-4" />
+                Manter
               </Button>
             </div>
           </div>

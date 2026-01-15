@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Ban } from 'lucide-react';
+import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Equal, Ban } from 'lucide-react';
 import { KrUnitSelect } from './KrUnitSelect';
 import { KrProgressPreview } from './KrProgressPreview';
 import { validateOrgKr, getRandomPlaceholder } from '../utils/krValidation';
@@ -305,6 +305,12 @@ export function OrgKrFormDialog({
                         <span className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-blue-500" />
                           Decrescente (↓)
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="maintain">
+                        <span className="flex items-center gap-2">
+                          <Equal className="h-4 w-4 text-purple-500" />
+                          Manter (=)
                         </span>
                       </SelectItem>
                     </SelectContent>
