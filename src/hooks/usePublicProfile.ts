@@ -38,57 +38,56 @@ export function usePublicProfile(profileId?: string) {
     queryFn: async () => {
       if (!profileId || !currentBu?.id) return null;
 
+      // Use secure function that applies field-level privacy controls
+      // Sensitive contact data (WhatsApp, Instagram, Discord) only visible for own profile
+      // Birthday data visible to all BU members (business decision for internal communication)
       const { data, error } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          user_id,
-          first_name,
-          last_name,
-          display_name,
-          work_email,
-          job_title_id,
-          job_title_rel:job_titles!job_title_id(name),
-          photo_url,
-          city,
-          state,
-          work_mode,
-          employment_status,
-          start_date,
-          team_id,
-          bu_id,
-          manager_user_id,
-          birth_day,
-          birth_month,
-          whatsapp_personal,
-          instagram_id,
-          discord_id,
-          team:teams!fk_profiles_team(id, name)
-        `)
-        .eq("id", profileId)
-        .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
-        .maybeSingle();
+        .rpc("get_profile_with_privacy", { p_profile_id: profileId });
 
       if (error) throw error;
-      if (!data) return null;
+      if (!data || data.length === 0) return null;
+
+      const profileData = data[0];
+      
+      // Verify BU membership (extra security check)
+      if (profileData.bu_id !== currentBu.id) return null;
+
+      // Fetch team data
+      let team = null;
+      if (profileData.team_id) {
+        const { data: teamData } = await supabase
+          .from("teams")
+          .select("id, name")
+          .eq("id", profileData.team_id)
+          .maybeSingle();
+        team = teamData;
+      }
+
+      // Fetch job title
+      let jobTitle = "Sem cargo";
+      if (profileData.job_title_id) {
+        const { data: jobTitleData } = await supabase
+          .from("job_titles")
+          .select("name")
+          .eq("id", profileData.job_title_id)
+          .maybeSingle();
+        if (jobTitleData) jobTitle = jobTitleData.name;
+      }
 
       // Fetch manager separately if exists
       let manager = null;
-      if (data?.manager_user_id) {
+      if (profileData.manager_user_id) {
         const { data: managerData } = await supabase
           .from("profiles")
           .select("id, display_name, photo_url")
-          .eq("id", data.manager_user_id)
+          .eq("id", profileData.manager_user_id)
           .maybeSingle();
         manager = managerData;
       }
 
       // Fetch membership job title override (BU-specific job title)
       // Priority: membership.job_title_id > profile.job_title_id
-      let effectiveJobTitle = (data.job_title_rel as { name: string } | null)?.name || "Sem cargo";
-      
-      if (data.user_id) {
+      if (profileData.user_id) {
         const { data: membershipData } = await supabase
           .from("bu_user_memberships")
           .select("job_title_id, job_title:job_titles!bu_user_memberships_job_title_id_fkey(name)")
@@ -99,14 +98,34 @@ export function usePublicProfile(profileId?: string) {
         
         // If membership has a specific job title, use it
         if (membershipData?.job_title_id && membershipData?.job_title) {
-          effectiveJobTitle = (membershipData.job_title as { name: string }).name;
+          jobTitle = (membershipData.job_title as { name: string }).name;
         }
       }
       
       return { 
-        ...data, 
+        id: profileData.id,
+        user_id: profileData.user_id,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        display_name: profileData.display_name,
+        work_email: profileData.work_email,
+        photo_url: profileData.photo_url,
+        city: profileData.city,
+        state: profileData.state,
+        work_mode: profileData.work_mode as "onsite" | "hybrid" | "remote",
+        employment_status: profileData.employment_status as "active" | "vacation" | "terminated" | "external",
+        start_date: profileData.start_date,
+        team_id: profileData.team_id,
+        bu_id: profileData.bu_id,
+        birth_day: profileData.birth_day,
+        birth_month: profileData.birth_month,
+        // Sensitive fields - will be null unless viewing own profile
+        whatsapp_personal: profileData.whatsapp_personal,
+        instagram_id: profileData.instagram_id,
+        discord_id: profileData.discord_id,
+        team,
         manager,
-        job_title: effectiveJobTitle,
+        job_title: jobTitle,
       } as PublicProfile;
     },
     enabled: !!profileId && !!currentBu?.id,

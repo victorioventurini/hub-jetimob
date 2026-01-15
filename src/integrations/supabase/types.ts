@@ -8471,6 +8471,32 @@ export type Database = {
         Returns: string
       }
       get_profile_id: { Args: { p_user_id: string }; Returns: string }
+      get_profile_with_privacy: {
+        Args: { p_profile_id: string }
+        Returns: {
+          birth_day: number
+          birth_month: number
+          bu_id: string
+          city: string
+          discord_id: string
+          display_name: string
+          employment_status: string
+          first_name: string
+          id: string
+          instagram_id: string
+          job_title_id: string
+          last_name: string
+          manager_user_id: string
+          photo_url: string
+          start_date: string
+          state: string
+          team_id: string
+          user_id: string
+          whatsapp_personal: string
+          work_email: string
+          work_mode: string
+        }[]
+      }
       get_system_setting: { Args: { p_key: string }; Returns: Json }
       get_team_member_ids: {
         Args: { p_include_subtree?: boolean; p_team_id: string }
