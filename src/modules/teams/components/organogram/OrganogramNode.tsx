@@ -154,8 +154,9 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
   // For area, use own color
   const areaColor = node.type === 'area' ? node.color : parentColor;
 
-  // Check if this is a team/subteam with leader info
-  const hasLeader = (node.type === 'team' || node.type === 'subteam') && node.leaderName;
+  // Check if this is a team/subteam (always show leader section for consistent height)
+  const isTeamOrSubteam = node.type === 'team' || node.type === 'subteam';
+  const hasLeader = isTeamOrSubteam && node.leaderName;
 
   return (
     <div className="flex flex-col items-center">
@@ -200,17 +201,23 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
           {node.role && (
             <p className="text-xs text-muted-foreground truncate">{node.role}</p>
           )}
-          {/* Leader info for teams */}
-          {hasLeader && (
-            <div className="flex items-center gap-1.5 mt-1">
-              <OptimizedAvatar
-                src={node.leaderPhotoUrl}
-                alt={node.leaderName || ''}
-                fallback={node.leaderName?.slice(0, 2).toUpperCase() || ''}
-                size="sm"
-                className="w-5 h-5 text-[10px]"
-              />
-              <p className="text-xs text-muted-foreground truncate">{node.leaderName}</p>
+          {/* Leader info for teams - always show section for consistent height */}
+          {isTeamOrSubteam && (
+            <div className="flex items-center gap-1.5 mt-1 min-h-[20px]">
+              {hasLeader ? (
+                <>
+                  <OptimizedAvatar
+                    src={node.leaderPhotoUrl}
+                    alt={node.leaderName || ''}
+                    fallback={node.leaderName?.slice(0, 2).toUpperCase() || ''}
+                    size="sm"
+                    className="w-5 h-5 text-[10px]"
+                  />
+                  <p className="text-xs text-muted-foreground truncate">{node.leaderName}</p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground/50 italic">Sem líder definido</p>
+              )}
             </div>
           )}
         </div>
