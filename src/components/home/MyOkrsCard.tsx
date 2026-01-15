@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Target, RefreshCw, AlertTriangle, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
-import { usePendingCheckins, getDayName } from '@/modules/okrs/hooks/usePendingCheckins';
+import { usePendingCheckins, getDayName } from '@/modules/okrs/hooks';
 import { CheckinDialog } from '@/modules/okrs/components/CheckinDialog';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { cn } from '@/lib/utils';

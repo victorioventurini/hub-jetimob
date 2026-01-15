@@ -36,8 +36,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useCancelTeamKeyResult } from '../hooks/useOkrMutations';
-import { useCanManageTeamOkr } from '../hooks/useCanManageTeamOkr';
+import { useCancelTeamKeyResult, useCanManageTeamOkr } from '../hooks';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 

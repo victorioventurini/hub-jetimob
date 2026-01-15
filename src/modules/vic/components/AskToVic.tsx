@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useAskToVic } from '../hooks/useAskToVic';
+import { useAskToVic } from '../hooks';
 import type { AskToVicProps } from '../types/ask-to-vic';
 
 const SIZE_CLASSES = {
