@@ -1,7 +1,7 @@
 /**
  * OrganogramNode - Card individual do organograma
  */
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, Building2, Users, Layers, Crown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,8 +19,8 @@ interface OrganogramNodeCardProps {
 const TYPE_CONFIG = {
   ceo: {
     icon: Crown,
-    bgClass: "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20",
-    borderClass: "border-amber-400 dark:border-amber-600",
+    bgClass: "bg-card",
+    borderClass: "border-2",
     iconClass: "text-amber-600 dark:text-amber-400",
   },
   area: {
@@ -55,6 +55,75 @@ const TYPE_CONFIG = {
   },
 };
 
+// CEO Card com avatar circular grande no estilo do organograma de referência
+const CeoCard = memo(function CeoCard({
+  node,
+  isExpanded,
+  onToggle,
+  hasChildren,
+}: Omit<OrganogramNodeCardProps, 'parentColor'>) {
+  return (
+    <div className="flex flex-col items-center">
+      {/* CEO circular avatar with colored ring */}
+      <Link
+        to={node.path}
+        className="flex flex-col items-center group"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Avatar with ring */}
+        <div className="relative mb-3">
+          <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 bg-card shadow-lg">
+            <OptimizedAvatar
+              src={node.photoUrl}
+              alt={node.name}
+              fallback={node.name.slice(0, 2).toUpperCase()}
+              className="w-full h-full text-lg"
+            />
+          </div>
+          {/* Crown icon */}
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-md">
+            <Crown className="w-4 h-4 text-white" />
+          </div>
+        </div>
+
+        {/* Name card below avatar */}
+        <div className={cn(
+          "flex items-center gap-2 px-5 py-2.5 rounded-lg border-2 border-amber-400 bg-card shadow-sm transition-all",
+          "group-hover:shadow-md group-hover:border-amber-500"
+        )}>
+          <div className="text-center">
+            <p className="font-semibold text-sm">{node.name}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">CEO</p>
+          </div>
+
+          {/* Expand/Collapse */}
+          {hasChildren && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggle();
+              }}
+              className={cn(
+                "p-1 rounded-md hover:bg-accent transition-colors ml-1",
+                "focus:outline-none focus:ring-2 focus:ring-ring"
+              )}
+              aria-label={isExpanded ? "Recolher" : "Expandir"}
+            >
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+          )}
+        </div>
+      </Link>
+    </div>
+  );
+});
+
+// Card padrão para área, time, etc.
 export const OrganogramNodeCard = memo(function OrganogramNodeCard({
   node,
   isExpanded,
@@ -62,6 +131,18 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
   hasChildren,
   parentColor,
 }: OrganogramNodeCardProps) {
+  // CEO tem card especial
+  if (node.type === 'ceo') {
+    return (
+      <CeoCard
+        node={node}
+        isExpanded={isExpanded}
+        onToggle={onToggle}
+        hasChildren={hasChildren}
+      />
+    );
+  }
+
   const config = TYPE_CONFIG[node.type];
   const Icon = config.icon;
   
@@ -80,18 +161,17 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
         className={cn(
           "flex items-center gap-3 px-4 py-3 rounded-lg border shadow-sm transition-all",
           "hover:shadow-md hover:border-accent focus:outline-none focus:ring-2 focus:ring-ring",
-          "min-w-[180px] max-w-[280px]",
+          "min-w-[160px] max-w-[240px]",
           config.bgClass,
           config.borderClass
         )}
         style={borderStyle || (node.color ? { borderLeftColor: node.color } : undefined)}
         onClick={(e) => {
-          // Allow navigation but prevent toggle
           e.stopPropagation();
         }}
       >
         {/* Avatar or Icon */}
-        {node.photoUrl || node.type === 'person' || node.type === 'ceo' ? (
+        {node.photoUrl || node.type === 'person' ? (
           <OptimizedAvatar
             src={node.photoUrl}
             alt={node.name}
@@ -100,10 +180,13 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
           />
         ) : (
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center",
+            "w-8 h-8 rounded-lg flex items-center justify-center",
             "bg-muted"
-          )}>
-            <Icon className={cn("w-4 h-4", config.iconClass)} />
+          )}
+          style={node.color ? { backgroundColor: `${node.color}20` } : undefined}
+          >
+            <Icon className={cn("w-4 h-4", config.iconClass)} 
+                  style={node.color ? { color: node.color } : undefined} />
           </div>
         )}
 
@@ -112,9 +195,6 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
           <p className="font-medium text-sm truncate">{node.name}</p>
           {node.role && (
             <p className="text-xs text-muted-foreground truncate">{node.role}</p>
-          )}
-          {node.email && node.type !== 'person' && (
-            <p className="text-xs text-muted-foreground truncate">{node.email}</p>
           )}
         </div>
 
@@ -145,17 +225,18 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
       {hasChildren && isExpanded && (
         <div className="flex flex-col items-center mt-4">
           {/* Connector line down */}
-          <div className="w-px h-4 bg-border" />
+          <div className="w-px h-6 bg-border" />
           
           {/* Children container */}
-          <div className="flex flex-wrap justify-center gap-4 relative">
+          <div className="flex flex-nowrap justify-center gap-6 relative">
             {/* Horizontal line connecting children */}
             {node.children.length > 1 && (
               <div 
                 className="absolute top-0 h-px bg-border"
                 style={{
-                  left: '25%',
-                  right: '25%',
+                  left: 'calc(50% - ' + ((node.children.length - 1) * 50) + '%)',
+                  right: 'calc(50% - ' + ((node.children.length - 1) * 50) + '%)',
+                  minWidth: '50%',
                 }}
               />
             )}
@@ -163,7 +244,7 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
             {node.children.map((child) => (
               <div key={child.id} className="flex flex-col items-center">
                 {/* Connector line up */}
-                <div className="w-px h-4 bg-border" />
+                <div className="w-px h-6 bg-border" />
                 <OrganogramNodeWrapper 
                   node={child} 
                   parentColor={areaColor}
@@ -178,8 +259,6 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
 });
 
 // Wrapper component to handle expand state
-import { useState } from "react";
-
 interface OrganogramNodeWrapperProps {
   node: OrganogramNodeType;
   parentColor?: string | null;

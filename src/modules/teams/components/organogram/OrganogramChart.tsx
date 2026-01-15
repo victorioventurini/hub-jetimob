@@ -1,7 +1,9 @@
 /**
  * OrganogramChart - Container principal do organograma
+ * 
+ * Layout: CEO no topo com avatar circular, 3 áreas sempre em linha horizontal
  */
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { OrganogramNodeWrapper } from "./OrganogramNode";
 import { OrganogramData, OrganogramFilters, OrganogramControlsState, OrganogramNode } from "../../types/organogram";
 import { cn } from "@/lib/utils";
@@ -10,10 +12,22 @@ interface OrganogramChartProps {
   data: OrganogramData;
   filters: OrganogramFilters;
   controls: OrganogramControlsState;
+  onControlsChange?: (controls: OrganogramControlsState) => void;
 }
 
-export function OrganogramChart({ data, filters, controls }: OrganogramChartProps) {
+export function OrganogramChart({ data, filters, controls, onControlsChange }: OrganogramChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasInitializedZoom = useRef(false);
+
+  // Auto-fit zoom on first load to ensure all areas are visible
+  useEffect(() => {
+    if (!hasInitializedZoom.current && data && onControlsChange) {
+      // Calculate zoom to fit all content (3 areas in row)
+      const initialZoom = 70; // Start at 70% to ensure 3 areas fit
+      onControlsChange({ ...controls, zoom: initialZoom });
+      hasInitializedZoom.current = true;
+    }
+  }, [data, onControlsChange]);
 
   // Filter nodes based on filters
   const filteredData = useMemo(() => {
@@ -80,7 +94,7 @@ export function OrganogramChart({ data, filters, controls }: OrganogramChartProp
     <div
       ref={containerRef}
       className={cn(
-        "overflow-auto p-8 min-h-[400px]",
+        "overflow-auto p-8 min-h-[500px]",
         "flex justify-center"
       )}
       style={{
@@ -89,12 +103,12 @@ export function OrganogramChart({ data, filters, controls }: OrganogramChartProp
       }}
     >
       <div className="inline-flex flex-col items-center">
-        {/* Render CEO and tree */}
+        {/* Render CEO at top with areas as children */}
         {filteredData.ceo ? (
           <OrganogramNodeWrapper node={filteredData.ceo} defaultExpanded />
         ) : (
-          /* Render areas without CEO */
-          <div className="flex flex-wrap justify-center gap-8">
+          /* Render areas without CEO - always in horizontal row */
+          <div className="flex flex-nowrap justify-center gap-8">
             {filteredData.areas.map(area => (
               <OrganogramNodeWrapper 
                 key={area.id} 
