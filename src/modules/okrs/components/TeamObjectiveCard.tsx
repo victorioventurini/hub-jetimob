@@ -67,6 +67,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
     direction: OkrDirection;
     unit: string;
     status: OkrRagStatus;
+    owner_user_id?: string | null;
   } | null>(null);
   const { data: allKeyResults, isLoading } = useTeamKeyResults(objective.bu_id || currentBu?.id, objective.team_id);
   const { data: contributors } = useObjectiveContributors(objective.is_shared ? objective.id : undefined);
@@ -320,6 +321,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
                             direction: kr.direction as OkrDirection,
                             unit: kr.unit,
                             status: kr.status as OkrRagStatus,
+                            owner_user_id: kr.owner_user_id,
                           })}
                           title="Editar KR"
                         >
