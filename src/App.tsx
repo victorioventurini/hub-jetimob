@@ -599,7 +599,7 @@ const App = () => {
                       }
                     />
                     <Route
-                      path="/organograma"
+                      path="/teams/org-chart"
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
