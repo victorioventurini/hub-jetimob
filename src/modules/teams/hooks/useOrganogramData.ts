@@ -27,24 +27,37 @@ export function useOrganogramData() {
       // Use any to avoid deep type instantiation issues
       const db = supabase as any;
 
-      // 1. Buscar CEO (primeiro admin da BU)
-      const { data: adminData } = await db
-        .from("user_roles")
-        .select("user_id")
-        .eq("bu_id", buId)
-        .eq("role", "admin")
-        .limit(1);
-
-      const adminUsers = (adminData ?? []) as { user_id: string }[];
-
+      // 1. Buscar CEO (victorio@jetimob.com ou primeiro super_admin)
       let ceoData: ProfileData | null = null;
-      if (adminUsers[0]?.user_id) {
-        const { data } = await db
-          .from("profiles")
-          .select("id, display_name, photo_url, work_email")
-          .eq("id", adminUsers[0].user_id)
-          .maybeSingle();
-        ceoData = data as ProfileData | null;
+      
+      // Primeiro tenta buscar victorio como CEO
+      const { data: victorioData } = await db
+        .from("profiles")
+        .select("id, display_name, photo_url, work_email")
+        .eq("work_email", "victorio@jetimob.com")
+        .eq("bu_id", buId)
+        .maybeSingle();
+      
+      if (victorioData) {
+        ceoData = victorioData as ProfileData;
+      } else {
+        // Fallback: buscar primeiro super_admin global
+        const { data: adminData } = await db
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "super_admin")
+          .limit(1);
+
+        const adminUsers = (adminData ?? []) as { user_id: string }[];
+
+        if (adminUsers[0]?.user_id) {
+          const { data } = await db
+            .from("profiles")
+            .select("id, display_name, photo_url, work_email")
+            .eq("id", adminUsers[0].user_id)
+            .maybeSingle();
+          ceoData = data as ProfileData | null;
+        }
       }
 
       // 2. Buscar áreas
