@@ -168,19 +168,18 @@ export function useOrganogramData() {
           });
         });
 
-        if (subteams.length === 0) {
-          teamMembers.forEach(member => {
-            children.push({
-              id: member.id,
-              type: 'person',
-              name: member.display_name,
-              email: member.work_email || undefined,
-              photoUrl: member.photo_url,
-              path: `/users/${member.id}`,
-              children: [],
-            });
+        // Sempre mostrar membros do time (mesmo que tenha subtimes)
+        teamMembers.forEach(member => {
+          children.push({
+            id: member.id,
+            type: 'person',
+            name: member.display_name,
+            email: member.work_email || undefined,
+            photoUrl: member.photo_url,
+            path: `/users/${member.id}`,
+            children: [],
           });
-        }
+        });
 
         return {
           id: team.id,
