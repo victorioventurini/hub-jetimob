@@ -7,7 +7,7 @@ import { useBu } from "@/contexts/BuContext";
 import { OrganogramNode, OrganogramData } from "../types/organogram";
 import { organogramKeys } from "@/lib/queryKeys/organogram";
 
-type CeoData = { id: string; display_name: string; photo_url: string | null; work_email: string | null };
+type ProfileData = { id: string; display_name: string; photo_url: string | null; work_email: string | null };
 type AreaRow = { id: string; name: string; color: string | null; leader_user_id: string | null };
 type TeamRow = { id: string; name: string; parent_team_id: string | null; area_id: string | null; leader_user_id: string | null };
 type MemberRow = { id: string; display_name: string; photo_url: string | null; work_email: string | null; team_id: string | null };
@@ -37,14 +37,14 @@ export function useOrganogramData() {
 
       const adminUsers = (adminData ?? []) as { user_id: string }[];
 
-      let ceoData: CeoData | null = null;
+      let ceoData: ProfileData | null = null;
       if (adminUsers[0]?.user_id) {
         const { data } = await db
           .from("profiles")
           .select("id, display_name, photo_url, work_email")
           .eq("id", adminUsers[0].user_id)
           .maybeSingle();
-        ceoData = data as CeoData | null;
+        ceoData = data as ProfileData | null;
       }
 
       // 2. Buscar áreas
@@ -102,6 +102,17 @@ export function useOrganogramData() {
         squadTeams = (stData ?? []) as SquadTeamRow[];
       }
 
+      // 7. Buscar líderes de times
+      const leaderIds = [...new Set(teams.map(t => t.leader_user_id).filter(Boolean))] as string[];
+      const leadersMap = new Map<string, ProfileData>();
+      if (leaderIds.length > 0) {
+        const { data: leadersData } = await db
+          .from("profiles")
+          .select("id, display_name, photo_url, work_email")
+          .in("id", leaderIds);
+        ((leadersData ?? []) as ProfileData[]).forEach(l => leadersMap.set(l.id, l));
+      }
+
       // Group members by team
       const membersByTeam = new Map<string, MemberRow[]>();
       members.forEach(m => {
@@ -128,6 +139,7 @@ export function useOrganogramData() {
         const teamMembers = membersByTeam.get(team.id) || [];
         const teamSquads = squadsByTeam.get(team.id) || [];
         const subteams = teams.filter(t => t.parent_team_id === team.id);
+        const leader = team.leader_user_id ? leadersMap.get(team.leader_user_id) : null;
         
         const children: OrganogramNode[] = [];
         
@@ -163,6 +175,9 @@ export function useOrganogramData() {
           name: team.name,
           path: `/teams/${team.id}`,
           children,
+          // Leader info
+          leaderName: leader?.display_name,
+          leaderPhotoUrl: leader?.photo_url,
         };
       };
 

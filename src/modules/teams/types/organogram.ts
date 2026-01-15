@@ -21,6 +21,9 @@ export interface OrganogramNode {
   role?: string | null;
   path: string;
   children: OrganogramNode[];
+  // Leader info for teams/subteams
+  leaderName?: string;
+  leaderPhotoUrl?: string | null;
 }
 
 export interface OrganogramData {

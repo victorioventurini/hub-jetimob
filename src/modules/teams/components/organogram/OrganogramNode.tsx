@@ -154,6 +154,9 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
   // For area, use own color
   const areaColor = node.type === 'area' ? node.color : parentColor;
 
+  // Check if this is a team/subteam with leader info
+  const hasLeader = (node.type === 'team' || node.type === 'subteam') && node.leaderName;
+
   return (
     <div className="flex flex-col items-center">
       <Link
@@ -161,7 +164,7 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
         className={cn(
           "flex items-center gap-3 px-4 py-3 rounded-lg border shadow-sm transition-all",
           "hover:shadow-md hover:border-accent focus:outline-none focus:ring-2 focus:ring-ring",
-          "min-w-[160px] max-w-[240px]",
+          "min-w-[160px] max-w-[280px]",
           config.bgClass,
           config.borderClass
         )}
@@ -195,6 +198,19 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
           <p className="font-medium text-sm truncate">{node.name}</p>
           {node.role && (
             <p className="text-xs text-muted-foreground truncate">{node.role}</p>
+          )}
+          {/* Leader info for teams */}
+          {hasLeader && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <OptimizedAvatar
+                src={node.leaderPhotoUrl}
+                alt={node.leaderName || ''}
+                fallback={node.leaderName?.slice(0, 2).toUpperCase() || ''}
+                size="sm"
+                className="w-5 h-5 text-[10px]"
+              />
+              <p className="text-xs text-muted-foreground truncate">{node.leaderName}</p>
+            </div>
           )}
         </div>
 
