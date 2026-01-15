@@ -1,5 +1,5 @@
 // Users page with BU filtering and server-side pagination
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
@@ -32,7 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TeamSelect, SimpleSelect } from "@/components/selects";
+import { TeamSelect, SimpleSelect, AreaSelect } from "@/components/selects";
 import {
   Search,
   Plus,
@@ -111,6 +111,9 @@ export default function UsersPage() {
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
   const searchQuery = searchState.value;
   
+  const areaFilterState = useUrlState<string>({ key: 'area_id', defaultValue: 'all' });
+  const areaFilter = areaFilterState.value;
+  
   const teamFilterState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   const teamFilter = teamFilterState.value;
   
@@ -121,6 +124,9 @@ export default function UsersPage() {
   // Handlers
   const setSearchQuery = (v: string) => {
     searchState.set(v);
+  };
+  const setAreaFilter = (v: string) => {
+    areaFilterState.set(v);
   };
   const setTeamFilter = (v: string) => {
     teamFilterState.set(v);
@@ -159,6 +165,7 @@ export default function UsersPage() {
   const { data: profilesData, isLoading, error: profilesError } = useQuery({
     queryKey: queryKeys.users.directory(currentBu?.id ?? null, { 
       q: searchQuery || undefined, 
+      areaId: areaFilter !== 'all' ? areaFilter : undefined,
       teamId: teamFilter !== 'all' ? teamFilter : undefined,
       status: statusFilter,
     }),
@@ -172,8 +179,9 @@ export default function UsersPage() {
       if (!currentBu?.id) return { profiles: [], total: 0 };
       
       // Extract filters from queryKey to ensure fresh values
-      const filters = queryKey[3] as { q?: string; teamId?: string; status?: string } | undefined;
+      const filters = queryKey[3] as { q?: string; areaId?: string; teamId?: string; status?: string } | undefined;
       const qSearch = filters?.q?.trim() || null;
+      const qAreaId = filters?.areaId || null;
       const qTeamId = filters?.teamId || null;
       const qStatus = filters?.status || 'active';
       
@@ -247,8 +255,32 @@ export default function UsersPage() {
     enabled: !!currentBu?.id && !!user && !authLoading,
   });
 
-  const profiles = profilesData?.profiles ?? [];
-  const totalProfiles = profilesData?.total ?? 0;
+  // Filter by area on frontend (RPC doesn't support area_id yet)
+  const { data: teamsData } = useQuery({
+    queryKey: ['teams-for-area-filter', currentBu?.id],
+    queryFn: async () => {
+      if (!currentBu?.id) return [];
+      const { data } = await supabase
+        .from("teams")
+        .select("id, area_id")
+        .eq("bu_id", currentBu.id)
+        .is("deleted_at", null);
+      return data ?? [];
+    },
+    enabled: !!currentBu?.id && areaFilter !== 'all',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const profiles = React.useMemo(() => {
+    const baseProfiles = profilesData?.profiles ?? [];
+    if (areaFilter === 'all' || !teamsData) return baseProfiles;
+    
+    // Get team IDs that belong to selected area
+    const teamIdsInArea = new Set(teamsData.filter(t => t.area_id === areaFilter).map(t => t.id));
+    return baseProfiles.filter(p => p.team?.id && teamIdsInArea.has(p.team.id));
+  }, [profilesData?.profiles, areaFilter, teamsData]);
+  
+  const totalProfiles = areaFilter === 'all' ? (profilesData?.total ?? 0) : profiles.length;
 
   const getInitials = (name: string) =>
     name
@@ -353,13 +385,21 @@ export default function UsersPage() {
 
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
           <UrlSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Buscar por nome, e-mail ou cargo..."
             className="flex-1 max-w-md"
             debounceMs={300}
+          />
+          <AreaSelect
+            value={areaFilter === "all" ? undefined : areaFilter}
+            onValueChange={(v) => setAreaFilter(v ?? "all")}
+            includeAll
+            allLabel="Todas as áreas"
+            placeholder="Área"
+            triggerClassName="w-[180px]"
           />
           <TeamSelect
             value={teamFilter === "all" ? undefined : teamFilter}
