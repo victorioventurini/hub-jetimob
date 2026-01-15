@@ -143,9 +143,10 @@ const TEAM_KR_WITH_RELATIONS_FIELDS = `
 ` as const;
 
 const CONTRIBUTED_VIEW_FIELDS = `
-  objective_id, title, description, status, primary_team_id, primary_team_name,
-  contributor_team_id, contributor_team_name, is_shared, responsibility_model,
-  org_objective_id, cycle_id, bu_id
+  objective_id, objective_title, objective_status, 
+  primary_team_id, primary_team_name,
+  contributor_team_id, contributor_team_name, 
+  is_shared, responsibility_model
 ` as const;
 
 const TEAM_OBJECTIVE_WITH_KRS_FIELDS = `
@@ -157,8 +158,8 @@ const TEAM_OBJECTIVE_WITH_KRS_FIELDS = `
 ` as const;
 
 const SHARED_SUMMARY_FIELDS = `
-  id, title, primary_team_id, primary_team_name,
-  total_teams_count, is_shared, responsibility_model, status
+  objective_id, title, primary_team_id, primary_team_name,
+  contributor_count, is_shared, responsibility_model, status
 ` as const;
 
 const TEAM_OBJECTIVE_WITH_KRS_FOR_VIEW = `
