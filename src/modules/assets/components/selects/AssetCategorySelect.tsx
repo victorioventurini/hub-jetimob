@@ -1,5 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCategories } from "../../hooks/useCategories";
+import { useAssetCategoriesQuery } from "../../hooks";
 import { cn } from "@/lib/utils";
 import type { AssetCategory } from "../../types";
 
@@ -73,7 +73,7 @@ export function AssetCategorySelect({
   triggerClassName,
   categories: externalCategories,
 }: AssetCategorySelectProps) {
-  const { categories: hookCategories, isLoading } = useCategories();
+  const { data: hookCategories = [], isLoading } = useAssetCategoriesQuery();
   const categories = externalCategories ?? hookCategories;
   const flatCategories = buildFlatCategoryList(categories);
 

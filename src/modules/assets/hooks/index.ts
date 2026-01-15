@@ -17,6 +17,6 @@ export { useAssetProfiles } from "./useProfiles";
 export { useAssetPermissionsV2 } from "./useAssetPermissionsV2";
 export { useAssetGroups } from "./useAssetGroups";
 export { useBrands } from "./useBrands";
-export { useCategories } from "./useCategories";
+
 export { useAuthorizers } from "./useAuthorizers";
 export { useBuAdmins } from "./useBuAdmins";

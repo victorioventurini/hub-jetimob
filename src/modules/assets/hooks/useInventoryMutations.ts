@@ -7,8 +7,10 @@ import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
 import type { AssetInventory, AssetMovementType } from "../types";
 
+import type { AssetCategory } from "../types";
+
 /**
- * Hook for asset category mutations
+ * Hook for asset category mutations (create, update, delete)
  */
 export function useAssetCategoryMutations() {
   const queryClient = useQueryClient();
@@ -40,10 +42,86 @@ export function useAssetCategoryMutations() {
     },
   });
 
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({
+      id,
+      ...data
+    }: {
+      id: string;
+      name?: string;
+      parent_id?: string;
+      description?: string;
+    }) => {
+      const client = assertSupabaseClient(supabase, "updateCategory");
+      const { data: category, error } = await client
+        .from("asset_categories")
+        .update({
+          name: data.name,
+          parent_id: data.parent_id || null,
+          description: data.description || null,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return category;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null), refetchType: 'active' });
+      toast.success("Categoria atualizada");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar categoria");
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const client = assertSupabaseClient(supabase, "deleteCategory");
+      const { error } = await client
+        .from("asset_categories")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+      return id;
+    },
+    // Optimistic update: remove from list immediately
+    onMutate: async (id) => {
+      const queryKey = queryKeys.assets.categories(buId ?? null);
+      await queryClient.cancelQueries({ queryKey });
+      
+      const previousData = queryClient.getQueryData<AssetCategory[]>(queryKey);
+      
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData.filter((c) => c.id !== id));
+      }
+      
+      return { previousData, queryKey };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      toast.error("Erro ao remover categoria");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(buId ?? null), refetchType: 'active' });
+      toast.success("Categoria removida");
+    },
+  });
+
   return {
     createCategory: createCategoryMutation.mutate,
     createCategoryAsync: createCategoryMutation.mutateAsync,
     isCreatingCategory: createCategoryMutation.isPending,
+    updateCategory: updateCategoryMutation.mutate,
+    updateCategoryAsync: updateCategoryMutation.mutateAsync,
+    isUpdatingCategory: updateCategoryMutation.isPending,
+    deleteCategory: deleteCategoryMutation.mutate,
+    deleteCategoryAsync: deleteCategoryMutation.mutateAsync,
+    isDeletingCategory: deleteCategoryMutation.isPending,
   };
 }
 
