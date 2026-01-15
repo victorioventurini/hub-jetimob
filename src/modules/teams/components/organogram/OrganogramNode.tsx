@@ -64,66 +64,62 @@ const CeoCard = memo(function CeoCard({
 }: Omit<OrganogramNodeCardProps, 'parentColor'>) {
   return (
     <div className="flex flex-col items-center">
-      {/* CEO circular avatar with colored ring */}
+      {/* CEO card with same proportions as other cards */}
       <Link
         to={node.path}
-        className="flex flex-col items-center group"
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-amber-400 bg-card shadow-sm transition-all",
+          "hover:shadow-md hover:border-amber-500 focus:outline-none focus:ring-2 focus:ring-ring",
+          "min-w-[140px] max-w-[200px]"
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Avatar with ring */}
-        <div className="relative mb-3">
-          <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 bg-card shadow-lg">
-            <OptimizedAvatar
-              src={node.photoUrl}
-              alt={node.name}
-              fallback={node.name.slice(0, 2).toUpperCase()}
-              className="w-full h-full text-lg"
-            />
-          </div>
+        {/* Avatar */}
+        <OptimizedAvatar
+          src={node.photoUrl}
+          alt={node.name}
+          fallback={node.name.slice(0, 2).toUpperCase()}
+          size="sm"
+          className="w-7 h-7"
+        />
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">{node.name}</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">CEO</p>
         </div>
 
-        {/* Name card below avatar */}
-        <div className={cn(
-          "flex items-center gap-2 px-5 py-2.5 rounded-lg border-2 border-amber-400 bg-card shadow-sm transition-all",
-          "group-hover:shadow-md group-hover:border-amber-500"
-        )}>
-          <div className="text-center">
-            <p className="font-semibold text-sm">{node.name}</p>
-            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">CEO</p>
-          </div>
-
-          {/* Expand/Collapse */}
-          {hasChildren && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggle();
-              }}
-              className={cn(
-                "p-1 rounded-md hover:bg-accent transition-colors ml-1",
-                "focus:outline-none focus:ring-2 focus:ring-ring"
-              )}
-              aria-label={isExpanded ? "Recolher" : "Expandir"}
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </div>
+        {/* Expand/Collapse */}
+        {hasChildren && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggle();
+            }}
+            className={cn(
+              "p-1 rounded-md hover:bg-accent transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-ring"
+            )}
+            aria-label={isExpanded ? "Recolher" : "Expandir"}
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+          </button>
+        )}
       </Link>
 
       {/* Children (Areas) */}
       {hasChildren && isExpanded && (
-        <div className="flex flex-col items-center mt-4">
+        <div className="flex flex-col items-center mt-3">
           {/* Connector line down */}
           <div className="w-px h-4 bg-border" />
           
           {/* Children container - horizontal row for areas */}
-          <div className="flex flex-nowrap justify-center gap-4 relative">
+          <div className="flex flex-nowrap justify-center gap-3 relative">
             {/* Horizontal line connecting children */}
             {node.children.length > 1 && (
               <div 
