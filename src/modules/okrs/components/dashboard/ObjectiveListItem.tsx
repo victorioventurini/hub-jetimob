@@ -422,6 +422,7 @@ export function ObjectiveListItem({
             direction: editingKr.direction,
             unit: editingKr.unit,
             status: editingKr.status,
+            owner_user_id: editingKr.owner_user_id,
           }}
         />
       )}
