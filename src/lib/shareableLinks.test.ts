@@ -130,14 +130,22 @@ describe('getShareableAbsoluteUrl', () => {
   });
 
   it('should handle undefined window gracefully', () => {
-    // @ts-expect-error - Testing edge case
-    delete global.window;
+    const windowBackup = global.window;
+    Object.defineProperty(global, 'window', {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
     
     const url = getShareableAbsoluteUrl('asset', 'abc-123');
     expect(url).toBe('/go/asset/abc-123');
     
     // Restore
-    global.window = originalWindow;
+    Object.defineProperty(global, 'window', {
+      value: windowBackup,
+      writable: true,
+      configurable: true,
+    });
   });
 });
 

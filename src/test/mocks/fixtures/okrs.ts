@@ -57,8 +57,12 @@ export function createMockCycle(overrides: Partial<Cycle> = {}): Cycle {
   return {
     id: `cycle-${Math.random().toString(36).substring(7)}`,
     name: `Q${Math.floor(now.getMonth() / 3) + 1} ${now.getFullYear()}`,
+    type: 'quarter',
     start_date: quarterStart.toISOString().split('T')[0],
     end_date: quarterEnd.toISOString().split('T')[0],
+    planning_date: null,
+    review_date: null,
+    retro_date: null,
     parent_cycle_id: null,
     ...overrides,
   };

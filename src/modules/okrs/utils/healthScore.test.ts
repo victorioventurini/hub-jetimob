@@ -10,7 +10,7 @@ import {
   getHealthLevelConfig,
   type HealthLevel,
 } from './healthScore';
-import { createMockKr, createMockInitiative, createMockCycle, FIXTURES } from '@/test/mocks/fixtures';
+import { createMockKr, createMockInitiative, createMockCycle, OKR_FIXTURES } from '@/test/mocks/fixtures';
 
 describe('calculateObjectiveHealth', () => {
   describe('with empty inputs', () => {
@@ -379,7 +379,7 @@ describe('calculateObjectiveHealth', () => {
   describe('overall health level determination', () => {
     it('should return "healthy" when weighted score >= 70', () => {
       const result = calculateObjectiveHealth({
-        krs: [FIXTURES.healthyKr],
+        krs: [OKR_FIXTURES.healthyKr],
         initiatives: [],
         cycle: null,
       });
@@ -390,7 +390,7 @@ describe('calculateObjectiveHealth', () => {
 
     it('should return "at_risk" when weighted score is between 40-69', () => {
       const result = calculateObjectiveHealth({
-        krs: [FIXTURES.atRiskKr],
+        krs: [OKR_FIXTURES.atRiskKr],
         initiatives: [],
         cycle: null,
       });
@@ -400,7 +400,7 @@ describe('calculateObjectiveHealth', () => {
 
     it('should return "critical" when weighted score < 40', () => {
       const result = calculateObjectiveHealth({
-        krs: [FIXTURES.criticalKr],
+        krs: [OKR_FIXTURES.criticalKr],
         initiatives: [],
         cycle: null,
       });
