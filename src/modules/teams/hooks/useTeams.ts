@@ -31,7 +31,7 @@ export function useTeams(optionsOrIncludeInactive: UseTeamsOptions | boolean = f
       let query = supabase
         .from("teams")
         .select(`
-          id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id,
+          id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id, area_id,
           leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
         `)
         .order("name");
@@ -115,7 +115,7 @@ export function useTeam(teamId: string | undefined) {
       const { data, error } = await supabase
         .from("teams")
         .select(`
-          id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id,
+          id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id, area_id,
           leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url)
         `)
         .eq("id", teamId)
@@ -298,6 +298,7 @@ export function useCreateTeam() {
           description: data.description || null,
           leader_user_id: data.leader_user_id || null,
           parent_team_id: data.parent_team_id || null,
+          area_id: data.area_id || null,
           status: data.status,
           bu_id: currentBu.id,
         })
