@@ -80,10 +80,6 @@ const CeoCard = memo(function CeoCard({
               className="w-full h-full text-lg"
             />
           </div>
-          {/* Crown icon */}
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-md">
-            <Crown className="w-4 h-4 text-white" />
-          </div>
         </div>
 
         {/* Name card below avatar */}
