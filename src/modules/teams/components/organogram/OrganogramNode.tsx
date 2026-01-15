@@ -300,16 +300,11 @@ export function OrganogramNodeWrapper({
   parentColor,
   defaultExpanded 
 }: OrganogramNodeWrapperProps) {
-  // Default expand state based on type
+  // Default expand state - all nodes expanded by default
   const getDefaultExpanded = () => {
     if (defaultExpanded !== undefined) return defaultExpanded;
-    switch (node.type) {
-      case 'ceo':
-      case 'area':
-        return true;
-      default:
-        return false;
-    }
+    // Expand all node types by default
+    return true;
   };
 
   const [isExpanded, setIsExpanded] = useState(getDefaultExpanded);

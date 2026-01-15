@@ -6,9 +6,11 @@
  */
 import { useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
-import { Network } from "lucide-react";
+import { Network, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { OrganogramChart, OrganogramControls } from "../components/organogram";
 import { useOrganogramData } from "../hooks/useOrganogramData";
 import { OrganogramFilters, OrganogramControlsState } from "../types/organogram";
@@ -18,10 +20,10 @@ export default function OrganogramPage() {
   const { currentBu } = useBu();
   const { data, isLoading, error } = useOrganogramData();
 
-  // Filters state
+  // Filters state - start with members visible, squads hidden
   const [filters, setFilters] = useState<OrganogramFilters>({
-    showMembers: false,
-    showSquads: true,
+    showMembers: true,
+    showSquads: false,
     searchTerm: "",
   });
 
@@ -64,6 +66,14 @@ export default function OrganogramPage() {
       </Helmet>
 
       <div className="container py-8 space-y-6">
+        {/* Back to Hub button */}
+        <Button variant="outline" size="sm" asChild className="mb-4">
+          <Link to="/">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Hub
+          </Link>
+        </Button>
+
         <PageHeader
           title="Organograma"
           description="Visualização hierárquica da estrutura organizacional"
