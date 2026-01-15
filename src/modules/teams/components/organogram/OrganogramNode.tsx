@@ -65,6 +65,8 @@ const CeoCard = memo(function CeoCard({
       {/* CEO card with same proportions as other cards */}
       <Link
         to={node.path}
+        target="_blank"
+        rel="noopener noreferrer"
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-amber-400 bg-card shadow-sm transition-all",
           "hover:shadow-md hover:border-amber-500 focus:outline-none focus:ring-2 focus:ring-ring",
@@ -164,6 +166,8 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
     <div className="flex flex-col items-center">
       <Link
         to={node.path}
+        target="_blank"
+        rel="noopener noreferrer"
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all",
           "hover:shadow-md hover:border-accent focus:outline-none focus:ring-2 focus:ring-ring",
