@@ -18,7 +18,7 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { useAllOrgObjectivesView, type OrgObjectiveWithKrs } from "./queries";
-import { useTeams } from "@/modules/teams/hooks/useTeams";
+import { useTeams } from "@/modules/teams/hooks";
 import type { TeamWithRelations } from "@/modules/teams/types";
 import type { HealthStatus } from "../types/health";
 

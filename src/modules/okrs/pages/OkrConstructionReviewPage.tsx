@@ -18,7 +18,7 @@ import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
 import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
 import { useConstructionReview } from "../hooks/useConstructionReview";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks";
 import { useVic } from "@/modules/vic/contexts/VicContext";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import { ConstructionScoreCard, ObjectiveChecklistCard } from "../components/construction";

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useAuth } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
-import { FlatTeamItem } from "@/modules/teams/hooks/useTeams";
+import type { FlatTeamItem } from "@/modules/teams/hooks";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 
 interface ManageableTeam {

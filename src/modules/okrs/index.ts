@@ -1,10 +1,9 @@
 // OKR Module Exports
-export * from './hooks/useOkrData';
+// Hooks are exported from ./hooks barrel file
 export * from './hooks/useOkrStatus';
 export * from './hooks/useOkrMutations';
 export * from './hooks/usePendingCheckins';
 export * from './hooks/useCycleCheckins';
-export * from './hooks/useSharedOkrData';
 export * from './hooks/useInitiatives';
 export * from './hooks/useOkrContributions';
 export * from './hooks/useOkrKrMetrics';
@@ -14,11 +13,31 @@ export * from './types/initiative';
 export * from './types/health';
 export * from './utils/krValidation';
 
-// Re-export consolidated queries
+// Re-export consolidated queries from barrel
 export {
+  // Core queries
+  useOrgObjectives,
+  useOrgObjective,
+  useOrgKeyResults,
+  useTeamObjectives,
+  useTeamKeyResults,
+  useMyTeamKeyResults,
+  useMyTeamObjectives,
+  useKrCheckins,
+  useLatestCheckinDate,
+  useTeams,
+  useCycles,
+  useUserProfile,
+  // Aggregate queries
   useTeamContributedOkrs,
   useSharedOkrsSummary,
   useSharedOkrsInsights,
+  useObjectiveContributors,
+  useTeamContributedObjectives,
+  useTeamObjectivesWithSharedInfo,
+  useManageContributors,
+  // Types
+  type OkrContributor,
 } from './hooks/queries';
 
 // Components
