@@ -37,6 +37,7 @@ export * from './queryKeys/integrations';
 export * from './queryKeys/permissions';
 export * from './queryKeys/misc';
 export * from './queryKeys/savedLinks';
+export * from './queryKeys/organogram';
 
 // Import all modules for unified object
 import { 
