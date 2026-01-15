@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TeamSelect, AreaSelect } from "@/components/selects";
 import {
-  Search,
   Plus,
   MoreHorizontal,
   Mail,
@@ -45,6 +44,7 @@ import {
   Pencil,
   X,
   Trash2,
+  Network,
 } from "lucide-react";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -350,12 +350,20 @@ export default function UsersPage() {
           title="Jetimobers"
           description="Diretório de colaboradores da Jetimob"
           actions={
-            canManageUsers && (
-              <Button variant="accent" className="gap-2" onClick={handleCreate}>
-                <Plus className="h-4 w-4" />
-                Novo Jetimober
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/teams/org-chart?fullscreen=true" target="_blank" rel="noopener noreferrer">
+                  <Network className="h-4 w-4 mr-2" />
+                  Organograma
+                </Link>
               </Button>
-            )
+              {canManageUsers && (
+                <Button variant="accent" className="gap-2" onClick={handleCreate}>
+                  <Plus className="h-4 w-4" />
+                  Novo Jetimober
+                </Button>
+              )}
+            </div>
           }
         />
 
