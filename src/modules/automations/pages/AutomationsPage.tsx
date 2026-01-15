@@ -27,7 +27,7 @@ import {
   useEventCatalog,
   useActionCatalog,
   useAutomationLogs,
-} from '../hooks/useAutomationData';
+} from '../hooks';
 import { EventCategorySection } from '../components/EventCatalogCard';
 import { ActionCategorySection } from '../components/ActionCatalogCard';
 import { AutomationLogsTable } from '../components/AutomationLogsTable';
