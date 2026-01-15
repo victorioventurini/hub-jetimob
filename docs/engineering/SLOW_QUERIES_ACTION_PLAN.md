@@ -1,8 +1,8 @@
 # Slow Queries — Relatório e Plano de Ação
 
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Data:** 2026-01-15  
-**Status:** 📋 EM ANÁLISE
+**Status:** ✅ P3.1 COMPLETO
 
 ---
 
@@ -86,21 +86,18 @@ Análise das métricas de performance do banco Supabase identificou:
 
 ## 5. Plano de Ação
 
-### Wave P3.1 — Índices Ausentes (Prioridade Alta)
+### Wave P3.1 — Índices Ausentes ✅ COMPLETO (2026-01-15)
 
-```sql
--- 1. okr_wizard_sessions - queries por bu_id e status
-CREATE INDEX IF NOT EXISTS idx_okr_wizard_sessions_bu_status 
-ON public.okr_wizard_sessions (bu_id, status)
-WHERE deleted_at IS NULL;
+**6 índices criados:**
 
--- 2. permission_template_items_v2 - queries por template_id
-CREATE INDEX IF NOT EXISTS idx_permission_template_items_v2_template
-ON public.permission_template_items_v2 (template_id);
-
--- 3. ai_agent_logs - substituir índice não usado por um mais adequado
--- Primeiro analisar o padrão de queries atual
-```
+| Índice | Tabela | Colunas |
+|--------|--------|---------|
+| `idx_okr_wizard_sessions_bu_status` | okr_wizard_sessions | (bu_id, status) |
+| `idx_okr_wizard_sessions_bu_created` | okr_wizard_sessions | (bu_id, created_at DESC) |
+| `idx_permission_template_items_v2_template` | permission_template_items_v2 | (template_id) |
+| `idx_permission_template_items_v2_pkey` | permission_template_items_v2 | (permission_key) |
+| `idx_ai_agent_logs_bu_created` | ai_agent_logs | (bu_id, created_at DESC) |
+| `idx_ai_agent_logs_agent_created` | ai_agent_logs | (agent_id, created_at DESC) |
 
 ### Wave P3.2 — Limpeza de Índices (Prioridade Média)
 
