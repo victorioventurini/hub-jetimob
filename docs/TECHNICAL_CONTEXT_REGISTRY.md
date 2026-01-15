@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.37.0  
+**Versão:** 2.38.0  
 **Última atualização:** 2026-01-15
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Teams/Areas Test Coverage adicionado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **OKR Status Filter v1.1 (discarded exclusion)**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -473,10 +473,14 @@ Objetivos de alto nível da organização.
 | description | text | Descrição |
 | year | int | Ano do objetivo |
 | owner_user_id | uuid | Responsável |
-| status | enum | `draft`, `active`, `completed`, `cancelled` |
+| status | enum | `draft`, `active`, `completed`, `cancelled`, `discarded` |
 | bu_id | uuid | FK para bu_units |
 
 **Escopo:** Por BU
+
+**Regras de Filtro (v2.38.0):**
+- Por padrão, queries excluem objetivos com `status = 'cancelled'` OU `status = 'discarded'`
+- Para incluir todos os status, usar `includeAllStatuses: true` nos hooks
 
 ---
 
@@ -512,12 +516,16 @@ Objetivos de cada time, vinculados a objetivos org.
 | title | text | Título |
 | year | int | Ano do objetivo |
 | owner_user_id | uuid | Responsável |
-| status | enum | Status do objetivo |
+| status | enum | `draft`, `active`, `completed`, `cancelled`, `discarded` |
 | bu_id | uuid | FK para bu_units |
 
 **Limite:** Máximo 3 objetivos ativos por time (validado via trigger)
 
 **Escopo:** Por BU (via team)
+
+**Regras de Filtro (v2.38.0):**
+- Por padrão, queries excluem objetivos com `status = 'cancelled'` OU `status = 'discarded'`
+- Para incluir todos os status, usar `includeAllStatuses: true` nos hooks
 
 ---
 
@@ -1910,6 +1918,33 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.38.0 (2026-01-15) — OKR Status Filter & UI Polish
+- **Filtro de status `discarded` em OKRs**:
+  - Hooks `useOrgObjectives` e `useTeamObjectives` agora excluem objetivos com status `discarded` por padrão
+  - Antes: apenas `cancelled` era excluído. Agora: `cancelled` E `discarded` são excluídos
+  - Opção `includeAllStatuses: true` permite incluir todos os status quando necessário
+  - Arquivos alterados: `src/modules/okrs/hooks/queries/useOkrQueries.ts`
+- **Cards de Times com altura uniforme**:
+  - `TeamCard.tsx` atualizado com `h-full flex flex-col` para altura consistente no grid
+  - Footer do card agora usa `mt-auto` para alinhar ao fundo
+- **Página de Permissões BU simplificada**:
+  - Removido `TabsList` com única tab "Usuários" (redundante)
+  - Layout simplificado mantendo funcionalidade completa
+- **Organograma melhorado**:
+  - Expansão padrão: CEO, Áreas e Times de primeiro nível expandidos, subtimes colapsados
+  - Novo toggle "Expandir/Recolher tudo" nos controles do organograma
+  - Props `expansionMode` e `expansionKey` para controle global de estado
+
+### v2.37.0 (2026-01-15) — Areas Strategic Layer
+- **Áreas (camada estratégica) implementadas**:
+  - Tabela `areas` com líder, co-líder, cor, ícone e status
+  - Áreas NÃO possuem OKRs (diferente de times)
+  - Interface de gestão em `/settings/areas`
+  - Vínculo `teams.area_id` para associar times a áreas
+- **Cobertura de testes para Teams/Areas**:
+  - Novos testes para `TeamCard`, `TeamForm`, `AreaForm`
+  - Integração com framework de testes automatizados
 
 ### v2.36.0 (2026-01-15) — Saved Links System
 - **Sistema de Links Salvos implementado**:
