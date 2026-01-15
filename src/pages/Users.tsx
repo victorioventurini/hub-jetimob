@@ -32,7 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TeamSelect, SimpleSelect, AreaSelect } from "@/components/selects";
+import { TeamSelect, AreaSelect } from "@/components/selects";
 import {
   Search,
   Plus,
@@ -110,17 +110,13 @@ export default function UsersPage() {
   // URL State - object API with pagination
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
   const searchQuery = searchState.value;
-  
+
   const areaFilterState = useUrlState<string>({ key: 'area_id', defaultValue: 'all' });
   const areaFilter = areaFilterState.value;
-  
+
   const teamFilterState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   const teamFilter = teamFilterState.value;
-  
-  const statusFilterState = useUrlState<string>({ key: 'status', defaultValue: 'active' });
-  const statusFilter = statusFilterState.value;
-  
-  
+
   // Handlers
   const setSearchQuery = (v: string) => {
     searchState.set(v);
@@ -130,9 +126,6 @@ export default function UsersPage() {
   };
   const setTeamFilter = (v: string) => {
     teamFilterState.set(v);
-  };
-  const setStatusFilter = (v: string) => {
-    statusFilterState.set(v);
   };
   
   // Local state
@@ -163,94 +156,102 @@ export default function UsersPage() {
 
 
   const { data: profilesData, isLoading, error: profilesError } = useQuery({
-    queryKey: queryKeys.users.directory(currentBu?.id ?? null, { 
-      q: searchQuery || undefined, 
+    queryKey: queryKeys.users.directory(currentBu?.id ?? null, {
+      q: searchQuery || undefined,
       areaId: areaFilter !== 'all' ? areaFilter : undefined,
       teamId: teamFilter !== 'all' ? teamFilter : undefined,
-      status: statusFilter,
+      // Regra: /users lista somente usuários internos e ativos
+      status: 'active',
+      excludeExternal: true,
     }),
     queryFn: async ({ queryKey }): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
       // Ensure session is loaded before making the RPC call
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
-      
+
       if (!currentBu?.id) return { profiles: [], total: 0 };
-      
+
       // Extract filters from queryKey to ensure fresh values
-      const filters = queryKey[3] as { q?: string; areaId?: string; teamId?: string; status?: string } | undefined;
+      const filters = queryKey[3] as { q?: string; teamId?: string } | undefined;
       const qSearch = filters?.q?.trim() || null;
-      const qAreaId = filters?.areaId || null;
       const qTeamId = filters?.teamId || null;
-      const qStatus = filters?.status || 'active';
-      
-      // Use RPC that filters by bu_user_memberships - no pagination, fetch all
-      const { data, error } = await supabase.rpc("get_bu_users_by_membership", {
+
+      // Use RPC - fetch all, then enforce active+internal on client
+      const { data, error } = await supabase.rpc('get_bu_users_by_membership', {
         p_bu_id: currentBu.id,
         p_search: qSearch,
         p_team_id: qTeamId,
-        p_status: qStatus,
-        p_limit: 1000, // Fetch all users
+        p_status: 'active',
+        p_limit: 1000,
         p_offset: 0,
       });
 
       if (error) throw error;
 
-      const totalCount = (data && data.length > 0) ? Number(data[0].total_count) : 0;
+      // Enforce “active” + exclude externals (some datasets may return externals even under active)
+      const rows = (data || []).filter((p: { employment_status: string }) => p.employment_status === 'active');
 
       // Coletar manager_user_ids únicos para buscar em lote
-      const managerIds = [...new Set((data || []).map((p: { manager_user_id: string | null }) => p.manager_user_id).filter(Boolean))] as string[];
-      
+      const managerIds = [
+        ...new Set(rows.map((p: { manager_user_id: string | null }) => p.manager_user_id).filter(Boolean)),
+      ] as string[];
+
       // Buscar managers em uma query separada
       let managersMap: Record<string, { id: string; display_name: string | null; photo_url: string | null }> = {};
       if (managerIds.length > 0) {
         const { data: managersData } = await supabase
-          .from("profiles")
-          .select("id, display_name, photo_url")
-          .in("id", managerIds);
-        
+          .from('profiles')
+          .select('id, display_name, photo_url')
+          .in('id', managerIds);
+
         if (managersData) {
-          managersMap = Object.fromEntries(managersData.map(m => [m.id, m]));
+          managersMap = Object.fromEntries(managersData.map((m) => [m.id, m]));
         }
       }
 
-      const profiles = (data || []).map((p: {
-        profile_id: string;
-        user_id: string | null;
-        first_name: string;
-        last_name: string;
-        display_name: string;
-        work_email: string;
-        job_title_name: string | null;
-        job_title_id: string | null;
-        photo_url: string | null;
-        city: string;
-        state: string;
-        work_mode: string;
-        employment_status: string;
-        team_id: string | null;
-        team_name: string | null;
-        manager_user_id: string | null;
-      }) => ({
-        id: p.profile_id,
-        user_id: p.user_id,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        display_name: p.display_name,
-        work_email: p.work_email,
-        job_title_name: p.job_title_name || "Sem cargo",
-        job_title_id: p.job_title_id,
-        photo_url: p.photo_url,
-        city: p.city,
-        state: p.state,
-        work_mode: p.work_mode,
-        employment_status: p.employment_status,
-        team: p.team_id && p.team_name ? { id: p.team_id, name: p.team_name } : null,
-        manager: p.manager_user_id ? managersMap[p.manager_user_id] ?? null : null,
-      })) as ProfileWithTeam[];
+      const profiles = rows
+        .map(
+          (p: {
+            profile_id: string;
+            user_id: string | null;
+            first_name: string;
+            last_name: string;
+            display_name: string;
+            work_email: string;
+            job_title_name: string | null;
+            job_title_id: string | null;
+            photo_url: string | null;
+            city: string;
+            state: string;
+            work_mode: string;
+            employment_status: string;
+            team_id: string | null;
+            team_name: string | null;
+            manager_user_id: string | null;
+          }) => ({
+            id: p.profile_id,
+            user_id: p.user_id,
+            first_name: p.first_name,
+            last_name: p.last_name,
+            display_name: p.display_name,
+            work_email: p.work_email,
+            job_title_name: p.job_title_name || 'Sem cargo',
+            job_title_id: p.job_title_id,
+            photo_url: p.photo_url,
+            city: p.city,
+            state: p.state,
+            work_mode: p.work_mode,
+            employment_status: p.employment_status,
+            team: p.team_id && p.team_name ? { id: p.team_id, name: p.team_name } : null,
+            manager: p.manager_user_id ? managersMap[p.manager_user_id] ?? null : null,
+          }),
+        ) as ProfileWithTeam[];
 
-      return { profiles, total: totalCount };
+      return { profiles, total: profiles.length };
     },
     enabled: !!currentBu?.id && !!user && !authLoading,
   });
@@ -408,18 +409,6 @@ export default function UsersPage() {
             allLabel="Todos os times"
             placeholder="Time"
             triggerClassName="w-[220px]"
-          />
-          <SimpleSelect
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-            options={[
-              { value: "all", label: "Todos" },
-              { value: "active", label: "Ativos" },
-              { value: "vacation", label: "Férias" },
-              { value: "terminated", label: "Desligados" },
-            ]}
-            placeholder="Status"
-            triggerClassName="w-[180px]"
           />
         </div>
 
