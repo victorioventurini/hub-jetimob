@@ -115,6 +115,40 @@ const CeoCard = memo(function CeoCard({
           )}
         </div>
       </Link>
+
+      {/* Children (Areas) */}
+      {hasChildren && isExpanded && (
+        <div className="flex flex-col items-center mt-4">
+          {/* Connector line down */}
+          <div className="w-px h-4 bg-border" />
+          
+          {/* Children container - horizontal row for areas */}
+          <div className="flex flex-nowrap justify-center gap-4 relative">
+            {/* Horizontal line connecting children */}
+            {node.children.length > 1 && (
+              <div 
+                className="absolute top-0 h-px bg-border"
+                style={{
+                  left: 'calc(50% - ' + ((node.children.length - 1) * 50) + '%)',
+                  right: 'calc(50% - ' + ((node.children.length - 1) * 50) + '%)',
+                  minWidth: '50%',
+                }}
+              />
+            )}
+            
+            {node.children.map((child) => (
+              <div key={child.id} className="flex flex-col items-center">
+                {/* Connector line up */}
+                <div className="w-px h-4 bg-border" />
+                <OrganogramNodeWrapper 
+                  node={child} 
+                  parentColor={child.color}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
