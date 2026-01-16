@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.41.0  
-**Última atualização:** 2026-01-15
+**Versão:** 2.42.0  
+**Última atualização:** 2026-01-16
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1904,8 +1904,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.36.0 |
-| **Data da última atualização** | 2026-01-15 |
+| **Versão do TCR** | 2.42.0 |
+| **Data da última atualização** | 2026-01-16 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -1918,6 +1918,20 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.42.0 (2026-01-16) — Team OKR/KR Linking Edit
+- **Edição de vínculos com objetivos/KRs organizacionais**:
+  - Modal de edição de objetivos de time (`TeamObjectiveFormDialog`) agora permite editar vínculo com objetivo organizacional
+  - Modal de edição de KRs de time (`TeamKrFormDialog`) agora permite editar vínculo com KR organizacional
+  - Campos exibidos tanto em modo criação quanto edição, com feedback visual distinto
+  - Mutation de update envia `org_objective_id` e `linked_org_kr_id` corretamente
+- **Arquivos alterados**:
+  - `src/modules/okrs/components/TeamObjectiveFormDialog.tsx`
+  - `src/modules/okrs/components/TeamKrFormDialog.tsx`
+- **Comportamento**:
+  - Objetivo de Time pode ser vinculado/desvinculado de Objetivo Organizacional a qualquer momento
+  - KR de Time pode ser vinculado/desvinculado de KR Organizacional se o objetivo pai estiver vinculado
+  - Seleção "Nenhum" disponível para desvincular
 
 ### v2.39.0 (2026-01-15) — Security Fixes & Performance Wave P5.1
 - **Security Fixes (2 error-level issues)**:
