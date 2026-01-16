@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Search, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Permission } from "../types";
-import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
+import type { PermissionTemplateV2 } from "../hooks";
 
 interface PermissionMatrixProps {
   permissions: Permission[];

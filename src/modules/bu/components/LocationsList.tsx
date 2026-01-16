@@ -48,7 +48,7 @@ import {
   useSoftDeleteBuLocation,
   useSetDefaultBuLocation,
   useUpdateBuLocation,
-} from "../hooks/useBuLocations";
+} from "../hooks";
 import type { BuLocation } from "../types/location";
 import { LOCATION_TYPE_LABELS, LOCATION_STATUS_LABELS } from "../types/location";
 

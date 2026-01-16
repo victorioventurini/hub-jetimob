@@ -2,7 +2,7 @@ import { Button, ButtonProps } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVic } from "../contexts/VicContext";
-import { useVicEnabled } from "../hooks/useVicAgent";
+import { useVicEnabled } from "../hooks";
 import {
   Tooltip,
   TooltipContent,

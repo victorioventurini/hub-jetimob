@@ -26,3 +26,5 @@ export {
   useUpdateSquadMember,
   useRemoveSquadMember,
 } from "./useSquads";
+
+export { useOrganogramData } from "./useOrganogramData";

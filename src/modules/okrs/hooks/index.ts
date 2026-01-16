@@ -178,8 +178,8 @@ export { useCreateTeamKrBundle } from './useCreateTeamKrBundle';
 // =========================
 // KPI & HISTORY
 // =========================
-export { useKpiHistory } from './useKpiHistory';
-export { useKrHistory, useKrWithHistory, type KrHistoryData, type KrCheckinHistory, type KrWithHistoryData } from './useKrHistory';
+export { useKpiHistory, useKrKpiHistory, useKpiChartData, type KpiHistoryData } from './useKpiHistory';
+export { useKrHistory, useKrWithHistory, useKrChartData, type KrHistoryData, type KrCheckinHistory, type KrWithHistoryData } from './useKrHistory';
 
 // =========================
 // QUALITY & ANALYSIS
@@ -192,3 +192,4 @@ export {
   type AnalysisGaps,
   type TeamSummary,
 } from './useOrgOkrAnalysis';
+export { useOrgHealthReview } from './useOrgHealthReview';

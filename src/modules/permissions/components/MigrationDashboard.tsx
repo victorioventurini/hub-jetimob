@@ -11,7 +11,7 @@ import {
   ArrowRight,
   Shield
 } from "lucide-react";
-import { useBuMigrationStatus } from "../hooks/useMigrationTracking";
+import { useBuMigrationStatus } from "../hooks";
 import { LoadingState } from "@/components/ui/loading-state";
 
 interface MigrationDashboardProps {

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useKrHistory } from "../hooks/useKrHistory";
+import { useKrHistory } from "../hooks";
 import { KrEvolutionChart } from "./KrEvolutionChart";
 import { KrCheckinsTable } from "./KrCheckinsTable";
 import { formatValueWithUnit } from "../constants/krUnits";

@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
-import { useCreateJobTitle, useUpdateJobTitle } from "../hooks/useJobTitles";
+import { useCreateJobTitle, useUpdateJobTitle } from "../hooks";
 import { useAllBus } from "@/modules/users-global/hooks";
 import { useBu } from "@/contexts/BuContext";
 import type { JobTitleWithUsageCount } from "../types";

@@ -15,7 +15,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
-import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
+import { useLeaderTeams } from "@/modules/home/hooks";
 import { useVicAgent } from "@/modules/vic/hooks";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { getContextualCultureMessage } from "@/data/cultureMessages";

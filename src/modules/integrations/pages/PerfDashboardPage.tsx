@@ -31,7 +31,7 @@ import {
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { usePerfMetricsLatest, usePerfMetricsHistory, collectPerfMetricsManually, type TableMetric, type UnusedIndex } from "../hooks/usePerfMetrics";
+import { usePerfMetricsLatest, usePerfMetricsHistory, collectPerfMetricsManually, type TableMetric, type UnusedIndex } from "../hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { perfMetricsKeys } from "@/lib/queryKeys/integrations";
 import { toast } from "sonner";

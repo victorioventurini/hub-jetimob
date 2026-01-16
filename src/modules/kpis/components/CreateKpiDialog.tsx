@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TeamSelect, BuUserSelect } from "@/components/selects";
-import { useKpiData } from "../hooks/useKpiData";
+import { useKpiData } from "../hooks";
 import {
   KpiCategory,
   KpiDirection,

@@ -9,7 +9,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Info } from "lucide-react";
-import { useKrChartData, type KrCheckinHistory } from "../hooks/useKrHistory";
+import { useKrChartData, type KrCheckinHistory } from "../hooks";
 import { formatValueWithUnit } from "../constants/krUnits";
 import { cn } from "@/lib/utils";
 

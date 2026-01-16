@@ -21,7 +21,7 @@ import {
   FileStack,
   ChevronRight
 } from "lucide-react";
-import { usePermissionPresets, usePresetItems, type PermissionPreset } from "../hooks/usePermissionGovernance";
+import { usePermissionPresets, usePresetItems, type PermissionPreset } from "../hooks";
 import { SURFACE_COLORS } from "@/lib/colors";
 
 const SURFACE_ICONS = {

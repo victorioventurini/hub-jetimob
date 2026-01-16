@@ -21,7 +21,7 @@ import {
   Loader2,
   CheckCircle2
 } from "lucide-react";
-import type { PermissionDiff } from "../hooks/usePermissionGovernance";
+import type { PermissionDiff } from "../hooks";
 
 interface PermissionDiffDialogProps {
   open: boolean;
