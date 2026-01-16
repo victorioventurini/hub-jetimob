@@ -344,12 +344,24 @@ export function useUpdateTeam() {
         }
       }
 
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        ...(data.leader_user_id !== undefined && {
+          leader_user_id: data.leader_user_id || null,
+        }),
+        ...(data.parent_team_id !== undefined && {
+          parent_team_id: data.parent_team_id || null,
+        }),
+        ...(data.area_id !== undefined && {
+          area_id: data.area_id || null,
+        }),
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: team, error } = await supabase
         .from("teams")
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
+        .update(sanitizedData)
         .eq("id", id)
         .select()
         .single();
