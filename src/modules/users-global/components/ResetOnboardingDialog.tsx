@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useResetOnboarding } from "../hooks/useUserGlobalActions";
+import { useResetOnboarding } from "../hooks";
 
 interface ResetOnboardingDialogProps {
   open: boolean;

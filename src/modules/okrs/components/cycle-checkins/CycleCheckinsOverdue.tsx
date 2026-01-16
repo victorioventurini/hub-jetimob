@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
-import { OverdueKr, formatDaysSince } from '../../hooks/useCycleCheckins';
+import { type OverdueKr, formatDaysSince } from "../../hooks";
 import { KrHistoryDialog } from '../KrHistoryDialog';
 import { cn } from '@/lib/utils';
 import { RAG_STATUS_COLORS } from '@/lib/colors';

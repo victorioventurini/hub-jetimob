@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import type { ObjectiveWithHealth } from "../../hooks/useTeamOkrQuality";
+import type { ObjectiveWithHealth } from "../../hooks";
 import type { HealthStatus } from "../../types/health";
 import { getHealthStatusConfig } from "../../types/health";
 

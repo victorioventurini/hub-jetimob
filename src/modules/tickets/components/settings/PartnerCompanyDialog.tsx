@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { useCreatePartnerCompany, useUpdatePartnerCompany } from "../../hooks/usePartners";
+import { useCreatePartnerCompany, useUpdatePartnerCompany } from "../../hooks";
 import { PartnerCompany } from "../../types";
 
 const formSchema = z.object({

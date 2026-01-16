@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AnalysisGaps } from "../../hooks/useOrgOkrAnalysis";
+import type { AnalysisGaps } from "../../hooks";
 
 export interface GapItem {
   icon: React.ElementType;

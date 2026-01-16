@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks";
 import { cn } from "@/lib/utils";
-import type { OrgOkrAnalysisData } from "../../hooks/useOrgOkrAnalysis";
+import type { OrgOkrAnalysisData } from "../../hooks";
 
 interface VicAnalysisPanelProps {
   analysisData: OrgOkrAnalysisData;

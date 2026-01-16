@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useUpdateInitiative } from "../../hooks/useInitiatives";
+import { useUpdateInitiative } from "../../hooks";
 import { 
   getInitiativeStatusLabel, 
   getInitiativePriorityLabel, 

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckinFeedItem } from '../../hooks/useCycleCheckins';
+import { type CheckinFeedItem } from "../../hooks";
 import { KrHistoryDialog } from '../KrHistoryDialog';
 import { cn } from '@/lib/utils';
 import { CONFIDENCE_COLORS, RAG_STATUS_COLORS } from '@/lib/colors';

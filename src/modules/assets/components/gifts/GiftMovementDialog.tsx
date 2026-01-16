@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowDown, ArrowUp, Settings2 } from "lucide-react";
-import { useGifts } from "../../hooks/useGifts";
+import { useGifts } from "../../hooks";
 import { useAuth } from "@/hooks/useAuth";
 import type { AssetGiftItem, GiftMovementType, GiftDestinationType } from "../../types";
 import { GIFT_MOVEMENT_TYPE_LABELS, GIFT_DESTINATION_TYPE_LABELS } from "../../types";

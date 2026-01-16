@@ -112,7 +112,7 @@ export {
 // CHECK-INS
 // =========================
 export { usePendingCheckins, useTeamPendingCheckins, getDayName, type PendingCheckin } from './usePendingCheckins';
-export { useCycleCheckins, type CycleCheckinsFilters } from './useCycleCheckins';
+export { useCycleCheckins, formatDaysSince, type CycleCheckinsFilters, type CheckinFeedItem, type OverdueKr } from './useCycleCheckins';
 export { useCreateCheckin } from './useCreateCheckin';
 
 // =========================
@@ -128,7 +128,7 @@ export {
   useDeleteInitiative,
   useUpdateInitiativeStatus,
 } from './useInitiatives';
-export { useInitiativeNameValidation } from './useInitiativeNameValidation';
+export { useInitiativeNameValidation, type InitiativeNameFeedback, type InitiativeNameFeedbackType } from './useInitiativeNameValidation';
 
 // =========================
 // CONTRIBUTIONS & METRICS
@@ -179,4 +179,16 @@ export { useCreateTeamKrBundle } from './useCreateTeamKrBundle';
 // KPI & HISTORY
 // =========================
 export { useKpiHistory } from './useKpiHistory';
-export { useKrHistory } from './useKrHistory';
+export { useKrHistory, useKrWithHistory, type KrHistoryData, type KrCheckinHistory, type KrWithHistoryData } from './useKrHistory';
+
+// =========================
+// QUALITY & ANALYSIS
+// =========================
+export { useTeamOkrQuality, type QualityOverview, type ObjectiveWithHealth, type TeamOkrQualityData } from './useTeamOkrQuality';
+export { 
+  useOrgOkrAnalysis, 
+  type OrgOkrAnalysisData,
+  type AnalysisScore,
+  type AnalysisGaps,
+  type TeamSummary,
+} from './useOrgOkrAnalysis';

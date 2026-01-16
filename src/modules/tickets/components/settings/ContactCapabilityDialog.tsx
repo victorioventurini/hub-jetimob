@@ -16,9 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePartnerContacts } from "../../hooks/usePartners";
-import { useTicketCategories } from "../../hooks/useTicketCategories";
-import { useCreateContactCapability } from "../../hooks/useContactCapabilities";
+import { usePartnerContacts, useTicketCategories, useCreateContactCapability } from "../../hooks";
 import { toast } from "sonner";
 
 interface ContactCapabilityDialogProps {

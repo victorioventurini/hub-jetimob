@@ -5,7 +5,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, TrendingUp, AlertTriangle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { QualityOverview } from "../../hooks/useTeamOkrQuality";
+import type { QualityOverview } from "../../hooks";
 
 interface QualityOverviewCardProps {
   overview: QualityOverview;

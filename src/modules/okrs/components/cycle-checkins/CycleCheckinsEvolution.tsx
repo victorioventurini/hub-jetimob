@@ -14,8 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
-import { CheckinFeedItem } from '../../hooks/useCycleCheckins';
-import { useKrWithHistory } from '../../hooks/useKrHistory';
+import { type CheckinFeedItem, useKrWithHistory } from "../../hooks";
 import { KrEvolutionChart } from '../KrEvolutionChart';
 import { KrHistoryDialog } from '../KrHistoryDialog';
 

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useCreateTicketSubcategory, useUpdateTicketSubcategory } from "../../hooks/useTicketCategories";
+import { useCreateTicketSubcategory, useUpdateTicketSubcategory } from "../../hooks";
 import { TicketSubcategory } from "../../types";
 
 const formSchema = z.object({

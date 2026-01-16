@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClavicularySelect } from "@/components/selects";
-import { useKeys } from "../../hooks/useKeys";
+import { useKeys } from "../../hooks";
 import type { AssetHook } from "../../types";
 
 const schema = z.object({

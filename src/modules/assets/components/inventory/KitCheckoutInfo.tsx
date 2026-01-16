@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAssetGroups } from "../../hooks/useAssetGroups";
+import { useAssetGroups } from "../../hooks";
 import type { AssetInventory, AssetGroup } from "../../types";
 import { INVENTORY_STATUS_LABELS } from "../../types";
 

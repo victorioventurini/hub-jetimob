@@ -28,8 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCreateRoutingRule, useUpdateRoutingRule } from "../../hooks/useRoutingRules";
-import { usePartnerContacts } from "../../hooks/usePartners";
+import { useCreateRoutingRule, useUpdateRoutingRule, usePartnerContacts } from "../../hooks";
 import { TicketRoutingRule, PartnerCompany, TicketCategory } from "../../types";
 
 const formSchema = z.object({

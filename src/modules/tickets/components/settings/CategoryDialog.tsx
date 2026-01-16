@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useCreateTicketCategory, useUpdateTicketCategory } from "../../hooks/useTicketCategories";
+import { useCreateTicketCategory, useUpdateTicketCategory } from "../../hooks";
 import { TicketCategory, TicketCategoryScope } from "../../types";
 
 const formSchema = z.object({

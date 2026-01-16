@@ -30,9 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowRightLeft, User, MapPin, XCircle, Key } from "lucide-react";
-import { useKeys } from "../../hooks/useKeys";
-import { useAssetProfiles } from "../../hooks/useProfiles";
-import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
+import { useKeys, useAssetProfiles, useAssetPermissionsV2 } from "../../hooks";
 import { useIdentity } from "@/hooks/useIdentity";
 import type { AssetKeyring, AssetHook, KeyMovementType } from "../../types";
 import { KEY_MOVEMENT_TYPE_LABELS } from "../../types";
