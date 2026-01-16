@@ -12,7 +12,7 @@
 
 import { AlertTriangle, Lightbulb, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { InitiativeNameFeedback as FeedbackType, InitiativeNameFeedbackType } from '../../hooks/useInitiativeNameValidation';
+import type { InitiativeNameFeedback as FeedbackType, InitiativeNameFeedbackType } from "../../hooks";
 import { FEEDBACK_STYLES } from '@/lib/colors';
 
 interface InitiativeNameFeedbackProps {

@@ -1,7 +1,7 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { STATUS_CONFIG, OkrCalculatedStatus } from '../../hooks/useOkrStatus';
+import { STATUS_CONFIG, type OkrCalculatedStatus } from "../../hooks";
 
 interface StatusCounts {
   on_track: number;

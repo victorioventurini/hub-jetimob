@@ -7,8 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Settings, Save, AlertCircle, CheckCircle2, Layers } from "lucide-react";
-import { useTicketCategories } from "../../hooks/useTicketCategories";
-import { usePartnerServiceMappings, useSavePartnerServices } from "../../hooks/usePartnerServices";
+import { useTicketCategories, usePartnerServiceMappings, useSavePartnerServices } from "../../hooks";
 import type { PartnerCompany, TicketCategory } from "../../types";
 
 interface PartnerServicesTabProps {

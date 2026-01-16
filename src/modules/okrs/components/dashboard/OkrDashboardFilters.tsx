@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Filter, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { STATUS_CONFIG, OkrCalculatedStatus } from '../../hooks/useOkrStatus';
+import { STATUS_CONFIG, type OkrCalculatedStatus } from "../../hooks";
 import { YearSelect, TeamSelect } from '@/components/selects';
 import type { FlatTeamItem } from '@/modules/teams/hooks';
 

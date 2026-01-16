@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AnalysisScore } from "../../hooks/useOrgOkrAnalysis";
+import type { AnalysisScore } from "../../hooks";
 
 interface AnalysisScoreCardProps {
   score: AnalysisScore;

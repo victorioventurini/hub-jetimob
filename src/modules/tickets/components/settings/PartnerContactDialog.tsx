@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useCreatePartnerContact, useUpdatePartnerContact } from "../../hooks/usePartners";
+import { useCreatePartnerContact, useUpdatePartnerContact } from "../../hooks";
 import { PartnerContact, PartnerCompany } from "../../types";
 import { ContactCapabilitiesList } from "./ContactCapabilitiesList";
 

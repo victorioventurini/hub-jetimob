@@ -13,7 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { QualityOverview } from "../../hooks/useTeamOkrQuality";
+import type { QualityOverview } from "../../hooks";
 
 interface KrMetrics {
   totalKrs: number;

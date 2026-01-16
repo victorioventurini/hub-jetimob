@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
 import { UrlSearchInput } from '@/shared/filters';
 import { TeamSelect, StatusSelect } from '@/components/selects';
-import { useManageableTeamsFlat } from '../../hooks/useManageableTeams';
+import { useManageableTeamsFlat } from "../../hooks";
 
 // Confidence options for the filter
 const CONFIDENCE_OPTIONS = [

@@ -73,7 +73,14 @@ export {
 } from './useInternalRoutingRules';
 
 // Contact capabilities
-export { useContactCapabilities } from './useContactCapabilities';
+export { 
+  useContactCapabilities, 
+  useCreateContactCapability, 
+  useSaveContactCapabilities, 
+  useCompanyContactCapabilities,
+  useDeleteContactCapability,
+  type ContactCapability,
+} from './useContactCapabilities';
 
 // Summary
 export { useTicketsSummary } from './useTicketsSummary';

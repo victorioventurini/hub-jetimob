@@ -7,11 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
-import {
-  useTicketCategories,
-  useDeleteTicketCategory,
-  useDeleteTicketSubcategory,
-} from "../../hooks/useTicketCategories";
+import { useTicketCategories, useDeleteTicketCategory, useDeleteTicketSubcategory } from "../../hooks";
 import { CategoryDialog } from "./CategoryDialog";
 import { SubcategoryDialog } from "./SubcategoryDialog";
 import { TicketCategory, TicketSubcategory } from "../../types";

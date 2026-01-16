@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
-import { usePartnerCompanies, usePartnerContacts, useDeletePartnerContact } from "../../hooks/usePartners";
+import { usePartnerCompanies, usePartnerContacts, useDeletePartnerContact } from "../../hooks";
 import { PartnerContactDialog } from "./PartnerContactDialog";
 import { PartnerContactHoverCard } from "./PartnerContactHoverCard";
 import { PartnerContact } from "../../types";

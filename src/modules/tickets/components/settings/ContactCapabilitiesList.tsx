@@ -8,11 +8,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Settings, Save, Layers, FolderTree, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  useContactCapabilities,
-  useSaveContactCapabilities,
-} from "../../hooks/useContactCapabilities";
-import { useTicketCategories } from "../../hooks/useTicketCategories";
+import { useContactCapabilities, useSaveContactCapabilities, useTicketCategories } from "../../hooks";
 import type { TicketCategory } from "../../types";
 
 interface ContactCapabilitiesListProps {

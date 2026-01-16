@@ -13,8 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
-import { useCreateInitiative, useUpdateInitiative } from "../../hooks/useInitiatives";
-import { useInitiativeNameValidation } from "../../hooks/useInitiativeNameValidation";
+import { useCreateInitiative, useUpdateInitiative, useInitiativeNameValidation } from "../../hooks";
 import { getInitiativeStatusLabel, getInitiativePriorityLabel, type Initiative, type InitiativeStatus, type InitiativePriority } from "../../types/initiative";
 import { Loader2, Check, ChevronsUpDown, Target, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";

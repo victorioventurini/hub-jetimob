@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
+import { useAssetPermissionsV2 } from "../../hooks";
 
 import {
   Dialog,
