@@ -166,9 +166,9 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
   // For area, use own color
   const areaColor = node.type === 'area' ? node.color : parentColor;
 
-  // Check if this is a team/subteam (always show leader section for consistent height)
-  const isTeamOrSubteam = node.type === 'team' || node.type === 'subteam';
-  const hasLeader = isTeamOrSubteam && node.leaderName;
+  // Check if this is an area/team/subteam (always show leader section for consistent height)
+  const showsLeaderSection = node.type === 'area' || node.type === 'team' || node.type === 'subteam';
+  const hasLeader = showsLeaderSection && node.leaderName;
 
   return (
     <div className="flex flex-col items-center">
@@ -215,8 +215,8 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
           {node.role && (
             <p className="text-xs text-muted-foreground truncate">{node.role}</p>
           )}
-          {/* Leader info for teams - always show section for consistent height */}
-          {isTeamOrSubteam && (
+          {/* Leader info for areas/teams - always show section for consistent height */}
+          {showsLeaderSection && (
             <div className="flex items-center gap-1.5 mt-1 min-h-[20px]">
               {hasLeader ? (
                 <>
