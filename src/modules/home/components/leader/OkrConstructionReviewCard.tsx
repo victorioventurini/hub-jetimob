@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
+import { useActiveCycles } from "@/modules/okrs/hooks";
 
 export interface OkrConstructionReviewCardProps {
   teamId: string | null;

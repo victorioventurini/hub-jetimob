@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BuUnit, UserBuMembership } from "@/modules/bu/types";
-import { useUserBus } from "@/modules/bu/hooks/useBuData";
-import { useExternalUserBus } from "@/modules/external/hooks/useExternalUserBus";
+import { useUserBus } from "@/modules/bu/hooks";
+import { useExternalUserBus } from "@/modules/external/hooks";
 import { useAuth } from "@/hooks/useAuth";
 
 interface BuContextType {

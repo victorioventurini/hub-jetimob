@@ -6,12 +6,7 @@
 export * from './types';
 
 // Hooks
-export { useTickets, useTicket, useMyTickets, useCreateTicket, useUpdateTicket, useUpdateTicketStatus, useDeleteTicket } from './hooks/useTickets';
-export { useTicketMessages, useCreateMessage, useEditMessage, useDeleteMessage } from './hooks/useTicketMessages';
-export { usePartnerCompanies, usePartnerCompany, useCreatePartnerCompany, useUpdatePartnerCompany, useDeletePartnerCompany, usePartnerContacts, usePartnerContact, useCreatePartnerContact, useUpdatePartnerContact, useDeletePartnerContact } from './hooks/usePartners';
-export { usePartnerServices, usePartnerCategories, usePartnerSubcategories, usePartnerServiceMappings, useCreatePartnerService, useDeletePartnerService, useSavePartnerServices, useHasPartnerServices } from './hooks/usePartnerServices';
-export { useTicketCategories, useCreateTicketCategory, useUpdateTicketCategory, useDeleteTicketCategory, useCreateTicketSubcategory, useUpdateTicketSubcategory, useDeleteTicketSubcategory } from './hooks/useTicketCategories';
-export { useRoutingRules, useCreateRoutingRule, useUpdateRoutingRule, useDeleteRoutingRule } from './hooks/useRoutingRules';
+export * from './hooks';
 
 // Components
 export { TicketsLayout } from './components/TicketsLayout';

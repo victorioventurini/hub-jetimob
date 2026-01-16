@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useKeys } from "@/modules/assets/hooks/useKeys";
+import { useKeys } from "@/modules/assets/hooks";
 import { cn } from "@/lib/utils";
 
 interface ClavicularySelectProps {

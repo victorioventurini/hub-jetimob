@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Building2 } from "lucide-react";
-import { usePartnerCompanies } from "@/modules/tickets/hooks/usePartners";
+import { usePartnerCompanies } from "@/modules/tickets/hooks";
 
 interface PartnerCompany {
   id: string;

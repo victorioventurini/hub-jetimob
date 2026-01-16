@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useTicketCategories } from "@/modules/tickets/hooks/useTicketCategories";
+import { useTicketCategories } from "@/modules/tickets/hooks";
 import type { TicketCategoryScope } from "@/modules/tickets/types";
 
 interface TicketCategory {

@@ -14,9 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
-import { useRoutingRules, useDeleteRoutingRule } from "../../hooks/useRoutingRules";
-import { usePartnerCompanies } from "../../hooks/usePartners";
-import { useTicketCategories } from "../../hooks/useTicketCategories";
+import { useRoutingRules, useDeleteRoutingRule, usePartnerCompanies, useTicketCategories } from "../../hooks";
 import { RoutingRuleDialog } from "./RoutingRuleDialog";
 import { InternalRoutingSection } from "./InternalRoutingSection";
 import { TicketRoutingRule } from "../../types";

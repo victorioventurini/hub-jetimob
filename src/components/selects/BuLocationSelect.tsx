@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useLocations, type BuLocationOption } from "@/modules/assets/hooks/useLocations";
+import { useLocations, type BuLocationOption } from "@/modules/assets/hooks";
 
 interface FlatLocation {
   id: string;
