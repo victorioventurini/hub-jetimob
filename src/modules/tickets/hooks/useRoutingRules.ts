@@ -93,12 +93,21 @@ export function useUpdateRoutingRule() {
       watcher_contact_ids?: string[];
       notes?: string | null;
     }) => {
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        ...(data.partner_company_id !== undefined && {
+          partner_company_id: data.partner_company_id || null,
+        }),
+        ...(data.subcategory_id !== undefined && {
+          subcategory_id: data.subcategory_id || null,
+        }),
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from("ticket_routing_rules")
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        } as any)
+        .update(sanitizedData as any)
         .eq("id", id);
 
       if (error) throw error;

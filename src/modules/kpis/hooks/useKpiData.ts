@@ -199,9 +199,17 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       status: 'active' | 'inactive';
     }) => {
       const client = assertSupabaseClient(supabase, "createKpi");
+
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        team_id: data.team_id || null,
+        owner_user_id: data.owner_user_id || null,
+      };
+
       const { data: result, error } = await client
         .from("kpi_metrics")
-        .insert(data)
+        .insert(sanitizedData)
         .select()
         .single();
 

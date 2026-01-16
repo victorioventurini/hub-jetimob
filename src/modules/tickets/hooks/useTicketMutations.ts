@@ -133,12 +133,24 @@ export function useUpdateTicket() {
       id,
       ...data
     }: UpdateTicketData & { id: string }) => {
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        ...(data.category_id !== undefined && {
+          category_id: data.category_id || null,
+        }),
+        ...(data.subcategory_id !== undefined && {
+          subcategory_id: data.subcategory_id || null,
+        }),
+        ...(data.owner_user_id !== undefined && {
+          owner_user_id: data.owner_user_id || null,
+        }),
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: ticket, error } = await supabase
         .from("tickets")
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
+        .update(sanitizedData)
         .eq("id", id)
         .select()
         .single();

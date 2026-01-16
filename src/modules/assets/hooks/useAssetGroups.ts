@@ -194,9 +194,17 @@ export function useAssetGroups() {
   // Atualizar grupo
   const updateGroupMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<AssetGroup> & { id: string }) => {
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        ...(data.primary_asset_id !== undefined && {
+          primary_asset_id: data.primary_asset_id || null,
+        }),
+      };
+
       const { data: group, error } = await supabase
         .from("asset_groups")
-        .update(data)
+        .update(sanitizedData)
         .eq("id", id)
         .select()
         .single();

@@ -173,12 +173,21 @@ export function useUpdateArea() {
       id: string;
       data: Partial<AreaFormData>;
     }) => {
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        ...(data.leader_user_id !== undefined && {
+          leader_user_id: data.leader_user_id || null,
+        }),
+        ...(data.co_leader_user_id !== undefined && {
+          co_leader_user_id: data.co_leader_user_id || null,
+        }),
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: area, error } = await supabase
         .from("areas")
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
+        .update(sanitizedData)
         .eq("id", id)
         .select()
         .single();
