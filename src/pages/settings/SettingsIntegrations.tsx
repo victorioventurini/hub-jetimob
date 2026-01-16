@@ -79,7 +79,7 @@ export default function SettingsIntegrations() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.settings.integrationsCatalog() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.integrationsCatalog(), refetchType: 'active' });
       toast.success("Configuração atualizada!");
     },
     onError: (error: any) => {

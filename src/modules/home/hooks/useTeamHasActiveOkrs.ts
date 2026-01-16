@@ -22,7 +22,7 @@ export function useTeamHasActiveOkrs(teamId: string | null) {
       
       const { count, error } = await supabase
         .from('okr_team_objectives')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('team_id', teamId)
         .in('cycle_id', activeCycleIds)
         .is('deleted_at', null)
