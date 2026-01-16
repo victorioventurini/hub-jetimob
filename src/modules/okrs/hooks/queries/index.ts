@@ -1,66 +1,41 @@
 /**
  * OKR Queries Module Index
  * 
- * Consolidated exports from the new query structure.
- * This replaces imports from fragmented files:
- * - useOkrData.ts
- * - useSharedOkrData.ts
- * - useTeamContributedOkrs.ts
- * - useOrgObjectiveView.ts
- * - useTeamContributionView.ts
+ * Consolidated exports from the modular query structure.
  */
 
-// Core queries
-export {
-  // Field definitions
-  OKR_FIELDS,
-  OKR_JOINED_FIELDS,
-  // Org objectives
-  useOrgObjectives,
-  useOrgObjective,
-  // Org KRs
-  useOrgKeyResults,
-  // Team objectives  
-  useTeamObjectives,
-  // Team KRs
-  useTeamKeyResults,
-  useMyTeamKeyResults,
-  useMyTeamObjectives,
-  // Check-ins
-  useKrCheckins,
-  useLatestCheckinDate,
-  // Helpers
-  useTeams,
-  useCycles,
-  useUserProfile,
-  // Types
-  type UseOrgObjectivesOptions,
-  type UseOrgKeyResultsOptions,
-  type UseTeamObjectivesOptions,
-  type UseTeamKeyResultsOptions,
-} from './useOkrQueries';
+// Field definitions
+export { OKR_FIELDS, OKR_JOINED_FIELDS, OKR_STALE_TIME } from './okrFieldDefinitions';
 
-// Aggregate/View queries
-export {
-  // Org view
-  useOrgObjectiveView,
-  useAllOrgObjectivesView,
-  // Team contributed
-  useTeamContributedOkrs,
-  useSharedOkrsSummary,
-  useSharedOkrsInsights,
-  // Contributors
-  useObjectiveContributors,
-  useTeamContributedObjectives,
-  useTeamObjectivesWithSharedInfo,
-  useManageContributors,
-  // Types
-  type TeamKrLinked,
-  type OrgKrWithTeamKrs,
-  type OrgObjectiveWithKrs,
-  type OkrContributor,
-  type LinkedTeamObjective,
-} from './useOkrAggregateQueries';
+// Org objectives
+export { useOrgObjectives, useOrgObjective, type UseOrgObjectivesOptions } from './useOrgObjectiveQueries';
+
+// Org KRs
+export { useOrgKeyResults, type UseOrgKeyResultsOptions } from './useOrgKeyResultQueries';
+
+// Team objectives
+export { useTeamObjectives, useMyTeamObjectives, type UseTeamObjectivesOptions } from './useTeamObjectiveQueries';
+
+// Team KRs
+export { useTeamKeyResults, useMyTeamKeyResults, type UseTeamKeyResultsOptions } from './useTeamKeyResultQueries';
+
+// Check-ins
+export { useKrCheckins, useLatestCheckinDate } from './useCheckinQueries';
+
+// Helpers
+export { useTeamsList as useTeams, useCyclesList as useCycles, useUserProfile } from '@/hooks/useSharedData';
+
+// Aggregate types
+export type { TeamKrLinked, OrgKrWithTeamKrs, OrgObjectiveWithKrs, OkrContributor, LinkedTeamObjective } from './aggregateTypes';
+
+// Org view queries
+export { useOrgObjectiveView, useAllOrgObjectivesView } from './useOrgObjectiveViewQueries';
+
+// Team contributed queries
+export { useTeamContributedOkrs, useSharedOkrsSummary, useSharedOkrsInsights } from './useTeamContributedQueries';
+
+// Contributor queries
+export { useObjectiveContributors, useTeamContributedObjectives, useTeamObjectivesWithSharedInfo, useManageContributors } from './useContributorQueries';
 
 // Dashboard aggregate query
 export {
