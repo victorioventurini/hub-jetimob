@@ -324,7 +324,7 @@ export function useLogPermissionChange() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: governanceQueryKeys.auditLogs(buId) });
+      queryClient.invalidateQueries({ queryKey: governanceQueryKeys.auditLogs(buId), refetchType: 'active' });
     },
   });
 }

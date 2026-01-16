@@ -52,7 +52,7 @@ export function useBuUserOverrides(userId: string | null) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
       toast.success("Override adicionado");
     },
     onError: (error: Error) => {
@@ -72,7 +72,7 @@ export function useBuUserOverrides(userId: string | null) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
       toast.success("Override removido");
     },
     onError: (error: Error) => {

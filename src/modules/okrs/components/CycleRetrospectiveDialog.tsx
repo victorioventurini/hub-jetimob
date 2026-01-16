@@ -59,7 +59,7 @@ export function CycleRetrospectiveDialog({
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectives(null), refetchType: 'active' });
       toast({
         title: 'Ciclo encerrado',
         description: 'A retrospectiva foi salva e o ciclo foi arquivado.',
