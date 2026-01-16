@@ -224,12 +224,28 @@ export function useAssetItemMutations() {
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<AssetInventory> & { id: string }) => {
       const client = assertSupabaseClient(supabase, "updateItem");
+      
+      // Sanitize UUID fields: convert empty strings to null
+      const sanitizedData = {
+        ...data,
+        ...(data.category_id !== undefined && {
+          category_id: data.category_id || null,
+        }),
+        ...(data.home_location_id !== undefined && {
+          home_location_id: data.home_location_id || null,
+        }),
+        ...(data.current_location_id !== undefined && {
+          current_location_id: data.current_location_id || null,
+        }),
+        ...(data.current_user_id !== undefined && {
+          current_user_id: data.current_user_id || null,
+        }),
+        updated_by: user?.id,
+      };
+
       const { data: item, error } = await client
         .from("asset_inventory")
-        .update({
-          ...data,
-          updated_by: user?.id,
-        })
+        .update(sanitizedData)
         .eq("id", id)
         .select()
         .single();
