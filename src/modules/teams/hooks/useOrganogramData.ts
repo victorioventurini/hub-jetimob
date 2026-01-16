@@ -168,18 +168,20 @@ export function useOrganogramData() {
           });
         });
 
-        // Sempre mostrar membros do time (mesmo que tenha subtimes)
-        teamMembers.forEach(member => {
-          children.push({
-            id: member.id,
-            type: 'person',
-            name: member.display_name,
-            email: member.work_email || undefined,
-            photoUrl: member.photo_url,
-            path: `/users/${member.id}`,
-            children: [],
+        // Mostrar membros do time, excluindo o líder (já exibido no header do card)
+        teamMembers
+          .filter(member => member.id !== team.leader_user_id)
+          .forEach(member => {
+            children.push({
+              id: member.id,
+              type: 'person',
+              name: member.display_name,
+              email: member.work_email || undefined,
+              photoUrl: member.photo_url,
+              path: `/users/${member.id}`,
+              children: [],
+            });
           });
-        });
 
         return {
           id: team.id,
