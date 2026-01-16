@@ -115,8 +115,10 @@ export function useOrganogramData() {
         squadTeams = (stData ?? []) as SquadTeamRow[];
       }
 
-      // 7. Buscar líderes de times
-      const leaderIds = [...new Set(teams.map(t => t.leader_user_id).filter(Boolean))] as string[];
+      // 7. Buscar líderes de times e áreas
+      const teamLeaderIds = teams.map(t => t.leader_user_id).filter(Boolean) as string[];
+      const areaLeaderIds = areas.map(a => a.leader_user_id).filter(Boolean) as string[];
+      const leaderIds = [...new Set([...teamLeaderIds, ...areaLeaderIds])];
       const leadersMap = new Map<string, ProfileData>();
       if (leaderIds.length > 0) {
         const { data: leadersData } = await db
@@ -198,6 +200,7 @@ export function useOrganogramData() {
       // Build area nodes
       const areaNodes: OrganogramNode[] = areas.map(area => {
         const areaTeams = teams.filter(t => t.area_id === area.id && !t.parent_team_id);
+        const areaLeader = area.leader_user_id ? leadersMap.get(area.leader_user_id) : null;
         return {
           id: area.id,
           type: 'area',
@@ -205,6 +208,9 @@ export function useOrganogramData() {
           color: area.color,
           path: '/settings/areas',
           children: areaTeams.map(team => buildTeamNode(team, false)),
+          // Leader info
+          leaderName: areaLeader?.display_name,
+          leaderPhotoUrl: areaLeader?.photo_url,
         };
       });
 
