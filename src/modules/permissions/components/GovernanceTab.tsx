@@ -29,7 +29,7 @@ import {
   usePermissionRiskReport, 
   usePermissionAuditLogs, 
   useUsersWithoutTemplates 
-} from "../hooks/usePermissionGovernance";
+} from "../hooks";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

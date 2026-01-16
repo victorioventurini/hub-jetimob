@@ -37,7 +37,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 import { AddressAutocomplete } from "./AddressAutocomplete";
-import { useCreateBuLocation, useUpdateBuLocation, useBuLocations } from "../hooks/useBuLocations";
+import { useCreateBuLocation, useUpdateBuLocation, useBuLocations } from "../hooks";
 import type { BuLocation, BuLocationType, BuLocationStatus } from "../types/location";
 import { LOCATION_TYPE_LABELS, LOCATION_STATUS_LABELS } from "../types/location";
 

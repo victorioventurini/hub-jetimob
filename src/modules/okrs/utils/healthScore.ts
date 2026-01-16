@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { calculateProgress } from "./progressCalculation";
 import type { OkrRagStatus, OkrConfidence, OkrDirection } from "../types";
-import type { Cycle } from "../hooks/useCycleData";
+import type { Cycle } from "../hooks";
 import type { Initiative, InitiativeStatus } from "../types/initiative";
 
 export type HealthLevel = "healthy" | "at_risk" | "critical";

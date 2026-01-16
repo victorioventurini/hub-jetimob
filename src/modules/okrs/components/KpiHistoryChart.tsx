@@ -25,7 +25,7 @@ import {
   ChartLine,
   Shield,
 } from "lucide-react";
-import { useKrKpiHistory, useKpiChartData, type KpiHistoryData } from "../hooks/useKpiHistory";
+import { useKrKpiHistory, useKpiChartData, type KpiHistoryData } from "../hooks";
 import { cn } from "@/lib/utils";
 
 interface KpiHistoryChartProps {

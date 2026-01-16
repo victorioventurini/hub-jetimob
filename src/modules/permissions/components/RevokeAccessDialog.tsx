@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Loader2 } from "lucide-react";
-import { useRevokeBuAccess } from "../hooks/useRevokeBuAccess";
+import { useRevokeBuAccess } from "../hooks";
 import { useBu } from "@/contexts/BuContext";
 
 interface RevokeAccessDialogProps {

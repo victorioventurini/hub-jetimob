@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, FileStack, Shield, Clock, User, Zap } from "lucide-react";
-import { usePermissionExplanation } from "../hooks/usePermissionGovernance";
+import { usePermissionExplanation } from "../hooks";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

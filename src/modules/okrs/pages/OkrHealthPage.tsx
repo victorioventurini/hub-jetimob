@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useOrgHealthReview } from "../hooks/useOrgHealthReview";
+import { useOrgHealthReview } from "../hooks";
 import { OrgHealthScoreCard, OrgObjectiveHealthCard } from "../components/health";
 import { useState } from "react";
 

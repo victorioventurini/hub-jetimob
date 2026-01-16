@@ -27,7 +27,7 @@ import {
   calculateObjectiveHealth,
 } from "../utils/healthScore";
 import type { OkrRagStatus } from "../types";
-import type { Cycle } from "../hooks/useCycleData";
+import type { Cycle } from "../hooks";
 import type { InitiativeStatus } from "../types/initiative";
 import { cn } from "@/lib/utils";
 

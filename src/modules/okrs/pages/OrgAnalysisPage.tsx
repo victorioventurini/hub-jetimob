@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useOrgOkrAnalysis, type AnalysisScore } from "../hooks/useOrgOkrAnalysis";
+import { useOrgOkrAnalysis, type AnalysisScore } from "../hooks";
 import { useVic } from "@/modules/vic/contexts/VicContext";
 import {
   AnalysisScoreCard,

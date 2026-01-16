@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { OrganogramChart, OrganogramControls } from "../components/organogram";
-import { useOrganogramData } from "../hooks/useOrganogramData";
+import { useOrganogramData } from "../hooks";
 import { OrganogramFilters, OrganogramControlsState } from "../types/organogram";
 import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";

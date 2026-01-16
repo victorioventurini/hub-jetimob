@@ -47,7 +47,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BuAccessManager } from "./BuAccessManager";
 import { ResetOnboardingDialog } from "./ResetOnboardingDialog";
-import { useUpdateGlobalRole, useReactivateUser } from "../hooks/useUserGlobalActions";
+import { useUpdateGlobalRole, useReactivateUser } from "../hooks";
 import { useAuth } from "@/hooks/useAuth";
 import type { GlobalUser } from "../types";
 

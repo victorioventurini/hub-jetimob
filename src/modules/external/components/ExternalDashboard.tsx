@@ -8,7 +8,7 @@ import { MyTicketsCard } from "./MyTicketsCard";
 import { ExternalStatsCards } from "./ExternalStatsCards";
 import { CompanyContextCard } from "./CompanyContextCard";
 import { VicExternalCard } from "./VicExternalCard";
-import { useExternalDashboard } from "../hooks/useExternalDashboard";
+import { useExternalDashboard } from "../hooks";
 import type { ExternalUserInfo } from "../types";
 
 interface ExternalDashboardProps {

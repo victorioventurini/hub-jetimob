@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { Cycle } from "../hooks/useCycleData";
+import type { Cycle } from "../hooks";
 
 interface CycleTimeAlertProps {
   cycle: Cycle;

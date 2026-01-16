@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVic } from "../contexts/VicContext";
-import { useVicStream } from "../hooks/useVicStream";
+import { useVicStream } from "../hooks";
 import { VicLoadingState } from "./VicLoadingState";
 import { VicStreamingText } from "./VicTypewriterText";
 import { toast } from "sonner";

@@ -12,7 +12,7 @@ import {
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Settings, Eye, Wrench, Settings2, Lock, Pencil } from "lucide-react";
-import { usePermissionTemplatesV2, PermissionTemplateV2 } from "../hooks/usePermissionsV2";
+import { usePermissionTemplatesV2, type PermissionTemplateV2 } from "../hooks";
 import { TemplateEditorSheet } from "./TemplateEditorSheet";
 import { SURFACE_COLORS, type PermissionSurface } from "@/lib/colors";
 

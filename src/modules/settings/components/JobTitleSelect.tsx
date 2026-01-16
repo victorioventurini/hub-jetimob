@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
-import { useActiveJobTitles } from "../hooks/useJobTitles";
+import { useActiveJobTitles } from "../hooks";
 import { cn } from "@/lib/utils";
 
 interface JobTitleSelectProps {

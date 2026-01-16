@@ -20,7 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useKpiData } from "../hooks/useKpiData";
+import { useKpiData } from "../hooks";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 

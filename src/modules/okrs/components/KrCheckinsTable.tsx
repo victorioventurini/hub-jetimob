@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatValueWithUnit } from "../constants/krUnits";
-import type { KrCheckinHistory } from "../hooks/useKrHistory";
+import type { KrCheckinHistory } from "../hooks";
 import type { OkrDirection } from "../types";
 
 interface KrCheckinsTableProps {

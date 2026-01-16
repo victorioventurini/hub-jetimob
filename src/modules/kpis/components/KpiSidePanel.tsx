@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useKpiData } from "../hooks/useKpiData";
+import { useKpiData } from "../hooks";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "../types";
 import { cn } from "@/lib/utils";
 import { getKpiTrendColor } from "@/lib/colors";

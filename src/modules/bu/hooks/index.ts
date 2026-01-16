@@ -10,4 +10,10 @@ export {
 } from "./useBuData";
 
 export { useBuBranding } from "./useBuBranding";
-export { useBuLocations } from "./useBuLocations";
+export { 
+  useBuLocations, 
+  useCreateBuLocation, 
+  useUpdateBuLocation, 
+  useSoftDeleteBuLocation, 
+  useSetDefaultBuLocation 
+} from "./useBuLocations";

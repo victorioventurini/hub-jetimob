@@ -17,7 +17,8 @@ export {
   usePermissionTemplatesV2,
   useTemplateItemsV2,
   useUserTemplatesV2,
-  useEffectivePermissionsV2 
+  useEffectivePermissionsV2,
+  type PermissionTemplateV2,
 } from "./usePermissionsV2";
 
 // Governance
@@ -30,13 +31,15 @@ export {
   usePermissionAuditLogs,
   useLogPermissionChange,
   useUsersWithoutTemplates,
+  type PermissionDiff,
+  type PermissionPreset,
 } from "./usePermissionGovernance";
 
 // Audit
 export { usePermissionAudit } from "./usePermissionAudit";
 
 // Migration
-export { useMigrationActions } from "./useMigrationTracking";
+export { useMigrationActions, useBuMigrationStatus } from "./useMigrationTracking";
 
 // Revoke
 export { useRevokeBuAccess } from "./useRevokeBuAccess";

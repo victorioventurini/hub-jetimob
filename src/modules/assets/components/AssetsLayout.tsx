@@ -1,7 +1,7 @@
 import { Outlet, useLocation, Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Package, Key, Gift, FileBarChart, Settings } from "lucide-react";
-import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
+import { useAssetPermissionsV2 } from "../hooks";
 
 /**
  * Tab definitions com permission check baseado em V2.
