@@ -12,7 +12,7 @@ export { useInventory, type UseInventoryOptions } from "./useInventory";
 // Other domain hooks
 export { useKeys } from "./useKeys";
 export { useGifts } from "./useGifts";
-export { useLocations } from "./useLocations";
+export { useLocations, type BuLocationOption } from "./useLocations";
 export { useAssetProfiles } from "./useProfiles";
 export { useAssetPermissionsV2 } from "./useAssetPermissionsV2";
 export { useAssetGroups } from "./useAssetGroups";

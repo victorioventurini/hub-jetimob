@@ -1,7 +1,7 @@
 import { AssetStatusSelect, BuLocationSelect } from "@/components/selects";
 import { BuUserSelect } from "@/components/selects";
 import type { AssetInventoryStatus, AssetCategory } from "../../types";
-import type { BuLocationOption } from "../../hooks/useLocations";
+import type { BuLocationOption } from "../../hooks";
 import { AssetCategorySelect } from "../selects/AssetCategorySelect";
 
 interface HolderOption {

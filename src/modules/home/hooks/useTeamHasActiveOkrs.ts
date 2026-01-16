@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
+import { useActiveCycles } from "@/modules/okrs/hooks";
 
 export function useTeamHasActiveOkrs(teamId: string | null) {
   const supabase = useBuScopedSupabase();

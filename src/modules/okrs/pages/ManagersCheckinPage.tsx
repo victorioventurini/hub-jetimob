@@ -9,8 +9,7 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
-import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
-import { useManagersPanorama, useCrossDependencies } from '@/modules/okrs/hooks/useManagersPanorama';
+import { useActiveCycles, useManagersPanorama, useCrossDependencies } from '@/modules/okrs/hooks';
 
 // Step components
 import { ManagersPanoramaStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersPanoramaStep';

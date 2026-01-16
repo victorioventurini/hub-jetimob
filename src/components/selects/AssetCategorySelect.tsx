@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useInventory } from "@/modules/assets/hooks/useInventory";
+import { useInventory } from "@/modules/assets/hooks";
 import { cn } from "@/lib/utils";
 
 interface SubcategoryItem {

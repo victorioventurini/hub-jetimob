@@ -55,7 +55,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { useJobTitles, useUpdateJobTitle, useDeleteJobTitle } from "../hooks/useJobTitles";
-import { useAllBus } from "@/modules/users-global/hooks/useAllBus";
+import { useAllBus } from "@/modules/users-global/hooks";
 import { JobTitleDialog } from "../components/JobTitleDialog";
 import type { JobTitleWithUsageCount } from "../types";
 

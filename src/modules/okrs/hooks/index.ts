@@ -151,6 +151,7 @@ export { useCanManageTeamOkr, useCanManageOrgOkr } from './useCanManageTeamOkr';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
 export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';
+export { useManagersPanorama, useCrossDependencies } from './useManagersPanorama';
 
 // =========================
 // ORG VIEW - DEPRECATED: use useOrgObjectiveView from './queries' instead

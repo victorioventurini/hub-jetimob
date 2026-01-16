@@ -32,11 +32,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserPlus } from "lucide-react";
 import { AssetCategorySelect, BuLocationSelect, BuUserSelect } from "@/components/selects";
-import { useInventory } from "../../hooks/useInventory";
-import { useLocations } from "../../hooks/useLocations";
-import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
+import { useInventory, useLocations, useAssetPermissionsV2, useBrands } from "../../hooks";
 import { useIdentity } from "@/hooks/useIdentity";
-import { useBrands } from "../../hooks/useBrands";
 import { AutocompleteInput } from "./AutocompleteInput";
 import type { AssetInventory } from "../../types";
 

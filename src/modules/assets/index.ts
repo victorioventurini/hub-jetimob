@@ -1,13 +1,8 @@
 // Types
 export * from "./types";
 
-// Hooks
-export { useAssetPermissionsV2 } from "./hooks/useAssetPermissionsV2";
-export { useInventory } from "./hooks/useInventory";
-export { useKeys } from "./hooks/useKeys";
-export { useGifts } from "./hooks/useGifts";
-export { useLocations } from "./hooks/useLocations";
-export { useAssetProfiles } from "./hooks/useProfiles";
+// Hooks - consolidated barrel export
+export * from "./hooks";
 
 // Inventory Components
 export { InventoryCard } from "./components/inventory/InventoryCard";

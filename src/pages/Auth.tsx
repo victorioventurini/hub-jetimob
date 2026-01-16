@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowRight, Loader2, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { checkEmailDomainAllowed } from "@/modules/bu/hooks/useBuData";
+import { checkEmailDomainAllowed } from "@/modules/bu/hooks";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 const STORAGE_KEY = "hub_last_email";
