@@ -62,6 +62,7 @@ interface TeamKrFormDialogProps {
     unit: string;
     status: OkrRagStatus;
     owner_user_id?: string | null;
+    linked_org_kr_id?: string | null;
   };
 }
 
@@ -80,11 +81,6 @@ export function TeamKrFormDialog({
   
   // Defense in depth: check if user can manage this team's OKRs
   const { canManage: canManageThisTeam, isLoading: isLoadingPermission } = useCanManageTeamOkr(teamId);
-  
-  // If user can't manage this team, don't render
-  if (!isLoadingPermission && !canManageThisTeam) {
-    return null;
-  }
 
   const [title, setTitle] = useState(kr?.title || '');
   const [description, setDescription] = useState('');
@@ -95,10 +91,15 @@ export function TeamKrFormDialog({
   const [unit, setUnit] = useState(kr?.unit || '%');
   const [direction, setDirection] = useState<OkrDirection>(kr?.direction || 'up');
   const [status, setStatus] = useState<OkrRagStatus>(kr?.status || 'not_started');
-  const [linkedOrgKrId, setLinkedOrgKrId] = useState<string>(NONE_LINKED_ORG_KR);
+  const [linkedOrgKrId, setLinkedOrgKrId] = useState<string>(kr?.linked_org_kr_id || NONE_LINKED_ORG_KR);
   const [ownerUserId, setOwnerUserId] = useState<string | null>(kr?.owner_user_id || null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [placeholder] = useState(() => getRandomPlaceholder(false));
+  
+  // If user can't manage this team, don't render
+  if (!isLoadingPermission && !canManageThisTeam) {
+    return null;
+  }
 
   // Auto-fill target when direction is "maintain"
   useEffect(() => {
@@ -117,7 +118,7 @@ export function TeamKrFormDialog({
     setUnit(kr?.unit || '%');
     setDirection(kr?.direction || 'up');
     setStatus(kr?.status || 'not_started');
-    setLinkedOrgKrId(NONE_LINKED_ORG_KR);
+    setLinkedOrgKrId(kr?.linked_org_kr_id || NONE_LINKED_ORG_KR);
     setOwnerUserId(kr?.owner_user_id || null);
   }, [kr]));
 
@@ -132,7 +133,7 @@ export function TeamKrFormDialog({
       if (error) throw error;
       return data;
     },
-    enabled: open && !isEditing,
+    enabled: open,
   });
 
   const effectiveBuId = buId || teamObjective?.bu_id;
@@ -150,7 +151,7 @@ export function TeamKrFormDialog({
       if (error) throw error;
       return data || [];
     },
-    enabled: !!teamObjective?.org_objective_id && open && !isEditing,
+    enabled: !!teamObjective?.org_objective_id && open,
   });
 
   const validation = useMemo(() => {
@@ -180,6 +181,7 @@ export function TeamKrFormDialog({
             unit,
             status,
             owner_user_id: ownerUserId,
+            linked_org_kr_id: linkedOrgKrId === NONE_LINKED_ORG_KR ? null : linkedOrgKrId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', kr.id);
@@ -446,7 +448,7 @@ export function TeamKrFormDialog({
                 </div>
               </div>
 
-              {!isEditing && orgKrs && orgKrs.length > 0 && (
+              {orgKrs && orgKrs.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-muted-foreground" />
@@ -468,6 +470,11 @@ export function TeamKrFormDialog({
                       ))}
                     </SelectContent>
                   </Select>
+                  {isEditing && (
+                    <p className="text-xs text-muted-foreground">
+                      Alterar o vínculo não afeta o histórico de progresso já registrado.
+                    </p>
+                  )}
                 </div>
               )}
 

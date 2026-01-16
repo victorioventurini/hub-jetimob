@@ -25,13 +25,13 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Ban, Lock } from 'lucide-react';
+import { Loader2, Users, Ban, Lock, Link2 } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { VicActionButton } from '@/modules/vic';
 import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
 import { useHierarchicalTeamList, type FlatTeamItem } from '@/modules/teams/hooks';
 import { useManageableTeamsFlat } from '../hooks/useManageableTeams';
-import { useObjectiveContributors, useManageContributors } from '../hooks';
+import { useObjectiveContributors, useManageContributors, useOrgObjectives } from '../hooks';
 import { useCycles } from '../hooks/useCycleData';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { useCancelTeamObjective } from '../hooks/useOkrMutations';
@@ -50,6 +50,7 @@ interface TeamObjectiveFormDialogProps {
     status: OkrStatus;
     is_shared?: boolean;
     responsibility_model?: string | null;
+    org_objective_id?: string | null;
   } | null;
   /** Available teams for selection (required for create mode) */
   teams?: Array<{ id: string; name: string; parent_team_id?: string | null }>;
@@ -76,22 +77,17 @@ export function TeamObjectiveFormDialog({
 }: TeamObjectiveFormDialogProps) {
   const isEditing = !!objective;
   
-  // Defense in depth: check if user can manage this team's OKRs
-  const { canManage: canManageThisTeam, isLoading: isLoadingPermission } = useCanManageTeamOkr(
-    isEditing ? objective?.team_id : null
-  );
-  
-  // If editing and user can't manage this team, don't render
-  if (isEditing && !isLoadingPermission && !canManageThisTeam) {
-    return null;
-  }
-  
   const queryClient = useQueryClient();
   const { client: supabase, buId } = useOptionalBuClient();
   const { toast: hookToast } = useToast();
   const { teams: hookTeams } = useHierarchicalTeamList();
   const manageContributors = useManageContributors();
   const cancelMutation = useCancelTeamObjective();
+  
+  // Defense in depth: check if user can manage this team's OKRs
+  const { canManage: canManageThisTeam, isLoading: isLoadingPermission } = useCanManageTeamOkr(
+    isEditing ? objective?.team_id : null
+  );
   
   // Use the new hook for manageable teams (enforces hierarchy rules)
   const { 
@@ -125,6 +121,9 @@ export function TeamObjectiveFormDialog({
 
   const { data: cycles = [] } = useCycles();
   const { data: existingContributors } = useObjectiveContributors(objective?.id || '');
+  
+  // Fetch org objectives for edit mode (create mode uses props)
+  const { data: fetchedOrgObjectives = [] } = useOrgObjectives({ buId: buId ?? undefined });
 
   // Load existing contributors for edit mode
   useEffect(() => {
@@ -132,6 +131,11 @@ export function TeamObjectiveFormDialog({
       setContributingTeamIds(existingContributors.map(c => c.team_id));
     }
   }, [existingContributors]);
+  
+  // If editing and user can't manage this team, don't render
+  if (isEditing && !isLoadingPermission && !canManageThisTeam) {
+    return null;
+  }
 
   // Pre-select user's team when dialog opens in create mode
   useEffect(() => {
@@ -174,13 +178,14 @@ export function TeamObjectiveFormDialog({
   };
 
   const hierarchicalTeams = isEditing ? hookTeams : buildHierarchicalTeams();
-
+  
   // Reset form when dialog opens
   useDialogFormReset(open, useCallback(() => {
     if (objective) {
       setTitle(objective.title);
       setDescription(objective.description || '');
       setTeamId(objective.team_id);
+      setOrgObjectiveId(objective.org_objective_id || '');
       setStatus(objective.status);
       setIsShared(objective.is_shared || false);
       setResponsibilityModel(
@@ -199,10 +204,12 @@ export function TeamObjectiveFormDialog({
     }
   }, [objective]));
 
-  const orgObjectiveOptions = orgObjectives?.map(obj => ({
+  // Use props for create mode, fetched data for edit mode
+  const availableOrgObjectives = isEditing ? fetchedOrgObjectives : (orgObjectives || []);
+  const orgObjectiveOptions = availableOrgObjectives.map(obj => ({
     value: obj.id,
     label: obj.title,
-  })) || [];
+  }));
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -271,6 +278,7 @@ export function TeamObjectiveFormDialog({
         .update({
           title,
           description: description || null,
+          org_objective_id: orgObjectiveId || null,
           status,
           is_shared: isShared,
           responsibility_model: isShared ? responsibilityModel : null,
@@ -433,20 +441,28 @@ export function TeamObjectiveFormDialog({
                 </div>
               )}
 
-              {/* Org objective selection - only for create mode */}
-              {!isEditing && (
-                <div className="space-y-2">
-                  <Label htmlFor="org-objective">Objetivo Organizacional *</Label>
-                  <SimpleSelect
-                    value={orgObjectiveId}
-                    onValueChange={setOrgObjectiveId}
-                    options={orgObjectiveOptions}
-                    placeholder="Vincule a um objetivo organizacional"
-                    disabled={isPending}
-                    triggerClassName="w-full"
-                  />
+              {/* Org objective selection */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="org-objective">
+                    Objetivo Organizacional {!isEditing && '*'}
+                  </Label>
                 </div>
-              )}
+                <SimpleSelect
+                  value={orgObjectiveId}
+                  onValueChange={setOrgObjectiveId}
+                  options={orgObjectiveOptions}
+                  placeholder="Vincule a um objetivo organizacional"
+                  disabled={isPending}
+                  triggerClassName="w-full"
+                />
+                {isEditing && (
+                  <p className="text-xs text-muted-foreground">
+                    Alterar o vínculo não afeta o histórico de progresso já registrado.
+                  </p>
+                )}
+              </div>
 
               {/* Cycle selection - only for create mode */}
               {!isEditing && (
