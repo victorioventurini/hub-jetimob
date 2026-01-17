@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.42.0  
-**Última atualização:** 2026-01-16
+**Versão:** 2.43.0  
+**Última atualização:** 2026-01-17
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -75,12 +75,25 @@
 - **Fluxo:**
   1. Usuário insere email
   2. Sistema valida se domínio pertence a uma BU ativa
-  3. Se válido, envia código OTP de 6 dígitos via email (Supabase Auth)
-  4. Usuário insere o código na tela de verificação
-  5. Sistema verifica OTP e autentica o usuário
-  6. Profile é criado automaticamente via trigger `handle_new_user()`
+  3. **Para usuários internos:** Verifica se existe perfil pré-cadastrado em `profiles`
+  4. Se válido, envia código OTP de 6 dígitos via email (Supabase Auth)
+  5. Usuário insere o código na tela de verificação
+  6. Sistema verifica OTP e autentica o usuário
+  7. Profile é criado automaticamente via trigger `handle_new_user()` (se não existir)
 
 > **Nota (v2.29.0):** O sistema foi migrado de Magic Link para OTP Code para evitar problemas com scanners de email corporativos que invalidavam os links antes do usuário clicar.
+
+> **Nota (v2.43.0):** Usuários internos (domínio em `allowed_email_domains`) agora precisam ter perfil pré-cadastrado em `profiles` para receber código OTP. Isso impede que qualquer email com domínio válido acesse o sistema sem convite prévio.
+
+#### Critérios de Recebimento de Código OTP
+
+| Tipo de Usuário | Critério | Tabela de Validação |
+|-----------------|----------|---------------------|
+| **Contato Parceiro** | Email cadastrado em `partner_contacts` com status `active` | `partner_contacts` |
+| **Empresa Parceira** | Domínio do email em `partner_companies.allowed_domains` | `partner_companies` |
+| **Usuário Interno** | Domínio em `bu_units.allowed_email_domains` **E** email em `profiles.work_email` | `bu_units` + `profiles` |
+
+⚠️ **IMPORTANTE:** Usuários internos sem perfil pré-cadastrado NÃO recebem código OTP, mesmo com domínio válido.
 
 ### 1.3 Conceito Multi-BU (Business Units)
 
