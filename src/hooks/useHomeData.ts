@@ -6,30 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
-
-// Helper function that accepts supabase client as parameter (DI pattern)
-async function fetchTeamsById(
-  supabase: SupabaseClient<Database>,
-  teamIds: Array<string | null | undefined>
-) {
-  const uniqueIds = Array.from(new Set(teamIds.filter((id): id is string => !!id)));
-  if (uniqueIds.length === 0) return {} as Record<string, string>;
-
-  const { data, error } = await supabase
-    .from("teams")
-    .select("id, name")
-    .is("deleted_at", null)
-    .in("id", uniqueIds);
-
-  if (error) throw error;
-
-  return (data || []).reduce<Record<string, string>>((acc, team) => {
-    acc[team.id] = team.name;
-    return acc;
-  }, {});
-}
 
 
 interface NewJetimober {
@@ -54,7 +30,7 @@ export function useNewJetimobers(limit = 5) {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // Use canonical view for user directory
+      // Use canonical view for user directory - view already includes team_name via JOIN
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -62,9 +38,9 @@ export function useNewJetimobers(limit = 5) {
           id,
           display_name,
           job_title_name,
+          team_name,
           photo_url,
-          start_date,
-          team_id
+          start_date
         `
         )
         .eq("user_type", "internal") // Exclude external contacts
@@ -80,8 +56,6 @@ export function useNewJetimobers(limit = 5) {
 
       if (error) throw error;
 
-      const teamsById = await fetchTeamsById(supabase, (data || []).map((p) => p.team_id));
-
       const now = new Date();
       return (data || []).map((profile) => {
         const startDate = new Date(profile.start_date);
@@ -92,7 +66,7 @@ export function useNewJetimobers(limit = 5) {
           id: profile.id,
           name: profile.display_name || "Sem nome",
           jobTitle: profile.job_title_name || "Sem cargo",
-          team: teamsById[profile.team_id] || "Sem time",
+          team: profile.team_name || "Sem time",
           photoUrl: profile.photo_url || undefined,
           startDate: profile.start_date,
           daysAgo,
@@ -121,7 +95,7 @@ export function useBirthdays() {
     queryKey: queryKeys.home.birthdays(currentBu?.id ?? null, currentMonth),
     staleTime: 10 * 60 * 1000, // 10 minutes - birthdays don't change
     queryFn: async (): Promise<Birthday[]> => {
-      // Use canonical view for user directory
+      // Use canonical view for user directory - view already includes team_name via JOIN
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -129,10 +103,10 @@ export function useBirthdays() {
           id,
           display_name,
           job_title_name,
+          team_name,
           photo_url,
           birth_day,
-          birth_month,
-          team_id
+          birth_month
         `
         )
         .eq("birth_month", currentMonth)
@@ -147,13 +121,11 @@ export function useBirthdays() {
 
       if (error) throw error;
 
-      const teamsById = await fetchTeamsById(supabase, (data || []).map((p) => p.team_id));
-
       return (data || []).map((profile) => ({
         id: profile.id,
         name: profile.display_name || "Sem nome",
         jobTitle: profile.job_title_name || "Sem cargo",
-        team: teamsById[profile.team_id] || "Sem time",
+        team: profile.team_name || "Sem time",
         photoUrl: profile.photo_url || undefined,
         birthDay: profile.birth_day!,
         birthMonth: profile.birth_month!,
@@ -184,7 +156,7 @@ export function useWorkAnniversaries() {
     queryKey: queryKeys.home.anniversaries(currentBu?.id ?? null, currentMonth),
     staleTime: 10 * 60 * 1000, // 10 minutes - anniversaries don't change
     queryFn: async (): Promise<WorkAnniversary[]> => {
-      // Use canonical view for user directory
+      // Use canonical view for user directory - view already includes team_name via JOIN
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -192,9 +164,9 @@ export function useWorkAnniversaries() {
           id,
           display_name,
           job_title_name,
+          team_name,
           photo_url,
-          start_date,
-          team_id
+          start_date
         `
         )
         .not("start_date", "is", null);
@@ -206,8 +178,6 @@ export function useWorkAnniversaries() {
       const { data, error } = await query;
 
       if (error) throw error;
-
-      const teamsById = await fetchTeamsById(supabase, (data || []).map((p) => p.team_id));
 
       // Filter by current month and exclude current year (no anniversary in first year)
       return (data || [])
@@ -225,7 +195,7 @@ export function useWorkAnniversaries() {
             id: profile.id,
             name: profile.display_name || "Sem nome",
             jobTitle: profile.job_title_name || "Sem cargo",
-            team: teamsById[profile.team_id] || "Sem time",
+            team: profile.team_name || "Sem time",
             photoUrl: profile.photo_url || undefined,
             startDate: profile.start_date,
             yearsAtCompany,
