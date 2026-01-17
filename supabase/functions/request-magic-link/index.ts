@@ -84,6 +84,7 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   }
 
   // 3. Check if domain is allowed in any BU (internal users)
+  // IMPORTANT: Internal users MUST have a pre-existing profile to receive magic link
   const { data, error } = await supabase
     .from("bu_units")
     .select("id, name, allowed_email_domains")
@@ -97,6 +98,25 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   for (const bu of (data as { id: string; name: string; allowed_email_domains: string[] }[]) || []) {
     const allowedDomains = bu.allowed_email_domains || [];
     if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+      // Domain matches - now verify user has a pre-existing profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, work_email")
+        .eq("work_email", emailLower)
+        .is("deleted_at", null)
+        .limit(1);
+
+      if (profileError) {
+        console.error("Error checking user profile:", profileError);
+        return { allowed: false, buName: null, isPartnerContact: false };
+      }
+
+      if (!profileData || profileData.length === 0) {
+        console.warn(`Internal user ${emailLower} has valid domain but NO pre-existing profile - ACCESS DENIED`);
+        return { allowed: false, buName: null, isPartnerContact: false };
+      }
+
+      console.log(`Internal user ${emailLower} verified with pre-existing profile`);
       return { allowed: true, buName: bu.name, isPartnerContact: false };
     }
   }
