@@ -490,15 +490,8 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateBu.isPending}>
-                {updateBu.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  "Salvar Alterações"
-                )}
+              <Button type="submit" isLoading={updateBu.isPending} loadingText="Salvando...">
+                Salvar Alterações
               </Button>
             </div>
           </form>

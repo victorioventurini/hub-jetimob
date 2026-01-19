@@ -269,16 +269,16 @@ export default function VicTestPage() {
                   key={idx} 
                   className={`p-4 rounded-lg border ${
                     result.success 
-                      ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" 
-                      : "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
+                      ? "bg-success-muted border-success/30" 
+                      : "bg-danger-muted border-danger/30"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex items-center gap-2">
                       {result.success ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <CheckCircle2 className="h-5 w-5 text-success" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-red-600" />
+                        <XCircle className="h-5 w-5 text-danger" />
                       )}
                       <span className="font-medium">{result.agentSlug}</span>
                     </div>

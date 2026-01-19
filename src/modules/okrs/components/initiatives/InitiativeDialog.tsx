@@ -585,8 +585,7 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading || !canSubmit}>
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button type="submit" isLoading={isLoading} disabled={!canSubmit}>
               {isEditing ? "Salvar" : "Criar Iniciativa"}
             </Button>
           </DialogFooter>

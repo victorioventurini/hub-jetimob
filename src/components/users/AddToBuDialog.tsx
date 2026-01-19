@@ -183,10 +183,7 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={addMembershipMutation.isPending}>
-              {addMembershipMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" isLoading={addMembershipMutation.isPending}>
               Adicionar à BU
             </Button>
           </DialogFooter>

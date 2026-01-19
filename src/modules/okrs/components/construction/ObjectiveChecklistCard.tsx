@@ -247,9 +247,9 @@ export function ObjectiveChecklistCard({
 
 function KrFeedbackCard({ feedback }: { feedback: KrFeedback }) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-50';
-    if (score >= 50) return 'text-amber-600 bg-amber-50';
-    return 'text-red-600 bg-red-50';
+    if (score >= 80) return 'text-success bg-success-muted';
+    if (score >= 50) return 'text-warning bg-warning-muted';
+    return 'text-danger bg-danger-muted';
   };
 
   return (

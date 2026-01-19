@@ -788,8 +788,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" isLoading={isPending}>
           {isEditing ? "Salvar" : "Cadastrar"}
         </Button>
       </DialogFooter>

@@ -185,10 +185,10 @@ export default function OrgAnalysisPage() {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-1">Score Geral</p>
                 <p className={`text-4xl font-bold ${
-                  scores.overall.status === 'excellent' ? 'text-green-600' :
-                  scores.overall.status === 'good' ? 'text-blue-600' :
-                  scores.overall.status === 'warning' ? 'text-yellow-600' :
-                  'text-red-600'
+                  scores.overall.status === 'excellent' ? 'text-success' :
+                  scores.overall.status === 'good' ? 'text-info' :
+                  scores.overall.status === 'warning' ? 'text-warning' :
+                  'text-danger'
                 }`}>
                   {scores.overall.value.toFixed(1)}
                   <span className="text-lg text-muted-foreground">/10</span>

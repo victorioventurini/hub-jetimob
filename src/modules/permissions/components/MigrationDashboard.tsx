@@ -79,9 +79,9 @@ export function MigrationDashboard({ compact = false }: MigrationDashboardProps)
 
   return (
     <div className="space-y-6">
-      <Alert variant="default" className="border-blue-500/50 bg-blue-500/10">
-        <Shield className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700 dark:text-blue-300">
+      <Alert variant="default" className="border-info/50 bg-info/10">
+        <Shield className="h-4 w-4 text-info" />
+        <AlertDescription className="text-info-muted-foreground">
           <strong>Migração de Permissões v1 → v2</strong><br />
           Migre usuários para o novo sistema de templates v2 para melhor controle granular.
         </AlertDescription>

@@ -193,11 +193,9 @@ export function BulkEditDialog({
             </Button>
             <Button
               type="submit"
-              disabled={bulkUpdateMutation.isPending || !hasChanges}
+              isLoading={bulkUpdateMutation.isPending}
+              disabled={!hasChanges}
             >
-              {bulkUpdateMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
               Atualizar {selectedIds.length}{" "}
               {selectedIds.length === 1 ? "jetimober" : "jetimobers"}
             </Button>
