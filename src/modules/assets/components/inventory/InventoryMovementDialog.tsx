@@ -30,13 +30,15 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowRight, User, MapPin, Wrench, XCircle } from "lucide-react";
-import { useInventory } from "../../hooks/useInventory";
-import { useAssetGroups } from "../../hooks/useAssetGroups";
-import { useLocations } from "../../hooks/useLocations";
-import { useAssetProfiles } from "../../hooks/useProfiles";
-import { useBuAdmins } from "../../hooks/useBuAdmins";
-import { useAuthorizers } from "../../hooks/useAuthorizers";
-import { useAssetPermissionsV2 } from "../../hooks/useAssetPermissionsV2";
+import { 
+  useInventory, 
+  useAssetGroups, 
+  useLocations, 
+  useAssetProfiles, 
+  useBuAdmins, 
+  useAuthorizers, 
+  useAssetPermissionsV2 
+} from "@/modules/assets/hooks";
 import { useIdentity } from "@/hooks/useIdentity";
 import { KitCheckoutInfo } from "./KitCheckoutInfo";
 import { BuUserSelect } from "@/components/selects";

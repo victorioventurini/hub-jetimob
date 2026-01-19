@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { usePermissionAudit } from "../hooks/usePermissionAudit";
+import { usePermissionAudit } from "@/modules/permissions/hooks";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AUDIT_STATUS_STYLES } from "@/lib/colors";

@@ -14,6 +14,7 @@ export {
 // Messages
 export { 
   useTicketMessages, 
+  useTicketAttachments,
   useCreateMessage, 
   useEditMessage, 
   useDeleteMessage 

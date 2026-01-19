@@ -22,7 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, AlertTriangle, Info, Target, ListChecks, Ticket, Users } from "lucide-react";
 import { DependencyItem, useUserDependencies } from "@/hooks/useUserDependencies";
-import { useAssetProfiles } from "@/modules/assets/hooks/useProfiles";
+import { useAssetProfiles } from "@/modules/assets/hooks";
 import { TransferConfig, TransferItem } from "@/hooks/useProfiles";
 
 interface UserDependenciesDialogProps {

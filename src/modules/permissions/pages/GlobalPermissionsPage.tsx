@@ -19,7 +19,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Search, Plus, MoreHorizontal, Key, Pencil, AlertTriangle, ClipboardCheck, Layers, FileStack, Package, Shield
 } from "lucide-react";
-import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
+import { usePermissionCatalog } from "@/modules/permissions/hooks";
 import { PermissionDialog } from "../components/PermissionDialog";
 import { AuditDashboard } from "../components/AuditDashboard";
 import { SurfacesTab } from "../components/SurfacesTab";

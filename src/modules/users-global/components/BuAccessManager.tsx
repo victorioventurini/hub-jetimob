@@ -20,8 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Plus, X, Star, Building2 } from "lucide-react";
-import { useAllBus } from "../hooks/useAllBus";
-import { useAddBuAccess, useRemoveBuAccess } from "../hooks/useUserGlobalActions";
+import { useAllBus, useAddBuAccess, useRemoveBuAccess } from "@/modules/users-global/hooks";
 import type { BuAccess } from "../types";
 
 interface BuAccessManagerProps {

@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Eye, Wrench, Settings2, Lock } from "lucide-react";
-import { usePermissionTemplatesV2 } from "../hooks/usePermissionsV2";
+import { usePermissionTemplatesV2 } from "@/modules/permissions/hooks";
 import { SURFACE_COLORS, type PermissionSurface } from "@/lib/colors";
 
 const SURFACE_CONFIG = {

@@ -47,9 +47,9 @@ import {
 import { 
   usePermissionTemplatesV2, 
   useTemplateItemsV2, 
-  PermissionTemplateV2 
-} from "../hooks/usePermissionsV2";
-import { usePermissionCatalog } from "../hooks/usePermissionCatalog";
+  usePermissionCatalog,
+  type PermissionTemplateV2 
+} from "@/modules/permissions/hooks";
 import { cn } from "@/lib/utils";
 import { SURFACE_COLORS } from "@/lib/colors";
 

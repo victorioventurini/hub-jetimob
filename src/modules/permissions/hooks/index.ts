@@ -10,7 +10,7 @@ export {
 } from "./useBuPermissions";
 
 // BU Users
-export { useBuUsers } from "./useBuUsers";
+export { useBuUsers, type BuUser } from "./useBuUsers";
 
 // Permissions V2
 export { 

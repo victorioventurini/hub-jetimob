@@ -15,8 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useUrlState } from "@/shared/url/useUrlState";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
-import { useActiveCycles } from "@/modules/okrs/hooks";
-import { useConstructionReview } from "../hooks/useConstructionReview";
+import { useActiveCycles, useConstructionReview } from "@/modules/okrs/hooks";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks";
 import { useVic } from "@/modules/vic/contexts/VicContext";

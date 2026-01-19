@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle } from "lucide-react";
-import { useKpiDetail } from "../hooks/useKpiData";
+import { useKpiDetail } from "@/modules/kpis/hooks";
 import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, KpiValueSource } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";

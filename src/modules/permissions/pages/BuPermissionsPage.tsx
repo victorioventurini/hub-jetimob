@@ -17,7 +17,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Shield, Search, Users, ChevronRight, Crown, ExternalLink, UserCheck } from "lucide-react";
-import { useBuUsers, type BuUser } from "../hooks/useBuUsers";
+import { useBuUsers, type BuUser } from "@/modules/permissions/hooks";
 import { UserPermissionsV2Sheet } from "../components/UserPermissionsV2Sheet";
 import { cn } from "@/lib/utils";
 

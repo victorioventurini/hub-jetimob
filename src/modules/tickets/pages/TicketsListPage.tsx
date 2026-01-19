@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Inbox } from "lucide-react";
-import { useTickets, useMyTickets } from "../hooks/useTickets";
+import { useTickets, useMyTickets } from "@/modules/tickets/hooks";
 import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
