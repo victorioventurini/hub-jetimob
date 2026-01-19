@@ -65,7 +65,6 @@ export function CollaboratorInitiativesStep({
         .select('id, name, description, kr_id, owner_user_id, status, priority, start_date, expected_end_date, progress, notes, updated_at')
         .in('kr_id', krIds)
         .is('deleted_at', null)
-        .is('cancelled_at', null)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
