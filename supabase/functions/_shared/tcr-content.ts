@@ -8,8 +8,8 @@
  * Updated: 2026-01-08
  */
 
-export const TCR_VERSION = "2.43.0";
-export const TCR_UPDATED_AT = "2026-01-17";
+export const TCR_VERSION = "2.44.0";
+export const TCR_UPDATED_AT = "2026-01-19";
 
 export interface TcrSection {
   title: string;
@@ -229,12 +229,17 @@ src/
 ├── modules/
 │   ├── okrs/
 │   │   ├── components/
+│   │   │   ├── checkin/          # CheckinDialog modularizado (v2.44.0)
+│   │   │   └── team-objective-form/  # TeamObjectiveFormDialog modularizado (v2.44.0)
 │   │   ├── hooks/
 │   │   ├── pages/
 │   │   └── types/
 │   ├── kpis/
 │   ├── tickets/
 │   ├── assets/
+│   │   └── components/
+│   │       └── inventory/
+│   │           └── form/         # InventoryFormDialog modularizado (v2.44.0)
 │   ├── home/
 │   ├── admin/
 │   ├── notifications/
@@ -246,6 +251,16 @@ src/
 └── integrations/
     └── supabase/     # Cliente e tipos gerados
 \`\`\`
+
+### 3.3 Refatorações de Sustentabilidade (v2.44.0)
+
+Arquivos grandes refatorados para manter limites de código:
+
+| Componente Original | Antes | Depois | Estrutura |
+|---------------------|-------|--------|-----------|
+| \`InventoryFormDialog.tsx\` | 707 linhas | 85 linhas | \`form/schema\`, \`form/fields\`, \`form/hook\` |
+| \`CheckinDialog.tsx\` | 593 linhas | 140 linhas | \`checkin/context\`, \`checkin/progress\`, \`checkin/status\`, \`checkin/reflection\` |
+| \`TeamObjectiveFormDialog.tsx\` | 658 linhas | 115 linhas | \`team-objective-form/types\`, \`team-objective-form/fields\`, \`team-objective-form/hook\` |
 `,
   },
   conventions: {
