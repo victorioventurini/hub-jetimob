@@ -161,7 +161,7 @@ export function CyclesTab() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{cycle.name}</span>
                             {isCurrent && (
-                              <Badge className="bg-green-500/10 text-green-600">
+                              <Badge className="bg-success/10 text-success">
                                 Atual
                               </Badge>
                             )}
@@ -213,7 +213,7 @@ export function CyclesTab() {
                                     {isQuarterCurrent && (
                                       <Badge
                                         variant="outline"
-                                        className="text-green-600 border-green-300"
+                                        className="text-success border-success/30"
                                       >
                                         Atual
                                       </Badge>
