@@ -358,7 +358,7 @@ export default function UsersPage() {
                 </Link>
               </Button>
               {canManageUsers && (
-                <Button variant="accent" className="gap-2" onClick={handleCreate}>
+                <Button className="gap-2" onClick={handleCreate}>
                   <Plus className="h-4 w-4" />
                   Novo Jetimober
                 </Button>

@@ -2,6 +2,7 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { SkeletonList } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { Plug } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationCard } from '../components/IntegrationCard';
@@ -47,15 +48,14 @@ export default function GlobalIntegrationsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Integrações Globais</h1>
-            <p className="text-muted-foreground">
-              Configure integrações disponíveis para todas as Business Units
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Integrações Globais"
+          description="Configure integrações disponíveis para todas as Business Units"
+          breadcrumbs={[
+            { label: "Configurações", href: "/settings" },
+            { label: "Integrações" },
+          ]}
+        />
         
         {/* Info Card */}
         <Card className="bg-muted/50 border-dashed">
