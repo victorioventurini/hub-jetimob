@@ -12,8 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
+import { PageHeader } from '@/components/ui/page-header';
+import {
   CheckCircle2, 
   AlertTriangle, 
   Clock, 
@@ -141,45 +141,40 @@ export default function CycleCheckinsPage() {
         {/* Breadcrumb */}
         <OkrCycleCheckinsBreadcrumb />
         
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Check-ins do Ciclo</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Visão consolidada de todos os check-ins do ciclo
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Cycle Selector */}
-            <div className="w-full sm:w-64">
-              {cyclesLoading ? (
-                <Skeleton className="h-10 w-full" />
-              ) : (
-                <Select 
-                  value={selectedCycleId} 
-                  onValueChange={handleCycleChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um ciclo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allCycles?.map((cycle) => (
-                      <SelectItem key={cycle.id} value={cycle.id}>
-                        <div className="flex items-center gap-2">
-                          {cycle.name}
-                          {activeCycles?.some(ac => ac.id === cycle.id) && (
-                            <Badge variant="secondary" className="text-xs">
-                              Ativo
-                            </Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+        <PageHeader
+          title="Check-ins do Ciclo"
+          description="Visão consolidada de todos os check-ins do ciclo"
+        />
+        
+        {/* Cycle Selector */}
+        <div className="flex items-center gap-3">
+          <div className="w-full sm:w-64">
+            {cyclesLoading ? (
+              <Skeleton className="h-10 w-full" />
+            ) : (
+              <Select 
+                value={selectedCycleId} 
+                onValueChange={handleCycleChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um ciclo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allCycles?.map((cycle) => (
+                    <SelectItem key={cycle.id} value={cycle.id}>
+                      <div className="flex items-center gap-2">
+                        {cycle.name}
+                        {activeCycles?.some(ac => ac.id === cycle.id) && (
+                          <Badge variant="secondary" className="text-xs">
+                            Ativo
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
         

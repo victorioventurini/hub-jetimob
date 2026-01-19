@@ -255,11 +255,11 @@ export default function TeamsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-accent">
+          <Card className="border-l-4 border-l-info">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-accent" />
+                <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-info" />
                 </div>
                 <div>
                   {isLoading ? (

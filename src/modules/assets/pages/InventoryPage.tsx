@@ -4,13 +4,14 @@ import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { useInventory } from "../hooks/useInventory";
 import { useLocations } from "../hooks/useLocations";
 import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
 import { InventoryListItem } from "../components/inventory/InventoryListItem";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
-import { UrlSearchInput } from "@/shared/filters";
 import { useUrlState } from "@/shared/url";
 import type { AssetInventoryStatus } from "../types";
 
@@ -120,22 +121,28 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header with search and actions */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <UrlSearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar por nome ou código..."
-          className="flex-1"
-          debounceMs={300}
-        />
-        {canAddItem && (
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Item
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Inventário"
+        description="Gerencie os itens do inventário da BU"
+        breadcrumbs={[
+          { label: "Ativos", href: "/assets" },
+          { label: "Inventário" },
+        ]}
+      />
+
+      <ListPageFilters
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome ou código..."
+        actions={
+          canAddItem && (
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Item
+            </Button>
+          )
+        }
+      />
 
       {/* Filters - always visible */}
       <InventoryFilters

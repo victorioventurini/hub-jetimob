@@ -11,9 +11,8 @@
 
 import { useCallback } from "react";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, BarChart3, GitBranch, PieChart, Eye } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { BarChart3, GitBranch, PieChart, Eye } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useOrgOkrAnalysis, type AnalysisScore } from "../hooks";
@@ -149,22 +148,14 @@ export default function OrgAnalysisPage() {
       </Helmet>
 
       <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/okrs">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Análise de OKRs Organizacionais</h1>
-              <p className="text-muted-foreground text-sm">
-                Avalie a estrutura e qualidade das OKRs da empresa
-              </p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Análise de OKRs Organizacionais"
+          description="Avalie a estrutura e qualidade das OKRs da empresa"
+          breadcrumbs={[
+            { label: "OKRs", href: "/okrs" },
+            { label: "Análise" },
+          ]}
+        />
 
         {isLoading ? (
           <div className="space-y-6">

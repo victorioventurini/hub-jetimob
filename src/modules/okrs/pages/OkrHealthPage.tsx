@@ -10,9 +10,9 @@
  */
 
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, Info, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Info, Calendar } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -63,19 +63,14 @@ export default function OkrHealthPage() {
       <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/okrs">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Saúde das OKRs Organizacionais</h1>
-              <p className="text-muted-foreground text-sm">
-                Monitore a execução e acompanhamento das OKRs da empresa
-              </p>
-            </div>
-          </div>
+          <PageHeader
+            title="Saúde das OKRs Organizacionais"
+            description="Monitore a execução e acompanhamento das OKRs da empresa"
+            breadcrumbs={[
+              { label: "OKRs", href: "/okrs" },
+              { label: "Saúde" },
+            ]}
+          />
 
           {/* Year Selector */}
           <div className="flex items-center gap-2">
