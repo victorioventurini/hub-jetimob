@@ -1,7 +1,7 @@
 # 🔍 Análise Sistêmica do Hub da Jet
 
 **Data:** 2026-01-19  
-**Versão TCR:** 2.43.0  
+**Versão TCR:** 2.44.0  
 **Objetivo:** Visão holística para escalabilidade e sustentabilidade
 
 ---
