@@ -139,7 +139,7 @@ export function DiagnosticsSloCard() {
                     <TableRow key={`${row.channel_slug}-${idx}`}>
                       <TableCell className="font-medium capitalize">{row.channel_slug}</TableCell>
                       <TableCell className="text-center">{row.total}</TableCell>
-                      <TableCell className="text-center text-green-600">{row.total_success}</TableCell>
+                      <TableCell className="text-center text-success">{row.total_success}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={hasFailures ? 'destructive' : 'outline'}>
                           {row.total_failed}

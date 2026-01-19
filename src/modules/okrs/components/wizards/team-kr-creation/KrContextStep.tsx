@@ -134,10 +134,10 @@ export function KrContextStep({
 
           {/* Shared OKR Info */}
           {objective.isShared && (
-            <Card className="border-blue-200 dark:border-blue-800/50">
+            <Card className="border-info/30 dark:border-info/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
+                  <Users className="h-4 w-4 text-info" />
                   Informações de Compartilhamento
                 </CardTitle>
               </CardHeader>

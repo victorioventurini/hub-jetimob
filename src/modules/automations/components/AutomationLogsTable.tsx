@@ -57,9 +57,9 @@ export function AutomationLogsTable({ logs, isLoading }: AutomationLogsTableProp
             render: (log) => (
               <div className="flex items-center gap-1.5">
                 {log.type === 'event' ? (
-                  <ArrowUpRight className="h-4 w-4 text-blue-500" />
+                  <ArrowUpRight className="h-4 w-4 text-info" />
                 ) : (
-                  <ArrowDownLeft className="h-4 w-4 text-purple-500" />
+                  <ArrowDownLeft className="h-4 w-4 text-status-purple" />
                 )}
                 <span className="text-xs uppercase text-muted-foreground">
                   {log.type === 'event' ? 'Evento' : 'Ação'}
