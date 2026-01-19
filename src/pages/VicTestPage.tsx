@@ -39,13 +39,13 @@ export default function VicTestPage() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isTestingAll, setIsTestingAll] = useState(false);
 
-  // Fetch all active agents from DB
+  // Fetch all active agents from public view (doesn't expose sensitive fields)
   const { data: dbAgents = [], isLoading: isLoadingAgents } = useQuery({
     queryKey: queryKeys.vic.globalAgents(),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("ai_agents")
-        .select("id, name, slug, is_active, scope, model_name, integration_key")
+        .from("v_ai_agents_public")
+        .select("id, name, slug, is_active, scope, integration_key")
         .eq("is_active", true)
         .order("name");
 
