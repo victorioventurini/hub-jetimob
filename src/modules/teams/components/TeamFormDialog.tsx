@@ -314,7 +314,7 @@ export function TeamFormDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="accent" isLoading={isPending} loadingText={isEditing ? "Salvando..." : "Criando..."}>
+            <Button type="submit" isLoading={isPending} loadingText={isEditing ? "Salvando..." : "Criando..."}>
               {isEditing ? "Salvar Alterações" : "Criar Time"}
             </Button>
           </div>
@@ -329,7 +329,7 @@ export function TeamFormDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           {trigger || (
-            <Button variant="accent" className="gap-2">
+            <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Novo Time
             </Button>
@@ -345,7 +345,7 @@ export function TeamFormDialog({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="accent" className="gap-2">
+          <Button className="gap-2">
             <Plus className="h-4 w-4" />
             Novo Time
           </Button>

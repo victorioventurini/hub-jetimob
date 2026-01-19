@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface QuickAccessCardProps {
   to: string;
@@ -183,15 +184,11 @@ export default function SettingsHome() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Painel de Configurações
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Gerencie as configurações globais do Hub
-        </p>
-      </div>
+      <PageHeader
+        title="Painel de Configurações"
+        description="Gerencie as configurações globais do Hub"
+        breadcrumbs={[{ label: "Configurações" }]}
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">

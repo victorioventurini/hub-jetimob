@@ -1,19 +1,24 @@
 /**
  * AreasPage - Main page for managing strategic areas
  */
-import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus, Building2, Search } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { useUrlState } from "@/shared/url";
 import { useAreas } from "../hooks";
 import { AreaCard } from "../components/AreaCard";
 import { AreaFormDialog } from "../components/AreaFormDialog";
 import { AreaWithRelations } from "../types";
+import { useState } from "react";
 
 export function AreasPage() {
-  const [search, setSearch] = useState("");
+  const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const search = searchState.value;
+  const setSearch = searchState.set;
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingArea, setEditingArea] = useState<AreaWithRelations | null>(null);
 
@@ -47,33 +52,26 @@ export function AreasPage() {
       </Helmet>
 
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Building2 className="h-6 w-6" />
-              Áreas
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Áreas estratégicas que agrupam times da organização
-            </p>
-          </div>
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Área
-          </Button>
-        </div>
+        <PageHeader
+          title="Áreas"
+          description="Áreas estratégicas que agrupam times da organização"
+          breadcrumbs={[
+            { label: "Configurações", href: "/settings" },
+            { label: "Áreas" },
+          ]}
+        />
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar áreas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <ListPageFilters
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar áreas..."
+          actions={
+            <Button onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Área
+            </Button>
+          }
+        />
 
         {/* Areas Grid */}
         {isLoading ? (

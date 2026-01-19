@@ -15,7 +15,7 @@ import { ProgressSummary } from '../components/ProgressSummary';
 import { YearSelect } from '@/components/selects';
 import { ManagersCheckinWizardCard } from '../components/wizards/managers-checkin/ManagersCheckinWizardCard';
 import { CLevelCheckinWizardCard } from '../components/wizards/clevel-checkin/CLevelCheckinWizardCard';
-import { OkrExecutiveDashboardBreadcrumb } from '../components/ui/OkrBreadcrumb';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function ExecutiveDashboardPage() {
   usePageTitle("Dashboard Executivo - OKRs");
@@ -57,24 +57,22 @@ export default function ExecutiveDashboardPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <OkrExecutiveDashboardBreadcrumb />
-        
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard Executivo</h1>
-            <p className="text-muted-foreground">
-              Visão executiva dos OKRs organizacionais
-            </p>
-          </div>
-          <YearSelect
-            value={selectedYear}
-            onValueChange={setSelectedYear}
-            years={years}
-            triggerClassName="w-[120px]"
-          />
-        </div>
+        <PageHeader
+          title="Dashboard Executivo"
+          description="Visão executiva dos OKRs organizacionais"
+          breadcrumbs={[
+            { label: "OKRs", href: "/okrs" },
+            { label: "Dashboard Executivo" },
+          ]}
+          actions={
+            <YearSelect
+              value={selectedYear}
+              onValueChange={setSelectedYear}
+              years={years}
+              triggerClassName="w-[120px]"
+            />
+          }
+        />
 
         {/* Strategic Wizard Entry Points */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

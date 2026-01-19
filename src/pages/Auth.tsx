@@ -353,7 +353,6 @@ export default function Auth() {
 
             <Button
               type="submit"
-              variant="accent"
               className="w-full h-12 gap-2 text-base"
               disabled={isLoading || isCheckingDomain}
             >

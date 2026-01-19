@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -226,16 +227,11 @@ export default function Modules() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Módulos</h1>
-            <p className="text-muted-foreground">
-              Catálogo de módulos do Hub
-              {currentBu && <span className="text-accent"> • {currentBu.name}</span>}
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Módulos"
+          description={`Catálogo de módulos do Hub${currentBu ? ` • ${currentBu.name}` : ''}`}
+          breadcrumbs={[{ label: "Módulos" }]}
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
