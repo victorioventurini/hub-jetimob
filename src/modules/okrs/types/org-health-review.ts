@@ -125,11 +125,11 @@ export interface OrgHealthReviewData {
 export function getHealthStatusColor(status: 'healthy' | 'attention' | 'risk'): string {
   switch (status) {
     case 'healthy':
-      return 'text-green-600 bg-green-50 border-green-200';
+      return 'text-success bg-success-muted border-success/30';
     case 'attention':
-      return 'text-amber-600 bg-amber-50 border-amber-200';
+      return 'text-warning bg-warning-muted border-warning/30';
     case 'risk':
-      return 'text-red-600 bg-red-50 border-red-200';
+      return 'text-destructive bg-destructive/10 border-destructive/30';
     default:
       return 'text-muted-foreground bg-muted border-border';
   }
