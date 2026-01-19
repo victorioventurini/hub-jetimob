@@ -7,7 +7,7 @@ import { KpisBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useKpiData } from "../hooks/useKpiData";
+import { useKpiData } from "@/modules/kpis/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 import { KpiCategorySection } from "../components/KpiCategorySection";
 import { KpiDetailDialog } from "../components/KpiDetailDialog";

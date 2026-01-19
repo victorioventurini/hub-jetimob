@@ -23,8 +23,7 @@ import {
 import { useUrlState } from "@/shared/url/useUrlState";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useLeaderTeams } from "@/modules/home/hooks/useLeaderTeams";
-import { useActiveCycles } from "@/modules/okrs/hooks/useCycleData";
-import { useTeamOkrQuality } from "../hooks/useTeamOkrQuality";
+import { useActiveCycles, useTeamOkrQuality } from "@/modules/okrs/hooks";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useHierarchicalTeamList, type FlatTeamItem } from "@/modules/teams/hooks";
 import { TeamSelect } from "@/components/selects/TeamSelect";

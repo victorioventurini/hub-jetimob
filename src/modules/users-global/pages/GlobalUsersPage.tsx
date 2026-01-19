@@ -31,8 +31,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Search, Users, Shield, Building2, CheckCircle, Clock, UserCircle, UserX } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useGlobalUsers } from "../hooks/useGlobalUsers";
-import { useAllBus } from "../hooks/useAllBus";
+import { useGlobalUsers, useAllBus } from "@/modules/users-global/hooks";
 import { UserGlobalSheet } from "../components/UserGlobalSheet";
 import type { GlobalUser, UserTypeFilter } from "../types";
 

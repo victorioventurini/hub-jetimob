@@ -4,7 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
-import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
+import { useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { ClaviculariesTab } from "../components/settings/ClaviculariesTab";
 import { InventoryTab } from "../components/settings/InventoryTab";

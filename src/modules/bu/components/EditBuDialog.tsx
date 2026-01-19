@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUpdateBu } from "../hooks/useBuData";
+import { useUpdateBu } from "@/modules/bu/hooks";
 import { BuLogoUpload } from "./BuLogoUpload";
 import { ColorPicker } from "./ColorPicker";
 import { formatCNPJ, validateCNPJ, unformatCNPJ } from "../utils/cnpjMask";

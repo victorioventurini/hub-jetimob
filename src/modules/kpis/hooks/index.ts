@@ -1,3 +1,3 @@
 // KPIs module hooks barrel export
 
-export { useKpiData } from "./useKpiData";
+export { useKpiData, useKpiDetail } from "./useKpiData";

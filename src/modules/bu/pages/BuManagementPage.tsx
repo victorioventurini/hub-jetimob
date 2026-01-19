@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useAllBus } from "../hooks/useBuData";
+import { useAllBus } from "@/modules/bu/hooks";
 import { CreateBuDialog } from "../components/CreateBuDialog";
 import { EditBuDialog } from "../components/EditBuDialog";
 import { BuDetailDialog } from "../components/BuDetailDialog";
