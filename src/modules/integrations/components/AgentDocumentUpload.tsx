@@ -48,7 +48,7 @@ function StatusBadge({ status }: { status: AgentDocument['status'] }) {
   switch (status) {
     case 'completed':
       return (
-        <Badge variant="default" className="bg-green-600">
+        <Badge variant="default" className="bg-success">
           <CheckCircle2 className="h-3 w-3 mr-1" />
           Pronto
         </Badge>
@@ -286,18 +286,11 @@ export function AgentDocumentUpload({ agentId }: AgentDocumentUploadProps) {
               <Button
                 onClick={handleUpload}
                 disabled={!selectedFile || !documentName.trim() || uploadMutation.isPending}
+                isLoading={uploadMutation.isPending}
+                loadingText="Enviando..."
               >
-                {uploadMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Enviar
-                  </>
-                )}
+                <Upload className="h-4 w-4 mr-2" />
+                Enviar
               </Button>
             </DialogFooter>
           </DialogContent>

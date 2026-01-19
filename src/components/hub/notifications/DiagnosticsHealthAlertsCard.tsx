@@ -57,7 +57,7 @@ interface Runbook {
 
 const severityConfig = {
   info: { icon: Info, color: 'text-muted-foreground', bg: 'bg-muted' },
-  warning: { icon: AlertTriangle, color: 'text-yellow-500', bg: 'bg-yellow-50' },
+  warning: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning-muted' },
   critical: { icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/10' },
 };
 

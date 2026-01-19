@@ -192,15 +192,15 @@ export function RulesInfoTab() {
       </Card>
 
       {/* Validation Note */}
-      <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
+      <Card className="border-warning/30 bg-warning-muted/50 dark:border-warning/30 dark:bg-warning-muted/20">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+            <Info className="h-5 w-5 text-warning mt-0.5 shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-amber-900 dark:text-amber-100">
+              <p className="font-medium text-warning-foreground dark:text-warning">
                 Validação em múltiplas camadas
               </p>
-              <p className="text-amber-700 dark:text-amber-300 mt-1">
+              <p className="text-warning-muted-foreground dark:text-warning/80 mt-1">
                 As regras de vínculo são validadas no frontend (para feedback imediato),
                 no backend (edge function) e no banco de dados (triggers). Isso garante
                 consistência mesmo em caso de uso direto da API.

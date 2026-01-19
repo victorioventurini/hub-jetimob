@@ -154,17 +154,17 @@ export function OrgHealthScoreCard({
             Status dos Objetivos
           </h4>
           <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 text-center p-2 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-lg font-bold text-green-600">{counts.healthyCount}</div>
-              <p className="text-[10px] text-green-600">Saudáveis</p>
+            <div className="flex-1 text-center p-2 bg-success-muted rounded-lg border border-success/30">
+              <div className="text-lg font-bold text-success">{counts.healthyCount}</div>
+              <p className="text-[10px] text-success">Saudáveis</p>
             </div>
-            <div className="flex-1 text-center p-2 bg-amber-50 rounded-lg border border-amber-200">
-              <div className="text-lg font-bold text-amber-600">{counts.attentionCount}</div>
-              <p className="text-[10px] text-amber-600">Atenção</p>
+            <div className="flex-1 text-center p-2 bg-warning-muted rounded-lg border border-warning/30">
+              <div className="text-lg font-bold text-warning">{counts.attentionCount}</div>
+              <p className="text-[10px] text-warning">Atenção</p>
             </div>
-            <div className="flex-1 text-center p-2 bg-red-50 rounded-lg border border-red-200">
-              <div className="text-lg font-bold text-red-600">{counts.riskCount}</div>
-              <p className="text-[10px] text-red-600">Em Risco</p>
+            <div className="flex-1 text-center p-2 bg-destructive/10 rounded-lg border border-destructive/30">
+              <div className="text-lg font-bold text-destructive">{counts.riskCount}</div>
+              <p className="text-[10px] text-destructive">Em Risco</p>
             </div>
           </div>
         </div>
