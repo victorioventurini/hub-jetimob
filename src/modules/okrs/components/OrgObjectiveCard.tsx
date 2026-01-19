@@ -75,9 +75,9 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
     <>
       <Card className={cn(
         'group transition-all border-l-4',
-        redCount > 0 && 'border-l-red-500',
-        redCount === 0 && yellowCount > 0 && 'border-l-yellow-500',
-        redCount === 0 && yellowCount === 0 && greenCount > 0 && 'border-l-green-500',
+        redCount > 0 && 'border-l-danger',
+        redCount === 0 && yellowCount > 0 && 'border-l-warning',
+        redCount === 0 && yellowCount === 0 && greenCount > 0 && 'border-l-success',
         activeKrs.length === 0 && 'border-l-muted'
       )}>
         <CardHeader className="pb-3">
@@ -139,9 +139,9 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
               <div
                 className={cn(
                   'h-full rounded-full transition-all',
-                  redCount > 0 && 'bg-red-500',
-                  redCount === 0 && yellowCount > 0 && 'bg-yellow-500',
-                  redCount === 0 && yellowCount === 0 && 'bg-green-500'
+                  redCount > 0 && 'bg-danger',
+                  redCount === 0 && yellowCount > 0 && 'bg-warning',
+                  redCount === 0 && yellowCount === 0 && 'bg-success'
                 )}
                 style={{ width: `${avgProgress}%` }}
               />
@@ -152,19 +152,19 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
               <div className="flex items-center gap-2 text-xs">
                 {greenCount > 0 && (
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="w-2 h-2 rounded-full bg-success" />
                     {greenCount}
                   </span>
                 )}
                 {yellowCount > 0 && (
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                    <span className="w-2 h-2 rounded-full bg-warning" />
                     {yellowCount}
                   </span>
                 )}
                 {redCount > 0 && (
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <span className="w-2 h-2 rounded-full bg-danger" />
                     {redCount}
                   </span>
                 )}

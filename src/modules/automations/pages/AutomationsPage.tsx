@@ -133,8 +133,8 @@ export default function AutomationsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <ArrowDownLeft className="h-5 w-5 text-blue-600" />
+              <div className="p-2 rounded-lg bg-info-muted">
+                <ArrowDownLeft className="h-5 w-5 text-info" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalActions}</p>
@@ -146,8 +146,8 @@ export default function AutomationsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Zap className="h-5 w-5 text-green-600" />
+              <div className="p-2 rounded-lg bg-success-muted">
+                <Zap className="h-5 w-5 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{successLogs}</p>

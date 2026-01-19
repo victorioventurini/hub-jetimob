@@ -147,9 +147,9 @@ export function EnhancedObjectiveCard({
 
   // Determine border color based on worst KR status
   const getBorderColor = () => {
-    if (redCount > 0) return 'border-l-red-500';
-    if (yellowCount > 0) return 'border-l-yellow-500';
-    if (greenCount > 0) return 'border-l-green-500';
+    if (redCount > 0) return 'border-l-danger';
+    if (yellowCount > 0) return 'border-l-warning';
+    if (greenCount > 0) return 'border-l-success';
     return 'border-l-muted';
   };
 
@@ -348,9 +348,9 @@ function EnhancedKrRow({ kr, index, type, onEdit, onCheckin }: EnhancedKrRowProp
 
   const getStatusColor = () => {
     switch (kr.status) {
-      case 'green': return 'text-green-600';
-      case 'yellow': return 'text-yellow-600';
-      case 'red': return 'text-red-600';
+      case 'green': return 'text-success';
+      case 'yellow': return 'text-warning';
+      case 'red': return 'text-danger';
       default: return 'text-muted-foreground';
     }
   };

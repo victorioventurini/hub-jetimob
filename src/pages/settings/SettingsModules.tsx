@@ -205,7 +205,7 @@ export default function SettingsModules() {
     switch (status) {
       case "active":
         return (
-          <Badge variant="default" className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
+          <Badge variant="default" className="bg-success-muted text-success hover:bg-success-muted">
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Ativo
           </Badge>
@@ -413,8 +413,8 @@ export default function SettingsModules() {
                   
                   const content = (
                     <>
-                      <div className="p-2 rounded-lg bg-blue-500/10">
-                        <IconComponent className="h-4 w-4 text-blue-500" />
+                      <div className="p-2 rounded-lg bg-info-muted">
+                        <IconComponent className="h-4 w-4 text-info" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{module.name}</p>

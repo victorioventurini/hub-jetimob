@@ -148,22 +148,22 @@ export function ProgressSummary({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-2 p-2 rounded-md bg-green-500/10">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className="flex items-center gap-2 p-2 rounded-md bg-success-muted">
+                <div className="w-3 h-3 rounded-full bg-success" />
                 <div>
                   <p className="text-sm font-medium">{greenCount}</p>
                   <p className="text-xs text-muted-foreground">No caminho</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-2 rounded-md bg-yellow-500/10">
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+              <div className="flex items-center gap-2 p-2 rounded-md bg-warning-muted">
+                <div className="w-3 h-3 rounded-full bg-warning" />
                 <div>
                   <p className="text-sm font-medium">{yellowCount}</p>
                   <p className="text-xs text-muted-foreground">Atenção</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-2 rounded-md bg-red-500/10">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
+              <div className="flex items-center gap-2 p-2 rounded-md bg-danger-muted">
+                <div className="w-3 h-3 rounded-full bg-danger" />
                 <div>
                   <p className="text-sm font-medium">{redCount}</p>
                   <p className="text-xs text-muted-foreground">Em risco</p>

@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ShieldX, Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -160,7 +160,7 @@ export default function OkrConstructionReviewPage() {
           <div className="p-4 rounded-full bg-muted mb-4"><ShieldX className="w-12 h-12 text-muted-foreground" /></div>
           <h1 className="text-xl font-semibold mb-2">Acesso Restrito</h1>
           <p className="text-muted-foreground mb-6">Esta página é exclusiva para líderes de time.</p>
-          <Button onClick={() => navigate('/okrs')}><ChevronLeft className="w-4 h-4 mr-2" />Voltar</Button>
+          <Button asChild><Link to="/okrs"><ChevronLeft className="w-4 h-4 mr-2" />Voltar</Link></Button>
         </div>
       </div>
     );
@@ -178,7 +178,7 @@ export default function OkrConstructionReviewPage() {
           <h1 className="text-xl font-semibold mb-2">Acesso Negado</h1>
           <p className="text-muted-foreground mb-6">Você só pode acessar a avaliação dos times que lidera.</p>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => navigate('/okrs')}><ChevronLeft className="w-4 h-4 mr-2" />Voltar</Button>
+            <Button asChild variant="outline"><Link to="/okrs"><ChevronLeft className="w-4 h-4 mr-2" />Voltar</Link></Button>
             {allowedTeams.length > 0 && (
               <Button onClick={() => teamIdState.set(allowedTeams[0].id)}>
                 Ver meu time
@@ -199,7 +199,7 @@ export default function OkrConstructionReviewPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/okrs')}><ChevronLeft className="w-5 h-5" /></Button>
+          <Button asChild variant="ghost" size="icon"><Link to="/okrs"><ChevronLeft className="w-5 h-5" /></Link></Button>
           <div>
             <h1 className="text-xl font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
