@@ -17,9 +17,9 @@ export function QualityOverviewCard({ overview, isLoading }: QualityOverviewCard
 
   // Determine overall status
   const getOverallStatus = () => {
-    if (avgHealthScore >= 75) return { label: 'Saudável', color: 'text-green-600', bgColor: 'bg-green-100', icon: TrendingUp };
-    if (avgHealthScore >= 50) return { label: 'Atenção', color: 'text-yellow-600', bgColor: 'bg-yellow-100', icon: AlertTriangle };
-    return { label: 'Em Risco', color: 'text-red-600', bgColor: 'bg-red-100', icon: XCircle };
+    if (avgHealthScore >= 75) return { label: 'Saudável', color: 'text-success', bgColor: 'bg-success-muted', icon: TrendingUp };
+    if (avgHealthScore >= 50) return { label: 'Atenção', color: 'text-warning', bgColor: 'bg-warning-muted', icon: AlertTriangle };
+    return { label: 'Em Risco', color: 'text-danger', bgColor: 'bg-danger-muted', icon: XCircle };
   };
 
   const status = getOverallStatus();
@@ -78,19 +78,19 @@ export function QualityOverviewCard({ overview, isLoading }: QualityOverviewCard
           <div className="flex gap-1 h-3 rounded-full overflow-hidden bg-muted">
             {healthyPercent > 0 && (
               <div 
-                className="bg-green-500 transition-all duration-300" 
+                className="bg-success transition-all duration-300" 
                 style={{ width: `${healthyPercent}%` }} 
               />
             )}
             {attentionPercent > 0 && (
               <div 
-                className="bg-yellow-500 transition-all duration-300" 
+                className="bg-warning transition-all duration-300" 
                 style={{ width: `${attentionPercent}%` }} 
               />
             )}
             {riskPercent > 0 && (
               <div 
-                className="bg-red-500 transition-all duration-300" 
+                className="bg-danger transition-all duration-300" 
                 style={{ width: `${riskPercent}%` }} 
               />
             )}
@@ -99,15 +99,15 @@ export function QualityOverviewCard({ overview, isLoading }: QualityOverviewCard
           {/* Legend */}
           <div className="flex justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <div className="w-2 h-2 rounded-full bg-success" />
               <span>Saudável ({objectivesHealthy})</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
+              <div className="w-2 h-2 rounded-full bg-warning" />
               <span>Atenção ({objectivesAttention})</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
+              <div className="w-2 h-2 rounded-full bg-danger" />
               <span>Em Risco ({objectivesRisk})</span>
             </div>
           </div>

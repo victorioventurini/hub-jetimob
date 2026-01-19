@@ -244,17 +244,17 @@ export function OrgObjectiveHealthCard({
 function KrHealthRow({ kr }: { kr: OrgKrHealthData }) {
   const getStatusColor = (status: 'green' | 'yellow' | 'red') => {
     switch (status) {
-      case 'green': return 'bg-green-500';
-      case 'yellow': return 'bg-amber-500';
-      case 'red': return 'bg-red-500';
+      case 'green': return 'bg-success';
+      case 'yellow': return 'bg-warning';
+      case 'red': return 'bg-danger';
     }
   };
 
   const getStatusBadgeColor = (status: 'green' | 'yellow' | 'red') => {
     switch (status) {
-      case 'green': return 'text-green-600 bg-green-50';
-      case 'yellow': return 'text-amber-600 bg-amber-50';
-      case 'red': return 'text-red-600 bg-red-50';
+      case 'green': return 'text-success bg-success-muted';
+      case 'yellow': return 'text-warning bg-warning-muted';
+      case 'red': return 'text-danger bg-danger-muted';
     }
   };
 
@@ -308,7 +308,7 @@ function KrHealthRow({ kr }: { kr: OrgKrHealthData }) {
       )}
 
       {kr.linkedTeams.length === 0 && (
-        <div className="flex items-center gap-1 text-xs text-amber-600">
+        <div className="flex items-center gap-1 text-xs text-warning">
           <AlertTriangle className="w-3 h-3" />
           Nenhum time contribuindo
         </div>

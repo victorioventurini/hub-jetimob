@@ -30,9 +30,9 @@ const trendIcons = {
 };
 
 const statusColors = {
-  green: 'text-green-600',
-  yellow: 'text-yellow-600',
-  red: 'text-red-600',
+  green: 'text-success',
+  yellow: 'text-warning',
+  red: 'text-danger',
 };
 
 export function TeamKpisCard({ kpis, teamId, isLoading }: TeamKpisCardProps) {
@@ -83,8 +83,8 @@ export function TeamKpisCard({ kpis, teamId, isLoading }: TeamKpisCardProps) {
                     {kpi.value}{kpi.unit}
                   </span>
                   <TrendIcon className={`h-4 w-4 ${
-                    kpi.trend === 'up' ? 'text-green-500' : 
-                    kpi.trend === 'down' ? 'text-red-500' : 
+                    kpi.trend === 'up' ? 'text-success' : 
+                    kpi.trend === 'down' ? 'text-danger' : 
                     'text-muted-foreground'
                   }`} />
                 </div>
