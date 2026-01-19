@@ -116,7 +116,7 @@ export function ManagersCrossIssuesStep({
               </Badge>
             )}
             {atRiskCount > 0 && (
-              <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+              <Badge variant="secondary" className="text-xs bg-warning-muted text-warning-muted-foreground">
                 {atRiskCount} em risco
               </Badge>
             )}

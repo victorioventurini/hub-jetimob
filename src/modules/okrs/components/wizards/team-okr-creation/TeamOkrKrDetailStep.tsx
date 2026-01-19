@@ -59,8 +59,8 @@ export interface TeamOkrKrDetailStepProps {
 const TYPE_CONFIG = {
   foundational: {
     icon: Target,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-success',
+    bgColor: 'bg-success-muted',
     title: 'Fundacional',
     questions: [
       'Que número prova que esse objetivo foi atingido?',
@@ -69,8 +69,8 @@ const TYPE_CONFIG = {
   },
   contribution: {
     icon: Link2,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-info',
+    bgColor: 'bg-info-muted',
     title: 'Contribuição',
     questions: [
       'Qual KR organizacional esse resultado alimenta?',
@@ -79,8 +79,8 @@ const TYPE_CONFIG = {
   },
   enabler: {
     icon: Wrench,
-    color: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-warning',
+    bgColor: 'bg-warning-muted',
     title: 'Habilitador',
     questions: [
       'O que precisa estar entregue para o resultado ser possível?',

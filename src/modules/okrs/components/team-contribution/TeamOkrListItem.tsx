@@ -15,9 +15,9 @@ const statusIcons = {
 };
 
 const statusColors = {
-  on_track: 'text-green-500',
-  at_risk: 'text-yellow-500',
-  off_track: 'text-red-500',
+  on_track: 'text-success',
+  at_risk: 'text-warning',
+  off_track: 'text-danger',
 };
 
 export function TeamOkrListItem({ okr }: TeamOkrListItemProps) {

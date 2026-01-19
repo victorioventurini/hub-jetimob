@@ -21,8 +21,8 @@ const statusConfig: Record<TicketStatus, { label: string; variant: "default" | "
 };
 
 const typeConfig: Record<TicketType, { label: string; className: string }> = {
-  internal: { label: "Interno", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
-  external: { label: "Externo", className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
+  internal: { label: "Interno", className: "bg-info-muted text-info-muted-foreground" },
+  external: { label: "Externo", className: "bg-accent text-accent-foreground" },
 };
 
 function getInitials(name: string | null | undefined): string {

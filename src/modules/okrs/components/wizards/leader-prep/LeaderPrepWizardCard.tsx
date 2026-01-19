@@ -68,13 +68,13 @@ export function LeaderPrepWizardCard({
             <div className={cn(
               "p-3 rounded-xl transition-transform group-hover:scale-105",
               hasIssues 
-                ? "bg-orange-100 dark:bg-orange-900/30"
-                : "bg-blue-100 dark:bg-blue-900/30"
+                ? "bg-warning-muted"
+                : "bg-info-muted"
             )}>
               {hasIssues ? (
-                <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <AlertTriangle className="h-6 w-6 text-warning" />
               ) : (
-                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <Users className="h-6 w-6 text-info" />
               )}
             </div>
 
@@ -90,7 +90,7 @@ export function LeaderPrepWizardCard({
                   </Badge>
                 )}
                 {isMonday && !hasIssues && (
-                  <Badge className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800">
+                  <Badge className="text-xs bg-info-muted text-info-muted-foreground border-info/30">
                     <Calendar className="h-3 w-3 mr-1" />
                     Segunda
                   </Badge>

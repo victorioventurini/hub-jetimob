@@ -132,8 +132,8 @@ export function PermissionDiffDialog({
               {removals.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Minus className="h-4 w-4 text-red-600" />
-                    <span className="text-sm font-medium text-red-700">
+                    <Minus className="h-4 w-4 text-danger" />
+                    <span className="text-sm font-medium text-danger">
                       Permissões a remover ({removals.length})
                     </span>
                   </div>

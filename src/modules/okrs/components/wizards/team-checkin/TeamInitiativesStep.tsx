@@ -35,9 +35,9 @@ export interface TeamInitiativesStepProps {
 
 const STATUS_CONFIG = {
   not_started: { label: 'Não iniciada', icon: Clock, className: 'text-muted-foreground' },
-  in_progress: { label: 'Em andamento', icon: Zap, className: 'text-blue-600' },
-  blocked: { label: 'Bloqueada', icon: AlertTriangle, className: 'text-red-600' },
-  completed: { label: 'Concluída', icon: CheckCircle2, className: 'text-green-600' },
+  in_progress: { label: 'Em andamento', icon: Zap, className: 'text-info' },
+  blocked: { label: 'Bloqueada', icon: AlertTriangle, className: 'text-danger' },
+  completed: { label: 'Concluída', icon: CheckCircle2, className: 'text-success' },
 };
 
 // ============================================================
@@ -78,7 +78,7 @@ export function TeamInitiativesStep({
                 </Badge>
               )}
               {inProgressCount > 0 && (
-                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                <Badge variant="secondary" className="text-xs bg-info-muted text-info-muted-foreground">
                   {inProgressCount} em andamento
                 </Badge>
               )}
