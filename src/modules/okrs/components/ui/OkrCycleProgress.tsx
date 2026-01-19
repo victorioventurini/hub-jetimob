@@ -78,19 +78,19 @@ export function OkrCycleProgress({
                   ⏳ {Math.round(cycleProgress)}% do tempo decorrido
                 </div>
                 {isAtRisk && (
-                  <div className="text-xs text-yellow-600">
+                  <div className="text-xs text-warning">
                     ⚠️ Progresso {Math.round(progressGap)}% abaixo do esperado
                   </div>
                 )}
                 {isOnTrack && (
-                  <div className="text-xs text-green-600">
+                  <div className="text-xs text-success">
                     ✓ Progresso alinhado ou adiantado
                   </div>
                 )}
               </>
             )}
             {isOverdue && (
-              <div className="text-xs text-red-600">
+              <div className="text-xs text-destructive">
                 ⚠️ Ciclo encerrado há {Math.abs(remainingDays)} dias
               </div>
             )}

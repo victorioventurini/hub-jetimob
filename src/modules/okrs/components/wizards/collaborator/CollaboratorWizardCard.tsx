@@ -55,7 +55,7 @@ export function CollaboratorWizardCard({ className }: CollaboratorWizardCardProp
         className={cn(
           "animate-fade-in overflow-hidden transition-all hover:shadow-md cursor-pointer group",
           overdueCount > 0 
-            ? "border-orange-200 dark:border-orange-800/50 bg-gradient-to-r from-orange-50/50 to-transparent dark:from-orange-950/20"
+            ? "border-warning/30 bg-gradient-to-r from-warning-muted/50 to-transparent"
             : "border-primary/20 bg-gradient-to-r from-primary/5 to-transparent",
           className
         )}
@@ -66,11 +66,11 @@ export function CollaboratorWizardCard({ className }: CollaboratorWizardCardProp
             <div className={cn(
               "p-3 rounded-xl transition-transform group-hover:scale-105",
               overdueCount > 0 
-                ? "bg-orange-100 dark:bg-orange-900/30"
+                ? "bg-warning-muted"
                 : "bg-primary/10"
             )}>
               {overdueCount > 0 ? (
-                <AlertCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <AlertCircle className="h-6 w-6 text-warning" />
               ) : (
                 <CalendarCheck className="h-6 w-6 text-primary" />
               )}

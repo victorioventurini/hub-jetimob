@@ -124,7 +124,7 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
           {!isSubteam && team.child_teams && team.child_teams.length > 0 && (
             <Badge 
               variant="outline" 
-              className="text-xs bg-blue-500/5 text-blue-600 border-blue-500/20"
+              className="text-xs bg-info/5 text-info border-info/20"
             >
               <Layers3 className="h-3 w-3 mr-1" />
               {team.child_teams.length} sub-time{team.child_teams.length !== 1 ? 's' : ''}

@@ -50,11 +50,11 @@ function getVariationColor(variation: number, direction: OkrDirection): string {
   }
 
   if (direction === "up") {
-    return variation > 0 ? "text-green-600" : "text-red-600";
+    return variation > 0 ? "text-success" : "text-destructive";
   }
 
   // down
-  return variation < 0 ? "text-green-600" : "text-red-600";
+  return variation < 0 ? "text-success" : "text-destructive";
 }
 
 function getVariationIcon(variation: number) {

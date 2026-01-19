@@ -477,7 +477,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
                   {valueDiff !== 0 && (
                     <div className={cn(
                       "flex items-center gap-1 text-xs font-medium",
-                      isPositiveChange ? 'text-green-600' : 'text-red-600'
+                      isPositiveChange ? 'text-success' : 'text-destructive'
                     )}>
                       {isPositiveChange ? (
                         <TrendingUp className="w-3 h-3" />

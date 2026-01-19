@@ -60,15 +60,15 @@ export function OrgHealthScoreCard({
 }: OrgHealthScoreCardProps) {
   
   const getScoreColor = (score: number) => {
-    if (score >= 7) return 'text-green-600';
-    if (score >= 4) return 'text-amber-600';
-    return 'text-red-600';
+    if (score >= 7) return 'text-success';
+    if (score >= 4) return 'text-warning';
+    return 'text-destructive';
   };
 
   const getProgressColor = (score: number) => {
-    if (score >= 7) return 'bg-green-500';
-    if (score >= 4) return 'bg-amber-500';
-    return 'bg-red-500';
+    if (score >= 7) return 'bg-success';
+    if (score >= 4) return 'bg-warning';
+    return 'bg-destructive';
   };
 
   const overallStatus = overallScore >= 7 ? 'healthy' : overallScore >= 4 ? 'attention' : 'risk';
