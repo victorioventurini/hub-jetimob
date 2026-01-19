@@ -153,8 +153,8 @@ export default function SettingsIntegrations() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Settings2 className="h-5 w-5 text-orange-600" />
+              <div className="p-2 rounded-lg bg-warning-muted">
+                <Settings2 className="h-5 w-5 text-warning" />
               </div>
               <div>
                 <p className="text-2xl font-bold">
@@ -224,7 +224,7 @@ export default function SettingsIntegrations() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-foreground">{integration.name}</h3>
                       {integration.is_enabled_global ? (
-                        <Badge variant="default" className="bg-green-500/10 text-green-600">
+                        <Badge variant="default" className="bg-success-muted text-success">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Habilitada
                         </Badge>
@@ -235,7 +235,7 @@ export default function SettingsIntegrations() {
                         </Badge>
                       )}
                       {integration.supports_agents && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-300">
+                        <Badge variant="outline" className="text-warning border-warning/30">
                           IA
                         </Badge>
                       )}

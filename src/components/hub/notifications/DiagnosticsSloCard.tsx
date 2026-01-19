@@ -148,8 +148,8 @@ export function DiagnosticsSloCard() {
                       <TableCell className="text-center">
                         <span className={cn(
                           'font-medium',
-                          Number(row.success_rate) >= 99 ? 'text-green-600' :
-                          Number(row.success_rate) >= 95 ? 'text-yellow-600' : 'text-destructive'
+                          Number(row.success_rate) >= 99 ? 'text-success' :
+                          Number(row.success_rate) >= 95 ? 'text-warning' : 'text-destructive'
                         )}>
                           {row.success_rate}%
                         </span>
@@ -164,7 +164,7 @@ export function DiagnosticsSloCard() {
                       </TableCell>
                       <TableCell className="text-center">
                         {isCompliant ? (
-                          <CheckCircle className="h-4 w-4 text-green-600 mx-auto" />
+                          <CheckCircle className="h-4 w-4 text-success mx-auto" />
                         ) : (
                           <XCircle className="h-4 w-4 text-destructive mx-auto" />
                         )}
@@ -181,7 +181,7 @@ export function DiagnosticsSloCard() {
         {worstEvents && worstEvents.length > 0 && (
           <div>
             <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
               Eventos com Pior Performance
             </h4>
             <Table>
@@ -204,8 +204,8 @@ export function DiagnosticsSloCard() {
                     <TableCell className="text-center">
                       <span className={cn(
                         'font-medium',
-                        event.success_rate >= 99 ? 'text-green-600' :
-                        event.success_rate >= 95 ? 'text-yellow-600' : 'text-destructive'
+                        event.success_rate >= 99 ? 'text-success' :
+                        event.success_rate >= 95 ? 'text-warning' : 'text-destructive'
                       )}>
                         {event.success_rate}%
                       </span>

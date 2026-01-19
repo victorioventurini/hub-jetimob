@@ -102,10 +102,10 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-6 bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30 border-b">
+      <div className="px-6 py-6 bg-gradient-to-r from-success-muted to-transparent border-b">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/50">
-            <PartyPopper className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="p-3 rounded-full bg-success-muted">
+            <PartyPopper className="h-6 w-6 text-success" />
           </div>
           <div>
             <h3 className="text-xl font-semibold">Check-in concluído!</h3>
@@ -124,7 +124,7 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
       {/* Stats */}
       <div className="px-6 py-4 grid grid-cols-4 gap-4 border-b bg-muted/20">
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 text-green-600">
+          <div className="flex items-center justify-center gap-1 text-success">
             <CheckCircle2 className="h-5 w-5" />
             <span className="text-2xl font-bold">{stats.completed}</span>
           </div>
@@ -140,7 +140,7 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
         <div className="text-center">
           <div className={cn(
             "flex items-center justify-center gap-1",
-            stats.withBlockers > 0 ? "text-orange-500" : "text-muted-foreground"
+            stats.withBlockers > 0 ? "text-warning" : "text-muted-foreground"
           )}>
             <AlertTriangle className="h-5 w-5" />
             <span className="text-2xl font-bold">{stats.withBlockers}</span>
@@ -163,7 +163,7 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
           {stats.completed > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
                 KRs atualizados
               </h4>
               <div className="space-y-2">
@@ -229,7 +229,7 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
             <>
               <Separator />
               <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2 text-orange-600 dark:text-orange-400">
+              <h4 className="font-medium flex items-center gap-2 text-warning">
                   <AlertTriangle className="h-4 w-4" />
                   Bloqueadores registrados
                 </h4>

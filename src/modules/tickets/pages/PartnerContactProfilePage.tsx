@@ -555,26 +555,26 @@ export default function PartnerContactProfilePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/30">
-                    <Hourglass className="h-4 w-4 mx-auto mb-1 text-yellow-600 dark:text-yellow-400" />
-                    <p className="text-lg font-semibold text-yellow-700 dark:text-yellow-300">
+                  <div className="text-center p-3 rounded-lg bg-warning-muted">
+                    <Hourglass className="h-4 w-4 mx-auto mb-1 text-warning" />
+                    <p className="text-lg font-semibold text-warning-muted-foreground">
                       {profile.ticket_stats.waiting}
                     </p>
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400">Aguardando</p>
+                    <p className="text-xs text-warning">Aguardando</p>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30">
-                    <Loader2 className="h-4 w-4 mx-auto mb-1 text-blue-600 dark:text-blue-400" />
-                    <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+                  <div className="text-center p-3 rounded-lg bg-info-muted">
+                    <Loader2 className="h-4 w-4 mx-auto mb-1 text-info" />
+                    <p className="text-lg font-semibold text-info-muted-foreground">
                       {profile.ticket_stats.in_progress}
                     </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400">Em andamento</p>
+                    <p className="text-xs text-info">Em andamento</p>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
-                    <CheckCircle2 className="h-4 w-4 mx-auto mb-1 text-green-600 dark:text-green-400" />
-                    <p className="text-lg font-semibold text-green-700 dark:text-green-300">
+                  <div className="text-center p-3 rounded-lg bg-success-muted">
+                    <CheckCircle2 className="h-4 w-4 mx-auto mb-1 text-success" />
+                    <p className="text-lg font-semibold text-success-muted-foreground">
                       {profile.ticket_stats.done}
                     </p>
-                    <p className="text-xs text-green-600 dark:text-green-400">Concluídos</p>
+                    <p className="text-xs text-success">Concluídos</p>
                   </div>
                 </div>
 
