@@ -182,20 +182,20 @@ export function LeaderAlignmentStep({
             <Card
               className={cn(
                 alignmentStatus === 'aligned' && "border-green-200 bg-green-50/50 dark:border-green-800/50 dark:bg-green-950/20",
-                alignmentStatus === 'team_ahead' && "border-blue-200 bg-blue-50/50 dark:border-blue-800/50 dark:bg-blue-950/20",
-                alignmentStatus === 'team_behind' && "border-orange-200 bg-orange-50/50 dark:border-orange-800/50 dark:bg-orange-950/20"
+                alignmentStatus === 'team_ahead' && "border-info/30 bg-info-muted/50",
+                alignmentStatus === 'team_behind' && "border-warning/30 bg-warning-muted/50"
               )}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   {alignmentStatus === 'aligned' && (
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <CheckCircle2 className="h-5 w-5 text-success" />
                   )}
                   {alignmentStatus === 'team_ahead' && (
-                    <ArrowUpRight className="h-5 w-5 text-blue-600" />
+                    <ArrowUpRight className="h-5 w-5 text-info" />
                   )}
                   {alignmentStatus === 'team_behind' && (
-                    <HelpCircle className="h-5 w-5 text-orange-600" />
+                    <HelpCircle className="h-5 w-5 text-warning" />
                   )}
                   <div>
                     <p className="font-medium text-sm">
