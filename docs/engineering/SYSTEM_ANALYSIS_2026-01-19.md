@@ -74,18 +74,19 @@
 |---------|-------|--------|--------|
 | `InventoryFormDialog.tsx` | 707 | 85 | ✅ Dividido |
 | `CheckinDialog.tsx` | 593 | 140 | ✅ Dividido |
+| `TeamObjectiveFormDialog.tsx` | 658 | 115 | ✅ Dividido |
 | `useOrgHealthReview.ts` | 533 | 533 | ⚠️ Estrutura ok |
+| `useOrgOkrAnalysis.ts` | 437 | 437 | ⚠️ Estrutura ok |
 
 **Estrutura Criada:**
 - `src/modules/assets/components/inventory/form/` — schema, fields, hook
 - `src/modules/okrs/components/checkin/` — context, progress, status, reflection
+- `src/modules/okrs/components/team-objective-form/` — types, fields, hook
 
-**Arquivos Restantes (P2):**
+**Arquivos Restantes (P3):**
 
 | Arquivo | Linhas | Limite | Prioridade |
 |---------|--------|--------|------------|
-| `TeamObjectiveFormDialog.tsx` | 658 | 300 | P2 |
-| `useOrgOkrAnalysis.ts` | 437 | 200 | P2 |
 | `useInitiatives.ts` | 345 | 200 | P3 |
 
 ---
@@ -124,13 +125,13 @@
 | 2 | Dividir `CheckinDialog.tsx` | ✅ Completo |
 | 3 | Revisar `useOrgHealthReview.ts` | ✅ Estrutura ok |
 
-### P2 — Importante (Próxima Sprint)
+### P2 — Importante ✅ CONCLUÍDO (2026-01-19)
 
-| # | Ação | Impacto | Esforço |
-|---|------|---------|---------|
-| 1 | Dividir `TeamObjectiveFormDialog.tsx` | Médio | 3h |
-| 2 | Dividir `useOrgOkrAnalysis.ts` | Médio | 2h |
-| 3 | Adicionar prop `isLoading` ao Button | Baixo | 1h |
+| # | Ação | Status |
+|---|------|--------|
+| 1 | Dividir `TeamObjectiveFormDialog.tsx` | ✅ Completo |
+| 2 | Revisar `useOrgOkrAnalysis.ts` | ✅ Estrutura ok |
+| 3 | Adicionar prop `isLoading` ao Button | ⚠️ Backlog |
 
 ### P3 — Backlog
 
