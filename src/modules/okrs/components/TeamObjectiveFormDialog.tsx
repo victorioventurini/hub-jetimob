@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Ban, Lock, Link2 } from 'lucide-react';
+import { Users, Ban, Lock, Link2 } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { VicActionButton } from '@/modules/vic';
 import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
@@ -634,8 +634,7 @@ export function TeamObjectiveFormDialog({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Button type="submit" isLoading={isPending}>
                   {isEditing ? 'Salvar' : 'Criar Objetivo'}
                 </Button>
               </div>

@@ -317,10 +317,10 @@ export function CollaboratorCheckinStep({
             {change !== 0 && (
               <div className={cn(
                 "flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium",
-                change > 0 && kr.direction === 'up' && "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400",
-                change < 0 && kr.direction === 'down' && "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400",
-                change > 0 && kr.direction === 'down' && "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
-                change < 0 && kr.direction === 'up' && "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
+                change > 0 && kr.direction === 'up' && "bg-success-muted text-success-muted-foreground",
+                change < 0 && kr.direction === 'down' && "bg-success-muted text-success-muted-foreground",
+                change > 0 && kr.direction === 'down' && "bg-danger-muted text-danger-muted-foreground",
+                change < 0 && kr.direction === 'up' && "bg-danger-muted text-danger-muted-foreground",
               )}>
                 {change > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                 <span>{change > 0 ? '+' : ''}{change}</span>

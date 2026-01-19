@@ -23,7 +23,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useIdentity } from "@/hooks/useIdentity";
 import { queryKeys } from "@/lib/queryKeys";
-import { Loader2, AlertTriangle, Lightbulb, BookOpen } from "lucide-react";
+import { AlertTriangle, Lightbulb, BookOpen } from "lucide-react";
 import type { OkrStatus } from "../types";
 
 interface CancellationReason {
@@ -276,8 +276,7 @@ export function CancelOkrDialog({
             >
               Voltar
             </Button>
-            <Button type="submit" variant="destructive" disabled={!canSubmit || cancelMutation.isPending}>
-              {cancelMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button type="submit" variant="destructive" isLoading={cancelMutation.isPending} disabled={!canSubmit}>
               Confirmar {finalStatus === "cancelled" ? "Cancelamento" : "Descarte"}
             </Button>
           </DialogFooter>

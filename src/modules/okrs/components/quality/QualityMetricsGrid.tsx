@@ -40,16 +40,16 @@ interface MetricCardProps {
 function MetricCard({ icon: Icon, label, value, total, variant = 'default', subLabel }: MetricCardProps) {
   const variants = {
     default: 'text-muted-foreground',
-    success: 'text-green-600',
-    warning: 'text-yellow-600',
-    danger: 'text-red-600',
+    success: 'text-success',
+    warning: 'text-warning',
+    danger: 'text-danger',
   };
 
   const bgVariants = {
     default: 'bg-muted/50',
-    success: 'bg-green-50',
-    warning: 'bg-yellow-50',
-    danger: 'bg-red-50',
+    success: 'bg-success-muted',
+    warning: 'bg-warning-muted',
+    danger: 'bg-danger-muted',
   };
 
   return (
