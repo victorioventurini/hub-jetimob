@@ -424,8 +424,7 @@ export function OrgKrFormDialog({
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={mutation.isPending || !validation.isValid}>
-                  {mutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Button type="submit" isLoading={mutation.isPending} disabled={!validation.isValid}>
                   {isEditing ? 'Salvar' : 'Criar Key Result'}
                 </Button>
               </div>

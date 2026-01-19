@@ -212,11 +212,11 @@ export function InstructionSourcesManager({ agentId }: InstructionSourcesManager
   const getStatusIcon = (status: string | null) => {
     switch (status) {
       case 'success':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-success" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-danger" />;
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="w-4 h-4 text-warning" />;
       default:
         return null;
     }

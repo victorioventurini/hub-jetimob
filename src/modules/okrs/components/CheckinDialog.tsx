@@ -369,9 +369,9 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
               {/* Shared OKR context */}
               {kr.is_shared && (
-                <div className="flex items-center gap-2 p-2 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 rounded-md">
-                  <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-xs text-purple-700 dark:text-purple-300">
+                <div className="flex items-center gap-2 p-2 bg-accent/50 border border-accent rounded-md">
+                  <Users className="w-4 h-4 text-accent-foreground" />
+                  <span className="text-xs text-accent-foreground">
                     OKR Compartilhada {kr.team_name && `• ${kr.team_name}`}
                   </span>
                 </div>

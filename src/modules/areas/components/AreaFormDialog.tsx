@@ -278,8 +278,7 @@ export function AreaFormDialog({ open, setOpen, area }: AreaFormDialogProps) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Button type="submit" isLoading={isPending}>
                 {isEditing ? "Salvar" : "Criar"}
               </Button>
             </DialogFooter>

@@ -102,9 +102,9 @@ export function OrgViewInsights({ objective }: OrgViewInsightsProps) {
   };
 
   const colorMap = {
-    warning: 'text-yellow-600 bg-yellow-50',
-    info: 'text-blue-600 bg-blue-50',
-    success: 'text-green-600 bg-green-50',
+    warning: 'text-warning bg-warning-muted',
+    info: 'text-info bg-info-muted',
+    success: 'text-success bg-success-muted',
   };
 
   return (

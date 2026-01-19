@@ -20,28 +20,28 @@ interface AnalysisScoreCardProps {
 
 const statusColors = {
   excellent: {
-    bg: 'bg-green-50 dark:bg-green-950/30',
-    text: 'text-green-700 dark:text-green-400',
-    progress: 'bg-green-500',
-    border: 'border-green-200 dark:border-green-900',
+    bg: 'bg-success-muted',
+    text: 'text-success-muted-foreground',
+    progress: 'bg-success',
+    border: 'border-success/30',
   },
   good: {
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-400',
-    progress: 'bg-blue-500',
-    border: 'border-blue-200 dark:border-blue-900',
+    bg: 'bg-info-muted',
+    text: 'text-info-muted-foreground',
+    progress: 'bg-info',
+    border: 'border-info/30',
   },
   warning: {
-    bg: 'bg-yellow-50 dark:bg-yellow-950/30',
-    text: 'text-yellow-700 dark:text-yellow-400',
-    progress: 'bg-yellow-500',
-    border: 'border-yellow-200 dark:border-yellow-900',
+    bg: 'bg-warning-muted',
+    text: 'text-warning-muted-foreground',
+    progress: 'bg-warning',
+    border: 'border-warning/30',
   },
   critical: {
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    text: 'text-red-700 dark:text-red-400',
-    progress: 'bg-red-500',
-    border: 'border-red-200 dark:border-red-900',
+    bg: 'bg-danger-muted',
+    text: 'text-danger-muted-foreground',
+    progress: 'bg-danger',
+    border: 'border-danger/30',
   },
 };
 

@@ -503,10 +503,10 @@ export function TeamObjectiveFormDialog({
 
               {/* Shared OKR Fields */}
               {isShared && (
-                <div className="space-y-4 p-4 rounded-lg border border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/30">
-                  <Alert className="border-purple-200 bg-purple-100/50 dark:border-purple-800 dark:bg-purple-900/30">
-                    <Users className="h-4 w-4 text-purple-600" />
-                    <AlertDescription className="text-purple-800 dark:text-purple-200">
+                <div className="space-y-4 p-4 rounded-lg border border-accent bg-accent/30">
+                  <Alert className="border-accent bg-accent/50">
+                    <Users className="h-4 w-4 text-accent-foreground" />
+                    <AlertDescription className="text-accent-foreground">
                       {selectedPrimaryTeamName 
                         ? `${selectedPrimaryTeamName} será o time primário responsável.`
                         : 'Selecione o time primário acima.'}

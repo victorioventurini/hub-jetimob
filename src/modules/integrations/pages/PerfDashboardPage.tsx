@@ -71,15 +71,15 @@ function SummaryCard({
   const variantStyles = {
     default: 'border-border',
     critical: 'border-destructive bg-destructive/5',
-    warning: 'border-amber-500 bg-amber-500/5',
-    success: 'border-emerald-500 bg-emerald-500/5',
+    warning: 'border-warning bg-warning/5',
+    success: 'border-success bg-success/5',
   };
 
   const iconStyles = {
     default: 'text-muted-foreground',
     critical: 'text-destructive',
-    warning: 'text-amber-500',
-    success: 'text-emerald-500',
+    warning: 'text-warning',
+    success: 'text-success',
   };
 
   return (
