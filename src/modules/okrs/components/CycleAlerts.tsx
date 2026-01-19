@@ -180,8 +180,8 @@ export function ExpectedProgressIndicator({
   const isBehind = delta < -10;
 
   const getStatusColor = () => {
-    if (isAhead) return "text-green-600";
-    if (isBehind) return "text-red-600";
+    if (isAhead) return "text-success";
+    if (isBehind) return "text-destructive";
     return "text-muted-foreground";
   };
 

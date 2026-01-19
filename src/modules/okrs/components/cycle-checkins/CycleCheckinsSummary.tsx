@@ -170,9 +170,9 @@ function TeamSummaryCard({ team, onClick }: TeamSummaryCardProps) {
       : Minus;
   
   const statusColor = team.overdueCount > 0 
-    ? 'text-yellow-500' 
+    ? 'text-warning' 
     : team.onTrackPercent >= 80 
-      ? 'text-green-500' 
+      ? 'text-success' 
       : 'text-muted-foreground';
   
   return (
@@ -200,9 +200,9 @@ function TeamSummaryCard({ team, onClick }: TeamSummaryCardProps) {
               value={team.onTrackPercent} 
               className={cn(
                 "h-2",
-                team.onTrackPercent >= 80 && "[&>div]:bg-green-500",
-                team.onTrackPercent >= 50 && team.onTrackPercent < 80 && "[&>div]:bg-yellow-500",
-                team.onTrackPercent < 50 && "[&>div]:bg-red-500",
+                team.onTrackPercent >= 80 && "[&>div]:bg-success",
+                team.onTrackPercent >= 50 && team.onTrackPercent < 80 && "[&>div]:bg-warning",
+                team.onTrackPercent < 50 && "[&>div]:bg-destructive",
               )}
             />
           </div>
@@ -215,7 +215,7 @@ function TeamSummaryCard({ team, onClick }: TeamSummaryCardProps) {
                   {team.overdueCount} atrasado{team.overdueCount !== 1 ? 's' : ''}
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <Badge variant="secondary" className="text-xs bg-success-muted text-success">
                   Em dia
                 </Badge>
               )}

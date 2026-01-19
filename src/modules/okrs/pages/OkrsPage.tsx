@@ -164,10 +164,10 @@ export default function OkrsPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Em Risco
               </CardTitle>
-              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <AlertTriangle className="w-4 h-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-destructive">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.atRiskKrs}
               </div>
             </CardContent>

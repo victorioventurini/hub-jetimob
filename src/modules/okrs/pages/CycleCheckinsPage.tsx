@@ -300,9 +300,9 @@ function SummaryCard({
 }: SummaryCardProps) {
   const variantStyles = {
     default: 'text-foreground',
-    success: 'text-green-600 dark:text-green-400',
-    warning: 'text-yellow-600 dark:text-yellow-400',
-    danger: 'text-red-600 dark:text-red-400',
+    success: 'text-success',
+    warning: 'text-warning',
+    danger: 'text-destructive',
   };
   
   return (

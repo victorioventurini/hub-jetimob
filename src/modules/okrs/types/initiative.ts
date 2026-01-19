@@ -89,8 +89,8 @@ export function getInitiativePriorityColor(priority: InitiativePriority | null):
   if (!priority) return 'text-muted-foreground';
   const colors: Record<InitiativePriority, string> = {
     low: 'text-muted-foreground',
-    medium: 'text-yellow-600 dark:text-yellow-400',
-    high: 'text-red-600 dark:text-red-400',
+    medium: 'text-warning',
+    high: 'text-destructive',
   };
   return colors[priority];
 }
