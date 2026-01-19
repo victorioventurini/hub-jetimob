@@ -7316,6 +7316,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string | null
+          integration_key: string | null
           is_active: boolean | null
           name: string | null
           output_format:
@@ -7330,6 +7331,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string | null
+          integration_key?: string | null
           is_active?: boolean | null
           name?: string | null
           output_format?:
@@ -7344,6 +7346,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string | null
+          integration_key?: string | null
           is_active?: boolean | null
           name?: string | null
           output_format?:
@@ -7360,6 +7363,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bu_units"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agents_integration_key_fkey"
+            columns: ["integration_key"]
+            isOneToOne: false
+            referencedRelation: "hub_integrations_catalog"
+            referencedColumns: ["integration_key"]
           },
         ]
       }
