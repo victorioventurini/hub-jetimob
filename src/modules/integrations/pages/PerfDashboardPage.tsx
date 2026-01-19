@@ -48,8 +48,8 @@ function formatBytes(bytes: number): string {
 function StatusBadge({ status }: { status: 'critical' | 'warning' | 'ok' }) {
   const variants = {
     critical: { label: 'Crítico', className: 'bg-destructive text-destructive-foreground' },
-    warning: { label: 'Atenção', className: 'bg-amber-500 text-white' },
-    ok: { label: 'OK', className: 'bg-emerald-500 text-white' },
+    warning: { label: 'Atenção', className: 'bg-warning text-warning-foreground' },
+    ok: { label: 'OK', className: 'bg-success text-success-foreground' },
   };
   const v = variants[status];
   return <Badge className={v.className}>{v.label}</Badge>;

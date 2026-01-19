@@ -85,12 +85,12 @@ export function InitiativeDateAlert({ expectedEndDate, cycle, className }: Initi
     <Alert 
       variant="default" 
       className={cn(
-        "border-orange-500/50 bg-orange-500/10",
+        "border-warning/50 bg-warning/10",
         className
       )}
     >
-      <CalendarX className="h-4 w-4 text-orange-600" />
-      <AlertDescription className="text-sm text-orange-800 dark:text-orange-200">
+      <CalendarX className="h-4 w-4 text-warning" />
+      <AlertDescription className="text-sm text-warning-muted-foreground">
         <span className="font-medium">Prazo além do ciclo.</span>
         {" "}
         Esta iniciativa termina {daysAfter} dia{daysAfter !== 1 ? "s" : ""} após o fim do ciclo ({format(cycleEnd, "dd/MM/yyyy", { locale: ptBR })}).

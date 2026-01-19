@@ -116,8 +116,8 @@ export function GiftItemDialog({ open, onOpenChange }: GiftItemDialogProps) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreatingItem}>
-                {isCreatingItem ? "Salvando..." : "Salvar"}
+              <Button type="submit" isLoading={isCreatingItem} loadingText="Salvando...">
+                Salvar
               </Button>
             </div>
           </form>

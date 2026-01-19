@@ -231,11 +231,11 @@ export function SquadFormDialog({
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={!name.trim() || isPending}
+                  isLoading={isPending}
+                  loadingText={isEditing ? "Salvando..." : "Criando..."}
+                  disabled={!name.trim()}
                 >
-                  {isPending 
-                    ? (isEditing ? "Salvando..." : "Criando...") 
-                    : (isEditing ? "Salvar" : "Criar Squad")}
+                  {isEditing ? "Salvar" : "Criar Squad"}
                 </Button>
               </div>
             </DialogFooter>

@@ -695,8 +695,8 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreatingItem || isUpdatingItem}>
-                {isCreatingItem || isUpdatingItem ? "Salvando..." : isEditing ? "Atualizar" : "Criar"}
+              <Button type="submit" isLoading={isCreatingItem || isUpdatingItem} loadingText="Salvando...">
+                {isEditing ? "Atualizar" : "Criar"}
               </Button>
             </div>
           </form>

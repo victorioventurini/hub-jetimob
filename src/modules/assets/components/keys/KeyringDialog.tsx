@@ -194,8 +194,8 @@ export function KeyringDialog({ open, onOpenChange }: KeyringDialogProps) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreatingKeyring}>
-                {isCreatingKeyring ? "Salvando..." : "Salvar"}
+              <Button type="submit" isLoading={isCreatingKeyring} loadingText="Salvando...">
+                Salvar
               </Button>
             </div>
           </form>

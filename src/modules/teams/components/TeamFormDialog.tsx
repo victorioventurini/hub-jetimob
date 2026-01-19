@@ -314,10 +314,8 @@ export function TeamFormDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="accent" disabled={isPending}>
-              {isPending 
-                ? (isEditing ? "Salvando..." : "Criando...") 
-                : (isEditing ? "Salvar Alterações" : "Criar Time")}
+            <Button type="submit" variant="accent" isLoading={isPending} loadingText={isEditing ? "Salvando..." : "Criando..."}>
+              {isEditing ? "Salvar Alterações" : "Criar Time"}
             </Button>
           </div>
         </div>

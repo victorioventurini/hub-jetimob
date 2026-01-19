@@ -54,15 +54,15 @@ export function ConstructionScoreCard({
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 50) return 'text-amber-600';
-    return 'text-red-600';
+    if (score >= 80) return 'text-success';
+    if (score >= 50) return 'text-warning';
+    return 'text-danger';
   };
 
   const getProgressColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 50) return 'bg-amber-500';
-    return 'bg-red-500';
+    if (score >= 80) return 'bg-success';
+    if (score >= 50) return 'bg-warning';
+    return 'bg-danger';
   };
 
   const analyzingCount = pendingCount;

@@ -149,7 +149,7 @@ export default function AgentLogsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-500" />
+                <XCircle className="w-5 h-5 text-danger" />
                 <div>
                   <p className="text-sm text-muted-foreground">Erros</p>
                   <p className="text-2xl font-bold">{stats.error}</p>
@@ -160,7 +160,7 @@ export default function AgentLogsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-yellow-500" />
+                <Clock className="w-5 h-5 text-warning" />
                 <div>
                   <p className="text-sm text-muted-foreground">Latência Média</p>
                   <p className="text-2xl font-bold">{stats.avgLatency}ms</p>
@@ -171,7 +171,7 @@ export default function AgentLogsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-blue-500" />
+                <Activity className="w-5 h-5 text-info" />
                 <div>
                   <p className="text-sm text-muted-foreground">Tokens Total</p>
                   <p className="text-2xl font-bold">{stats.totalTokens.toLocaleString()}</p>

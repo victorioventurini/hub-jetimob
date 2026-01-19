@@ -340,8 +340,8 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Criando..." : "Criar KPI"}
+              <Button type="submit" isLoading={isSubmitting} loadingText="Criando...">
+                Criar KPI
               </Button>
             </DialogFooter>
           </form>
