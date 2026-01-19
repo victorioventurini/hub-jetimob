@@ -15,7 +15,7 @@ import {
   type InitiativeStatus, 
   type InitiativePriority 
 } from "../../types/initiative";
-import { Loader2, Target, Calendar, AlertTriangle } from "lucide-react";
+import { Target, Calendar, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { UserLink } from "@/components/links";
@@ -242,8 +242,7 @@ export function InitiativeQuickUpdateDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button type="submit" isLoading={updateMutation.isPending}>
               Salvar Atualização
             </Button>
           </DialogFooter>

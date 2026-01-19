@@ -56,14 +56,14 @@ export function OrgOkrOverviewCard({
       label: 'KRs Vinculados',
       value: `${linkagePercent}%`,
       subLabel: `${totals.linkedKrs} de ${totals.orgKrs}`,
-      color: linkagePercent >= 70 ? 'text-green-600' : linkagePercent >= 40 ? 'text-yellow-600' : 'text-red-600',
+      color: linkagePercent >= 70 ? 'text-success' : linkagePercent >= 40 ? 'text-warning' : 'text-danger',
     },
     {
       icon: Users,
       label: 'Times com OKRs',
       value: `${teamsPercent}%`,
       subLabel: `${totals.teamsWithOkrs} de ${totals.totalTeams}`,
-      color: teamsPercent >= 80 ? 'text-green-600' : teamsPercent >= 50 ? 'text-yellow-600' : 'text-red-600',
+      color: teamsPercent >= 80 ? 'text-success' : teamsPercent >= 50 ? 'text-warning' : 'text-danger',
     },
   ];
 
@@ -72,7 +72,7 @@ export function OrgOkrOverviewCard({
       icon: TrendingUp,
       label: 'Progresso Médio',
       value: `${overallProgress}%`,
-      color: overallProgress >= 70 ? 'text-green-600' : overallProgress >= 40 ? 'text-yellow-600' : 'text-red-600',
+      color: overallProgress >= 70 ? 'text-success' : overallProgress >= 40 ? 'text-warning' : 'text-danger',
     });
   }
 

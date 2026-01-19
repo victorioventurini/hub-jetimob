@@ -277,8 +277,7 @@ export function OrgObjectiveFormDialog({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isPending || !title.trim()}>
-                  {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Button type="submit" isLoading={isPending} disabled={!title.trim()}>
                   {isEditing ? 'Salvar' : 'Criar Objetivo'}
                 </Button>
               </div>

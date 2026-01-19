@@ -128,28 +128,28 @@ function generateInsights(overview: QualityOverview, metrics: KrMetrics): Insigh
 
 const typeStyles = {
   critical: {
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    iconColor: 'text-red-600',
-    badge: 'bg-red-100 text-red-700',
+    bg: 'bg-danger-muted',
+    border: 'border-danger/30',
+    iconColor: 'text-danger',
+    badge: 'bg-danger-muted text-danger-muted-foreground',
   },
   warning: {
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
-    iconColor: 'text-yellow-600',
-    badge: 'bg-yellow-100 text-yellow-700',
+    bg: 'bg-warning-muted',
+    border: 'border-warning/30',
+    iconColor: 'text-warning',
+    badge: 'bg-warning-muted text-warning-muted-foreground',
   },
   success: {
-    bg: 'bg-green-50',
-    border: 'border-green-200',
-    iconColor: 'text-green-600',
-    badge: 'bg-green-100 text-green-700',
+    bg: 'bg-success-muted',
+    border: 'border-success/30',
+    iconColor: 'text-success',
+    badge: 'bg-success-muted text-success-muted-foreground',
   },
   info: {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    iconColor: 'text-blue-600',
-    badge: 'bg-blue-100 text-blue-700',
+    bg: 'bg-info-muted',
+    border: 'border-info/30',
+    iconColor: 'text-info',
+    badge: 'bg-info-muted text-info-muted-foreground',
   },
 };
 

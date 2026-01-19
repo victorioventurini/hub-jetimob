@@ -83,9 +83,9 @@ export function GapsRecommendationsCard({
   }
 
   const severityColors = {
-    high: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    low: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    high: 'bg-danger-muted text-danger-muted-foreground',
+    medium: 'bg-warning-muted text-warning-muted-foreground',
+    low: 'bg-info-muted text-info-muted-foreground',
   };
 
   const hasNoGaps = gapItems.length === 0;
@@ -101,8 +101,8 @@ export function GapsRecommendationsCard({
       <CardContent>
         {hasNoGaps ? (
           <div className="text-center py-6 text-muted-foreground">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 mb-3">
-              <Activity className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success-muted mb-3">
+              <Activity className="h-6 w-6 text-success" />
             </div>
             <p className="text-sm font-medium">Nenhum gap crítico identificado</p>
             <p className="text-xs mt-1">A estrutura das OKRs está bem alinhada</p>
@@ -120,14 +120,14 @@ export function GapsRecommendationsCard({
                     <div className={cn(
                       "p-1.5 rounded-md shrink-0",
                       item.severity === 'high' 
-                        ? 'bg-red-100 dark:bg-red-900/30' 
-                        : 'bg-yellow-100 dark:bg-yellow-900/30'
+                        ? 'bg-danger-muted' 
+                        : 'bg-warning-muted'
                     )}>
                       <Icon className={cn(
                         "h-4 w-4",
                         item.severity === 'high' 
-                          ? 'text-red-600 dark:text-red-400' 
-                          : 'text-yellow-600 dark:text-yellow-400'
+                          ? 'text-danger' 
+                          : 'text-warning'
                       )} />
                     </div>
                     <div className="flex-1 min-w-0">

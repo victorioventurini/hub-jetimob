@@ -66,13 +66,13 @@ const STATUS_CONFIG: Record<InitiativeStatus, {
   blocked: {
     label: 'Bloqueada',
     icon: Ban,
-    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    className: 'bg-danger-muted text-danger-muted-foreground',
     highlight: true,
   },
   completed: {
     label: 'Concluída',
     icon: CheckCircle2,
-    className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    className: 'bg-success-muted text-success-muted-foreground',
   },
 };
 
@@ -163,11 +163,11 @@ export function InitiativesSummary({
                   ⚠️ Iniciativas que merecem atenção:
                 </p>
                 <ul className="space-y-1.5">
-                  {needsAttention.map(init => (
+                    {needsAttention.map(init => (
                     <li key={init.id} className="text-xs">
                       <span className="font-medium">{init.name}</span>
                       {init.status === 'blocked' && (
-                        <span className="text-red-600 dark:text-red-400 ml-1">
+                        <span className="text-danger ml-1">
                           (bloqueada)
                         </span>
                       )}

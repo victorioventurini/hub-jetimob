@@ -21,17 +21,17 @@ interface TeamSummaryListProps {
 const healthStatusConfig = {
   healthy: {
     label: 'Saudável',
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    color: 'bg-success-muted text-success-muted-foreground',
     icon: null,
   },
   attention: {
     label: 'Atenção',
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+    color: 'bg-warning-muted text-warning-muted-foreground',
     icon: null,
   },
   risk: {
     label: 'Risco',
-    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    color: 'bg-danger-muted text-danger-muted-foreground',
     icon: AlertTriangle,
   },
 };
