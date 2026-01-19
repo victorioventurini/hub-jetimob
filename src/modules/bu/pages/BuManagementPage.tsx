@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Building2, Plus, Globe, ChevronRight, Edit2, Eye } from "lucide-react";
+import { Building2, Plus, Globe, Edit2, Eye } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAllBus } from "../hooks/useBuData";
 import { CreateBuDialog } from "../components/CreateBuDialog";
@@ -53,19 +54,17 @@ export default function BuManagementPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Business Units</h1>
-            <p className="text-muted-foreground">
-              Gerencie as unidades de negócio e seus domínios de acesso.
-            </p>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova BU
-          </Button>
-        </div>
+        <PageHeader
+          title="Business Units"
+          description="Gerencie as unidades de negócio e seus domínios de acesso."
+          breadcrumbs={[{ label: "Business Units" }]}
+          actions={
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Business Unit
+            </Button>
+          }
+        />
 
         {/* Loading */}
         {isLoading && (

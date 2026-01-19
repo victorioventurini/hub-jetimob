@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { 
   useNotificationEvents,
@@ -348,10 +349,10 @@ export default function HubNotifications() {
   if (isLoading) {
     return (
       <div className="container py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Central de Notificações</h1>
-          <p className="text-muted-foreground">Gerencie canais e eventos de notificação</p>
-        </div>
+        <PageHeader
+          title="Central de Notificações"
+          description="Gerencie canais e eventos de notificação"
+        />
         <Card>
           <CardContent className="p-6 space-y-4">
             {[1, 2, 3, 4].map(i => (
@@ -365,10 +366,10 @@ export default function HubNotifications() {
   
   return (
     <div className="container py-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Central de Notificações</h1>
-        <p className="text-muted-foreground">Gerencie canais e eventos de notificação do Hub</p>
-      </div>
+      <PageHeader
+        title="Central de Notificações"
+        description="Gerencie canais e eventos de notificação do Hub"
+      />
       
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>

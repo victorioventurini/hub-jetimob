@@ -1,5 +1,6 @@
 import { Blocks, Search, CheckCircle2, XCircle, Clock, MoreVertical, Building2, ToggleLeft, ToggleRight, Settings, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -247,13 +248,10 @@ export default function SettingsModules() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Módulos</h1>
-        <p className="text-muted-foreground">
-          Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit
-        </p>
-      </div>
+      <PageHeader
+        title="Módulos"
+        description="Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit"
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
