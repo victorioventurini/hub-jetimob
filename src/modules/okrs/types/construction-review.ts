@@ -200,9 +200,9 @@ export const REVIEW_CRITERIA: ReviewCriterion[] = [
 
 export function getStatusColor(status: ReviewStatus): string {
   switch (status) {
-    case 'approved': return 'text-green-600 bg-green-100';
-    case 'needs_improvement': return 'text-amber-600 bg-amber-100';
-    case 'analyzing': return 'text-blue-600 bg-blue-100';
+    case 'approved': return 'text-success bg-success-muted';
+    case 'needs_improvement': return 'text-warning bg-warning-muted';
+    case 'analyzing': return 'text-info bg-info-muted';
     default: return 'text-muted-foreground bg-muted';
   }
 }

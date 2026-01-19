@@ -106,11 +106,11 @@ export function ObjectiveHealthCard({ health, className, defaultExpanded = false
   const getStatusIcon = (status: HealthFactor["status"]) => {
     switch (status) {
       case "good":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-success" />;
       case "warning":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+        return <AlertTriangle className="w-4 h-4 text-warning" />;
       case "bad":
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-danger" />;
     }
   };
 

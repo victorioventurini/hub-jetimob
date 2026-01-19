@@ -104,9 +104,11 @@ export function AddSquadMemberDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={!userId || addMember.isPending}
+              isLoading={addMember.isPending}
+              loadingText="Adicionando..."
+              disabled={!userId}
             >
-              {addMember.isPending ? "Adicionando..." : "Adicionar"}
+              Adicionar
             </Button>
           </DialogFooter>
         </form>
