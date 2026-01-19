@@ -1,4 +1,4 @@
-import { OkrRagStatus } from "../../types";
+import type { OkrRagStatus } from "../../types";
 
 export interface CheckinKrData {
   id: string;

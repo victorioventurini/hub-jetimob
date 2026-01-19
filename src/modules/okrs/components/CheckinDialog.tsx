@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getMentionDisplayText } from '@/components/mentions';
 import { useAuth } from '@/hooks/useAuth';
 import { Sparkles } from 'lucide-react';
-import { OkrRagStatus } from './types';
+import type { OkrRagStatus } from '../types';
 import { useIdentity } from '@/hooks/useIdentity';
 import {
   CheckinContextBlock,
