@@ -8148,6 +8148,13 @@ export type Database = {
         }[]
       }
       cleanup_old_cron_logs: { Args: never; Returns: undefined }
+      cleanup_old_logs: {
+        Args: never
+        Returns: {
+          rows_deleted: number
+          table_name: string
+        }[]
+      }
       cleanup_old_perf_snapshots: { Args: never; Returns: number }
       cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
       collect_perf_metrics: { Args: never; Returns: Json }
