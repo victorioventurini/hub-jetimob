@@ -43,11 +43,11 @@ export function CLevelCheckinWizardCard({
   }
 
   return (
-    <Card className="border-l-4 border-l-purple-500">
+    <Card className="border-l-4 border-l-status-purple">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-purple-500" />
+            <Crown className="h-5 w-5 text-status-purple" />
             <CardTitle className="text-lg">Check-in Estratégico</CardTitle>
           </div>
           {atRiskCount > 0 && (
@@ -73,7 +73,7 @@ export function CLevelCheckinWizardCard({
         </div>
         <Button 
           onClick={handleClick} 
-          className="w-full gap-2 bg-purple-600 hover:bg-purple-700"
+          className="w-full gap-2 bg-status-purple hover:bg-status-purple/90"
         >
           <Play className="h-4 w-4" />
           Iniciar Revisão Estratégica

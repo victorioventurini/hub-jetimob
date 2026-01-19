@@ -259,9 +259,9 @@ export function CancelOkrDialog({
           </div>
 
           {/* Educational Alert */}
-          <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+          <Alert className="bg-info-muted border-info/30 dark:bg-info-muted/30 dark:border-info/30">
+            <BookOpen className="w-4 h-4 text-info" />
+            <AlertDescription className="text-info-foreground dark:text-info text-sm">
               Cancelar OKRs faz parte do processo de aprendizado. O importante é documentar o motivo e a lição
               aprendida para evoluir como organização.
             </AlertDescription>

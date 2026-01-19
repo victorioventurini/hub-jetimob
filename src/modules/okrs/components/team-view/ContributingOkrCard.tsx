@@ -63,7 +63,7 @@ export function ContributingOkrCard({
   return (
     <Card className={cn(
       "transition-all border-l-4",
-      "border-l-purple-400 dark:border-l-purple-600",
+      "border-l-status-purple",
       "hover:shadow-md"
     )}>
       <CardContent className="p-4">
@@ -73,7 +73,7 @@ export function ContributingOkrCard({
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <Badge 
                 variant="outline" 
-                className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800"
+                className="bg-status-purple-muted text-status-purple border-status-purple/30"
               >
                 <Users className="w-3 h-3 mr-1" />
                 Compartilhada
