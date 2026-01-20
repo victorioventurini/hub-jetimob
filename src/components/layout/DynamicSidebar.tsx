@@ -169,9 +169,9 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
       return (
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
-            <div className="w-full">{linkContent}</div>
+            {linkContent}
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-medium">
+          <TooltipContent side="right" className="font-medium" onPointerDownOutside={(e) => e.preventDefault()}>
             {name}
           </TooltipContent>
         </Tooltip>

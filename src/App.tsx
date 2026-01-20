@@ -173,7 +173,7 @@ const App = () => {
 
   return (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <TooltipProvider disableHoverableContent>
       <Toaster />
       <Sonner />
       <BrowserRouter>
