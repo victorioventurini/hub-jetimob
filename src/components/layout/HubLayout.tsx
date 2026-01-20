@@ -23,25 +23,33 @@ export function HubLayout({ children }: HubLayoutProps) {
     setMobileMenuOpen(false);
 
     const cleanup = () => {
+      // Força remoção de pointer-events:none do body e html
+      // Radix Tooltip/Dialog podem travar isso durante navegação
+      document.body.style.removeProperty('pointer-events');
+      document.documentElement.style.removeProperty('pointer-events');
+      
+      // Fallback: se computed ainda for 'none', força 'auto'
       const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
       const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
 
-      // Se o computed ficou travado em 'none', força override inline.
       if (bodyComputed === "none") {
         document.body.style.pointerEvents = "auto";
-      } else if (document.body.style.pointerEvents === "none") {
-        document.body.style.pointerEvents = "";
       }
-
       if (htmlComputed === "none") {
         document.documentElement.style.pointerEvents = "auto";
-      } else if (document.documentElement.style.pointerEvents === "none") {
-        document.documentElement.style.pointerEvents = "";
+      }
+      
+      // Remove qualquer aria-hidden residual do body (Radix Portal cleanup)
+      if (document.body.getAttribute('data-scroll-locked') === '1') {
+        document.body.removeAttribute('data-scroll-locked');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
       }
     };
 
-    // Rodar mais de uma vez para cobrir animações do Sheet/Dialog (closed duration ~300ms)
-    const timers = [0, 250, 550, 900].map((delay) => window.setTimeout(cleanup, delay));
+    // Executa imediatamente + timers para cobrir animações (até 1s)
+    cleanup();
+    const timers = [50, 150, 300, 500, 1000].map((delay) => window.setTimeout(cleanup, delay));
 
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [location.pathname]);
