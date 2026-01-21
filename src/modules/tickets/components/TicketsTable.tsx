@@ -1,0 +1,185 @@
+/**
+ * TicketsTable - Table view for tickets listing
+ * Displays tickets in a structured table format with columns
+ */
+
+import { Link } from "react-router-dom";
+import { format, formatDistanceToNow, isPast, isToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { AlertTriangle, Clock, Building2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Ticket, TicketStatus, TicketType } from "../types";
+
+interface TicketsTableProps {
+  tickets: Ticket[];
+}
+
+const statusLabels: Record<TicketStatus, string> = {
+  waiting: "Aguardando",
+  in_progress: "Em andamento",
+  paused: "Pausado",
+  done: "Concluído",
+  discarded: "Descartado",
+};
+
+const statusVariants: Record<TicketStatus, "default" | "secondary" | "outline" | "destructive"> = {
+  waiting: "secondary",
+  in_progress: "default",
+  paused: "outline",
+  done: "default",
+  discarded: "destructive",
+};
+
+const typeLabels: Record<TicketType, string> = {
+  internal: "Interno",
+  external: "Externo",
+};
+
+export function TicketsTable({ tickets }: TicketsTableProps) {
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[300px]">Título</TableHead>
+            <TableHead>Tipo</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead>Responsável</TableHead>
+            <TableHead>Prazo</TableHead>
+            <TableHead className="text-right">Atualizado</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tickets.map((ticket) => {
+            const isOverdue = ticket.expected_due_at && isPast(new Date(ticket.expected_due_at)) && ticket.status !== "done" && ticket.status !== "discarded";
+            const isDueToday = ticket.expected_due_at && isToday(new Date(ticket.expected_due_at)) && ticket.status !== "done" && ticket.status !== "discarded";
+            
+            // Get owner/assignee name
+            const responsibleName = ticket.type === "external" && ticket.assigned_contact
+              ? ticket.assigned_contact.name
+              : ticket.owner?.display_name;
+            
+            const responsiblePhoto = ticket.type === "external" 
+              ? null 
+              : ticket.owner?.photo_url;
+
+            return (
+              <TableRow 
+                key={ticket.id} 
+                className={cn(
+                  "cursor-pointer hover:bg-muted/50",
+                  isOverdue && "bg-status-red-muted/30"
+                )}
+              >
+                <TableCell>
+                  <Link 
+                    to={`/tickets/${ticket.id}`}
+                    className="block group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium group-hover:text-primary transition-colors line-clamp-1">
+                        {ticket.title}
+                      </span>
+                      {isOverdue && (
+                        <AlertTriangle className="h-4 w-4 text-status-red shrink-0" />
+                      )}
+                    </div>
+                    {ticket.partner_company && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <Building2 className="h-3 w-3" />
+                        <span className="line-clamp-1">{ticket.partner_company.name}</span>
+                      </div>
+                    )}
+                  </Link>
+                </TableCell>
+                
+                <TableCell>
+                  <Badge 
+                    variant={ticket.type === "external" ? "default" : "secondary"}
+                    className={cn(
+                      "text-xs",
+                      ticket.type === "external" && "bg-primary"
+                    )}
+                  >
+                    {typeLabels[ticket.type]}
+                  </Badge>
+                </TableCell>
+                
+                <TableCell>
+                  <Badge variant={statusVariants[ticket.status]}>
+                    {statusLabels[ticket.status]}
+                  </Badge>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="text-sm">
+                    {ticket.category?.name && (
+                      <span className="text-foreground">{ticket.category.name}</span>
+                    )}
+                    {ticket.subcategory?.name && (
+                      <span className="text-muted-foreground"> → {ticket.subcategory.name}</span>
+                    )}
+                    {!ticket.category?.name && (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  {responsibleName ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={responsiblePhoto ?? undefined} />
+                        <AvatarFallback className="text-xs">
+                          {responsibleName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm line-clamp-1">{responsibleName}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                
+                <TableCell>
+                  {ticket.expected_due_at ? (
+                    <div className={cn(
+                      "flex items-center gap-1 text-sm",
+                      isOverdue && "text-status-red font-medium",
+                      isDueToday && !isOverdue && "text-status-yellow font-medium"
+                    )}>
+                      <Clock className="h-3 w-3" />
+                      {format(new Date(ticket.expected_due_at), "dd/MM/yyyy", { locale: ptBR })}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                
+                <TableCell className="text-right">
+                  <span className="text-sm text-muted-foreground">
+                    {formatDistanceToNow(new Date(ticket.updated_at), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
+                  </span>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
