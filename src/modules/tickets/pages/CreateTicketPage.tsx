@@ -316,31 +316,36 @@ export default function CreateTicketPage() {
     if (attachments.length === 0 || !currentBu) return;
     
     for (const file of attachments) {
-      const filePath = `${currentBu.id}/${ticketId}/${Date.now()}-${file.name}`;
+      const fileExt = file.name.split('.').pop();
+      // Use messageId in path for consistency with useTicketMessageMutations
+      const filePath = `${currentBu.id}/${ticketId}/${messageId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("ticket-attachments")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: false,
+        });
       
       if (uploadError) {
         console.error("Upload error:", uploadError);
         continue;
       }
       
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("ticket-attachments")
-        .getPublicUrl(filePath);
+      // Store the storage path (not public URL since bucket is private)
+      // Files will be accessed via signed URLs when displayed
+      const storagePath = uploadData.path;
       
-      // Insert attachment record
+      // Insert attachment record with storage path
       await supabase.from("ticket_attachments").insert({
         bu_id: currentBu.id,
         ticket_id: ticketId,
         message_id: messageId,
-        file_url: urlData.publicUrl,
+        file_url: storagePath,
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
+        uploaded_by_user_id: profileId,
       });
     }
   };
