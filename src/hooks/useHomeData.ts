@@ -31,7 +31,7 @@ export function useNewJetimobers(limit = 5) {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       // Use canonical view for user directory - view already includes team_name via JOIN
-      // Filter by user_type = 'internal' to show only internal users
+      // Filter by user_type = 'internal' AND employment_status != 'external' to show only internal employees
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -45,6 +45,7 @@ export function useNewJetimobers(limit = 5) {
         `
         )
         .eq("user_type", "internal") // Only internal users
+        .neq("employment_status", "external") // Exclude external employment status
         .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
         .order("start_date", { ascending: false })
         .limit(limit);
@@ -116,6 +117,7 @@ export function useBirthdays() {
         `
         )
         .eq("user_type", "internal") // Only internal users
+        .neq("employment_status", "external") // Exclude external employment status
         .not("birth_day", "is", null)
         .not("birth_month", "is", null);
 
@@ -204,6 +206,7 @@ export function useWorkAnniversaries() {
         `
         )
         .eq("user_type", "internal") // Only internal users
+        .neq("employment_status", "external") // Exclude external employment status
         .not("start_date", "is", null);
 
       if (currentBu?.id) {
