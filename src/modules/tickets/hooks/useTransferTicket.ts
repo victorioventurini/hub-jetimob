@@ -47,7 +47,7 @@ export interface TransferTicketParams {
 // HOOK
 // ===========================================
 
-export function useTransferTicket(transferredByProfileId: string | null) {
+export function useTransferTicket(transferredByProfileId: string | null, transferredByAuthUserId: string | null) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
@@ -141,7 +141,7 @@ export function useTransferTicket(transferredByProfileId: string | null) {
             p_event_slug: "ticket.assigned",
             p_bu_id: buId,
             p_recipient_user_ids: [toResponsible.authUserId],
-            p_actor_id: transferredByProfileId,
+            p_actor_id: transferredByAuthUserId, // auth.users.id do usuário que transferiu
             p_title: `${transferrerName} transferiu um ticket para você`,
             p_message: ticketTitle,
             p_context_type: "ticket",

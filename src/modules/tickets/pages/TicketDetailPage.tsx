@@ -30,7 +30,7 @@ import type { ParsedMention } from "@/components/mentions";
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { profileId } = useIdentity();
+  const { profileId, userId } = useIdentity();
   const { isExternal, externalContacts } = useExternalUser();
   const { currentBu } = useBu();
   const goBack = useSafeBack({ moduleRoot: "/tickets" });
@@ -47,7 +47,7 @@ export default function TicketDetailPage() {
   const { data: attachments = [] } = useTicketAttachments(id!);
   const { data: viewersData } = useTicketViewersAndMentions(ticket);
   const updateStatus = useUpdateTicketStatus();
-  const transferTicket = useTransferTicket(profileId);
+  const transferTicket = useTransferTicket(profileId, userId);
   const createMessage = useCreateMessage({ 
     profileId, 
     contactId: currentBuContactId 
