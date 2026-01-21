@@ -26,31 +26,71 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   }
 
   // 1. Check if email is a registered partner contact (Modo B - external users)
-  const { data: partnerContacts, error: partnerError } = await supabase
+  // Query using global email identity model with BU associations
+  const { data: partnerContact, error: partnerError } = await supabase
     .from("partner_contacts")
     .select(`
       id,
-      bu_id,
-      partner_company:partner_companies!inner(id, name, status),
-      bu:bu_units!inner(id, name, status)
+      name,
+      partner_company:partner_companies!inner(id, name, status)
     `)
     .eq("email", emailLower)
     .eq("status", "active")
     .is("deleted_at", null)
-    .limit(1);
+    .maybeSingle();
 
   if (partnerError) {
     console.error("Error checking partner contact:", partnerError);
   }
 
-  if (partnerContacts && partnerContacts.length > 0) {
-    const partnerContact = partnerContacts[0];
+  if (partnerContact) {
     const company = partnerContact.partner_company as unknown as { id: string; name: string; status: string } | null;
-    const bu = partnerContact.bu as unknown as { id: string; name: string; status: string } | null;
     
-    if (company?.status === 'active' && bu?.status === 'active') {
-      console.log(`Partner contact found: ${emailLower} from ${company.name}`);
-      return { allowed: true, buName: bu.name, isPartnerContact: true };
+    if (company?.status === 'active') {
+      // Check for active BU associations
+      const { data: associations, error: assocError } = await supabase
+        .from("partner_contact_bu_associations")
+        .select(`
+          id,
+          bu_id,
+          is_active,
+          bu:bu_units!inner(id, name, status)
+        `)
+        .eq("partner_contact_id", partnerContact.id)
+        .eq("is_active", true)
+        .is("deleted_at", null);
+
+      if (assocError) {
+        console.warn("Error checking partner contact associations:", assocError);
+      }
+
+      if (associations && associations.length > 0) {
+        const firstActiveBu = associations.find(a => {
+          const bu = a.bu as unknown as { id: string; name: string; status: string } | null;
+          return bu?.status === 'active';
+        });
+        
+        if (firstActiveBu) {
+          const bu = firstActiveBu.bu as unknown as { id: string; name: string } | null;
+          console.log(`Partner contact found: ${emailLower} from ${company.name} with active BU association`);
+          return { allowed: true, buName: bu?.name || null, isPartnerContact: true };
+        }
+      }
+      
+      // Fallback: check legacy bu_id field (for contacts not yet migrated to associations)
+      const { data: legacyContact } = await supabase
+        .from("partner_contacts")
+        .select(`bu:bu_units!inner(id, name, status)`)
+        .eq("id", partnerContact.id)
+        .maybeSingle();
+
+      if (legacyContact) {
+        const bu = legacyContact.bu as unknown as { id: string; name: string; status: string } | null;
+        if (bu?.status === 'active') {
+          console.log(`Partner contact found via legacy bu_id: ${emailLower} from ${company.name}`);
+          return { allowed: true, buName: bu.name, isPartnerContact: true };
+        }
+      }
     }
   }
 
