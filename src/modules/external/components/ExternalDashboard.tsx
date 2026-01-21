@@ -3,11 +3,11 @@
  * Clean, simple layout focused on tickets
  */
 import { CultureCard } from "@/components/home/CultureCard";
+import { VicCard } from "@/components/home/VicCard";
 import { ExternalHero } from "./ExternalHero";
 import { MyTicketsCard } from "./MyTicketsCard";
 import { ExternalStatsCards } from "./ExternalStatsCards";
 import { CompanyContextCard } from "./CompanyContextCard";
-import { VicExternalCard } from "./VicExternalCard";
 import { useExternalDashboard } from "../hooks";
 import type { ExternalUserInfo } from "../types";
 
@@ -32,11 +32,11 @@ export function ExternalDashboard({ externalInfo }: ExternalDashboardProps) {
       {/* My Tickets Card - Full width */}
       <MyTicketsCard tickets={tickets} isLoading={isLoading} />
 
-      {/* Grid: Company Context + Vic */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CompanyContextCard context={companyContext} isLoading={isLoading} />
-        <VicExternalCard />
-      </div>
+      {/* Company Context */}
+      <CompanyContextCard context={companyContext} isLoading={isLoading} />
+
+      {/* Vic Card - Always at the end */}
+      <VicCard profile="external" />
     </div>
   );
 }

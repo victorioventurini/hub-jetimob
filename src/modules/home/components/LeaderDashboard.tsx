@@ -1,5 +1,6 @@
 /**
  * LeaderDashboard - Main dashboard layout for team leaders
+ * Note: People blocks and VicCard are rendered by the parent Index.tsx
  */
 import { useLeaderScope } from "../hooks/useLeaderScope";
 import { useLeaderDashboard } from "../hooks/useLeaderDashboard";
@@ -13,15 +14,11 @@ import {
   TeamKpisCard,
   TicketsTeamInboxCard,
   AssetsTeamLoansCard,
-  VicLeaderInsightsCard,
   OkrConstructionReviewCard,
 } from "./leader";
 import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard";
 import { TeamCheckinWizardCard } from "@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard";
 import { TeamOkrCreationWizardCard } from "@/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizardCard";
-import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
-import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
-import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function LeaderDashboard() {
@@ -171,21 +168,6 @@ export function LeaderDashboard() {
             isLoading={isDashboardLoading}
           />
         )}
-      </section>
-
-      {/* Vic Insights */}
-      <section>
-        <VicLeaderInsightsCard
-          teamId={selectedTeamId}
-          teamName={selectedTeam?.team_name}
-        />
-      </section>
-
-      {/* People Blocks */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <NewJetimobersBlock />
-        <BirthdaysBlock />
-        <WorkAnniversariesBlock />
       </section>
     </div>
   );
