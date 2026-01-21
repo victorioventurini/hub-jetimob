@@ -26,8 +26,8 @@ export function useExternalUser() {
         return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };
       }
 
-      // Fetch ALL active partner contacts for this user (multi-BU support)
-      const { data, error } = await supabase
+      // First, fetch ALL active partner contacts for this user
+      const { data: contactsData, error: contactsError } = await supabase
         .from("partner_contacts")
         .select(`
           id,
@@ -37,43 +37,95 @@ export function useExternalUser() {
           partner_companies!inner (
             id,
             name
-          ),
-          bu_id,
-          bu_units!inner (
-            id,
-            name,
-            legal_entity
           )
         `)
         .eq("profile_user_id", user.id)
         .eq("status", "active")
         .is("deleted_at", null);
 
-      if (error) {
-        console.error("Error checking external user:", error);
+      if (contactsError) {
+        console.error("Error checking external user:", contactsError);
         return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };
       }
 
-      if (!data || data.length === 0) {
+      if (!contactsData || contactsData.length === 0) {
         return { contacts: [], allBuIds: [], primaryContact: null, isExternal: false };
       }
 
-      // Map to ExternalContactRecord array
-      const contacts: ExternalContactRecord[] = data.map((record) => {
-        const company = record.partner_companies as unknown as { id: string; name: string };
-        const bu = record.bu_units as unknown as { id: string; name: string; legal_entity: string | null };
+      // Get contact IDs
+      const contactIds = contactsData.map(c => c.id);
 
+      // Now fetch all BU associations for these contacts
+      const { data: associations, error: assocError } = await supabase
+        .from("partner_contact_bu_associations")
+        .select(`
+          id,
+          partner_contact_id,
+          bu_id,
+          is_active,
+          bu_units!inner (
+            id,
+            name,
+            legal_entity
+          )
+        `)
+        .in("partner_contact_id", contactIds)
+        .eq("is_active", true)
+        .is("deleted_at", null);
+
+      if (assocError) {
+        console.error("Error fetching BU associations:", assocError);
+        // Fallback: use bu_id from contacts directly (legacy)
+        const contacts: ExternalContactRecord[] = contactsData.map((record) => {
+          const company = record.partner_companies as unknown as { id: string; name: string };
+          return {
+            contactId: record.id,
+            name: record.name,
+            email: record.email,
+            companyId: company.id,
+            companyName: company.name,
+            buId: "", // Unknown without associations
+            buName: "",
+            buLegalName: null,
+          };
+        }).filter(c => c.buId); // Only include those with BU
+        
+        const allBuIds = [...new Set(contacts.map(c => c.buId))];
         return {
-          contactId: record.id,
-          name: record.name,
-          email: record.email,
+          contacts,
+          allBuIds,
+          primaryContact: contacts[0] ?? null,
+          isExternal: contacts.length > 0,
+        };
+      }
+
+      // Build contacts from associations
+      const contacts: ExternalContactRecord[] = [];
+      const seenKeys = new Set<string>();
+
+      for (const assoc of associations || []) {
+        const contact = contactsData.find(c => c.id === assoc.partner_contact_id);
+        if (!contact) continue;
+
+        const bu = assoc.bu_units as unknown as { id: string; name: string; legal_entity: string | null };
+        const company = contact.partner_companies as unknown as { id: string; name: string };
+        
+        // Unique key to avoid duplicates
+        const key = `${contact.id}-${bu.id}`;
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+
+        contacts.push({
+          contactId: contact.id,
+          name: contact.name,
+          email: contact.email,
           companyId: company.id,
           companyName: company.name,
           buId: bu.id,
           buName: bu.name,
           buLegalName: bu.legal_entity,
-        };
-      });
+        });
+      }
 
       // Extract unique BU IDs
       const allBuIds = [...new Set(contacts.map(c => c.buId))];

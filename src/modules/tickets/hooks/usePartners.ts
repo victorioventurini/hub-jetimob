@@ -215,24 +215,57 @@ export function usePartnerContacts(companyId?: string) {
     queryFn: async () => {
       if (!buId) return [];
 
-      let query = supabase
-        .from("partner_contacts")
+      // Query via partner_contact_bu_associations (new global model)
+      const { data: associations, error: assocError } = await supabase
+        .from("partner_contact_bu_associations")
         .select(`
-          id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-          partner_company:partner_companies(id, name)
+          id,
+          is_active,
+          partner_contact:partner_contacts!inner (
+            id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
+            partner_company:partner_companies(id, name)
+          )
         `)
         .eq("bu_id", buId)
-        .is("deleted_at", null)
-        .order("name");
+        .eq("is_active", true)
+        .is("deleted_at", null);
 
-      if (companyId) {
-        query = query.eq("partner_company_id", companyId);
+      if (assocError) {
+        console.error("[usePartnerContacts] Error querying associations:", assocError);
+        // Fallback to legacy query
+        let query = supabase
+          .from("partner_contacts")
+          .select(`
+            id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
+            partner_company:partner_companies(id, name)
+          `)
+          .eq("bu_id", buId)
+          .is("deleted_at", null)
+          .order("name");
+
+        if (companyId) {
+          query = query.eq("partner_company_id", companyId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data as unknown as PartnerContact[];
       }
 
-      const { data, error } = await query;
+      // Flatten associations to contacts
+      let contacts = (associations || [])
+        .map((a) => a.partner_contact)
+        .filter((c): c is NonNullable<typeof c> => c !== null && c.status === "active");
 
-      if (error) throw error;
-      return data as unknown as PartnerContact[];
+      // Filter by company if specified
+      if (companyId) {
+        contacts = contacts.filter((c) => c.partner_company_id === companyId);
+      }
+
+      // Sort by name
+      contacts.sort((a, b) => a.name.localeCompare(b.name));
+
+      return contacts as unknown as PartnerContact[];
     },
     enabled: !!buId,
   });
