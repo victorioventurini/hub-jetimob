@@ -128,3 +128,10 @@ export {
   useTransferTicket,
   type TransferTicketParams,
 } from './useTransferTicket';
+
+// Pin messages
+export {
+  usePinMessage,
+  canUserPinMessages,
+  type PinMessageParams,
+} from './usePinMessage';

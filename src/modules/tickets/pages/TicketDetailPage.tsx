@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
-import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket } from "@/modules/tickets/hooks";
+import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket, usePinMessage, canUserPinMessages } from "@/modules/tickets/hooks";
 import { useTicketViewersAndMentions } from "../hooks/useTicketViewersAndMentions";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -24,6 +24,7 @@ import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { TicketTransferModal } from "../components/TicketTransferModal";
+import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
 import { UserLink } from "@/components/links/UserLink";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
@@ -52,9 +53,16 @@ export default function TicketDetailPage() {
     profileId, 
     contactId: currentBuContactId 
   });
+  const pinMessage = usePinMessage();
   
   // Transfer modal state
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+
+  // Check if user can pin messages
+  const canPin = useMemo(() => {
+    if (!ticket || !profileId) return false;
+    return canUserPinMessages(ticket, profileId, currentBuContactId);
+  }, [ticket, profileId, currentBuContactId]);
 
   // SEO - Meta title e description
   usePageTitle(
@@ -233,23 +241,36 @@ export default function TicketDetailPage() {
                   Nenhuma mensagem ainda. Seja o primeiro a comentar!
                 </p>
               ) : (
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-4">
-                    {messages.map((message) => {
-                      const isOwnMessage = message.author_user_id === profileId;
-                      const messageAttachments = attachmentsByMessage.get(message.id) || [];
-                      
-                      return (
-                        <TicketMessageBubble
-                          key={message.id}
-                          message={message}
-                          isOwnMessage={isOwnMessage}
-                          attachments={messageAttachments}
-                        />
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
+                <>
+                  {/* Pinned messages section */}
+                  <PinnedMessagesSection
+                    messages={messages}
+                    canPin={canPin}
+                    onUnpin={(messageId) => pinMessage.mutate({ messageId, ticketId: ticket.id, pin: false })}
+                    isUnpinning={pinMessage.isPending}
+                  />
+                  
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="space-y-4">
+                      {messages.filter(m => !m.is_pinned).map((message) => {
+                        const isOwnMessage = message.author_user_id === profileId;
+                        const messageAttachments = attachmentsByMessage.get(message.id) || [];
+                        
+                        return (
+                          <TicketMessageBubble
+                            key={message.id}
+                            message={message}
+                            isOwnMessage={isOwnMessage}
+                            attachments={messageAttachments}
+                            canPin={canPin}
+                            onTogglePin={(msgId, pin) => pinMessage.mutate({ messageId: msgId, ticketId: ticket.id, pin })}
+                            isPinning={pinMessage.isPending}
+                          />
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </>
               )}
 
               <Separator className="my-4" />
