@@ -79,20 +79,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`[send-partner-invite] Processing invite for contact ${contact_id}`);
+    console.log(`[send-partner-invite] Processing invite for contact ${contact_id} in BU ${bu_id}`);
 
-    // Fetch contact details with company
+    // Fetch contact details (global contact model)
     const { data: contact, error: contactError } = await supabase
       .from("partner_contacts")
       .select(`
         id,
         name,
         email,
-        partner_companies(id, name),
-        bu_units(id, name)
+        partner_companies(id, name)
       `)
       .eq("id", contact_id)
-      .eq("bu_id", bu_id)
+      .is("deleted_at", null)
       .single();
 
     if (contactError || !contact) {
@@ -103,9 +102,30 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Verify contact has association with the specified BU
+    const { data: assoc, error: assocError } = await supabase
+      .from("partner_contact_bu_associations")
+      .select("id, is_active")
+      .eq("partner_contact_id", contact_id)
+      .eq("bu_id", bu_id)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (assocError) {
+      console.warn("[send-partner-invite] Could not verify BU association:", assocError);
+      // Continue anyway - might be legacy contact with bu_id directly
+    }
+
+    // Fetch BU details separately
+    const { data: buData } = await supabase
+      .from("bu_units")
+      .select("id, name")
+      .eq("id", bu_id)
+      .single();
+
     // deno-lint-ignore no-explicit-any
     const contactData = contact as any;
-    const buName = contactData.bu_units?.name || "Hub";
+    const buName = buData?.name || "Hub";
     const companyName = contactData.partner_companies?.name || "Empresa Parceira";
 
     // Fetch inviter profile
