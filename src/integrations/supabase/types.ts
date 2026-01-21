@@ -5377,7 +5377,7 @@ export type Database = {
       partner_companies: {
         Row: {
           allowed_domains: string[] | null
-          bu_id: string
+          bu_id: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -5393,7 +5393,7 @@ export type Database = {
         }
         Insert: {
           allowed_domains?: string[] | null
-          bu_id: string
+          bu_id?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -5409,7 +5409,7 @@ export type Database = {
         }
         Update: {
           allowed_domains?: string[] | null
-          bu_id?: string
+          bu_id?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -8376,6 +8376,20 @@ export type Database = {
         }[]
       }
       f_unaccent: { Args: { "": string }; Returns: string }
+      find_partner_by_document: {
+        Args: { p_document: string }
+        Returns: {
+          allowed_domains: string[]
+          document: string
+          document_type: string
+          id: string
+          legal_name: string
+          name: string
+          notes: string
+          person_type: string
+          status: string
+        }[]
+      }
       generate_okr_insights_for_objective: {
         Args: {
           p_bu_id: string

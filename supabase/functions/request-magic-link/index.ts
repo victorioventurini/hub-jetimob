@@ -54,30 +54,32 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     }
   }
 
-  // 2. Check if domain is in partner_companies.allowed_domains (any email from authorized partner domain)
-  const { data: partnerCompanies, error: partnerCompanyError } = await supabase
-    .from("partner_companies")
+  // 2. Check if domain is in partner_companies.allowed_domains via BU associations
+  // Query partner companies with active BU associations
+  const { data: partnerBuAssociations, error: partnerCompanyError } = await supabase
+    .from("partner_company_bu_associations")
     .select(`
       id,
-      name,
-      allowed_domains,
-      status,
+      bu_id,
+      is_active,
+      partner_company:partner_companies!inner(id, name, allowed_domains, status),
       bu:bu_units!inner(id, name, status)
     `)
-    .eq("status", "active")
+    .eq("is_active", true)
     .is("deleted_at", null);
 
   if (partnerCompanyError) {
     console.error("Error checking partner company domains:", partnerCompanyError);
   }
 
-  if (partnerCompanies) {
-    for (const company of partnerCompanies) {
-      const allowedDomains = (company.allowed_domains as string[]) || [];
-      const bu = company.bu as unknown as { id: string; name: string; status: string } | null;
+  if (partnerBuAssociations) {
+    for (const assoc of partnerBuAssociations) {
+      const company = assoc.partner_company as unknown as { id: string; name: string; allowed_domains: string[]; status: string } | null;
+      const bu = assoc.bu as unknown as { id: string; name: string; status: string } | null;
+      const allowedDomains = company?.allowed_domains || [];
       
-      if (bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
-        console.log(`Partner company domain authorized: ${domain} from ${company.name}`);
+      if (company?.status === 'active' && bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+        console.log(`Partner company domain authorized: ${domain} from ${company.name} in BU ${bu.name}`);
         return { allowed: true, buName: bu.name, isPartnerContact: true };
       }
     }

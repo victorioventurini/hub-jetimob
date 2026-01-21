@@ -77,6 +77,9 @@ export function useCreatePartnerCompany() {
     mutationFn: async (data: {
       name: string;
       legal_name?: string | null;
+      person_type?: 'pf' | 'pj';
+      document?: string | null;
+      document_type?: 'cpf' | 'cnpj' | null;
       allowed_domains?: string[];
       status?: PartnerCompanyStatus;
       notes?: string | null;
@@ -87,25 +90,44 @@ export function useCreatePartnerCompany() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      // 1. Criar parceiro global (sem bu_id)
       const { data: company, error } = await supabase
         .from("partner_companies")
         .insert({
-          bu_id: buId,
+          bu_id: null, // Parceiro global
           name: data.name,
           legal_name: data.legal_name || null,
+          person_type: data.person_type || 'pj',
+          document: data.document?.replace(/\D/g, '') || null,
+          document_type: data.document_type || null,
           allowed_domains: data.allowed_domains || [],
           status: data.status || "active",
           notes: data.notes || null,
           created_by: user?.id,
         })
-        .select()
+        .select("id, name, legal_name, person_type, document, document_type, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
         .single();
 
       if (error) throw error;
+
+      // 2. Criar associação com a BU atual
+      const { error: assocError } = await supabase
+        .from("partner_company_bu_associations")
+        .insert({
+          partner_company_id: company.id,
+          bu_id: buId,
+          is_active: true,
+        });
+
+      if (assocError) {
+        console.error("[useCreatePartnerCompany] Failed to create BU association:", assocError);
+        // Não falha a operação, parceiro foi criado
+      }
+
       return company as PartnerCompany;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(buId ?? null) });
     },
   });
 }
