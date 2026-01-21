@@ -48,6 +48,7 @@ export const TICKET_FIELDS = {
   ticketDetail: `
     id, bu_id, type, title, status,
     expected_due_at, visibility,
+    visibility_team_ids, visibility_user_ids,
     created_by_user_id, owner_user_id, assigned_contact_id,
     partner_company_id, category_id, subcategory_id,
     created_at, updated_at,
