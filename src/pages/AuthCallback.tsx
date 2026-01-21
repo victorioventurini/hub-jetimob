@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
 import { Loader2, AlertCircle } from "lucide-react";
 
 /**
@@ -51,7 +52,31 @@ export default function AuthCallback() {
           }
 
           if (data.session) {
-            console.log("[AuthCallback] Session established, redirecting to:", next);
+            console.log("[AuthCallback] Session established via verifyOtp:", {
+              userId: data.session.user.id,
+              email: data.session.user.email,
+              expiresAt: data.session.expires_at,
+            });
+            
+            // Clear BU client cache to ensure fresh clients with the new JWT
+            clearBuClientCache();
+            
+            // Wait for the auth state listener to process the new session.
+            // The SDK emits SIGNED_IN asynchronously after verifyOtp resolves.
+            // We poll getSession to confirm the session is fully hydrated.
+            let attempts = 0;
+            const maxAttempts = 10;
+            while (attempts < maxAttempts && mounted) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              const { data: checkData } = await supabase.auth.getSession();
+              if (checkData.session?.user?.id === data.session.user.id) {
+                console.log("[AuthCallback] Session confirmed after", attempts + 1, "checks");
+                break;
+              }
+              attempts++;
+            }
+            
+            console.log("[AuthCallback] Redirecting to:", next);
             if (mounted) navigate(next, { replace: true });
             return;
           }
