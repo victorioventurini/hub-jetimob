@@ -5381,10 +5381,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          document: string | null
+          document_type: string | null
           id: string
           legal_name: string | null
           name: string
           notes: string | null
+          person_type: string | null
           status: Database["public"]["Enums"]["partner_company_status"]
           updated_at: string
         }
@@ -5394,10 +5397,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          document?: string | null
+          document_type?: string | null
           id?: string
           legal_name?: string | null
           name: string
           notes?: string | null
+          person_type?: string | null
           status?: Database["public"]["Enums"]["partner_company_status"]
           updated_at?: string
         }
@@ -5407,10 +5413,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          document?: string | null
+          document_type?: string | null
           id?: string
           legal_name?: string | null
           name?: string
           notes?: string | null
+          person_type?: string | null
           status?: Database["public"]["Enums"]["partner_company_status"]
           updated_at?: string
         }
@@ -5420,6 +5429,78 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_company_bu_associations: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          partner_company_id: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          partner_company_id: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          partner_company_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_company_bu_associations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
             referencedColumns: ["id"]
           },
         ]
@@ -5567,7 +5648,7 @@ export type Database = {
       }
       partner_service_mappings: {
         Row: {
-          bu_id: string
+          bu_id: string | null
           category_id: string
           created_at: string
           created_by: string | null
@@ -5580,7 +5661,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bu_id: string
+          bu_id?: string | null
           category_id: string
           created_at?: string
           created_by?: string | null
@@ -5593,7 +5674,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bu_id?: string
+          bu_id?: string | null
           category_id?: string
           created_at?: string
           created_by?: string | null
@@ -7787,6 +7868,52 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "partner_service_mappings_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
+            columns: ["partner_company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_service_mappings_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_partner_services_by_bu: {
+        Row: {
+          bu_id: string | null
+          category_id: string | null
+          category_name: string | null
+          document: string | null
+          document_type: string | null
+          id: string | null
+          partner_company_id: string | null
+          partner_company_name: string | null
+          person_type: string | null
+          status: Database["public"]["Enums"]["partner_service_status"] | null
+          subcategory_id: string | null
+          subcategory_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_company_bu_associations_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
