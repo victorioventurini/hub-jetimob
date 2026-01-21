@@ -1,25 +1,20 @@
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Inbox } from "lucide-react";
-import { useTickets, useMyTickets } from "@/modules/tickets/hooks";
-import { TicketCard } from "../components/TicketCard";
+import { Inbox } from "lucide-react";
+import { useTickets } from "@/modules/tickets/hooks";
+import { TicketsTable } from "../components/TicketsTable";
 import { TicketFilters } from "../components/TicketFilters";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState, useUrlTab, useLocalSearch, parsers } from "@/shared/url";
+import { useUrlState, useLocalSearch, parsers } from "@/shared/url";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
-import type { TicketStatus, TicketType, Ticket } from "../types";
-
-type TicketTab = "mine" | "waiting" | "in_progress" | "done" | "discarded";
+import type { TicketStatus, TicketType } from "../types";
 
 export default function TicketsListPage() {
   const navigate = useNavigate();
   const { isExternal } = useExternalUser();
   
-  // URL State - object API
-  const [activeTab, setActiveTab] = useUrlTab<TicketTab>("mine");
+  // URL State for filters
   const { value: search, setValue: setSearch } = useLocalSearch("q");
   
   const typeState = useUrlState<TicketType | "all">({ key: "type", defaultValue: "all" });
@@ -45,73 +40,21 @@ export default function TicketsListPage() {
   });
   const showOverdue = overdueState.value;
   const setShowOverdue = overdueState.set;
-  const tabStatusFilter = useMemo((): TicketStatus | TicketStatus[] | undefined => {
-    switch (activeTab) {
-      case "waiting":
-        return "waiting";
-      case "in_progress":
-        return "in_progress";
-      case "done":
-        return "done";
-      case "discarded":
-        return "discarded";
-      default:
-        return statusFilter !== "all" ? statusFilter : undefined;
-    }
-  }, [activeTab, statusFilter]);
 
-  // Use query for "all" tabs, my tickets for "mine" tab
+  // Build query filters
   const queryFilters = useMemo(() => ({
     type: typeFilter !== "all" ? typeFilter : undefined,
-    status: tabStatusFilter,
+    status: statusFilter !== "all" ? statusFilter : undefined,
     category_id: categoryId !== "all" ? categoryId : undefined,
     partner_company_id: partnerId !== "all" ? partnerId : undefined,
     search: search || undefined,
     overdue: showOverdue || undefined,
-  }), [typeFilter, tabStatusFilter, categoryId, partnerId, search, showOverdue]);
+  }), [typeFilter, statusFilter, categoryId, partnerId, search, showOverdue]);
 
   const { 
-    data: ticketsResponse, 
-    isLoading: isLoadingAll 
-  } = useTickets(activeTab !== "mine" ? queryFilters : undefined);
-  
-  const { data: myTickets = [], isLoading: isLoadingMy } = useMyTickets();
-
-  // Filter my tickets client-side (small dataset)
-  const filteredMyTickets = useMemo(() => {
-    return myTickets.filter((ticket: Ticket) => {
-      if (search && !ticket.title.toLowerCase().includes(search.toLowerCase())) {
-        return false;
-      }
-      if (typeFilter !== "all" && ticket.type !== typeFilter) {
-        return false;
-      }
-      if (statusFilter !== "all" && ticket.status !== statusFilter) {
-        return false;
-      }
-      if (categoryId !== "all" && ticket.category_id !== categoryId) {
-        return false;
-      }
-      if (partnerId !== "all" && ticket.partner_company_id !== partnerId) {
-        return false;
-      }
-      return true;
-    });
-  }, [myTickets, search, typeFilter, statusFilter, categoryId, partnerId]);
-
-  // Get the right data based on active tab
-  const displayTickets = activeTab === "mine" 
-    ? filteredMyTickets 
-    : (ticketsResponse ?? []);
-  
-  const totalItems = displayTickets.length;
-
-  const isLoading = activeTab === "mine" ? isLoadingMy : isLoadingAll;
-
-  // Handler for tab change
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab as TicketTab);
-  };
+    data: tickets = [], 
+    isLoading 
+  } = useTickets(queryFilters);
 
   return (
     <div className="space-y-6">
@@ -131,41 +74,25 @@ export default function TicketsListPage() {
         onOverdueChange={setShowOverdue}
       />
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
-          <TabsTrigger value="mine">Meus</TabsTrigger>
-          <TabsTrigger value="waiting">Aguardando</TabsTrigger>
-          <TabsTrigger value="in_progress">Em andamento</TabsTrigger>
-          <TabsTrigger value="done">Concluídos</TabsTrigger>
-          <TabsTrigger value="discarded">Descartados</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="mt-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          ) : displayTickets.length === 0 ? (
-            <EmptyState
-              icon={Inbox}
-              title="Nenhum ticket encontrado"
-              description="Não há tickets que correspondam aos filtros selecionados."
-              actionLabel={isExternal ? undefined : "Criar primeiro ticket"}
-              onAction={isExternal ? undefined : () => navigate("/tickets/new")}
-            />
-          ) : (
-            <div className="space-y-4">
-              {displayTickets.map((ticket) => (
-                <TicketCard key={ticket.id} ticket={ticket} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
+      {/* Content */}
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : tickets.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title="Nenhum ticket encontrado"
+          description="Não há tickets que correspondam aos filtros selecionados."
+          actionLabel={isExternal ? undefined : "Criar primeiro ticket"}
+          onAction={isExternal ? undefined : () => navigate("/tickets/new")}
+        />
+      ) : (
+        <TicketsTable tickets={tickets} />
+      )}
     </div>
   );
 }
