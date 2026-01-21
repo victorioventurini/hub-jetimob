@@ -17,7 +17,8 @@ export {
   useTicketAttachments,
   useCreateMessage, 
   useEditMessage, 
-  useDeleteMessage 
+  useDeleteMessage,
+  type CreateMessageAuthor,
 } from './useTicketMessages';
 
 // Partners

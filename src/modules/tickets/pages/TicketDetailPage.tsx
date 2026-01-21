@@ -16,6 +16,8 @@ import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachmen
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeBack } from "@/hooks/useSafeBack";
+import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
+import { useBu } from "@/contexts/BuContext";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
@@ -27,13 +29,25 @@ import type { ParsedMention } from "@/components/mentions";
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { profileId } = useIdentity();
+  const { isExternal, externalContacts } = useExternalUser();
+  const { currentBu } = useBu();
   const goBack = useSafeBack({ moduleRoot: "/tickets" });
+
+  // Get the correct contactId for the current BU (if external user)
+  const currentBuContactId = useMemo(() => {
+    if (!isExternal || !currentBu?.id || !externalContacts) return null;
+    const contact = externalContacts.find(c => c.buId === currentBu.id);
+    return contact?.contactId ?? null;
+  }, [isExternal, currentBu?.id, externalContacts]);
 
   const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
   const { data: attachments = [] } = useTicketAttachments(id!);
   const updateStatus = useUpdateTicketStatus();
-  const createMessage = useCreateMessage(profileId);
+  const createMessage = useCreateMessage({ 
+    profileId, 
+    contactId: currentBuContactId 
+  });
 
   // SEO - Meta title e description
   usePageTitle(
