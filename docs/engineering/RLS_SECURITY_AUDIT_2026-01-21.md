@@ -2,7 +2,7 @@
 
 **Data:** 2026-01-21  
 **Status:** ✅ Auditoria Completa  
-**TCR Version:** v2.48.0
+**TCR Version:** v2.49.0
 
 ---
 
@@ -80,6 +80,9 @@ WHERE pcba.partner_contact_id = partner_contacts.id
 | `20260121211712_*.sql` | Fix recursão infinita partner_contacts ↔ partner_contact_bu_associations |
 | `20260121212924_*.sql` | Fix identity mismatch (has_permission, is_bu_admin) + self-reference bug |
 | `20260121213xxx_*.sql` | Fix overly permissive INSERT policies em audit tables |
+| `20260121220904_*.sql` | Pinned messages: colunas + função `can_pin_ticket_message` + trigger |
+| `20260121223844_*.sql` | **ticket_attachments_insert_v3**: permite contatos externos participantes fazer upload |
+| `20260121223914_*.sql` | **ticket_attachments_select_v3**: usa `can_view_ticket()` para acesso de leitura |
 
 ---
 
