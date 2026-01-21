@@ -102,7 +102,7 @@ const KNOWN_SCHEMA: Record<string, string[]> = {
     'body_richtext', 'created_at', 'edited_at', 'deleted_at'
   ],
   ticket_participants: [
-    'id', 'bu_id', 'ticket_id', 'participant_type', 'user_id', 'partner_contact_id',
+    'id', 'bu_id', 'ticket_id', 'participant_type', 'profile_id', 'partner_contact_id', // IDENTITY v2.51.0: user_id → profile_id
     'role', 'is_active', 'created_at'
   ],
   ticket_categories: [

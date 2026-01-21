@@ -189,12 +189,13 @@ export interface Ticket {
 }
 
 // Participante de Ticket
+// IDENTITY v2.1: profile_id armazena profiles.id (renomeado de user_id em v2.51.0)
 export interface TicketParticipant {
   id: string;
   bu_id: string;
   ticket_id: string;
   participant_type: TicketParticipantType;
-  user_id: string | null;
+  profile_id: string | null; // IDENTITY: profiles.id (v2.51.0 rename)
   partner_contact_id: string | null;
   role: TicketParticipantRole;
   is_active: boolean;

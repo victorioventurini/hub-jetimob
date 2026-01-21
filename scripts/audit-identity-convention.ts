@@ -18,12 +18,12 @@ import * as path from "path";
 // =====================================================
 
 const LEGACY_COLUMNS_STORING_PROFILE_ID = [
-  // Tickets
+  // Tickets (note: ticket_participants.user_id was RENAMED to profile_id in v2.51.0)
   "tickets.owner_user_id",
   "tickets.created_by_user_id",
   "ticket_messages.author_user_id",
   "ticket_messages.pinned_by_user_id",
-  "ticket_participants.user_id",
+  // "ticket_participants.user_id" - REMOVED: renamed to profile_id in v2.51.0
   "ticket_attachments.uploaded_by_user_id",
   // OKRs
   "okr_org_objectives.owner_user_id",
@@ -87,12 +87,12 @@ const VIOLATION_PATTERNS: ViolationPattern[] = [
     severity: "error",
     message: "JOIN incorreto: coluna armazena profiles.id, mas está comparando com profiles.user_id",
   },
-  // Coluna profile_id que não existe
+  // Uso de user_id legado em ticket_participants (foi renomeado para profile_id em v2.51.0)
   {
-    name: "nonexistent_profile_id_column",
-    pattern: /(?:tp|ticket_participants)\.profile_id/gi,
+    name: "legacy_user_id_in_ticket_participants",
+    pattern: /(?:tp|ticket_participants)\.user_id/gi,
     severity: "error",
-    message: "Coluna profile_id não existe em ticket_participants. Use user_id (que armazena profiles.id)",
+    message: "Coluna user_id foi renomeada para profile_id em ticket_participants (v2.51.0). Atualize para profile_id.",
   },
   // Uso de useAuth().user.id para operações de domínio
   {
