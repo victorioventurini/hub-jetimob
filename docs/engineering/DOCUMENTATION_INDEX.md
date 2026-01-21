@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-15  
-**TCR Version:** 2.38.0
+**Última atualização:** 2026-01-21  
+**TCR Version:** 2.45.0
 
 ---
 
