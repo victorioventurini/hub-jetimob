@@ -139,6 +139,44 @@ export function usePartnerSubcategories(
 }
 
 /**
+ * Busca empresas parceiras que atendem uma categoria específica
+ */
+export function usePartnersByCategory(categoryId: string | undefined) {
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
+  const supabase = useBuScopedSupabase();
+
+  return useQuery({
+    queryKey: ["partners-by-category", buId, categoryId],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: async () => {
+      if (!buId || !categoryId) return [];
+
+      // Buscar parceiros distintos que atendem a categoria
+      const { data, error } = await supabase
+        .from("v_partner_services")
+        .select("partner_company_id, partner_company_name")
+        .eq("bu_id", buId)
+        .eq("category_id", categoryId)
+        .eq("status", "active");
+
+      if (error) throw error;
+
+      // Remover duplicatas (mesmo parceiro pode ter múltiplas subcategorias)
+      const uniquePartners = Array.from(
+        new Map(data.map(p => [p.partner_company_id, p])).values()
+      );
+
+      return uniquePartners.map(p => ({
+        id: p.partner_company_id,
+        name: p.partner_company_name,
+      }));
+    },
+    enabled: !!buId && !!categoryId,
+  });
+}
+
+/**
  * Busca todos os mappings de um parceiro (para configuração)
  */
 export function usePartnerServiceMappings(partnerCompanyId: string | undefined) {
