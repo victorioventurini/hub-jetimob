@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { toast } from "sonner";
 import type {
   CreateTicketData,
   UpdateTicketData,
@@ -114,6 +115,10 @@ export function useCreateTicket(profileId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId ?? null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId ?? null), refetchType: 'active' });
+    },
+    onError: (error: Error) => {
+      console.error("[useCreateTicket] Error:", error);
+      toast.error("Erro ao criar ticket: " + (error.message || "Erro desconhecido"));
     },
   });
 }
