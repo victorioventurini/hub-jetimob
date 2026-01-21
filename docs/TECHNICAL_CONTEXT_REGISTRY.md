@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.45.0  
+**Versão:** 2.46.0  
 **Última atualização:** 2026-01-21
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -89,13 +89,15 @@
 
 | Tipo de Usuário | Critério | Tabela de Validação |
 |-----------------|----------|---------------------|
-| **Contato Parceiro** | Email cadastrado em `partner_contacts` com status `active` | `partner_contacts` |
+| **Contato Parceiro** | Email cadastrado em `partner_contacts` com status `active` **E** com associação ativa em `partner_contact_bu_associations` | `partner_contacts` + `partner_contact_bu_associations` |
 | **Empresa Parceira** | Domínio do email em `partner_companies.allowed_domains` (via `partner_company_bu_associations`) | `partner_company_bu_associations` → `partner_companies` |
 | **Usuário Interno** | Domínio em `bu_units.allowed_email_domains` **E** email em `profiles.work_email` | `bu_units` + `profiles` |
 
 ⚠️ **IMPORTANTE:** Usuários internos sem perfil pré-cadastrado NÃO recebem código OTP, mesmo com domínio válido.
 
 > **Nota (v2.45.0):** Empresas parceiras agora são globais (únicas por CPF/CNPJ). A validação de domínio para login verifica associações ativas em `partner_company_bu_associations`.
+
+> **Nota (v2.46.0):** Contatos de parceiros agora são globais (únicos por email). A validação de login verifica associações ativas em `partner_contact_bu_associations`. Um mesmo contato pode estar ativo em múltiplas BUs.
 
 ### 1.3 Conceito Multi-BU (Business Units)
 
@@ -1218,23 +1220,56 @@ Vínculo entre empresas parceiras globais e BUs específicas.
 
 ---
 
-#### **partner_contacts** — Contatos de Parceiros
-Pessoas de contato vinculadas a empresas parceiras.
+#### **partner_contacts** — Contatos de Parceiros (Global)
+Pessoas de contato vinculadas a empresas parceiras. **Globais por email** (v2.46.0).
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | uuid | PK |
-| bu_id | uuid | FK para bu_units |
+| bu_id | uuid | FK para bu_units (DEPRECATED, usar associações) |
 | partner_company_id | uuid | FK para partner_companies |
 | profile_user_id | uuid | FK para profiles (se usuário existir) |
 | name | text | Nome do contato |
-| email | text | Email do contato |
+| email | text | Email do contato **(UNIQUE global)** |
 | phone | text | Telefone |
 | status | enum | `active`, `inactive` |
 | created_at | timestamp | Data de criação |
 | deleted_at | timestamp | Soft delete |
 
+**Escopo:** Global (único por email)
+
+**Regras (v2.46.0):**
+- Email é único globalmente: `UNIQUE (lower(email)) WHERE deleted_at IS NULL`
+- Vínculo com BUs gerenciado via `partner_contact_bu_associations`
+- Campo `bu_id` mantido para backward compatibility, será removido em versão futura
+- Um contato pode estar ativo em múltiplas BUs simultaneamente
+- Fluxo de cadastro: verificar email → se existir, ativar na BU → se não, criar novo
+
+---
+
+#### **partner_contact_bu_associations** — Associações de Contatos por BU (v2.46.0)
+Tabela de vínculo N:N entre contatos de parceiros e Business Units.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| partner_contact_id | uuid | FK para partner_contacts |
+| bu_id | uuid | FK para bu_units |
+| is_active | bool | Se associação está ativa na BU |
+| notes | text | Observações da BU |
+| created_by | uuid | FK para profiles (quem criou) |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data de atualização |
+| deleted_at | timestamp | Soft delete |
+
 **Escopo:** Por BU
+
+**Regras:**
+- Um contato pode estar associado a múltiplas BUs
+- Cada BU pode ativar/desativar o contato independentemente
+- RLS baseada em `is_current_bu(bu_id)` para isolamento
+- Índice único: `(partner_contact_id, bu_id)`
+- Login de contato requer associação ativa na BU
 
 ---
 
@@ -2342,6 +2377,23 @@ export type { SomeType } from './types';
   - Documentação das SQL functions para códigos de assets
 - **Contexto de BU** documentado como fonte única de verdade
 - **Removidas referências obsoletas** a `/bu/:buId/` nas rotas
+
+### v2.46.0 (2026-01-21)
+- **Global Partner Contacts v1.0**:
+  - Contatos de parceiros agora são globais (únicos por email)
+  - Nova tabela `partner_contact_bu_associations` para vínculo N:N entre contatos e BUs
+  - Constraint `UNIQUE (lower(email)) WHERE deleted_at IS NULL` em `partner_contacts`
+  - Campo `bu_id` em `partner_contacts` tornado nullable (deprecated)
+  - Migração automática de dados existentes para nova estrutura
+  - RLS atualizada para ler contatos via tabela de associações
+  - Modal de cadastro refatorado para fluxo multi-step:
+    - Step 1: Verificação de email (busca global)
+    - Step 2a: Contato existente → botão "Ativar nesta BU"
+    - Step 2b: Contato novo → formulário completo
+  - Novos hooks: `useCheckContactByEmail`, `useActivateContactInBu`, `useCreateGlobalContact`
+  - Edge functions atualizadas: `send-partner-invite`, `request-magic-link`
+  - Hook `useExternalUser` atualizado para buscar BUs via associações
+  - Hook `usePartnerContacts` atualizado para listar via associações
 
 ### v2.0.0 (2026-01-06) — Link Standard Refactoring
 - **Padrão Oficial de Links Compartilháveis**:
