@@ -357,14 +357,17 @@ export interface PaginatedTicketsResponse {
 export interface CreateTicketData {
   type: TicketType;
   title: string;
-  category_id?: string;
-  subcategory_id?: string;
-  partner_company_id?: string;
+  category_id?: string | null;
+  subcategory_id?: string | null;
+  partner_company_id?: string | null;
+  // External contact assignment (contact-first routing v2.4+)
+  assigned_contact_id?: string | null;
+  assignment_source?: 'contact_capability' | 'routing_fallback' | 'manual' | null;
   visibility: TicketVisibility;
   visibility_team_ids?: string[];
   visibility_squad_ids?: string[];
   visibility_user_ids?: string[];
-  expected_due_at?: string;
+  expected_due_at?: string | null;
   initial_message?: RichTextContent;
   initial_message_mentions?: {
     user_id?: string | null;

@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
-import { Users, AlertCircle, Info } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -24,12 +24,10 @@ import {
 
 interface FallbackContactsEditorProps {
   companyId: string;
-  companyName?: string;
 }
 
 export function FallbackContactsEditor({
   companyId,
-  companyName,
 }: FallbackContactsEditorProps) {
   const { data: allContacts = [], isLoading: loadingContacts } =
     usePartnerContacts(companyId);

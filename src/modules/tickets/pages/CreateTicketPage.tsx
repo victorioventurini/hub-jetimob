@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useCreateTicket } from "../hooks/useTickets";
 import { useTicketCategories } from "../hooks/useTicketCategories";
+import { useAvailableExternalContacts } from "../hooks/useAvailableExternalContacts";
 
 import { usePartnerCategories, usePartnerSubcategories, useHasPartnerServices, usePartnersByCategory } from "../hooks/usePartnerServices";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
@@ -86,6 +87,10 @@ export default function CreateTicketPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [userTeamsInitialized, setUserTeamsInitialized] = useState(false);
   
+  // State for external contact selection
+  const [selectedExternalContactId, setSelectedExternalContactId] = useState<string | undefined>(undefined);
+  const [externalContactSource, setExternalContactSource] = useState<"capability" | "fallback" | "none">("none");
+  
   const form = useForm<FormData>({
     resolver: zodResolver(createTicketSchema),
     defaultValues: {
@@ -99,6 +104,7 @@ export default function CreateTicketPage() {
   const selectedType = form.watch("type");
   const selectedPartnerId = form.watch("partner_company_id");
   const selectedCategoryId = form.watch("category_id");
+  const selectedSubcategoryId = form.watch("subcategory_id");
   const selectedVisibility = form.watch("visibility");
 
   // Current user's profile id for locked user selection
@@ -164,6 +170,28 @@ export default function CreateTicketPage() {
     selectedType === "external" ? selectedPartnerId : undefined,
     selectedCategoryId
   );
+
+  // Hook para buscar contatos disponíveis (por capacidade ou fallback)
+  const { contacts: availableContacts, source: contactsSource, isLoading: loadingContacts } = 
+    useAvailableExternalContacts(
+      selectedType === "external" ? selectedPartnerId : undefined,
+      selectedSubcategoryId,
+      selectedCategoryId
+    );
+
+  // Auto-selecionar contato se só houver um disponível
+  useEffect(() => {
+    if (selectedType === "external" && availableContacts.length === 1 && !selectedExternalContactId) {
+      setSelectedExternalContactId(availableContacts[0].id);
+      setExternalContactSource(contactsSource);
+    }
+  }, [selectedType, availableContacts, selectedExternalContactId, contactsSource]);
+
+  // Resetar contato quando mudar subcategoria ou empresa
+  useEffect(() => {
+    setSelectedExternalContactId(undefined);
+    setExternalContactSource("none");
+  }, [selectedPartnerId, selectedSubcategoryId]);
 
   // Auto-selecionar empresa se só houver uma opção para a categoria
   useEffect(() => {
@@ -325,6 +353,11 @@ export default function CreateTicketPage() {
         category_id: data.category_id || null,
         subcategory_id: data.subcategory_id || null,
         partner_company_id: data.type === "external" ? data.partner_company_id || null : null,
+        // External contact assignment
+        assigned_contact_id: data.type === "external" ? selectedExternalContactId || null : null,
+        assignment_source: data.type === "external" && selectedExternalContactId 
+          ? (externalContactSource === "capability" ? "contact_capability" : "routing_fallback")
+          : null,
         visibility: data.visibility,
         visibility_team_ids: data.visibility === "teams" ? selectedTeamIds : [],
         visibility_user_ids: data.visibility === "users" ? selectedUserIds : [],
@@ -587,6 +620,77 @@ export default function CreateTicketPage() {
                     </FormItem>
                   )}
                 />
+              )}
+
+              {/* External Contact Selection - After subcategory for external tickets */}
+              {selectedType === "external" && selectedPartnerId && (selectedSubcategoryId || isGeneralistCategory) && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    Contato Responsável
+                    {contactsSource === "fallback" && (
+                      <Badge variant="secondary" className="text-xs">Padrão</Badge>
+                    )}
+                    {contactsSource === "capability" && (
+                      <Badge variant="outline" className="text-xs">Especialista</Badge>
+                    )}
+                  </Label>
+                  
+                  {loadingContacts ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Buscando contatos...
+                    </div>
+                  ) : availableContacts.length === 0 ? (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Nenhum contato disponível. Configure capacidades ou contatos padrão nas configurações da empresa.
+                      </AlertDescription>
+                    </Alert>
+                  ) : availableContacts.length === 1 ? (
+                    <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/30">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{availableContacts[0].name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {availableContacts[0].email}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Select
+                      value={selectedExternalContactId}
+                      onValueChange={(value) => {
+                        setSelectedExternalContactId(value);
+                        setExternalContactSource(contactsSource);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o contato responsável..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableContacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{contact.name}</span>
+                              <span className="text-muted-foreground text-xs">
+                                ({contact.email})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
+                  <p className="text-xs text-muted-foreground">
+                    {contactsSource === "capability"
+                      ? "Contato com capacidade para atender esta subcategoria."
+                      : contactsSource === "fallback"
+                        ? "Contato padrão da empresa (nenhum especialista encontrado)."
+                        : ""}
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>

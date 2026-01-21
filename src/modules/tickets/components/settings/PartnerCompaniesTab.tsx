@@ -147,7 +147,6 @@ export function PartnerCompaniesTab() {
               
               <FallbackContactsEditor 
                 companyId={servicesCompany.id} 
-                companyName={servicesCompany.name}
               />
             </div>
           )}
