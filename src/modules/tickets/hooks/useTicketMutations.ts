@@ -41,6 +41,9 @@ export function useCreateTicket(profileId: string | null) {
           category_id: data.category_id || null,
           subcategory_id: data.subcategory_id || null,
           partner_company_id: data.partner_company_id || null,
+          // External contact assignment (contact-first routing v2.4+)
+          assigned_contact_id: data.assigned_contact_id || null,
+          assignment_source: data.assignment_source || null,
           visibility: data.visibility,
           visibility_team_ids: data.visibility_team_ids || [],
           visibility_squad_ids: data.visibility_squad_ids || [],
@@ -62,6 +65,17 @@ export function useCreateTicket(profileId: string | null) {
         user_id: profileId,
         role: "requester" as const,
       });
+
+      // If external contact is assigned, add as participant with assignee role
+      if (data.assigned_contact_id) {
+        await supabase.from("ticket_participants").insert({
+          bu_id: buId,
+          ticket_id: ticket.id,
+          participant_type: "partner_contact" as const,
+          partner_contact_id: data.assigned_contact_id,
+          role: "assignee" as const,
+        });
+      }
 
       // Add initial message if provided with profileId
       if (data.initial_message && Object.keys(data.initial_message).length > 0) {
