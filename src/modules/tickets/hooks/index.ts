@@ -34,6 +34,17 @@ export {
   useDeletePartnerContact 
 } from './usePartners';
 
+// Partner Contacts Global (new multi-BU model)
+export {
+  useCheckContactByEmail,
+  useContactBuAssociations,
+  useActivateContactInBu,
+  useCreateGlobalContact,
+  useDeactivateContactInBu,
+  type PartnerContactWithAssociations,
+  type ContactBuAssociation,
+} from './usePartnerContactGlobal';
+
 // Partner Services
 export { 
   usePartnerServices, 
