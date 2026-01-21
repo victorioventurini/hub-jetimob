@@ -179,7 +179,7 @@ function EmptyState({ isExternal }: { isExternal: boolean }) {
       </p>
       <p className="text-xs mt-1">
         {isExternal 
-          ? "Crie um ticket para iniciar uma solicitação." 
+          ? "Aguarde ser adicionado a um ticket pela equipe." 
           : "Crie um ticket para registrar uma solicitação."}
       </p>
     </div>
@@ -264,7 +264,7 @@ function InternalTicketsCard({ isLoading: externalLoading }: { isLoading?: boole
   );
 }
 
-// External variant component
+// External variant component - external users cannot create tickets
 function ExternalTicketsCard({ tickets, isLoading }: { tickets: TicketItem[]; isLoading?: boolean }) {
   if (isLoading) {
     return <LoadingState isExternal />;
@@ -281,12 +281,7 @@ function ExternalTicketsCard({ tickets, isLoading }: { tickets: TicketItem[]; is
           </div>
           <CardTitle className="text-lg">Meus Tickets</CardTitle>
         </div>
-        <Button asChild size="sm">
-          <Link to="/tickets/new?type=external">
-            <Plus className="h-4 w-4 mr-1" />
-            Criar novo ticket
-          </Link>
-        </Button>
+        {/* External users cannot create tickets - removed button */}
       </CardHeader>
       <CardContent>
         {/* Tickets List or Empty State */}
