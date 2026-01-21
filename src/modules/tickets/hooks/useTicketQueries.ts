@@ -90,6 +90,10 @@ export function useTickets(filters?: TicketFilters) {
         query = query.eq("owner_user_id", filters.owner_user_id);
       }
 
+      if (filters?.assigned_contact_id) {
+        query = query.eq("assigned_contact_id", filters.assigned_contact_id);
+      }
+
       if (filters?.created_by_user_id) {
         query = query.eq("created_by_user_id", filters.created_by_user_id);
       }
