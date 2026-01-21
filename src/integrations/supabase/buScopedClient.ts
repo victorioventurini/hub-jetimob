@@ -33,6 +33,25 @@ function readAccessTokenFromStorage(): string | null {
   }
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const json = atob(padded);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function getJwtRole(token: string): string | null {
+  const payload = decodeJwtPayload(token);
+  const role = payload?.["role"];
+  return typeof role === "string" ? role : null;
+}
+
 const buClientCache = new Map<string, SupabaseClient<Database>>();
 
 export function clearBuClientCache() {
@@ -60,9 +79,14 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
 
         const storedToken = readAccessTokenFromStorage();
         const currentAuth = headers.get("Authorization") || headers.get("authorization");
-        const isAnonAuth = !!currentAuth && currentAuth.includes(SUPABASE_PUBLISHABLE_KEY);
+        const currentToken = currentAuth?.startsWith("Bearer ") ? currentAuth.slice(7) : null;
+        const currentRole = currentToken ? getJwtRole(currentToken) : null;
 
-        if (storedToken && (!currentAuth || isAnonAuth)) {
+        // If PostgREST is about to run as anon (common during cold starts/tab restores),
+        // replace it with the persisted user JWT.
+        const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
+
+        if (storedToken && shouldInjectUserJwt) {
           headers.set("Authorization", `Bearer ${storedToken}`);
           if (import.meta.env.DEV) {
             console.debug("[BuScopedClient] Injected JWT from storage for buId:", buId);
