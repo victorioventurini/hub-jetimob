@@ -24,7 +24,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { usePartnerCompanies, useDeletePartnerCompany, usePartnerServices } from "../../hooks";
 import { PartnerCompanyDialog } from "./PartnerCompanyDialog";
 import { PartnerServicesTab } from "./PartnerServicesTab";
+import { FallbackContactsEditor } from "./FallbackContactsEditor";
 import { PartnerCompany } from "../../types";
+import { Separator } from "@/components/ui/separator";
 
 export function PartnerCompaniesTab() {
   const { data: rawCompanies = [], isLoading } = usePartnerCompanies();
@@ -128,16 +130,27 @@ export function PartnerCompaniesTab() {
         description="Tickets existentes serão mantidos, mas novos tickets externos não poderão ser criados para esta empresa."
       />
 
-      {/* Dialog de Serviços */}
+      {/* Dialog de Serviços e Configurações */}
       <Dialog open={!!servicesCompany} onOpenChange={() => setServicesCompany(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Serviços de {servicesCompany?.name}
+              Configurações de {servicesCompany?.name}
             </DialogTitle>
           </DialogHeader>
-          {servicesCompany && <PartnerServicesTab partner={servicesCompany} />}
+          {servicesCompany && (
+            <div className="space-y-6">
+              <PartnerServicesTab partner={servicesCompany} />
+              
+              <Separator />
+              
+              <FallbackContactsEditor 
+                companyId={servicesCompany.id} 
+                companyName={servicesCompany.name}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

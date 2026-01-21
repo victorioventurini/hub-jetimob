@@ -83,5 +83,14 @@ export {
   type ContactCapability,
 } from './useContactCapabilities';
 
+// Available external contacts (for ticket creation)
+export {
+  useAvailableExternalContacts,
+  useContactsByCapability,
+  useCompanyFallbackContacts,
+  useUpdateFallbackContacts,
+  type AvailableExternalContact,
+} from './useAvailableExternalContacts';
+
 // Summary
 export { useTicketsSummary } from './useTicketsSummary';

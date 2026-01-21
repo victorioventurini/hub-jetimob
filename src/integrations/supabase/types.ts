@@ -5438,6 +5438,7 @@ export type Database = {
           bu_id: string
           created_at: string
           created_by: string | null
+          default_contact_ids: string[] | null
           deleted_at: string | null
           id: string
           is_active: boolean
@@ -5449,6 +5450,7 @@ export type Database = {
           bu_id: string
           created_at?: string
           created_by?: string | null
+          default_contact_ids?: string[] | null
           deleted_at?: string | null
           id?: string
           is_active?: boolean
@@ -5460,6 +5462,7 @@ export type Database = {
           bu_id?: string
           created_at?: string
           created_by?: string | null
+          default_contact_ids?: string[] | null
           deleted_at?: string | null
           id?: string
           is_active?: boolean
