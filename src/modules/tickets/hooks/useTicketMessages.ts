@@ -89,7 +89,13 @@ export function useTicketAttachments(ticketId: string | null) {
 // MUTATIONS
 // ===========================================
 
-export function useCreateMessage(profileId: string | null) {
+export interface CreateMessageAuthor {
+  profileId: string | null;
+  /** If the user is an external contact, this is their partner_contacts.id */
+  contactId?: string | null;
+}
+
+export function useCreateMessage(author: CreateMessageAuthor) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
@@ -104,18 +110,34 @@ export function useCreateMessage(profileId: string | null) {
       data: CreateMessageData;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
-      if (!profileId) throw new Error("Perfil não carregado");
+      
+      const isExternalUser = !!author.contactId;
+      
+      if (!isExternalUser && !author.profileId) {
+        throw new Error("Perfil não carregado");
+      }
 
-      // Create message with profileId (profiles.id)
+      // Determine author type and ID based on user type
+      const messagePayload = isExternalUser
+        ? {
+            bu_id: buId,
+            ticket_id: ticketId,
+            author_type: "partner_contact" as const,
+            author_contact_id: author.contactId,
+            body_richtext: data.body_richtext,
+          }
+        : {
+            bu_id: buId,
+            ticket_id: ticketId,
+            author_type: "internal_user" as const,
+            author_user_id: author.profileId,
+            body_richtext: data.body_richtext,
+          };
+
+      // Create message
       const { data: message, error } = await buScopedSupabase
         .from("ticket_messages")
-        .insert({
-          bu_id: buId,
-          ticket_id: ticketId,
-          author_type: "internal_user" as const,
-          author_user_id: profileId,
-          body_richtext: data.body_richtext,
-        } as any)
+        .insert(messagePayload as any)
         .select()
         .single();
 
@@ -129,6 +151,9 @@ export function useCreateMessage(profileId: string | null) {
 
       // Create mentions if provided (using global mentions table)
       if (data.mentions && data.mentions.length > 0) {
+        // For external users, use their contactId; for internal users, use profileId
+        const createdBy = isExternalUser ? null : author.profileId;
+        
         const mentionInserts = data.mentions
           .filter((m) => m.user_id || m.contact_id)
           .map((m) => ({
@@ -137,7 +162,7 @@ export function useCreateMessage(profileId: string | null) {
             entity_id: message.id,
             mentioned_user_id: m.user_id || null,
             mentioned_contact_id: m.contact_id || null,
-            created_by: profileId,
+            created_by: createdBy,
           }));
 
         if (mentionInserts.length > 0) {
@@ -170,6 +195,7 @@ export function useCreateMessage(profileId: string | null) {
             .getPublicUrl(uploadData.path);
 
           // Insert attachment record
+          // For external users, uploaded_by_user_id is null (they don't have a profile)
           await buScopedSupabase.from("ticket_attachments").insert({
             bu_id: buId,
             ticket_id: ticketId,
@@ -178,7 +204,7 @@ export function useCreateMessage(profileId: string | null) {
             file_name: file.name,
             file_size: file.size,
             mime_type: file.type,
-            uploaded_by_user_id: profileId,
+            uploaded_by_user_id: isExternalUser ? null : author.profileId,
           });
         }
       }

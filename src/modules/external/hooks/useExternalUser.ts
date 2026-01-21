@@ -27,6 +27,7 @@ export function useExternalUser() {
       }
 
       // First, fetch ALL active partner contacts for this user
+      // NOTE: partner_contacts.user_id stores auth.users.id
       const { data: contactsData, error: contactsError } = await supabase
         .from("partner_contacts")
         .select(`
@@ -39,7 +40,7 @@ export function useExternalUser() {
             name
           )
         `)
-        .eq("profile_user_id", user.id)
+        .eq("user_id", user.id)
         .eq("status", "active")
         .is("deleted_at", null);
 
