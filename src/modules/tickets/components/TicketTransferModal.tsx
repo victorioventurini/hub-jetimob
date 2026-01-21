@@ -1,12 +1,13 @@
 /**
  * TicketTransferModal - Modal para transferir ticket para outro responsável
  * 
- * - Ticket interno: lista apenas usuários internos
- * - Ticket externo: lista apenas contatos externos da mesma empresa parceira
+ * - Ticket interno: lista usuários internos via useBuUsersDirectory
+ * - Ticket externo: lista contatos externos da mesma empresa via usePartnerCompanyContacts
+ * 
+ * Refatorado para usar hooks canônicos e eliminar duplicação de código.
  */
 
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -24,11 +25,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Search, User, Building2, Check } from "lucide-react";
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useBu } from "@/contexts/BuContext";
-import { queryKeys } from "@/lib/queryKeys";
+import { usePartnerCompanyContacts } from "../hooks/usePartnerCompanyContacts";
+import { getInitials } from "@/lib/mentions";
 
-interface TransferCandidate {
+// ===========================================
+// TYPES
+// ===========================================
+
+export interface TransferCandidate {
   id: string;
   type: "internal" | "external";
   name: string;
@@ -49,10 +53,9 @@ interface TicketTransferModalProps {
   isTransferring?: boolean;
 }
 
-function getInitials(name: string | null | undefined): string {
-  if (!name) return "U";
-  return name.slice(0, 2).toUpperCase();
-}
+// ===========================================
+// COMPONENT
+// ===========================================
 
 export function TicketTransferModal({
   open,
@@ -66,64 +69,29 @@ export function TicketTransferModal({
   const [search, setSearch] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<TransferCandidate | null>(null);
 
-  const supabase = useBuScopedSupabase();
-  const { currentBu } = useBu();
-  const buId = currentBu?.id;
+  // ========================================
+  // DATA FETCHING - HOOKS CANÔNICOS
+  // ========================================
 
-  // Load internal users (for internal tickets)
+  // Internal users via canonical hook
   const { data: internalUsers = [], isLoading: loadingInternal } = useBuUsersDirectory({
     q: search,
     pageSize: 100,
     excludeExternal: true,
+    enabled: ticketType === "internal",
   });
 
-  // Load external contacts from same company (for external tickets)
-  const { data: externalContacts = [], isLoading: loadingExternal } = useQuery({
-    queryKey: [...queryKeys.tickets.partnerContacts(buId ?? null, partnerCompanyId ?? undefined), "transfer", search],
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      if (!buId || !partnerCompanyId) return [];
-
-      // Query contacts from same partner company via associations
-      const { data: associations, error } = await supabase
-        .from("partner_contact_bu_associations")
-        .select(`
-          id,
-          partner_contact:partner_contacts!inner (
-            id, name, email, partner_company_id, profile_user_id
-          )
-        `)
-        .eq("bu_id", buId)
-        .eq("is_active", true)
-        .is("deleted_at", null);
-
-      if (error) {
-        console.error("[TicketTransferModal] Error loading contacts:", error);
-        return [];
-      }
-
-      // Flatten, filter by company, and filter out deleted
-      const contacts = (associations || [])
-        .map((a) => a.partner_contact)
-        .filter((c): c is NonNullable<typeof c> => 
-          c !== null && c.partner_company_id === partnerCompanyId
-        );
-
-      // Filter by search
-      if (search) {
-        const searchLower = search.toLowerCase();
-        return contacts.filter((c) =>
-          c.name?.toLowerCase().includes(searchLower) ||
-          c.email?.toLowerCase().includes(searchLower)
-        );
-      }
-
-      return contacts;
-    },
-    enabled: !!buId && ticketType === "external" && !!partnerCompanyId,
+  // External contacts via canonical hook
+  const { data: externalContacts = [], isLoading: loadingExternal } = usePartnerCompanyContacts({
+    partnerCompanyId,
+    q: search,
+    enabled: ticketType === "external" && !!partnerCompanyId,
   });
 
-  // Build candidates list based on ticket type
+  // ========================================
+  // CANDIDATES LIST
+  // ========================================
+
   const candidates = useMemo((): TransferCandidate[] => {
     if (ticketType === "internal") {
       return internalUsers
@@ -134,7 +102,7 @@ export function TicketTransferModal({
           name: u.display_name || "Sem nome",
           subtitle: u.job_title_name || undefined,
           avatarUrl: u.photo_url,
-          authUserId: u.user_id, // profiles.user_id = auth.users.id
+          authUserId: u.user_id,
         }));
     } else {
       return externalContacts
@@ -142,15 +110,19 @@ export function TicketTransferModal({
         .map((c) => ({
           id: c.id,
           type: "external" as const,
-          name: c.name || "Sem nome",
+          name: c.name,
           subtitle: c.email || undefined,
           avatarUrl: null,
-          authUserId: c.profile_user_id, // partner_contacts.profile_user_id
+          authUserId: c.authUserId,
         }));
     }
   }, [ticketType, internalUsers, externalContacts, currentResponsibleId]);
 
   const isLoading = ticketType === "internal" ? loadingInternal : loadingExternal;
+
+  // ========================================
+  // HANDLERS
+  // ========================================
 
   const handleTransfer = () => {
     if (selectedCandidate) {
@@ -165,6 +137,10 @@ export function TicketTransferModal({
     }
     onOpenChange(newOpen);
   };
+
+  // ========================================
+  // RENDER
+  // ========================================
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
