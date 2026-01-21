@@ -52,9 +52,8 @@ const MODULE_VIEW_PERMISSIONS: Record<string, string[]> = {
 /**
  * Módulos que não requerem verificação de permissão específica.
  * - Módulos globais como 'profile' são sempre acessíveis para usuários autenticados.
- * - 'wizards' (Rituais) é aberto a todos na BU.
  */
-const ALWAYS_ACCESSIBLE_MODULES = ["profile", "wizards"];
+const ALWAYS_ACCESSIBLE_MODULES = ["profile"];
 
 export interface ModuleAccessResult {
   /** Se o usuário pode ver e acessar o módulo */
