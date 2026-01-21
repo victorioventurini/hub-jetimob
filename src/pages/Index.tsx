@@ -4,12 +4,13 @@ import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { CultureCard } from "@/components/home/CultureCard";
 import { VicCard, type VicCardProfile } from "@/components/home/VicCard";
+import { DashboardHero } from "@/components/home/DashboardHero";
+import { MyTicketsCard } from "@/components/home/MyTicketsCard";
 import { KpiSummaryCard } from "@/components/home/KpiSummaryCard";
 import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
-import { MyTicketsHomeCard } from "@/components/home/MyTicketsHomeCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
 import { ManagersCheckinWizardCard } from "@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard";
@@ -21,13 +22,11 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
-
 import { useProductivityTip } from "@/hooks/useProductivityTip";
 import { useBu } from "@/contexts/BuContext";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigate } from "react-router-dom";
-import { Lightbulb, Sparkles } from "lucide-react";
 
 const Index = () => {
   usePageTitle("Início");
@@ -98,22 +97,12 @@ const Index = () => {
     <HubLayout>
       <div className="space-y-8">
         {/* 1. Hero Section - Boas-vindas + Dica de produtividade */}
-        <section className="animate-fade-in">
-          <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
-            {greeting}
-          </h1>
-          {tipLoading ? (
-            <Skeleton className="h-5 w-80 mt-2" />
-          ) : (
-            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
-              <span>{tip}</span>
-              {isFromAI && (
-                <Sparkles className="h-3 w-3 text-purple-400 shrink-0" aria-label="Gerada por IA" />
-              )}
-            </p>
-          )}
-        </section>
+        <DashboardHero
+          greeting={greeting}
+          tip={tip}
+          tipLoading={tipLoading}
+          isFromAI={isFromAI}
+        />
 
         {/* 2. Culture Card */}
         <CultureCard />
@@ -182,7 +171,7 @@ const Index = () => {
         </section>
 
         {/* 6. Tickets */}
-        {canAccessTickets && <MyTicketsHomeCard />}
+        {canAccessTickets && <MyTicketsCard />}
 
         {/* 7. People Blocks */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
