@@ -4,8 +4,8 @@
 export const homeKeys = {
   dashboard: (buId: string | null, userId: string) => 
     ['home', 'dashboard', buId, userId] as const,
-  birthdays: (buId: string | null, month?: number) => ['birthdays', buId, month] as const,
-  anniversaries: (buId: string | null, month?: number) => ['work-anniversaries', buId, month] as const,
+  birthdays: (buId: string | null, period?: number | string) => ['birthdays', buId, period] as const,
+  anniversaries: (buId: string | null, period?: number | string) => ['work-anniversaries', buId, period] as const,
   newJetimobers: (buId: string | null, limit?: number) => ['new-jetimobers', buId, limit] as const,
   cultureMessage: () => ['home', 'culture-message'] as const,
   leaderSummary: (buId: string | null, teamId: string | null) => 

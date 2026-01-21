@@ -31,6 +31,7 @@ export function useNewJetimobers(limit = 5) {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       // Use canonical view for user directory - view already includes team_name via JOIN
+      // Filter by user_type = 'internal' to show only internal users
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -43,7 +44,7 @@ export function useNewJetimobers(limit = 5) {
           start_date
         `
         )
-        .eq("user_type", "internal") // Exclude external contacts
+        .eq("user_type", "internal") // Only internal users
         .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0])
         .order("start_date", { ascending: false })
         .limit(limit);
@@ -84,18 +85,23 @@ interface Birthday {
   photoUrl?: string;
   birthDay: number;
   birthMonth: number;
+  /** Days until birthday (0 = today) */
+  daysUntil: number;
 }
 
+/**
+ * Retorna aniversariantes dos próximos 15 dias
+ */
 export function useBirthdays() {
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
-  const currentMonth = new Date().getMonth() + 1;
+  const today = new Date();
 
   return useQuery({
-    queryKey: queryKeys.home.birthdays(currentBu?.id ?? null, currentMonth),
+    queryKey: queryKeys.home.birthdays(currentBu?.id ?? null, "next15days"),
     staleTime: 10 * 60 * 1000, // 10 minutes - birthdays don't change
     queryFn: async (): Promise<Birthday[]> => {
-      // Use canonical view for user directory - view already includes team_name via JOIN
+      // Fetch all users with birth_day set, then filter client-side for next 15 days
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -109,9 +115,9 @@ export function useBirthdays() {
           birth_month
         `
         )
-        .eq("birth_month", currentMonth)
+        .eq("user_type", "internal") // Only internal users
         .not("birth_day", "is", null)
-        .order("birth_day", { ascending: true });
+        .not("birth_month", "is", null);
 
       if (currentBu?.id) {
         query = query.eq("bu_id", currentBu.id);
@@ -121,15 +127,37 @@ export function useBirthdays() {
 
       if (error) throw error;
 
-      return (data || []).map((profile) => ({
-        id: profile.id,
-        name: profile.display_name || "Sem nome",
-        jobTitle: profile.job_title_name || "Sem cargo",
-        team: profile.team_name || "Sem time",
-        photoUrl: profile.photo_url || undefined,
-        birthDay: profile.birth_day!,
-        birthMonth: profile.birth_month!,
-      }));
+      const currentYear = today.getFullYear();
+
+      // Calculate days until birthday and filter next 15 days
+      return (data || [])
+        .map((profile) => {
+          const birthDay = profile.birth_day!;
+          const birthMonth = profile.birth_month!;
+
+          // Calculate next birthday
+          let birthdayThisYear = new Date(currentYear, birthMonth - 1, birthDay);
+          if (birthdayThisYear < today) {
+            // Birthday already passed this year, use next year
+            birthdayThisYear = new Date(currentYear + 1, birthMonth - 1, birthDay);
+          }
+
+          const diffTime = birthdayThisYear.getTime() - today.getTime();
+          const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          return {
+            id: profile.id,
+            name: profile.display_name || "Sem nome",
+            jobTitle: profile.job_title_name || "Sem cargo",
+            team: profile.team_name || "Sem time",
+            photoUrl: profile.photo_url || undefined,
+            birthDay,
+            birthMonth,
+            daysUntil,
+          };
+        })
+        .filter((person) => person.daysUntil >= 0 && person.daysUntil <= 15)
+        .sort((a, b) => a.daysUntil - b.daysUntil);
     },
     enabled: true,
   });
@@ -144,19 +172,25 @@ interface WorkAnniversary {
   startDate: string;
   yearsAtCompany: number;
   anniversaryDay: number;
+  anniversaryMonth: number;
+  /** Days until anniversary (0 = today) */
+  daysUntil: number;
 }
 
+/**
+ * Retorna aniversários de empresa dos próximos 15 dias
+ */
 export function useWorkAnniversaries() {
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+  const today = new Date();
+  const currentYear = today.getFullYear();
 
   return useQuery({
-    queryKey: queryKeys.home.anniversaries(currentBu?.id ?? null, currentMonth),
+    queryKey: queryKeys.home.anniversaries(currentBu?.id ?? null, "next15days"),
     staleTime: 10 * 60 * 1000, // 10 minutes - anniversaries don't change
     queryFn: async (): Promise<WorkAnniversary[]> => {
-      // Use canonical view for user directory - view already includes team_name via JOIN
+      // Fetch all users with start_date, then filter client-side
       let query = supabase
         .from("v_bu_active_profiles")
         .select(
@@ -169,6 +203,7 @@ export function useWorkAnniversaries() {
           start_date
         `
         )
+        .eq("user_type", "internal") // Only internal users
         .not("start_date", "is", null);
 
       if (currentBu?.id) {
@@ -179,17 +214,26 @@ export function useWorkAnniversaries() {
 
       if (error) throw error;
 
-      // Filter by current month and exclude current year (no anniversary in first year)
+      // Calculate days until anniversary and filter next 15 days
       return (data || [])
-        .filter((profile) => {
-          const startDate = new Date(profile.start_date);
-          const startMonth = startDate.getMonth() + 1;
-          const startYear = startDate.getFullYear();
-          return startMonth === currentMonth && startYear < currentYear;
-        })
         .map((profile) => {
           const startDate = new Date(profile.start_date);
-          const yearsAtCompany = currentYear - startDate.getFullYear();
+          const startDay = startDate.getDate();
+          const startMonth = startDate.getMonth() + 1;
+          const startYear = startDate.getFullYear();
+
+          // Calculate next anniversary
+          let anniversaryThisYear = new Date(currentYear, startMonth - 1, startDay);
+          let yearsAtCompany = currentYear - startYear;
+
+          if (anniversaryThisYear < today) {
+            // Anniversary already passed this year, use next year
+            anniversaryThisYear = new Date(currentYear + 1, startMonth - 1, startDay);
+            yearsAtCompany = currentYear + 1 - startYear;
+          }
+
+          const diffTime = anniversaryThisYear.getTime() - today.getTime();
+          const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
           return {
             id: profile.id,
@@ -199,11 +243,14 @@ export function useWorkAnniversaries() {
             photoUrl: profile.photo_url || undefined,
             startDate: profile.start_date,
             yearsAtCompany,
-            anniversaryDay: startDate.getDate(),
+            anniversaryDay: startDay,
+            anniversaryMonth: startMonth,
+            daysUntil,
           };
         })
-        .sort((a, b) => a.anniversaryDay - b.anniversaryDay);
+        // Filter: next 15 days AND at least 1 year at company
+        .filter((person) => person.daysUntil >= 0 && person.daysUntil <= 15 && person.yearsAtCompany >= 1)
+        .sort((a, b) => a.daysUntil - b.daysUntil);
     },
   });
 }
-
