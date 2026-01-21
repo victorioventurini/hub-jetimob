@@ -23,9 +23,12 @@ export type PartnerContactStatus = 'active' | 'inactive';
 // Empresa Parceira
 export interface PartnerCompany {
   id: string;
-  bu_id: string;
+  bu_id?: string | null; // Now optional - global partners may not have direct bu_id
   name: string;
   legal_name: string | null;
+  person_type?: 'pf' | 'pj';
+  document?: string | null;
+  document_type?: 'cpf' | 'cnpj' | null;
   allowed_domains: string[];
   status: PartnerCompanyStatus;
   notes: string | null;
