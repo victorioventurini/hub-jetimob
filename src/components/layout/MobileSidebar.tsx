@@ -72,7 +72,11 @@ const iconMap: Record<string, LucideIcon> = {
 // Itens fixos (sempre aparecem)
 const fixedItems = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Rituais", href: "/wizards", icon: Rocket },
+];
+
+// Itens condicionais baseados em acesso a módulos
+const conditionalItems = [
+  { name: "Rituais", href: "/wizards", icon: Rocket, requiresModule: "okrs" },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)
@@ -214,9 +218,13 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                 {fixedItems.map((item) => (
                   <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                 ))}
+                {/* Itens condicionais com verificação de módulo */}
+                {conditionalItems
+                  .filter((item) => hasModuleAccess(item.requiresModule))
+                  .map((item) => (
+                    <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                  ))}
               </div>
-
-              {/* Módulos Globais - apenas quando NÃO há BU selecionada */}
               {!currentBu && globalModules.length > 0 && (
                 <div className="pt-4 mt-4 border-t space-y-1">
                   <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
