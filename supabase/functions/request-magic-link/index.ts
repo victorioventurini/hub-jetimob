@@ -245,16 +245,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Build custom callback URL with token as query param to survive SendGrid click tracking
-    // The hash fragment (#access_token=...) is lost when SendGrid wraps links for tracking.
-    // By putting token_hash in the query string, the callback page can use verifyOtp to complete auth.
-    const callbackUrl = new URL(redirectTo.replace(/\/$/, '') + '/auth/callback');
-    callbackUrl.searchParams.set('token_hash', linkData.properties.hashed_token);
-    callbackUrl.searchParams.set('type', 'magiclink');
-    callbackUrl.searchParams.set('email', email);
-    
+    // Build callback URL with token_hash as query param to survive SendGrid click tracking.
+    // Important: we must NOT concatenate strings with redirectTo because redirectTo can be a full URL
+    // with its own path/query. Instead, treat redirectTo as the final destination AFTER login.
+    const redirectUrl = new URL(redirectTo);
+    const nextPath = `${redirectUrl.pathname}${redirectUrl.search}` || "/";
+
+    const callbackUrl = new URL("/auth/callback", redirectUrl.origin);
+    callbackUrl.searchParams.set("next", nextPath);
+    callbackUrl.searchParams.set("token_hash", linkData.properties.hashed_token);
+    callbackUrl.searchParams.set("type", "magiclink");
+
     const magicLink = callbackUrl.toString();
-    console.log("Magic link generated successfully for:", email);
+    console.log("Magic link generated successfully for:", email, "callback:", callbackUrl.pathname);
 
     // Get display name from email
     const displayName = email.split('@')[0].split('.')[0];
