@@ -122,6 +122,13 @@ const Index = () => {
         {/* My Tickets Card - Only for users with tickets access */}
         {canAccessTickets && <MyTicketsHomeCard />}
 
+        {/* People Blocks - Moved above check-ins */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <NewJetimobersBlock />
+          <BirthdaysBlock />
+          <WorkAnniversariesBlock />
+        </div>
+
         {/* Personal Check-in (Rituais) - Only for users with OKR access */}
         {canAccessOkrs && <CollaboratorWizardCard />}
 
@@ -182,13 +189,6 @@ const Index = () => {
             />
           )}
         </section>
-
-        {/* People Blocks */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <NewJetimobersBlock />
-          <BirthdaysBlock />
-          <WorkAnniversariesBlock />
-        </div>
 
         {/* Vic Card - Bottom (with profile-based suggestions) */}
         <VicCard profile={greetingProfile} />
