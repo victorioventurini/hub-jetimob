@@ -25,6 +25,8 @@ export const ticketsKeys = {
   partnerContacts: (buId: string | null, companyId?: string) =>
     ['partner-contacts', buId, companyId] as const,
   partnerContact: (id: string | null) => ['partner-contact', id] as const,
+  partnerContactByEmail: (email: string | null) => ['partner-contact-by-email', email?.toLowerCase()] as const,
+  partnerContactBuAssociations: (contactId: string | null) => ['partner-contact-bu-associations', contactId] as const,
   partnerContactHover: (contactId: string | null) => ['partner-contact-hover', contactId] as const,
   partnerServices: (buId: string | null, companyId?: string) =>
     ['partner-services', buId, companyId] as const,

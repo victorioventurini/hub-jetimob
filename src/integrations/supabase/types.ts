@@ -5508,6 +5508,78 @@ export type Database = {
           },
         ]
       }
+      partner_contact_bu_associations: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          partner_contact_id: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          partner_contact_id: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          partner_contact_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_partner_contact_bu_assoc_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_partner_contact_bu_assoc_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_partner_contact_bu_assoc_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contact_bu_associations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_contact_bu_associations_partner_contact_id_fkey"
+            columns: ["partner_contact_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_contact_capabilities: {
         Row: {
           bu_id: string
@@ -5588,7 +5660,7 @@ export type Database = {
       }
       partner_contacts: {
         Row: {
-          bu_id: string
+          bu_id: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -5603,7 +5675,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          bu_id: string
+          bu_id?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -5618,7 +5690,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          bu_id?: string
+          bu_id?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
