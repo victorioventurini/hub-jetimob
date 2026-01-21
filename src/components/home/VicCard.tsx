@@ -1,6 +1,21 @@
+/**
+ * VicCard - Unified AI assistant card for all user types
+ * Supports: executive, leader, collaborator, and external profiles
+ */
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Target, BarChart3, MessageSquare, ArrowRight, Users, TrendingUp, Calendar } from "lucide-react";
+import { 
+  Sparkles, 
+  Target, 
+  BarChart3, 
+  MessageSquare, 
+  ArrowRight, 
+  Users, 
+  TrendingUp, 
+  Calendar,
+  Clock,
+  HelpCircle,
+} from "lucide-react";
 import { useVic } from "@/modules/vic/contexts/VicContext";
 import { useVicEnabled } from "@/modules/vic/hooks";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
@@ -47,6 +62,37 @@ const EXECUTIVE_SUGGESTIONS: VicSuggestion[] = [
   },
 ];
 
+// Leader-specific suggestions
+const LEADER_SUGGESTIONS: VicSuggestion[] = [
+  {
+    id: "team-alignment",
+    label: "Como está o alinhamento do meu time?",
+    description: "Análise de alinhamento estratégico",
+    agentSlug: "coach-okrs",
+    actionContext: "dashboard-okrs",
+    context: { type: "leader_insight", title: "Alinhamento do Time" },
+    icon: <Users className="h-4 w-4" />,
+  },
+  {
+    id: "okrs-attention",
+    label: "Quais OKRs precisam de atenção?",
+    description: "Prioridades desta semana",
+    agentSlug: "coach-okrs",
+    actionContext: "okr-review-quality",
+    context: { type: "okr-review", title: "OKRs em Risco" },
+    icon: <Target className="h-4 w-4" />,
+  },
+  {
+    id: "team-performance-summary",
+    label: "Resumo de performance do time",
+    description: "Visão consolidada",
+    agentSlug: "coach-okrs",
+    actionContext: "dashboard-okrs",
+    context: { type: "leader_insight", title: "Performance do Time" },
+    icon: <TrendingUp className="h-4 w-4" />,
+  },
+];
+
 // Collaborator-specific suggestions
 const COLLABORATOR_SUGGESTIONS: VicSuggestion[] = [
   {
@@ -78,11 +124,47 @@ const COLLABORATOR_SUGGESTIONS: VicSuggestion[] = [
   },
 ];
 
+// External user suggestions
+const EXTERNAL_SUGGESTIONS: VicSuggestion[] = [
+  {
+    id: "create-ticket",
+    label: "Criar um novo ticket",
+    description: "Abrir uma nova solicitação",
+    agentSlug: "cultura",
+    actionContext: "dashboard-culture",
+    context: { type: "external-help", title: "Criar Ticket", additionalData: { isExternalUser: true } },
+    icon: <MessageSquare className="h-4 w-4" />,
+  },
+  {
+    id: "track-tickets",
+    label: "Acompanhar meus tickets",
+    description: "Ver o status das minhas solicitações",
+    agentSlug: "cultura",
+    actionContext: "dashboard-culture",
+    context: { type: "external-help", title: "Acompanhar Tickets", additionalData: { isExternalUser: true } },
+    icon: <Clock className="h-4 w-4" />,
+  },
+  {
+    id: "understand-status",
+    label: "Entender o status de um ticket",
+    description: "O que significa cada etapa",
+    agentSlug: "cultura",
+    actionContext: "dashboard-culture",
+    context: { type: "external-help", title: "Status de Tickets", additionalData: { isExternalUser: true } },
+    icon: <HelpCircle className="h-4 w-4" />,
+  },
+];
+
+export type VicCardProfile = "executive" | "leader" | "collaborator" | "external";
+
 interface VicCardProps {
-  profile?: "executive" | "leader" | "collaborator";
+  profile?: VicCardProfile;
+  /** Team context for leaders */
+  teamId?: string | null;
+  teamName?: string;
 }
 
-export function VicCard({ profile }: VicCardProps) {
+export function VicCard({ profile, teamId, teamName }: VicCardProps) {
   const { openPanel } = useVic();
   const { isEnabled, isLoading } = useVicEnabled();
   const dashboardData = useHomeDashboard();
@@ -94,16 +176,71 @@ export function VicCard({ profile }: VicCardProps) {
 
   // Get profile-based suggestions
   const currentProfile = profile || dashboardData.role;
-  const suggestions = currentProfile === "executive" 
-    ? EXECUTIVE_SUGGESTIONS 
-    : COLLABORATOR_SUGGESTIONS;
+  const isExternal = currentProfile === "external";
+  
+  const getSuggestions = (): VicSuggestion[] => {
+    switch (currentProfile) {
+      case "executive":
+        return EXECUTIVE_SUGGESTIONS;
+      case "leader":
+        return LEADER_SUGGESTIONS;
+      case "external":
+        return EXTERNAL_SUGGESTIONS;
+      default:
+        return COLLABORATOR_SUGGESTIONS;
+    }
+  };
+  
+  const suggestions = getSuggestions();
 
   const handleSuggestionClick = (suggestion: VicSuggestion) => {
-    openPanel({
-      agentSlug: suggestion.agentSlug,
-      actionContext: suggestion.actionContext,
-      context: suggestion.context,
-    });
+    // For leaders, add team context
+    if (currentProfile === "leader" && teamId) {
+      openPanel({
+        agentSlug: suggestion.agentSlug,
+        actionContext: suggestion.actionContext,
+        context: {
+          ...suggestion.context,
+          additionalData: {
+            ...(suggestion.context.additionalData || {}),
+            teamId,
+            teamName,
+          },
+        },
+      });
+    } else {
+      openPanel({
+        agentSlug: suggestion.agentSlug,
+        actionContext: suggestion.actionContext,
+        context: suggestion.context,
+      });
+    }
+  };
+
+  const handleOpenChat = () => {
+    if (isExternal) {
+      openPanel({
+        agentSlug: "cultura",
+        actionContext: "dashboard-culture",
+        context: { type: "external-help", title: "Atendimento", additionalData: { isExternalUser: true } },
+      });
+    } else if (currentProfile === "leader" && teamId) {
+      openPanel({
+        agentSlug: "coach-okrs",
+        actionContext: "dashboard-okrs",
+        context: {
+          type: "leader_chat",
+          title: teamName || "Meu Time",
+          additionalData: { teamId, teamName },
+        },
+      });
+    } else {
+      openPanel({
+        agentSlug: "cultura",
+        actionContext: "dashboard-culture",
+        context: { type: "general", title: "Conversa livre" },
+      });
+    }
   };
 
   return (
@@ -121,10 +258,10 @@ export function VicCard({ profile }: VicCardProps) {
           </div>
           <div>
             <h3 className="font-semibold text-foreground">
-              Pergunte ao Vic
+              {isExternal ? "Como posso ajudar?" : "Pergunte ao Vic"}
             </h3>
             <p className="text-sm text-muted-foreground">
-              Sugestões para você hoje
+              {isExternal ? "Sou o Vic, assistente virtual" : "Sugestões para você hoje"}
             </p>
           </div>
         </div>
@@ -159,13 +296,7 @@ export function VicCard({ profile }: VicCardProps) {
             variant="ghost"
             size="sm"
             className="w-full text-muted-foreground hover:text-primary"
-            onClick={() =>
-              openPanel({
-                agentSlug: "cultura",
-                actionContext: "dashboard-culture",
-                context: { type: "general", title: "Conversa livre" },
-              })
-            }
+            onClick={handleOpenChat}
           >
             <Sparkles className="h-3.5 w-3.5 mr-2" />
             Conversar com o Vic

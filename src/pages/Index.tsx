@@ -3,7 +3,7 @@ import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { CultureCard } from "@/components/home/CultureCard";
-import { VicCard } from "@/components/home/VicCard";
+import { VicCard, type VicCardProfile } from "@/components/home/VicCard";
 import { KpiSummaryCard } from "@/components/home/KpiSummaryCard";
 import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
@@ -45,8 +45,8 @@ const Index = () => {
   const canAccessOkrs = hasModuleAccess("okrs");
   const canAccessTickets = hasModuleAccess("tickets");
   
-  // Determine profile for greeting
-  const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
+  // Determine profile for greeting and VicCard
+  const greetingProfile: VicCardProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
   
   // Use impersonated user's first name when impersonating
   const displayName = isImpersonating && impersonatedUser
@@ -191,8 +191,12 @@ const Index = () => {
           <WorkAnniversariesBlock />
         </section>
 
-        {/* 8. Vic Card */}
-        <VicCard profile={greetingProfile} />
+        {/* 8. Vic Card - Always at the end */}
+        <VicCard 
+          profile={greetingProfile} 
+          teamId={isLeader ? leaderTeams?.[0]?.team_id : undefined}
+          teamName={isLeader ? leaderTeams?.[0]?.team_name : undefined}
+        />
       </div>
     </HubLayout>
   );
