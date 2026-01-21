@@ -109,6 +109,11 @@ const TicketDetailPage = lazy(() => import("./modules/tickets/pages/TicketDetail
 const TicketsSettingsPage = lazy(() => import("./modules/tickets/pages/TicketsSettingsPage"));
 const PartnerContactProfilePage = lazy(() => import("./modules/tickets/pages/PartnerContactProfilePage"));
 
+// Módulo Partners (Global)
+const PartnersPage = lazy(() => import("./modules/partners/pages/PartnersPage"));
+const PartnerFormPage = lazy(() => import("./modules/partners/pages/PartnerFormPage"));
+const PartnerDetailPage = lazy(() => import("./modules/partners/pages/PartnerDetailPage"));
+
 // Settings
 const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const HubLayout = lazy(() => import("./components/layout/HubLayout").then(m => ({ default: m.HubLayout })));
@@ -912,6 +917,44 @@ const App = () => {
                           <BuRequiredRoute>
                             <ModuleRoute moduleSlug="tickets">
                               <TicketDetailPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Partners - Global Module */}
+                    <Route
+                      path="/partners"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="partners">
+                              <PartnersPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/partners/new"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="partners">
+                              <PartnerFormPage />
+                            </ModuleRoute>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/partners/:partnerId"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <ModuleRoute moduleSlug="partners">
+                              <PartnerDetailPage />
                             </ModuleRoute>
                           </BuRequiredRoute>
                         </ProtectedRoute>
