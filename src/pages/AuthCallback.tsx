@@ -6,13 +6,16 @@ import { Loader2, AlertCircle } from "lucide-react";
 /**
  * AuthCallback
  * 
- * Aguarda a sessão ser detectada pelo listener global e redireciona para o destino.
- * O SDK Supabase v2 processa automaticamente o hash/code da URL.
+ * Handles magic link authentication callback.
+ * 
+ * The magic link email includes token_hash and email as query params (not hash fragment)
+ * because SendGrid click tracking strips the hash. We use verifyOtp to complete auth.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(true);
 
   const next = useMemo(() => {
     const raw = searchParams.get("next") || "/";
@@ -21,56 +24,87 @@ export default function AuthCallback() {
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
 
-    // O SDK já processa o hash/code automaticamente.
-    // Aguardamos a sessão ficar disponível via listener global.
-    const checkSession = async () => {
+    const processAuth = async () => {
       try {
+        // Check for token_hash in query params (our custom flow that survives SendGrid tracking)
+        const tokenHash = searchParams.get("token_hash");
+        const type = searchParams.get("type");
+        const email = searchParams.get("email");
+
+        if (tokenHash && type === "magiclink" && email) {
+          console.log("[AuthCallback] Processing magic link with token_hash for:", email);
+          
+          // Use verifyOtp with token_hash to complete authentication
+          const { data, error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "magiclink",
+          });
+
+          if (verifyError) {
+            console.error("[AuthCallback] verifyOtp error:", verifyError);
+            if (mounted) {
+              setError(verifyError.message || "Link expirado ou inválido. Solicite um novo.");
+              setIsProcessing(false);
+            }
+            return;
+          }
+
+          if (data.session) {
+            console.log("[AuthCallback] Session established, redirecting to:", next);
+            if (mounted) navigate(next, { replace: true });
+            return;
+          }
+        }
+
+        // Fallback: check if session already exists (e.g., from hash fragment processed by SDK)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("[AuthCallback] Session error:", sessionError);
-          if (mounted) setError(sessionError.message);
+          if (mounted) {
+            setError(sessionError.message);
+            setIsProcessing(false);
+          }
           return;
         }
 
         if (session) {
-          console.log("[AuthCallback] Session found, redirecting to:", next);
+          console.log("[AuthCallback] Existing session found, redirecting to:", next);
           if (mounted) navigate(next, { replace: true });
-        } else {
-          // Aguardar um pouco e tentar novamente (o listener pode ainda não ter processado)
-          timeoutId = setTimeout(() => {
-            if (mounted) {
-              supabase.auth.getSession().then(({ data: { session: s } }) => {
-                if (s && mounted) {
-                  navigate(next, { replace: true });
-                } else if (mounted) {
-                  // Após 2 tentativas, redirecionar para /auth
-                  console.warn("[AuthCallback] No session after retry, redirecting to /auth");
-                  navigate("/auth", { replace: true });
-                }
-              });
-            }
-          }, 1000);
+          return;
         }
+
+        // No session and no token - wait a bit for SDK to process hash (legacy support)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { data: { session: retrySession } } = await supabase.auth.getSession();
+        if (retrySession && mounted) {
+          navigate(next, { replace: true });
+          return;
+        }
+
+        // Still no session - redirect to auth page
+        console.warn("[AuthCallback] No session after processing, redirecting to /auth");
+        if (mounted) navigate("/auth", { replace: true });
+        
       } catch (e: any) {
         console.error("[AuthCallback] Error:", e);
-        if (mounted) setError(e?.message || "Erro ao finalizar login");
+        if (mounted) {
+          setError(e?.message || "Erro ao finalizar login");
+          setIsProcessing(false);
+        }
       }
     };
 
-    // Pequeno delay para dar tempo do SDK processar o hash
-    const initialDelay = setTimeout(() => {
-      checkSession();
-    }, 100);
+    // Small delay to allow page to render
+    const timer = setTimeout(processAuth, 100);
 
     return () => {
       mounted = false;
-      clearTimeout(initialDelay);
-      clearTimeout(timeoutId);
+      clearTimeout(timer);
     };
-  }, [navigate, next]);
+  }, [navigate, next, searchParams]);
 
   if (error) {
     return (
@@ -100,7 +134,9 @@ export default function AuthCallback() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">Finalizando login...</p>
+        <p className="text-sm text-muted-foreground">
+          {isProcessing ? "Verificando seu acesso..." : "Finalizando login..."}
+        </p>
       </div>
     </div>
   );

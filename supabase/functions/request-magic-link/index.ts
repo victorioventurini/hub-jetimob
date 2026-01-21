@@ -234,7 +234,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    if (linkError || !linkData?.properties?.action_link) {
+    if (linkError || !linkData?.properties?.hashed_token) {
       console.error("Error generating magic link:", linkError);
       return new Response(
         JSON.stringify({ error: "Erro ao gerar link de acesso. Tente novamente." }),
@@ -245,7 +245,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const magicLink = linkData.properties.action_link;
+    // Build custom callback URL with token as query param to survive SendGrid click tracking
+    // The hash fragment (#access_token=...) is lost when SendGrid wraps links for tracking.
+    // By putting token_hash in the query string, the callback page can use verifyOtp to complete auth.
+    const callbackUrl = new URL(redirectTo.replace(/\/$/, '') + '/auth/callback');
+    callbackUrl.searchParams.set('token_hash', linkData.properties.hashed_token);
+    callbackUrl.searchParams.set('type', 'magiclink');
+    callbackUrl.searchParams.set('email', email);
+    
+    const magicLink = callbackUrl.toString();
     console.log("Magic link generated successfully for:", email);
 
     // Get display name from email
