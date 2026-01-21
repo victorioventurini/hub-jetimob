@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.46.0  
+**Versão:** 2.47.0  
 **Última atualização:** 2026-01-21
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado**
@@ -2177,6 +2177,20 @@ export type { SomeType } from './types';
 ### v2.30.0 (2026-01-13) — Org KR Owner + Wizard Initiative Filter
 - **Org KR Owner implementado**
 - **Wizard Initiative Filter aprimorado**
+
+### v2.47.0 (2026-01-21) — Mention Triggers for External Contacts
+- **Triggers de Menções Ativados**:
+  - `trg_auto_add_ticket_mention_as_participant` — Auto-adiciona usuário/contato mencionado como participante do ticket (role: `watcher`)
+  - `trg_notify_ticket_mention` — Notifica usuário/contato mencionado via sistema centralizado (`emit_notification_event`)
+- **Suporte Completo a Contatos Externos**:
+  - Função `notify_ticket_mention` refatorada para usar `emit_notification_event`
+  - Contatos externos são notificados por e-mail (via `notification_outbox`)
+  - Contatos externos com `profile_user_id` recebem notificação in-app
+  - Contatos mencionados ganham acesso automático ao ticket via RLS
+- **Fluxo Completo**:
+  1. Usuário menciona contato externo → Trigger cria participante (watcher)
+  2. Trigger emite evento `mention.created` → Notificação e-mail + in-app
+  3. Contato externo pode visualizar e responder no ticket
 
 ### v2.19.0 (2026-01-12) — Mentions Global Restoration
 - **Correção Arquitetural**: Tabela `mentions` restaurada como tabela global canônica
