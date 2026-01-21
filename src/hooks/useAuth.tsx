@@ -28,7 +28,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { clearBuClientCache } from '@/integrations/supabase/buScopedClient';
+import { clearAuthSessionStorage, clearBuClientCache } from '@/integrations/supabase/buScopedClient';
 
 interface Profile {
   id: string;
@@ -231,7 +231,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    // Prefer a guaranteed local sign-out to avoid getting stuck "logged in" when the server
+    // session is already gone (e.g. refresh token revoked elsewhere, stale session id, etc.).
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // ignore - we'll still clear local session below
+    }
+
+    // Defense-in-depth: ensure we remove any persisted auth session keys.
+    clearAuthSessionStorage();
+    clearBuClientCache();
+
     setUser(null);
     setSession(null);
     setProfile(null);
