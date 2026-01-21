@@ -1,8 +1,8 @@
 # Convenção de Identidade: user_id vs profile_id
 
-**Versão:** 2.1.0  
-**Última atualização:** 2026-01-12  
-**Status:** Ativo | Impersonation Support v2.0
+**Versão:** 2.1.1  
+**Última atualização:** 2026-01-21  
+**Status:** Ativo | Impersonation Support v2.0 | **Profile ID Naming Convention v2.1**
 
 ---
 
@@ -105,14 +105,14 @@ O Hub utiliza **dois identificadores distintos** para representar usuários:
 | `okr_checkins` | `user_id` | **profiles.id** | `okr_checkins_author_profile_fkey` |
 | `okr_initiatives` | `owner_user_id` | **profiles.id** | `okr_initiatives_owner_user_id_fkey` |
 
-#### Módulo Tickets (migrado em 2026-01-07)
+#### Módulo Tickets (migrado em 2026-01-07, renomeado em 2026-01-21)
 
-| Tabela | Coluna (nome legado) | Armazena | FK Constraint |
-|--------|---------------------|----------|---------------|
-| `tickets` | `owner_user_id` | **profiles.id** | `tickets_owner_profile_fkey` |
-| `tickets` | `created_by_user_id` | **profiles.id** | `tickets_created_by_profile_fkey` |
-| `ticket_messages` | `author_user_id` | **profiles.id** | `ticket_messages_author_profile_fkey` |
-| `ticket_participants` | `user_id` | **profiles.id** | `ticket_participants_profile_fkey` |
+| Tabela | Coluna | Armazena | FK Constraint | Nota |
+|--------|--------|----------|---------------|------|
+| `tickets` | `owner_user_id` | **profiles.id** | `tickets_owner_profile_fkey` | Nome legado |
+| `tickets` | `created_by_user_id` | **profiles.id** | `tickets_created_by_profile_fkey` | Nome legado |
+| `ticket_messages` | `author_user_id` | **profiles.id** | `ticket_messages_author_profile_fkey` | Nome legado |
+| `ticket_participants` | `profile_id` ✅ | **profiles.id** | `ticket_participants_profile_fkey` | **Renomeado de user_id em v2.51.0** |
 
 #### Módulo Assets (migrado em 2026-01-07)
 
@@ -541,7 +541,26 @@ chmod +x scripts/check-identity-convention.sh
 **Integração com pre-commit (husky):**
 ```bash
 # .husky/pre-commit
-./scripts/check-identity-convention.sh
+./scripts/identity-gate.sh
+```
+
+### 10.3 Identity Gate (v2.51.0) ⭐ NOVO
+
+O script `scripts/identity-gate.sh` implementa enforcement automatizado de CI para bloquear violações de convenção de identidade antes do merge:
+
+| Check | Pattern Bloqueado | Gravidade |
+|-------|-------------------|-----------|
+| `auth.uid()` em colunas de domínio | `auth.uid() = owner_user_id` | 🔴 ERROR |
+| `user.id` em módulos OKR/Tickets | `user.id` em src/modules/okrs | 🔴 ERROR |
+| `select('*')` | `.select('*')` | 🟡 WARNING |
+| `useAuth` em módulos de domínio | `from "@/hooks/useAuth"` em modules/ | 🔴 ERROR |
+
+```bash
+# Executar manualmente
+./scripts/identity-gate.sh
+
+# Saída esperada (sucesso)
+✅ All identity checks passed
 ```
 
 ---
@@ -550,6 +569,8 @@ chmod +x scripts/check-identity-convention.sh
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 2.1.1 | 2026-01-21 | `ticket_participants.user_id` renomeado para `profile_id`; Identity Gate CI script adicionado |
+| 2.1.0 | 2026-01-12 | Profile ID naming convention documentation |
 | 2.0.0 | 2026-01-10 | Identity Cutover v3.0 completo, canary gates, strict mode |
 | 1.2.0 | 2026-01-08 | Corrigidas 7 RLS policies de OKRs que comparavam auth.uid() com profile_id |
 | 1.1.0 | 2026-01-07 | Adicionada dívida técnica de Tickets e script de validação |

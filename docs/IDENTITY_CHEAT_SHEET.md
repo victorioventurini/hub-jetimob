@@ -14,7 +14,7 @@ Estas colunas têm nomes enganosos mas **NÃO armazenam `auth.users.id`**:
 | `tickets` | `owner_user_id` | `ON p.id = t.owner_user_id` |
 | `tickets` | `created_by_user_id` | `ON p.id = t.created_by_user_id` |
 | `ticket_messages` | `author_user_id` | `ON p.id = tm.author_user_id` |
-| `ticket_participants` | `profile_id` ✅ | `ON p.id = tp.profile_id` |
+| `ticket_participants` | `profile_id` ✅ | `ON p.id = tp.profile_id` | *(renomeado de user_id em v2.51.0)* |
 | `ticket_attachments` | `uploaded_by_user_id` | `ON p.id = ta.uploaded_by_user_id` |
 
 ### OKRs
@@ -90,7 +90,21 @@ Estas colunas **realmente armazenam** `auth.users.id`:
 ```bash
 # Rodar audit de convenção de identidade
 npx tsx scripts/audit-identity-convention.ts
+
+# Identity Gate (CI/Pre-commit) - bloqueia violações
+./scripts/identity-gate.sh
 ```
+
+### Identity Gate (v2.51.0)
+
+O script `scripts/identity-gate.sh` bloqueia automaticamente:
+
+| Check | Descrição |
+|-------|-----------|
+| `auth.uid()` em colunas de domínio | Proibido: `auth.uid() = owner_user_id` |
+| `user.id` em módulos OKR/Tickets | Proibido: deve usar `profileId` |
+| `select('*')` | Aviso: usar campos explícitos |
+| `useAuth` em módulos de domínio | Proibido: deve usar `useIdentity` |
 
 ---
 

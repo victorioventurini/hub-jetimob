@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.12.0  
-**Última atualização:** 2026-01-19  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **P1/P2 Refatorações Concluídas**
-**Referência:** TCR v2.44.0
+**Versão:** 1.13.0  
+**Última atualização:** 2026-01-21  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas**
+**Referência:** TCR v2.51.0
 
 ---
 
@@ -477,6 +477,7 @@ $$ LANGUAGE sql STABLE;
 | `audit-user-directory.ts` | `npx tsx scripts/audit-user-directory.ts` | INNER JOIN memberships em listagem de usuários |
 | `audit-docs-vs-tcr.ts` | `npx tsx scripts/audit-docs-vs-tcr.ts` | Documentação contradizendo TCR |
 | `audit-sql-against-registry.ts` | `npx tsx scripts/audit-sql-against-registry.ts` | **Referências a tabelas/funções inexistentes** |
+| **identity-gate.sh** | `./scripts/identity-gate.sh` | **CI/Pre-commit gate para identity violations** ⭐ NOVO |
 
 > 📚 Ver: [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md)
 > 📚 Ver: [DOCS_CONSISTENCY_RULES.md](./DOCS_CONSISTENCY_RULES.md)
