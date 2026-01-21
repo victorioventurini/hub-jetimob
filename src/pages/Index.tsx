@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useHomeDashboard } from "@/hooks/useHomeDashboard";
 import { useGreeting } from "@/hooks/useGreeting";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
 import { useProductivityTip } from "@/hooks/useProductivityTip";
 import { useBu } from "@/contexts/BuContext";
@@ -35,8 +36,12 @@ const Index = () => {
   const dashboardData = useHomeDashboard();
   const { isLeader, isLoading: isLeaderLoading, teams: leaderTeams } = useLeaderTeams();
   const { isExternal, isLoading: isExternalLoading } = useExternalUser();
+  const { hasModuleAccess } = useModuleAccess();
 
   const isExecutive = dashboardData.role === "executive";
+  
+  // Verificar acesso ao módulo OKRs
+  const canAccessOkrs = hasModuleAccess("okrs");
   
   // Determine profile for greeting
   const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
@@ -112,16 +117,16 @@ const Index = () => {
         {/* Culture Card - Full Width with Typewriter */}
         <CultureCard />
 
-        {/* Personal Check-in - Everyone is a user first */}
-        <CollaboratorWizardCard />
+        {/* Personal Check-in (Rituais) - Only for users with OKR access */}
+        {canAccessOkrs && <CollaboratorWizardCard />}
 
         {/* Leader Section - Additional management tools for leaders */}
-        {isLeader && !isExecutive && (
+        {isLeader && !isExecutive && canAccessOkrs && (
           <LeaderDashboard />
         )}
 
-        {/* Executive Section - Management wizards for executives */}
-        {isExecutive && (
+        {/* Executive Section - Management wizards for executives (only with OKR access) */}
+        {isExecutive && canAccessOkrs && (
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ManagersCheckinWizardCard isLoading={dashboardData.isLoading} />
             <CLevelCheckinWizardCard 
@@ -139,8 +144,8 @@ const Index = () => {
           </section>
         )}
 
-        {/* My OKRs Card - Shows pending check-ins for the user */}
-        <MyOkrsCard />
+        {/* My OKRs Card - Shows pending check-ins for the user (only with OKR access) */}
+        {canAccessOkrs && <MyOkrsCard />}
 
         {/* Dashboard Cards - Vision rápida */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -148,13 +153,16 @@ const Index = () => {
             kpis={dashboardData.kpis} 
             title={isExecutive ? "KPIs da BU" : "Meus KPIs"}
           />
-          <OkrSummaryCard 
-            onTrack={dashboardData.okrSummary.onTrack}
-            atRisk={dashboardData.okrSummary.atRisk}
-            offTrack={dashboardData.okrSummary.offTrack}
-            title={isExecutive ? `OKRs ${currentBu?.name || 'da Empresa'}` : "Meus OKRs"}
-          />
-          {dashboardData.teamStatus ? (
+          {/* OKR Summary Card - only for users with OKR access */}
+          {canAccessOkrs && (
+            <OkrSummaryCard 
+              onTrack={dashboardData.okrSummary.onTrack}
+              atRisk={dashboardData.okrSummary.atRisk}
+              offTrack={dashboardData.okrSummary.offTrack}
+              title={isExecutive ? `OKRs ${currentBu?.name || 'da Empresa'}` : "Meus OKRs"}
+            />
+          )}
+          {dashboardData.teamStatus && canAccessOkrs ? (
             <TeamStatusCard
               teamName={dashboardData.teamStatus.teamName}
               onTrackPercent={dashboardData.teamStatus.onTrackPercent}
