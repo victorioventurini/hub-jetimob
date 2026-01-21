@@ -39,11 +39,12 @@ export function useTickets(filters?: TicketFilters) {
       if (isImpersonating && impersonatedUserId) {
         const { data: rpcResult, error: rpcError } = await supabase
           .rpc("get_visible_ticket_ids_for_impersonation", {
-            p_impersonated_profile_id: impersonatedUserId,
+            p_profile_id: impersonatedUserId,
           });
         
         if (rpcError) throw rpcError;
-        visibleTicketIds = (rpcResult || []).map((r: { ticket_id: string }) => r.ticket_id);
+        // RPC returns uuid[] directly
+        visibleTicketIds = rpcResult || [];
         
         if (visibleTicketIds.length === 0) return [];
       }

@@ -14,7 +14,7 @@ Estas colunas têm nomes enganosos mas **NÃO armazenam `auth.users.id`**:
 | `tickets` | `owner_user_id` | `ON p.id = t.owner_user_id` |
 | `tickets` | `created_by_user_id` | `ON p.id = t.created_by_user_id` |
 | `ticket_messages` | `author_user_id` | `ON p.id = tm.author_user_id` |
-| `ticket_participants` | `user_id` | `ON p.id = tp.user_id` |
+| `ticket_participants` | `profile_id` ✅ | `ON p.id = tp.profile_id` |
 | `ticket_attachments` | `uploaded_by_user_id` | `ON p.id = ta.uploaded_by_user_id` |
 
 ### OKRs

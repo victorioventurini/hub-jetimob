@@ -39,12 +39,13 @@ export function useTicketsSummary(teamId?: string) {
         // Primeiro obter IDs de tickets visíveis
         const { data: visibleIds, error: rpcError } = await supabase
           .rpc("get_visible_ticket_ids_for_impersonation", {
-            p_impersonated_profile_id: impersonatedUserId,
+            p_profile_id: impersonatedUserId,
           });
         
         if (rpcError) throw rpcError;
         
-        const ticketIds = (visibleIds || []).map((r: { ticket_id: string }) => r.ticket_id);
+        // RPC returns uuid[] directly
+        const ticketIds = visibleIds || [];
         
         if (ticketIds.length === 0) {
           return {
