@@ -113,8 +113,13 @@ export function useCreateMessage(author: CreateMessageAuthor) {
       
       const isExternalUser = !!author.contactId;
       
+      // Validar que temos um ID de autor válido
       if (!isExternalUser && !author.profileId) {
         throw new Error("Perfil não carregado");
+      }
+      
+      if (isExternalUser && !author.contactId) {
+        throw new Error("Contato externo não encontrado para esta BU");
       }
 
       // Determine author type and ID based on user type
@@ -189,18 +194,17 @@ export function useCreateMessage(author: CreateMessageAuthor) {
             continue;
           }
 
-          // Get public URL
-          const { data: urlData } = supabase.storage
-            .from("ticket-attachments")
-            .getPublicUrl(uploadData.path);
+          // Store the storage path (not public URL since bucket is private)
+          // Files will be accessed via signed URLs when displayed
+          const storagePath = uploadData.path;
 
-          // Insert attachment record
+          // Insert attachment record with storage path
           // For external users, uploaded_by_user_id is null (they don't have a profile)
           await buScopedSupabase.from("ticket_attachments").insert({
             bu_id: buId,
             ticket_id: ticketId,
             message_id: message.id,
-            file_url: urlData.publicUrl,
+            file_url: storagePath, // Store path, not URL
             file_name: file.name,
             file_size: file.size,
             mime_type: file.type,
