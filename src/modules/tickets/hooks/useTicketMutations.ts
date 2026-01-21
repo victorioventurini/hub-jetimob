@@ -62,7 +62,7 @@ export function useCreateTicket(profileId: string | null) {
         bu_id: buId,
         ticket_id: ticket.id,
         participant_type: "internal_user" as const,
-        user_id: profileId,
+        profile_id: profileId,
         role: "requester" as const,
       });
 
@@ -116,7 +116,7 @@ export function useCreateTicket(profileId: string | null) {
           bu_id: buId,
           ticket_id: ticket.id,
           participant_type: p.type,
-          user_id: p.type === "internal_user" ? p.id : null,
+          profile_id: p.type === "internal_user" ? p.id : null,
           partner_contact_id: p.type === "partner_contact" ? p.id : null,
           role: p.role,
         }));

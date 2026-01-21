@@ -84,7 +84,7 @@ const PRE_IMPLEMENTATION_CHECKLIST: ChecklistItem[] = [
 // =====================================================
 
 const LEGACY_COLUMNS = [
-  { table: "ticket_participants", column: "user_id", stores: "profiles.id", join: "ON p.id = tp.user_id" },
+  { table: "ticket_participants", column: "profile_id ✅", stores: "profiles.id", join: "ON p.id = tp.profile_id" },
   { table: "tickets", column: "owner_user_id", stores: "profiles.id", join: "ON p.id = t.owner_user_id" },
   { table: "okr_checkins", column: "user_id", stores: "profiles.id", join: "ON p.id = c.user_id" },
   { table: "teams", column: "leader_user_id", stores: "profiles.id", join: "ON p.id = t.leader_user_id" },
