@@ -37,6 +37,13 @@ export function useCreateMessage(author: CreateMessageAuthor) {
       data: CreateMessageData;
     }) => {
       if (!buId) throw new Error("BU não selecionada");
+
+      // Guard: ensure the request is authenticated before hitting RLS/BU-context functions.
+      // This prevents opaque DB errors like NO_BU_CONTEXT when the session expired.
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("NOT_AUTHENTICATED");
       
       const isExternalUser = !!author.contactId;
       
@@ -70,7 +77,7 @@ export function useCreateMessage(author: CreateMessageAuthor) {
       const { data: message, error } = await buScopedSupabase
         .from("ticket_messages")
         .insert(messagePayload as any)
-        .select()
+        .select("id")
         .single();
 
       if (error) throw error;
