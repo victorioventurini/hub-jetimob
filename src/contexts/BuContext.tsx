@@ -99,9 +99,20 @@ export function BuProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(BU_STORAGE_KEY, singleBu.bu_id);
       localStorage.setItem(BU_SELECTED_KEY, "true");
     } else {
-      // Multiple BUs and no valid selection - user needs to choose
-      setBuSelected(false);
-      setCurrentBuId(null);
+      // Multiple BUs and no valid stored selection.
+      // Prefer the user's default membership (is_default = true) to avoid blank states
+      // after login and keep behavior consistent with backend current_bu_id() fallback.
+      const defaultBu = userBus.find((m) => m.is_default);
+      if (defaultBu) {
+        setCurrentBuId(defaultBu.bu_id);
+        setBuSelected(true);
+        localStorage.setItem(BU_STORAGE_KEY, defaultBu.bu_id);
+        localStorage.setItem(BU_SELECTED_KEY, "true");
+      } else {
+        // No explicit default: user needs to choose
+        setBuSelected(false);
+        setCurrentBuId(null);
+      }
     }
     
     setHasInitialized(true);
