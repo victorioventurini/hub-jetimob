@@ -146,15 +146,25 @@ export function useUpdatePartnerCompany() {
       id: string;
       name?: string;
       legal_name?: string | null;
+      person_type?: 'pf' | 'pj';
+      document?: string | null;
+      document_type?: 'cpf' | 'cnpj' | null;
       allowed_domains?: string[];
       status?: PartnerCompanyStatus;
       notes?: string | null;
     }) => {
+      // Limpar documento se fornecido
+      const updateData = {
+        ...data,
+        document: data.document?.replace(/\D/g, '') || null,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: company, error } = await supabase
         .from("partner_companies")
-        .update(data)
+        .update(updateData)
         .eq("id", id)
-        .select()
+        .select("id, name, legal_name, person_type, document, document_type, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
         .single();
 
       if (error) throw error;
