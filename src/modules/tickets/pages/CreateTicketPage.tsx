@@ -31,6 +31,7 @@ import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
 import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
 import { MentionInput, type ParsedMention } from "@/components/mentions";
@@ -66,6 +67,15 @@ export default function CreateTicketPage() {
   });
 
   const navigate = useNavigate();
+  const { isExternal, isLoading: isExternalLoading } = useExternalUser();
+
+  // Redirect external users - they cannot create tickets
+  useEffect(() => {
+    if (!isExternalLoading && isExternal) {
+      toast.error("Usuários externos não podem criar tickets");
+      navigate("/tickets", { replace: true });
+    }
+  }, [isExternal, isExternalLoading, navigate]);
   const [searchParams] = useSearchParams();
   const goBack = useSafeBack({ moduleRoot: '/tickets' });
   

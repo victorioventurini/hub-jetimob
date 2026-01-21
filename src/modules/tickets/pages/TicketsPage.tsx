@@ -7,9 +7,11 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { TicketsLayout } from "../components/TicketsLayout";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useBu } from "@/contexts/BuContext";
+import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 
 export default function TicketsPage() {
   const { currentBu } = useBu();
+  const { isExternal } = useExternalUser();
   
   usePageTitle("Tickets", {
     customDescription: "Gerencie tickets internos e externos, acompanhe status, prazos e mensagens.",
@@ -23,13 +25,15 @@ export default function TicketsPage() {
           title="Tickets"
           description={`Gerencie demandas internas e externas da ${currentBu?.name || 'organização'}`}
           actions={
-            <Button asChild>
-              <Link to="/tickets/new">
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Novo Ticket</span>
-                <span className="sm:hidden">Novo</span>
-              </Link>
-            </Button>
+            !isExternal && (
+              <Button asChild>
+                <Link to="/tickets/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Novo Ticket</span>
+                  <span className="sm:hidden">Novo</span>
+                </Link>
+              </Button>
+            )
           }
         />
         <TicketsLayout />
