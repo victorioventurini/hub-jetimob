@@ -20,15 +20,32 @@ function readAccessTokenFromStorage(): string | null {
   if (!DEFAULT_AUTH_STORAGE_KEY) return null;
   try {
     const raw = localStorage.getItem(DEFAULT_AUTH_STORAGE_KEY);
-    if (!raw) return null;
+    if (!raw) {
+      if (import.meta.env.DEV) {
+        console.debug("[BuScopedClient] No auth token found in storage key:", DEFAULT_AUTH_STORAGE_KEY);
+      }
+      return null;
+    }
     const parsed = JSON.parse(raw);
-    return (
-      parsed?.access_token ??
-      parsed?.currentSession?.access_token ??
-      parsed?.session?.access_token ??
-      null
-    );
-  } catch {
+    
+    // Supabase SDK v2 stores session in different structures depending on version
+    // Try all known paths
+    const token = 
+      parsed?.access_token ??                          // Direct token (older format)
+      parsed?.currentSession?.access_token ??          // currentSession wrapper
+      parsed?.session?.access_token ??                 // session wrapper
+      parsed?.user?.session?.access_token ??           // nested user.session
+      null;
+    
+    if (import.meta.env.DEV && !token) {
+      console.debug("[BuScopedClient] Auth storage found but no token extracted. Keys:", Object.keys(parsed || {}));
+    }
+    
+    return token;
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.warn("[BuScopedClient] Error reading auth token from storage:", e);
+    }
     return null;
   }
 }
@@ -114,6 +131,14 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
           if (import.meta.env.DEV) {
             console.debug("[BuScopedClient] Injected JWT from storage for buId:", buId);
           }
+        }
+
+        // Debug logging in dev mode
+        if (import.meta.env.DEV) {
+          const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
+          const hasAuth = headers.has("Authorization");
+          const authRole = hasAuth ? getJwtRole(headers.get("Authorization")?.slice(7) || "") : null;
+          console.debug(`[BuScopedClient] Request: ${url.split("?")[0]} | BU: ${buId} | Auth: ${hasAuth ? authRole || "jwt" : "none"}`);
         }
 
         return fetch(input, { ...init, headers });
