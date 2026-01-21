@@ -11,15 +11,18 @@ export {
   useDeleteTicket 
 } from './useTickets';
 
-// Messages
+// Messages (split into queries and mutations for modularity)
 export { 
   useTicketMessages, 
   useTicketAttachments,
+} from './useTicketMessageQueries';
+
+export { 
   useCreateMessage, 
   useEditMessage, 
   useDeleteMessage,
   type CreateMessageAuthor,
-} from './useTicketMessages';
+} from './useTicketMessageMutations';
 
 // Attachments
 export {
