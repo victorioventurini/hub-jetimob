@@ -1,9 +1,9 @@
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileIcon, Download, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseMentionsForDisplay } from "@/lib/mentions";
+import { AttachmentLink } from "./AttachmentLink";
 import type { TicketMessage, TicketAttachment } from "../types";
 
 interface TicketMessageBubbleProps {
@@ -17,8 +17,10 @@ export function TicketMessageBubble({
   isOwnMessage,
   attachments = [],
 }: TicketMessageBubbleProps) {
-  // Get author from message - use author_user for internal users
-  const authorProfile = message.author_user ?? (message as any).author;
+  // Get author info - handle both internal users and external contacts
+  const authorProfile = message.author_user ?? message.author_contact;
+  const authorName = message.author_user?.display_name ?? message.author_contact?.name ?? "Usuário";
+  const authorInitials = authorName.slice(0, 2).toUpperCase();
 
   // Extract text content from body_richtext
   const getMessageText = (): string => {
@@ -37,26 +39,15 @@ export function TicketMessageBubble({
   const messageText = getMessageText();
   const messageContent = parseMentionsForDisplay(messageText);
 
-  const formatFileSize = (bytes: number | null): string => {
-    if (!bytes) return "";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const isImage = (mimeType: string | null) => {
-    return mimeType?.startsWith("image/");
-  };
-
   return (
     <div className={cn(
       "flex gap-3",
       isOwnMessage && "flex-row-reverse"
     )}>
       <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage src={authorProfile?.photo_url ?? undefined} />
+        <AvatarImage src={(authorProfile as any)?.photo_url ?? undefined} />
         <AvatarFallback className="text-xs">
-          {authorProfile?.display_name?.slice(0, 2).toUpperCase() || "?"}
+          {authorInitials}
         </AvatarFallback>
       </Avatar>
       
@@ -69,7 +60,7 @@ export function TicketMessageBubble({
           isOwnMessage && "justify-end"
         )}>
           <span className="text-sm font-medium">
-            {authorProfile?.display_name || "Usuário"}
+            {authorName}
           </span>
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(message.created_at), { 
@@ -100,46 +91,11 @@ export function TicketMessageBubble({
             isOwnMessage && "justify-end"
           )}>
             {attachments.map((attachment) => (
-              <a
-                key={attachment.id}
-                href={attachment.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  "group flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors",
-                  isOwnMessage 
-                    ? "bg-primary/10 border-primary/20 hover:bg-primary/20"
-                    : "bg-muted hover:bg-muted/80"
-                )}
-              >
-                {isImage(attachment.mime_type) ? (
-                  <div className="relative">
-                    <img
-                      src={attachment.file_url}
-                      alt={attachment.file_name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded flex items-center justify-center">
-                      <Download className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <FileIcon className="w-5 h-5 text-muted-foreground shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-medium truncate max-w-[150px]">
-                        {attachment.file_name}
-                      </span>
-                      {attachment.file_size && (
-                        <span className="text-xs text-muted-foreground">
-                          {formatFileSize(attachment.file_size)}
-                        </span>
-                      )}
-                    </div>
-                    <Download className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </>
-                )}
-              </a>
+              <AttachmentLink 
+                key={attachment.id} 
+                attachment={attachment} 
+                isOwnMessage={isOwnMessage} 
+              />
             ))}
           </div>
         )}

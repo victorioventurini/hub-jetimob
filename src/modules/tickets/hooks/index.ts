@@ -21,6 +21,13 @@ export {
   type CreateMessageAuthor,
 } from './useTicketMessages';
 
+// Attachments
+export {
+  useAttachmentUrl,
+  getSignedAttachmentUrl,
+  isStoragePath,
+} from './useAttachmentUrl';
+
 // Partners
 export { 
   usePartnerCompanies, 
