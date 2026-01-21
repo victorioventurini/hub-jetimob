@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, Plus, Pencil, Trash2, Globe, Settings } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Globe, Settings, User, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -27,7 +27,9 @@ import { PartnerServicesTab } from "./PartnerServicesTab";
 import { PartnerCompany } from "../../types";
 
 export function PartnerCompaniesTab() {
-  const { data: companies = [], isLoading } = usePartnerCompanies();
+  const { data: rawCompanies = [], isLoading } = usePartnerCompanies();
+  // Force type to PartnerCompany[] to avoid Supabase type inference issues
+  const companies = rawCompanies as unknown as PartnerCompany[];
   const { mutate: deleteCompany, isPending: isDeleting } = useDeletePartnerCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<PartnerCompany | null>(null);
@@ -88,6 +90,7 @@ export function PartnerCompaniesTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Empresa</TableHead>
+                  <TableHead>CPF/CNPJ</TableHead>
                   <TableHead>Domínios Permitidos</TableHead>
                   <TableHead>Serviços</TableHead>
                   <TableHead>Status</TableHead>
@@ -161,15 +164,43 @@ function CompanyRow({
   // Contar categorias únicas
   const uniqueCategories = new Set(services.map((s) => s.category_id)).size;
 
+  // Formatar documento
+  const formatDocument = (doc: string | null | undefined, type: string | null | undefined) => {
+    if (!doc) return null;
+    if (type === 'cpf' && doc.length === 11) {
+      return `${doc.slice(0, 3)}.${doc.slice(3, 6)}.${doc.slice(6, 9)}-${doc.slice(9)}`;
+    }
+    if (type === 'cnpj' && doc.length === 14) {
+      return `${doc.slice(0, 2)}.${doc.slice(2, 5)}.${doc.slice(5, 8)}/${doc.slice(8, 12)}-${doc.slice(12)}`;
+    }
+    return doc;
+  };
+
   return (
     <TableRow>
       <TableCell>
-        <div>
-          <p className="font-medium">{company.name}</p>
-          {company.legal_name && (
-            <p className="text-sm text-muted-foreground">{company.legal_name}</p>
+        <div className="flex items-start gap-2">
+          {company.person_type === 'pf' ? (
+            <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+          ) : (
+            <Briefcase className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           )}
+          <div>
+            <p className="font-medium">{company.name}</p>
+            {company.legal_name && (
+              <p className="text-sm text-muted-foreground">{company.legal_name}</p>
+            )}
+          </div>
         </div>
+      </TableCell>
+      <TableCell>
+        {company.document ? (
+          <span className="font-mono text-sm">
+            {formatDocument(company.document, company.document_type)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )}
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
@@ -181,7 +212,7 @@ function CompanyRow({
               </Badge>
             ))
           ) : (
-            <span className="text-muted-foreground text-sm">Nenhum domínio</span>
+            <span className="text-muted-foreground text-sm">—</span>
           )}
         </div>
       </TableCell>

@@ -26,9 +26,9 @@ export interface PartnerCompany {
   bu_id?: string | null; // Now optional - global partners may not have direct bu_id
   name: string;
   legal_name: string | null;
-  person_type?: 'pf' | 'pj';
+  person_type?: string | null; // 'pf' | 'pj'
   document?: string | null;
-  document_type?: 'cpf' | 'cnpj' | null;
+  document_type?: string | null; // 'cpf' | 'cnpj'
   allowed_domains: string[];
   status: PartnerCompanyStatus;
   notes: string | null;
