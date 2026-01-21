@@ -6,15 +6,14 @@ import { useBirthdays } from "@/hooks/useHomeData";
 import { EmptyState } from "@/components/ui/empty-state";
 import { UserLink } from "@/components/links/UserLink";
 
-const monthNames = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-];
+function formatDaysUntil(daysUntil: number): string {
+  if (daysUntil === 0) return "Hoje!";
+  if (daysUntil === 1) return "Amanhã";
+  return `em ${daysUntil} dias`;
+}
 
 export function BirthdaysBlock() {
   const { data: birthdays, isLoading } = useBirthdays();
-  const currentMonth = new Date().getMonth() + 1;
-  const currentMonthName = monthNames[currentMonth - 1];
 
   const getInitials = (name: string) =>
     name
@@ -39,7 +38,7 @@ export function BirthdaysBlock() {
                 <Skeleton className="h-4 w-24 mb-1" />
                 <Skeleton className="h-3 w-32" />
               </div>
-              <Skeleton className="h-5 w-10" />
+              <Skeleton className="h-5 w-16" />
             </div>
           ))}
         </CardContent>
@@ -54,7 +53,7 @@ export function BirthdaysBlock() {
           <Cake className="h-5 w-5 text-status-pink" />
         </div>
         <CardTitle className="text-base">
-          Aniversários de {currentMonthName}
+          Próximos Aniversários
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -62,7 +61,7 @@ export function BirthdaysBlock() {
           <EmptyState
             icon={Cake}
             title="Nenhum aniversário"
-            description={`Não há aniversários em ${currentMonthName}.`}
+            description="Não há aniversários nos próximos 15 dias."
             iconClassName="text-status-pink"
             compact
           />
@@ -86,9 +85,14 @@ export function BirthdaysBlock() {
                     {person.jobTitle} • {person.team}
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-status-pink shrink-0">
-                  {person.birthDay}/{person.birthMonth.toString().padStart(2, "0")}
-                </span>
+                <div className="text-right shrink-0">
+                  <span className="text-sm font-semibold text-status-pink">
+                    {person.birthDay}/{person.birthMonth.toString().padStart(2, "0")}
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDaysUntil(person.daysUntil)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

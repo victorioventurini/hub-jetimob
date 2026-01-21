@@ -6,15 +6,14 @@ import { useWorkAnniversaries } from "@/hooks/useHomeData";
 import { EmptyState } from "@/components/ui/empty-state";
 import { UserLink } from "@/components/links/UserLink";
 
-const monthNames = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-];
+function formatDaysUntil(daysUntil: number): string {
+  if (daysUntil === 0) return "Hoje!";
+  if (daysUntil === 1) return "Amanhã";
+  return `em ${daysUntil} dias`;
+}
 
 export function WorkAnniversariesBlock() {
   const { data: workAnniversaries, isLoading } = useWorkAnniversaries();
-  const currentMonth = new Date().getMonth() + 1;
-  const currentMonthName = monthNames[currentMonth - 1];
 
   const getInitials = (name: string) =>
     name
@@ -57,7 +56,7 @@ export function WorkAnniversariesBlock() {
           <Award className="h-5 w-5 text-amber-500" />
         </div>
         <CardTitle className="text-base">
-          Jet Aniversários de {currentMonthName}
+          Próximos Jet Aniversários
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -65,7 +64,7 @@ export function WorkAnniversariesBlock() {
           <EmptyState
             icon={Award}
             title="Nenhum aniversário de empresa"
-            description={`Não há aniversários de Jet em ${currentMonthName}.`}
+            description="Não há Jet Aniversários nos próximos 15 dias."
             iconClassName="text-amber-500"
             compact
           />
@@ -94,7 +93,7 @@ export function WorkAnniversariesBlock() {
                     {person.yearsAtCompany} {person.yearsAtCompany === 1 ? "ano" : "anos"} de Jet
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    dia {person.anniversaryDay}
+                    {formatDaysUntil(person.daysUntil)}
                   </p>
                 </div>
               </div>
