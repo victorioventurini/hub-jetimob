@@ -32,8 +32,12 @@ export function useTicketMessages(ticketId: string | null) {
           created_at,
           edited_at,
           deleted_at,
+          is_pinned,
+          pinned_at,
+          pinned_by_user_id,
           author_user:profiles!author_user_id(id, display_name, photo_url),
-          author_contact:partner_contacts(id, name, email)
+          author_contact:partner_contacts(id, name, email),
+          pinned_by:profiles!pinned_by_user_id(id, display_name)
         `)
         .eq("ticket_id", ticketId)
         .is("deleted_at", null)

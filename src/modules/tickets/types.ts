@@ -216,9 +216,14 @@ export interface TicketMessage {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
+  // Pinned message support
+  is_pinned: boolean;
+  pinned_at: string | null;
+  pinned_by_user_id: string | null;
   // Joined (using actual database field names from profiles table)
   author_user?: { id: string; display_name: string; photo_url: string | null } | null;
   author_contact?: { id: string; name: string; email: string } | null;
+  pinned_by?: { id: string; display_name: string } | null;
   attachments?: TicketAttachment[];
   mentions?: TicketMention[];
 }

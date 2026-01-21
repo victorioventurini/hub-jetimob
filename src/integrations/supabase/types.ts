@@ -6762,6 +6762,9 @@ export type Database = {
           deleted_at: string | null
           edited_at: string | null
           id: string
+          is_pinned: boolean
+          pinned_at: string | null
+          pinned_by_user_id: string | null
           ticket_id: string
         }
         Insert: {
@@ -6774,6 +6777,9 @@ export type Database = {
           deleted_at?: string | null
           edited_at?: string | null
           id?: string
+          is_pinned?: boolean
+          pinned_at?: string | null
+          pinned_by_user_id?: string | null
           ticket_id: string
         }
         Update: {
@@ -6786,6 +6792,9 @@ export type Database = {
           deleted_at?: string | null
           edited_at?: string | null
           id?: string
+          is_pinned?: boolean
+          pinned_at?: string | null
+          pinned_by_user_id?: string | null
           ticket_id?: string
         }
         Relationships: [
@@ -6822,6 +6831,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_pinned_by_user_id_fkey"
+            columns: ["pinned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_pinned_by_user_id_fkey"
+            columns: ["pinned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_pinned_by_user_id_fkey"
+            columns: ["pinned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
           {
@@ -8341,6 +8371,10 @@ export type Database = {
       }
       can_manage_team_okr_by_profile: {
         Args: { p_profile_id: string; p_team_id: string }
+        Returns: boolean
+      }
+      can_pin_ticket_message: {
+        Args: { p_profile_id: string; p_ticket_id: string }
         Returns: boolean
       }
       can_view_ticket: {
