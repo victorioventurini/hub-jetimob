@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Menu, LogOut, User, Settings, Building2, Cog } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
+import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
@@ -31,6 +33,12 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
   const { isImpersonating } = useOptionalImpersonation();
+  
+  // Estado para controlar o dropdown do usuário
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  
+  // Fecha o dropdown ao mudar de rota
+  useCloseOnRouteChange(userMenuOpen, setUserMenuOpen);
   
   // Admin de BU ou acesso administrativo podem acessar configurações
   // isAdmin já considera super_admin e admin via useAuth
@@ -104,7 +112,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
           <NotificationCenter />
 
           {/* User menu */}
-          <DropdownMenu>
+          <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 sm:gap-3 px-2 min-h-[44px]">
                 <OptimizedAvatar

@@ -171,11 +171,18 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
 
     if (collapsed) {
       return (
-        <Tooltip delayDuration={300}>
+        <Tooltip delayDuration={400}>
           <TooltipTrigger asChild>
             {linkContent}
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-medium" onPointerDownOutside={(e) => e.preventDefault()}>
+          <TooltipContent 
+            side="right" 
+            className="font-medium"
+            // Previne que o tooltip capture eventos ao fechar
+            onPointerDownOutside={(e) => e.preventDefault()}
+            // Força fechamento imediato ao sair
+            sideOffset={8}
+          >
             {name}
           </TooltipContent>
         </Tooltip>
