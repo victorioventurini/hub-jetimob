@@ -114,6 +114,12 @@ export {
   type AvailableExternalContact,
 } from './useAvailableExternalContacts';
 
+// Partner company contacts (canonical list by company)
+export {
+  usePartnerCompanyContacts,
+  type PartnerContactListItem,
+} from './usePartnerCompanyContacts';
+
 // Summary
 export { useTicketsSummary } from './useTicketsSummary';
 
