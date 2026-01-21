@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,12 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2, Users, AtSign } from "lucide-react";
+import { Building2, Users, AtSign, ArrowRightLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
-import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage } from "@/modules/tickets/hooks";
+import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket } from "@/modules/tickets/hooks";
 import { useTicketViewersAndMentions } from "../hooks/useTicketViewersAndMentions";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -23,6 +23,7 @@ import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import { TicketDetailHeader } from "../components/TicketDetailHeader";
+import { TicketTransferModal } from "../components/TicketTransferModal";
 import { UserLink } from "@/components/links/UserLink";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
@@ -46,10 +47,14 @@ export default function TicketDetailPage() {
   const { data: attachments = [] } = useTicketAttachments(id!);
   const { data: viewersData } = useTicketViewersAndMentions(ticket);
   const updateStatus = useUpdateTicketStatus();
+  const transferTicket = useTransferTicket(profileId);
   const createMessage = useCreateMessage({ 
     profileId, 
     contactId: currentBuContactId 
   });
+  
+  // Transfer modal state
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
 
   // SEO - Meta title e description
   usePageTitle(
@@ -104,6 +109,50 @@ export default function TicketDetailPage() {
       toast.error("Erro ao enviar mensagem");
       throw error;
     }
+  };
+
+  const handleTransfer = async (candidate: {
+    id: string;
+    type: "internal" | "external";
+    name: string;
+    authUserId?: string | null;
+  }) => {
+    if (!ticket) return;
+
+    // Get current responsible info
+    const fromResponsible = ticket.type === "external" && ticket.assigned_contact
+      ? {
+          type: "external" as const,
+          id: ticket.assigned_contact.id,
+          name: ticket.assigned_contact.name || "Contato",
+        }
+      : ticket.owner
+      ? {
+          type: "internal" as const,
+          id: ticket.owner.id,
+          name: ticket.owner.display_name || "Usuário",
+        }
+      : null;
+
+    if (!fromResponsible) {
+      toast.error("Não foi possível identificar o responsável atual");
+      return;
+    }
+
+    await transferTicket.mutateAsync({
+      ticketId: ticket.id,
+      ticketTitle: ticket.title,
+      ticketType: ticket.type,
+      fromResponsible,
+      toResponsible: {
+        type: candidate.type,
+        id: candidate.id,
+        name: candidate.name,
+        authUserId: candidate.authUserId,
+      },
+    });
+
+    setTransferModalOpen(false);
   };
 
   if (isLoadingTicket) {
@@ -248,7 +297,18 @@ export default function TicketDetailPage() {
               {/* Responsável - External: assigned_contact, Internal: owner */}
               {ticket.type === "external" && ticket.assigned_contact ? (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Responsável</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-muted-foreground">Responsável</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => setTransferModalOpen(true)}
+                      title="Transferir ticket"
+                    >
+                      <ArrowRightLeft className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-xs bg-muted">
@@ -263,7 +323,18 @@ export default function TicketDetailPage() {
                 </div>
               ) : ticket.owner ? (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Responsável</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-muted-foreground">Responsável</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => setTransferModalOpen(true)}
+                      title="Transferir ticket"
+                    >
+                      <ArrowRightLeft className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={ticket.owner.photo_url ?? undefined} />
@@ -398,6 +469,21 @@ export default function TicketDetailPage() {
           </Card>
         </div>
       </div>
+
+        {/* Transfer Modal */}
+        <TicketTransferModal
+          open={transferModalOpen}
+          onOpenChange={setTransferModalOpen}
+          ticketType={ticket.type}
+          partnerCompanyId={ticket.partner_company_id}
+          currentResponsibleId={
+            ticket.type === "external"
+              ? ticket.assigned_contact?.id
+              : ticket.owner?.id
+          }
+          onTransfer={handleTransfer}
+          isTransferring={transferTicket.isPending}
+        />
       </div>
     </HubLayout>
   );
