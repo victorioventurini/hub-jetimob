@@ -97,7 +97,9 @@ export default function CreateTicketPage() {
       type: typeFromUrl === 'external' ? 'external' : 'internal',
       title: "",
       initial_message: "",
-      visibility: "bu_all", // Default visibility to avoid validation issues
+      // For external tickets, no default visibility - user must select
+      // For internal tickets, default to bu_all
+      visibility: typeFromUrl === 'external' ? undefined : "bu_all",
     },
   });
 
@@ -334,6 +336,12 @@ export default function CreateTicketPage() {
   };
 
   const onSubmit = async (data: FormData) => {
+    // Validate visibility is selected (required for external tickets)
+    if (!data.visibility) {
+      toast.error("Selecione a visibilidade do ticket");
+      return;
+    }
+    
     // Validate visibility selections
     if (data.visibility === "teams" && selectedTeamIds.length === 0) {
       toast.error("Selecione pelo menos um time para a visibilidade");
@@ -714,7 +722,10 @@ export default function CreateTicketPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="bu_all">Toda {currentBu?.name || "a BU"}</SelectItem>
+                        {/* bu_all only available for internal tickets */}
+                        {selectedType !== "external" && (
+                          <SelectItem value="bu_all">Toda {currentBu?.name || "a BU"}</SelectItem>
+                        )}
                         <SelectItem value="teams">Times específicos</SelectItem>
                         <SelectItem value="users">Usuários específicos</SelectItem>
                         <SelectItem value="private">Privado</SelectItem>
