@@ -20,7 +20,9 @@ export default function AuthCallback() {
 
   const next = useMemo(() => {
     const raw = searchParams.get("next") || "/";
-    return raw.startsWith("/") ? raw : "/";
+    // Only allow internal, absolute paths. Reject protocol-relative URLs like "//evil.com".
+    if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+    return raw;
   }, [searchParams]);
 
   useEffect(() => {
@@ -31,10 +33,9 @@ export default function AuthCallback() {
         // Check for token_hash in query params (our custom flow that survives SendGrid tracking)
         const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
-        const email = searchParams.get("email");
 
-        if (tokenHash && type === "magiclink" && email) {
-          console.log("[AuthCallback] Processing magic link with token_hash for:", email);
+        if (tokenHash && type === "magiclink") {
+          console.log("[AuthCallback] Processing magic link with token_hash");
           
           // Use verifyOtp with token_hash to complete authentication
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
