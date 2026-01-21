@@ -5,6 +5,7 @@ import { AlertCircle, Inbox } from "lucide-react";
 import { useTickets } from "@/modules/tickets/hooks";
 import { TicketsTable } from "../components/TicketsTable";
 import { TicketFilters } from "../components/TicketFilters";
+import { parseResponsibleValue } from "../components/filters/TicketResponsibleSelect";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch, parsers } from "@/shared/url";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
@@ -33,6 +34,11 @@ export default function TicketsListPage() {
   const partnerId = partnerState.value;
   const setPartnerId = partnerState.set;
   
+  // Responsible filter (format: "internal:{id}" or "external:{id}")
+  const responsibleState = useUrlState<string>({ key: "responsible", defaultValue: "" });
+  const responsibleId = responsibleState.value || undefined;
+  const setResponsibleId = (val: string | undefined) => responsibleState.set(val || "");
+  
   const overdueState = useUrlState<boolean>({ 
     key: "overdue", 
     defaultValue: false, 
@@ -41,15 +47,20 @@ export default function TicketsListPage() {
   const showOverdue = overdueState.value;
   const setShowOverdue = overdueState.set;
 
+  // Parse responsible filter into owner_user_id or assigned_contact_id
+  const parsedResponsible = useMemo(() => parseResponsibleValue(responsibleId), [responsibleId]);
+
   // Build query filters
   const queryFilters = useMemo(() => ({
     type: typeFilter !== "all" ? typeFilter : undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
     category_id: categoryId !== "all" ? categoryId : undefined,
     partner_company_id: partnerId !== "all" ? partnerId : undefined,
+    owner_user_id: parsedResponsible.type === "internal" ? parsedResponsible.id ?? undefined : undefined,
+    assigned_contact_id: parsedResponsible.type === "external" ? parsedResponsible.id ?? undefined : undefined,
     search: search || undefined,
     overdue: showOverdue || undefined,
-  }), [typeFilter, statusFilter, categoryId, partnerId, search, showOverdue]);
+  }), [typeFilter, statusFilter, categoryId, partnerId, parsedResponsible, search, showOverdue]);
 
   const { 
     data: tickets = [], 
@@ -88,6 +99,8 @@ export default function TicketsListPage() {
         onCategoryChange={setCategoryId}
         partnerId={partnerId}
         onPartnerChange={setPartnerId}
+        responsibleId={responsibleId}
+        onResponsibleChange={setResponsibleId}
         showOverdueOnly={showOverdue}
         onOverdueChange={setShowOverdue}
       />

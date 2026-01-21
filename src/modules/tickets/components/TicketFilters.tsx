@@ -5,6 +5,7 @@ import {
   TicketCategorySelect, 
   PartnerCompanySelect 
 } from "@/components/selects";
+import { TicketResponsibleSelect } from "./filters/TicketResponsibleSelect";
 import type { TicketStatus, TicketType } from "../types";
 
 interface TicketFiltersProps {
@@ -18,6 +19,8 @@ interface TicketFiltersProps {
   onCategoryChange: (value: string) => void;
   partnerId: string | "all";
   onPartnerChange: (value: string) => void;
+  responsibleId: string | undefined;
+  onResponsibleChange: (value: string | undefined) => void;
   showOverdueOnly: boolean;
   onOverdueChange: (value: boolean) => void;
 }
@@ -37,6 +40,8 @@ export function TicketFilters({
   onCategoryChange,
   partnerId,
   onPartnerChange,
+  responsibleId,
+  onResponsibleChange,
 }: TicketFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -73,6 +78,15 @@ export function TicketFilters({
         onValueChange={onCategoryChange}
         includeAll
         allLabel="Todas categorias"
+        triggerClassName="w-[180px]"
+      />
+
+      {/* Responsible - internal or external */}
+      <TicketResponsibleSelect
+        value={responsibleId}
+        onValueChange={onResponsibleChange}
+        includeAll
+        allLabel="Todos responsáveis"
         triggerClassName="w-[180px]"
       />
 

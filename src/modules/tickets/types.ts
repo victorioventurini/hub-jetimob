@@ -336,6 +336,7 @@ export interface TicketFilters {
   subcategory_id?: string;
   partner_company_id?: string;
   owner_user_id?: string;
+  assigned_contact_id?: string;
   created_by_user_id?: string;
   overdue?: boolean;
   search?: string;
