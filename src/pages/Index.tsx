@@ -9,6 +9,7 @@ import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
+import { MyTicketsHomeCard } from "@/components/home/MyTicketsHomeCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
 import { ManagersCheckinWizardCard } from "@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard";
@@ -40,8 +41,9 @@ const Index = () => {
 
   const isExecutive = dashboardData.role === "executive";
   
-  // Verificar acesso ao módulo OKRs
+  // Verificar acesso aos módulos
   const canAccessOkrs = hasModuleAccess("okrs");
+  const canAccessTickets = hasModuleAccess("tickets");
   
   // Determine profile for greeting
   const greetingProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
@@ -116,6 +118,9 @@ const Index = () => {
 
         {/* Culture Card - Full Width with Typewriter */}
         <CultureCard />
+
+        {/* My Tickets Card - Only for users with tickets access */}
+        {canAccessTickets && <MyTicketsHomeCard />}
 
         {/* Personal Check-in (Rituais) - Only for users with OKR access */}
         {canAccessOkrs && <CollaboratorWizardCard />}

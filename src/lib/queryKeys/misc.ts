@@ -14,6 +14,8 @@ export const homeKeys = {
     ['home', 'leader-focus', buId, teamId] as const,
   leaderTeams: (buId: string | null, userId: string | null) => 
     ['home', 'leader-teams', buId, userId] as const,
+  myTicketsHome: (buId: string | null, profileId: string | null) =>
+    ['home', 'my-tickets', buId, profileId] as const,
 } as const;
 
 export const searchKeys = {
