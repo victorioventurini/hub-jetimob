@@ -13,10 +13,10 @@ export function usePartnerCompanies() {
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
-  return useQuery({
+  return useQuery<PartnerCompany[]>({
     queryKey: queryKeys.tickets.partners(buId ?? null),
     staleTime: 5 * 60 * 1000, // 5 minutes - partner list changes rarely
-    queryFn: async () => {
+    queryFn: async (): Promise<PartnerCompany[]> => {
       if (!buId) return [];
 
       // Query parceiros ativos na BU via associação
@@ -35,10 +35,12 @@ export function usePartnerCompanies() {
       if (error) throw error;
       
       // Flatten e filtrar parceiros válidos
-      return (data || [])
+      const partners = (data || [])
         .map((row) => row.partner_company)
         .filter((p): p is NonNullable<typeof p> => p !== null && p.deleted_at === null)
-        .sort((a, b) => a.name.localeCompare(b.name)) as PartnerCompany[];
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      return partners as PartnerCompany[];
     },
     enabled: !!buId,
   });

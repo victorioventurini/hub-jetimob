@@ -75,7 +75,7 @@ export function PartnerCompanyDialog({
         form.reset({
           name: company.name,
           legal_name: company.legal_name || "",
-          person_type: company.person_type || "pj",
+          person_type: (company.person_type === 'pf' ? 'pf' : 'pj') as 'pf' | 'pj',
           document: company.document || "",
           allowed_domains: company.allowed_domains?.join(", ") || "",
           notes: company.notes || "",
