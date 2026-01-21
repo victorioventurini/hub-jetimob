@@ -122,3 +122,9 @@ export {
   usePendingTicketsForContact,
   useMigrateAndRemoveContact,
 } from './useContactTicketMigration';
+
+// Transfer
+export {
+  useTransferTicket,
+  type TransferTicketParams,
+} from './useTransferTicket';
