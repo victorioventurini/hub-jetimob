@@ -3170,6 +3170,13 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "kpi_metrics_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
         ]
       }
       kpi_values: {
@@ -4148,6 +4155,13 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_checkins_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
         ]
       }
       okr_coaching_events: {
@@ -4312,6 +4326,13 @@ export type Database = {
             columns: ["depends_on_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_dependencies_depends_on_team_id_fkey"
+            columns: ["depends_on_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
           {
@@ -4996,6 +5017,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_team_key_results_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "okr_team_key_results_team_objective_id_fkey"
             columns: ["team_objective_id"]
             isOneToOne: false
@@ -5078,6 +5106,13 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objective_contributors_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]
@@ -5221,6 +5256,13 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]
@@ -5370,6 +5412,13 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]
@@ -6234,6 +6283,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_bu_id_fkey"
             columns: ["bu_id"]
             isOneToOne: false
@@ -6371,6 +6427,13 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]
@@ -6536,6 +6599,13 @@ export type Database = {
             columns: ["parent_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_parent_team_id_fkey"
+            columns: ["parent_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]
@@ -7421,6 +7491,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_team_memberships_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -7630,6 +7707,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_bu_id_fkey"
             columns: ["primary_bu_id"]
             isOneToOne: false
@@ -7718,6 +7802,13 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
           {
@@ -8099,6 +8190,13 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_team_key_results_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
         ]
       }
       v_perf_indexes_report: {
@@ -8195,6 +8293,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_profiles_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_bu_id_fkey"
             columns: ["primary_bu_id"]
             isOneToOne: false
@@ -8235,6 +8340,13 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "okr_team_objectives_team_id_fkey"
+            columns: ["primary_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
         ]
       }
       v_team_contributed_okrs: {
@@ -8260,10 +8372,128 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_team_objective_contributors_team_id_fkey"
+            columns: ["contributor_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
             columns: ["primary_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_team_id_fkey"
+            columns: ["primary_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_teams_clean: {
+        Row: {
+          area_id: string | null
+          bu_id: string | null
+          checkin_day: number | null
+          checkin_deadline_hour: number | null
+          checkin_frequency: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string | null
+          leader_profile_id: string | null
+          member_count: number | null
+          name: string | null
+          parent_team_id: string | null
+          status: Database["public"]["Enums"]["team_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          area_id?: string | null
+          bu_id?: string | null
+          checkin_day?: number | null
+          checkin_deadline_hour?: number | null
+          checkin_frequency?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string | null
+          leader_profile_id?: string | null
+          member_count?: number | null
+          name?: string | null
+          parent_team_id?: string | null
+          status?: Database["public"]["Enums"]["team_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          area_id?: string | null
+          bu_id?: string | null
+          checkin_day?: number | null
+          checkin_deadline_hour?: number | null
+          checkin_frequency?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string | null
+          leader_profile_id?: string | null
+          member_count?: number | null
+          name?: string | null
+          parent_team_id?: string | null
+          status?: Database["public"]["Enums"]["team_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_leader_user_id_fkey"
+            columns: ["leader_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_leader_user_id_fkey"
+            columns: ["leader_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_leader_user_id_fkey"
+            columns: ["leader_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_parent_team_id_fkey"
+            columns: ["parent_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_parent_team_id_fkey"
+            columns: ["parent_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]

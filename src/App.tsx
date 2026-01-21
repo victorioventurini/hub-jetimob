@@ -37,6 +37,7 @@ const SelectBu = lazy(() => import("./pages/SelectBu"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const WizardsPage = lazy(() => import("./pages/Wizards"));
 const VicTestPage = lazy(() => import("./pages/VicTestPage"));
+const DevDocsPage = lazy(() => import("./pages/DevDocsPage"));
 
 
 // Módulo Teams
@@ -525,6 +526,20 @@ const App = () => {
                           <ProtectedRoute>
                             <BuRequiredRoute>
                               <VicTestPage />
+                            </BuRequiredRoute>
+                          </ProtectedRoute>
+                        }
+                      />
+                    )}
+
+                    {/* Dev Docs Page - Pre-checklist and quick reference (DEV ONLY) */}
+                    {import.meta.env.DEV && (
+                      <Route
+                        path="/dev/docs"
+                        element={
+                          <ProtectedRoute>
+                            <BuRequiredRoute>
+                              <DevDocsPage />
                             </BuRequiredRoute>
                           </ProtectedRoute>
                         }
