@@ -1,8 +1,10 @@
 # RLS V2 Migration — Final Report
 
-**Data:** 2026-01-12  
-**Status:** ✅ 100% Completo  
-**TCR Version:** v2.24.0
+**Data:** 2026-01-12 (atualizado 2026-01-21)  
+**Status:** ✅ 100% Completo + Auditoria de Segurança  
+**TCR Version:** v2.48.0
+
+> 📋 **Auditoria de segurança:** [RLS_SECURITY_AUDIT_2026-01-21.md](./RLS_SECURITY_AUDIT_2026-01-21.md) — 6 correções críticas aplicadas
 
 ---
 

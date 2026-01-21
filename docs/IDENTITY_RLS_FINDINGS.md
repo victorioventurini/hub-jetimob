@@ -1,7 +1,9 @@
 # Identity RLS Findings
 
-**Data:** 2026-01-08  
+**Data:** 2026-01-08 (atualizado 2026-01-21)  
 **Status:** ✅ **TODAS AS CORREÇÕES APLICADAS**
+
+> 📋 **Auditoria complementar:** [RLS_SECURITY_AUDIT_2026-01-21.md](./engineering/RLS_SECURITY_AUDIT_2026-01-21.md)
 
 ---
 

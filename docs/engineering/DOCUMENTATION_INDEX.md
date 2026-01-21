@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-01-21  
-**TCR Version:** 2.46.0
+**TCR Version:** 2.48.0
 
 ---
 
@@ -39,9 +39,11 @@
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
 | [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção `user_id` (auth) vs `profile_id` (domínio) | ✅ v2.0 |
-| [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md) | Modelo completo de permissões V2 | ✅ v1.1.0 |
+| [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md) | Modelo completo de permissões V2 | ✅ v1.2.0 |
 | [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de templates de permissão | ✅ v3.0 |
 | [IMPERSONATION_AWARE_COMPONENTS.md](./IMPERSONATION_AWARE_COMPONENTS.md) | Componentes que suportam impersonação | ✅ Ativo |
+| [RLS_V2_MIGRATION_FINAL_REPORT.md](./RLS_V2_MIGRATION_FINAL_REPORT.md) | Migração completa para RLS V2 | ✅ v2.48.0 |
+| [RLS_SECURITY_AUDIT_2026-01-21.md](./RLS_SECURITY_AUDIT_2026-01-21.md) | **Auditoria de segurança RLS (6 fixes)** | ✅ NOVO |
 
 ---
 
