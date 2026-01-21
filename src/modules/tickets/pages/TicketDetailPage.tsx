@@ -243,8 +243,23 @@ export default function TicketDetailPage() {
                 </div>
               )}
 
-              {/* Owner */}
-              {ticket.owner && (
+              {/* Responsável - External: assigned_contact, Internal: owner */}
+              {ticket.type === "external" && ticket.assigned_contact ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Responsável</p>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-xs bg-muted">
+                        {ticket.assigned_contact.name?.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{ticket.assigned_contact.name}</span>
+                      <span className="text-xs text-muted-foreground">{ticket.assigned_contact.email}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : ticket.owner ? (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Responsável</p>
                   <div className="flex items-center gap-2">
@@ -262,7 +277,7 @@ export default function TicketDetailPage() {
                     />
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Creator */}
               {ticket.created_by && (
