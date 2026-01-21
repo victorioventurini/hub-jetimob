@@ -99,6 +99,13 @@ export default function TicketDetailPage() {
     files: File[];
   }) => {
     if (!ticket) return;
+
+    // Guard: if the user is not identified (session expired / logged out), avoid hitting the DB.
+    // Internal user: needs profileId. External user: needs contactId for current BU.
+    if (!profileId && !currentBuContactId) {
+      toast.error("Sua sessão expirou. Faça login novamente.");
+      return;
+    }
     
     try {
       await createMessage.mutateAsync({
@@ -114,7 +121,21 @@ export default function TicketDetailPage() {
       });
       toast.success("Mensagem enviada");
     } catch (error) {
-      toast.error("Erro ao enviar mensagem");
+      // Prefer actionable messages over a generic toast.
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? String((error as any).message)
+          : "";
+
+      if (message.includes("NOT_AUTHENTICATED") || message.includes("NO_BU_CONTEXT")) {
+        toast.error("Sua sessão expirou. Faça login novamente.");
+      } else if (message.includes("BU não selecionada")) {
+        toast.error("Selecione uma BU para enviar mensagens.");
+      } else {
+        toast.error("Erro ao enviar mensagem");
+      }
+
+      console.error("Failed to send ticket message:", error);
       throw error;
     }
   };
