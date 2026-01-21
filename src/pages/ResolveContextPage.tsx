@@ -19,7 +19,9 @@ type EntityType =
   | "okr_team_kr"
   | "keyring"
   | "gift"
-  | "kpi";
+  | "kpi"
+  | "checkin"
+  | "health_alert";
 
 interface EntityConfig {
   targetPath: (id: string) => string;
@@ -70,6 +72,15 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
   kpi: {
     targetPath: (id) => `/kpis?metric=${id}`,
     label: "KPI",
+  },
+  checkin: {
+    // Check-ins redirect to the parent KR
+    targetPath: (id) => `/okrs?checkin=${id}`,
+    label: "check-in",
+  },
+  health_alert: {
+    targetPath: () => `/hub/notifications?tab=diagnostics`,
+    label: "alerta de saúde",
   },
 };
 
@@ -158,6 +169,33 @@ async function resolveBuId(entity: EntityType, id: string): Promise<string | nul
     case "kpi": {
       const { data } = await supabase
         .from("kpi_metrics")
+        .select("bu_id")
+        .eq("id", id)
+        .maybeSingle();
+      return data?.bu_id ?? null;
+    }
+    case "checkin": {
+      // Resolve BU from the parent KR
+      const { data } = await supabase
+        .from("okr_checkins")
+        .select("kr_id")
+        .eq("id", id)
+        .maybeSingle();
+      
+      if (!data?.kr_id) return null;
+      
+      // Get BU from the KR
+      const { data: krData } = await supabase
+        .from("okr_team_key_results")
+        .select("bu_id")
+        .eq("id", data.kr_id)
+        .maybeSingle();
+      
+      return krData?.bu_id ?? null;
+    }
+    case "health_alert": {
+      const { data } = await supabase
+        .from("notification_health_alerts")
         .select("bu_id")
         .eq("id", id)
         .maybeSingle();
