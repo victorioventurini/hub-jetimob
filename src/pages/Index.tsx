@@ -97,12 +97,11 @@ const Index = () => {
   return (
     <HubLayout>
       <div className="space-y-8">
-        {/* Hero Section */}
+        {/* 1. Hero Section - Boas-vindas + Dica de produtividade */}
         <section className="animate-fade-in">
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
             {greeting}
           </h1>
-          {/* Dica do Dia - abaixo do nome */}
           {tipLoading ? (
             <Skeleton className="h-5 w-80 mt-2" />
           ) : (
@@ -116,56 +115,48 @@ const Index = () => {
           )}
         </section>
 
-        {/* Culture Card - Full Width with Typewriter */}
+        {/* 2. Culture Card */}
         <CultureCard />
 
-        {/* My Tickets Card - Only for users with tickets access */}
-        {canAccessTickets && <MyTicketsHomeCard />}
+        {/* 3. Wizards Section */}
+        {canAccessOkrs && (
+          <section className="space-y-4">
+            {/* Collaborator Wizard - All users */}
+            <CollaboratorWizardCard />
 
-        {/* People Blocks - Moved above check-ins */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <NewJetimobersBlock />
-          <BirthdaysBlock />
-          <WorkAnniversariesBlock />
-        </div>
+            {/* Leader Dashboard - Leaders only (not executives) */}
+            {isLeader && !isExecutive && <LeaderDashboard />}
 
-        {/* Personal Check-in (Rituais) - Only for users with OKR access */}
-        {canAccessOkrs && <CollaboratorWizardCard />}
-
-        {/* Leader Section - Additional management tools for leaders */}
-        {isLeader && !isExecutive && canAccessOkrs && (
-          <LeaderDashboard />
-        )}
-
-        {/* Executive Section - Management wizards for executives (only with OKR access) */}
-        {isExecutive && canAccessOkrs && (
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ManagersCheckinWizardCard isLoading={dashboardData.isLoading} />
-            <CLevelCheckinWizardCard 
-              overallProgress={
-                dashboardData.okrSummary.onTrack + 
-                dashboardData.okrSummary.atRisk + 
-                dashboardData.okrSummary.offTrack > 0 
-                  ? (dashboardData.okrSummary.onTrack / 
-                    (dashboardData.okrSummary.onTrack + dashboardData.okrSummary.atRisk + dashboardData.okrSummary.offTrack)) * 100 
-                  : 0
-              }
-              atRiskCount={dashboardData.okrSummary.offTrack}
-              isLoading={dashboardData.isLoading}
-            />
+            {/* Executive Wizards */}
+            {isExecutive && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ManagersCheckinWizardCard isLoading={dashboardData.isLoading} />
+                <CLevelCheckinWizardCard 
+                  overallProgress={
+                    dashboardData.okrSummary.onTrack + 
+                    dashboardData.okrSummary.atRisk + 
+                    dashboardData.okrSummary.offTrack > 0 
+                      ? (dashboardData.okrSummary.onTrack / 
+                        (dashboardData.okrSummary.onTrack + dashboardData.okrSummary.atRisk + dashboardData.okrSummary.offTrack)) * 100 
+                      : 0
+                  }
+                  atRiskCount={dashboardData.okrSummary.offTrack}
+                  isLoading={dashboardData.isLoading}
+                />
+              </div>
+            )}
           </section>
         )}
 
-        {/* My OKRs Card - Shows pending check-ins for the user (only with OKR access) */}
+        {/* 4. My OKRs Card */}
         {canAccessOkrs && <MyOkrsCard />}
 
-        {/* Dashboard Cards - Vision rápida */}
+        {/* 5. KPIs + OKRs Summary + Focus */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <KpiSummaryCard 
             kpis={dashboardData.kpis} 
             title={isExecutive ? "KPIs da BU" : "Meus KPIs"}
           />
-          {/* OKR Summary Card - only for users with OKR access */}
           {canAccessOkrs && (
             <OkrSummaryCard 
               onTrack={dashboardData.okrSummary.onTrack}
@@ -190,7 +181,17 @@ const Index = () => {
           )}
         </section>
 
-        {/* Vic Card - Bottom (with profile-based suggestions) */}
+        {/* 6. Tickets */}
+        {canAccessTickets && <MyTicketsHomeCard />}
+
+        {/* 7. People Blocks */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <NewJetimobersBlock />
+          <BirthdaysBlock />
+          <WorkAnniversariesBlock />
+        </section>
+
+        {/* 8. Vic Card */}
         <VicCard profile={greetingProfile} />
       </div>
     </HubLayout>
