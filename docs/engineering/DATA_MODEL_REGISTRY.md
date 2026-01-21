@@ -1,8 +1,8 @@
 # Data Model Registry — Hub da Jet
 
-**Gerado em:** 2026-01-21T17:15:00.000Z  
-**Versão do Generator:** 1.2.0  
-**Versão do TCR:** 2.46.0  
+**Gerado em:** 2026-01-21T23:30:00.000Z  
+**Versão do Generator:** 1.2.1  
+**Versão do TCR:** 2.51.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
 > ⚠️ **FONTE ÚNICA DE VERDADE**
@@ -272,6 +272,7 @@ Lista completa das tabelas no schema `public`:
 | `tickets` | `created_by_user_id` | ✅ → `profiles.id` | Criador do ticket |
 | `tickets` | `assigned_user_id` | ✅ → `profiles.id` | Responsável |
 | `ticket_messages` | `performed_by_user_id` | ✅ → `profiles.id` | Autor da mensagem |
+| `ticket_participants` | `profile_id` | ✅ → `profiles.id` | Participante (renomeado de user_id em v2.51.0) |
 | `asset_inventory` | `current_user_id` | ✅ → `profiles.id` | Possuidor atual |
 | `asset_inventory` | `created_by` | ❌ (inferido) | Criador |
 | `asset_inventory` | `updated_by` | ❌ (inferido) | Atualizador |
@@ -445,4 +446,4 @@ O script:
 
 ---
 
-*Gerado automaticamente do banco de dados em 2026-01-15. Não edite manualmente.*
+*Gerado automaticamente do banco de dados em 2026-01-21. Não edite manualmente.*

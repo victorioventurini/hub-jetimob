@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-01-21  
-**TCR Version:** 2.49.0
+**TCR Version:** 2.51.0
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.49.0 |
+| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.51.0 |
 
 ---
 
@@ -17,7 +17,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) | **Padrões obrigatórios:** PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, Hooks, Limites de Código | ✅ v1.8.0 |
+| [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) | **Padrões obrigatórios:** PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions, Hooks, Limites de Código | ✅ v1.13.0 |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys centralizadas | ✅ Normativo |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase (global vs bu-scoped) | ✅ Normativo |
 | [SHARED_COMPONENTS_REGISTRY.md](./SHARED_COMPONENTS_REGISTRY.md) | Registro de componentes compartilhados | ✅ v1.2.0 |
@@ -38,7 +38,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção `user_id` (auth) vs `profile_id` (domínio) | ✅ v2.0 |
+| [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção `user_id` (auth) vs `profile_id` (domínio) | ✅ v2.1 |
 | [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md) | Modelo completo de permissões V2 | ✅ v1.2.0 |
 | [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de templates de permissão | ✅ v3.0 |
 | [IMPERSONATION_AWARE_COMPONENTS.md](./IMPERSONATION_AWARE_COMPONENTS.md) | Componentes que suportam impersonação | ✅ Ativo |
