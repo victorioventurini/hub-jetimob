@@ -167,6 +167,9 @@ async function notifyCriticalAlertsWithCooldown(
       }
 
       // Create outbox entry for in_app notification
+      // MULTI-BU: Use /go/health_alert/{id} for automatic context resolution
+      const contextUrl = `/go/health_alert/${alert.id}`;
+      
       const { error: outboxError } = await supabase
         .from("notification_outbox")
         .insert({
@@ -181,7 +184,7 @@ async function notifyCriticalAlertsWithCooldown(
             severity: "critical",
             context_type: "health_alert",
             context_id: alert.id,
-            context_url: `/hub/notifications?tab=diagnostics`,
+            context_url: contextUrl,
             metadata: {
               alert_type: alert.alert_type,
               escalation_level: alert.escalation_level,

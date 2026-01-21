@@ -19,7 +19,9 @@ export type ShareableEntity =
   | "okr_team_kr"
   | "keyring"
   | "gift"
-  | "kpi";
+  | "kpi"
+  | "checkin"
+  | "health_alert";
 
 /**
  * Generates a shareable URL that resolves BU context before navigation.
@@ -68,6 +70,8 @@ export const ENTITY_LABELS: Record<ShareableEntity, string> = {
   keyring: "Chaveiro",
   gift: "Brinde",
   kpi: "KPI",
+  checkin: "Check-in",
+  health_alert: "Alerta de Saúde",
 };
 
 /**
