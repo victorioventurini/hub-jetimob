@@ -1865,11 +1865,27 @@ const { profileId, isLoading } = useMyProfileId();
 
 ## 7. Storage Buckets
 
-| Bucket | Público | Uso |
-|--------|---------|-----|
-| `avatars` | ✅ Sim | Fotos de perfil |
-| `bu-assets` | ✅ Sim | Logos e símbolos de BUs |
-| `agent-documents` | ❌ Não | Documentos para RAG de agentes |
+| Bucket | Público | Uso | Acesso |
+|--------|---------|-----|--------|
+| `avatars` | ✅ Sim | Fotos de perfil | Public URL |
+| `bu-assets` | ✅ Sim | Logos e símbolos de BUs | Public URL |
+| `agent-documents` | ❌ Não | Documentos para RAG de agentes | Signed URL |
+| `ticket-attachments` | ❌ Não | Anexos de tickets e mensagens | Signed URL (1h) |
+
+### 7.1 Bucket `ticket-attachments`
+
+**Estrutura de path:** `{bu_id}/{ticket_id}/{message_id}/{timestamp}-{random}.{ext}`
+
+**RLS Policies:**
+- **INSERT:** Usuários autenticados podem fazer upload
+- **SELECT:** Usuários autenticados com acesso ao ticket (via signed URL)
+- **DELETE:** Usuários podem deletar seus próprios uploads dentro de suas BUs
+
+**Hooks relacionados:**
+- `useAttachmentUrl()` — Gera signed URL (1 hora de validade)
+- `getSignedAttachmentUrl()` — Versão async para uso fora de hooks
+
+> ⚠️ **Bucket privado:** Usar sempre `createSignedUrl()` para acessar arquivos. Nunca usar `getPublicUrl()`.
 
 ---
 
