@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.43.0  
-**Última atualização:** 2026-01-17
+**Versão:** 2.45.0  
+**Última atualização:** 2026-01-21
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -90,10 +90,12 @@
 | Tipo de Usuário | Critério | Tabela de Validação |
 |-----------------|----------|---------------------|
 | **Contato Parceiro** | Email cadastrado em `partner_contacts` com status `active` | `partner_contacts` |
-| **Empresa Parceira** | Domínio do email em `partner_companies.allowed_domains` | `partner_companies` |
+| **Empresa Parceira** | Domínio do email em `partner_companies.allowed_domains` (via `partner_company_bu_associations`) | `partner_company_bu_associations` → `partner_companies` |
 | **Usuário Interno** | Domínio em `bu_units.allowed_email_domains` **E** email em `profiles.work_email` | `bu_units` + `profiles` |
 
 ⚠️ **IMPORTANTE:** Usuários internos sem perfil pré-cadastrado NÃO recebem código OTP, mesmo com domínio válido.
+
+> **Nota (v2.45.0):** Empresas parceiras agora são globais (únicas por CPF/CNPJ). A validação de domínio para login verifica associações ativas em `partner_company_bu_associations`.
 
 ### 1.3 Conceito Multi-BU (Business Units)
 
@@ -1159,6 +1161,104 @@ Links personalizados por usuário/módulo com suporte a favoritos.
 
 ---
 
+### 2.8 Módulo Partners (Empresas Parceiras)
+
+#### **partner_companies** — Empresas Parceiras (Global)
+Empresas externas que podem acessar o Hub via contatos.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | **DEPRECATED** — FK para bu_units (nullable, mantido para compatibilidade) |
+| name | text | Nome fantasia |
+| legal_name | text | Razão social |
+| person_type | text | `pf` (pessoa física) ou `pj` (pessoa jurídica) |
+| document | text | CPF ou CNPJ (único globalmente) |
+| document_type | text | `cpf` ou `cnpj` |
+| allowed_domains | text[] | Domínios de email permitidos para login |
+| status | enum | `active`, `inactive` |
+| notes | text | Observações |
+| deleted_at | timestamp | Soft delete |
+
+**Escopo:** Global (empresa é única por CPF/CNPJ no sistema)
+
+**Mudança v2.45.0:**
+- Campo `bu_id` tornado nullable para suporte multi-BU
+- Índice único em `document` para evitar duplicatas globais
+- Associações por BU via tabela `partner_company_bu_associations`
+- Novos campos: `person_type`, `document`, `document_type`
+
+**Função SQL:**
+- `find_partner_by_document(p_document text)` — Busca empresa por CPF/CNPJ normalizado
+
+---
+
+#### **partner_company_bu_associations** — Associações de Empresas por BU
+Vínculo entre empresas parceiras globais e BUs específicas.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| partner_company_id | uuid | FK para partner_companies |
+| bu_id | uuid | FK para bu_units |
+| is_active | bool | Se associação está ativa na BU |
+| notes | text | Observações da BU |
+| created_by | uuid | FK para profiles (quem criou) |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data de atualização |
+| deleted_at | timestamp | Soft delete |
+
+**Escopo:** Por BU
+
+**Regras:**
+- Uma empresa pode estar associada a múltiplas BUs
+- Cada BU pode ativar/desativar a empresa independentemente
+- RLS baseada em `is_current_bu(bu_id)` para isolamento
+- Índice único: `(partner_company_id, bu_id)` onde `deleted_at IS NULL`
+
+---
+
+#### **partner_contacts** — Contatos de Parceiros
+Pessoas de contato vinculadas a empresas parceiras.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | FK para bu_units |
+| partner_company_id | uuid | FK para partner_companies |
+| profile_user_id | uuid | FK para profiles (se usuário existir) |
+| name | text | Nome do contato |
+| email | text | Email do contato |
+| phone | text | Telefone |
+| status | enum | `active`, `inactive` |
+| created_at | timestamp | Data de criação |
+| deleted_at | timestamp | Soft delete |
+
+**Escopo:** Por BU
+
+---
+
+#### **partner_service_mappings** — Mapeamento de Serviços
+Vínculo entre empresas parceiras e categorias de tickets que atendem.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | FK para bu_units |
+| partner_company_id | uuid | FK para partner_companies |
+| category_id | uuid | FK para ticket_categories |
+| is_active | bool | Se mapeamento está ativo |
+| deleted_at | timestamp | Soft delete |
+
+**Escopo:** Por BU
+
+**Regras:**
+- Usado para auto-routing de tickets por categoria
+- Uma empresa pode atender múltiplas categorias
+- Uma categoria pode ter múltiplas empresas parceiras
+
+---
+
 ## 3. Módulos do Hub
 
 ### 3.1 Módulos Ativos
@@ -1917,8 +2017,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.42.0 |
-| **Data da última atualização** | 2026-01-16 |
+| **Versão do TCR** | 2.45.0 |
+| **Data da última atualização** | 2026-01-21 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -1932,21 +2032,26 @@ export type { SomeType } from './types';
 
 ## Changelog
 
-### v2.42.0 (2026-01-16) — Team OKR/KR Linking Edit
-- **Edição de vínculos com objetivos/KRs organizacionais**:
-  - Modal de edição de objetivos de time (`TeamObjectiveFormDialog`) agora permite editar vínculo com objetivo organizacional
-  - Modal de edição de KRs de time (`TeamKrFormDialog`) agora permite editar vínculo com KR organizacional
-  - Campos exibidos tanto em modo criação quanto edição, com feedback visual distinto
-  - Mutation de update envia `org_objective_id` e `linked_org_kr_id` corretamente
-- **Arquivos alterados**:
-  - `src/modules/okrs/components/TeamObjectiveFormDialog.tsx`
-  - `src/modules/okrs/components/TeamKrFormDialog.tsx`
-- **Comportamento**:
-  - Objetivo de Time pode ser vinculado/desvinculado de Objetivo Organizacional a qualquer momento
-  - KR de Time pode ser vinculado/desvinculado de KR Organizacional se o objetivo pai estiver vinculado
-  - Seleção "Nenhum" disponível para desvincular
+### v2.45.0 (2026-01-21) — Global Partner Companies + Home Module Access Control
+- **Estrutura Global de Partner Companies**:
+  - Tabela `partner_companies` agora é global (CPF/CNPJ único no sistema)
+  - Nova tabela `partner_company_bu_associations` para vínculo empresa ↔ BU
+  - Campos adicionados: `person_type`, `document`, `document_type`
+  - Índice único em `document` para evitar duplicatas globais
+  - Função SQL `find_partner_by_document(p_document text)` para busca global
+  - Edge Function `request-magic-link` atualizada para validar via associações
+  - Frontend `PartnerCompanyDialog` com campos PF/PJ e CPF/CNPJ mascarado
+  - Hooks: `useGlobalPartners`, `usePartnerBuAssociations`
+- **Controle de Acesso por Módulo na Home**:
+  - Cards de OKRs (Rituais, LeaderDashboard, MyOkrsCard, OkrSummaryCard, TeamStatusCard) 
+    ocultos para usuários sem acesso ao módulo `/okrs`
+  - Uso de `useModuleAccess().hasModuleAccess("okrs")` para controle condicional
+  - Afeta usuários internos e externos sem permissão no módulo OKRs
+- **Documentação**:
+  - Seção 2.8 (Módulo Partners) adicionada ao TCR
+  - Critérios de OTP atualizados para refletir nova estrutura
 
-### v2.39.0 (2026-01-15) — Security Fixes & Performance Wave P5.1
+### v2.42.0 (2026-01-16) — Team OKR/KR Linking Edit
 - **Security Fixes (2 error-level issues)**:
   - RLS habilitado em `perf_metrics_snapshots` com política deny-all para authenticated
   - 3 views convertidas de SECURITY DEFINER para SECURITY INVOKER:
