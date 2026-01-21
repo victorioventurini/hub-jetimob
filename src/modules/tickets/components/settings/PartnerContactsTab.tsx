@@ -23,21 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
-import { usePartnerCompanies, usePartnerContacts, useDeletePartnerContact } from "../../hooks";
+import { usePartnerCompanies, usePartnerContacts } from "../../hooks";
 import { PartnerContactDialog } from "./PartnerContactDialog";
 import { PartnerContactHoverCard } from "./PartnerContactHoverCard";
+import { MigrateTicketsDialog } from "./MigrateTicketsDialog";
 import { PartnerContact } from "../../types";
 
 export function PartnerContactsTab() {
   const { data: companies = [], isLoading: loadingCompanies } = usePartnerCompanies();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>();
   const { data: contacts = [], isLoading: loadingContacts } = usePartnerContacts(selectedCompanyId);
-  const { mutate: deleteContact, isPending: isDeleting } = useDeletePartnerContact();
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<PartnerContact | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [contactToRemove, setContactToRemove] = useState<PartnerContact | null>(null);
 
   const handleEdit = (contact: PartnerContact) => {
     setEditingContact(contact);
@@ -47,13 +46,6 @@ export function PartnerContactsTab() {
   const handleCreate = () => {
     setEditingContact(null);
     setDialogOpen(true);
-  };
-
-  const handleDelete = () => {
-    if (deleteId) {
-      deleteContact(deleteId);
-      setDeleteId(null);
-    }
   };
 
   const isLoading = loadingCompanies || loadingContacts;
@@ -172,8 +164,7 @@ export function PartnerContactsTab() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setDeleteId(contact.id)}
-                          disabled={isDeleting}
+                          onClick={() => setContactToRemove(contact)}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -195,13 +186,13 @@ export function PartnerContactsTab() {
         defaultCompanyId={selectedCompanyId}
       />
 
-      <DeleteConfirmDialog
-        open={!!deleteId}
-        onOpenChange={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Remover contato?"
-        description="O contato perderá acesso aos tickets. Esta ação pode ser revertida adicionando o contato novamente."
-      />
+      {contactToRemove && (
+        <MigrateTicketsDialog
+          open={!!contactToRemove}
+          onOpenChange={(open) => !open && setContactToRemove(null)}
+          contact={contactToRemove}
+        />
+      )}
     </>
   );
 }

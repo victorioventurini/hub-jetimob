@@ -52,4 +52,8 @@ export const ticketsKeys = {
   // Summary (aggregated dashboard data)
   summary: (buId: string | null, teamId?: string) => 
     ['tickets', 'summary', buId, teamId] as const,
+  
+  // Pending tickets for a contact (migration flow)
+  pendingForContact: (contactId: string | null) =>
+    ['tickets', 'pending-for-contact', contactId] as const,
 } as const;

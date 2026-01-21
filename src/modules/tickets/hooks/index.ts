@@ -105,3 +105,9 @@ export {
 
 // Summary
 export { useTicketsSummary } from './useTicketsSummary';
+
+// Contact ticket migration
+export {
+  usePendingTicketsForContact,
+  useMigrateAndRemoveContact,
+} from './useContactTicketMigration';
