@@ -6941,9 +6941,9 @@ export type Database = {
           is_active: boolean
           participant_type: Database["public"]["Enums"]["ticket_participant_type"]
           partner_contact_id: string | null
+          profile_id: string | null
           role: Database["public"]["Enums"]["ticket_participant_role"]
           ticket_id: string
-          user_id: string | null
         }
         Insert: {
           bu_id: string
@@ -6952,9 +6952,9 @@ export type Database = {
           is_active?: boolean
           participant_type: Database["public"]["Enums"]["ticket_participant_type"]
           partner_contact_id?: string | null
+          profile_id?: string | null
           role: Database["public"]["Enums"]["ticket_participant_role"]
           ticket_id: string
-          user_id?: string | null
         }
         Update: {
           bu_id?: string
@@ -6963,9 +6963,9 @@ export type Database = {
           is_active?: boolean
           participant_type?: Database["public"]["Enums"]["ticket_participant_type"]
           partner_contact_id?: string | null
+          profile_id?: string | null
           role?: Database["public"]["Enums"]["ticket_participant_role"]
           ticket_id?: string
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -6984,21 +6984,21 @@ export type Database = {
           },
           {
             foreignKeyName: "ticket_participants_profile_fkey"
-            columns: ["user_id"]
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ticket_participants_profile_fkey"
-            columns: ["user_id"]
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_bu_all_profiles_admin"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ticket_participants_profile_fkey"
-            columns: ["user_id"]
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
