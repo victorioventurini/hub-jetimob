@@ -28,17 +28,24 @@ function readAccessTokenFromStorage(): string | null {
     }
     const parsed = JSON.parse(raw);
     
-    // Supabase SDK v2 stores session in different structures depending on version
-    // Try all known paths
+    // Supabase SDK v2.8x+ stores session in different structures depending on version
+    // The most common structure in v2.89+ is:
+    // { access_token, refresh_token, expires_at, expires_in, token_type, user }
+    // But sometimes it's wrapped in a session object.
+    // Try all known paths in order of likelihood:
     const token = 
-      parsed?.access_token ??                          // Direct token (older format)
-      parsed?.currentSession?.access_token ??          // currentSession wrapper
+      parsed?.access_token ??                          // Direct token (v2.8x+ default)
       parsed?.session?.access_token ??                 // session wrapper
-      parsed?.user?.session?.access_token ??           // nested user.session
+      parsed?.currentSession?.access_token ??          // currentSession wrapper (legacy)
+      parsed?.user?.session?.access_token ??           // nested user.session (rare)
       null;
     
-    if (import.meta.env.DEV && !token) {
-      console.debug("[BuScopedClient] Auth storage found but no token extracted. Keys:", Object.keys(parsed || {}));
+    if (import.meta.env.DEV) {
+      if (token) {
+        console.debug("[BuScopedClient] Token found in storage, role:", getJwtRole(token));
+      } else {
+        console.debug("[BuScopedClient] Auth storage found but no token extracted. Structure:", JSON.stringify(Object.keys(parsed || {})));
+      }
     }
     
     return token;

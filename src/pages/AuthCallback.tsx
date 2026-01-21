@@ -64,17 +64,37 @@ export default function AuthCallback() {
             
             // Wait for the auth state listener to process the new session.
             // The SDK emits SIGNED_IN asynchronously after verifyOtp resolves.
-            // We poll getSession to confirm the session is fully hydrated.
+            // We poll getSession to confirm the session is fully hydrated AND
+            // that the token is persisted to localStorage (critical for BU-scoped client).
             let attempts = 0;
-            const maxAttempts = 10;
+            const maxAttempts = 20; // Increased from 10 to give more time
             while (attempts < maxAttempts && mounted) {
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 150)); // Slightly longer delay
               const { data: checkData } = await supabase.auth.getSession();
-              if (checkData.session?.user?.id === data.session.user.id) {
-                console.log("[AuthCallback] Session confirmed after", attempts + 1, "checks");
+              
+              // Also verify token is in localStorage (BuScopedClient reads from there)
+              const storageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'oiwnghihyqdsinouwmga'}-auth-token`;
+              const storedSession = localStorage.getItem(storageKey);
+              const hasStoredToken = storedSession && JSON.parse(storedSession)?.access_token;
+              
+              if (checkData.session?.user?.id === data.session.user.id && hasStoredToken) {
+                console.log("[AuthCallback] Session confirmed in SDK and localStorage after", attempts + 1, "checks");
                 break;
               }
               attempts++;
+            }
+            
+            // Final verification - if we still don't have the token, force a setSession call
+            const finalStorageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'oiwnghihyqdsinouwmga'}-auth-token`;
+            const finalCheck = localStorage.getItem(finalStorageKey);
+            if (!finalCheck || !JSON.parse(finalCheck)?.access_token) {
+              console.warn("[AuthCallback] Token not in localStorage after polling, forcing setSession");
+              await supabase.auth.setSession({
+                access_token: data.session.access_token,
+                refresh_token: data.session.refresh_token,
+              });
+              // Small delay to let storage persist
+              await new Promise(resolve => setTimeout(resolve, 200));
             }
             
             console.log("[AuthCallback] Redirecting to:", next);
