@@ -7,12 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2 } from "lucide-react";
+import { Building2, Users, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
 import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage } from "@/modules/tickets/hooks";
+import { useTicketViewersAndMentions } from "../hooks/useTicketViewersAndMentions";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeBack } from "@/hooks/useSafeBack";
@@ -43,6 +44,7 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
   const { data: attachments = [] } = useTicketAttachments(id!);
+  const { data: viewersData } = useTicketViewersAndMentions(ticket);
   const updateStatus = useUpdateTicketStatus();
   const createMessage = useCreateMessage({ 
     profileId, 
@@ -310,6 +312,88 @@ export default function TicketDetailPage() {
                   {ticket.visibility === "private" && "Privado"}
                 </p>
               </div>
+
+              {/* Viewers - Teams */}
+              {ticket.visibility === "teams" && viewersData?.teams && viewersData.teams.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    Visualizadores (Times)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {viewersData.teams.map((team) => (
+                      <Badge key={team.id} variant="secondary" className="text-xs">
+                        {team.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Viewers - Users */}
+              {ticket.visibility === "users" && viewersData?.users && viewersData.users.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    Visualizadores (Usuários)
+                  </p>
+                  <div className="space-y-2">
+                    {viewersData.users.map((user) => (
+                      <div key={user.id} className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={user.photo_url ?? undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {user.display_name?.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <UserLink 
+                          userId={user.id} 
+                          displayName={user.display_name || 'Usuário'} 
+                          openInNewTab 
+                          className="text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mentioned Users */}
+              {viewersData?.mentions && viewersData.mentions.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                    <AtSign className="h-3 w-3" />
+                    Mencionados
+                  </p>
+                  <div className="space-y-2">
+                    {viewersData.mentions.map((mention) => (
+                      <div key={mention.id} className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={mention.photo_url ?? undefined} />
+                          <AvatarFallback className="text-[10px] bg-muted">
+                            {mention.display_name?.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {mention.type === "user" ? (
+                          <UserLink 
+                            userId={mention.id} 
+                            displayName={mention.display_name || 'Usuário'} 
+                            openInNewTab 
+                            className="text-xs"
+                          />
+                        ) : (
+                          <span className="text-xs">{mention.display_name}</span>
+                        )}
+                        {mention.type === "contact" && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0">
+                            Externo
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
