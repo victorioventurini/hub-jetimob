@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { DynamicSidebar } from "./DynamicSidebar";
 import { MobileSidebar } from "./MobileSidebar";
@@ -16,38 +16,50 @@ interface HubLayoutProps {
  * Resolve problemas com Radix UI deixando body bloqueado
  */
 function forceCleanupPointerEvents() {
-  // Remove inline styles
+  // Remove inline styles do body e html
   document.body.style.removeProperty('pointer-events');
   document.documentElement.style.removeProperty('pointer-events');
   
-  // Fallback: se computed ainda for 'none', força 'auto'
-  const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
-  const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
-
-  if (bodyComputed === "none") {
-    document.body.style.pointerEvents = "auto";
-  }
-  if (htmlComputed === "none") {
-    document.documentElement.style.pointerEvents = "auto";
-  }
+  // Força pointer-events: auto (não apenas remove)
+  document.body.style.pointerEvents = '';
+  document.documentElement.style.pointerEvents = '';
   
-  // Remove qualquer aria-hidden residual do body (Radix Portal cleanup)
-  if (document.body.getAttribute('data-scroll-locked') === '1') {
+  // Remove qualquer data-scroll-locked residual do body (Radix Portal cleanup)
+  if (document.body.getAttribute('data-scroll-locked')) {
     document.body.removeAttribute('data-scroll-locked');
     document.body.style.removeProperty('overflow');
     document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('margin-right');
   }
   
-  // Força fechamento de qualquer tooltip aberto (dispatch blur)
-  if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur();
+  // Remove aria-hidden residual (Radix dialog/sheet)
+  if (document.body.hasAttribute('aria-hidden')) {
+    document.body.removeAttribute('aria-hidden');
   }
   
-  // Remove portals de Radix que podem estar travados
-  const radixPortals = document.querySelectorAll('[data-radix-popper-content-wrapper]');
-  radixPortals.forEach((el) => {
+  // Remove inert residual
+  if (document.body.hasAttribute('inert')) {
+    document.body.removeAttribute('inert');
+  }
+  
+  // Limpa todos os portals de Radix que podem estar travados
+  document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach((el) => {
     if (el instanceof HTMLElement) {
-      el.style.pointerEvents = 'auto';
+      el.style.pointerEvents = '';
+    }
+  });
+  
+  // Limpa overlays de dialog/sheet que podem estar travados
+  document.querySelectorAll('[data-radix-portal]').forEach((el) => {
+    if (el instanceof HTMLElement) {
+      el.style.pointerEvents = '';
+    }
+  });
+  
+  // Remove qualquer overlay fantasma
+  document.querySelectorAll('[data-state="closed"]').forEach((el) => {
+    if (el instanceof HTMLElement && el.style.pointerEvents === 'none') {
+      el.style.pointerEvents = '';
     }
   });
 }
@@ -72,19 +84,39 @@ export function HubLayout({ children }: HubLayoutProps) {
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [location.pathname]);
   
-  // Listener global de clique para forçar desbloqueio se detectar bloqueio
+  // Listener global para forçar desbloqueio em qualquer movimento do mouse
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
+    let cleanupScheduled = false;
+    
+    const scheduleCleanup = () => {
+      if (cleanupScheduled) return;
+      cleanupScheduled = true;
+      requestAnimationFrame(() => {
+        forceCleanupPointerEvents();
+        cleanupScheduled = false;
+      });
+    };
+    
+    // Detecta movimento do mouse - se houver bloqueio, limpa
+    const handleMouseMove = () => {
       const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
       if (bodyComputed === "none") {
-        // Detectou bloqueio durante clique - força limpeza
-        forceCleanupPointerEvents();
+        scheduleCleanup();
       }
     };
     
-    // Captura fase para detectar antes de qualquer bloqueio
+    // Detecta clique - força limpeza se bloqueado
+    const handleClick = () => {
+      scheduleCleanup();
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('click', handleClick, true);
+    };
   }, []);
 
   return (
