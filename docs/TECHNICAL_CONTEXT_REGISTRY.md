@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.48.0  
+**Versão:** 2.49.0  
 **Última atualização:** 2026-01-21
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1876,16 +1876,18 @@ const { profileId, isLoading } = useMyProfileId();
 
 **Estrutura de path:** `{bu_id}/{ticket_id}/{message_id}/{timestamp}-{random}.{ext}`
 
-**RLS Policies:**
-- **INSERT:** Usuários autenticados podem fazer upload
-- **SELECT:** Usuários autenticados com acesso ao ticket (via signed URL)
+**RLS Policies (v3):**
+- **INSERT:** Usuários internos com `tickets.attachment.create:bu` **OU** contatos externos participantes do ticket
+- **SELECT:** Usuários/contatos que podem visualizar o ticket (via `can_view_ticket()`)
 - **DELETE:** Usuários podem deletar seus próprios uploads dentro de suas BUs
 
 **Hooks relacionados:**
 - `useAttachmentUrl()` — Gera signed URL (1 hora de validade)
 - `getSignedAttachmentUrl()` — Versão async para uso fora de hooks
+- `useCreateMessage()` — Processa uploads de anexos na criação de mensagens
 
 > ⚠️ **Bucket privado:** Usar sempre `createSignedUrl()` para acessar arquivos. Nunca usar `getPublicUrl()`.
+> ⚠️ **Storage path:** Armazenar apenas o path interno (ex: `{bu_id}/{ticket_id}/...`), não a URL pública.
 
 ---
 
@@ -2193,6 +2195,35 @@ export type { SomeType } from './types';
 ### v2.30.0 (2026-01-13) — Org KR Owner + Wizard Initiative Filter
 - **Org KR Owner implementado**
 - **Wizard Initiative Filter aprimorado**
+
+### v2.49.0 (2026-01-21) — Tickets Module Enhancements
+- **Pinned Messages v1.0**:
+  - Colunas adicionadas: `is_pinned`, `pinned_at`, `pinned_by_user_id` em `ticket_messages`
+  - Função `can_pin_ticket_message(p_profile_id, p_ticket_id)` valida permissão
+  - Hook `usePinMessage()` + helper `canUserPinMessages()` para UI
+  - Mensagens fixadas aparecem no topo da conversa com destaque visual
+- **Ticket Transfer System v1.0**:
+  - Hook `useTransferTicket()` para transferência entre responsáveis (interno ↔ interno, externo ↔ externo)
+  - Mensagem de sistema registrada no histórico do ticket
+  - Notificação `ticket.assigned` emitida para novo responsável
+  - Validação: tickets internos só podem ser transferidos para usuários internos; externos só para contatos da mesma empresa
+- **Attachments RLS v3 (External Access)**:
+  - Nova policy `ticket_attachments_insert_v3` permite contatos externos participantes fazer upload
+  - Verificação via `ticket_participants.partner_contact_id` + `partner_contacts.user_id = auth.uid()`
+  - Storage path usa path interno (não URL pública) para bucket privado
+- **Hook Canônico `usePartnerCompanyContacts`**:
+  - Listar contatos ativos de uma empresa parceira específica
+  - POST-BU compliant, queryKeys centralizadas
+  - Usado em `TicketTransferModal` para seleção de contatos externos
+
+### v2.48.0 (2026-01-21) — RLS Security Audit v1.0
+- **6 Correções Críticas de RLS** (ver `docs/engineering/RLS_SECURITY_AUDIT_2026-01-21.md`):
+  - Recursão infinita em `partner_contacts` ↔ `partner_contact_bu_associations`
+  - Identity mismatch: `has_permission(auth.uid())` → `has_permission(my_profile_id())`
+  - Self-reference bug em `partner_contacts` UPDATE policy
+  - Overly permissive INSERT em tabelas de audit
+- **Funções SECURITY DEFINER**:
+  - `get_user_partner_contact_id(auth.uid())` — Retorna contact_id sem disparar RLS recursiva
 
 ### v2.47.0 (2026-01-21) — Mention Triggers for External Contacts
 - **Triggers de Menções Ativados**:
