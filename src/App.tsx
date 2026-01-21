@@ -178,7 +178,7 @@ const App = () => {
 
   return (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider disableHoverableContent>
+    <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
       <Toaster />
       <Sonner />
       <BrowserRouter>

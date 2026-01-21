@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { DynamicSidebar } from "./DynamicSidebar";
 import { MobileSidebar } from "./MobileSidebar";
@@ -9,6 +9,47 @@ import { cn } from "@/lib/utils";
 
 interface HubLayoutProps {
   children: ReactNode;
+}
+
+/**
+ * Função agressiva de limpeza de pointer-events
+ * Resolve problemas com Radix UI deixando body bloqueado
+ */
+function forceCleanupPointerEvents() {
+  // Remove inline styles
+  document.body.style.removeProperty('pointer-events');
+  document.documentElement.style.removeProperty('pointer-events');
+  
+  // Fallback: se computed ainda for 'none', força 'auto'
+  const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
+  const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
+
+  if (bodyComputed === "none") {
+    document.body.style.pointerEvents = "auto";
+  }
+  if (htmlComputed === "none") {
+    document.documentElement.style.pointerEvents = "auto";
+  }
+  
+  // Remove qualquer aria-hidden residual do body (Radix Portal cleanup)
+  if (document.body.getAttribute('data-scroll-locked') === '1') {
+    document.body.removeAttribute('data-scroll-locked');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  }
+  
+  // Força fechamento de qualquer tooltip aberto (dispatch blur)
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  
+  // Remove portals de Radix que podem estar travados
+  const radixPortals = document.querySelectorAll('[data-radix-popper-content-wrapper]');
+  radixPortals.forEach((el) => {
+    if (el instanceof HTMLElement) {
+      el.style.pointerEvents = 'auto';
+    }
+  });
 }
 
 export function HubLayout({ children }: HubLayoutProps) {
@@ -22,37 +63,29 @@ export function HubLayout({ children }: HubLayoutProps) {
   useEffect(() => {
     setMobileMenuOpen(false);
 
-    const cleanup = () => {
-      // Força remoção de pointer-events:none do body e html
-      // Radix Tooltip/Dialog podem travar isso durante navegação
-      document.body.style.removeProperty('pointer-events');
-      document.documentElement.style.removeProperty('pointer-events');
-      
-      // Fallback: se computed ainda for 'none', força 'auto'
-      const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
-      const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
-
-      if (bodyComputed === "none") {
-        document.body.style.pointerEvents = "auto";
-      }
-      if (htmlComputed === "none") {
-        document.documentElement.style.pointerEvents = "auto";
-      }
-      
-      // Remove qualquer aria-hidden residual do body (Radix Portal cleanup)
-      if (document.body.getAttribute('data-scroll-locked') === '1') {
-        document.body.removeAttribute('data-scroll-locked');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
-      }
-    };
-
     // Executa imediatamente + timers para cobrir animações (até 1s)
-    cleanup();
-    const timers = [50, 150, 300, 500, 1000].map((delay) => window.setTimeout(cleanup, delay));
+    forceCleanupPointerEvents();
+    const timers = [0, 50, 150, 300, 500, 1000].map((delay) => 
+      window.setTimeout(forceCleanupPointerEvents, delay)
+    );
 
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [location.pathname]);
+  
+  // Listener global de clique para forçar desbloqueio se detectar bloqueio
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
+      if (bodyComputed === "none") {
+        // Detectou bloqueio durante clique - força limpeza
+        forceCleanupPointerEvents();
+      }
+    };
+    
+    // Captura fase para detectar antes de qualquer bloqueio
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

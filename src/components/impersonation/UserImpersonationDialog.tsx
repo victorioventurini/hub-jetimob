@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useBu } from "@/contexts/BuContext";
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
+import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
 import { toast } from "sonner";
 
 export function UserImpersonationDialog() {
@@ -23,6 +24,9 @@ export function UserImpersonationDialog() {
   const [searchTerm, setSearchTerm] = useState("");
   const { startImpersonation, canImpersonate, isImpersonating, stopImpersonation } = useImpersonation();
   const { currentBuId } = useBu();
+  
+  // Fecha o dialog ao mudar de rota
+  useCloseOnRouteChange(open, setOpen);
   
   // Usa o hook canônico com busca server-side
   const { data: users = [], isLoading } = useBuUsersDirectory({
