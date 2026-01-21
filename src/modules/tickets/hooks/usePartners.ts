@@ -19,15 +19,26 @@ export function usePartnerCompanies() {
     queryFn: async () => {
       if (!buId) return [];
 
+      // Query parceiros ativos na BU via associação
       const { data, error } = await supabase
-        .from("partner_companies")
-        .select("id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
+        .from("partner_company_bu_associations")
+        .select(`
+          partner_company:partner_companies(
+            id, name, legal_name, person_type, document, document_type,
+            allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at
+          )
+        `)
         .eq("bu_id", buId)
-        .is("deleted_at", null)
-        .order("name");
+        .eq("is_active", true)
+        .is("deleted_at", null);
 
       if (error) throw error;
-      return data as PartnerCompany[];
+      
+      // Flatten e filtrar parceiros válidos
+      return (data || [])
+        .map((row) => row.partner_company)
+        .filter((p): p is NonNullable<typeof p> => p !== null && p.deleted_at === null)
+        .sort((a, b) => a.name.localeCompare(b.name)) as PartnerCompany[];
     },
     enabled: !!buId,
   });
