@@ -59,6 +59,29 @@ export function clearBuClientCache() {
 }
 
 /**
+ * Hard clears any persisted auth session for this project.
+ *
+ * Why: in some edge cases (e.g. server-side session already revoked), the SDK call may fail
+ * before it removes localStorage keys. This guarantees a true local logout.
+ */
+export function clearAuthSessionStorage(): void {
+  if (!DEFAULT_AUTH_STORAGE_KEY) return;
+
+  try {
+    // Remove the canonical key and any related keys created by the auth client
+    // (e.g. code verifier, provider token, etc.).
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(DEFAULT_AUTH_STORAGE_KEY)) {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * Returns a singleton BU-scoped client for the given BU.
  * This avoids creating multiple GoTrueClient instances (which can cause undefined auth behavior).
  */
