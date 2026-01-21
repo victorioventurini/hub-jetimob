@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Inbox } from "lucide-react";
+import { AlertCircle, Inbox } from "lucide-react";
 import { useTickets } from "@/modules/tickets/hooks";
 import { TicketsTable } from "../components/TicketsTable";
 import { TicketFilters } from "../components/TicketFilters";
@@ -53,8 +53,26 @@ export default function TicketsListPage() {
 
   const { 
     data: tickets = [], 
-    isLoading 
+    isLoading,
+    error,
+    refetch,
   } = useTickets(queryFilters);
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={AlertCircle}
+        title="Não foi possível carregar os tickets"
+        description={
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao buscar seus tickets. Tente novamente."
+        }
+        actionLabel="Tentar novamente"
+        onAction={() => refetch()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
