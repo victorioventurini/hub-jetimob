@@ -94,6 +94,7 @@ export default function CreateTicketPage() {
       type: typeFromUrl === 'external' ? 'external' : 'internal',
       title: "",
       initial_message: "",
+      visibility: "bu_all", // Default visibility to avoid validation issues
     },
   });
 
@@ -341,7 +342,8 @@ export default function CreateTicketPage() {
       
       navigate("/tickets");
     } catch (error) {
-      // Error handled by mutation
+      // Error is now handled by mutation's onError
+      console.error("[CreateTicketPage] Submit error:", error);
     } finally {
       setIsUploading(false);
     }
