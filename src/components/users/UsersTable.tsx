@@ -112,7 +112,7 @@ export function UsersTable({
   const someSelected = selectedIds.size > 0 && !allSelected;
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
