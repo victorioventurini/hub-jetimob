@@ -1,14 +1,9 @@
 import { useMemo, useState, useRef, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2, Users, AtSign, ArrowRightLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
@@ -23,9 +18,8 @@ import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { TicketTransferModal } from "../components/TicketTransferModal";
+import { TicketDetailSidebar } from "../components/TicketDetailSidebar";
 import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
-import { TicketStatusSelector } from "../components/TicketStatusSelector";
-import { UserLink, ContactLink } from "@/components/links";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
 
@@ -371,227 +365,22 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Sidebar - Details */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Detalhes</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {/* Status Selector - Only for creator, owner, or assigned contact */}
-              <TicketStatusSelector
-                value={ticket.status}
-                onChange={handleStatusChange}
-                disabled={!canChangeStatus}
-                isUpdating={updateStatus.isPending}
-              />
-
-              <Separator />
-
-              {/* Partner Company - Display only, no link */}
-              {ticket.type === "external" && (ticket as any).partner_company && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5">Empresa Parceira</p>
-                  <div className="flex items-center gap-2 p-2 -mx-2 rounded-md bg-muted/30">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Building2 className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium">
-                      {(ticket as any).partner_company.name}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Category */}
-              {(ticket as any).category && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Categoria</p>
-                  <p className="text-sm font-medium">
-                    {(ticket as any).category.name}
-                    {(ticket as any).subcategory && ` → ${(ticket as any).subcategory.name}`}
-                  </p>
-                </div>
-              )}
-
-              {/* Responsável - External: assigned_contact, Internal: owner */}
-              {ticket.type === "external" && ticket.assigned_contact ? (
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-muted-foreground">Responsável</p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5"
-                      onClick={() => setTransferModalOpen(true)}
-                      title="Transferir ticket"
-                    >
-                      <ArrowRightLeft className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs bg-muted">
-                        {ticket.assigned_contact.name?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <ContactLink 
-                        contactId={ticket.assigned_contact.id} 
-                        displayName={ticket.assigned_contact.name || 'Contato'} 
-                        openInNewTab 
-                        className="text-sm"
-                      />
-                      <span className="text-xs text-muted-foreground">{ticket.assigned_contact.email}</span>
-                    </div>
-                  </div>
-                </div>
-              ) : ticket.owner ? (
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-muted-foreground">Responsável</p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5"
-                      onClick={() => setTransferModalOpen(true)}
-                      title="Transferir ticket"
-                    >
-                      <ArrowRightLeft className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={ticket.owner.photo_url ?? undefined} />
-                      <AvatarFallback className="text-xs">
-                        {ticket.owner.display_name?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <UserLink 
-                      profileId={ticket.owner.id} 
-                      displayName={ticket.owner.display_name || 'Usuário'} 
-                      openInNewTab 
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Creator */}
-              {ticket.created_by && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Criado por</p>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={ticket.created_by.photo_url ?? undefined} />
-                      <AvatarFallback className="text-xs">
-                        {ticket.created_by.display_name?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <UserLink 
-                      profileId={ticket.created_by.id} 
-                      displayName={ticket.created_by.display_name || 'Usuário'} 
-                      openInNewTab 
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Visibility */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Visibilidade</p>
-                <p className="text-sm">
-                  {ticket.visibility === "bu_all" && "Toda a BU"}
-                  {ticket.visibility === "teams" && "Times específicos"}
-                  {ticket.visibility === "users" && "Usuários específicos"}
-                  {ticket.visibility === "private" && "Privado"}
-                </p>
-              </div>
-
-              {/* Viewers - Teams */}
-              {ticket.visibility === "teams" && viewersData?.teams && viewersData.teams.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    Visualizadores (Times)
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {viewersData.teams.map((team) => (
-                      <Badge key={team.id} variant="secondary" className="text-xs">
-                        {team.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Viewers - Users */}
-              {ticket.visibility === "users" && viewersData?.users && viewersData.users.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    Visualizadores (Usuários)
-                  </p>
-                  <div className="space-y-2">
-                    {viewersData.users.map((user) => (
-                      <div key={user.id} className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={user.photo_url ?? undefined} />
-                          <AvatarFallback className="text-[10px]">
-                            {user.display_name?.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <UserLink 
-                          profileId={user.id} 
-                          displayName={user.display_name || 'Usuário'} 
-                          openInNewTab 
-                          className="text-xs"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Mentioned Users */}
-              {viewersData?.mentions && viewersData.mentions.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                    <AtSign className="h-3 w-3" />
-                    Mencionados
-                  </p>
-                  <div className="space-y-2">
-                    {viewersData.mentions.map((mention) => (
-                      <div key={mention.id} className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={mention.photo_url ?? undefined} />
-                          <AvatarFallback className="text-[10px] bg-muted">
-                            {mention.display_name?.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        {mention.type === "user" ? (
-                          <UserLink 
-                            profileId={mention.id} 
-                            displayName={mention.display_name || 'Usuário'} 
-                            openInNewTab 
-                            className="text-xs"
-                          />
-                        ) : (
-                          <span className="text-xs">{mention.display_name}</span>
-                        )}
-                        {mention.type === "contact" && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0">
-                            Externo
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <TicketDetailSidebar
+          ticketType={ticket.type}
+          status={ticket.status}
+          visibility={ticket.visibility}
+          owner={ticket.owner}
+          assignedContact={ticket.assigned_contact}
+          createdBy={ticket.created_by}
+          category={(ticket as any).category}
+          subcategory={(ticket as any).subcategory}
+          partnerCompany={ticket.type === "external" ? (ticket as any).partner_company : null}
+          viewersData={viewersData}
+          canChangeStatus={canChangeStatus}
+          isUpdatingStatus={updateStatus.isPending}
+          onStatusChange={handleStatusChange}
+          onTransferClick={() => setTransferModalOpen(true)}
+        />
       </div>
 
         {/* Transfer Modal */}
