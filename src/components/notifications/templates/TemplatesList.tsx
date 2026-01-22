@@ -214,13 +214,13 @@ export function TemplatesList() {
                             <div className="flex items-center gap-1">
                               {template.is_active ? (
                                 <>
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                  <span className="text-sm text-green-600">Ativo</span>
+                                  <CheckCircle className="h-4 w-4 text-success" />
+                                  <span className="text-sm text-success">Ativo</span>
                                 </>
                               ) : (
                                 <>
-                                  <AlertCircle className="h-4 w-4 text-yellow-500" />
-                                  <span className="text-sm text-yellow-600">Inativo</span>
+                                  <AlertCircle className="h-4 w-4 text-warning" />
+                                  <span className="text-sm text-warning">Inativo</span>
                                 </>
                               )}
                               {isGlobal && (

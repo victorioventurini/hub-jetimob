@@ -2,7 +2,7 @@
  * CLevelCheckinWizardCard - Entry point for C-Level Check-in Wizard
  * Navega para a página fullpage /okrs/clevel-checkin
  */
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,11 +22,6 @@ export function CLevelCheckinWizardCard({
   atRiskCount = 0,
   isLoading = false,
 }: CLevelCheckinWizardCardProps) {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate('/okrs/clevel-checkin');
-  };
 
   if (isLoading) {
     return (
@@ -72,11 +67,13 @@ export function CLevelCheckinWizardCard({
           </div>
         </div>
         <Button 
-          onClick={handleClick} 
+          asChild
           className="w-full gap-2 bg-status-purple hover:bg-status-purple/90"
         >
-          <Play className="h-4 w-4" />
-          Iniciar Revisão Estratégica
+          <Link to="/okrs/clevel-checkin">
+            <Play className="h-4 w-4" />
+            Iniciar Revisão Estratégica
+          </Link>
         </Button>
       </CardContent>
     </Card>

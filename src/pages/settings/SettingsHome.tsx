@@ -237,7 +237,7 @@ export default function SettingsHome() {
           <QuickAccessCard
             to="/hub/business-units"
             icon={Building2}
-            iconBgColor="bg-green-500/10 text-green-500"
+            iconBgColor="bg-success-muted text-success"
             title="Business Units"
             description="Gerenciar unidades de negócio"
             count={busData}
@@ -246,7 +246,7 @@ export default function SettingsHome() {
           <QuickAccessCard
             to="/hub/modules"
             icon={Blocks}
-            iconBgColor="bg-purple-500/10 text-purple-500"
+            iconBgColor="bg-status-purple-muted text-status-purple"
             title="Módulos"
             description="Configurar módulos do Hub"
             count={modulesData?.total}
@@ -255,7 +255,7 @@ export default function SettingsHome() {
           <QuickAccessCard
             to="/hub/integrations"
             icon={Puzzle}
-            iconBgColor="bg-orange-500/10 text-orange-500"
+            iconBgColor="bg-status-orange-muted text-status-orange"
             title="Integrações"
             description="APIs e conexões externas"
             count={integrationsData?.total}
@@ -304,7 +304,7 @@ export default function SettingsHome() {
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-green-500" />
+                <Building2 className="h-4 w-4 text-success" />
                 <span>Criar nova Business Unit</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -314,7 +314,7 @@ export default function SettingsHome() {
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
-                <Blocks className="h-4 w-4 text-purple-500" />
+                <Blocks className="h-4 w-4 text-status-purple" />
                 <span>Gerenciar módulos</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -324,7 +324,7 @@ export default function SettingsHome() {
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
-                <Puzzle className="h-4 w-4 text-orange-500" />
+                <Puzzle className="h-4 w-4 text-status-orange" />
                 <span>Configurar integrações</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
