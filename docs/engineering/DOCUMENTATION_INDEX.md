@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-01-22  
-**TCR Version:** 2.59.0
+**TCR Version:** 2.63.0
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.58.0 |
+| [TECHNICAL_CONTEXT_REGISTRY.md](../canonical/TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.63.0 |
 
 ---
 
@@ -52,6 +52,7 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
+| [SYSTEM_AUDIT_2026-01-22.md](../audits/SYSTEM_AUDIT_2026-01-22.md) | **Auditoria completa do sistema (DB, Backend, Frontend)** | ✅ NOVO |
 | [HEALTH_REPORT_2026-01-22.md](./HEALTH_REPORT_2026-01-22.md) | **Relatório atual de saúde técnica** | ✅ Atual |
 | [COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md](./COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md) | **Auditoria técnica completa** | ✅ NOVO |
 | [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | Auditoria sistêmica completa | 📦 Histórico |
