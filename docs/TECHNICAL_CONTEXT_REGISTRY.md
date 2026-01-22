@@ -2196,6 +2196,21 @@ export type { SomeType } from './types';
 - **Org KR Owner implementado**
 - **Wizard Initiative Filter aprimorado**
 
+### v2.52.0 (2026-01-22) — ON CONFLICT Index Fixes
+- **FIX: `ticket_participants` unique index constraints**:
+  - Índices `idx_ticket_participants_unique_user` e `idx_ticket_participants_unique_contact` recriados
+  - Removida condição `is_active = true` que impedia `ON CONFLICT` de funcionar
+  - Nova definição: `UNIQUE (ticket_id, profile_id) WHERE profile_id IS NOT NULL`
+  - Corrige erro `42P10` no trigger `auto_add_ticket_mention_as_participant`
+- **FIX: `notification_outbox` dedupe key index**:
+  - Índice `idx_notification_outbox_dedupe_key` convertido de parcial para não-parcial
+  - Permite `ON CONFLICT (dedupe_key) DO NOTHING` em `emit_notification_event()`
+  - Corrige erro `42P10` no trigger `notify_ticket_message_created`
+- **BU-Scoped Client JWT Fallback**:
+  - `readAccessTokenFromStorage()` agora varre `localStorage` para encontrar token
+  - Fallback para `sb-*-auth-token` keys se o canonical key falhar
+  - Previne requests como `anon` em ambientes com storage key variável
+
 ### v2.49.0 (2026-01-21) — Tickets Module Enhancements
 - **Pinned Messages v1.0**:
   - Colunas adicionadas: `is_pinned`, `pinned_at`, `pinned_by_user_id` em `ticket_messages`
