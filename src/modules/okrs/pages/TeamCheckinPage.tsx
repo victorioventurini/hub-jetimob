@@ -7,9 +7,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
-import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
-import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
-import { useTeamPendingKrs } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import { 
+  useGenericWizardDraft,
+  useActiveCycles,
+  useTeamPendingKrs,
+} from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 
 import { usePageTitle } from '@/hooks/usePageTitle';

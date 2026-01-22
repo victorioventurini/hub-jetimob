@@ -15,11 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { MultiTeamSelect } from '@/components/selects/MultiTeamSelect';
 import { VicActionButton, VicLoadingState, VicTypewriterText } from '@/modules/vic';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import { useWizardAI } from '@/modules/okrs/hooks';
 import { Users, User, HandshakeIcon, Sparkles, AlertCircle, Info } from 'lucide-react';
 import { WizardStepFooter } from '../shared';
 import { cn } from '@/lib/utils';
-import type { FlatTeamItem } from '@/modules/teams/hooks/useTeams';
+import type { FlatTeamItem } from '@/modules/teams/hooks';
 
 // ============================================================
 // TYPES

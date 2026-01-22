@@ -142,3 +142,6 @@ export {
   canUserPinMessages,
   type PinMessageParams,
 } from './usePinMessage';
+
+// Viewers and mentions (for ticket detail page)
+export { useTicketViewersAndMentions } from './useTicketViewersAndMentions';
