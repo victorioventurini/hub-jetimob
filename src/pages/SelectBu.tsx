@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useNavigate, Link, useLocation, type Location } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Building2, ArrowRight, Loader2, LogOut, Settings, Lock } from "lucide-react";
+import { ArrowRight, Loader2, LogOut, Settings, Lock, Building2 } from "lucide-react";
+import { BuSymbol } from "@/modules/bu/components/BuSymbol";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -248,21 +249,16 @@ export default function SelectBu() {
                         <div 
                           className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
                           style={{ 
-                            backgroundColor: bu.primary_color ? `${bu.primary_color}15` : 'hsl(var(--muted))'
+                            backgroundColor: bu.primary_color ? `${bu.primary_color}20` : 'hsl(var(--muted))'
                           }}
                         >
-                          {bu.symbol_url ? (
-                            <img 
-                              src={bu.symbol_url} 
-                              alt={bu.name} 
-                              className="w-8 h-8 object-contain"
-                            />
-                          ) : (
-                            <Building2 
-                              className="w-7 h-7" 
-                              style={{ color: bu.primary_color || 'hsl(var(--primary))' }}
-                            />
-                          )}
+                          <BuSymbol
+                            symbolUrl={bu.symbol_url}
+                            primaryColor={bu.primary_color}
+                            name={bu.name}
+                            size="lg"
+                            useColorFilter={true}
+                          />
                         </div>
 
                         {/* BU Info */}
