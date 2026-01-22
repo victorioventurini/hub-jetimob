@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,18 @@ export default function TicketDetailPage() {
     contactId: currentBuContactId 
   });
   const pinMessage = usePinMessage();
+  
+  // Refs for auto-scrolling to bottom
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  const hasScrolledRef = useRef(false);
+  
+  // Scroll to bottom when messages load initially
+  useEffect(() => {
+    if (messages.length > 0 && !hasScrolledRef.current && scrollAnchorRef.current) {
+      scrollAnchorRef.current.scrollIntoView({ behavior: "instant" });
+      hasScrolledRef.current = true;
+    }
+  }, [messages.length]);
   
   // Transfer modal state
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -295,6 +307,7 @@ export default function TicketDetailPage() {
                           />
                         );
                       })}
+                      <div ref={scrollAnchorRef} />
                     </div>
                   </ScrollArea>
                 </>
