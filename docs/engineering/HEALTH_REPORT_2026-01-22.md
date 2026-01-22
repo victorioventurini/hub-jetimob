@@ -155,8 +155,8 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 
 1. ✅ ~~Auditoria técnica completa~~ CONCLUÍDO
 2. ✅ ~~Criar partial indexes para soft delete (7 tabelas)~~ CONCLUÍDO
-3. ⏳ Executar cleanup de logs (ai_agent_logs, perf_metrics_snapshots)
-4. ⏳ Agendar cleanup_old_logs() via pg_cron
+3. ✅ ~~Agendar cleanup_old_logs() semanal via pg_cron~~ CONCLUÍDO
+4. ✅ ~~Documentar edge functions no TCR (18 funções)~~ CONCLUÍDO
 5. 🔲 Implementar módulo KPIs completo
 6. 🔲 Implementar módulo Automations completo
 
