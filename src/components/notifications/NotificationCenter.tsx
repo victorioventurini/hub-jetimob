@@ -14,12 +14,10 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
   Bell, 
-  Check, 
   CheckCheck,
   AtSign,
   TrendingUp,
@@ -31,12 +29,14 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+
+// Supported notification types - any unknown type falls back to 'default'
+type NotificationType = 'mention' | 'checkin_created' | 'checkin_overdue' | 'kr_status_changed' | 'shared_okr_update';
 
 interface Notification {
   id: string;
-  type: 'mention' | 'checkin_created' | 'checkin_overdue' | 'kr_status_changed' | 'shared_okr_update';
+  type: NotificationType | string; // Allow any string from DB, handle unknown gracefully
   title: string;
   message: string;
   context_type: string | null;
@@ -52,20 +52,22 @@ interface Notification {
   } | null;
 }
 
-const notificationIcons = {
+const notificationIcons: Record<string, typeof Bell> = {
   mention: AtSign,
   checkin_created: TrendingUp,
   checkin_overdue: Clock,
   kr_status_changed: AlertTriangle,
   shared_okr_update: Users,
+  default: Bell, // Fallback for unknown types
 };
 
-const notificationColors = {
+const notificationColors: Record<string, string> = {
   mention: 'text-status-blue',
   checkin_created: 'text-status-green',
   checkin_overdue: 'text-status-orange',
   kr_status_changed: 'text-status-yellow',
   shared_okr_update: 'text-status-purple',
+  default: 'text-muted-foreground', // Fallback for unknown types
 };
 
 export function NotificationCenter() {
@@ -293,11 +295,13 @@ export function NotificationCenter() {
               </p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-border">
               {notifications.map((notification) => {
-                const Icon = notificationIcons[notification.type] ?? Bell;
-                const iconColor = notificationColors[notification.type] ?? 'text-muted-foreground';
-                const actorName = notification.actor?.display_name ?? 'Usuário';
+                // Safe lookup with fallback to default for unknown notification types
+                const notificationType = notification.type || 'default';
+                const Icon = notificationIcons[notificationType] || notificationIcons.default;
+                const iconColor = notificationColors[notificationType] || notificationColors.default;
+                const actorName = notification.actor?.display_name || 'Usuário';
 
                 return (
                   <button
