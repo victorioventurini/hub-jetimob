@@ -8669,6 +8669,7 @@ export type Database = {
       cleanup_old_logs: {
         Args: {
           p_agent_logs_days?: number
+          p_audit_logs_days?: number
           p_cron_days?: number
           p_perf_days?: number
           p_wizard_days?: number

@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebouncedValue } from '@/hooks/useDebounce';
 import { useVicAgent, useVicEnabled } from '@/modules/vic/hooks/useVicAgent';
 
 export type InitiativeNameFeedbackType = 'warning' | 'suggestion' | 'success';
@@ -53,7 +53,7 @@ export function useInitiativeNameValidation(
   const [feedback, setFeedback] = useState<InitiativeNameFeedback | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   
-  const debouncedName = useDebounce(name, debounceMs);
+  const debouncedName = useDebouncedValue(name, debounceMs);
   const { isEnabled } = useVicEnabled();
   const { invoke } = useVicAgent();
 

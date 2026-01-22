@@ -27,7 +27,7 @@ import { Target, Link2, Wrench, TrendingUp, TrendingDown, Equal, User, CheckCirc
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebouncedValue } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
 import type { KrPlan } from './TeamOkrKrTypeStep';

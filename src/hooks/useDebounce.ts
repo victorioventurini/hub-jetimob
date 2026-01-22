@@ -50,11 +50,7 @@ export function useDebouncedValue<T>(value: T, delay: number = 300): T {
   return debouncedValue;
 }
 
-/**
- * @deprecated Use useDebouncedValue instead
- * Alias for backwards compatibility
- */
-export const useDebounce = useDebouncedValue;
+// useDebounce alias REMOVED in v2.64.0 — use useDebouncedValue directly
 
 // =============================================================================
 // CALLBACK DEBOUNCE
