@@ -295,8 +295,9 @@ export function NotificationCenter() {
           ) : (
             <div className="divide-y">
               {notifications.map((notification) => {
-                const Icon = notificationIcons[notification.type];
-                const iconColor = notificationColors[notification.type];
+                const Icon = notificationIcons[notification.type] ?? Bell;
+                const iconColor = notificationColors[notification.type] ?? 'text-muted-foreground';
+                const actorName = notification.actor?.display_name ?? 'Usuário';
 
                 return (
                   <button
@@ -313,9 +314,9 @@ export function NotificationCenter() {
                     {/* Avatar or Icon */}
                     {notification.actor ? (
                       <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarImage src={notification.actor.photo_url || undefined} />
+                        <AvatarImage src={notification.actor.photo_url ?? undefined} />
                         <AvatarFallback className="text-xs">
-                          {getInitials(notification.actor.display_name)}
+                          {getInitials(actorName)}
                         </AvatarFallback>
                       </Avatar>
                     ) : (
