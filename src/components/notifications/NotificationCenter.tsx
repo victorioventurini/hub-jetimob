@@ -5,6 +5,7 @@ import { createBuScopedClient } from '@/integrations/supabase/useBuScopedSupabas
 import { supabase as supabaseGlobal } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
+import { useExternalUser } from '@/modules/external/hooks/useExternalUser';
 import { queryKeys } from '@/lib/queryKeys';
 import { useCloseOnRouteChange } from '@/hooks/useCloseOnRouteChange';
 import {
@@ -72,19 +73,24 @@ const notificationColors: Record<string, string> = {
 export function NotificationCenter() {
   const { user } = useAuth();
   const { currentBuId, isLoading: isBuLoading } = useBu();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Imported per EXTERNAL_USER_IDENTITY_PATTERN.md for future external-specific logic
+  const { isExternal, isLoading: isExternalLoading } = useExternalUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+
+  // Combined loading state for safe rendering
+  const isContextLoading = isBuLoading || isExternalLoading;
 
   // Fecha o popover ao mudar de rota
   useCloseOnRouteChange(open, setOpen);
 
   // Safety: Close popover if BU context becomes unavailable
   useEffect(() => {
-    if (open && !currentBuId && !isBuLoading) {
+    if (open && !currentBuId && !isContextLoading) {
       setOpen(false);
     }
-  }, [open, currentBuId, isBuLoading]);
+  }, [open, currentBuId, isContextLoading]);
 
   // NOTE: This component is mounted even on pre-BU routes (e.g. /auth).
   // Never call useBuScopedSupabase() here; instead create a BU client only when BU is selected.
@@ -92,9 +98,9 @@ export function NotificationCenter() {
     return currentBuId ? createBuScopedClient(currentBuId) : null;
   }, [currentBuId]);
 
-  // Prevent opening the popover if no BU context
+  // Prevent opening the popover if no BU context or still loading
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen && !currentBuId) {
+    if (newOpen && (!currentBuId || isContextLoading)) {
       // Don't allow opening without BU context
       return;
     }
