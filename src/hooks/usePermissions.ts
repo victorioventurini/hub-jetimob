@@ -71,10 +71,11 @@ export function usePermissions() {
     enabled: isReady && !!user?.id,
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
   });
-
-  // Durante impersonação, nunca retornar isWildcard = true
-  // (queremos ver as limitações reais do usuário)
-  const isWildcard = !isImpersonating && permissions.includes("*");
+  // Durante impersonação, o isWildcard deve refletir as permissões DO USUÁRIO IMPERSONADO
+  // Se o usuário impersonado é admin (tem '*'), ele deve ter acesso total
+  // O que bloqueamos é herdar wildcard do caller (super_admin) - isso já é feito
+  // buscando permissões via get_user_permissions_for_impersonation
+  const isWildcard = permissions.includes("*");
 
   /**
    * Verifica se o usuário tem uma permissão específica

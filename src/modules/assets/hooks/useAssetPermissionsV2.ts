@@ -22,9 +22,12 @@ export function useAssetPermissionsV2() {
 
   const isLoading = permissionsLoading || buLoading;
 
-  // Full access: super_admin, admin global, ou admin da BU
-  // IMPORTANTE: Durante impersonação, NÃO conceder full access - usar permissões do usuário impersonado
-  const hasFullAccess = !isImpersonating && (isAdmin || userRole === "admin" || isWildcard);
+  // Full access: isWildcard já inclui admin/super_admin do usuário atual OU impersonado
+  // Durante impersonação, isAdmin e userRole refletem o CALLER, não o impersonado
+  // Por isso usamos apenas isWildcard que reflete as permissões buscadas corretamente
+  const hasFullAccess = isImpersonating 
+    ? isWildcard  // Durante impersonação: só isWildcard (vem das permissões do impersonado)
+    : (isAdmin || userRole === "admin" || isWildcard);  // Normal: todas as fontes
 
   // === Permissões de VISUALIZAÇÃO ===
   const canViewAssets = hasFullAccess || hasAny([
