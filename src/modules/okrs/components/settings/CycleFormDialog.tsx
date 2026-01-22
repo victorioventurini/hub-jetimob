@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { usePermissions } from "@/hooks/usePermissions";
+import { DIALOG_SIZES } from "@/lib/dialog-sizes";
 import {
   Dialog,
   DialogContent,
@@ -173,7 +174,7 @@ export function CycleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className={DIALOG_SIZES.md}>
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Ciclo" : "Novo Ciclo"}</DialogTitle>
           <DialogDescription>

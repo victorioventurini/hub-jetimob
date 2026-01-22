@@ -45,15 +45,15 @@ export function LimitsTab() {
       </div>
 
       {/* Info Card */}
-      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+      <Card className="border-info/30 bg-info-muted">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+            <Info className="h-5 w-5 text-info mt-0.5 shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-blue-900 dark:text-blue-100">
+              <p className="font-medium text-info-muted-foreground">
                 Por que limites são importantes?
               </p>
-              <p className="text-blue-700 dark:text-blue-300 mt-1">
+              <p className="text-info-muted-foreground mt-1">
                 A metodologia OKR recomenda foco rigoroso. Pesquisas mostram que times com
                 menos objetivos têm maior taxa de sucesso. Os limites ajudam a priorizar
                 o que realmente importa.

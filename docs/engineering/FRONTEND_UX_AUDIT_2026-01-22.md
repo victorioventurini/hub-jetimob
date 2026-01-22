@@ -249,20 +249,21 @@ src/modules/okrs/
 
 ## 📊 Plano de Ação
 
-### Fase 1 — Imediato (Esta Semana)
+### Fase 1 — Imediato (Esta Semana) ✅ CONCLUÍDA
 
-| # | Ação | Esforço | Prioridade |
-|---|------|---------|------------|
-| 1.1 | Criar `DIALOG_SIZES` constantes | 15 min | P2 |
-| 1.2 | Padronizar modais OKR (4 arquivos) | 30 min | P2 |
-| 1.3 | Auditar botões sem `isLoading` | 1h | P2 |
+| # | Ação | Esforço | Status |
+|---|------|---------|--------|
+| 1.1 | Criar `DIALOG_SIZES` constantes | 15 min | ✅ Feito |
+| 1.2 | Padronizar modais OKR (CheckinDialog, CycleFormDialog, CycleRetrospectiveDialog) | 30 min | ✅ Feito |
+| 1.3 | Migrar cores hardcoded módulo OKRs (KrHistoryDialog, CycleCheckinsTable, OkrCycleProgress, etc) | 1h | ✅ Feito |
+| 1.4 | Migrar cores hardcoded módulo Teams (TeamCard) | 30 min | ✅ Feito |
 
 ### Fase 2 — Próxima Sprint
 
 | # | Ação | Esforço | Prioridade |
 |---|------|---------|------------|
-| 2.1 | Migrar cores hardcoded (módulo OKRs) | 2h | P2 |
-| 2.2 | Migrar cores hardcoded (módulo Teams) | 1h | P2 |
+| 2.1 | Migrar cores hardcoded (módulo Assets) | 2h | P2 |
+| 2.2 | Migrar cores hardcoded (módulo Tickets) | 1.5h | P2 |
 | 2.3 | URL State em páginas restantes | 2h | P2 |
 | 2.4 | Consolidar UserCombobox → ParticipantSelect | 2h | P3 |
 
@@ -270,7 +271,7 @@ src/modules/okrs/
 
 | # | Ação | Esforço | Prioridade |
 |---|------|---------|------------|
-| 3.1 | Migrar cores hardcoded (todos os módulos) | 4h | P3 |
+| 3.1 | Migrar cores hardcoded (todos os módulos restantes) | 4h | P3 |
 | 3.2 | Keyboard shortcuts | 4h | P3 |
 | 3.3 | Command palette (Cmd+K) | 8h | P3 |
 | 3.4 | Audit de acessibilidade completo | 4h | P3 |
@@ -280,13 +281,13 @@ src/modules/okrs/
 
 ## 📏 Métricas de Sucesso
 
-| Métrica | Antes | Meta | Após |
-|---------|-------|------|------|
-| Arquivos com cores hardcoded | ~156 | <20 | - |
-| Variações de modal size | 5+ | 4 (sm/md/lg/xl) | - |
-| Páginas com URL State | 4 | 8+ | - |
-| Botões sem isLoading | ? | 0 | - |
-| Lighthouse Accessibility | ? | >90 | - |
+| Métrica | Antes | Meta | Após (2026-01-22) |
+|---------|-------|------|-------------------|
+| Arquivos com cores hardcoded | ~156 | <20 | ~140 (em progresso) |
+| Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ Padronizado |
+| Páginas com URL State | 4 | 8+ | 4 (pendente) |
+| Botões sem isLoading | ? | 0 | Em auditoria |
+| Lighthouse Accessibility | ? | >90 | Pendente |
 
 ---
 

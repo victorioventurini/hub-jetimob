@@ -28,7 +28,7 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
         className={cn(
           "group hover:shadow-lg transition-all duration-200 cursor-pointer relative h-full flex flex-col",
           isSubteam 
-            ? "hover:border-blue-500/30 border-l-4 border-l-blue-500/50" 
+            ? "hover:border-info/30 border-l-4 border-l-info/50" 
             : "hover:border-primary/30 border-l-4 border-l-primary/50"
         )}
       >
@@ -124,7 +124,7 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
           {!isSubteam && team.child_teams && team.child_teams.length > 0 && (
             <Badge 
               variant="outline" 
-              className="text-xs bg-info/5 text-info border-info/20"
+              className="text-xs bg-info-muted text-info border-info/20"
             >
               <Layers3 className="h-3 w-3 mr-1" />
               {team.child_teams.length} sub-time{team.child_teams.length !== 1 ? 's' : ''}

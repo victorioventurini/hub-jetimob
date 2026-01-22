@@ -53,11 +53,11 @@ function ObjectiveRow({ objective }: { objective: ObjectiveWithHealth }) {
         <h4 className="text-sm font-medium truncate">{objective.title}</h4>
         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <CheckCircle className="w-3 h-3 text-green-500" />
+            <CheckCircle className="w-3 h-3 text-success" />
             {objective.krs_updated}/{objective.kr_count} KRs atualizados
           </span>
           {objective.krs_at_risk > 0 && (
-            <span className="flex items-center gap-1 text-yellow-600">
+            <span className="flex items-center gap-1 text-warning">
               <AlertTriangle className="w-3 h-3" />
               {objective.krs_at_risk} em risco
             </span>

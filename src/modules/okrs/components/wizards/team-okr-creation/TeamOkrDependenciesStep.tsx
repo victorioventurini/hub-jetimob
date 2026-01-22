@@ -209,9 +209,9 @@ export function TeamOkrDependenciesStep({
 
           {/* No Dependencies */}
           {noDependencies && (
-            <Card className="border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-950/20">
+            <Card className="border-success/30 bg-success-muted">
               <CardContent className="p-6 text-center">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
                 <h3 className="font-medium mb-2">Nenhuma dependência detectada</h3>
                 <p className="text-sm text-muted-foreground">
                   Seus KRs parecem ser independentes. Ótimo para o foco do time!

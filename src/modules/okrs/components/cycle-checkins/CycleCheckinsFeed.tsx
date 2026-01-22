@@ -161,7 +161,7 @@ export function CycleCheckinsFeed({
             ? valueDiff > 0 ? TrendingUp : valueDiff < 0 ? TrendingDown : Minus
             : null;
           const trendColor = valueDiff !== null
-            ? valueDiff > 0 ? 'text-green-500' : valueDiff < 0 ? 'text-red-500' : 'text-muted-foreground'
+            ? valueDiff > 0 ? 'text-success' : valueDiff < 0 ? 'text-danger' : 'text-muted-foreground'
             : '';
           
           return (
@@ -245,7 +245,7 @@ export function CycleCheckinsFeed({
                           </div>
                         )}
                         {checkin.blockers && (
-                          <div className="flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400">
+                          <div className="flex items-start gap-1.5 text-xs text-danger">
                             <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                             <span className="line-clamp-2">{checkin.blockers}</span>
                           </div>

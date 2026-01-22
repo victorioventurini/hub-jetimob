@@ -121,7 +121,7 @@ export function RiskKrsList({ redKrs, yellowKrs, teams, isLoading }: RiskKrsList
               
               {yellowKrs.length > 0 && (
                 <div className="space-y-2 mt-4">
-                  <p className="text-xs font-semibold text-yellow-600 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-warning uppercase tracking-wide">
                     Atenção ({yellowKrs.length})
                   </p>
                   {yellowKrs.map(kr => renderKrItem(kr, false))}

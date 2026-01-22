@@ -206,7 +206,7 @@ export function OrgHealthScoreCard({
               {/* Top Risks */}
               {consolidatedAnalysis.topRisks?.length > 0 && (
                 <div className="space-y-1.5">
-                  <h5 className="text-xs font-medium text-red-600 flex items-center gap-1">
+                  <h5 className="text-xs font-medium text-danger flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
                     Principais Riscos
                   </h5>
@@ -224,7 +224,7 @@ export function OrgHealthScoreCard({
               {/* Recommendations */}
               {consolidatedAnalysis.recommendations?.length > 0 && (
                 <div className="space-y-1.5">
-                  <h5 className="text-xs font-medium text-green-600 flex items-center gap-1">
+                  <h5 className="text-xs font-medium text-success flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     Recomendações
                   </h5>
