@@ -211,9 +211,9 @@ docs/engineering/
 | # | Ação | Tipo | Status |
 |---|------|------|--------|
 | 2.1 | Migrar query keys hardcoded | Frontend | ✅ `useAttachmentUrl`, `useTicketViewersAndMentions`, `useCompanyOkrs`, `ImpersonationContext` |
-| 2.2 | Eliminar `select("*")` residuais | Frontend | ⏳ Pendente |
+| 2.2 | Eliminar `select("*")` residuais | Frontend | ✅ `useNotificationMutations.ts` (bare .select() fixed) |
 | 2.3 | Migrar `useState` → `useUrlState` | Frontend | ✅ `useLeaderScope.ts` |
-| 2.4 | Corrigir identity violations | Frontend | ⏳ Pendente |
+| 2.4 | Corrigir identity violations | Frontend | ✅ `useInventoryMutations.ts` (user.id → useIdentity().realProfileId) |
 
 ### Wave 3 — Próximas 2 Semanas
 
@@ -274,7 +274,7 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 2. **Correção das 2 RLS policies** — Segurança
 3. **Habilitar password protection** — Segurança de auth
 
-### Saúde Geral do Projeto: **8.8/10** ⭐ (atualizado após Wave 2)
+### Saúde Geral do Projeto: **8.9/10** ⭐ (atualizado após Wave 2 completo)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
