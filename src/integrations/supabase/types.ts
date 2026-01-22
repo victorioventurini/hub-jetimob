@@ -8666,26 +8666,18 @@ export type Database = {
         }[]
       }
       cleanup_old_cron_logs: { Args: never; Returns: undefined }
-      cleanup_old_logs:
-        | {
-            Args: never
-            Returns: {
-              rows_deleted: number
-              table_name: string
-            }[]
-          }
-        | {
-            Args: {
-              p_agent_logs_days?: number
-              p_cron_days?: number
-              p_perf_days?: number
-              p_wizard_days?: number
-            }
-            Returns: {
-              rows_deleted: number
-              table_name: string
-            }[]
-          }
+      cleanup_old_logs: {
+        Args: {
+          p_agent_logs_days?: number
+          p_cron_days?: number
+          p_perf_days?: number
+          p_wizard_days?: number
+        }
+        Returns: {
+          rows_deleted: number
+          table_name: string
+        }[]
+      }
       cleanup_old_perf_snapshots: { Args: never; Returns: number }
       cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
       collect_perf_metrics: { Args: never; Returns: Json }
