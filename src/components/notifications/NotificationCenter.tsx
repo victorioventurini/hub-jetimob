@@ -13,7 +13,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -72,7 +71,7 @@ const notificationColors: Record<string, string> = {
 
 export function NotificationCenter() {
   const { user } = useAuth();
-  const { currentBuId } = useBu();
+  const { currentBuId, isLoading: isBuLoading } = useBu();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -80,11 +79,27 @@ export function NotificationCenter() {
   // Fecha o popover ao mudar de rota
   useCloseOnRouteChange(open, setOpen);
 
+  // Safety: Close popover if BU context becomes unavailable
+  useEffect(() => {
+    if (open && !currentBuId && !isBuLoading) {
+      setOpen(false);
+    }
+  }, [open, currentBuId, isBuLoading]);
+
   // NOTE: This component is mounted even on pre-BU routes (e.g. /auth).
   // Never call useBuScopedSupabase() here; instead create a BU client only when BU is selected.
   const supabaseBu = useMemo(() => {
     return currentBuId ? createBuScopedClient(currentBuId) : null;
   }, [currentBuId]);
+
+  // Prevent opening the popover if no BU context
+  const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen && !currentBuId) {
+      // Don't allow opening without BU context
+      return;
+    }
+    setOpen(newOpen);
+  };
 
   // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery({
@@ -235,7 +250,7 @@ export function NotificationCenter() {
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
@@ -249,8 +264,14 @@ export function NotificationCenter() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[380px] p-0">
-        {/* Header */}
+      <PopoverContent align="end" className="w-[380px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
+        {/* Prevent interaction issues by not rendering content if BU not ready */}
+        {!currentBuId ? (
+          <div className="p-4 text-center text-muted-foreground">
+            Carregando contexto...
+          </div>
+        ) : (
+          <>
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold">Notificações</h3>
           <div className="flex items-center gap-1">
@@ -377,6 +398,8 @@ export function NotificationCenter() {
             Ver todas as notificações
           </Button>
         </div>
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );
