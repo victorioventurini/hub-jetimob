@@ -80,7 +80,7 @@ export function WorkAnniversariesBlock() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <UserLink
-                    userId={person.id}
+                    profileId={person.id}
                     displayName={person.name}
                     className="text-sm font-medium truncate block"
                   />

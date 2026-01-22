@@ -385,7 +385,7 @@ export default function TicketDetailPage() {
                       </AvatarFallback>
                     </Avatar>
                     <UserLink 
-                      userId={ticket.owner.id} 
+                      profileId={ticket.owner.id} 
                       displayName={ticket.owner.display_name || 'Usuário'} 
                       openInNewTab 
                       className="text-sm"
@@ -406,7 +406,7 @@ export default function TicketDetailPage() {
                       </AvatarFallback>
                     </Avatar>
                     <UserLink 
-                      userId={ticket.created_by.id} 
+                      profileId={ticket.created_by.id} 
                       displayName={ticket.created_by.display_name || 'Usuário'} 
                       openInNewTab 
                       className="text-sm"
@@ -460,7 +460,7 @@ export default function TicketDetailPage() {
                           </AvatarFallback>
                         </Avatar>
                         <UserLink 
-                          userId={user.id} 
+                          profileId={user.id} 
                           displayName={user.display_name || 'Usuário'} 
                           openInNewTab 
                           className="text-xs"
@@ -489,7 +489,7 @@ export default function TicketDetailPage() {
                         </Avatar>
                         {mention.type === "user" ? (
                           <UserLink 
-                            userId={mention.id} 
+                            profileId={mention.id} 
                             displayName={mention.display_name || 'Usuário'} 
                             openInNewTab 
                             className="text-xs"

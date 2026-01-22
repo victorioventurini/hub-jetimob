@@ -28,11 +28,12 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
     }
 
     const displayName = match[1];
-    const userId = match[2];
+    // The ID stored in mentions is profiles.id (domain identity), not auth.users.id
+    const profileId = match[2];
     parts.push(
-      <UserHoverCard key={`${userId}-${match.index}`} userId={userId}>
+      <UserHoverCard key={`${profileId}-${match.index}`} profileId={profileId}>
         <Link
-          to={`/users/${userId}`}
+          to={`/users/${profileId}`}
           className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
@@ -350,10 +351,11 @@ export function MentionInput({
     deleteRange.deleteContents();
 
     // Create mention chip element
+    // CRITICAL: Store profiles.id (domain identity), not user.user_id (auth identity)
     const mentionDisplayName = getEmailPrefix(user.email) || user.display_name;
     const chip = document.createElement('span');
     chip.contentEditable = 'false';
-    chip.setAttribute('data-mention-id', user.user_id);
+    chip.setAttribute('data-mention-id', user.id); // user.id = profiles.id (domain identity)
     chip.className = 'mention-chip';
     chip.textContent = `@${mentionDisplayName}`;
 
