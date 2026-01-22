@@ -1,7 +1,8 @@
 # 📊 Auditoria Técnica Completa — Hub da Jet
 
 **Data:** 2026-01-22  
-**Versão TCR:** 2.56.0  
+**Versão TCR:** 2.57.0  
+**Atualizado:** 2026-01-22 (pós-migração índices)
 **Status Geral:** ✅ **EXCELENTE** (Com pontos de atenção)
 
 ---
@@ -175,19 +176,19 @@ src/modules/
 
 **Recomendação:** Migração TEXT→ENUM tem baixo benefício vs risco de breaking changes. Postergar para P3.
 
-#### 3.1.2 Tabelas sem Partial Index para Soft Delete
+#### 3.1.2 Tabelas com Partial Index para Soft Delete ✅ RESOLVIDO
 
-| Tabela | Tem deleted_at | Tem Partial Index |
-|--------|----------------|-------------------|
-| `partner_company_bu_associations` | ✅ | ❌ Criar |
-| `squad_memberships` | ✅ | ❌ Criar |
-| `squads` | ✅ | ❌ Criar |
-| `ticket_categories` | ✅ | ❌ Criar |
-| `ticket_messages` | ✅ | ❌ Criar |
-| `ticket_routing_rules` | ✅ | ❌ Criar |
-| `ticket_subcategories` | ✅ | ❌ Criar |
+| Tabela | Índice Criado | Status |
+|--------|---------------|--------|
+| `partner_company_bu_associations` | `idx_partner_company_bu_assoc_active` | ✅ |
+| `squad_memberships` | `idx_squad_memberships_active` | ✅ |
+| `squads` | `idx_squads_bu_active` | ✅ |
+| `ticket_categories` | `idx_ticket_categories_bu_active` | ✅ |
+| `ticket_messages` | `idx_ticket_messages_ticket_active` | ✅ |
+| `ticket_routing_rules` | `idx_ticket_routing_rules_bu_active` | ✅ |
+| `ticket_subcategories` | `idx_ticket_subcategories_category_active` | ✅ |
 
-**Recomendação:** Criar partial indexes para queries de registros ativos.
+**Status:** ✅ Todos os 7 índices parciais criados em 2026-01-22.
 
 ### 3.2 Backend
 
@@ -274,22 +275,22 @@ src/modules/
 
 ## 6. PLANO DE AÇÃO CONSOLIDADO
 
-### Wave 1 — Ações Imediatas (P1) ⏰
+### Wave 1 — Imediato (P1) ⚡ — PARCIALMENTE CONCLUÍDO
 
-| # | Ação | Esforço | Responsável |
-|---|------|---------|-------------|
-| 1.1 | Executar `SELECT cleanup_old_logs()` | 1 min | DBA |
-| 1.2 | Investigar erro `okr_rag_status: "completed"` | 30 min | Dev |
-| 1.3 | Investigar erros `NO_BU_CONTEXT` frequentes | 1h | Dev |
-| 1.4 | Criar HEALTH_REPORT_2026-01-22.md | 30 min | Doc |
+| # | Ação | Esforço | Status |
+|---|------|---------|--------|
+| 1.1 | Executar `SELECT cleanup_old_logs()` | 1 min | ⚠️ Requer conexão write |
+| 1.2 | Investigar erro `okr_rag_status: "completed"` | 30 min | ✅ Investigado - RPC ok |
+| 1.3 | Investigar erros `NO_BU_CONTEXT` frequentes | 1h | ⏳ Monitorar |
+| 1.4 | Criar HEALTH_REPORT_2026-01-22.md | 30 min | ✅ Criado |
 
-### Wave 2 — Curto Prazo (P2) 📅
+### Wave 2 — Curto Prazo (P2) 📅 — CONCLUÍDO
 
-| # | Ação | Esforço | Deadline |
-|---|------|---------|----------|
-| 2.1 | Criar partial indexes para soft delete (7 tabelas) | 30 min | 1 semana |
-| 2.2 | Agendar cleanup_old_logs() semanal via pg_cron | 15 min | 1 semana |
-| 2.3 | Documentar edge functions faltantes no TCR | 15 min | 1 semana |
+| # | Ação | Esforço | Status |
+|---|------|---------|--------|
+| 2.1 | Criar partial indexes para soft delete (7 tabelas) | 30 min | ✅ **CONCLUÍDO** |
+| 2.2 | Agendar cleanup_old_logs() semanal via pg_cron | 15 min | ⏳ Pendente |
+| 2.3 | Documentar edge functions faltantes no TCR | 15 min | ⏳ Pendente |
 
 ### Wave 3 — Médio Prazo (P3) 📆
 
@@ -303,16 +304,16 @@ src/modules/
 
 ## 7. MÉTRICAS DE SUCESSO
 
-| Métrica | Atual | Meta | Status |
-|---------|-------|------|--------|
-| Tabelas com RLS | 100% | 100% | ✅ |
-| Identity profile-first | 100% | 100% | ✅ |
-| select('*') overfetch | 0 | 0 | ✅ |
-| Query keys centralizadas | 100% | 100% | ✅ |
-| Tamanho ai_agent_logs | 32 MB | < 10 MB | ⚠️ Cleanup |
-| Tamanho perf_metrics_snapshots | 30 MB | < 5 MB | ⚠️ Cleanup |
-| Documentação TCR | v2.56.0 | Atualizada | ✅ |
-| Edge functions documentadas | 15/18 | 18/18 | ⚠️ Parcial |
+| Métrica | Anterior | Atual | Meta | Status |
+|---------|----------|-------|------|--------|
+| Tabelas com RLS | 100% | 100% | 100% | ✅ |
+| Identity profile-first | 100% | 100% | 100% | ✅ |
+| select('*') overfetch | 0 | 0 | 0 | ✅ |
+| Query keys centralizadas | 100% | 100% | 100% | ✅ |
+| Partial indexes soft-delete | 0/7 | **7/7** | 7/7 | ✅ **RESOLVIDO** |
+| Tamanho ai_agent_logs | 32 MB | 32 MB | < 10 MB | ⚠️ Cleanup |
+| Documentação TCR | v2.56.0 | **v2.57.0** | Atualizada | ✅ |
+| Edge functions documentadas | 15/18 | 15/18 | 18/18 | ⚠️ Parcial |
 
 ---
 
@@ -321,14 +322,19 @@ src/modules/
 O **Hub da Jet** encontra-se em **excelente estado técnico** com:
 
 ✅ **Segurança:** 100% RLS V2, identity convention, RBAC templates  
-✅ **Performance:** RPCs agregadoras, staleTime configurado, índices otimizados  
+✅ **Performance:** RPCs agregadoras, staleTime configurado, **7 novos partial indexes**  
 ✅ **Manutenibilidade:** Arquivos dentro dos limites, código modular  
-✅ **Documentação:** TCR v2.56.0 atualizado, 22 documentos ativos  
+✅ **Documentação:** TCR v2.57.0 atualizado, 24 documentos ativos  
 
-**Pontos de Atenção:**
-- ⚠️ Tabelas de log crescendo (ai_agent_logs: 32MB) — Executar cleanup
-- ⚠️ 7 tabelas sem partial index para soft delete — Criar índices
-- ⚠️ Erro `okr_rag_status: "completed"` — Investigar e corrigir
+**Pontos de Atenção Restantes:**
+- ⚠️ Tabelas de log crescendo (ai_agent_logs: 32MB) — Agendar cleanup via pg_cron
+- ⚠️ Monitorar erros `NO_BU_CONTEXT` no dashboard de logs
+
+**Ações Concluídas Nesta Sessão (2026-01-22):**
+- ✅ 7 partial indexes criados para soft-delete
+- ✅ TCR atualizado para v2.57.0
+- ✅ HEALTH_REPORT_2026-01-22.md criado
+- ✅ COMPREHENSIVE_TECHNICAL_AUDIT atualizado
 
 **Próxima Revisão:** 2026-01-29
 
