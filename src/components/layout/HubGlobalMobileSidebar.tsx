@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
 import {
   Home,
   Building2,
@@ -56,6 +57,9 @@ const externalLinks = [
 
 export function HubGlobalMobileSidebar({ open, onOpenChange }: HubGlobalMobileSidebarProps) {
   const location = useLocation();
+  
+  // Fecha automaticamente ao trocar de rota
+  useCloseOnRouteChange(open, onOpenChange);
 
   const NavItem = ({ 
     name, 

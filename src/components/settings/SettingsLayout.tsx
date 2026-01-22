@@ -156,28 +156,33 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  // Fix: remove lock residual do Radix após navegação (Sheet/Dialog)
+  // Fix: remove lock residual do Radix após navegação (Sheet/Dialog/Tooltip)
   useEffect(() => {
     setMobileMenuOpen(false);
 
     const cleanup = () => {
-      const bodyComputed = window.getComputedStyle(document.body).pointerEvents;
-      const htmlComputed = window.getComputedStyle(document.documentElement).pointerEvents;
-
-      if (bodyComputed === "none") {
-        document.body.style.pointerEvents = "auto";
-      } else if (document.body.style.pointerEvents === "none") {
-        document.body.style.pointerEvents = "";
-      }
-
-      if (htmlComputed === "none") {
-        document.documentElement.style.pointerEvents = "auto";
-      } else if (document.documentElement.style.pointerEvents === "none") {
-        document.documentElement.style.pointerEvents = "";
-      }
+      // Cleanup pointer-events
+      document.body.style.removeProperty('pointer-events');
+      document.documentElement.style.removeProperty('pointer-events');
+      document.body.style.pointerEvents = '';
+      document.documentElement.style.pointerEvents = '';
+      
+      // Remove Radix tooltips órfãos
+      document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.remove();
+        }
+      });
+      
+      document.querySelectorAll('[role="tooltip"]').forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.remove();
+        }
+      });
     };
 
-    const timers = [0, 250, 550, 900].map((delay) => window.setTimeout(cleanup, delay));
+    cleanup();
+    const timers = [0, 50, 150, 300, 500, 1000].map((delay) => window.setTimeout(cleanup, delay));
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [location.pathname]);
   return (

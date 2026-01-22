@@ -46,6 +46,8 @@ function forceCleanupPointerEvents() {
   document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach((el) => {
     if (el instanceof HTMLElement) {
       el.style.pointerEvents = '';
+      // Remove completamente tooltips presos
+      el.remove();
     }
   });
   
@@ -56,10 +58,17 @@ function forceCleanupPointerEvents() {
     }
   });
   
-  // Remove qualquer overlay fantasma
+  // Remove qualquer overlay fantasma com state closed
   document.querySelectorAll('[data-state="closed"]').forEach((el) => {
     if (el instanceof HTMLElement && el.style.pointerEvents === 'none') {
       el.style.pointerEvents = '';
+    }
+  });
+  
+  // Remove tooltips órfãos (abertos mas sem trigger visível)
+  document.querySelectorAll('[role="tooltip"]').forEach((el) => {
+    if (el instanceof HTMLElement) {
+      el.remove();
     }
   });
 }

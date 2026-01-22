@@ -116,9 +116,14 @@ export function HubGlobalSidebar({ collapsed, onCollapse }: HubGlobalSidebarProp
 
     if (collapsed) {
       return (
-        <Tooltip delayDuration={100}>
+        <Tooltip delayDuration={0} disableHoverableContent>
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-          <TooltipContent side="right" className="font-medium">
+          <TooltipContent 
+            side="right" 
+            className="font-medium pointer-events-none"
+            sideOffset={8}
+            avoidCollisions={false}
+          >
             {name}
           </TooltipContent>
         </Tooltip>
