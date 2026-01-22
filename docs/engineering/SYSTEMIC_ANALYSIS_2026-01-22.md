@@ -111,11 +111,11 @@ SELECT
 
 | Prioridade | Issue | Arquivos Afetados | Ação |
 |------------|-------|-------------------|------|
-| 🔴 P1 | Arquivos > 500 linhas | `Users.tsx` (691 lines), `TicketDetailPage.tsx` (~612 lines), `Sidebar.tsx` (~542 lines) | Refatorar/extrair componentes |
+| ✅ ~~P1~~ | ~~Arquivos > 500 linhas~~ | ~~`Users.tsx`, `TicketDetailPage.tsx`~~ | **CORRIGIDO 2026-01-22** — Extraídos `UsersTable.tsx`, `TicketDetailSidebar.tsx` |
 | ✅ ~~P2~~ | ~~Hardcoded Query Keys~~ | ~~`useAttachmentUrl.ts`, `useTicketViewersAndMentions.ts`, `useCompanyOkrs.ts`, `ImpersonationContext.tsx`~~ | **CORRIGIDO 2026-01-22** |
-| 🟡 P2 | `select("*")` residuais | `useOrgObjectiveQueries.ts`, `useTicketQueries.ts` | Usar seleção explícita |
+| ✅ ~~P2~~ | ~~`select("*")` residuais~~ | ~~`useOrgObjectiveQueries.ts`, `useTicketQueries.ts`~~ | **VERIFICADO 2026-01-22** — Já usam `OKR_FIELDS.*` e `TICKET_FIELDS.*` |
 | ✅ ~~P2~~ | ~~useState para estado de URL~~ | ~~`useLeaderScope.ts`~~ | **CORRIGIDO 2026-01-22** |
-| 🟢 P3 | Identity violations | `useMyTicketsHome.ts`, `useInventoryMutations.ts` | Usar `useIdentity().profileId` |
+| ✅ ~~P3~~ | ~~Identity violations~~ | ~~`useInventoryMutations.ts`~~ | **CORRIGIDO 2026-01-22** — Usa `useIdentity().realProfileId` |
 
 ---
 
@@ -180,18 +180,18 @@ docs/engineering/
 
 | Severidade | Contagem | Exemplos |
 |------------|----------|----------|
-| 🔴 **Crítico (P1)** | 2 | Logs crescendo (82K+ rows), arquivos grandes (>500 linhas) |
-| 🟡 **Importante (P2)** | 5 | Hardcoded query keys, docs duplicados, password protection |
-| 🟢 **Desejável (P3)** | 6 | Auditoria funções SQL, padronização JSDoc |
+| 🔴 **Crítico (P1)** | 0 ✅ | ~~Logs crescendo, arquivos grandes~~ — Corrigidos |
+| 🟡 **Importante (P2)** | 1 | Docs duplicados, password protection |
+| 🟢 **Desejável (P3)** | 4 | Auditoria funções SQL, padronização JSDoc |
 
 ### Por Esforço Estimado
 
-| Esforço | Itens | Horas Est. |
-|---------|-------|------------|
-| **Trivial** (<1h) | Cleanup logs, habilitar password protection | 1h |
-| **Pequeno** (1-4h) | Migrar hardcoded query keys | 3h |
-| **Médio** (4-8h) | Refatorar arquivos grandes | 8h |
-| **Grande** (>8h) | Reorganizar docs, auditar 193 funções SQL | 16h+ |
+| Esforço | Itens | Horas Est. | Status |
+|---------|-------|------------|--------|
+| ~~**Trivial**~~ | ~~Cleanup logs, habilitar password protection~~ | ~~1h~~ | ⏳ |
+| ~~**Pequeno**~~ | ~~Migrar hardcoded query keys~~ | ~~3h~~ | ✅ |
+| ~~**Médio**~~ | ~~Refatorar arquivos grandes, identity violations~~ | ~~8h~~ | ✅ |
+| **Grande** | Reorganizar docs, auditar 193 funções SQL | 16h+ | Wave 4 |
 
 ---
 
@@ -274,14 +274,16 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 2. **Correção das 2 RLS policies** — Segurança
 3. **Habilitar password protection** — Segurança de auth
 
-### Saúde Geral do Projeto: **9.0/10** ⭐ (atualizado após Wave 3 completo)
+### Saúde Geral do Projeto: **9.2/10** ⭐ (atualizado após verificação Wave 4)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
 - ✅ Arquitetura bem documentada
 - ✅ Padrões de desenvolvimento maduros
 - ✅ Separação clara de responsabilidades
-- ⚠️ Precisa de manutenção preventiva de logs e docs
+- ✅ Seleção explícita de campos em todas as queries principais
+- ✅ Query keys centralizadas
+- ⚠️ Precisa de manutenção preventiva de logs e reorganização de docs
 
 ---
 
