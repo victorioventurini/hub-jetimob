@@ -19,6 +19,10 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 | **get_visible_ticket_ids_for_impersonation** | RPC | ✅ Corrigido (external contacts) |
 | **External User Home Dashboard** | UX | ✅ Cards internos ocultados |
 | **Auditoria Técnica Completa** | Análise | ✅ Concluída |
+| **7 Partial Indexes Soft-Delete** | Performance | ✅ **NOVO** |
+| **pg_cron Cleanup Semanal** | Infra | ✅ **NOVO** |
+| **Fix user_team_memberships.is_active** | Bugfix | ✅ **NOVO** |
+| **TCR Edge Functions (18)** | Docs | ✅ **NOVO** |
 
 ---
 
