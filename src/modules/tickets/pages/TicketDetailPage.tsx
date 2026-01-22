@@ -25,7 +25,7 @@ import type { ParsedMention } from "@/components/mentions";
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { profileId, userId } = useIdentity();
+  const { profileId, realProfileId, userId } = useIdentity();
   const { isExternal, externalContacts } = useExternalUser();
   const { currentBu } = useBu();
   const goBack = useSafeBack({ moduleRoot: "/tickets" });
@@ -55,7 +55,7 @@ export default function TicketDetailPage() {
   }, [ticket]);
 
   const createMessage = useCreateMessage(
-    { profileId, contactId: currentBuContactId },
+    { profileId: realProfileId, contactId: currentBuContactId },
     ticketContext
   );
   const pinMessage = usePinMessage();
