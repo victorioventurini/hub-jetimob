@@ -154,11 +154,23 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 ## 📋 Próximos Passos (Recomendados)
 
 1. ✅ ~~Auditoria técnica completa~~ CONCLUÍDO
-2. ⏳ Executar cleanup de logs (ai_agent_logs, perf_metrics_snapshots)
-3. ⏳ Criar partial indexes para soft delete (7 tabelas)
+2. ✅ ~~Criar partial indexes para soft delete (7 tabelas)~~ CONCLUÍDO
+3. ⏳ Executar cleanup de logs (ai_agent_logs, perf_metrics_snapshots)
 4. ⏳ Agendar cleanup_old_logs() via pg_cron
 5. 🔲 Implementar módulo KPIs completo
 6. 🔲 Implementar módulo Automations completo
+
+### Índices Parciais Criados (2026-01-22)
+
+| Tabela | Índice | Status |
+|--------|--------|--------|
+| `partner_company_bu_associations` | `idx_partner_company_bu_assoc_active` | ✅ |
+| `squad_memberships` | `idx_squad_memberships_active` | ✅ |
+| `squads` | `idx_squads_bu_active` | ✅ |
+| `ticket_categories` | `idx_ticket_categories_bu_active` | ✅ |
+| `ticket_messages` | `idx_ticket_messages_ticket_active` | ✅ |
+| `ticket_routing_rules` | `idx_ticket_routing_rules_bu_active` | ✅ |
+| `ticket_subcategories` | `idx_ticket_subcategories_category_active` | ✅ |
 
 ---
 
