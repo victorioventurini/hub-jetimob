@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
-import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket, usePinMessage, canUserPinMessages } from "@/modules/tickets/hooks";
+import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket, usePinMessage, canUserPinMessages, type TicketContext } from "@/modules/tickets/hooks";
 import { useTicketViewersAndMentions } from "../hooks/useTicketViewersAndMentions";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -50,10 +50,21 @@ export default function TicketDetailPage() {
   const { data: viewersData } = useTicketViewersAndMentions(ticket);
   const updateStatus = useUpdateTicketStatus();
   const transferTicket = useTransferTicket(profileId, userId);
-  const createMessage = useCreateMessage({ 
-    profileId, 
-    contactId: currentBuContactId 
-  });
+  // Build ticket context for auto-status change when responsible sends message
+  const ticketContext: TicketContext | undefined = useMemo(() => {
+    if (!ticket) return undefined;
+    return {
+      type: ticket.type,
+      status: ticket.status,
+      owner_user_id: ticket.owner_user_id,
+      assigned_contact_id: ticket.assigned_contact_id,
+    };
+  }, [ticket]);
+
+  const createMessage = useCreateMessage(
+    { profileId, contactId: currentBuContactId },
+    ticketContext
+  );
   const pinMessage = usePinMessage();
   
   // Refs for auto-scrolling to bottom
@@ -103,7 +114,14 @@ export default function TicketDetailPage() {
 
   const handleStatusChange = async (newStatus: TicketStatus) => {
     if (!ticket) return;
-    await updateStatus.mutateAsync({ id: ticket.id, status: newStatus });
+    await updateStatus.mutateAsync({ 
+      id: ticket.id, 
+      status: newStatus,
+      context: {
+        currentStatus: ticket.status,
+        profileId,
+      },
+    });
   };
 
   const handleSendMessage = async (data: {

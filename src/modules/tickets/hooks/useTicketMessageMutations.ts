@@ -3,7 +3,9 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { supabase } from "@/integrations/supabase/client";
-import type { CreateMessageData } from "../types";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { CreateMessageData, TicketStatus, TicketType } from "../types";
 
 // NOTA: Este módulo usa profiles.id para author_user_id (identity convention)
 // Ver docs/engineering/IDENTITY_CONVENTION.md para detalhes
@@ -18,11 +20,33 @@ export interface CreateMessageAuthor {
   contactId?: string | null;
 }
 
+/** Context for auto-status change when responsible sends message */
+export interface TicketContext {
+  type: TicketType;
+  status: TicketStatus;
+  /** profiles.id of the owner (internal tickets) */
+  owner_user_id: string | null;
+  /** partner_contacts.id of the assignee (external tickets) */
+  assigned_contact_id: string | null;
+}
+
+// ===========================================
+// CONSTANTS
+// ===========================================
+
+const STATUS_LABELS: Record<TicketStatus, string> = {
+  waiting: "Aguardando",
+  paused: "Pausado",
+  in_progress: "Em Andamento",
+  done: "Concluído",
+  discarded: "Descartado",
+};
+
 // ===========================================
 // MUTATIONS
 // ===========================================
 
-export function useCreateMessage(author: CreateMessageAuthor) {
+export function useCreateMessage(author: CreateMessageAuthor, ticketContext?: TicketContext) {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
   const buId = currentBu?.id;
@@ -82,11 +106,57 @@ export function useCreateMessage(author: CreateMessageAuthor) {
 
       if (error) throw error;
 
-      // Update ticket updated_at
-      await buScopedSupabase
-        .from("tickets")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", ticketId);
+      // Check if author is the responsible and ticket is not already in_progress
+      // If so, auto-update status to in_progress and insert system message
+      let statusChanged = false;
+      if (ticketContext && ticketContext.status !== "in_progress" && ticketContext.status !== "done" && ticketContext.status !== "discarded") {
+        const isResponsible = ticketContext.type === "internal"
+          ? author.profileId === ticketContext.owner_user_id
+          : author.contactId === ticketContext.assigned_contact_id;
+
+        if (isResponsible) {
+          // Update ticket status to in_progress
+          const { error: statusError } = await buScopedSupabase
+            .from("tickets")
+            .update({ 
+              status: "in_progress" as TicketStatus, 
+              updated_at: new Date().toISOString() 
+            })
+            .eq("id", ticketId);
+
+          if (!statusError) {
+            statusChanged = true;
+            
+            // Insert system message recording the status change
+            const formattedDate = format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+            const oldStatusLabel = STATUS_LABELS[ticketContext.status];
+            const newStatusLabel = STATUS_LABELS["in_progress"];
+            const systemMessage = `🔄 Status alterado de **${oldStatusLabel}** para **${newStatusLabel}** (resposta do responsável). ${formattedDate}`;
+
+            await buScopedSupabase
+              .from("ticket_messages")
+              .insert({
+                bu_id: buId,
+                ticket_id: ticketId,
+                author_type: "system" as any,
+                author_user_id: isExternalUser ? null : author.profileId,
+                author_contact_id: isExternalUser ? author.contactId : null,
+                body_richtext: {
+                  type: "system",
+                  content: systemMessage,
+                },
+              } as any);
+          }
+        }
+      }
+
+      // Update ticket updated_at (if not already updated by status change)
+      if (!statusChanged) {
+        await buScopedSupabase
+          .from("tickets")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", ticketId);
+      }
 
       // Create mentions if provided
       if (data.mentions && data.mentions.length > 0) {
@@ -133,6 +203,14 @@ export function useCreateMessage(author: CreateMessageAuthor) {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.tickets.detail(variables.ticketId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tickets.listPrefix(null),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tickets.myTicketsPrefix(null),
         refetchType: 'active',
       });
     },
