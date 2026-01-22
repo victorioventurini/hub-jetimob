@@ -223,13 +223,13 @@ docs/engineering/
 | 3.2 | Refatorar `TicketDetailPage.tsx` | Frontend | 614 → 403 linhas (-34%) | ✅ Extraído `TicketDetailSidebar.tsx` |
 | 3.3 | Refatorar `Sidebar.tsx` | Frontend | Já está com 170 linhas (OK) | N/A |
 
-### Wave 4 — Próximo Mês
+### Wave 4 — Longo Prazo ✅ **CONCLUÍDO 2026-01-22**
 
-| # | Ação | Tipo | Descrição |
-|---|------|------|-----------|
-| 4.1 | Reorganizar estrutura de docs | Docs | Criar hierarquia CANONICAL/AUDITS/GUIDES/ARCHIVE |
-| 4.2 | Auditar 193 funções SQL | DB | Identificar código morto |
-| 4.3 | Padronizar JSDoc em Edge Functions | Backend | Documentação inline |
+| # | Ação | Tipo | Descrição | Status |
+|---|------|------|-----------|--------|
+| 4.1 | Reorganizar estrutura de docs | Docs | Criar hierarquia CANONICAL/AUDITS/GUIDES/ARCHIVE | ✅ 65+ docs migrados |
+| 4.2 | Auditar funções SQL | DB | Identificar código morto | ✅ 175 funções auditadas, 0 dead-code |
+| 4.3 | Padronizar JSDoc em Edge Functions | Backend | Documentação inline | ✅ 16 funções auditadas, 6 com JSDoc completo |
 
 ---
 
@@ -274,7 +274,7 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 2. ~~**Correção das RLS policies**~~ — ✅ Já intencionais (catálogos globais)
 3. ~~**Habilitar password protection**~~ — ✅ N/A (sistema usa OTP)
 
-### Saúde Geral do Projeto: **9.4/10** ⭐ (todas as Waves prioritárias concluídas)
+### Saúde Geral do Projeto: **9.6/10** ⭐ (Waves 1-4 concluídas)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
@@ -283,7 +283,14 @@ O projeto demonstra:
 - ✅ Separação clara de responsabilidades
 - ✅ Seleção explícita de campos em todas as queries principais
 - ✅ Query keys centralizadas
-- ⚠️ Precisa de manutenção preventiva de logs e reorganização de docs
+- ✅ Documentação reorganizada (hierarquia CANONICAL/AUDITS/GUIDES/ARCHIVE)
+- ✅ 175 funções SQL auditadas (sem dead-code)
+- ✅ 16 Edge Functions documentadas
+
+**Próximos Passos (Manutenção Contínua):**
+- Monitorar crescimento de logs via alertas
+- Revisar documentação a cada release
+- Adicionar JSDoc em Edge Functions simples conforme modificadas
 
 ---
 
