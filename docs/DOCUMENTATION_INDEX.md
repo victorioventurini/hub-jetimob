@@ -51,6 +51,8 @@ docs/
 | `BACKEND_AUDIT_2026-01-22.md` | Auditoria de Edge Functions | 2026-01-22 |
 | `DATABASE_OPTIMIZATION_AUDIT_2026-01-22.md` | Otimização de banco | 2026-01-22 |
 | `FRONTEND_UX_AUDIT_2026-01-22.md` | Auditoria de UX | 2026-01-22 |
+| `SQL_FUNCTIONS_AUDIT_2026-01-22.md` | **Auditoria de 175 funções SQL** | 2026-01-22 |
+| `EDGE_FUNCTIONS_JSDOC_AUDIT_2026-01-22.md` | **Auditoria JSDoc de 16 Edge Functions** | 2026-01-22 |
 
 ---
 
