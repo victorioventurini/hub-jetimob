@@ -26,7 +26,7 @@ import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { TicketTransferModal } from "../components/TicketTransferModal";
 import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
 import { TicketStatusSelector } from "../components/TicketStatusSelector";
-import { UserLink } from "@/components/links/UserLink";
+import { UserLink, ContactLink } from "@/components/links";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
 
@@ -392,7 +392,12 @@ export default function TicketDetailPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">{ticket.assigned_contact.name}</span>
+                      <ContactLink 
+                        contactId={ticket.assigned_contact.id} 
+                        displayName={ticket.assigned_contact.name || 'Contato'} 
+                        openInNewTab 
+                        className="text-sm"
+                      />
                       <span className="text-xs text-muted-foreground">{ticket.assigned_contact.email}</span>
                     </div>
                   </div>
