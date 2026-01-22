@@ -31,7 +31,7 @@ export function useBuNotificationChannelMutations() {
         }], {
           onConflict: 'bu_id,channel_slug',
         })
-        .select()
+        .select('id, bu_id, channel_slug, is_enabled, config, created_at, updated_at')
         .single();
       
       if (error) throw error;

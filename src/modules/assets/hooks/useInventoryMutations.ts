@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
@@ -129,7 +129,7 @@ export function useAssetCategoryMutations() {
  * Hook for asset inventory item mutations (create, update, delete)
  */
 export function useAssetItemMutations() {
-  const { user } = useAuth();
+  const { realProfileId } = useIdentity();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
@@ -156,10 +156,10 @@ export function useAssetItemMutations() {
       const client = assertSupabaseClient(supabase, "createItem");
       const { assigned_to_user_id, authorized_by_user_id, due_at, ...itemData } = data;
 
-      // Create the item
+      // Create the item - using realProfileId for domain columns
       const insertData: Record<string, unknown> = {
         bu_id: buId!,
-        created_by: user?.id,
+        created_by: realProfileId,
         ...itemData,
       };
 
@@ -192,7 +192,7 @@ export function useAssetItemMutations() {
           to_holder_type: "user",
           to_user_id: assigned_to_user_id,
           authorized_by_user_id: authorized_by_user_id,
-          performed_by_user_id: user?.id,
+          performed_by_user_id: realProfileId,
           due_at: due_at || null,
           notes: "Atribuição inicial no cadastro",
         });
@@ -240,7 +240,7 @@ export function useAssetItemMutations() {
         ...(data.current_user_id !== undefined && {
           current_user_id: data.current_user_id || null,
         }),
-        updated_by: user?.id,
+        updated_by: realProfileId,
       };
 
       const { data: item, error } = await client
@@ -275,7 +275,7 @@ export function useAssetItemMutations() {
         .from("asset_inventory")
         .update({
           deleted_at: new Date().toISOString(),
-          updated_by: user?.id,
+          updated_by: realProfileId,
         })
         .eq("id", id);
 
@@ -322,7 +322,7 @@ export function useAssetItemMutations() {
  * Hook for asset movement mutations
  */
 export function useAssetMovementMutations() {
-  const { user } = useAuth();
+  const { realProfileId } = useIdentity();
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
@@ -347,7 +347,7 @@ export function useAssetMovementMutations() {
         .from("asset_movements")
         .insert({
           bu_id: buId!,
-          performed_by_user_id: user?.id,
+          performed_by_user_id: realProfileId,
           ...data,
         })
         .select()
