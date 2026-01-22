@@ -1,14 +1,23 @@
+/**
+ * request-magic-link
+ * 
+ * Generates and sends magic link for authentication.
+ * Validates email domain against BU settings and partner contacts.
+ * 
+ * Uses centralized error handling via _shared/error-handler.ts
+ */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { sendEmail, buildMagicLinkEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";
+import { 
+  withErrorHandling, 
+  createErrorResponse,
+  validateRequiredFields,
+} from "../_shared/error-handler.ts";
+import { corsHeaders } from "../_shared/middleware.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 
 interface MagicLinkRequest {
   email: string;
@@ -166,146 +175,111 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   return { allowed: false, buName: null, isPartnerContact: false };
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+const handler = withErrorHandling(async (req: Request, requestId: string): Promise<Response> => {
+  const body = await req.json() as MagicLinkRequest;
+  const { email, redirectTo } = body;
+
+  // Validate required fields using centralized validation
+  const validationError = validateRequiredFields(
+    { email, redirectTo }, 
+    ['email', 'redirectTo'], 
+    requestId
+  );
+  if (validationError) return validationError;
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return createErrorResponse("INVALID_FORMAT", requestId, {
+      message: "Email inválido",
+      details: { field: "email" },
+    });
   }
 
-  try {
-    const { email, redirectTo }: MagicLinkRequest = await req.json();
+  // Create Supabase admin client
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
-    // Validate input
-    if (!email || !redirectTo) {
-      console.warn("Missing required fields: email or redirectTo");
-      return new Response(
-        JSON.stringify({ error: "Email e redirectTo são obrigatórios" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ error: "Email inválido" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    // Create Supabase admin client
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+  // Check if email domain is allowed or is a partner contact
+  const { allowed, buName, isPartnerContact } = await getEmailBu(email);
+  
+  if (!allowed) {
+    const domain = email.split('@')[1] || 'unknown';
+    console.warn(`[${requestId}] Unauthorized email attempted: ${email}, domain: ${domain}`);
+    return createErrorResponse("FORBIDDEN", requestId, {
+      message: `O email ${email} não está autorizado para acesso ao Hub.`,
     });
-
-    // Check if email domain is allowed or is a partner contact
-    const { allowed, buName, isPartnerContact } = await getEmailBu(email);
-    
-    if (!allowed) {
-      const domain = email.split('@')[1] || 'unknown';
-      console.warn("Unauthorized email attempted:", email, "domain:", domain);
-      return new Response(
-        JSON.stringify({ error: `O email ${email} não está autorizado para acesso ao Hub.` }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    const userType = isPartnerContact ? "partner contact" : "internal user";
-    console.log(`Generating magic link for ${email} (BU: ${buName}, type: ${userType})`);
-
-    // Generate magic link using admin API
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo,
-      },
-    });
-
-    if (linkError || !linkData?.properties?.hashed_token) {
-      console.error("Error generating magic link:", linkError);
-      return new Response(
-        JSON.stringify({ error: "Erro ao gerar link de acesso. Tente novamente." }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    // Build callback URL with token_hash as query param to survive SendGrid click tracking.
-    // Important: we must NOT concatenate strings with redirectTo because redirectTo can be a full URL
-    // with its own path/query. Instead, treat redirectTo as the final destination AFTER login.
-    const redirectUrl = new URL(redirectTo);
-    const nextPath = `${redirectUrl.pathname}${redirectUrl.search}` || "/";
-
-    const callbackUrl = new URL("/auth/callback", redirectUrl.origin);
-    callbackUrl.searchParams.set("next", nextPath);
-    callbackUrl.searchParams.set("token_hash", linkData.properties.hashed_token);
-    callbackUrl.searchParams.set("type", "magiclink");
-
-    const magicLink = callbackUrl.toString();
-    console.log("Magic link generated successfully for:", email, "callback:", callbackUrl.pathname);
-
-    // Get display name from email
-    const displayName = email.split('@')[0].split('.')[0];
-
-    // Build and send email via SendGrid
-    const emailHtml = buildMagicLinkEmailHtml({
-      magicLink,
-      displayName,
-      buName: buName || undefined,
-    });
-
-    const emailResult = await sendEmail({
-      to: email,
-      subject: `Seu link de acesso ao Hub - ${formatEmailDateTime()}`,
-      html: emailHtml,
-    });
-
-    if (!emailResult.success) {
-      console.error("Error sending magic link email:", emailResult.error);
-      return new Response(
-        JSON.stringify({ error: "Erro ao enviar email. Tente novamente." }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    console.log(`Magic link sent successfully to: ${email}`);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      provider: "sendgrid",
-      message: "Link de acesso enviado por email" 
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-  } catch (error: any) {
-    console.error("Error in request-magic-link function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Erro interno do servidor" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
   }
-};
+
+  const userType = isPartnerContact ? "partner contact" : "internal user";
+  console.log(`[${requestId}] Generating magic link for ${email} (BU: ${buName}, type: ${userType})`);
+
+  // Generate magic link using admin API
+  const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+    options: {
+      redirectTo,
+    },
+  });
+
+  if (linkError || !linkData?.properties?.hashed_token) {
+    console.error(`[${requestId}] Error generating magic link:`, linkError);
+    return createErrorResponse("INTERNAL_ERROR", requestId, {
+      message: "Erro ao gerar link de acesso. Tente novamente.",
+    });
+  }
+
+  // Build callback URL with token_hash as query param to survive SendGrid click tracking.
+  const redirectUrl = new URL(redirectTo);
+  const nextPath = `${redirectUrl.pathname}${redirectUrl.search}` || "/";
+
+  const callbackUrl = new URL("/auth/callback", redirectUrl.origin);
+  callbackUrl.searchParams.set("next", nextPath);
+  callbackUrl.searchParams.set("token_hash", linkData.properties.hashed_token);
+  callbackUrl.searchParams.set("type", "magiclink");
+
+  const magicLink = callbackUrl.toString();
+  console.log(`[${requestId}] Magic link generated successfully for: ${email}`);
+
+  // Get display name from email
+  const displayName = email.split('@')[0].split('.')[0];
+
+  // Build and send email via SendGrid
+  const emailHtml = buildMagicLinkEmailHtml({
+    magicLink,
+    displayName,
+    buName: buName || undefined,
+  });
+
+  const emailResult = await sendEmail({
+    to: email,
+    subject: `Seu link de acesso ao Hub - ${formatEmailDateTime()}`,
+    html: emailHtml,
+  });
+
+  if (!emailResult.success) {
+    console.error(`[${requestId}] Error sending magic link email:`, emailResult.error);
+    return createErrorResponse("SERVICE_UNAVAILABLE", requestId, {
+      message: "Erro ao enviar email. Tente novamente.",
+    });
+  }
+
+  console.log(`[${requestId}] Magic link sent successfully to: ${email}`);
+
+  return new Response(JSON.stringify({ 
+    success: true, 
+    provider: "sendgrid",
+    message: "Link de acesso enviado por email",
+    requestId,
+  }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+});
 
 serve(handler);
