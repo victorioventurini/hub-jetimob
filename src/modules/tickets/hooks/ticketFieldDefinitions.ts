@@ -52,7 +52,7 @@ export const TICKET_FIELDS = {
     created_by_user_id, owner_user_id, assigned_contact_id,
     partner_company_id, category_id, subcategory_id,
     created_at, updated_at,
-    partner_company:partner_companies(id, name),
+    partner_company:partner_companies(id, name, trade_name),
     category:ticket_categories(id, name),
     subcategory:ticket_subcategories(id, name),
     created_by:profiles!tickets_created_by_profile_fkey(id, display_name, photo_url),

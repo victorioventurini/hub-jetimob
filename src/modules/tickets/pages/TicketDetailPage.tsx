@@ -303,7 +303,7 @@ export default function TicketDetailPage() {
                 partnerCompanyId={ticket.type === "external" ? ticket.partner_company_id : null}
                 placeholder="Digite sua mensagem... Use @ para mencionar"
                 buName={currentBu?.name}
-                partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_companies?.trade_name : undefined}
+                partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_company?.trade_name : undefined}
               />
             </CardContent>
           </Card>
