@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.53.0  
+**Versão:** 2.54.0  
 **Última atualização:** 2026-01-22
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2070,7 +2070,7 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.53.0 |
+| **Versão do TCR** | 2.54.0 |
 | **Data da última atualização** | 2026-01-22 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -2079,12 +2079,19 @@ export type { SomeType } from './types';
 | **Permission Templates V2** | 27 |
 | **Permission Presets** | 12 |
 | **Módulos com Hooks Consolidados** | 12 ✅ |
-| **Módulos com Saved Links** | 1 (OKRs) ✅ |
+| **Módulos com Saved Links** | 3 (OKRs, Assets, Tickets) ✅ |
 | **Notification Templates Ativos** | 19 (v2) ✅ |
 
 ---
 
 ## Changelog
+
+### v2.54.0 (2026-01-22) — Saved Links for Tickets Module
+- **Saved Links System v1.2**:
+  - Módulo Tickets agora suporta links salvos com favoritos
+  - `SavedLinksPopover` adicionado ao `PageHeader` de `/tickets`
+  - Padrão consistente com OKRs e Assets
+  - Módulos com Saved Links: OKRs, Assets, Tickets
 
 ### v2.53.0 (2026-01-22) — Notification Templates v2 + Tickets UI Enhancement
 - **Notification Templates v2**:
