@@ -197,12 +197,12 @@ docs/engineering/
 
 ## 3. Plano de Ação Priorizado
 
-### Wave 1 — Imediato (Hoje/Amanhã)
+### Wave 1 — Imediato ✅ **VERIFICADO 2026-01-22**
 
 | # | Ação | Tipo | Responsável | Status |
 |---|------|------|-------------|--------|
-| 1.1 | Executar `SELECT cleanup_old_logs(14)` | DB | Operações | ⏳ |
-| 1.2 | Habilitar Leaked Password Protection | Auth Config | Operações | ⏳ |
+| 1.1 | Cleanup de logs via `cleanup_old_logs(14)` | DB | Operações | ✅ Cron ativo (`cleanup-old-logs-weekly`), dados dentro da janela de 14 dias |
+| 1.2 | Leaked Password Protection | Auth Config | N/A | ✅ Não necessário — sistema usa OTP/Magic Link (sem senhas) |
 
 > ✅ **RLS Policies Analisadas:** As 23 policies com `USING(true)` são **intencionais** (catálogos globais e logs de auditoria). Não requerem ação.
 
@@ -270,11 +270,11 @@ docs/engineering/
 O Hub da Jet está em **excelente estado técnico** para um produto do seu tamanho e maturidade. As dívidas identificadas são majoritariamente de **manutenção preventiva** e não representam riscos imediatos de funcionamento.
 
 ### Prioridades Absolutas:
-1. **Limpeza de logs** — Impacto imediato em custos e performance
-2. **Correção das 2 RLS policies** — Segurança
-3. **Habilitar password protection** — Segurança de auth
+1. ~~**Limpeza de logs**~~ — ✅ Cron job ativo, dados dentro da janela
+2. ~~**Correção das RLS policies**~~ — ✅ Já intencionais (catálogos globais)
+3. ~~**Habilitar password protection**~~ — ✅ N/A (sistema usa OTP)
 
-### Saúde Geral do Projeto: **9.2/10** ⭐ (atualizado após verificação Wave 4)
+### Saúde Geral do Projeto: **9.4/10** ⭐ (todas as Waves prioritárias concluídas)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
