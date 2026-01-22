@@ -173,19 +173,19 @@ function usePartnerContactProfile(id: string | undefined) {
         }));
       }
 
-      // Fetch ticket count for this contact
+      // Fetch ticket count for this contact (reported OR assigned)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { count } = await (supabase as any)
         .from("tickets")
         .select("id", { count: "exact", head: true })
-        .eq("reporter_partner_contact_id", id);
+        .or(`reporter_partner_contact_id.eq.${id},assigned_contact_id.eq.${id}`);
 
-      // Fetch ticket stats by status
+      // Fetch ticket stats by status (reported OR assigned)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: ticketsData } = await (supabase as any)
         .from("tickets")
         .select("status, created_at, closed_at")
-        .eq("reporter_partner_contact_id", id);
+        .or(`reporter_partner_contact_id.eq.${id},assigned_contact_id.eq.${id}`);
 
       const ticketStats = {
         waiting: 0,
