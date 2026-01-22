@@ -166,6 +166,23 @@ export const TICKET_STATUS_STYLES = {
 export type TicketStatusKey = keyof typeof TICKET_STATUS_STYLES;
 
 // ============================================
+// Ticket Type Colors
+// ============================================
+
+export const TICKET_TYPE_STYLES = {
+  internal: {
+    badge: 'bg-status-blue-muted text-status-blue border-status-blue/20',
+    dot: 'bg-status-blue',
+  },
+  external: {
+    badge: 'bg-status-purple-muted text-status-purple border-status-purple/20',
+    dot: 'bg-status-purple',
+  },
+} as const;
+
+export type TicketTypeKey = keyof typeof TICKET_TYPE_STYLES;
+
+// ============================================
 // Asset Status Colors
 // ============================================
 

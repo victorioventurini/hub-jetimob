@@ -5,7 +5,7 @@
  */
 
 import { Link } from "react-router-dom";
-import { formatDistanceToNow, isValid, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isValid, parseISO, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MapPin, Package } from "lucide-react";
+import { MapPin, Package, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AssetInventory } from "../../types";
@@ -34,17 +34,34 @@ function formatUpdatedAt(dateStr: string | null | undefined): string {
   return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
 }
 
+// Safe date formatter for expected return date
+function formatReturnDate(dateStr: string | null | undefined): { text: string; isOverdue: boolean; isDueToday: boolean } {
+  if (!dateStr) return { text: "", isOverdue: false, isDueToday: false };
+  const date = parseISO(dateStr);
+  if (!isValid(date)) return { text: "", isOverdue: false, isDueToday: false };
+  
+  const isOverdue = isPast(date) && !isToday(date);
+  const isDueToday = isToday(date);
+  
+  return {
+    text: format(date, "dd/MM/yyyy", { locale: ptBR }),
+    isOverdue,
+    isDueToday,
+  };
+}
+
 export function InventoryTable({ items }: InventoryTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[280px]">Item</TableHead>
+            <TableHead className="w-[250px]">Item</TableHead>
             <TableHead>Código</TableHead>
             <TableHead>Categoria</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Responsável</TableHead>
+            <TableHead>Devolução</TableHead>
             <TableHead>Localização</TableHead>
             <TableHead className="text-right">Atualizado</TableHead>
           </TableRow>
@@ -54,6 +71,7 @@ export function InventoryTable({ items }: InventoryTableProps) {
             // Determinar holder info
             const isWithUser = item.current_holder_type === "user" && item.current_user;
             const isAtLocation = item.current_holder_type === "location" && item.current_location;
+            const returnInfo = formatReturnDate(item.expected_return_at);
             
             return (
               <TableRow 
@@ -123,6 +141,23 @@ export function InventoryTable({ items }: InventoryTableProps) {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm line-clamp-1">{item.current_user.full_name}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                
+                {/* Devolução Prevista */}
+                <TableCell>
+                  {item.status === 'loaned' && returnInfo.text ? (
+                    <div className={cn(
+                      "flex items-center gap-1 text-sm",
+                      returnInfo.isOverdue && "text-status-red font-medium",
+                      returnInfo.isDueToday && !returnInfo.isOverdue && "text-status-yellow font-medium"
+                    )}>
+                      {returnInfo.isOverdue && <AlertTriangle className="h-3 w-3" />}
+                      <Clock className="h-3 w-3" />
+                      {returnInfo.text}
                     </div>
                   ) : (
                     <span className="text-muted-foreground">—</span>
