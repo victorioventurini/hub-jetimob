@@ -8629,7 +8629,7 @@ export type Database = {
         Returns: boolean
       }
       can_view_ticket: {
-        Args: { p_profile_id: string; p_ticket_id: string }
+        Args: { p_profile_id?: string; p_ticket_id: string }
         Returns: boolean
       }
       check_scope_access: {
