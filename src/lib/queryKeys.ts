@@ -38,6 +38,7 @@ export * from './queryKeys/permissions';
 export * from './queryKeys/misc';
 export * from './queryKeys/savedLinks';
 export * from './queryKeys/organogram';
+export * from './queryKeys/participantKeys';
 
 // Import all modules for unified object
 import { 
@@ -80,6 +81,7 @@ import {
   cyclesKeys 
 } from './queryKeys/misc';
 import { savedLinksKeys } from './queryKeys/savedLinks';
+import { participantKeys } from './queryKeys/participantKeys';
 
 /**
  * Centralized TanStack Query Keys
@@ -141,6 +143,9 @@ export const queryKeys = {
   
   // Saved Links
   savedLinks: savedLinksKeys,
+  
+  // Participants (Unified Layer)
+  participants: participantKeys,
 } as const;
 
 // Helper type for extracting query key types
