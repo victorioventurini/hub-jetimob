@@ -284,13 +284,13 @@ src/modules/
 | 1.3 | Investigar erros `NO_BU_CONTEXT` frequentes | 1h | ⏳ Monitorar |
 | 1.4 | Criar HEALTH_REPORT_2026-01-22.md | 30 min | ✅ Criado |
 
-### Wave 2 — Curto Prazo (P2) 📅 — CONCLUÍDO
+### Wave 2 — Curto Prazo (P2) 📅 — CONCLUÍDO ✅
 
 | # | Ação | Esforço | Status |
 |---|------|---------|--------|
 | 2.1 | Criar partial indexes para soft delete (7 tabelas) | 30 min | ✅ **CONCLUÍDO** |
-| 2.2 | Agendar cleanup_old_logs() semanal via pg_cron | 15 min | ⏳ Pendente |
-| 2.3 | Documentar edge functions faltantes no TCR | 15 min | ⏳ Pendente |
+| 2.2 | Agendar cleanup_old_logs() semanal via pg_cron | 15 min | ✅ **CONCLUÍDO** |
+| 2.3 | Documentar edge functions faltantes no TCR | 15 min | ✅ **CONCLUÍDO** |
 
 ### Wave 3 — Médio Prazo (P3) 📆
 
