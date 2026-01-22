@@ -96,9 +96,9 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
   const getTrendColor = () => {
     if (kr.direction === 'maintain') return 'text-muted-foreground';
     if (kr.direction === 'up') {
-      return historyData?.trend === 'up' ? 'text-green-500' : historyData?.trend === 'down' ? 'text-red-500' : 'text-muted-foreground';
+      return historyData?.trend === 'up' ? 'text-success' : historyData?.trend === 'down' ? 'text-danger' : 'text-muted-foreground';
     }
-    return historyData?.trend === 'down' ? 'text-green-500' : historyData?.trend === 'up' ? 'text-red-500' : 'text-muted-foreground';
+    return historyData?.trend === 'down' ? 'text-success' : historyData?.trend === 'up' ? 'text-danger' : 'text-muted-foreground';
   };
   
   const trendColor = getTrendColor();

@@ -124,7 +124,7 @@ export function CycleCheckinsTable({
                 ? valueDiff > 0 ? TrendingUp : valueDiff < 0 ? TrendingDown : Minus
                 : null;
               const trendColor = valueDiff !== null
-                ? valueDiff > 0 ? 'text-green-500' : valueDiff < 0 ? 'text-red-500' : 'text-muted-foreground'
+                ? valueDiff > 0 ? 'text-success' : valueDiff < 0 ? 'text-danger' : 'text-muted-foreground'
                 : '';
 
               return (

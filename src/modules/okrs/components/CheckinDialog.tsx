@@ -3,6 +3,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { queryKeys } from '@/lib/queryKeys';
+import { DIALOG_SIZES } from '@/lib/dialog-sizes';
 import {
   Dialog,
   DialogContent,
@@ -151,7 +152,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${DIALOG_SIZES.md} max-h-[90vh] overflow-y-auto`}>
         <form onSubmit={handleSubmit}>
           <DialogHeader className="pb-2">
             <DialogTitle className="flex items-center gap-2 text-lg">

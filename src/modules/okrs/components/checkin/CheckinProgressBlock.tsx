@@ -63,9 +63,9 @@ export function CheckinProgressBlock({
 
       {/* Value input */}
       {isAutomatic ? (
-        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          <span className="text-sm text-blue-700 dark:text-blue-300">
+        <div className="flex items-center gap-2 p-3 bg-info-muted border border-info/30 rounded-lg">
+          <Lock className="w-4 h-4 text-info" />
+          <span className="text-sm text-info-muted-foreground">
             Este KR é atualizado automaticamente pela KPI vinculada
           </span>
         </div>

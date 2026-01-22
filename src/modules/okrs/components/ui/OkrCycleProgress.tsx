@@ -115,8 +115,8 @@ export function OkrCycleProgress({
           </span>
           <span className={cn(
             'font-medium',
-            isOverdue && 'text-red-600',
-            isAtRisk && 'text-yellow-600',
+            isOverdue && 'text-danger',
+            isAtRisk && 'text-warning',
           )}>
             {Math.round(cycleProgress)}%
           </span>
@@ -188,14 +188,14 @@ export function OkrCycleProgress({
       </div>
 
       {isAtRisk && (
-        <div className="flex items-center gap-1.5 text-xs text-yellow-600 pt-1">
+        <div className="flex items-center gap-1.5 text-xs text-warning pt-1">
           <AlertTriangle className="w-3.5 h-3.5" />
           <span>{Math.round(progressGap)}% abaixo do esperado para este ponto do ciclo</span>
         </div>
       )}
       
       {isOnTrack && !isOverdue && (
-        <div className="flex items-center gap-1.5 text-xs text-green-600 pt-1">
+        <div className="flex items-center gap-1.5 text-xs text-success pt-1">
           <CheckCircle className="w-3.5 h-3.5" />
           <span>Progresso alinhado com o tempo</span>
         </div>
