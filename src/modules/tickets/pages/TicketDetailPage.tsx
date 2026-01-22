@@ -93,6 +93,24 @@ export default function TicketDetailPage() {
     return canUserPinMessages(ticket, profileId, currentBuContactId);
   }, [ticket, profileId, currentBuContactId]);
 
+  // Check if user can change ticket status (creator, owner/responsible, or admin)
+  const canChangeStatus = useMemo(() => {
+    if (!ticket || !profileId) return false;
+    
+    // Creator can always change status
+    if (ticket.created_by_user_id === profileId) return true;
+    
+    // Owner (internal responsible) can change status
+    if (ticket.owner_user_id === profileId) return true;
+    
+    // For external tickets: assigned contact can change status (if they have a linked profile)
+    if (ticket.type === 'external' && currentBuContactId && ticket.assigned_contact_id === currentBuContactId) {
+      return true;
+    }
+    
+    return false;
+  }, [ticket, profileId, currentBuContactId]);
+
   // SEO - Meta title e description
   usePageTitle(
     ticket ? `Ticket: ${ticket.title}` : "Ticket",
@@ -360,10 +378,11 @@ export default function TicketDetailPage() {
               <CardTitle className="text-base">Detalhes</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              {/* Status Selector */}
+              {/* Status Selector - Only for creator, owner, or assigned contact */}
               <TicketStatusSelector
                 value={ticket.status}
                 onChange={handleStatusChange}
+                disabled={!canChangeStatus}
                 isUpdating={updateStatus.isPending}
               />
 
