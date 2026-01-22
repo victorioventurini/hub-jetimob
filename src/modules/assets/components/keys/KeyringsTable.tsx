@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +30,14 @@ interface KeyringsTableProps {
 
 const getStatusColor = (status: string): string => {
   return ASSET_STATUS_STYLES[status as AssetStatusKey]?.badge || ASSET_STATUS_STYLES.retired.badge;
+};
+
+// Safe date formatter to prevent RangeError on invalid dates
+const formatUpdatedAt = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "—";
+  const date = parseISO(dateStr);
+  if (!isValid(date)) return "—";
+  return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
 };
 
 export function KeyringsTable({ keyrings }: KeyringsTableProps) {
@@ -127,10 +135,7 @@ export function KeyringsTable({ keyrings }: KeyringsTableProps) {
                 {/* Atualizado */}
                 <TableCell className="text-right">
                   <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(keyring.updated_at), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
+                    {formatUpdatedAt(keyring.updated_at)}
                   </span>
                 </TableCell>
               </TableRow>

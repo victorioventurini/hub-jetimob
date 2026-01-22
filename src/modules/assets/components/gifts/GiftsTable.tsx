@@ -4,7 +4,7 @@
  * Follows the same pattern as TicketsTable for visual consistency
  */
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Table,
@@ -35,6 +35,14 @@ function getStockStatus(quantity: number): { status: string; label: string } {
   if (quantity === 0) return { status: "written_off", label: "Sem estoque" };
   if (quantity < 10) return { status: "maintenance", label: "Baixo estoque" };
   return { status: "available", label: "Em estoque" };
+}
+
+// Safe date formatter to prevent RangeError on invalid dates
+function formatUpdatedAt(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  const date = parseISO(dateStr);
+  if (!isValid(date)) return "—";
+  return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
 }
 
 export function GiftsTable({ items, batches, getItemTotals, onItemClick }: GiftsTableProps) {
@@ -129,10 +137,7 @@ export function GiftsTable({ items, batches, getItemTotals, onItemClick }: Gifts
                 {/* Atualizado */}
                 <TableCell className="text-right">
                   <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(item.updated_at), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
+                    {formatUpdatedAt(item.updated_at)}
                   </span>
                 </TableCell>
               </TableRow>
