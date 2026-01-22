@@ -12,11 +12,17 @@ export {
   useDeleteGlobalPartner,
 } from "./useGlobalPartners";
 
-// BU associations
+// BU associations (BU-scoped for regular users)
 export {
   usePartnerBuAssociations,
   usePartnersByBu,
   useActivatePartnerInBu,
   useDeactivatePartnerInBu,
   useTogglePartnerBuAssociation,
+} from "./usePartnerBuAssociations";
+
+// Platform Admin hooks (cross-BU, global client)
+export {
+  useActivatePartnerInBuGlobal,
+  useDeactivatePartnerInBuGlobal,
 } from "./usePartnerBuAssociations";

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ExternalLink,
   Activity,
+  Handshake,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const platformItems = [
   { name: "Permissões", href: "/hub/permissions", icon: Shield },
   { name: "Cargos", href: "/hub/job-titles", icon: Briefcase },
   { name: "Usuários", href: "/hub/users", icon: Users },
+  { name: "Parceiros", href: "/hub/partners", icon: Handshake },
   { name: "Notificações", href: "/hub/notifications", icon: Bell },
   { name: "Performance", href: "/hub/performance", icon: Activity },
   { name: "Catálogo UI", href: "/hub/ui", icon: Palette },

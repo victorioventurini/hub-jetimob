@@ -115,6 +115,10 @@ const PartnersPage = lazy(() => import("./modules/partners/pages/PartnersPage"))
 const PartnerFormPage = lazy(() => import("./modules/partners/pages/PartnerFormPage"));
 const PartnerDetailPage = lazy(() => import("./modules/partners/pages/PartnerDetailPage"));
 
+// Hub Partners (Platform Admin)
+const HubPartnersPage = lazy(() => import("./pages/settings/HubPartnersPage"));
+const HubPartnerDetailPage = lazy(() => import("./pages/settings/HubPartnerDetailPage"));
+
 // Settings
 const SettingsLayout = lazy(() => import("./components/settings/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const HubLayout = lazy(() => import("./components/layout/HubLayout").then(m => ({ default: m.HubLayout })));
@@ -490,6 +494,32 @@ const App = () => {
                           <AdminRoute>
                             <SettingsLayout>
                               <SettingsUiCatalog />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Hub Partners - Gestão Global de Parceiros */}
+                    <Route
+                      path="/hub/partners"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <HubPartnersPage />
+                            </SettingsLayout>
+                          </AdminRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/hub/partners/:partnerId"
+                      element={
+                        <ProtectedRoute skipBuCheck>
+                          <AdminRoute>
+                            <SettingsLayout>
+                              <HubPartnerDetailPage />
                             </SettingsLayout>
                           </AdminRoute>
                         </ProtectedRoute>

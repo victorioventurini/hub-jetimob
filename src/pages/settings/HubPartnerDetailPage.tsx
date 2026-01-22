@@ -1,12 +1,23 @@
 /**
- * PartnerDetailPage - Detalhes de um parceiro com gestão de BUs
+ * HubPartnerDetailPage - Detalhes de parceiro com gestão cross-BU (Platform Admin)
+ * 
+ * Esta página permite que Platform Admins vejam e gerenciem as associações
+ * de um parceiro em todas as BUs do sistema.
  */
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Building2, Users, Check, X, Loader2, Edit, Trash2 } from "lucide-react";
+import { 
+  Building2, 
+  Users, 
+  Check, 
+  X, 
+  Loader2, 
+  Edit, 
+  Trash2,
+  ArrowLeft,
+} from "lucide-react";
 
-import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +26,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,14 +37,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import {
   usePartnerDetail,
   usePartnerBuAssociations,
-  useTogglePartnerBuAssociation,
   useDeleteGlobalPartner,
-} from "../hooks";
-import { useBu } from "@/contexts/BuContext";
+  useActivatePartnerInBuGlobal,
+  useDeactivatePartnerInBuGlobal,
+} from "@/modules/partners/hooks";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 function formatDocument(doc: string | null, type: string | null): string {
   if (!doc) return "Não informado";
@@ -64,87 +84,118 @@ function DetailSkeleton() {
   );
 }
 
-export default function PartnerDetailPage() {
+// Hook para buscar todas as BUs (Platform Admin)
+function useAllBus() {
+  return useQuery({
+    queryKey: ["all-bus"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bu_units")
+        .select("id, name, status")
+        .eq("status", "active")
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export default function HubPartnerDetailPage() {
   const { partnerId } = useParams<{ partnerId: string }>();
   const navigate = useNavigate();
-  const { currentBuId, currentBu, userBus } = useBu();
 
   const { data: partner, isLoading } = usePartnerDetail(partnerId || null);
   const { data: associations } = usePartnerBuAssociations(partnerId || null);
-  const toggleAssociation = useTogglePartnerBuAssociation();
+  const { data: allBus } = useAllBus();
   const deletePartner = useDeleteGlobalPartner();
+  const activateMutation = useActivatePartnerInBuGlobal();
+  const deactivateMutation = useDeactivatePartnerInBuGlobal();
 
-  if (isLoading) {
-    return (
-      <HubLayout>
-        <div className="space-y-6 max-w-3xl">
-          <PageHeader
-            title="Carregando..."
-            backTo="/partners"
-            backLabel="Voltar para Parceiros"
-          />
-          <DetailSkeleton />
-        </div>
-      </HubLayout>
-    );
-  }
-
-  if (!partner) {
-    return (
-      <HubLayout>
-        <div className="space-y-6 max-w-3xl">
-          <PageHeader
-            title="Parceiro não encontrado"
-            backTo="/partners"
-            backLabel="Voltar para Parceiros"
-          />
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                Este parceiro não existe ou você não tem permissão para visualizá-lo.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </HubLayout>
-    );
-  }
+  const isPending = activateMutation.isPending || deactivateMutation.isPending;
 
   const handleToggleBu = (buId: string, currentlyActive: boolean) => {
-    if (partnerId) {
-      toggleAssociation.mutate(partnerId, buId, currentlyActive);
+    if (!partnerId) return;
+    
+    if (currentlyActive) {
+      deactivateMutation.mutate({ partnerId, buId });
+    } else {
+      activateMutation.mutate({
+        partner_company_id: partnerId,
+        bu_id: buId,
+        is_active: true,
+      });
     }
   };
 
   const handleDelete = async () => {
     if (partnerId) {
       await deletePartner.mutateAsync(partnerId);
-      navigate("/partners");
+      navigate("/hub/partners");
     }
   };
 
-  const isActiveInCurrentBu = associations?.some(
-    (a) => a.bu_id === currentBuId && a.is_active
+  if (isLoading) {
+    return (
+      <>
+        <div className="space-y-6">
+          <PageHeader
+            title="Carregando..."
+            backTo="/hub/partners"
+            backLabel="Voltar para Parceiros"
+          />
+          <DetailSkeleton />
+        </div>
+      </>
+    );
+  }
+
+  if (!partner) {
+    return (
+      <>
+        <div className="space-y-6">
+          <PageHeader
+            title="Parceiro não encontrado"
+            backTo="/hub/partners"
+            backLabel="Voltar para Parceiros"
+          />
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                Este parceiro não existe ou foi removido.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  }
+
+  // Mapear associações por BU para fácil lookup
+  const associationsByBu = new Map(
+    associations?.map((a) => [a.bu_id, a]) || []
   );
 
   return (
-    <HubLayout>
+    <>
       <Helmet>
         <title>{partner.name} | Parceiros | Hub Jetimob</title>
-        <meta name="description" content={`Detalhes do parceiro ${partner.name}`} />
+        <meta name="description" content={`Gestão global do parceiro ${partner.name}`} />
       </Helmet>
 
-      <div className="space-y-6 max-w-3xl">
+      <div className="space-y-6">
         <PageHeader
           title={partner.name}
           description={partner.legal_name || undefined}
-          backTo="/partners"
+          backTo="/hub/partners"
           backLabel="Voltar para Parceiros"
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" size="icon">
-                <Edit className="h-4 w-4" />
+              <Button variant="outline" size="icon" asChild>
+                <Link to={`/partners/${partnerId}/edit`}>
+                  <Edit className="h-4 w-4" />
+                </Link>
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -154,7 +205,7 @@ export default function PartnerDetailPage() {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir parceiro?</AlertDialogTitle>
+                    <AlertDialogTitle>Excluir parceiro globalmente?</AlertDialogTitle>
                     <AlertDialogDescription>
                       Esta ação não pode ser desfeita. O parceiro será removido de todas as BUs
                       e não poderá mais ser utilizado em tickets.
@@ -169,7 +220,7 @@ export default function PartnerDetailPage() {
                       {deletePartner.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        "Excluir"
+                        "Excluir Permanentemente"
                       )}
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -218,17 +269,9 @@ export default function PartnerDetailPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Status na BU atual:</span>
-                    <span className="ml-2">
-                      {isActiveInCurrentBu ? (
-                        <span className="text-emerald-600 flex items-center gap-1 inline-flex">
-                          <Check className="h-3 w-3" /> Ativo
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground flex items-center gap-1 inline-flex">
-                          <X className="h-3 w-3" /> Inativo
-                        </span>
-                      )}
+                    <span className="text-muted-foreground">BUs Ativas:</span>
+                    <span className="ml-2 font-medium">
+                      {associations?.filter((a) => a.is_active).length || 0}
                     </span>
                   </div>
                 </div>
@@ -243,63 +286,72 @@ export default function PartnerDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Status na BU atual */}
+        {/* Gestão de BUs (Platform Admin - todas as BUs) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Status nesta Unidade de Negócio</CardTitle>
+            <CardTitle className="text-base">Associações por Unidade de Negócio</CardTitle>
             <CardDescription>
-              Ative ou desative este parceiro em {currentBu?.name || "sua BU atual"}
+              Gerencie em quais BUs este parceiro está ativo. Esta é uma visão de Platform Admin.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium bg-primary text-primary-foreground">
-                  {currentBu?.name?.slice(0, 2).toUpperCase() || "BU"}
-                </div>
-                <div>
-                  <p className="font-medium">{currentBu?.name || "BU Atual"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {isActiveInCurrentBu ? "Parceiro ativo nesta unidade" : "Parceiro inativo nesta unidade"}
-                  </p>
-                </div>
-              </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unidade de Negócio</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allBus?.map((bu) => {
+                  const association = associationsByBu.get(bu.id);
+                  const isActive = association?.is_active ?? false;
 
-              <div className="flex items-center gap-3">
-                <Label htmlFor="bu-toggle" className="text-sm text-muted-foreground">
-                  {isActiveInCurrentBu ? "Ativo" : "Inativo"}
-                </Label>
-                <Switch
-                  id="bu-toggle"
-                  checked={isActiveInCurrentBu}
-                  onCheckedChange={() => currentBuId && handleToggleBu(currentBuId, isActiveInCurrentBu ?? false)}
-                  disabled={toggleAssociation.isPending || !currentBuId}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Serviços / Categorias - placeholder para futuro */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Categorias Atendidas</CardTitle>
-            <CardDescription>
-              Categorias de tickets que este parceiro pode atender
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Configure as categorias nas configurações de tickets
-            </p>
-            <div className="flex justify-center">
-              <Button variant="outline" asChild>
-                <a href="/tickets/settings?tab=capabilities">Configurar serviços</a>
-              </Button>
-            </div>
+                  return (
+                    <TableRow key={bu.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
+                            {bu.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="font-medium">{bu.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600">
+                            <Check className="h-3.5 w-3.5" />
+                            Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <X className="h-3.5 w-3.5" />
+                            Inativo
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Label htmlFor={`bu-${bu.id}`} className="text-sm text-muted-foreground">
+                            {isActive ? "Desativar" : "Ativar"}
+                          </Label>
+                          <Switch
+                            id={`bu-${bu.id}`}
+                            checked={isActive}
+                            onCheckedChange={() => handleToggleBu(bu.id, isActive)}
+                            disabled={isPending}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
-    </HubLayout>
+    </>
   );
 }
