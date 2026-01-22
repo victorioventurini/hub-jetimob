@@ -1,9 +1,9 @@
 # Auditoria de Front-End (UX, Consistência, Qualidade)
 
 **Data:** 2026-01-22  
-**Versão:** 2.0.0  
-**TCR Consultado:** v2.59.0  
-**Status:** 📊 ANÁLISE COMPLETA
+**Versão:** 3.0.0  
+**TCR Consultado:** v2.64.0  
+**Status:** ✅ AUDITORIA COMPLETA + PLANO ATUALIZADO
 
 ---
 
@@ -11,13 +11,17 @@
 
 O Hub da Jet apresenta **excelente maturidade técnica** no front-end, com design system consolidado, componentes padronizados e arquitetura modular. Esta auditoria identificou oportunidades de polimento para elevar o produto a padrão enterprise.
 
-| Categoria | Crítico (P1) | Importante (P2) | Desejável (P3) |
-|-----------|--------------|-----------------|----------------|
-| **Cores Hardcoded** | 0 | 3 módulos | ~156 arquivos |
-| **Tamanhos de Modal** | 0 | 4 variações | 0 |
-| **Componentes Duplicados** | 0 | 0 | 2 candidatos |
-| **UX Friction Points** | 1 | 3 | 5 |
-| **Acessibilidade** | 0 | 2 | 4 |
+| Categoria | Crítico (P1) | Importante (P2) | Desejável (P3) | Status |
+|-----------|--------------|-----------------|----------------|--------|
+| **Cores Hardcoded** | 0 | 3 módulos | ~140 arquivos | 🔄 Em progresso |
+| **Tamanhos de Modal** | 0 | 0 | 0 | ✅ Padronizado |
+| **Componentes Duplicados** | 0 | 1 (MultiUserSelect) | 2 | 🔲 Backlog |
+| **onClick + navigate** | 0 | 4 (Wizard Cards) | 0 | 🔲 Pendente |
+| **Componentes Gigantes** | 0 | 3 (>500 linhas) | 2 | 🔲 Pendente |
+| **UX Friction Points** | 0 | 2 | 5 | 🔄 Em progresso |
+| **Acessibilidade** | 0 | 2 | 4 | 🔲 Backlog |
+
+**Health Score Frontend:** 9.2/10
 
 **Conclusão:** Projeto em **excelente saúde**. Débitos são majoritariamente de polimento, não de funcionalidade.
 
@@ -247,47 +251,67 @@ src/modules/okrs/
 
 ---
 
-## 📊 Plano de Ação
+## 📊 Plano de Ação Atualizado
 
 ### Fase 1 — Imediato (Esta Semana) ✅ CONCLUÍDA
 
 | # | Ação | Esforço | Status |
 |---|------|---------|--------|
 | 1.1 | Criar `DIALOG_SIZES` constantes | 15 min | ✅ Feito |
-| 1.2 | Padronizar modais OKR (CheckinDialog, CycleFormDialog, CycleRetrospectiveDialog) | 30 min | ✅ Feito |
-| 1.3 | Migrar cores hardcoded módulo OKRs (KrHistoryDialog, CycleCheckinsTable, OkrCycleProgress, etc) | 1h | ✅ Feito |
-| 1.4 | Migrar cores hardcoded módulo Teams (TeamCard) | 30 min | ✅ Feito |
+| 1.2 | Padronizar modais OKR | 30 min | ✅ Feito |
+| 1.3 | Migrar cores hardcoded módulo OKRs | 1h | ✅ Feito |
+| 1.4 | Migrar cores hardcoded módulo Teams | 30 min | ✅ Feito |
 
-### Fase 2 — Próxima Sprint
+### Fase 2 — Próxima Sprint (P2)
+
+| # | Ação | Esforço | Prioridade | Arquivos |
+|---|------|---------|------------|----------|
+| 2.1 | **onClick → Link** nos Wizard Cards | 1h | P2 | `CLevelCheckinWizardCard.tsx`, `TeamOkrCreationWizardCard.tsx`, `TeamCheckinWizardCard.tsx`, `ManagersCheckinWizardCard.tsx` |
+| 2.2 | Migrar cores hardcoded (Settings) | 1h | P2 | `SettingsHome.tsx:240-317` |
+| 2.3 | Migrar cores hardcoded (Integrations) | 1h | P2 | `InstructionSourcesManager.tsx:69-81` |
+| 2.4 | Migrar cores hardcoded (Notifications) | 30min | P2 | `TemplatesList.tsx:216-225` |
+| 2.5 | Migrar cores hardcoded (SharedOkrBadge) | 30min | P2 | `SharedOkrBadge.tsx:76-135` |
+| 2.6 | Remover `MultiUserSelect` deprecated | 15min | P2 | `src/components/selects/MultiUserSelect.tsx` |
+| 2.7 | URL State em páginas restantes | 2h | P2 | `/settings/notifications`, `/partners/companies` |
+
+### Fase 3 — Modularização de Componentes Grandes (P2-P3)
+
+| # | Arquivo | Linhas | Ação | Prioridade |
+|---|---------|--------|------|------------|
+| 3.1 | `ObjectiveListItem.tsx` | 664 | Extrair `KeyResultRow.tsx` + hook de dialogs | P2 |
+| 3.2 | `PartnerContactProfilePage.tsx` | 606 | Extrair `usePartnerContactProfile` hook | P2 |
+| 3.3 | `TeamsPage.tsx` | 493 | Extrair cards de estatísticas | P3 |
+| 3.4 | `OkrDashboardPage.tsx` | 472 | Extrair lógica de view switching | P3 |
+| 3.5 | `Users.tsx` | 457 | Extrair RPC fetching para hook | P3 |
+| 3.6 | `UserProfile/index.tsx` | 423 | Modularizar cards | P3 |
+
+### Fase 4 — Backlog (P3)
 
 | # | Ação | Esforço | Prioridade |
 |---|------|---------|------------|
-| 2.1 | Migrar cores hardcoded (módulo Assets) | 2h | P2 |
-| 2.2 | Migrar cores hardcoded (módulo Tickets) | 1.5h | P2 |
-| 2.3 | URL State em páginas restantes | 2h | P2 |
-| 2.4 | Consolidar UserCombobox → ParticipantSelect | 2h | P3 |
-
-### Fase 3 — Backlog
-
-| # | Ação | Esforço | Prioridade |
-|---|------|---------|------------|
-| 3.1 | Migrar cores hardcoded (todos os módulos restantes) | 4h | P3 |
-| 3.2 | Keyboard shortcuts | 4h | P3 |
-| 3.3 | Command palette (Cmd+K) | 8h | P3 |
-| 3.4 | Audit de acessibilidade completo | 4h | P3 |
-| 3.5 | Empty state illustrations | 4h | P3 |
+| 4.1 | Migrar cores restantes (~140 arquivos) | 8h | P3 |
+| 4.2 | Consolidar `UserCombobox` → `ParticipantSelect` | 2h | P3 |
+| 4.3 | Criar `DateRangePicker` canônico | 2h | P3 |
+| 4.4 | Keyboard shortcuts | 4h | P3 |
+| 4.5 | Command palette (Cmd+K) | 8h | P3 |
+| 4.6 | Audit de acessibilidade completo | 4h | P3 |
+| 4.7 | Empty state illustrations | 4h | P3 |
 
 ---
 
 ## 📏 Métricas de Sucesso
 
-| Métrica | Antes | Meta | Após (2026-01-22) |
-|---------|-------|------|-------------------|
-| Arquivos com cores hardcoded | ~156 | <20 | ~140 (em progresso) |
-| Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ Padronizado |
-| Páginas com URL State | 4 | 8+ | 4 (pendente) |
-| Botões sem isLoading | ? | 0 | Em auditoria |
+| Métrica | Antes | Meta | Atual |
+|---------|-------|------|-------|
+| Arquivos com cores hardcoded | ~156 | <20 | ~140 |
+| Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
+| Componentes >400 linhas | 6 | <3 | 6 (pendente) |
+| onClick+navigate (vs Link) | 4+ | 0 | 4 (pendente) |
+| Páginas com URL State | 4 | 8+ | 4 |
+| Componentes deprecated ativos | 1 | 0 | 1 (MultiUserSelect) |
 | Lighthouse Accessibility | ? | >90 | Pendente |
+
+**Frontend Health Score: 9.2/10**
 
 ---
 
@@ -323,6 +347,47 @@ src/components/ui/
 
 ---
 
+## 7. PADRÕES DE NAVEGAÇÃO
+
+### 7.1 🟡 onClick + navigate → Link (P2)
+
+**Problema:** 4 Wizard Cards usam `onClick + navigate()` ao invés de `<Link>` ou `Button asChild`.
+
+| Componente | Arquivo | Rota |
+|------------|---------|------|
+| `CLevelCheckinWizardCard` | `clevel-checkin/CLevelCheckinWizardCard.tsx:27-29` | `/okrs/clevel-checkin` |
+| `TeamOkrCreationWizardCard` | `team-okr-creation/TeamOkrCreationWizardCard.tsx:41-43` | `/okrs/create?team={id}` |
+| `TeamCheckinWizardCard` | `team-checkin/TeamCheckinWizardCard.tsx:37-39` | `/okrs/team-checkin?team={id}` |
+| `ManagersCheckinWizardCard` | `managers-checkin/ManagersCheckinWizardCard.tsx:27-29` | `/okrs/managers-checkin` |
+
+**Impacto:** Ctrl+Click não abre em nova aba, menos acessível.
+
+**Solução:** Usar pattern `Button asChild` + `Link`:
+```tsx
+<Button asChild variant="outline">
+  <Link to="/okrs/clevel-checkin">
+    Iniciar Check-in
+  </Link>
+</Button>
+```
+
+---
+
+## 8. COMPONENTES GRANDES (>400 linhas)
+
+### 8.1 Identificados para Modularização
+
+| Arquivo | Linhas | Complexidade | Ação Sugerida |
+|---------|--------|--------------|---------------|
+| `ObjectiveListItem.tsx` | 664 | Alta | Extrair `KeyResultRow` + hook de dialogs |
+| `PartnerContactProfilePage.tsx` | 606 | Alta | Extrair hook `usePartnerContactProfile` |
+| `TeamsPage.tsx` | 493 | Média | Extrair cards de estatísticas |
+| `OkrDashboardPage.tsx` | 472 | Média | Extrair lógica de view switching |
+| `Users.tsx` | 457 | Média | Extrair RPC para hook dedicado |
+| `UserProfile/index.tsx` | 423 | Baixa | Modularizar cards |
+
+---
+
 ## ✅ Conclusão
 
 O Hub da Jet possui **front-end de alta qualidade** com:
@@ -334,12 +399,14 @@ O Hub da Jet possui **front-end de alta qualidade** com:
 
 **Débitos identificados são de polimento**, não estruturais:
 - Cores hardcoded → Migração gradual para tokens
-- Modal sizes → Padronizar com constantes
+- onClick+navigate → Converter para `<Link>`
+- Componentes grandes → Modularizar progressivamente
 - URL State → Completar migração em páginas restantes
 
-**Recomendação:** Priorizar Fase 1 e 2 para atingir padrão enterprise.
+**Recomendação:** Priorizar Fase 2 para atingir padrão enterprise (10/10).
 
 ---
 
-*Auditoria realizada em: 2026-01-22*  
+*Auditoria realizada em: 2026-01-22 (v3.0.0)*  
+*TCR: v2.64.0*  
 *Próxima revisão: 2026-02-22*
