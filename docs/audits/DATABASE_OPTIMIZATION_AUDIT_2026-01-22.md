@@ -12,9 +12,10 @@
 |-----------|-------|--------|--------|
 | Tabelas Gigantescas | 3 críticas | 0 | ✅ Políticas ativas |
 | Índices de Performance | 0 | 4 novos | ✅ Criados |
-| Índices Parciais Soft-Delete | 7 | 7 | ✅ Existentes |
+| Índices Parciais Soft-Delete | 5 planejados | 22 existentes | ✅ Cobertura completa |
 | Campos TEXT→ENUM | 11 candidatos | 0 migrados | 🔲 P3 |
 | Política Retenção audit_logs | ❌ | 180 dias | ✅ Implementado |
+| Limpeza ai_agent_logs | 82k+ rows | Executada | ✅ Dados antigos removidos |
 
 **Política de Retenção:** ✅ Ativa — `cleanup_old_logs()` gerencia 5 tabelas
 
@@ -202,17 +203,28 @@ ON ticket_messages(ticket_id, created_at DESC) WHERE deleted_at IS NULL;
 ✅ idx_okr_audit_log_entity_id (okr_audit_log.entity_id)
 ```
 
-### Índices Parciais Existentes (7) ✅
+### Índices Parciais Existentes (22) ✅
 
 ```
-✅ Cobertura excelente em:
-   - partner_company_bu_associations
-   - squad_memberships
-   - squads
-   - ticket_categories
-   - ticket_messages
-   - ticket_routing_rules
-   - ticket_subcategories
+✅ Cobertura completa em tabelas soft-delete:
+   - ai_agents (idx_ai_agents_bu_active)
+   - areas (idx_areas_deleted_at)
+   - asset_group_items (idx_asset_group_items_unique_active)
+   - bu_locations (idx_bu_locations_deleted_at)
+   - bu_user_memberships (idx_bu_memberships_active_unique, idx_bu_user_memberships_active)
+   - job_titles (idx_job_titles_active)
+   - notification_health_alerts (idx_health_alerts_active, idx_unique_active_alert_per_bu_type)
+   - oauth_clients (oauth_clients_deleted_at_idx)
+   - okr_coaching_events (idx_okr_coaching_events_active)
+   - partner_company_bu_associations (idx_partner_company_bu_assoc_active)
+   - profiles (idx_profiles_bu_active)
+   - squad_memberships (idx_squad_memberships_active)
+   - squads (idx_squads_bu_active)
+   - teams (idx_teams_leader_bu_active)
+   - ticket_categories (idx_ticket_categories_bu_active)
+   - ticket_messages (idx_ticket_messages_ticket_active, idx_ticket_messages_active)
+   - ticket_routing_rules (idx_ticket_routing_rules_bu_active)
+   - ticket_subcategories (idx_ticket_subcategories_active, idx_ticket_subcategories_category_active)
 ```
 
 ---
