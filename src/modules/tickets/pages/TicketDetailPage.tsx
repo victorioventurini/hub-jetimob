@@ -25,6 +25,7 @@ import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { TicketTransferModal } from "../components/TicketTransferModal";
 import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
+import { TicketStatusSelector } from "../components/TicketStatusSelector";
 import { UserLink } from "@/components/links/UserLink";
 import type { TicketStatus } from "../types";
 import type { ParsedMention } from "@/components/mentions";
@@ -239,8 +240,6 @@ export default function TicketDetailPage() {
           status={ticket.status}
           createdAt={ticket.created_at}
           expectedDueAt={ticket.expected_due_at}
-          onStatusChange={handleStatusChange}
-          isUpdating={updateStatus.isPending}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -315,7 +314,35 @@ export default function TicketDetailPage() {
             <CardHeader>
               <CardTitle className="text-base">Detalhes</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
+              {/* Status Selector */}
+              <TicketStatusSelector
+                value={ticket.status}
+                onChange={handleStatusChange}
+                isUpdating={updateStatus.isPending}
+              />
+
+              <Separator />
+
+              {/* Partner Company */}
+              {ticket.type === "external" && (ticket as any).partner_company && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5">Empresa Parceira</p>
+                  <Link 
+                    to={`/partners/${(ticket as any).partner_company.id}`}
+                    target="_blank"
+                    className="flex items-center gap-2 p-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Building2 className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                      {(ticket as any).partner_company.trade_name || (ticket as any).partner_company.name}
+                    </span>
+                  </Link>
+                </div>
+              )}
+
               {/* Category */}
               {(ticket as any).category && (
                 <div>
@@ -324,17 +351,6 @@ export default function TicketDetailPage() {
                     {(ticket as any).category.name}
                     {(ticket as any).subcategory && ` → ${(ticket as any).subcategory.name}`}
                   </p>
-                </div>
-              )}
-
-              {/* Partner */}
-              {ticket.type === "external" && (ticket as any).partner && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Parceiro</p>
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{(ticket as any).partner.name}</span>
-                  </div>
                 </div>
               )}
 
