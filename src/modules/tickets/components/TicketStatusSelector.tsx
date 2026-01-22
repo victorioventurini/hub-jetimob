@@ -1,13 +1,19 @@
 /**
- * TicketStatusSelector - Seletor visual de status para tickets
+ * TicketStatusSelector - Seletor de status para tickets em dropdown
  * 
- * Exibe botões de status com indicadores de cor, permitindo
- * mudança de status de forma mais intuitiva que um dropdown.
+ * Exibe um dropdown compacto com opções de status coloridas.
  */
 
 import { cn } from "@/lib/utils";
 import { TICKET_STATUS_STYLES } from "@/lib/colors";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import type { TicketStatus } from "../types";
 
 const STATUS_OPTIONS: Array<{
@@ -34,40 +40,53 @@ export function TicketStatusSelector({
   disabled = false,
   isUpdating = false,
 }: TicketStatusSelectorProps) {
+  const currentStatus = STATUS_OPTIONS.find((opt) => opt.value === value);
+  const currentStyles = TICKET_STATUS_STYLES[value];
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <p className="text-xs text-muted-foreground font-medium">Status</p>
-      <div className="grid grid-cols-2 gap-1.5">
-        {STATUS_OPTIONS.map((option) => {
-          const isSelected = value === option.value;
-          const styles = TICKET_STATUS_STYLES[option.value];
-          
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onChange(option.value)}
-              disabled={disabled || isUpdating}
-              className={cn(
-                "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all text-left",
-                "border disabled:opacity-50 disabled:cursor-not-allowed",
-                isSelected 
-                  ? cn(styles.badge, "border-current ring-1 ring-current/20")
-                  : "bg-background border-border hover:bg-muted/50"
-              )}
-            >
-              <span className={cn(
-                "h-2 w-2 rounded-full shrink-0",
-                styles.dot
-              )} />
-              <span className="truncate">{option.label}</span>
-              {isUpdating && isSelected && (
-                <Loader2 className="h-3 w-3 animate-spin ml-auto" />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={disabled || isUpdating}
+            className={cn(
+              "w-full justify-between font-medium",
+              currentStyles.badge
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <span className={cn("h-2 w-2 rounded-full shrink-0", currentStyles.dot)} />
+              {currentStatus?.label}
+            </span>
+            {isUpdating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[180px] bg-background">
+          {STATUS_OPTIONS.map((option) => {
+            const isSelected = value === option.value;
+            const styles = TICKET_STATUS_STYLES[option.value];
+
+            return (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => onChange(option.value)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <span className={cn("h-2 w-2 rounded-full shrink-0", styles.dot)} />
+                <span className="flex-1">{option.label}</span>
+                {isSelected && <Check className="h-4 w-4 text-primary" />}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

@@ -246,8 +246,15 @@ export default function TicketDetailPage() {
         {/* Main content - Messages Thread */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Mensagens</CardTitle>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Mensagens</CardTitle>
+                {canPin && (
+                  <span className="text-xs text-muted-foreground">
+                    Dica: passe o mouse sobre uma mensagem para fixá-la
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingMessages ? (
@@ -324,22 +331,18 @@ export default function TicketDetailPage() {
 
               <Separator />
 
-              {/* Partner Company */}
+              {/* Partner Company - Display only, no link */}
               {ticket.type === "external" && (ticket as any).partner_company && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1.5">Empresa Parceira</p>
-                  <Link 
-                    to={`/partners/${(ticket as any).partner_company.id}`}
-                    target="_blank"
-                    className="flex items-center gap-2 p-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors group"
-                  >
+                  <div className="flex items-center gap-2 p-2 -mx-2 rounded-md bg-muted/30">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <Building2 className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                    <span className="text-sm font-medium">
                       {(ticket as any).partner_company.name}
                     </span>
-                  </Link>
+                  </div>
                 </div>
               )}
 
