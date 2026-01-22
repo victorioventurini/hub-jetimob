@@ -1,48 +1,42 @@
 /**
- * Hook to manage leader scope (selected team) with localStorage persistence
+ * Hook to manage leader scope (selected team) with URL state persistence
+ * 
+ * @see DEVELOPMENT_STANDARDS.md E.1-E.3 - teamId deve ir para URL state
  */
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { useLeaderTeams } from "./useLeaderTeams";
 import { queryKeys } from "@/lib/queryKeys";
-
-const STORAGE_KEY_PREFIX = "hub.leader.selectedTeamId";
-
-function getStorageKey(buId: string) {
-  return `${STORAGE_KEY_PREFIX}.${buId}`;
-}
+import { useUrlState } from "@/shared/url";
 
 export function useLeaderScope() {
   const { currentBuId } = useBu();
   const { teams, isLeader, hasMultipleTeams, isLoading: isTeamsLoading } = useLeaderTeams();
   const queryClient = useQueryClient();
 
-  const [selectedTeamId, setSelectedTeamIdState] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  // URL state for team selection (per TCR E.1: teamId goes to URL)
+  const { value: selectedTeamId, set: setSelectedTeamId } = useUrlState<string | null>({
+    key: "teamId",
+    defaultValue: null,
+  });
 
-  // Initialize from localStorage or first team
+  // Auto-select first team if none selected and teams are available
   useEffect(() => {
-    if (isTeamsLoading || !currentBuId) return;
+    if (isTeamsLoading || teams.length === 0) return;
 
-    const storageKey = getStorageKey(currentBuId);
-    const storedId = localStorage.getItem(storageKey);
-
-    // If stored ID exists and is valid, use it
-    if (storedId && teams.some(t => t.team_id === storedId)) {
-      setSelectedTeamIdState(storedId);
-    } else if (teams.length > 0) {
-      // Otherwise, select first team
-      const firstTeamId = teams[0].team_id;
-      setSelectedTeamIdState(firstTeamId);
-      localStorage.setItem(storageKey, firstTeamId);
+    // If no team selected OR selected team is invalid, select first
+    const isValidSelection = selectedTeamId && teams.some(t => t.team_id === selectedTeamId);
+    
+    if (!isValidSelection) {
+      setSelectedTeamId(teams[0].team_id);
     }
-
-    setIsInitialized(true);
-  }, [teams, currentBuId, isTeamsLoading]);
+  }, [teams, selectedTeamId, isTeamsLoading, setSelectedTeamId]);
 
   // Get current selected team object
-  const selectedTeam = teams.find(t => t.team_id === selectedTeamId) || null;
+  const selectedTeam = useMemo(() => {
+    return teams.find(t => t.team_id === selectedTeamId) || null;
+  }, [teams, selectedTeamId]);
 
   // Handler to change team
   const selectTeam = useCallback((teamId: string) => {
@@ -54,12 +48,8 @@ export function useLeaderScope() {
       return;
     }
 
-    // Update state
-    setSelectedTeamIdState(teamId);
-
-    // Persist to localStorage
-    const storageKey = getStorageKey(currentBuId);
-    localStorage.setItem(storageKey, teamId);
+    // Update URL state
+    setSelectedTeamId(teamId);
 
     // Invalidate dashboard queries to refetch with new team
     queryClient.invalidateQueries({ 
@@ -68,7 +58,10 @@ export function useLeaderScope() {
     queryClient.invalidateQueries({ 
       queryKey: queryKeys.home.leaderFocus(currentBuId ?? null, null) 
     });
-  }, [currentBuId, teams, queryClient]);
+  }, [currentBuId, teams, queryClient, setSelectedTeamId]);
+
+  // Initialized when teams loaded and we have a valid selection (or no teams)
+  const isInitialized = !isTeamsLoading && (teams.length === 0 || selectedTeam !== null);
 
   return {
     teams,
