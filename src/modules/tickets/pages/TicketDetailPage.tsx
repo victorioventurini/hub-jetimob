@@ -302,7 +302,7 @@ export default function TicketDetailPage() {
                 partnerCompanyId={ticket.type === "external" ? ticket.partner_company_id : null}
                 placeholder="Digite sua mensagem... Use @ para mencionar"
                 buName={currentBu?.name}
-                partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_company?.trade_name : undefined}
+                partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_company?.name : undefined}
               />
             </CardContent>
           </Card>
@@ -337,7 +337,7 @@ export default function TicketDetailPage() {
                       <Building2 className="h-4 w-4 text-primary" />
                     </div>
                     <span className="text-sm font-medium group-hover:text-primary transition-colors">
-                      {(ticket as any).partner_company.trade_name || (ticket as any).partner_company.name}
+                      {(ticket as any).partner_company.name}
                     </span>
                   </Link>
                 </div>
