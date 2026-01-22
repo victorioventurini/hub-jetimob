@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.57.0  
+**Versão:** 2.58.0  
 **Última atualização:** 2026-01-22
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -23,7 +23,7 @@
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
 >
 > ### Relatórios de Saúde e Compliance
-> - [HEALTH_REPORT_2026-01-13.md](./engineering/HEALTH_REPORT_2026-01-13.md) — **Relatório de saúde técnica atual**
+> - [HEALTH_REPORT_2026-01-22.md](./engineering/HEALTH_REPORT_2026-01-22.md) — **Relatório de saúde técnica atual**
 > - [COMPLIANCE_BASELINE.md](./engineering/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
 > - [FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
 > - [SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Estado final do sistema
@@ -425,11 +425,12 @@ Vínculo de usuários com times.
 | id | uuid | PK |
 | user_id | uuid | **PROFILE_ID**: FK para profiles.id (ver [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md)) |
 | team_id | uuid | FK para teams |
-| is_active | bool | Se está ativo |
 | joined_at | timestamp | Data de entrada |
 | left_at | timestamp | Data de saída (se saiu) |
 
 **Escopo:** Por BU (via team)
+
+> **Nota (v2.58.0):** Esta tabela **não possui** coluna `is_active`. A existência do registro indica membership ativo. Remoção de membership = DELETE do registro.
 
 ---
 
@@ -2771,6 +2772,24 @@ export type { SomeType } from './types';
   - Modelo com `entity_type` + `entity_id` para uso multi-módulo
   - RLS V2 policies aplicadas
   - Frontend atualizado (`useTickets.ts`, `useTicketMessages.ts`)
+
+### v2.58.0 (2026-01-22)
+- **Comprehensive Technical Audit Completion**:
+  - **7 Partial Indexes para Soft-Delete**: Criados índices parciais (`WHERE deleted_at IS NULL`) para:
+    - `partner_company_bu_associations`, `squad_memberships`, `squads`, `ticket_categories`
+    - `ticket_messages`, `ticket_routing_rules`, `ticket_subcategories`
+  - **pg_cron Cleanup Semanal**: Agendado `cleanup_old_logs()` via pg_cron (Domingo 03:00 UTC)
+  - **user_team_memberships Schema Fix**: 
+    - Corrigido: Tabela **não possui** coluna `is_active` (membership ativo = registro existe)
+    - RPCs `user_has_permission_ctx` e `get_visible_ticket_ids_for_impersonation` atualizadas
+    - Frontend `UserHoverCard.tsx` corrigido (removido filtro `.eq('is_active', true)`)
+  - **18 Edge Functions Documentadas**: Todas as funções ativas catalogadas no TCR
+  - **Relatório de Saúde Atualizado**: `HEALTH_REPORT_2026-01-22.md` reflete estado atual
+
+### v2.57.0 (2026-01-22)
+- **TCR Edge Functions Documentation**:
+  - Documentadas 18 edge functions ativas com status e categoria
+  - Adicionada seção "Edge Functions" no TCR
 
 ### v2.56.0 (2026-01-22)
 - **Impersonation Ticket List External Support v1.0**:
