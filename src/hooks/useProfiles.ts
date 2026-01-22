@@ -45,7 +45,7 @@ export function useDeleteProfile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
       toast.success("Jetimober excluído com sucesso");
     },
     onError: () => {

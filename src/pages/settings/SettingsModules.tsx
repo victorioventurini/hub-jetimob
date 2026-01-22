@@ -172,8 +172,8 @@ export default function SettingsModules() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.settings.moduleConfigs() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.modulesPage.buModulesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.moduleConfigs(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modulesPage.buModulesPrefix(), refetchType: 'active' });
       toast.success("Configuração atualizada");
     },
     onError: (error) => {

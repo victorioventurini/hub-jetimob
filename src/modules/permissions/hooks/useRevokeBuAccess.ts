@@ -66,8 +66,8 @@ export function useRevokeBuAccess() {
     },
     onSuccess: (result, { userName }) => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.buUsers(currentBuId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.settings.buMemberCounts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.buUsers(currentBuId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.buMemberCounts(), refetchType: 'active' });
       
       if (result.hadOtherMemberships) {
         toast.success(`Acesso de ${userName} a esta BU foi revogado`);

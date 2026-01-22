@@ -242,7 +242,7 @@ export function PartnerCompanyDialog({
       },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(currentBu.id) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(currentBu.id), refetchType: 'active' });
           toast.success(`${existingCompany.name} foi ativada nesta BU!`);
           onOpenChange(false);
         },

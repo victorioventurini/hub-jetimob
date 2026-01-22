@@ -70,8 +70,8 @@ export function TeamCheckinSettings({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.teams.all(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.all(null), refetchType: 'active' });
       toast({
         title: 'Configurações atualizadas',
         description: 'As configurações de check-in do time foram salvas.',

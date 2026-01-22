@@ -225,7 +225,7 @@ export function CategoryImportDialog({ open, onOpenChange }: CategoryImportDialo
       setResult(importResult);
       
       // Invalidate cache to refresh the list
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.categories(currentBu?.id ?? null), refetchType: 'active' });
       
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao processar arquivo");

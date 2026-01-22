@@ -371,7 +371,7 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
       setResult(importResult);
 
       // Invalidate cache to refresh the list
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(currentBu?.id ?? null), refetchType: 'active' });
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao processar arquivo");
