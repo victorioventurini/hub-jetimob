@@ -104,8 +104,9 @@ O Hub da Jet encontra-se em **excelente estado de saúde técnica** após múlti
 
 | Erro | Frequência | Ação |
 |------|------------|------|
-| `NO_BU_CONTEXT: User is not authenticated` | Alta (8+/hora) | ⚠️ Investigar origem |
-| `invalid input value for enum okr_rag_status: "completed"` | Baixa (2x) | 🔴 Bug frontend/RPC |
+| `NO_BU_CONTEXT: User is not authenticated` | Alta (tela /auth) | ✅ Esperado na tela de login |
+| `invalid input value for enum okr_rag_status: "completed"` | Baixa (2x) | ⏳ Monitorar |
+| `column user_team_memberships.is_active does not exist` | Média | ✅ **CORRIGIDO** |
 
 ### 2.2 Backend (Edge Functions)
 

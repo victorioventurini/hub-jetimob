@@ -87,13 +87,13 @@ export function UserHoverCard({ userId, profileId, children, asChild = true }: U
         }
       }
 
-      // Fetch team memberships using user_id (always use user_id for memberships)
+      // Fetch team memberships using user_id
+      // user_team_memberships: existence = active (no is_active column)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const membershipsResult = await (supabase as any)
         .from('user_team_memberships')
         .select('team_id')
-        .eq('user_id', profileData.user_id)
-        .eq('is_active', true);
+        .eq('user_id', profileData.user_id);
       
       const teamMemberships = membershipsResult.data as Array<{ team_id: string }> | null;
 
