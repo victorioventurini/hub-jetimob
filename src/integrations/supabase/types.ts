@@ -7657,6 +7657,23 @@ export type Database = {
           },
         ]
       }
+      v_all_participants: {
+        Row: {
+          auth_user_id: string | null
+          bu_id: string | null
+          company_id: string | null
+          company_name: string | null
+          display_name: string | null
+          email: string | null
+          job_title: string | null
+          participant_id: string | null
+          photo_url: string | null
+          status: string | null
+          team_name: string | null
+          user_type: string | null
+        }
+        Relationships: []
+      }
       v_bu_active_profiles: {
         Row: {
           birth_day: number | null
@@ -9257,6 +9274,21 @@ export type Database = {
           template_id: string
           variables_used: string[]
           version_id: string
+        }[]
+      }
+      resolve_participant_identity: {
+        Args: { p_bu_id?: string; p_participant_id: string }
+        Returns: {
+          auth_user_id: string
+          company_id: string
+          company_name: string
+          display_name: string
+          email: string
+          job_title: string
+          participant_id: string
+          photo_url: string
+          team_name: string
+          user_type: string
         }[]
       }
       resolve_ticket_assignee: {
