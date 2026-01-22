@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.63.0  
+**Versão:** 2.64.0  
 **Última atualização:** 2026-01-22
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3 Hooks Barrel Consolidation v1.0** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (16 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **System Health Score 9.6/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3 Hooks Barrel Consolidation v1.0** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (16 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **System Health Score 10/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2840,6 +2840,22 @@ export type { SomeType } from './types';
 - **Cleanup de código**:
   - Removidos arquivos: `LegacyAssetRedirect.tsx`, `TicketMentionInput.tsx`, `useDebouncedValue.ts`, `useDebouncedCallback.ts`
   - Imports atualizados para novos módulos consolidados
+
+### v2.64.0 (2026-01-22)
+- **Database Hygiene Wave — Score 10/10**:
+  - `cleanup_old_logs()` atualizada para incluir `audit_logs` com retenção de 180 dias
+  - Função consolidada agora gerencia 5 tabelas: `ai_agent_logs` (14d), `perf_metrics_snapshots` (14d), `cron_execution_logs` (7d), `okr_wizard_sessions` (30d), `audit_logs` (180d)
+  - pg_cron já configurado para execução semanal (domingo 03:00 UTC)
+- **Índices de Performance P2**:
+  - `idx_ai_agent_logs_agent_id` — busca por agent_id
+  - `idx_notification_deliveries_notification_id` — busca por notification_id
+  - `idx_ai_agent_documents_agent_id` — busca por agent_id
+  - `idx_okr_audit_log_entity_id` — busca por entity_id
+- **Frontend Hygiene**:
+  - `useDebounce` alias deprecated REMOVIDO de `src/hooks/useDebounce.ts`
+  - Migrado `useInitiativeNameValidation.ts` para usar `useDebouncedValue`
+  - Migrado `TeamOkrKrDetailStep.tsx` para usar `useDebouncedValue`
+- **Audit Report atualizado**: `docs/audits/SYSTEM_AUDIT_2026-01-22.md` com todos itens P1/P2 resolvidos
 
 ### v2.28.0 (2026-01-13)
 - **OKR Wizard Team Selection Fix**:
