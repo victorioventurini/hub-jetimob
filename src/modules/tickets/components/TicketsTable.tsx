@@ -55,6 +55,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
             <TableHead>Tipo</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Categoria</TableHead>
+            <TableHead>Criado por</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Prazo</TableHead>
             <TableHead className="text-right">Atualizado</TableHead>
@@ -134,6 +135,22 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </div>
+                </TableCell>
+                
+                <TableCell>
+                  {ticket.created_by ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={ticket.created_by.photo_url ?? undefined} />
+                        <AvatarFallback className="text-xs">
+                          {ticket.created_by.display_name?.slice(0, 2).toUpperCase() ?? "??"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm line-clamp-1">{ticket.created_by.display_name}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 
                 <TableCell>
