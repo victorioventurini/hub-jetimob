@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.62.0  
+**Versão:** 2.63.0  
 **Última atualização:** 2026-01-22
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3 Hooks Barrel Consolidation v1.0** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (16 funções)** | **System Health Score 9.6/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3 Hooks Barrel Consolidation v1.0** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (16 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **System Health Score 9.6/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2774,6 +2774,27 @@ export type { SomeType } from './types';
   - Modelo com `entity_type` + `entity_id` para uso multi-módulo
   - RLS V2 policies aplicadas
   - Frontend atualizado (`useTickets.ts`, `useTicketMessages.ts`)
+
+### v2.63.0 (2026-01-22)
+- **Ticket Watcher Messaging Fix v1.0**:
+  - Corrigido: Watchers (mencionados) agora podem enviar mensagens
+  - Problema: `TicketDetailPage` usava `profileId` em vez de `realProfileId` para mutations
+  - Solução: Usar `realProfileId` do `useIdentity()` conforme IDENTITY_CONVENTION.md
+- **Ticket Message Pinning RLS v3**:
+  - Nova policy `ticket_messages_update_v3` permite criador/owner do ticket fixar mensagens
+  - Função `can_pin_ticket_message()` valida permissão de pinagem
+  - Corrigido erro "Cannot coerce result to single JSON object"
+- **Tickets UI Badge Standardization v1.0**:
+  - Criado `TICKET_TYPE_STYLES` em `src/lib/colors.ts` (padrão canônico)
+  - `TicketsTable` agora usa estilos canônicos de `colors.ts` para tipo e status
+  - Badges com dot colorido + fundo muted (consistência com detail page)
+- **Assets Inventory Return Date Column v1.0**:
+  - Campo `expected_return_at` adicionado ao tipo `AssetInventory`
+  - Query enriquecida para buscar `due_at` da última movimentação de checkout
+  - Nova coluna "Devolução" na tabela de inventário com indicadores visuais de atraso
+- **System Audit Report 2026-01-22**:
+  - Relatório completo de auditoria criado em `docs/audits/SYSTEM_AUDIT_2026-01-22.md`
+  - Identificados débitos técnicos P1/P2/P3 e plano de ação
 
 ### v2.58.0 (2026-01-22)
 - **Comprehensive Technical Audit Completion**:
