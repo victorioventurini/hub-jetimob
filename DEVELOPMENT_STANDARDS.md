@@ -214,3 +214,71 @@ npx tsx scripts/audit-profiles-email.ts
 - [ ] Nenhum uso de `profiles.email`
 - [ ] Usar `profiles.work_email` ou resolver RPC
 - [ ] Audit script `audit-profiles-email.ts` passa
+
+---
+
+## D. UI Immediate Update Pattern (Atualização Imediata da UI)
+
+### Regra
+
+**OBRIGATÓRIO**: Todas as mutations (create, update, delete) devem invalidar queries relacionadas com `refetchType: 'active'` para garantir atualização imediata da UI sem necessidade de refresh manual.
+
+### Por que isso importa?
+
+- Sem `refetchType: 'active'`, o React Query pode não refetch queries inativas
+- Usuário precisa dar refresh manual para ver alterações
+- UX degradada e confusão sobre se a ação foi bem-sucedida
+
+### Implementação Correta
+
+```typescript
+// ✅ CORRETO - Atualização imediata
+const createMutation = useMutation({
+  mutationFn: async (data) => { /* ... */ },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ 
+      queryKey: queryKeys.module.entity(buId), 
+      refetchType: 'active'  // ← OBRIGATÓRIO
+    });
+    toast.success("Item criado");
+  },
+});
+
+// ❌ ERRADO - Pode não atualizar UI imediatamente
+const createMutation = useMutation({
+  mutationFn: async (data) => { /* ... */ },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ 
+      queryKey: queryKeys.module.entity(buId)
+      // Falta refetchType: 'active'
+    });
+    toast.success("Item criado");
+  },
+});
+```
+
+### Quando Invalidar Múltiplas Queries
+
+Se uma mutação afeta múltiplas entidades, invalide todas com `refetchType: 'active'`:
+
+```typescript
+onSuccess: () => {
+  // Invalidar lista principal
+  queryClient.invalidateQueries({ 
+    queryKey: queryKeys.assets.inventory.all(buId), 
+    refetchType: 'active' 
+  });
+  // Invalidar entidades relacionadas
+  queryClient.invalidateQueries({ 
+    queryKey: queryKeys.assets.categories(buId), 
+    refetchType: 'active' 
+  });
+  toast.success("Item criado");
+},
+```
+
+### Checklist para PRs com Mutations
+
+- [ ] Todas mutations usam `refetchType: 'active'` em `invalidateQueries`
+- [ ] Queries relacionadas são invalidadas (não apenas a principal)
+- [ ] Toast de feedback é exibido após sucesso/erro

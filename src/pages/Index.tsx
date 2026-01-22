@@ -151,7 +151,7 @@ const Index = () => {
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <KpiSummaryCard 
               kpis={dashboardData.kpis} 
-              title={isExecutive ? "KPIs da BU" : "Meus KPIs"}
+              title={isExecutive ? `KPIs da ${currentBu?.name || 'BU'}` : "Meus KPIs"}
             />
             {canAccessOkrs && (
               <OkrSummaryCard 

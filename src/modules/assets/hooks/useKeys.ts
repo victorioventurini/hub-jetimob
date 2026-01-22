@@ -191,7 +191,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       return claviculary;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null), refetchType: 'active' });
       toast.success("Claviculário criado");
     },
     onError: () => {
@@ -215,7 +215,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       return claviculary;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null), refetchType: 'active' });
       toast.success("Claviculário atualizado");
     },
     onError: () => {
@@ -237,7 +237,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       return hook;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null), refetchType: 'active' });
       toast.success("Gancho criado");
     },
     onError: (error: any) => {
@@ -265,7 +265,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null), refetchType: 'active' });
       toast.success("Ganchos criados");
     },
     onError: () => {
@@ -301,8 +301,8 @@ export function useKeys(options: UseKeysOptions = {}) {
       return keyring;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.keyrings(buId ?? null, undefined), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.keyrings(buId ?? null, undefined), exact: false, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null), refetchType: 'active' });
       toast.success("Chaveiro criado");
     },
     onError: (error: any) => {
@@ -332,7 +332,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       return key;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.all(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.all(buId ?? null), refetchType: 'active' });
       toast.success("Chave criada");
     },
     onError: (error: any) => {
@@ -388,8 +388,8 @@ export function useKeys(options: UseKeysOptions = {}) {
       return movement;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.keyrings(buId ?? null, undefined), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.keyrings(buId ?? null, undefined), exact: false, refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.clavicularies(buId ?? null), refetchType: 'active' });
       toast.success("Movimentação registrada");
     },
     onError: (error: any) => {
