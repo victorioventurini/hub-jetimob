@@ -137,7 +137,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false, refetchType: 'active' });
       toast.success("Item criado");
     },
     onError: () => {
@@ -160,7 +160,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return item;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false, refetchType: 'active' });
       toast.success("Item atualizado");
     },
     onError: () => {
@@ -195,7 +195,8 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return batch;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.batches(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.batches(buId ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false, refetchType: 'active' });
       toast.success("Lote criado");
     },
     onError: () => {
@@ -238,7 +239,8 @@ export function useGifts(options: UseGiftsOptions = {}) {
       return movement;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.batches(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.batches(buId ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assets.gifts.items(buId ?? null, undefined), exact: false, refetchType: 'active' });
       toast.success("Movimentação registrada");
     },
     onError: (error: any) => {
