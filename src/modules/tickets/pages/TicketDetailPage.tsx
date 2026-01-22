@@ -302,6 +302,8 @@ export default function TicketDetailPage() {
                 isSubmitting={createMessage.isPending}
                 partnerCompanyId={ticket.type === "external" ? ticket.partner_company_id : null}
                 placeholder="Digite sua mensagem... Use @ para mencionar"
+                buName={currentBu?.name}
+                partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_companies?.trade_name : undefined}
               />
             </CardContent>
           </Card>

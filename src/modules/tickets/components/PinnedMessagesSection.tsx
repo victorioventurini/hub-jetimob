@@ -34,9 +34,14 @@ export function PinnedMessagesSection({
 
   return (
     <div className="mb-4 space-y-2">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Pin className="h-4 w-4" />
-        <span>Mensagens fixadas ({pinnedMessages.length})</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Pin className="h-4 w-4" />
+          <span>Mensagens fixadas ({pinnedMessages.length})</span>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          Somente o responsável e o criador podem fixar mensagens
+        </span>
       </div>
       <div className="space-y-2">
         {pinnedMessages.map((message) => (

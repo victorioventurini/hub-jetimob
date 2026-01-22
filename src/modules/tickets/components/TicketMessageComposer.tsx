@@ -24,6 +24,10 @@ interface TicketMessageComposerProps {
   isSubmitting?: boolean;
   partnerCompanyId?: string | null;
   placeholder?: string;
+  /** Nome da BU atual para exibir na dica de menção */
+  buName?: string;
+  /** Nome da empresa parceira para exibir na dica de menção (tickets externos) */
+  partnerCompanyName?: string;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -47,6 +51,8 @@ export function TicketMessageComposer({
   isSubmitting = false,
   partnerCompanyId,
   placeholder = "Digite sua mensagem... Use @ para mencionar",
+  buName,
+  partnerCompanyName,
 }: TicketMessageComposerProps) {
   const [content, setContent] = useState("");
   const [mentions, setMentions] = useState<ParsedMention[]>([]);
@@ -240,8 +246,13 @@ export function TicketMessageComposer({
 
       {/* Helper text */}
       <p className="text-xs text-muted-foreground">
-        Use <kbd className="px-1 py-0.5 bg-muted rounded text-[10px]">@</kbd> para mencionar • 
-        <kbd className="px-1 py-0.5 bg-muted rounded text-[10px] ml-1">⌘+Enter</kbd> para enviar
+        Use <kbd className="px-1 py-0.5 bg-muted rounded text-[10px]">@</kbd> para mencionar
+        {buName && partnerCompanyName ? (
+          <> usuários da <span className="font-medium">{buName}</span> e da <span className="font-medium">{partnerCompanyName}</span></>
+        ) : buName ? (
+          <> usuários da <span className="font-medium">{buName}</span></>
+        ) : null}
+        {" "}• <kbd className="px-1 py-0.5 bg-muted rounded text-[10px]">⌘+Enter</kbd> para enviar
       </p>
     </div>
   );
