@@ -4,11 +4,11 @@
  * This file contains the embedded TCR sections.
  * Extracted from get-tcr/index.ts for maintainability.
  * 
- * Version: 2.10.0
- * Updated: 2026-01-08
+ * Version: 2.58.0
+ * Updated: 2026-01-22
  */
 
-export const TCR_VERSION = "2.54.0";
+export const TCR_VERSION = "2.58.0";
 export const TCR_UPDATED_AT = "2026-01-22";
 
 export interface TcrSection {
