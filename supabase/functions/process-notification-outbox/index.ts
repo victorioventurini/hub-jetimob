@@ -84,9 +84,21 @@ async function processOutboxItem(
       const now = new Date();
       const dateVars = formatDateForTemplate(now);
       
+      // Get actor name if actor_id is present in payload
+      let actorName = (payload.actor_name as string) || null;
+      if (!actorName && payload.actor_id) {
+        const { data: actorData } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", payload.actor_id)
+          .maybeSingle();
+        actorName = actorData?.display_name || "Alguém";
+      }
+      
       const templateVars: Record<string, unknown> = {
         bu_name: buName,
         user_name: recipient.display_name || "Usuário",
+        actor_name: actorName || "Alguém",
         current_date: dateVars.date,
         current_time: dateVars.time,
         current_datetime: dateVars.datetime,

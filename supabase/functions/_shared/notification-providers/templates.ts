@@ -122,7 +122,8 @@ export function formatDateForTemplate(date: Date): { date: string; time: string;
   return {
     date: `${day}/${month}/${year}`,
     time: `${hours}:${minutes}`,
-    datetime: `${day}/${month}/${year} ${hours}:${minutes}`,
+    // Format: DD/MM às HH:MM (matching magic link pattern)
+    datetime: `${day}/${month} às ${hours}:${minutes}`,
   };
 }
 
