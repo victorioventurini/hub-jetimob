@@ -68,14 +68,19 @@ export default function TicketDetailPage() {
   const pinMessage = usePinMessage();
   
   // Refs for auto-scrolling to bottom
-  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
   const hasScrolledRef = useRef(false);
   
   // Scroll to bottom when messages load initially
   useEffect(() => {
-    if (messages.length > 0 && !hasScrolledRef.current && scrollAnchorRef.current) {
-      scrollAnchorRef.current.scrollIntoView({ behavior: "instant" });
-      hasScrolledRef.current = true;
+    if (messages.length > 0 && !hasScrolledRef.current && scrollViewportRef.current) {
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        if (scrollViewportRef.current) {
+          scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
+          hasScrolledRef.current = true;
+        }
+      });
     }
   }, [messages.length]);
   
@@ -307,7 +312,10 @@ export default function TicketDetailPage() {
                     isUnpinning={pinMessage.isPending}
                   />
                   
-                  <ScrollArea className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] pr-4">
+                  <ScrollArea 
+                    className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] pr-4"
+                    viewportRef={scrollViewportRef}
+                  >
                     <div className="space-y-4">
                       {messages.filter(m => !m.is_pinned).map((message) => {
                         const isOwnMessage = message.author_user_id === profileId;
@@ -325,7 +333,6 @@ export default function TicketDetailPage() {
                           />
                         );
                       })}
-                      <div ref={scrollAnchorRef} />
                     </div>
                   </ScrollArea>
                 </>
