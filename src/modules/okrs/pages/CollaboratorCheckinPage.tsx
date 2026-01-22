@@ -9,11 +9,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
-import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
+import { 
+  useGenericWizardDraft,
+  useActiveCycles,
+  useUserKrsForWizard,
+} from '@/modules/okrs/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
-import { useActiveCycles } from '@/modules/okrs/hooks/useCycleData';
-import { useUserKrsForWizard } from '@/modules/okrs/hooks/useUserKrsForWizard';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
