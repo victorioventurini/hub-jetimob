@@ -271,7 +271,7 @@ export default function TicketDetailPage() {
                     isUnpinning={pinMessage.isPending}
                   />
                   
-                  <ScrollArea className="h-[400px] pr-4">
+                  <ScrollArea className="h-[calc(100vh-480px)] min-h-[200px] max-h-[600px] pr-4">
                     <div className="space-y-4">
                       {messages.filter(m => !m.is_pinned).map((message) => {
                         const isOwnMessage = message.author_user_id === profileId;
