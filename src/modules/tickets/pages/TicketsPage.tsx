@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { TicketsLayout } from "../components/TicketsLayout";
-import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useBu } from "@/contexts/BuContext";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
@@ -27,10 +26,10 @@ export default function TicketsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        <TicketsBreadcrumb />
         <PageHeader
           title="Tickets"
           description={`Gerencie demandas internas e externas da ${currentBu?.name || 'organização'}`}
+          breadcrumbs={[{ label: "Tickets" }]}
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="tickets" />
