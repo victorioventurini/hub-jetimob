@@ -17,38 +17,65 @@ const DEFAULT_AUTH_STORAGE_KEY = (() => {
 })();
 
 function readAccessTokenFromStorage(): string | null {
-  if (!DEFAULT_AUTH_STORAGE_KEY) return null;
+  // Primary path: canonical storage key derived from project ref.
+  // Fallback path: scan localStorage for any sb-*-auth-token keys.
+  // Why: some environments / SDK configs may vary the storage key; relying on a single key
+  // can cause PostgREST requests to run as anon even when a session exists.
   try {
-    const raw = localStorage.getItem(DEFAULT_AUTH_STORAGE_KEY);
-    if (!raw) {
+    const tryExtractToken = (raw: string | null, sourceKey: string): string | null => {
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+
+      // Supabase SDK v2.8x+ stores session in different structures depending on version.
+      // Try all known paths in order of likelihood.
+      const token =
+        parsed?.access_token ?? // Direct token (v2.8x+ default)
+        parsed?.session?.access_token ?? // session wrapper
+        parsed?.currentSession?.access_token ?? // currentSession wrapper (legacy)
+        parsed?.user?.session?.access_token ?? // nested user.session (rare)
+        null;
+
       if (import.meta.env.DEV) {
-        console.debug("[BuScopedClient] No auth token found in storage key:", DEFAULT_AUTH_STORAGE_KEY);
+        if (token) {
+          console.debug("[BuScopedClient] Token found in storage key:", sourceKey, "| role:", getJwtRole(token));
+        } else {
+          console.debug(
+            "[BuScopedClient] Auth storage found but no token extracted. key:",
+            sourceKey,
+            "| structure:",
+            JSON.stringify(Object.keys(parsed || {}))
+          );
+        }
       }
-      return null;
-    }
-    const parsed = JSON.parse(raw);
-    
-    // Supabase SDK v2.8x+ stores session in different structures depending on version
-    // The most common structure in v2.89+ is:
-    // { access_token, refresh_token, expires_at, expires_in, token_type, user }
-    // But sometimes it's wrapped in a session object.
-    // Try all known paths in order of likelihood:
-    const token = 
-      parsed?.access_token ??                          // Direct token (v2.8x+ default)
-      parsed?.session?.access_token ??                 // session wrapper
-      parsed?.currentSession?.access_token ??          // currentSession wrapper (legacy)
-      parsed?.user?.session?.access_token ??           // nested user.session (rare)
-      null;
-    
-    if (import.meta.env.DEV) {
-      if (token) {
-        console.debug("[BuScopedClient] Token found in storage, role:", getJwtRole(token));
-      } else {
-        console.debug("[BuScopedClient] Auth storage found but no token extracted. Structure:", JSON.stringify(Object.keys(parsed || {})));
+
+      return token;
+    };
+
+    // 1) Canonical key
+    if (DEFAULT_AUTH_STORAGE_KEY) {
+      const raw = localStorage.getItem(DEFAULT_AUTH_STORAGE_KEY);
+      const token = tryExtractToken(raw, DEFAULT_AUTH_STORAGE_KEY);
+      if (token) return token;
+      if (import.meta.env.DEV) {
+        console.debug("[BuScopedClient] No auth token found in canonical storage key:", DEFAULT_AUTH_STORAGE_KEY);
       }
     }
-    
-    return token;
+
+    // 2) Fallback scan
+    // Common patterns:
+    // - sb-<projectRef>-auth-token
+    // - sb-<projectRef>-auth-token.<suffix>
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (!key.startsWith("sb-")) continue;
+      if (!key.includes("auth-token")) continue;
+
+      const token = tryExtractToken(localStorage.getItem(key), key);
+      if (token) return token;
+    }
+
+    return null;
   } catch (e) {
     if (import.meta.env.DEV) {
       console.warn("[BuScopedClient] Error reading auth token from storage:", e);
