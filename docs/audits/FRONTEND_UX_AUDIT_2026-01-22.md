@@ -262,17 +262,17 @@ src/modules/okrs/
 | 1.3 | Migrar cores hardcoded módulo OKRs | 1h | ✅ Feito |
 | 1.4 | Migrar cores hardcoded módulo Teams | 30 min | ✅ Feito |
 
-### Fase 2 — Próxima Sprint (P2)
+### Fase 2 — Próxima Sprint (P2) ✅ PARCIALMENTE CONCLUÍDA
 
-| # | Ação | Esforço | Prioridade | Arquivos |
-|---|------|---------|------------|----------|
-| 2.1 | **onClick → Link** nos Wizard Cards | 1h | P2 | `CLevelCheckinWizardCard.tsx`, `TeamOkrCreationWizardCard.tsx`, `TeamCheckinWizardCard.tsx`, `ManagersCheckinWizardCard.tsx` |
-| 2.2 | Migrar cores hardcoded (Settings) | 1h | P2 | `SettingsHome.tsx:240-317` |
-| 2.3 | Migrar cores hardcoded (Integrations) | 1h | P2 | `InstructionSourcesManager.tsx:69-81` |
-| 2.4 | Migrar cores hardcoded (Notifications) | 30min | P2 | `TemplatesList.tsx:216-225` |
-| 2.5 | Migrar cores hardcoded (SharedOkrBadge) | 30min | P2 | `SharedOkrBadge.tsx:76-135` |
-| 2.6 | Remover `MultiUserSelect` deprecated | 15min | P2 | `src/components/selects/MultiUserSelect.tsx` |
-| 2.7 | URL State em páginas restantes | 2h | P2 | `/settings/notifications`, `/partners/companies` |
+| # | Ação | Esforço | Prioridade | Status |
+|---|------|---------|------------|--------|
+| 2.1 | **onClick → Link** nos Wizard Cards | 1h | P2 | ✅ Feito (4 arquivos) |
+| 2.2 | Migrar cores hardcoded (Settings) | 1h | P2 | ✅ Feito |
+| 2.3 | Migrar cores hardcoded (Integrations) | 1h | P2 | 🔲 Pendente |
+| 2.4 | Migrar cores hardcoded (Notifications) | 30min | P2 | ✅ Feito |
+| 2.5 | Migrar cores hardcoded (SharedOkrBadge) | 30min | P2 | 🔲 Pendente |
+| 2.6 | Remover `MultiUserSelect` deprecated | 15min | P2 | 🔲 Pendente |
+| 2.7 | URL State em páginas restantes | 2h | P2 | 🔲 Pendente |
 
 ### Fase 3 — Modularização de Componentes Grandes (P2-P3)
 

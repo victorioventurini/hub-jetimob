@@ -2,7 +2,7 @@
  * ManagersCheckinWizardCard - Entry point for Managers Check-in Wizard
  * Navega para a página fullpage /okrs/managers-checkin
  */
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,11 +22,6 @@ export function ManagersCheckinWizardCard({
   blockedItemsCount = 0,
   isLoading = false,
 }: ManagersCheckinWizardCardProps) {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate('/okrs/managers-checkin');
-  };
 
   if (isLoading) {
     return (
@@ -45,15 +40,15 @@ export function ManagersCheckinWizardCard({
   const hasIssues = crossDependenciesCount > 0 || blockedItemsCount > 0;
 
   return (
-    <Card className="border-l-4 border-l-amber-500">
+    <Card className="border-l-4 border-l-status-amber">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-amber-500" />
+            <Building2 className="h-5 w-5 text-status-amber" />
             <CardTitle className="text-lg">Check-in de Gestores</CardTitle>
           </div>
           {hasIssues && (
-            <Badge variant="outline" className="text-amber-600 border-amber-300">
+            <Badge variant="outline" className="text-status-amber border-status-amber/30">
               <AlertTriangle className="h-3 w-3 mr-1" />
               Requer atenção
             </Badge>
@@ -79,12 +74,14 @@ export function ManagersCheckinWizardCard({
           )}
         </div>
         <Button 
-          onClick={handleClick} 
+          asChild
           className="w-full gap-2"
           variant="secondary"
         >
-          <Play className="h-4 w-4" />
-          Iniciar Alinhamento
+          <Link to="/okrs/managers-checkin">
+            <Play className="h-4 w-4" />
+            Iniciar Alinhamento
+          </Link>
         </Button>
       </CardContent>
     </Card>

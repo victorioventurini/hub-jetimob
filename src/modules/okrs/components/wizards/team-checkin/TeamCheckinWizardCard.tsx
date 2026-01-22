@@ -4,7 +4,7 @@
  * Navigates to the fullpage wizard at /okrs/team-checkin
  */
 
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,16 +26,10 @@ export function TeamCheckinWizardCard({
   lastCheckinDate,
   isLoading = false,
 }: TeamCheckinWizardCardProps) {
-  const navigate = useNavigate();
-
   const formatLastCheckin = () => {
     if (!lastCheckinDate) return 'Nenhum ritual realizado';
     const date = new Date(lastCheckinDate);
     return `Último: ${date.toLocaleDateString('pt-BR')}`;
-  };
-
-  const handleClick = () => {
-    navigate(`/okrs/team-checkin?team=${teamId}`);
   };
 
   if (isLoading) {
@@ -82,11 +76,13 @@ export function TeamCheckinWizardCard({
           </div>
         </div>
         <Button 
-          onClick={handleClick} 
+          asChild
           className="w-full gap-2"
         >
-          <Play className="h-4 w-4" />
-          Iniciar Ritual
+          <Link to={`/okrs/team-checkin?team=${teamId}`}>
+            <Play className="h-4 w-4" />
+            Iniciar Ritual
+          </Link>
         </Button>
       </CardContent>
     </Card>
