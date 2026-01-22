@@ -100,7 +100,7 @@ export default function CronJobConfigPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cronJob.globalConfig() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cronJob.globalConfig(), refetchType: 'active' });
       toast.success('Configuração atualizada');
     },
     onError: () => toast.error('Erro ao atualizar'),
@@ -119,7 +119,7 @@ export default function CronJobConfigPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cronJob.globalConfig() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cronJob.globalConfig(), refetchType: 'active' });
       setHasUnsavedChanges(false);
       toast.success('Secret salvo com sucesso!');
     },

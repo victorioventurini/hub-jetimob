@@ -122,7 +122,7 @@ export function useEmitNotificationEvent() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
     },
   });
 }
@@ -170,7 +170,7 @@ export function useSendTestNotification() {
       return results;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
     },
   });
 }

@@ -178,9 +178,9 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
       // Invalidar queries DEPOIS do navigate para evitar race condition
       // Usamos setTimeout(0) para garantir que o navigate execute antes
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.myProfile() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(userId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page(userId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.myProfile(), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(userId), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page(userId), refetchType: 'active' });
       }, 0);
     },
     onError: (error) => {

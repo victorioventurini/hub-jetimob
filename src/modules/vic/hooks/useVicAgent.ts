@@ -238,7 +238,7 @@ export function useVicConfig() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.vic.buConfig(currentBu?.id ?? buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vic.buConfig(currentBu?.id ?? buId ?? null), refetchType: 'active' });
       toast.success("Configurações de IA atualizadas");
     },
     onError: (error) => {
@@ -310,7 +310,7 @@ export function useVicAgentActivations() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.vic.agentActivations(currentBu?.id ?? buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vic.agentActivations(currentBu?.id ?? buId ?? null), refetchType: 'active' });
       toast.success("Configuração do agente atualizada");
     },
     onError: (error) => {

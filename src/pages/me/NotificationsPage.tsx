@@ -209,7 +209,7 @@ function NotificationList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
     },
   });
 
@@ -225,7 +225,7 @@ function NotificationList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
       toast.success('Todas as notificações foram marcadas como lidas');
     },
   });

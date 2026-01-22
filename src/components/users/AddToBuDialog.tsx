@@ -88,8 +88,8 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.buMembers(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.buMembers(currentBu?.id ?? null), refetchType: 'active' });
       toast.success(`${existingProfile?.display_name} adicionado à ${currentBu?.name}!`);
       onOpenChange(false);
     },

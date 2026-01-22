@@ -74,8 +74,8 @@ export function useCreateOkrContribution() {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(variables.from_type, variables.from_id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(variables.to_type, variables.to_id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(variables.from_type, variables.from_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(variables.to_type, variables.to_id), refetchType: 'active' });
       toast.success('Contribuição criada com sucesso');
     },
     onError: (error: Error) => {
@@ -109,7 +109,7 @@ export function useDeleteOkrContribution() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.contributions(), refetchType: 'active' });
       toast.success('Contribuição removida');
     },
     onError: () => {

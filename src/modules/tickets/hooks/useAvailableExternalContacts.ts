@@ -237,6 +237,7 @@ export function useUpdateFallbackContacts() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["company-fallback-contacts", buId, variables.partnerCompanyId],
+        refetchType: 'active',
       });
       toast.success("Contatos padrão atualizados");
     },

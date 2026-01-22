@@ -112,7 +112,7 @@ export function DiagnosticsHealthAlertsCard() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.healthAlerts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.healthAlerts(), refetchType: 'active' });
       setSelectedAlert(null);
       setAckNotes('');
       toast.success('Alerta reconhecido');
@@ -132,7 +132,7 @@ export function DiagnosticsHealthAlertsCard() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.healthAlerts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.healthAlerts(), refetchType: 'active' });
       setSelectedAlert(null);
       setAckNotes('');
       toast.success('Alerta resolvido');

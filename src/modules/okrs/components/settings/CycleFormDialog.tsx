@@ -157,8 +157,8 @@ export function CycleFormDialog({
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
       toast.success(isEditing ? "Ciclo atualizado" : "Ciclo criado");
       onOpenChange(false);
     },
