@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * Hook to get a signed URL for a ticket attachment.
@@ -10,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function useAttachmentUrl(storagePath: string | null, enabled = true) {
   return useQuery({
-    queryKey: ["ticket-attachment-url", storagePath],
+    queryKey: queryKeys.tickets.attachmentUrl(storagePath),
     queryFn: async () => {
       if (!storagePath) return null;
       

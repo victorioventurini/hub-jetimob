@@ -112,9 +112,9 @@ SELECT
 | Prioridade | Issue | Arquivos Afetados | Ação |
 |------------|-------|-------------------|------|
 | 🔴 P1 | Arquivos > 500 linhas | `Users.tsx` (691 lines), `TicketDetailPage.tsx` (~612 lines), `Sidebar.tsx` (~542 lines) | Refatorar/extrair componentes |
-| 🟡 P2 | Hardcoded Query Keys | `AddToBuDialog.tsx`, `KrAlignmentStep.tsx`, `AddToKitDialog.tsx` | Migrar para `queryKeys.*` |
+| ✅ ~~P2~~ | ~~Hardcoded Query Keys~~ | ~~`useAttachmentUrl.ts`, `useTicketViewersAndMentions.ts`, `useCompanyOkrs.ts`, `ImpersonationContext.tsx`~~ | **CORRIGIDO 2026-01-22** |
 | 🟡 P2 | `select("*")` residuais | `useOrgObjectiveQueries.ts`, `useTicketQueries.ts` | Usar seleção explícita |
-| 🟡 P2 | useState para estado de URL | `useLeaderScope.ts` | Migrar para `useUrlState` |
+| ✅ ~~P2~~ | ~~useState para estado de URL~~ | ~~`useLeaderScope.ts`~~ | **CORRIGIDO 2026-01-22** |
 | 🟢 P3 | Identity violations | `useMyTicketsHome.ts`, `useInventoryMutations.ts` | Usar `useIdentity().profileId` |
 
 ---
@@ -206,14 +206,14 @@ docs/engineering/
 
 > ✅ **RLS Policies Analisadas:** As 23 policies com `USING(true)` são **intencionais** (catálogos globais e logs de auditoria). Não requerem ação.
 
-### Wave 2 — Esta Semana
+### Wave 2 — Esta Semana ✅ **CONCLUÍDO 2026-01-22**
 
-| # | Ação | Tipo | Arquivos |
-|---|------|------|----------|
-| 2.1 | Migrar query keys hardcoded | Frontend | `AddToBuDialog.tsx`, `KrAlignmentStep.tsx`, `AddToKitDialog.tsx` |
-| 2.2 | Eliminar `select("*")` residuais | Frontend | `useOrgObjectiveQueries.ts`, `useTicketQueries.ts` |
-| 2.3 | Migrar `useState` → `useUrlState` | Frontend | `useLeaderScope.ts` |
-| 2.4 | Corrigir identity violations | Frontend | `useMyTicketsHome.ts`, `useInventoryMutations.ts` |
+| # | Ação | Tipo | Status |
+|---|------|------|--------|
+| 2.1 | Migrar query keys hardcoded | Frontend | ✅ `useAttachmentUrl`, `useTicketViewersAndMentions`, `useCompanyOkrs`, `ImpersonationContext` |
+| 2.2 | Eliminar `select("*")` residuais | Frontend | ⏳ Pendente |
+| 2.3 | Migrar `useState` → `useUrlState` | Frontend | ✅ `useLeaderScope.ts` |
+| 2.4 | Corrigir identity violations | Frontend | ⏳ Pendente |
 
 ### Wave 3 — Próximas 2 Semanas
 
@@ -274,7 +274,7 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 2. **Correção das 2 RLS policies** — Segurança
 3. **Habilitar password protection** — Segurança de auth
 
-### Saúde Geral do Projeto: **8.5/10** ⭐
+### Saúde Geral do Projeto: **8.8/10** ⭐ (atualizado após Wave 2)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)

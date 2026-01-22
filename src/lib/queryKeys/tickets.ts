@@ -56,4 +56,12 @@ export const ticketsKeys = {
   // Pending tickets for a contact (migration flow)
   pendingForContact: (contactId: string | null) =>
     ['tickets', 'pending-for-contact', contactId] as const,
+    
+  // Attachment signed URLs
+  attachmentUrl: (storagePath: string | null) =>
+    ['ticket-attachment-url', storagePath] as const,
+    
+  // Ticket viewers and mentions
+  viewers: (ticketId: string | null) =>
+    ['ticket-viewers', ticketId] as const,
 } as const;

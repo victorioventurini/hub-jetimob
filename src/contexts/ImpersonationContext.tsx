@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * ImpersonationContext
@@ -120,22 +121,22 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUser(userInfo);
     
     // Invalidar cache de permissões, teams, assets, tickets e OKRs para forçar refetch
-    // Invalidate both 'real' and 'impersonated' variants - usar await para garantir sincronização
-    await queryClient.invalidateQueries({ queryKey: ["identity"] });
-    await queryClient.invalidateQueries({ queryKey: ["permissions"] });
-    await queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
-    await queryClient.invalidateQueries({ queryKey: ["manageable-teams"] });
-    await queryClient.invalidateQueries({ queryKey: ["assets"] });
-    await queryClient.invalidateQueries({ queryKey: ["tickets"] }); // Tickets list
-    await queryClient.invalidateQueries({ queryKey: ["ticket"] }); // Ticket detail (singular)
-    await queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
-    await queryClient.invalidateQueries({ queryKey: ["okrs"] }); // OKRs list and check-ins
-    await queryClient.invalidateQueries({ queryKey: ["home"] }); // Home dashboard
-    await queryClient.invalidateQueries({ queryKey: ["kpis"] }); // KPIs
+    // Usando prefixos para invalidar todas as variações de cada query
+    await queryClient.invalidateQueries({ queryKey: queryKeys.identity.profile(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.permissions.myPermissions(null, null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.okrs.manageableTeams(null, null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard(null, '') });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null) });
     
     // Refetch explícito das queries de impersonação após invalidação
-    await queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "impersonated"] });
-    await queryClient.refetchQueries({ queryKey: ["manageable-teams", "impersonated"] });
+    await queryClient.refetchQueries({ queryKey: queryKeys.okrs.manageableTeams(null, null) });
+    await queryClient.refetchQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
     
     console.log("[ImpersonationContext] Cache invalidado e refetched para impersonação de:", userId);
   }, [canImpersonate, queryClient]);
@@ -146,21 +147,21 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     setImpersonatedUser(null);
     
     // Invalidar cache de permissões, teams, assets, tickets e OKRs
-    await queryClient.invalidateQueries({ queryKey: ["identity"] });
-    await queryClient.invalidateQueries({ queryKey: ["permissions"] });
-    await queryClient.invalidateQueries({ queryKey: ["okr-manageable-teams"] });
-    await queryClient.invalidateQueries({ queryKey: ["manageable-teams"] });
-    await queryClient.invalidateQueries({ queryKey: ["assets"] });
-    await queryClient.invalidateQueries({ queryKey: ["tickets"] }); // Tickets list
-    await queryClient.invalidateQueries({ queryKey: ["ticket"] }); // Ticket detail (singular)
-    await queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
-    await queryClient.invalidateQueries({ queryKey: ["okrs"] }); // OKRs list and check-ins
-    await queryClient.invalidateQueries({ queryKey: ["home"] }); // Home dashboard
-    await queryClient.invalidateQueries({ queryKey: ["kpis"] }); // KPIs
+    await queryClient.invalidateQueries({ queryKey: queryKeys.identity.profile(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.permissions.myPermissions(null, null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.okrs.manageableTeams(null, null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard(null, '') });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null) });
     
     // Refetch explícito das queries reais após invalidação
-    await queryClient.refetchQueries({ queryKey: ["okr-manageable-teams", "real"] });
-    await queryClient.refetchQueries({ queryKey: ["manageable-teams", "real"] });
+    await queryClient.refetchQueries({ queryKey: queryKeys.okrs.manageableTeams(null, null) });
+    await queryClient.refetchQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
     
     console.log("[ImpersonationContext] Impersonação encerrada, cache invalidado");
   }, [queryClient]);
