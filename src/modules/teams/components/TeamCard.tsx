@@ -38,10 +38,10 @@ export function TeamCard({ team, variant = "team" }: TeamCardProps) {
           <div className="flex items-center gap-2">
             <div className={cn(
               "h-6 w-6 rounded flex items-center justify-center shrink-0",
-              isSubteam ? "bg-blue-500/10" : "bg-primary/10"
+              isSubteam ? "bg-info-muted" : "bg-primary/10"
             )}>
               {isSubteam ? (
-                <Layers3 className="h-3.5 w-3.5 text-blue-500" />
+                <Layers3 className="h-3.5 w-3.5 text-info" />
               ) : (
                 <Building2 className="h-3.5 w-3.5 text-primary" />
               )}

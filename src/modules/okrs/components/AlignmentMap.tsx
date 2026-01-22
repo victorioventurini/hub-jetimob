@@ -45,11 +45,11 @@ export function AlignmentMap({ orgObjectives, teamObjectives, teams, isLoading }
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-500/10 text-green-700 border-green-500/30';
+        return 'bg-success-muted text-success-muted-foreground border-success/30';
       case 'draft':
         return 'bg-muted text-muted-foreground';
       case 'completed':
-        return 'bg-blue-500/10 text-blue-700 border-blue-500/30';
+        return 'bg-info-muted text-info-muted-foreground border-info/30';
       default:
         return 'bg-muted text-muted-foreground';
     }
