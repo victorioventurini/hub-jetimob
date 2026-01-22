@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { useInventory, useLocations, useAssetPermissionsV2 } from "@/modules/assets/hooks";
-import { InventoryListItem } from "../components/inventory/InventoryListItem";
+import { InventoryTable } from "../components/inventory/InventoryTable";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
 import { useUrlState } from "@/shared/url";
@@ -169,13 +168,7 @@ export default function InventoryPage() {
           onAction={canAddItem && !search && !hasActiveFilters ? () => setDialogOpen(true) : undefined}
         />
       ) : (
-        <div className="space-y-1">
-          {filteredItems.map((item) => (
-            <Link key={item.id} to={`/assets/inventory/${item.id}`} className="block">
-              <InventoryListItem item={item} />
-            </Link>
-          ))}
-        </div>
+        <InventoryTable items={filteredItems} />
       )}
 
       {/* Create dialog */}
