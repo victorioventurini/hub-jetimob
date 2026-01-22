@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Building2, Users, Network, Layers3, Box } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
-import { TeamsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useTeams, useTeamTree, useTeamStats } from "../hooks";
 import { useSquads } from "../hooks";
 import { TeamFormDialog } from "../components/TeamFormDialog";
@@ -186,10 +185,10 @@ export default function TeamsPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
-        <TeamsBreadcrumb />
         <PageHeader
           title="Estrutura Organizacional"
           description="Times, Sub-times e Squads"
+          breadcrumbs={[{ label: "Times" }]}
           actions={canCreateTeams && <TeamFormDialog />}
         />
 

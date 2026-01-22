@@ -3,7 +3,6 @@ import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { useInventory, useLocations, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { InventoryTable } from "../components/inventory/InventoryTable";
@@ -118,15 +117,6 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Inventário"
-        description="Gerencie os itens do inventário da BU"
-        breadcrumbs={[
-          { label: "Ativos", href: "/assets" },
-          { label: "Inventário" },
-        ]}
-      />
-
       <ListPageFilters
         searchValue={search}
         onSearchChange={setSearch}

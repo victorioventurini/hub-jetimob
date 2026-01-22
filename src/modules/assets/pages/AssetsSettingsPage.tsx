@@ -3,7 +3,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/ui/page-header";
 import { useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { ClaviculariesTab } from "../components/settings/ClaviculariesTab";
@@ -38,12 +37,6 @@ export default function AssetsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Configurações de Ativos"
-        description="Configure categorias, inventário e claviculários de ativos."
-        backTo="/assets"
-        backLabel="Voltar para Ativos"
-      />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="categories" className="gap-2">
