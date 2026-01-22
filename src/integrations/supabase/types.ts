@@ -9587,7 +9587,7 @@ export type Database = {
       squad_product: "crm" | "cms" | "erp"
       squad_role: "product_owner" | "tech_lead" | "ux_ui_lead" | "member"
       team_status: "active" | "inactive"
-      ticket_author_type: "internal_user" | "partner_contact"
+      ticket_author_type: "internal_user" | "partner_contact" | "system"
       ticket_category_scope: "internal" | "external" | "both"
       ticket_participant_role: "requester" | "assignee" | "watcher"
       ticket_participant_type: "internal_user" | "partner_contact"
@@ -9858,7 +9858,7 @@ export const Constants = {
       squad_product: ["crm", "cms", "erp"],
       squad_role: ["product_owner", "tech_lead", "ux_ui_lead", "member"],
       team_status: ["active", "inactive"],
-      ticket_author_type: ["internal_user", "partner_contact"],
+      ticket_author_type: ["internal_user", "partner_contact", "system"],
       ticket_category_scope: ["internal", "external", "both"],
       ticket_participant_role: ["requester", "assignee", "watcher"],
       ticket_participant_type: ["internal_user", "partner_contact"],
