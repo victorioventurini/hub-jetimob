@@ -224,6 +224,8 @@ async function uploadAttachments({
   uploadedByUserId,
   supabaseClient,
 }: UploadAttachmentsParams) {
+  const errors: string[] = [];
+
   for (const file of files) {
     const fileExt = file.name.split('.').pop();
     const fileName = `${buId}/${ticketId}/${messageId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
@@ -238,7 +240,8 @@ async function uploadAttachments({
       });
 
     if (uploadError) {
-      console.error("Failed to upload file:", uploadError);
+      console.error("Failed to upload file:", file.name, uploadError);
+      errors.push(`Upload failed for ${file.name}: ${uploadError.message}`);
       continue;
     }
 
@@ -247,7 +250,7 @@ async function uploadAttachments({
     const storagePath = uploadData.path;
 
     // Insert attachment record with storage path
-    await supabaseClient.from("ticket_attachments").insert({
+    const { error: insertError } = await supabaseClient.from("ticket_attachments").insert({
       bu_id: buId,
       ticket_id: ticketId,
       message_id: messageId,
@@ -257,5 +260,16 @@ async function uploadAttachments({
       mime_type: file.type,
       uploaded_by_user_id: uploadedByUserId,
     });
+
+    if (insertError) {
+      console.error("Failed to insert attachment record:", file.name, insertError);
+      errors.push(`Insert failed for ${file.name}: ${insertError.message}`);
+      // Attempt to clean up uploaded file
+      await supabaseClient.storage.from("ticket-attachments").remove([storagePath]);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Attachment errors: ${errors.join('; ')}`);
   }
 }
