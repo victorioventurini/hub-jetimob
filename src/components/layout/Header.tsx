@@ -20,6 +20,7 @@ import { BuSelector } from "@/modules/bu/components/BuSelector";
 import { NotificationCenter } from "@/components/notifications";
 import { UserImpersonationDialog } from "@/components/impersonation";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
+import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -33,6 +34,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
   const { isImpersonating } = useOptionalImpersonation();
+  const { isExternal, externalInfo } = useExternalUser();
   
   // Estado para controlar o dropdown do usuário
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -45,17 +47,19 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   // IMPORTANTE: Durante impersonação, NÃO mostrar acesso a configurações - simular experiência real
   const canAccessSettings = !isImpersonating && (isAdmin || userRole === "admin");
 
-  const displayName = profile?.display_name || "Jetimober";
-  const email = profile?.work_email || "";
-  // Exibir job_title do perfil, fallback para "Membro"
-  const jobTitleLabel = profile?.job_title || "Membro";
+  // Usuários externos usam externalInfo, internos usam profile
+  const displayName = profile?.display_name || externalInfo?.name || "Usuário";
+  const email = profile?.work_email || externalInfo?.email || "";
+  // Exibir job_title do perfil para internos, nome da empresa para externos, fallback para "Membro"
+  const jobTitleLabel = profile?.job_title || (isExternal ? externalInfo?.companyName : null) || "Membro";
 
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
+    .filter(Boolean)
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "U";
 
   const handleSignOut = async () => {
     await signOut();

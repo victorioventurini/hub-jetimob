@@ -99,19 +99,20 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      // Fetch actor info for each notification
-      const actorIds = [...new Set((data || []).map(n => n.actor_id).filter(Boolean))];
+      // Fetch actor info for each notification (supports both profiles AND partner_contacts)
+      const actorIds: string[] = [...new Set((data || []).map(n => n.actor_id).filter((id): id is string => Boolean(id)))];
       
       let actorMap: Record<string, { display_name: string; photo_url: string | null }> = {};
       
       if (actorIds.length > 0) {
-        const { data: actors } = await supabaseBu
+        // First try profiles (internal users)
+        const { data: profileActors } = await supabaseBu
           .from('profiles')
           .select('user_id, display_name, photo_url')
           .in('user_id', actorIds);
         
-        if (actors) {
-          actorMap = actors.reduce((acc, actor) => {
+        if (profileActors) {
+          actorMap = profileActors.reduce((acc, actor) => {
             if (actor.user_id) {
               acc[actor.user_id] = {
                 display_name: actor.display_name,
@@ -120,6 +121,31 @@ export function NotificationCenter() {
             }
             return acc;
           }, {} as Record<string, { display_name: string; photo_url: string | null }>);
+        }
+
+        // Find remaining actor IDs not found in profiles (external users)
+        const foundActorIds = new Set(Object.keys(actorMap));
+        const missingActorIds = actorIds.filter(id => !foundActorIds.has(id));
+        
+        if (missingActorIds.length > 0) {
+          // Fetch from partner_contacts for external actors
+          const { data: contactActors } = await supabaseBu
+            .from('partner_contacts')
+            .select('user_id, name')
+            .in('user_id', missingActorIds)
+            .eq('status', 'active')
+            .is('deleted_at', null);
+          
+          if (contactActors) {
+            for (const contact of contactActors) {
+              if (contact.user_id) {
+                actorMap[contact.user_id] = {
+                  display_name: contact.name,
+                  photo_url: null, // partner_contacts don't have photo_url
+                };
+              }
+            }
+          }
         }
       }
 
