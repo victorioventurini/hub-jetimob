@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { useGifts, useAssetPermissionsV2 } from "@/modules/assets/hooks";
-import { GiftItemCard } from "../components/gifts/GiftItemCard";
+import { GiftsTable } from "../components/gifts/GiftsTable";
 import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
 import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
-import { UrlSearchInput } from "@/shared/filters";
 import { useUrlState } from "@/shared/url";
 
 export default function GiftsPage() {
@@ -20,7 +20,7 @@ export default function GiftsPage() {
   const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts({
     search: search || undefined,
   });
-  const { canManageGifts, isGiftsAdmin, isLoading: isLoadingPermissions } = useAssetPermissionsV2();
+  const { canManageGifts, isLoading: isLoadingPermissions } = useAssetPermissionsV2();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 
@@ -39,9 +39,10 @@ export default function GiftsPage() {
           <Skeleton className="h-10 flex-1" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Skeleton className="h-10 w-full" />
+        <div className="space-y-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-40" />
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       </div>
@@ -61,30 +62,28 @@ export default function GiftsPage() {
         </Alert>
       )}
 
-      {/* Header com busca e ações */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <UrlSearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar por nome ou categoria..."
-          className="flex-1"
-          debounceMs={300}
-        />
-        {canManageGifts && (
-          <>
-            <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>
-              <ArrowUp className="h-4 w-4 mr-2" />
-              Registrar Saída
-            </Button>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Brinde
-            </Button>
-          </>
-        )}
-      </div>
+      {/* Header com busca e ações - usando ListPageFilters canônico */}
+      <ListPageFilters
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome ou categoria..."
+        actions={
+          canManageGifts && (
+            <>
+              <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>
+                <ArrowUp className="h-4 w-4 mr-2" />
+                Registrar Saída
+              </Button>
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Brinde
+              </Button>
+            </>
+          )
+        }
+      />
 
-      {/* Grid de brindes */}
+      {/* Tabela de brindes */}
       {items.length === 0 ? (
         <EmptyState
           icon={Gift}
@@ -96,16 +95,11 @@ export default function GiftsPage() {
           onAction={canManageGifts && !search ? () => setDialogOpen(true) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((item) => (
-            <GiftItemCard
-              key={item.id}
-              item={item}
-              totals={getItemTotals(item.id)}
-              batches={batches.filter((b) => b.gift_item_id === item.id)}
-            />
-          ))}
-        </div>
+        <GiftsTable 
+          items={items} 
+          batches={batches} 
+          getItemTotals={getItemTotals}
+        />
       )}
 
       {/* Dialogs */}

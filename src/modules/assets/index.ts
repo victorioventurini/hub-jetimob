@@ -11,13 +11,13 @@ export { InventoryMovementDialog } from "./components/inventory/InventoryMovemen
 export { InventoryDetailView } from "./components/inventory/InventoryDetailView";
 
 // Keys Components
-export { KeyringsList } from "./components/keys/KeyringsList";
+export { KeyringsTable } from "./components/keys/KeyringsTable";
 export { KeyringDialog } from "./components/keys/KeyringDialog";
 export { KeyringDetailDialog } from "./components/keys/KeyringDetailDialog";
 export { KeyringMovementDialog } from "./components/keys/KeyringMovementDialog";
 export { ClavicularyDialog } from "./components/keys/ClavicularyDialog";
 
 // Gifts Components
-export { GiftItemCard } from "./components/gifts/GiftItemCard";
+export { GiftsTable } from "./components/gifts/GiftsTable";
 export { GiftItemDialog } from "./components/gifts/GiftItemDialog";
 export { GiftMovementDialog } from "./components/gifts/GiftMovementDialog";

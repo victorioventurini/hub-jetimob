@@ -3,10 +3,10 @@ import { Key, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { useKeys, useAssetPermissionsV2 } from "@/modules/assets/hooks";
-import { KeyringsList } from "../components/keys/KeyringsList";
+import { KeyringsTable } from "../components/keys/KeyringsTable";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
-import { UrlSearchInput } from "@/shared/filters";
 import { useUrlState } from "@/shared/url";
 
 export default function KeysPage() {
@@ -30,9 +30,10 @@ export default function KeysPage() {
           <Skeleton className="h-10 flex-1" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Skeleton className="h-10 w-full" />
+        <div className="space-y-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-40" />
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       </div>
@@ -41,22 +42,20 @@ export default function KeysPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header com busca */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <UrlSearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar chaveiro..."
-          className="flex-1"
-          debounceMs={300}
-        />
-        {canManageKeys && (
-          <Button onClick={() => setKeyringDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Chaveiro
-          </Button>
-        )}
-      </div>
+      {/* Header com busca - usando ListPageFilters canônico */}
+      <ListPageFilters
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar chaveiro..."
+        actions={
+          canManageKeys && (
+            <Button onClick={() => setKeyringDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Chaveiro
+            </Button>
+          )
+        }
+      />
 
       {/* Lista de chaveiros */}
       {keyrings.length === 0 ? (
@@ -70,7 +69,7 @@ export default function KeysPage() {
           onAction={canManageKeys && !search ? () => setKeyringDialogOpen(true) : undefined}
         />
       ) : (
-        <KeyringsList keyrings={keyrings} />
+        <KeyringsTable keyrings={keyrings} />
       )}
 
       {/* Dialog */}
