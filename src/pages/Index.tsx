@@ -40,9 +40,15 @@ const Index = () => {
 
   const isExecutive = dashboardData.role === "executive";
   
+  // During impersonation, check if impersonated user is external
+  const isViewingAsExternal = isImpersonating && impersonatedUser?.employmentStatus === "external";
+  
   // Verificar acesso aos módulos
   const canAccessOkrs = hasModuleAccess("okrs");
   const canAccessTickets = hasModuleAccess("tickets");
+  
+  // Hide internal-only cards when viewing as external user
+  const showInternalOnlyCards = !isViewingAsExternal;
   
   // Determine profile for greeting and VicCard
   const greetingProfile: VicCardProfile = isExecutive ? "executive" : isLeader ? "leader" : "collaborator";
@@ -140,35 +146,37 @@ const Index = () => {
         {/* 4. My OKRs Card */}
         {canAccessOkrs && <MyOkrsCard />}
 
-        {/* 5. KPIs + OKRs Summary + Focus */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <KpiSummaryCard 
-            kpis={dashboardData.kpis} 
-            title={isExecutive ? "KPIs da BU" : "Meus KPIs"}
-          />
-          {canAccessOkrs && (
-            <OkrSummaryCard 
-              onTrack={dashboardData.okrSummary.onTrack}
-              atRisk={dashboardData.okrSummary.atRisk}
-              offTrack={dashboardData.okrSummary.offTrack}
-              title={isExecutive ? `OKRs ${currentBu?.name || 'da Empresa'}` : "Meus OKRs"}
+        {/* 5. KPIs + OKRs Summary + Focus - Hidden for external users */}
+        {showInternalOnlyCards && (
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <KpiSummaryCard 
+              kpis={dashboardData.kpis} 
+              title={isExecutive ? "KPIs da BU" : "Meus KPIs"}
             />
-          )}
-          {dashboardData.teamStatus && canAccessOkrs ? (
-            <TeamStatusCard
-              teamName={dashboardData.teamStatus.teamName}
-              onTrackPercent={dashboardData.teamStatus.onTrackPercent}
-              atRiskPercent={dashboardData.teamStatus.atRiskPercent}
-              offTrackPercent={dashboardData.teamStatus.offTrackPercent}
-              title={isExecutive ? "Visão Geral" : "Meu Time"}
-            />
-          ) : (
-            <FocusCard 
-              items={dashboardData.focusItems}
-              title="Seu Foco"
-            />
-          )}
-        </section>
+            {canAccessOkrs && (
+              <OkrSummaryCard 
+                onTrack={dashboardData.okrSummary.onTrack}
+                atRisk={dashboardData.okrSummary.atRisk}
+                offTrack={dashboardData.okrSummary.offTrack}
+                title={isExecutive ? `OKRs ${currentBu?.name || 'da Empresa'}` : "Meus OKRs"}
+              />
+            )}
+            {dashboardData.teamStatus && canAccessOkrs ? (
+              <TeamStatusCard
+                teamName={dashboardData.teamStatus.teamName}
+                onTrackPercent={dashboardData.teamStatus.onTrackPercent}
+                atRiskPercent={dashboardData.teamStatus.atRiskPercent}
+                offTrackPercent={dashboardData.teamStatus.offTrackPercent}
+                title={isExecutive ? "Visão Geral" : "Meu Time"}
+              />
+            ) : (
+              <FocusCard 
+                items={dashboardData.focusItems}
+                title="Seu Foco"
+              />
+            )}
+          </section>
+        )}
 
         {/* 6. Tickets */}
         {canAccessTickets && <MyTicketsCard />}

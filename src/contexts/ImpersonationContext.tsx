@@ -19,6 +19,7 @@ export interface ImpersonatedUserInfo {
   displayName: string;
   email: string | null;
   photoUrl: string | null;
+  employmentStatus: string | null;
 }
 
 interface ImpersonationContextType {
@@ -90,7 +91,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     // Buscar informações do usuário
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("id, display_name, work_email, photo_url")
+      .select("id, display_name, work_email, photo_url, employment_status")
       .eq("id", userId)
       .single();
     
@@ -104,6 +105,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
       displayName: profile.display_name || "Usuário",
       email: profile.work_email,
       photoUrl: profile.photo_url,
+      employmentStatus: profile.employment_status,
     };
     
     // Salvar na sessionStorage
