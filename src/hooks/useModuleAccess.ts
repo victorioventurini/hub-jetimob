@@ -70,10 +70,10 @@ export interface ModuleAccessResult {
  * Hook para verificar acesso a módulos baseado no sistema de permissões V2.
  * 
  * Regras de acesso:
- * - isAdmin ou BU admin (wildcard): acesso total a todos os módulos
+ * - isWildcard (admin/super_admin): acesso total a todos os módulos
  * - Outros usuários: precisam de pelo menos uma permission key do módulo
  * - Módulos em ALWAYS_ACCESSIBLE_MODULES não requerem verificação
- * - Durante impersonação: usa permissões do usuário impersonado (sem full access)
+ * - Durante impersonação: isWildcard reflete permissões do usuário impersonado
  * 
  * @param moduleSlug - Slug do módulo para verificar (opcional)
  * @returns Objeto com estado de acesso e helpers
@@ -85,9 +85,12 @@ export function useModuleAccess(moduleSlug?: string): ModuleAccessResult {
 
   const isLoading = permissionsLoading || buLoading;
   
-  // Full access: super_admin, admin global, ou admin da BU
-  // IMPORTANTE: Durante impersonação, NÃO conceder full access - usar permissões reais do usuário impersonado
-  const hasFullAccess = !isImpersonating && (isAdmin || userRole === "admin" || isWildcard);
+  // Full access: isWildcard já inclui admin/super_admin do usuário atual OU impersonado
+  // Durante impersonação, isAdmin e userRole refletem o CALLER, não o impersonado
+  // Por isso usamos apenas isWildcard que reflete as permissões buscadas corretamente
+  const hasFullAccess = isImpersonating 
+    ? isWildcard  // Durante impersonação: só isWildcard (vem das permissões do impersonado)
+    : (isAdmin || userRole === "admin" || isWildcard);  // Normal: todas as fontes
 
   /**
    * Verifica se o usuário pode acessar um módulo específico
