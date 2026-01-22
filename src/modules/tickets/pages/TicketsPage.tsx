@@ -8,11 +8,17 @@ import { TicketsLayout } from "../components/TicketsLayout";
 import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { useBu } from "@/contexts/BuContext";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { SavedLinksPopover } from "@/shared/saved-links";
 
 export default function TicketsPage() {
   const { currentBu } = useBu();
   const { isExternal } = useExternalUser();
+  const { isImpersonating, impersonatedUser } = useOptionalImpersonation();
+  
+  // Check if impersonating an external user
+  const isViewingAsExternal = isImpersonating && impersonatedUser?.employmentStatus === "external";
+  const canCreateTicket = !isExternal && !isViewingAsExternal;
   
   usePageTitle("Tickets", {
     customDescription: "Gerencie tickets internos e externos, acompanhe status, prazos e mensagens.",
@@ -28,7 +34,7 @@ export default function TicketsPage() {
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="tickets" />
-              {!isExternal && (
+              {canCreateTicket && (
                 <Button asChild>
                   <Link to="/tickets/new">
                     <Plus className="h-4 w-4 mr-2" />
