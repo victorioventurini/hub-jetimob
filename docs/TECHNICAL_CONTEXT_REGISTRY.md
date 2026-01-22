@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.51.0  
-**Última atualização:** 2026-01-21
+**Versão:** 2.53.0  
+**Última atualização:** 2026-01-22
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.1 (OKRs + Assets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2070,8 +2070,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.45.0 |
-| **Data da última atualização** | 2026-01-21 |
+| **Versão do TCR** | 2.53.0 |
+| **Data da última atualização** | 2026-01-22 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -2080,10 +2080,28 @@ export type { SomeType } from './types';
 | **Permission Presets** | 12 |
 | **Módulos com Hooks Consolidados** | 12 ✅ |
 | **Módulos com Saved Links** | 1 (OKRs) ✅ |
+| **Notification Templates Ativos** | 19 (v2) ✅ |
 
 ---
 
 ## Changelog
+
+### v2.53.0 (2026-01-22) — Notification Templates v2 + Tickets UI Enhancement
+- **Notification Templates v2**:
+  - 19 templates de email atualizados com novo padrão de subject: `[{{bu_name}}] ... - {{current_datetime}}`
+  - 35+ variáveis registradas em `notification_template_variables`
+  - Triggers enriquecidos: `notify_ticket_message_created`, `notify_ticket_status_changed`, `notify_asset_checkout`, `notify_team_membership_changed`
+  - Edge Function `process-notification-outbox` atualizado para resolver `actor_name` dinamicamente
+  - Formato de data padronizado: `DD/MM às HH:MM`
+- **Tickets Table Enhancement**:
+  - Coluna "Criado por" adicionada à listagem de tickets com avatar e nome
+  - Campo `created_by` já estava disponível no select, agora exibido na UI
+- **External User Onboarding Fix**:
+  - Corrigido loop de tela branca após onboarding de usuários externos
+  - Rota `/select-bu` agora pula verificação de onboarding para evitar condição de corrida
+  - Auto-redirect para single-BU users com fallback seguro
+
+### v2.52.0 (2026-01-22) — ON CONFLICT Index Fixes
 
 ### v2.45.0 (2026-01-21) — Global Partner Companies + Home Module Access Control
 - **Estrutura Global de Partner Companies**:
