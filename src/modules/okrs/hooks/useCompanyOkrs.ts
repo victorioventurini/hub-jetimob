@@ -28,7 +28,7 @@ export function useCompanyOkrs(year?: number) {
   const currentYear = year || new Date().getFullYear();
 
   return useQuery({
-    queryKey: ['company-okrs', buId, currentYear],
+    queryKey: queryKeys.okrs.companyOkrs(buId ?? null, currentYear),
     queryFn: async (): Promise<{
       okrs: CompanyOkr[];
       overallProgress: number;

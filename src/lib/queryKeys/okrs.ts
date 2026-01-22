@@ -210,6 +210,10 @@ export const okrsKeys = {
     ['okr-org-kr-team-links', buId, krIds] as const,
   orgHealthConsolidated: (buId: string | null, year: number) =>
     ['okr-org-health-consolidated', buId, year] as const,
+    
+  // Company OKRs (C-Level Wizard)
+  companyOkrs: (buId: string | null, year: number) =>
+    ['company-okrs', buId, year] as const,
 } as const;
 
 export const kpisKeys = {

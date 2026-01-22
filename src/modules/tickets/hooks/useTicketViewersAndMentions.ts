@@ -8,6 +8,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
+import { queryKeys } from "@/lib/queryKeys";
 import type { Ticket } from "../types";
 
 interface TeamInfo {
@@ -40,7 +41,7 @@ export function useTicketViewersAndMentions(ticket: Ticket | null | undefined) {
   const buId = currentBu?.id;
 
   return useQuery({
-    queryKey: ["ticket-viewers", ticket?.id],
+    queryKey: queryKeys.tickets.viewers(ticket?.id ?? null),
     queryFn: async (): Promise<TicketViewersData> => {
       if (!ticket) {
         return { teams: [], users: [], mentions: [] };
