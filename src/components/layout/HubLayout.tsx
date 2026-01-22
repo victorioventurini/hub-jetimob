@@ -42,12 +42,10 @@ function forceCleanupPointerEvents() {
     document.body.removeAttribute('inert');
   }
   
-  // Limpa todos os portals de Radix que podem estar travados
+  // Limpa pointer-events em wrappers de popper (NÃO remove — evita removeChild race com Popover/DropdownMenu)
   document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach((el) => {
     if (el instanceof HTMLElement) {
       el.style.pointerEvents = '';
-      // Remove completamente tooltips presos
-      el.remove();
     }
   });
   

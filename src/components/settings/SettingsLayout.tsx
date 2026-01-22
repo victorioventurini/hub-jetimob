@@ -167,10 +167,10 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
       document.body.style.pointerEvents = '';
       document.documentElement.style.pointerEvents = '';
       
-      // Remove Radix tooltips órfãos
+      // Limpa pointer-events em wrappers de popper (NÃO remove — evita removeChild race com Popover/DropdownMenu)
       document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach((el) => {
         if (el instanceof HTMLElement) {
-          el.remove();
+          el.style.pointerEvents = '';
         }
       });
       
