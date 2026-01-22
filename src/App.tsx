@@ -213,7 +213,7 @@ const App = () => {
                     <Route
                       path="/select-bu"
                       element={
-                        <ProtectedRoute skipBuCheck>
+                        <ProtectedRoute skipBuCheck skipOnboardingCheck>
                           <SelectBu />
                         </ProtectedRoute>
                       }
