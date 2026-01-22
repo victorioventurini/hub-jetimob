@@ -22,6 +22,7 @@ export {
   useEditMessage, 
   useDeleteMessage,
   type CreateMessageAuthor,
+  type TicketContext,
 } from './useTicketMessageMutations';
 
 // Attachments

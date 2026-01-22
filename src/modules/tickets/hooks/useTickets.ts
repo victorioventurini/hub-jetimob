@@ -16,4 +16,4 @@ export type { MentionRow, MentionInfo } from './ticketQueryUtils';
 export { useTickets, useTicket, useMyTickets } from './useTicketQueries';
 
 // Mutation hooks
-export { useCreateTicket, useUpdateTicket, useUpdateTicketStatus, useDeleteTicket } from './useTicketMutations';
+export { useCreateTicket, useUpdateTicket, useUpdateTicketStatus, useDeleteTicket, type StatusChangeContext } from './useTicketMutations';

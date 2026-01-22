@@ -10,11 +10,25 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import type {
   CreateTicketData,
   UpdateTicketData,
   TicketStatus,
 } from "../types";
+
+// ===========================================
+// CONSTANTS
+// ===========================================
+
+const STATUS_LABELS: Record<TicketStatus, string> = {
+  waiting: "Aguardando",
+  paused: "Pausado",
+  in_progress: "Em Andamento",
+  done: "Concluído",
+  discarded: "Descartado",
+};
 
 // ===========================================
 // CREATE MUTATION
@@ -189,6 +203,12 @@ export function useUpdateTicket() {
 // STATUS UPDATE MUTATION
 // ===========================================
 
+/** Context for inserting system message on status change */
+export interface StatusChangeContext {
+  currentStatus: TicketStatus;
+  profileId: string | null;
+}
+
 export function useUpdateTicketStatus() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
@@ -199,24 +219,50 @@ export function useUpdateTicketStatus() {
     mutationFn: async ({
       id,
       status,
+      context,
     }: {
       id: string;
       status: TicketStatus;
+      /** Context for inserting system message */
+      context?: StatusChangeContext;
     }) => {
       const { data: ticket, error } = await supabase
         .from("tickets")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("id", id)
-        .select()
+        .select("bu_id")
         .single();
 
       if (error) throw error;
+
+      // Insert system message recording the status change
+      if (context && context.currentStatus !== status && ticket?.bu_id) {
+        const formattedDate = format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+        const oldStatusLabel = STATUS_LABELS[context.currentStatus];
+        const newStatusLabel = STATUS_LABELS[status];
+        const systemMessage = `🔄 Status alterado de **${oldStatusLabel}** para **${newStatusLabel}**. ${formattedDate}`;
+
+        await supabase
+          .from("ticket_messages")
+          .insert({
+            bu_id: ticket.bu_id,
+            ticket_id: id,
+            author_type: "system" as any,
+            author_user_id: context.profileId,
+            body_richtext: {
+              type: "system",
+              content: systemMessage,
+            },
+          } as any);
+      }
+
       return ticket;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.messages(variables.id), refetchType: 'active' });
     },
   });
 }
