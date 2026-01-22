@@ -9,11 +9,17 @@ import { parseResponsibleValue } from "../components/filters/TicketResponsibleSe
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch, parsers } from "@/shared/url";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import type { TicketStatus, TicketType } from "../types";
 
 export default function TicketsListPage() {
   const navigate = useNavigate();
   const { isExternal } = useExternalUser();
+  const { isImpersonating, impersonatedUser } = useOptionalImpersonation();
+  
+  // Check if impersonating an external user
+  const isViewingAsExternal = isImpersonating && impersonatedUser?.employmentStatus === "external";
+  const canCreateTicket = !isExternal && !isViewingAsExternal;
   
   // URL State for filters
   const { value: search, setValue: setSearch } = useLocalSearch("q");
@@ -118,8 +124,8 @@ export default function TicketsListPage() {
           icon={Inbox}
           title="Nenhum ticket encontrado"
           description="Não há tickets que correspondam aos filtros selecionados."
-          actionLabel={isExternal ? undefined : "Criar primeiro ticket"}
-          onAction={isExternal ? undefined : () => navigate("/tickets/new")}
+          actionLabel={canCreateTicket ? "Criar primeiro ticket" : undefined}
+          onAction={canCreateTicket ? () => navigate("/tickets/new") : undefined}
         />
       ) : (
         <TicketsTable tickets={tickets} />

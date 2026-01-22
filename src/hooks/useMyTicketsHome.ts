@@ -1,11 +1,13 @@
 /**
  * Hook for fetching user's tickets for home dashboard
  * Returns recent tickets where user is creator or owner, plus summary stats
+ * Supports impersonation (including external users)
  */
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useIdentity } from "@/hooks/useIdentity";
+import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { homeKeys } from "@/lib/queryKeys/misc";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
@@ -36,6 +38,7 @@ export interface UseMyTicketsHomeResult {
   stats: MyTicketsHomeStats;
   isLoading: boolean;
   error: Error | null;
+  isViewingAsExternal: boolean;
 }
 
 const OPEN_STATUSES = ["waiting", "in_progress", "paused"] as const satisfies readonly TicketStatus[];
@@ -45,9 +48,13 @@ export function useMyTicketsHome(): UseMyTicketsHomeResult {
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
   const { profileId, isReady } = useIdentity();
+  const { isImpersonating, impersonatedUser, impersonatedUserId } = useOptionalImpersonation();
+  
+  // Check if impersonating an external user
+  const isViewingAsExternal = isImpersonating && impersonatedUser?.employmentStatus === "external";
 
   const { data, isLoading, error } = useQuery({
-    queryKey: homeKeys.myTicketsHome(buId ?? null, profileId ?? null),
+    queryKey: homeKeys.myTicketsHome(buId ?? null, profileId ?? null, isImpersonating ? impersonatedUserId : null),
     queryFn: async () => {
       if (!buId || !profileId) return { tickets: [], stats: { totalOpen: 0, overdueCount: 0, dueTodayCount: 0 } };
 
@@ -55,8 +62,24 @@ export function useMyTicketsHome(): UseMyTicketsHomeResult {
       const todayStart = startOfDay(now);
       const todayEnd = endOfDay(now);
 
-      // Fetch tickets where user is creator or owner
-      const { data: ticketsData, error: ticketsError } = await supabase
+      // During impersonation, use the RPC to get visible ticket IDs
+      let visibleTicketIds: string[] | null = null;
+      if (isImpersonating && impersonatedUserId) {
+        const { data: rpcResult, error: rpcError } = await supabase
+          .rpc("get_visible_ticket_ids_for_impersonation", {
+            p_profile_id: impersonatedUserId,
+          });
+        
+        if (rpcError) throw rpcError;
+        visibleTicketIds = rpcResult || [];
+        
+        if (visibleTicketIds.length === 0) {
+          return { tickets: [], stats: { totalOpen: 0, overdueCount: 0, dueTodayCount: 0 } };
+        }
+      }
+
+      // Build base query
+      let ticketsQuery = supabase
         .from("tickets")
         .select(`
           id,
@@ -70,10 +93,18 @@ export function useMyTicketsHome(): UseMyTicketsHomeResult {
         `)
         .eq("bu_id", buId)
         .is("deleted_at", null)
-        .or(`created_by_user_id.eq.${profileId},owner_user_id.eq.${profileId}`)
         .in("status", OPEN_STATUSES)
         .order("updated_at", { ascending: false })
         .limit(5);
+      
+      // Filter by visible IDs during impersonation, otherwise by creator/owner
+      if (visibleTicketIds !== null) {
+        ticketsQuery = ticketsQuery.in("id", visibleTicketIds);
+      } else {
+        ticketsQuery = ticketsQuery.or(`created_by_user_id.eq.${profileId},owner_user_id.eq.${profileId}`);
+      }
+
+      const { data: ticketsData, error: ticketsError } = await ticketsQuery;
 
       if (ticketsError) throw ticketsError;
 
@@ -99,7 +130,21 @@ export function useMyTicketsHome(): UseMyTicketsHomeResult {
         };
       });
 
-      // Fetch stats with separate count queries for accuracy
+      // Fetch stats - during impersonation, filter by visible IDs
+      let statsFilter: string | null = null;
+      if (visibleTicketIds !== null && visibleTicketIds.length > 0) {
+        // For stats during impersonation, we need to count from visible tickets
+        const openCount = tickets.length;
+        const overdueCount = tickets.filter(t => t.isOverdue).length;
+        const dueTodayCount = tickets.filter(t => t.isDueToday).length;
+        
+        return { 
+          tickets, 
+          stats: { totalOpen: openCount, overdueCount, dueTodayCount } 
+        };
+      }
+      
+      // Normal stats query (not impersonating)
       const [totalOpenResult, overdueResult, dueTodayResult] = await Promise.all([
         // Total open
         supabase
@@ -147,5 +192,6 @@ export function useMyTicketsHome(): UseMyTicketsHomeResult {
     stats: data?.stats || { totalOpen: 0, overdueCount: 0, dueTodayCount: 0 },
     isLoading,
     error: error as Error | null,
+    isViewingAsExternal,
   };
 }
