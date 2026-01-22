@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-01-22  
-**TCR Version:** 2.58.0
+**TCR Version:** 2.59.0
 
 ---
 
@@ -31,6 +31,7 @@
 |-----------|-----------|--------|
 | [DATA_MODEL_REGISTRY.md](./DATA_MODEL_REGISTRY.md) | **Fonte única de verdade** para schema (tabelas, views, funções, enums) | ✅ Canônico |
 | [DATA_MODEL_REGISTRY.json](./DATA_MODEL_REGISTRY.json) | Versão JSON para automação e scripts | ✅ Gerado |
+| [SCHEMA_QUICK_REFERENCE.md](./SCHEMA_QUICK_REFERENCE.md) | **Referência rápida de tabelas e colunas** para validação antes de migrations | ✅ v1.0.0 |
 
 ---
 
