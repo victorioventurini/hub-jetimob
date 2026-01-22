@@ -80,6 +80,8 @@ export interface AssetInventory {
   home_location?: { id: string; name: string } | null;
   current_location?: { id: string; name: string } | null;
   current_user?: { id: string; full_name: string; avatar_url: string | null } | null;
+  // Enriched from latest movement
+  expected_return_at?: string | null;
 }
 
 // Movimentações de Inventário

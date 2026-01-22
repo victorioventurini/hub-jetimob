@@ -1,6 +1,7 @@
 /**
  * TicketsTable - Table view for tickets listing
  * Displays tickets in a structured table format with columns
+ * Uses canonical styles from colors.ts for type and status badges
  */
 
 import { Link } from "react-router-dom";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { AlertTriangle, Clock, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TICKET_STATUS_STYLES, TICKET_TYPE_STYLES } from "@/lib/colors";
 import type { Ticket, TicketStatus, TicketType } from "../types";
 
 interface TicketsTableProps {
@@ -30,14 +32,6 @@ const statusLabels: Record<TicketStatus, string> = {
   paused: "Pausado",
   done: "Concluído",
   discarded: "Descartado",
-};
-
-const statusVariants: Record<TicketStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  waiting: "secondary",
-  in_progress: "default",
-  paused: "outline",
-  done: "default",
-  discarded: "destructive",
 };
 
 const typeLabels: Record<TicketType, string> = {
@@ -106,19 +100,15 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                 </TableCell>
                 
                 <TableCell>
-                  <Badge 
-                    variant={ticket.type === "external" ? "default" : "secondary"}
-                    className={cn(
-                      "text-xs",
-                      ticket.type === "external" && "bg-primary"
-                    )}
-                  >
+                  <Badge className={cn("gap-1.5 text-xs", TICKET_TYPE_STYLES[ticket.type].badge)}>
+                    <span className={cn("h-1.5 w-1.5 rounded-full", TICKET_TYPE_STYLES[ticket.type].dot)} />
                     {typeLabels[ticket.type]}
                   </Badge>
                 </TableCell>
                 
                 <TableCell>
-                  <Badge variant={statusVariants[ticket.status]}>
+                  <Badge className={cn("gap-1.5", TICKET_STATUS_STYLES[ticket.status].badge)}>
+                    <span className={cn("h-1.5 w-1.5 rounded-full", TICKET_STATUS_STYLES[ticket.status].dot)} />
                     {statusLabels[ticket.status]}
                   </Badge>
                 </TableCell>

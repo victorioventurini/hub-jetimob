@@ -31,7 +31,7 @@ const MOVEMENT_FIELDS = `
   notes, created_at
 `;
 
-// Helper to enrich items with location and profile data
+// Helper to enrich items with location, profile data, and expected return date
 async function enrichInventoryItems(
   supabase: ReturnType<typeof useOptionalBuScopedSupabase>,
   items: any[]
@@ -40,13 +40,26 @@ async function enrichInventoryItems(
 
   const locationIds = [...new Set(items.flatMap(i => [i.home_location_id, i.current_location_id].filter(Boolean)))];
   const profileIds = [...new Set(items.map(i => i.current_user_id).filter(Boolean))];
+  
+  // Get asset IDs with status 'loaned' to fetch their expected return dates
+  const loanedAssetIds = items.filter(i => i.status === 'loaned').map(i => i.id);
 
-  const [{ data: locations }, { data: profiles }] = await Promise.all([
+  const [{ data: locations }, { data: profiles }, { data: movements }] = await Promise.all([
     locationIds.length > 0 
       ? supabase.from("bu_locations").select("id, name").in("id", locationIds)
       : Promise.resolve({ data: [] }),
     profileIds.length > 0
       ? supabase.from("profiles").select("id, first_name, last_name, display_name, photo_url").in("id", profileIds)
+      : Promise.resolve({ data: [] }),
+    // Fetch latest checkout movement with due_at for loaned assets
+    loanedAssetIds.length > 0
+      ? supabase
+          .from("asset_movements")
+          .select("asset_id, due_at")
+          .in("asset_id", loanedAssetIds)
+          .eq("movement_type", "checkout")
+          .is("returned_at", null)
+          .order("occurred_at", { ascending: false })
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -56,12 +69,21 @@ async function enrichInventoryItems(
     full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sem nome',
     avatar_url: p.photo_url,
   }]));
+  
+  // Map asset_id to due_at (only first occurrence, which is the most recent)
+  const dueDateMap = new Map<string, string | null>();
+  for (const m of movements || []) {
+    if (!dueDateMap.has(m.asset_id)) {
+      dueDateMap.set(m.asset_id, m.due_at);
+    }
+  }
 
   return items.map(i => ({
     ...i,
     home_location: i.home_location_id ? locationMap.get(i.home_location_id) || null : null,
     current_location: i.current_location_id ? locationMap.get(i.current_location_id) || null : null,
     current_user: i.current_user_id ? profileMap.get(i.current_user_id) || null : null,
+    expected_return_at: i.status === 'loaned' ? dueDateMap.get(i.id) || null : null,
   })) as AssetInventory[];
 }
 
