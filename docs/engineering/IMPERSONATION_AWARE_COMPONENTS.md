@@ -141,14 +141,17 @@ export function useTeamManagement() {
 
 ### 4.2 Hooks que já usam `isWildcard`
 
-Hooks que usam `usePermissions().isWildcard` já são impersonation-aware:
+Hooks que usam `usePermissions().isWildcard` já são impersonation-aware porque
+`usePermissions()` busca as permissões do usuário impersonado (via `get_user_permissions_for_impersonation`):
 
 ```typescript
-// ✅ CORRETO: isWildcard retorna false durante impersonação
+// ✅ CORRETO: isWildcard reflete as permissões do usuário IMPERSONADO
+// Se impersonando colaborador comum: isWildcard = false
+// Se impersonando admin BU: isWildcard = true (porque tem '*')
 const { isWildcard } = usePermissions();
 
 const canManageTeam = (teamId: string): boolean => {
-  if (isWildcard) return true; // Só true se NÃO impersonando
+  if (isWildcard) return true; // True se usuário (ou impersonado) é admin
   return manageableTeams.some(t => t.team_id === teamId && t.can_manage);
 };
 ```
@@ -192,7 +195,7 @@ export function MyFormDialog({ item, ...props }: MyFormDialogProps) {
 | `KpiDashboardPage` | `src/modules/kpis/pages/KpiDashboardPage.tsx` | `usePermissions().has("kpis:manage")` |
 | `useTeamManagement` | `src/hooks/useTeamManagement.ts` | Impersonation-Aware Hook |
 | `useAssetPermissionsV2` | `src/modules/assets/hooks/useAssetPermissionsV2.ts` | Via `usePermissions().isWildcard` |
-| `useModuleAccess` | `src/hooks/useModuleAccess.ts` | Via `!isImpersonating && isAdmin` |
+| `useModuleAccess` | `src/hooks/useModuleAccess.ts` | Via `isWildcard` (impersonado) ou `isAdmin`/`userRole` (normal) |
 | `useCanManageTeamOkr` | `src/modules/okrs/hooks/useCanManageTeamOkr.ts` | Via `usePermissions().isWildcard` |
 
 ---

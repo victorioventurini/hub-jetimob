@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.54.0  
+**Versão:** 2.55.0  
 **Última atualização:** 2026-01-22
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0**
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0**
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2085,6 +2085,20 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.55.0 (2026-01-22) — Impersonation Wildcard Fix + can_view_ticket Hybrid User Support
+- **Impersonation Wildcard Fix v1.0**:
+  - Corrigido bug onde módulos não apareciam ao impersonar admin de BU
+  - `usePermissions().isWildcard` agora reflete corretamente as permissões do usuário impersonado
+  - Durante impersonação de admin BU: `isWildcard = true` (porque recebe `*` do backend)
+  - Durante impersonação de colaborador comum: `isWildcard = false`
+  - Atualizado `useModuleAccess.ts` e `useAssetPermissionsV2.ts` para usar `isWildcard` durante impersonação
+  - Documentação `IMPERSONATION_AWARE_COMPONENTS.md` atualizada com novo comportamento
+- **can_view_ticket Hybrid User Support v1.0**:
+  - Corrigida função `can_view_ticket()` para suportar usuários híbridos (profile + partner_contact)
+  - Usuários externos com profile que foram adicionados como participantes via `partner_contact_id` agora podem ver o ticket
+  - Ordem de verificação atualizada: 1) Creator/owner, 2) Participante interno, 3) Participante externo via auth.uid, 4) Profile com partner_contact, 5) Regras de visibilidade
+  - Corrigido enum `'all'` → `'bu_all'` e removido `'squads'` inexistente
 
 ### v2.54.0 (2026-01-22) — Saved Links for Tickets Module
 - **Saved Links System v1.2**:
