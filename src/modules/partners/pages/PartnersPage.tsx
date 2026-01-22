@@ -46,7 +46,7 @@ function PartnerCard({ partner, currentBuId }: { partner: GlobalPartnerCompany; 
   );
 
   return (
-    <Link to={`/partners/${partner.id}`}>
+    <Link to={`/settings/partners/${partner.id}`}>
       <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
         <CardContent className="p-4">
           <div className="flex items-start gap-4">
@@ -188,7 +188,7 @@ export default function PartnersPage() {
           description="Cadastro global de parceiros com ativação por unidade de negócio"
           actions={
             <Button asChild>
-              <Link to="/partners/new">
+              <Link to="/settings/partners/new">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Parceiro
               </Link>
