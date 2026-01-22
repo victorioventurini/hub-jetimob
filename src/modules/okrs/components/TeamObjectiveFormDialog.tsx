@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { DIALOG_SIZES } from '@/lib/dialog-sizes';
 import { Button } from '@/components/ui/button';
 import { Ban } from 'lucide-react';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
@@ -38,7 +39,7 @@ export function TeamObjectiveFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className={`${DIALOG_SIZES.md} max-h-[90vh] overflow-y-auto`}>
           <DialogHeader>
             <DialogTitle>
               {form.isEditing ? 'Editar Objetivo do Time' : 'Novo Objetivo de Time'}
