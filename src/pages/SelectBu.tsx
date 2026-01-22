@@ -64,10 +64,18 @@ export default function SelectBu() {
   const userBuIds = new Set(userBus.map((m) => m.bu_id));
 
   // Auto-redirect if user has access to only one BU
+  // Also handles the case where BuContext already auto-selected for single-BU users
   useEffect(() => {
-    if (!isLoading && userBus.length === 1) {
+    if (isLoading) return;
+    
+    if (userBus.length === 1) {
+      // Single BU user - select and redirect
       selectBu(userBus[0].bu_id);
       navigate(returnTo, { replace: true });
+    } else if (userBus.length === 0) {
+      // No BUs - redirect to dashboard (will show appropriate error)
+      console.warn("[SelectBu] User has no BU access, redirecting to home");
+      navigate("/", { replace: true });
     }
   }, [isLoading, userBus, selectBu, navigate, returnTo]);
 
@@ -104,13 +112,26 @@ export default function SelectBu() {
     navigate(returnTo, { replace: true });
   };
 
-  // Show loader while checking, or if auto-redirecting
-  if (isLoading || (!isLoading && userBus.length === 1)) {
+  // Show loader while checking, or while auto-redirecting for single-BU users
+  // The useEffect above handles the actual redirect
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Single BU user - show loading while useEffect redirects
+  if (userBus.length === 1) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Acessando...</p>
         </div>
       </div>
     );
