@@ -77,15 +77,17 @@ export function usePartnersByBu() {
 
 /**
  * Ativa ou cria associação de um parceiro com a BU atual
+ * IMPORTANTE: Usa cliente BU-scoped para respeitar RLS
  */
 export function useActivatePartnerInBu() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const supabaseBu = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (data: PartnerBuAssociationData) => {
       // Upsert: se já existe, atualiza; se não, cria
-      const { error } = await supabase
+      const { error } = await supabaseBu
         .from("partner_company_bu_associations")
         .upsert(
           {
@@ -119,10 +121,12 @@ export function useActivatePartnerInBu() {
 
 /**
  * Desativa parceiro em uma BU (não deleta, apenas is_active = false)
+ * IMPORTANTE: Usa cliente BU-scoped para respeitar RLS
  */
 export function useDeactivatePartnerInBu() {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const supabaseBu = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async ({
@@ -132,7 +136,7 @@ export function useDeactivatePartnerInBu() {
       partnerId: string;
       buId: string;
     }) => {
-      const { error } = await supabase
+      const { error } = await supabaseBu
         .from("partner_company_bu_associations")
         .update({
           is_active: false,
@@ -178,4 +182,86 @@ export function useTogglePartnerBuAssociation() {
     },
     isPending: activateMutation.isPending || deactivateMutation.isPending,
   };
+}
+
+// ============================================================
+// PLATFORM ADMIN HOOKS (Cross-BU, usam cliente global)
+// ============================================================
+
+/**
+ * Ativa parceiro em qualquer BU (Platform Admin only)
+ * Usa cliente global pois Platform Admin opera cross-BU
+ */
+export function useActivatePartnerInBuGlobal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: PartnerBuAssociationData) => {
+      const { error } = await supabase
+        .from("partner_company_bu_associations")
+        .upsert(
+          {
+            partner_company_id: data.partner_company_id,
+            bu_id: data.bu_id,
+            is_active: data.is_active ?? true,
+            notes: data.notes || null,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "partner_company_id,bu_id",
+          }
+        );
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: partnersKeys.all() });
+      queryClient.invalidateQueries({ queryKey: partnersKeys.byBu(variables.bu_id) });
+      queryClient.invalidateQueries({ queryKey: partnersKeys.buAssociations(variables.partner_company_id) });
+      toast.success("Parceiro ativado na unidade de negócio");
+    },
+    onError: (error: Error) => {
+      console.error("[useActivatePartnerInBuGlobal] Error:", error);
+      toast.error("Erro ao ativar parceiro");
+    },
+  });
+}
+
+/**
+ * Desativa parceiro em qualquer BU (Platform Admin only)
+ * Usa cliente global pois Platform Admin opera cross-BU
+ */
+export function useDeactivatePartnerInBuGlobal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      partnerId,
+      buId,
+    }: {
+      partnerId: string;
+      buId: string;
+    }) => {
+      const { error } = await supabase
+        .from("partner_company_bu_associations")
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("partner_company_id", partnerId)
+        .eq("bu_id", buId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: partnersKeys.all() });
+      queryClient.invalidateQueries({ queryKey: partnersKeys.byBu(variables.buId) });
+      queryClient.invalidateQueries({ queryKey: partnersKeys.buAssociations(variables.partnerId) });
+      toast.success("Parceiro desativado na unidade de negócio");
+    },
+    onError: (error: Error) => {
+      console.error("[useDeactivatePartnerInBuGlobal] Error:", error);
+      toast.error("Erro ao desativar parceiro");
+    },
+  });
 }
