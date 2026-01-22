@@ -116,7 +116,7 @@ export function useCreateMessage(author: CreateMessageAuthor) {
           messageId: message.id,
           files: data.attachments,
           uploadedByUserId: isExternalUser ? null : author.profileId,
-          buScopedSupabase,
+          supabaseClient: buScopedSupabase,
         });
       }
 
@@ -212,7 +212,8 @@ interface UploadAttachmentsParams {
   messageId: string;
   files: File[];
   uploadedByUserId: string | null;
-  buScopedSupabase: ReturnType<typeof useBuScopedSupabase>;
+  /** BU-scoped client (also used for storage to ensure JWT is attached) */
+  supabaseClient: ReturnType<typeof useBuScopedSupabase>;
 }
 
 async function uploadAttachments({
@@ -221,15 +222,15 @@ async function uploadAttachments({
   messageId,
   files,
   uploadedByUserId,
-  buScopedSupabase,
+  supabaseClient,
 }: UploadAttachmentsParams) {
   for (const file of files) {
     const fileExt = file.name.split('.').pop();
     const fileName = `${buId}/${ticketId}/${messageId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
 
-    // Upload to storage using global client (RLS handles auth)
-    // See docs/engineering/BU_SCOPED_SUPABASE_RULES.md for storage exception
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // Upload to storage using the BU-scoped client to ensure JWT is attached
+    // This fixes NO_BU_CONTEXT errors during cold starts / tab restores
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
       .from("ticket-attachments")
       .upload(fileName, file, {
         contentType: file.type,
@@ -246,7 +247,7 @@ async function uploadAttachments({
     const storagePath = uploadData.path;
 
     // Insert attachment record with storage path
-    await buScopedSupabase.from("ticket_attachments").insert({
+    await supabaseClient.from("ticket_attachments").insert({
       bu_id: buId,
       ticket_id: ticketId,
       message_id: messageId,
