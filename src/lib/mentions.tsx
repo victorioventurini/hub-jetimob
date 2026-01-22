@@ -172,7 +172,6 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
     
     // Determine if it's external or internal
     const isExternal = typeOrId === 'external';
-    const userId = typeOrId === 'external' ? null : (typeOrId === 'internal' ? id : id);
 
     if (isExternal) {
       // External contact - show tooltip
@@ -193,10 +192,13 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
       );
     } else {
       // Internal user - use UserHoverCard with Link
+      // The ID stored in mentions is profiles.id (domain identity), not auth.users.id
+      // Use profileId prop to ensure correct lookup
+      const profileId = typeOrId === 'internal' ? id : id;
       parts.push(
-        <UserHoverCard key={`${userId}-${match.index}`} userId={userId || id}>
+        <UserHoverCard key={`${profileId}-${match.index}`} profileId={profileId}>
           <Link
-            to={`/users/${userId || id}`}
+            to={`/users/${profileId}`}
             className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
