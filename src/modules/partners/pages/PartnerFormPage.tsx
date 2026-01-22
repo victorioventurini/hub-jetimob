@@ -154,7 +154,7 @@ export default function PartnerFormPage() {
         <PageHeader
           title="Novo Parceiro"
           description="Cadastre uma nova empresa parceira"
-          backTo="/partners"
+          backTo="/settings/partners"
           backLabel="Voltar para Parceiros"
         />
 

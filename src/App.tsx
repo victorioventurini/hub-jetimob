@@ -968,9 +968,9 @@ const App = () => {
                       }
                     />
 
-                    {/* Partners - Global Module */}
+                    {/* Partners - Moved to /settings */}
                     <Route
-                      path="/partners"
+                      path="/settings/partners"
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
@@ -982,7 +982,7 @@ const App = () => {
                       }
                     />
                     <Route
-                      path="/partners/new"
+                      path="/settings/partners/new"
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>
@@ -994,7 +994,7 @@ const App = () => {
                       }
                     />
                     <Route
-                      path="/partners/:partnerId"
+                      path="/settings/partners/:partnerId"
                       element={
                         <ProtectedRoute>
                           <BuRequiredRoute>

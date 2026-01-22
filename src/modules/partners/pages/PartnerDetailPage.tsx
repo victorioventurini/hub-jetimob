@@ -80,7 +80,7 @@ export default function PartnerDetailPage() {
         <div className="space-y-6 max-w-3xl">
           <PageHeader
             title="Carregando..."
-            backTo="/partners"
+            backTo="/settings/partners"
             backLabel="Voltar para Parceiros"
           />
           <DetailSkeleton />
@@ -95,7 +95,7 @@ export default function PartnerDetailPage() {
         <div className="space-y-6 max-w-3xl">
           <PageHeader
             title="Parceiro não encontrado"
-            backTo="/partners"
+            backTo="/settings/partners"
             backLabel="Voltar para Parceiros"
           />
           <Card>
@@ -120,7 +120,7 @@ export default function PartnerDetailPage() {
   const handleDelete = async () => {
     if (partnerId) {
       await deletePartner.mutateAsync(partnerId);
-      navigate("/partners");
+      navigate("/settings/partners");
     }
   };
 
@@ -139,7 +139,7 @@ export default function PartnerDetailPage() {
         <PageHeader
           title={partner.name}
           description={partner.legal_name || undefined}
-          backTo="/partners"
+          backTo="/settings/partners"
           backLabel="Voltar para Parceiros"
           actions={
             <div className="flex gap-2">

@@ -97,7 +97,7 @@ export default function HubPartnersPage() {
             />
           </div>
           <Button asChild>
-            <Link to="/partners/new">
+            <Link to="/settings/partners/new">
               <Plus className="h-4 w-4 mr-2" />
               Novo Parceiro
             </Link>
