@@ -215,13 +215,13 @@ docs/engineering/
 | 2.3 | Migrar `useState` → `useUrlState` | Frontend | ✅ `useLeaderScope.ts` |
 | 2.4 | Corrigir identity violations | Frontend | ✅ `useInventoryMutations.ts` (user.id → useIdentity().realProfileId) |
 
-### Wave 3 — Próximas 2 Semanas
+### Wave 3 — Refatoração de Arquivos Grandes ✅ **CONCLUÍDO 2026-01-22**
 
-| # | Ação | Tipo | Arquivos |
-|---|------|------|----------|
-| 3.1 | Refatorar `Users.tsx` (691 → <400 linhas) | Frontend | Extrair componentes |
-| 3.2 | Refatorar `TicketDetailPage.tsx` | Frontend | Extrair lógica |
-| 3.3 | Refatorar `Sidebar.tsx` | Frontend | Modularizar |
+| # | Ação | Tipo | Arquivos | Status |
+|---|------|------|----------|--------|
+| 3.1 | Refatorar `Users.tsx` | Frontend | 691 → 457 linhas (-34%) | ✅ Extraído `UsersTable.tsx` |
+| 3.2 | Refatorar `TicketDetailPage.tsx` | Frontend | 614 → 403 linhas (-34%) | ✅ Extraído `TicketDetailSidebar.tsx` |
+| 3.3 | Refatorar `Sidebar.tsx` | Frontend | Já está com 170 linhas (OK) | N/A |
 
 ### Wave 4 — Próximo Mês
 
@@ -274,7 +274,7 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 2. **Correção das 2 RLS policies** — Segurança
 3. **Habilitar password protection** — Segurança de auth
 
-### Saúde Geral do Projeto: **8.9/10** ⭐ (atualizado após Wave 2 completo)
+### Saúde Geral do Projeto: **9.0/10** ⭐ (atualizado após Wave 3 completo)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
