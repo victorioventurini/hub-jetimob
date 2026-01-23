@@ -1,15 +1,18 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.14.0  
-**Última atualização:** 2026-01-22  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Comprehensive Audit 2026-01-22 Completo**
-**Referência:** TCR v2.58.0
+**Versão:** 1.15.0  
+**Última atualização:** 2026-01-23  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0**
+**Referência:** TCR v2.67.0
 
 ---
 
 ## Índice
 
 - [A. Arquitetura e Contextos](#a-arquitetura-e-contextos)
+  - [A.1 PRE-BU vs POST-BU](#a1-pre-bu-vs-post-bu)
+  - [A.2 Context Resilience Pattern](#a2-context-resilience-pattern-v1150)
+  - [A.3 BU Scope Enforcement](#a3-bu-scope-enforcement)
 - [B. Identidade (auth vs profiles)](#b-identidade-auth-vs-profiles)
 - [C. Permissões (RBAC V2-only)](#c-permissões-rbac)
 - [D. Queries, Performance e DX](#d-queries-performance-e-dx)
@@ -118,7 +121,52 @@ const { data } = useQuery({
 });
 ```
 
-### A.2 BU Scope Enforcement
+### A.2 Context Resilience Pattern (v1.15.0)
+
+Hooks e providers que podem ser usados em rotas públicas (ex: `/auth`) DEVEM usar acesso resiliente ao contexto via `useContext` com optional chaining, ao invés de hooks que lançam exceção.
+
+#### Problema
+
+Rotas públicas são renderizadas **antes** de `AuthProvider` ou `BuProvider` estarem inicializados. Usar `useAuth()` ou `useBu()` diretamente causa crash:
+
+```typescript
+// ❌ ERRADO: Crash em rotas públicas
+const { user } = useAuth(); // Error: useAuth must be used within AuthProvider
+const { currentBu } = useBu(); // Error: useBu must be used within BuProvider
+```
+
+#### Solução: Acesso Resiliente
+
+```typescript
+import { useContext } from 'react';
+import { AuthContext, AuthContextType } from '@/hooks/useAuth';
+import { BuContext, BuContextType } from '@/contexts/BuContext';
+
+// ✅ CORRETO: Acesso seguro que não crasheia
+const authContext = useContext(AuthContext) as AuthContextType | undefined;
+const user = authContext?.user ?? null;
+const isAuthLoading = authContext?.isLoading ?? true;
+
+const buContext = useContext(BuContext);
+const currentBu = buContext?.currentBu ?? null;
+const buSelected = buContext?.buSelected ?? false;
+```
+
+#### Arquivos com Contexto Resiliente
+
+| Arquivo | Contexto | Justificativa |
+|---------|----------|---------------|
+| `useExternalUser.ts` | `AuthContext` | Bootstrap de usuários externos antes de BuProvider |
+| `usePageTitle.ts` | `BuContext` | Usado em páginas públicas (/auth, /auth/callback) |
+| `BuContext.tsx` | `AuthContext` | Inicializa antes de AuthProvider em rotas públicas |
+
+#### Padrão Obrigatório
+
+1. **Exportar contexto**: Contexts devem ser exportados para acesso direto
+2. **Optional chaining**: Usar `?.` para acessar propriedades
+3. **Defaults seguros**: Fornecer valores padrão (null, true, false) para evitar undefined
+
+### A.3 BU Scope Enforcement
 
 ```
 ⚠️ REGRA INQUEBRÁVEL: Todo dado operacional é escopado por BU.
