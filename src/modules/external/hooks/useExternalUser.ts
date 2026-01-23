@@ -7,13 +7,17 @@
  * BEFORE BuProvider is initialized - it's used to populate BuContext itself.
  */
 import { useQuery } from "@tanstack/react-query";
+import { useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthContext } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";
 
 export function useExternalUser() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  // Use optional context access to avoid throwing when outside AuthProvider
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
+  const isAuthLoading = authContext?.isLoading ?? true;
 
   const {
     data: externalData,

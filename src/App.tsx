@@ -182,29 +182,75 @@ const App = () => {
   }, []);
 
   return (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <BuProvider>
-            <ImpersonationProvider>
-              <ModuleProvider>
-                <VicProvider>
-                  <VicSidepanel />
-                  <ErrorBoundary>
-                    <Suspense fallback={<PageLoader />}>
-                      <Routes>
-                      {/* ===== ROTAS PÚBLICAS ===== */}
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/auth/callback" element={<AuthCallback />} />
-                      <Route path="/p/assets/:code" element={<PublicAsset />} />
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
-                      {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
-                    
-                    {/* Onboarding */}
-                    <Route
+/**
+ * Componente de roteamento que decide se deve renderizar rotas públicas
+ * ou as rotas autenticadas com BuProvider.
+ * 
+ * Conforme TCR v2.66.0: BuProvider depende de AuthProvider estar inicializado,
+ * e rotas públicas (/auth, /auth/callback, /p/assets/*) não devem carregar BuProvider.
+ */
+function AppRoutes() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* ===== ROTAS PÚBLICAS (sem BuProvider) ===== */}
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/p/assets/:code" element={<PublicAsset />} />
+        
+        {/* ===== ROTAS AUTENTICADAS (com BuProvider) ===== */}
+        <Route path="*" element={<AuthenticatedRoutesWrapper />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+/**
+ * Wrapper que envolve todas as rotas autenticadas com os providers necessários.
+ */
+function AuthenticatedRoutesWrapper() {
+  return (
+    <BuProvider>
+      <ImpersonationProvider>
+        <ModuleProvider>
+          <VicProvider>
+            <VicSidepanel />
+            <ErrorBoundary>
+              <AuthenticatedRoutes />
+            </ErrorBoundary>
+          </VicProvider>
+        </ModuleProvider>
+      </ImpersonationProvider>
+    </BuProvider>
+  );
+}
+
+/**
+ * Componente com todas as rotas autenticadas.
+ * Já está envolvido pelos providers em AuthenticatedRoutesWrapper.
+ */
+function AuthenticatedRoutes() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* ===== ÁREA GLOBAL DO HUB (sem contexto de BU) ===== */}
+        
+        {/* Onboarding */}
+        <Route
                       path="/onboarding"
                       element={
                         <ProtectedRoute skipBuCheck skipOnboardingCheck>
@@ -1044,46 +1090,35 @@ const App = () => {
                       }
                     />
 
-                    {/* BU Areas Settings */}
-                    <Route
-                      path="/settings/areas"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <HubLayout>
-                              <AreasPage />
-                            </HubLayout>
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
+        {/* BU Areas Settings */}
+        <Route
+          path="/settings/areas"
+          element={
+            <ProtectedRoute>
+              <BuRequiredRoute>
+                <HubLayout>
+                  <AreasPage />
+                </HubLayout>
+              </BuRequiredRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/me/notifications"
+          element={
+            <ProtectedRoute>
+              <BuRequiredRoute>
+                <NotificationsPage />
+              </BuRequiredRoute>
+            </ProtectedRoute>
+          }
+        />
 
-                    {/* User Notifications */}
-                    <Route
-                      path="/me/notifications"
-                      element={
-                        <ProtectedRoute>
-                          <BuRequiredRoute>
-                            <NotificationsPage />
-                          </BuRequiredRoute>
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </ErrorBoundary>
-              </VicProvider>
-            </ModuleProvider>
-          </ImpersonationProvider>
-        </BuProvider>
-      </AuthProvider>
-    </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
-};
+}
 
 export default App;
