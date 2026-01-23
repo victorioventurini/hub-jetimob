@@ -7,10 +7,11 @@ import { Loader2, AlertCircle } from "lucide-react";
 /**
  * AuthCallback
  * 
- * Handles magic link authentication callback.
+ * Handles Magic Link authentication callback.
  * 
- * The magic link email includes token_hash and email as query params (not hash fragment)
- * because SendGrid click tracking strips the hash. We use verifyOtp to complete auth.
+ * The Magic Link email includes token_hash and type as query params (not hash fragment)
+ * because SendGrid click tracking strips the hash. We call supabase.auth.verifyOtp() 
+ * with token_hash and type="magiclink" to complete the authentication.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function AuthCallback() {
         if (tokenHash && type === "magiclink") {
           console.log("[AuthCallback] Processing magic link with token_hash");
           
-          // Use verifyOtp with token_hash to complete authentication
+          // Complete Magic Link authentication using token_hash
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: "magiclink",

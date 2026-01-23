@@ -28,7 +28,7 @@ async function performLogin(page: Page, email: string): Promise<void> {
   const submitButton = page.locator('button[type="submit"]');
   await submitButton.click();
   
-  // Note: In test environment, we'd mock the OTP verification
+  // Note: In test environment, we'd mock the Magic Link callback
   // For now, this sets up the flow - actual auth would need backend mocking
 }
 
