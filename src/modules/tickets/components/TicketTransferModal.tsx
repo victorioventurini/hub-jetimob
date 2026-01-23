@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Search, User, Building2, Check } from "lucide-react";
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
-import { usePartnerCompanyContacts } from "../hooks/usePartnerCompanyContacts";
+import { usePartnerCompanyContacts } from "@/modules/tickets/hooks";
 import { getInitials } from "@/lib/mentions";
 
 // ===========================================

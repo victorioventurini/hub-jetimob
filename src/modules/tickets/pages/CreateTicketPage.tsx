@@ -19,9 +19,15 @@ import { ArrowLeft, CalendarIcon, Loader2, Paperclip, X, FileIcon, AlertCircle, 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useCreateTicket, useTicketCategories, useAvailableExternalContacts } from "@/modules/tickets/hooks";
-
-import { usePartnerCategories, usePartnerSubcategories, useHasPartnerServices, usePartnersByCategory } from "../hooks/usePartnerServices";
+import { 
+  useCreateTicket, 
+  useTicketCategories, 
+  useAvailableExternalContacts,
+  usePartnerCategories, 
+  usePartnerSubcategories, 
+  useHasPartnerServices,
+  usePartnersByCategory,
+} from "@/modules/tickets/hooks";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";

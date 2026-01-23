@@ -18,7 +18,7 @@ import {
 import {
   useAvailableExternalContacts,
   type AvailableExternalContact,
-} from "../../hooks/useAvailableExternalContacts";
+} from "@/modules/tickets/hooks";
 
 interface ExternalContactSelectProps {
   partnerCompanyId: string | undefined;

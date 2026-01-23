@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useCheckContactByEmail } from "../../../hooks/usePartnerContactGlobal";
+import { useCheckContactByEmail } from "@/modules/tickets/hooks";
 import type { PartnerCompany } from "../../../types";
 
 const emailSchema = z.object({

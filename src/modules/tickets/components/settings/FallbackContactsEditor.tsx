@@ -16,11 +16,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { usePartnerContacts } from "../../hooks/usePartners";
-import {
+import { 
+  usePartnerContacts,
   useCompanyFallbackContacts,
   useUpdateFallbackContacts,
-} from "../../hooks/useAvailableExternalContacts";
+} from "@/modules/tickets/hooks";
 
 interface FallbackContactsEditorProps {
   companyId: string;

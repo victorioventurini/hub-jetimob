@@ -29,7 +29,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { formatPhoneInput, normalizePhone } from "@/lib/phone";
-import { useCreateGlobalContact } from "../../../hooks/usePartnerContactGlobal";
+import { useCreateGlobalContact } from "@/modules/tickets/hooks";
 import type { PartnerCompany } from "../../../types";
 
 const formSchema = z.object({

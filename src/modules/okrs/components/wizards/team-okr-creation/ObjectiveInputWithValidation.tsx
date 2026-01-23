@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle2, Pencil, Sparkles, AlertCircle, Lightbulb } from 'lucide-react';
 import { VicTypewriterText } from '@/modules/vic';
 import { FEEDBACK_STYLES } from '@/lib/colors';
-import type { ObjectiveValidationFeedback } from '@/modules/okrs/hooks/useWizardDraft';
+import type { ObjectiveValidationFeedback } from '@/modules/okrs/hooks';
 
 // ============================================================
 // TYPES

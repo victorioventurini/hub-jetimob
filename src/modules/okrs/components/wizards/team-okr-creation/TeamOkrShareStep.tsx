@@ -17,10 +17,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Sparkles, Copy, CheckCircle2, Loader2, MessageSquare, Target, Users, Quote } from 'lucide-react';
 import { VicLoadingState, VicTypewriterText } from '@/modules/vic';
 import { WizardLastStepFooter } from '../shared';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import { useWizardAI, type ShareStepContent } from '@/modules/okrs/hooks';
 import { toast } from 'sonner';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
-import type { ShareStepContent } from '@/modules/okrs/hooks/useWizardDraft';
 
 // ============================================================
 // TYPES
