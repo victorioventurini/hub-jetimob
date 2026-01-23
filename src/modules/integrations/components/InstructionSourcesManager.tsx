@@ -44,7 +44,13 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
-import { useInstructionSources, useCreateInstructionSource, useUpdateInstructionSource, useDeleteInstructionSource, type InstructionSourceRow } from '../hooks/useInstructionSources';
+import { 
+  useInstructionSources, 
+  useCreateInstructionSource, 
+  useUpdateInstructionSource, 
+  useDeleteInstructionSource, 
+  type InstructionSourceRow 
+} from '@/modules/integrations/hooks';
 import type { InstructionSourceType } from '../types';
 import type { Json } from '@/integrations/supabase/types';
 

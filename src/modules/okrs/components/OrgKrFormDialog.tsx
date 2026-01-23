@@ -38,7 +38,7 @@ import { validateOrgKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useCancelOrgKeyResult } from '../hooks/useOkrMutations';
+import { useCancelOrgKeyResult } from '@/modules/okrs/hooks';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection } from '../types';
 

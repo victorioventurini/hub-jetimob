@@ -1,10 +1,7 @@
 import { FileBarChart, Package, Key, Gift, Clock, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useInventory } from "../hooks/useInventory";
-import { useKeys } from "../hooks/useKeys";
-import { useGifts } from "../hooks/useGifts";
-import { useAssetPermissionsV2 } from "../hooks/useAssetPermissionsV2";
+import { useInventory, useKeys, useGifts, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default function AssetsReportsPage() {

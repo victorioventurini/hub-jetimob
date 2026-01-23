@@ -162,7 +162,7 @@ export { useOrgOkrsForContext } from './useOrgOkrsForContext';
 // WIZARD HOOKS
 // =========================
 export { useWizardDraft, type WizardStep } from './useWizardDraft';
-export { useKrWizardDraft } from './useKrWizardDraft';
+export { useKrWizardDraft, type KrWizardStep } from './useKrWizardDraft';
 export { useGenericWizardDraft } from './useGenericWizardDraft';
 export { useWizardAI } from './useWizardAI';
 export { useWizardOrchestrator } from './useWizardOrchestrator';

@@ -1,8 +1,32 @@
-// Integrations module hooks barrel export
+/**
+ * Integrations Module Hooks Barrel
+ * 
+ * Consolidated exports from all integration-related hooks.
+ * All imports should come from this file, NOT from individual hook files.
+ * 
+ * @see docs/canonical/DEVELOPMENT_STANDARDS.md (Section K: Hooks e Barrel Files)
+ */
 
+// Core integrations
 export * from "./useIntegrations";
-export { useAgentDocuments } from "./useAgentDocuments";
-export { useInstructionSources } from "./useInstructionSources";
+
+// Agent documents
+export { 
+  useAgentDocuments, 
+  useUploadAgentDocument, 
+  useDeleteAgentDocument 
+} from "./useAgentDocuments";
+
+// Instruction sources
+export { 
+  useInstructionSources, 
+  useCreateInstructionSource, 
+  useUpdateInstructionSource, 
+  useDeleteInstructionSource,
+  type InstructionSourceRow,
+} from "./useInstructionSources";
+
+// Performance metrics
 export { 
   usePerfMetricsLatest, 
   usePerfMetricsHistory, 
