@@ -114,6 +114,8 @@ export function ContactHoverCard({
         ) : contact ? (
           <Link 
             to={`/contacts/${contact.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="block p-4 hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-start gap-3">
