@@ -164,7 +164,7 @@ export function TicketDetailSidebar({
                 </Avatar>
                 <UserLink
                   profileId={createdBy.id}
-                  displayName={createdBy.display_name || "Usuário"}
+                  displayName={createdBy.display_name || "Alguém"}
                   openInNewTab
                   className="text-sm"
                 />
@@ -254,7 +254,7 @@ function ResponsibleSection({ type, user, contact, onTransferClick }: Responsibl
           </Avatar>
           <UserLink
             profileId={user.id}
-            displayName={user.display_name || "Usuário"}
+            displayName={user.display_name || "Alguém"}
             openInNewTab
             className="text-sm"
           />
@@ -300,7 +300,7 @@ function ViewersUsersSection({ users }: { users: ViewerUser[] }) {
             </Avatar>
             <UserLink
               profileId={user.id}
-              displayName={user.display_name || "Usuário"}
+              displayName={user.display_name || "Alguém"}
               openInNewTab
               className="text-xs"
             />
@@ -330,7 +330,7 @@ function MentionsSection({ mentions }: { mentions: Mention[] }) {
             {mention.type === "user" ? (
               <UserLink
                 profileId={mention.id}
-                displayName={mention.display_name || "Usuário"}
+                displayName={mention.display_name || "Alguém"}
                 openInNewTab
                 className="text-xs"
               />

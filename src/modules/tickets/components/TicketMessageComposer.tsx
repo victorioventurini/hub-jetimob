@@ -79,7 +79,7 @@ function getMessageText(bodyRichtext: RichTextContent): string {
  * Convert TicketMessage to GenericMessage for ReplyPreview.
  */
 function ticketMessageToGeneric(message: TicketMessage): GenericMessage {
-  const authorName = message.author_user?.display_name ?? message.author_contact?.name ?? "Usuário";
+  const authorName = message.author_user?.display_name ?? message.author_contact?.name ?? "Alguém";
   const isExternal = message.author_type === "partner_contact";
 
   return {
