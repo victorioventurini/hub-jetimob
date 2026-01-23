@@ -25,7 +25,8 @@
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
 >
 > ### Relatórios de Saúde e Compliance
-> - [HEALTH_REPORT_2026-01-22.md](../audits/HEALTH_REPORT_2026-01-22.md) — **Relatório de saúde técnica atual**
+> - [SYSTEMIC_HEALTH_ANALYSIS_2026-01-23.md](../audits/SYSTEMIC_HEALTH_ANALYSIS_2026-01-23.md) — **Análise sistêmica de saúde** ⭐
+> - [HEALTH_REPORT_2026-01-22.md](../audits/HEALTH_REPORT_2026-01-22.md) — Relatório de saúde técnica
 > - [COMPLIANCE_BASELINE.md](../audits/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
 >
 > ### Testes Automatizados
