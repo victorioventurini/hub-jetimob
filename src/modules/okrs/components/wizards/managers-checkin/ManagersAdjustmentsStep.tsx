@@ -58,10 +58,10 @@ export function ManagersAdjustmentsStep({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-green-500/10 to-transparent">
+      <div className="px-6 py-4 border-b bg-gradient-to-r from-success/10 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-            <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <div className="p-2 rounded-lg bg-success-muted">
+            <Target className="h-5 w-5 text-success" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">Ajustes de Foco</h3>
@@ -98,7 +98,7 @@ export function ManagersAdjustmentsStep({
                 <Card key={index}>
                   <CardContent className="p-3">
                     <div className="flex items-start gap-3">
-                      <Target className="h-4 w-4 mt-1 text-green-600" />
+                      <Target className="h-4 w-4 mt-1 text-success" />
                       <p className="flex-1 text-sm">{adjustment}</p>
                       <Button
                         variant="ghost"
@@ -147,7 +147,7 @@ export function ManagersAdjustmentsStep({
           </Button>
           <Button 
             onClick={onComplete} 
-            className="flex-1 bg-green-600 hover:bg-green-700" 
+            className="flex-1 bg-success hover:bg-success/90" 
             size="lg"
           >
             <CheckCircle2 className="h-4 w-4 mr-2" />

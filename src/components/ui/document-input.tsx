@@ -189,7 +189,7 @@ const DocumentInput = React.forwardRef<HTMLInputElement, DocumentInputProps>(
           placeholder="Digite CPF ou CNPJ"
         className={cn(
             "pr-10",
-            showStatus && isValid && "border-emerald-500 focus-visible:ring-emerald-500/20",
+            showStatus && isValid && "border-success focus-visible:ring-success/20",
             showStatus && !isValid && "border-destructive focus-visible:ring-destructive/20",
             className
           )}
@@ -202,7 +202,7 @@ const DocumentInput = React.forwardRef<HTMLInputElement, DocumentInputProps>(
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : showStatus ? (
             isValid ? (
-              <Check className="h-4 w-4 text-emerald-500" />
+              <Check className="h-4 w-4 text-success" />
             ) : (
               <X className="h-4 w-4 text-destructive" />
             )

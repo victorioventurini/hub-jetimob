@@ -25,10 +25,10 @@ export function CLevelInsightsStep({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-amber-500/5 to-transparent">
+      <div className="px-6 py-4 border-b bg-gradient-to-r from-warning/5 to-transparent">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/10">
-            <Lightbulb className="h-5 w-5 text-amber-500" />
+          <div className="p-2 rounded-lg bg-warning/10">
+            <Lightbulb className="h-5 w-5 text-warning" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">Insights Estratégicos</h3>
@@ -45,7 +45,7 @@ export function CLevelInsightsStep({
           <Card>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium">NPS precisa de atenção</p>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -60,7 +60,7 @@ export function CLevelInsightsStep({
           <Card>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <TrendingUp className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <TrendingUp className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium">Receita em boa trajetória</p>
                   <p className="text-sm text-muted-foreground mt-1">

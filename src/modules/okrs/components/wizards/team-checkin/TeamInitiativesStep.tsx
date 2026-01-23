@@ -92,7 +92,7 @@ export function TeamInitiativesStep({
         <div className="p-6 space-y-3">
           {!hasContent ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+              <CheckCircle2 className="h-12 w-12 text-success mb-4" />
               <h4 className="font-medium text-lg">Nenhuma iniciativa crítica</h4>
               <p className="text-sm text-muted-foreground mt-1">
                 Todas as iniciativas estão em bom estado.
@@ -108,7 +108,7 @@ export function TeamInitiativesStep({
                   key={initiative.id}
                   className={cn(
                     "transition-colors",
-                    initiative.status === 'blocked' && "border-red-200 dark:border-red-800/50"
+                    initiative.status === 'blocked' && "border-danger/50"
                   )}
                 >
                   <CardContent className="p-4">

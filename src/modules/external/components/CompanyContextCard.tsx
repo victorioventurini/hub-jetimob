@@ -66,7 +66,7 @@ export function CompanyContextCard({ context, isLoading }: CompanyContextCardPro
 
         {/* Routing message */}
         <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
-          <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+          <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
           <p className="text-sm text-muted-foreground">
             Seus tickets são automaticamente direcionados para os especialistas corretos.
           </p>

@@ -171,7 +171,7 @@ export function ObjectiveChecklistCard({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {assessment.strengths?.length > 0 && (
                     <div className="space-y-2">
-                      <h5 className="text-xs font-medium text-green-600 flex items-center gap-1">
+                      <h5 className="text-xs font-medium text-success flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Pontos Fortes
                       </h5>
@@ -187,7 +187,7 @@ export function ObjectiveChecklistCard({
 
                   {assessment.improvements?.length > 0 && (
                     <div className="space-y-2">
-                      <h5 className="text-xs font-medium text-amber-600 flex items-center gap-1">
+                      <h5 className="text-xs font-medium text-warning flex items-center gap-1">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         Sugestões de Melhoria
                       </h5>
@@ -272,7 +272,7 @@ function KrFeedbackCard({ feedback }: { feedback: KrFeedback }) {
         <div className="space-y-1">
           {feedback.improvements.map((imp, i) => (
             <p key={i} className="text-xs text-muted-foreground flex items-start gap-1">
-              <span className="text-amber-600">→</span>
+              <span className="text-warning">→</span>
               {imp}
             </p>
           ))}
@@ -283,7 +283,7 @@ function KrFeedbackCard({ feedback }: { feedback: KrFeedback }) {
         <div className="space-y-1">
           {feedback.strengths.map((str, i) => (
             <p key={i} className="text-xs text-muted-foreground flex items-start gap-1">
-              <span className="text-green-600">✓</span>
+              <span className="text-success">✓</span>
               {str}
             </p>
           ))}
