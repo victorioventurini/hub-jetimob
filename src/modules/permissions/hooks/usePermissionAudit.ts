@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase as authSupabase } from "@/integrations/supabase/client";
+import { supabase as authSupabase } from "@/integrations/supabase/globalClient";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 

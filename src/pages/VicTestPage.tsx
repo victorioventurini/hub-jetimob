@@ -17,7 +17,7 @@ import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks";
 import { VIC_AGENTS, type VicAgentSlug } from "@/modules/vic/types";
 import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface TestResult {

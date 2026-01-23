@@ -32,7 +32,7 @@ import {
   useCreateAgent,
   useUpdateAgent,
 } from '@/modules/integrations/hooks';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/globalClient';
 import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';

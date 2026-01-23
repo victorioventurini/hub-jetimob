@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createBuScopedClient } from '@/integrations/supabase/useBuScopedSupabase';
-import { supabase as supabaseGlobal } from '@/integrations/supabase/client';
+import { supabase as supabaseGlobal } from '@/integrations/supabase/globalClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { useExternalUser } from '@/modules/external/hooks/useExternalUser';

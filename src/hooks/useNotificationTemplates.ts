@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
-import { supabase as globalSupabase } from '@/integrations/supabase/client';
+import { supabase as globalSupabase } from '@/integrations/supabase/globalClient';
 
 // Types
 export interface NotificationTemplate {
