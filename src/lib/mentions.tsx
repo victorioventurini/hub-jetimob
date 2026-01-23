@@ -149,7 +149,58 @@ export function getMentionPlainText(text: string): string {
 // ============================================================
 
 /**
+ * URL detection regex - matches http, https, and www URLs
+ * Captures the full URL including path, query params, and fragments
+ */
+const URL_REGEX = /(?:https?:\/\/|www\.)[^\s<>\[\]()]+(?:\([^\s<>\[\]()]*\)|[^\s<>\[\]().,;:!?"'`])/gi;
+
+/**
+ * Linkify plain text - detects URLs and converts them to clickable links.
+ * Opens links in new tab with security attributes.
+ */
+export function linkifyText(text: string, keyPrefix: string = ''): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const regex = new RegExp(URL_REGEX.source, 'gi');
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before URL
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    let url = match[0];
+    // Ensure URL has protocol
+    const href = url.startsWith('www.') ? `https://${url}` : url;
+
+    parts.push(
+      <a
+        key={`${keyPrefix}url-${match.index}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline hover:text-primary/80 transition-colors break-all"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {url}
+      </a>
+    );
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
+/**
  * Parse mentions for display - converts mention syntax to styled React elements.
+ * Also linkifies plain text URLs, making them clickable with target="_blank".
  * Supports both new format (@[Name](type:id)) and legacy format (@[Name](id)).
  */
 export function parseMentionsForDisplay(text: string): React.ReactNode[] {
@@ -161,9 +212,10 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
   let match;
 
   while ((match = combinedRegex.exec(text)) !== null) {
-    // Add text before mention
+    // Add text before mention (with linkification)
     if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
+      const textBefore = text.slice(lastIndex, match.index);
+      parts.push(...linkifyText(textBefore, `pre-${match.index}-`));
     }
 
     const displayName = match[1];
@@ -208,12 +260,13 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
+  // Add remaining text (with linkification)
   if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
+    const remainingText = text.slice(lastIndex);
+    parts.push(...linkifyText(remainingText, `post-${lastIndex}-`));
   }
 
-  return parts.length > 0 ? parts : [text];
+  return parts.length > 0 ? parts : linkifyText(text, 'full-');
 }
 
 // ============================================================
