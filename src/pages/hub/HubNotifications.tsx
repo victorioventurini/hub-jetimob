@@ -814,7 +814,7 @@ export default function HubNotifications() {
                                 'destructive'
                               }
                               className={cn(
-                                item.status === 'sent' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                item.status === 'sent' && "bg-success-muted text-success"
                               )}
                             >
                               {item.status === 'sent' && <CheckCircle className="h-3 w-3 mr-1" />}
@@ -825,7 +825,7 @@ export default function HubNotifications() {
                           </TableCell>
                           <TableCell className="text-center">
                             {item.retries > 0 ? (
-                              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                              <span className="text-warning font-medium">
                                 {item.retries}
                               </span>
                             ) : '0'}

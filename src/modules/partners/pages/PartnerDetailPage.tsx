@@ -221,7 +221,7 @@ export default function PartnerDetailPage() {
                     <span className="text-muted-foreground">Status na BU atual:</span>
                     <span className="ml-2">
                       {isActiveInCurrentBu ? (
-                        <span className="text-emerald-600 flex items-center gap-1 inline-flex">
+                        <span className="text-success flex items-center gap-1 inline-flex">
                           <Check className="h-3 w-3" /> Ativo
                         </span>
                       ) : (

@@ -415,11 +415,11 @@ export function TeamOkrSharingStep({
             )}
 
             {/* Coach Insight */}
-            <Card className="bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/50">
+            <Card className="bg-warning-muted border-warning/30">
               <CardContent className="py-3">
                 <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <Info className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-warning-muted-foreground">
                     <strong>Coach de OKRs:</strong> Em OKRs compartilhadas, KRs do tipo "Fundacional" devem ser evitados. 
                     Prefira KRs de "Contribuição" que medem a parte do resultado sob responsabilidade de cada time.
                   </p>

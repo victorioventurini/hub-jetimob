@@ -181,7 +181,7 @@ export function AiInsightsCard({
       <Card className={className}>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-4 h-4 text-status-purple" />
             {title}
           </CardTitle>
         </CardHeader>
@@ -208,7 +208,7 @@ export function AiInsightsCard({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-500" />
+              <Sparkles className="w-4 h-4 text-status-purple" />
               {title}
             </CardTitle>
             {onRefresh && (
@@ -220,7 +220,7 @@ export function AiInsightsCard({
         </CardHeader>
         <CardContent>
           <Alert className="bg-muted/50 border-muted">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-success" />
             <AlertDescription className="text-sm">
               Nenhum insight disponível no momento. Os agentes de IA estão monitorando continuamente.
             </AlertDescription>
@@ -241,7 +241,7 @@ export function AiInsightsCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-4 h-4 text-status-purple" />
             {title}
             <Badge variant="secondary" className="text-[10px]">
               {insights.length}
