@@ -8992,6 +8992,10 @@ export type Database = {
           subcategory_count: number
         }[]
       }
+      get_partner_contact_ticket_stats: {
+        Args: { p_contact_id: string }
+        Returns: Json
+      }
       get_partner_subcategories: {
         Args: { p_category_id: string; p_partner_company_id: string }
         Returns: {
