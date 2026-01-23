@@ -15,7 +15,7 @@ import { useBu } from '@/contexts/BuContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useHomeDashboard } from '@/hooks/useHomeDashboard';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
-import { useVicAgent } from '@/modules/vic/hooks/useVicAgent';
+import { useVicAgent } from '@/modules/vic/hooks';
 
 interface ProductivityContext {
   dayOfWeek: string;

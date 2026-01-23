@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { useVicAgent } from '@/modules/vic/hooks/useVicAgent';
+import { useVicAgent } from '@/modules/vic/hooks';
 import type { VicAgentSlug, VicContext } from '@/modules/vic/types';
 import type { 
   WizardPersona, 

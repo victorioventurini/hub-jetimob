@@ -1,22 +1,44 @@
-// Tickets module hooks barrel export
+/**
+ * Tickets Module Hooks Barrel
+ * 
+ * Consolidated exports from all ticket-related hooks.
+ * All imports should come from this file, NOT from individual hook files.
+ * 
+ * @see docs/canonical/DEVELOPMENT_STANDARDS.md (Section K: Hooks e Barrel Files)
+ */
 
-// Core tickets
+// Core ticket queries
 export { 
   useTickets, 
   useTicket, 
-  useMyTickets, 
+  useMyTickets 
+} from './useTicketQueries';
+
+// Core ticket mutations
+export { 
   useCreateTicket, 
   useUpdateTicket, 
   useUpdateTicketStatus, 
-  useDeleteTicket 
-} from './useTickets';
+  useDeleteTicket,
+  type StatusChangeContext,
+} from './useTicketMutations';
 
-// Messages (split into queries and mutations for modularity)
+// Query utilities
+export { 
+  fetchMessagesCounts, 
+  fetchMentions, 
+  normalizeTicketRelations,
+  type MentionRow,
+  type MentionInfo,
+} from './ticketQueryUtils';
+
+// Messages queries
 export { 
   useTicketMessages, 
   useTicketAttachments,
 } from './useTicketMessageQueries';
 
+// Messages mutations
 export { 
   useCreateMessage, 
   useEditMessage, 
