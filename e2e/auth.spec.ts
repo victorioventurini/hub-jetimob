@@ -46,15 +46,14 @@ test.describe('Authentication Flow', () => {
     const submitButton = page.locator('button[type="submit"]');
     await submitButton.click();
     
-    // Should either show OTP input or redirect
+    // Should show success message (Magic Link sent) or redirect
     await page.waitForTimeout(1000);
     
-    // Check if we're on a different state (OTP input, loading, or redirect)
-    const hasOtpInput = await page.locator('input[type="text"][maxlength="6"], [data-testid="otp-input"]').isVisible();
-    const hasSuccessMessage = await page.locator('text=/código|verificação|enviado/i').isVisible();
+    // Check if we're on a different state (success message, loading, or redirect)
+    const hasSuccessMessage = await page.locator('text=/link|enviado|email|acesso/i').isVisible();
     const urlChanged = page.url() !== `http://localhost:5173${ROUTES.auth}`;
     
-    expect(hasOtpInput || hasSuccessMessage || urlChanged).toBeTruthy();
+    expect(hasSuccessMessage || urlChanged).toBeTruthy();
   });
 
   test('should have accessible form elements', async ({ page }) => {

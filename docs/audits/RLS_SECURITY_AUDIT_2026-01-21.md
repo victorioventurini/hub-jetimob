@@ -138,7 +138,7 @@ CREATE POLICY "..." ON audit_table
 
 | Warning | Razão para Ignorar |
 |---------|-------------------|
-| Leaked Password Protection Disabled | Plataforma usa OTP (sem senhas tradicionais) |
+| Leaked Password Protection Disabled | Plataforma usa Magic Link (sem senhas tradicionais) |
 
 ---
 

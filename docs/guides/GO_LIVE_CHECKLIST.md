@@ -97,7 +97,7 @@
 
 ## 7. Funcionalidades Críticas (Smoke Test)
 
-- [ ] Login via OTP Code funciona
+- [ ] Login via Magic Link funciona
 - [ ] Criação automática de profile via trigger
 - [ ] Troca de BU funciona
 - [ ] CRUD de Usuários
@@ -119,7 +119,7 @@
 
 ## 8. Edge Functions & Integrações
 
-- [ ] `request-magic-link` funcionando (envia OTP Code)
+- [ ] `request-magic-link` funcionando (envia Magic Link)
 - [ ] `global-search` validando BU e permissões
 - [ ] `get-public-asset` sanitizando corretamente
 - [ ] Nenhuma Edge Function legada ativa

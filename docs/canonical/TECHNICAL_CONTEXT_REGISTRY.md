@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.64.0  
-**Última atualização:** 2026-01-22
+**Versão:** 2.65.0  
+**Última atualização:** 2026-01-23
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth OTP Code ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3 Hooks Barrel Consolidation v1.0** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (16 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **System Health Score 10/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3 Hooks Barrel Consolidation v1.0** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (16 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **System Health Score 10/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -65,29 +65,30 @@
 | **Roteamento** | React Router DOM v6 |
 | **Backend** | Supabase (Lovable Cloud) |
 | **Banco de Dados** | PostgreSQL |
-| **Autenticação** | Supabase Auth (OTP Code via email) |
+| **Autenticação** | Supabase Auth (Magic Link via email) |
 | **Storage** | Supabase Storage |
 | **Funções Serverless** | Supabase Edge Functions (Deno) |
 | **IA** | Lovable AI (Google Gemini / OpenAI) |
 
 ### 1.2 Modelo de Autenticação
 
-- **Método:** OTP Code (código de 6 dígitos via email)
+- **Método:** Magic Link (link de acesso via email)
 - **Validação de Domínio:** Usuários só podem fazer login se o domínio do email estiver cadastrado em uma BU ativa
 - **Fluxo:**
   1. Usuário insere email
   2. Sistema valida se domínio pertence a uma BU ativa
   3. **Para usuários internos:** Verifica se existe perfil pré-cadastrado em `profiles`
-  4. Se válido, envia código OTP de 6 dígitos via email (Supabase Auth)
-  5. Usuário insere o código na tela de verificação
-  6. Sistema verifica OTP e autentica o usuário
-  7. Profile é criado automaticamente via trigger `handle_new_user()` (se não existir)
+  4. Se válido, gera Magic Link via `supabase.auth.admin.generateLink()`
+  5. Envia link por email via SendGrid (com Resend como fallback)
+  6. Usuário clica no link e é redirecionado para `/auth/callback`
+  7. `AuthCallback.tsx` verifica o `token_hash` via `supabase.auth.verifyOtp()` para estabelecer sessão
+  8. Profile é criado automaticamente via trigger `handle_new_user()` (se não existir)
 
-> **Nota (v2.29.0):** O sistema foi migrado de Magic Link para OTP Code para evitar problemas com scanners de email corporativos que invalidavam os links antes do usuário clicar.
+> **Nota (v2.65.0):** O sistema usa Magic Link com `token_hash` no URL (não hash fragment) para evitar problemas com SendGrid click tracking que remove fragmentos de URL.
 
-> **Nota (v2.43.0):** Usuários internos (domínio em `allowed_email_domains`) agora precisam ter perfil pré-cadastrado em `profiles` para receber código OTP. Isso impede que qualquer email com domínio válido acesse o sistema sem convite prévio.
+> **Nota (v2.43.0):** Usuários internos (domínio em `allowed_email_domains`) agora precisam ter perfil pré-cadastrado em `profiles` para receber Magic Link. Isso impede que qualquer email com domínio válido acesse o sistema sem convite prévio.
 
-#### Critérios de Recebimento de Código OTP
+#### Critérios de Recebimento de Magic Link
 
 | Tipo de Usuário | Critério | Tabela de Validação |
 |-----------------|----------|---------------------|
@@ -95,7 +96,7 @@
 | **Empresa Parceira** | Domínio do email em `partner_companies.allowed_domains` (via `partner_company_bu_associations`) | `partner_company_bu_associations` → `partner_companies` |
 | **Usuário Interno** | Domínio em `bu_units.allowed_email_domains` **E** email em `profiles.work_email` | `bu_units` + `profiles` |
 
-⚠️ **IMPORTANTE:** Usuários internos sem perfil pré-cadastrado NÃO recebem código OTP, mesmo com domínio válido.
+⚠️ **IMPORTANTE:** Usuários internos sem perfil pré-cadastrado NÃO recebem Magic Link, mesmo com domínio válido.
 
 > **Nota (v2.45.0):** Empresas parceiras agora são globais (únicas por CPF/CNPJ). A validação de domínio para login verifica associações ativas em `partner_company_bu_associations`.
 

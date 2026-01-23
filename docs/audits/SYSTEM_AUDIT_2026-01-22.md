@@ -229,7 +229,7 @@ ON notification_deliveries(notification_id);
 
 **Status:** Desabilitado (intencional)
 
-**Justificativa:** O sistema usa OTP Code (6 dígitos via email), não senhas tradicionais. Esta proteção não se aplica ao modelo de autenticação atual.
+**Justificativa:** O sistema usa Magic Link (link de acesso via email), não senhas tradicionais. Esta proteção não se aplica ao modelo de autenticação atual.
 
 ---
 
