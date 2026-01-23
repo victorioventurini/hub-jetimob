@@ -8653,6 +8653,15 @@ export type Database = {
         Args: { p_profile_id?: string; p_ticket_id: string }
         Returns: boolean
       }
+      check_permission_scope_access: {
+        Args: {
+          p_bu_id: string
+          p_ctx?: Json
+          p_scope: Database["public"]["Enums"]["permission_scope"]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       check_scope_access: {
         Args: { p_ctx?: Json; p_scope: string; p_user_id: string }
         Returns: boolean
@@ -9001,6 +9010,10 @@ export type Database = {
           permission_key: string
           source_name: string
         }[]
+      }
+      get_permission_scope: {
+        Args: { p_permission_key: string }
+        Returns: Database["public"]["Enums"]["permission_scope"]
       }
       get_profile_bus: {
         Args: { p_profile_id: string }
