@@ -247,7 +247,7 @@ function CompanyRow({
         ) : (
           <Badge
             variant="outline"
-            className="cursor-pointer text-amber-600 border-amber-300"
+            className="cursor-pointer text-warning border-warning/30"
             onClick={onConfigureServices}
           >
             Configurar

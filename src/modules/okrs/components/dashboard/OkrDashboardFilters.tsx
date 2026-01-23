@@ -133,7 +133,7 @@ export function OkrDashboardFilters({
               size="sm" 
               className={cn(
                 "gap-2",
-                filters.sharedFilter && filters.sharedFilter !== 'all' && "border-purple-500 text-purple-700"
+                filters.sharedFilter && filters.sharedFilter !== 'all' && "border-status-purple text-status-purple"
               )}
             >
               <Users className="w-4 h-4" />

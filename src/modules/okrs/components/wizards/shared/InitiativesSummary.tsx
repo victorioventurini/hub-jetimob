@@ -207,7 +207,7 @@ export function InitiativesSummary({
                     key={init.id}
                     className={cn(
                       "rounded-md border p-3 transition-colors",
-                      config.highlight && "border-red-300 bg-red-50/30 dark:bg-red-950/10",
+                      config.highlight && "border-destructive/30 bg-destructive/5",
                       isAtRisk && "border-destructive/50 bg-destructive/5"
                     )}
                   >

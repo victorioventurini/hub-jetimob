@@ -87,7 +87,7 @@ export function TeamKrReviewStep({
   if (!currentKr) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6">
-        <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+        <CheckCircle2 className="h-12 w-12 text-success mb-4" />
         <h3 className="font-semibold text-lg">Nenhum KR para revisar</h3>
         <Button onClick={onContinue} className="mt-4">
           Continuar

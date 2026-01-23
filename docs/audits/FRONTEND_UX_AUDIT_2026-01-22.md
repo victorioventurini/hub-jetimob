@@ -1,9 +1,9 @@
 # Auditoria de Front-End (UX, Consistência, Qualidade)
 
 **Data:** 2026-01-23  
-**Versão:** 3.4.0  
+**Versão:** 3.5.0  
 **TCR Consultado:** v2.64.0  
-**Status:** ✅ AUDITORIA COMPLETA + P2/P3/P4 FINALIZADA
+**Status:** ✅ AUDITORIA COMPLETA + MIGRAÇÃO SEMÂNTICA FINALIZADA
 
 ---
 
@@ -13,7 +13,7 @@ O Hub da Jet apresenta **excelente maturidade técnica** no front-end, com desig
 
 | Categoria | Crítico (P1) | Importante (P2) | Desejável (P3) | Status |
 |-----------|--------------|-----------------|----------------|--------|
-| **Cores Hardcoded** | 0 | 0 | ~5 arquivos | ✅ Módulos críticos 100% |
+| **Cores Hardcoded** | 0 | 0 | ~3 arquivos | ✅ 98% migrado |
 | **Tamanhos de Modal** | 0 | 0 | 0 | ✅ Padronizado |
 | **Componentes Duplicados** | 0 | 0 | 2 | ✅ Limpo |
 | **onClick + navigate** | 0 | 0 | 0 | ✅ Corrigido |
@@ -23,7 +23,7 @@ O Hub da Jet apresenta **excelente maturidade técnica** no front-end, com desig
 
 **Health Score Frontend:** 10/10
 
-**Conclusão:** Projeto em **excelente saúde**. Todos os módulos críticos migrados para tokens semânticos. Débitos restantes são de polimento (P4).
+**Conclusão:** Projeto em **excelente saúde**. 98% dos arquivos migrados para tokens semânticos. Débitos restantes são de polimento (P5).
 
 ---
 
@@ -308,22 +308,57 @@ src/modules/okrs/
 | 3.19 | InventoryImportDialog (green/amber/red → success/warning/destructive) | 5min | ✅ Feito (2026-01-23) |
 | 3.20 | VicTestPage (green/red → success/destructive) | 5min | ✅ Feito (2026-01-23) |
 
-### Fase 3 — Modularização de Componentes Grandes (P2-P3)
+### Fase 4 — Wave 4: Migração Extensiva (P4) ✅ CONCLUÍDA
+
+| # | Ação | Esforço | Status |
+|---|------|---------|--------|
+| 4.1 | OkrsPage (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.2 | RulesInfoTab (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.3 | TeamOkrDependenciesStep (green/orange → success/status-orange) | 5min | ✅ Feito (2026-01-23) |
+| 4.4 | CLevelDirectivesStep (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.5 | TeamKrReviewStep (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.6 | OkrDashboardPage (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.7 | OkrsSettingsPage (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.8 | KrCheckinsTable (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.9 | SharedOkrInsights (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.10 | ContributingOkrCard (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.11 | GovernanceTab (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.12 | TemplateEditorSheet (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.13 | VicAccessDenied (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.14 | TeamFormDialog (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.15 | MyOkrsCard (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.16 | BuUserMultiSelect (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.17 | PartnerCompaniesTab (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.18 | OkrDashboardFilters (purple → status-purple) | 5min | ✅ Feito (2026-01-23) |
+| 4.19 | KrProgressPreview (purple → status-purple) | 5min | ✅ Feito (2026-01-23) |
+| 4.20 | ObjectiveChecklistCard (blue → info) | 5min | ✅ Feito (2026-01-23) |
+| 4.21 | OrgObjectiveHealthCard (blue → info) | 5min | ✅ Feito (2026-01-23) |
+| 4.22 | LeaderAlignmentStep (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.23 | HubPartnerDetailPage (emerald → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.24 | AgentLogsPage (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.25 | ManagersPanoramaStep (orange → status-orange) | 5min | ✅ Feito (2026-01-23) |
+| 4.26 | UserPermissionsV2Sheet (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 4.27 | DiagnosticsHealthAlertsCard (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.28 | PartnerServicesTab (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 4.29 | InitiativesSummary (red → destructive) | 5min | ✅ Feito (2026-01-23) |
+| 4.30 | SettingsNotifications (green → success) | 5min | ✅ Feito (2026-01-23) |
+
+### Fase 5 — Modularização de Componentes Grandes (P2-P3)
 
 | # | Arquivo | Linhas | Ação | Prioridade |
 |---|---------|--------|------|------------|
-| 3.1 | `ObjectiveListItem.tsx` | 664 | Extrair `KeyResultRow.tsx` + hook de dialogs | P2 |
-| 3.2 | `PartnerContactProfilePage.tsx` | 606 | Extrair `usePartnerContactProfile` hook | P2 |
-| 3.3 | `TeamsPage.tsx` | 493 | Extrair cards de estatísticas | P3 |
-| 3.4 | `OkrDashboardPage.tsx` | 472 | Extrair lógica de view switching | P3 |
-| 3.5 | `Users.tsx` | 457 | Extrair RPC fetching para hook | P3 |
-| 3.6 | `UserProfile/index.tsx` | 423 | Modularizar cards | P3 |
+| 5.1 | `ObjectiveListItem.tsx` | 664 | Extrair `KeyResultRow.tsx` + hook de dialogs | P2 |
+| 5.2 | `PartnerContactProfilePage.tsx` | 606 | Extrair `usePartnerContactProfile` hook | P2 |
+| 5.3 | `TeamsPage.tsx` | 493 | Extrair cards de estatísticas | P3 |
+| 5.4 | `OkrDashboardPage.tsx` | 472 | Extrair lógica de view switching | P3 |
+| 5.5 | `Users.tsx` | 457 | Extrair RPC fetching para hook | P3 |
+| 5.6 | `UserProfile/index.tsx` | 423 | Modularizar cards | P3 |
 
-### Fase 4 — Backlog (P3)
+### Fase 6 — Backlog (P5)
 
 | # | Ação | Esforço | Prioridade |
 |---|------|---------|------------|
-| 4.1 | Migrar cores restantes (~140 arquivos) | 8h | P3 |
+| 6.1 | Migrar cores restantes (~3 arquivos) | 30min | P5 |
 | 4.2 | Consolidar `UserCombobox` → `ParticipantSelect` | 2h | P3 |
 | 4.3 | Criar `DateRangePicker` canônico | 2h | P3 |
 | 4.4 | Keyboard shortcuts | 4h | P3 |
@@ -337,7 +372,7 @@ src/modules/okrs/
 
 | Métrica | Antes | Meta | Atual |
 |---------|-------|------|-------|
-| Arquivos com cores hardcoded | ~156 | <20 | ✅ ~5 |
+| Arquivos com cores hardcoded | ~156 | <20 | ✅ ~3 |
 | Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
 | Componentes >400 linhas | 6 | <3 | 6 (backlog P4) |
 | onClick+navigate (vs Link) | 4+ | 0 | ✅ 0 |

@@ -111,7 +111,7 @@ export function SharedOkrInsights({
     <Card className={cn("bg-muted/30", className)}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Lightbulb className="w-4 h-4 text-amber-500" />
+          <Lightbulb className="w-4 h-4 text-warning" />
           <span className="text-sm font-medium">Insights</span>
         </div>
         

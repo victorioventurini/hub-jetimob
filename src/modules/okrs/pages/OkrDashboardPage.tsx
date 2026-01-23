@@ -368,7 +368,7 @@ export default function OkrDashboardPage() {
             <CardContent>
               {pendingCheckinsCount > 0 ? (
                 <>
-                  <div className="text-3xl font-bold text-amber-600">{pendingCheckinsCount}</div>
+                  <div className="text-3xl font-bold text-warning">{pendingCheckinsCount}</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     KRs precisam de atualização
                   </p>

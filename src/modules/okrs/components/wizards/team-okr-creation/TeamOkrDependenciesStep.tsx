@@ -292,7 +292,7 @@ export function TeamOkrDependenciesStep({
                     </div>
 
                     {selectedActions[index] && (
-                      <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                      <div className="flex items-center gap-2 text-xs text-success">
                         <CheckCircle2 className="h-3 w-3" />
                         <span>
                           {selectedActions[index] === 'ignore' 
@@ -317,7 +317,7 @@ export function TeamOkrDependenciesStep({
                 <ul className="space-y-2">
                   {dependencies.map((dep, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+                      <AlertTriangle className="h-4 w-4 text-status-orange shrink-0 mt-0.5" />
                       <span>{dep.description}</span>
                     </li>
                   ))}

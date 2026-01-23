@@ -138,7 +138,7 @@ export default function AgentLogsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-5 h-5 text-success" />
                 <div>
                   <p className="text-sm text-muted-foreground">Sucesso</p>
                   <p className="text-2xl font-bold">{stats.success}</p>

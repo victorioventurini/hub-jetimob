@@ -102,7 +102,7 @@ export function ContributingOkrCard({
 
         {/* Primary Team Info */}
         <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md mb-3">
-          <Crown className="w-4 h-4 text-amber-500" />
+          <Crown className="w-4 h-4 text-warning" />
           <span className="text-sm">
             <span className="text-muted-foreground">Time primário:</span>{' '}
             <span className="font-medium">{primaryTeamName}</span>

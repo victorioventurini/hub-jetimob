@@ -257,7 +257,7 @@ export function TeamFormDialog({
             excludeIds={excludedTeamIds}
           />
           {selectedParentTeam?.status === "inactive" && (
-            <div className="flex items-center gap-2 text-xs text-amber-600">
+            <div className="flex items-center gap-2 text-xs text-warning">
               <AlertTriangle className="h-3 w-3" />
               <span>O time pai selecionado está inativo</span>
             </div>

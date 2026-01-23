@@ -55,7 +55,7 @@ export function KrProgressPreview({
           ) : direction === 'down' ? (
             <TrendingDown className="h-4 w-4 text-info" />
           ) : (
-            <Equal className="h-4 w-4 text-purple-500" />
+            <Equal className="h-4 w-4 text-status-purple" />
           )}
         </div>
         
