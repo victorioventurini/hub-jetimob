@@ -173,50 +173,19 @@ function usePartnerContactProfile(id: string | undefined) {
         }));
       }
 
-      // Fetch ticket count for this contact (assigned)
-      // Note: tickets don't have reporter_partner_contact_id - only assigned_contact_id exists
+      // Fetch ticket stats using RPC (handles RLS bypass for admins)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { count } = await (supabase as any)
-        .from("tickets")
-        .select("id", { count: "exact", head: true })
-        .eq("assigned_contact_id", id);
-
-      // Fetch ticket stats by status (assigned)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: ticketsData } = await (supabase as any)
-        .from("tickets")
-        .select("status, created_at, updated_at")
-        .eq("assigned_contact_id", id);
+      const { data: ticketStatsData } = await (supabase as any)
+        .rpc("get_partner_contact_ticket_stats", { p_contact_id: id });
 
       const ticketStats = {
-        waiting: 0,
-        in_progress: 0,
-        done: 0,
-        avg_resolution_days: null as number | null,
+        waiting: ticketStatsData?.waiting ?? 0,
+        in_progress: ticketStatsData?.in_progress ?? 0,
+        done: ticketStatsData?.done ?? 0,
+        avg_resolution_days: ticketStatsData?.avg_resolution_days ?? null,
       };
 
-      const resolutionTimes: number[] = [];
-
-      for (const ticket of ticketsData || []) {
-        if (ticket.status === 'waiting') ticketStats.waiting++;
-        if (ticket.status === 'in_progress') ticketStats.in_progress++;
-        if (ticket.status === 'done') {
-          ticketStats.done++;
-          // Use updated_at as proxy for completion date (no closed_at column)
-          if (ticket.updated_at && ticket.created_at) {
-            const created = new Date(ticket.created_at);
-            const completed = new Date(ticket.updated_at);
-            const diffDays = Math.ceil((completed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-            resolutionTimes.push(diffDays);
-          }
-        }
-      }
-
-      if (resolutionTimes.length > 0) {
-        ticketStats.avg_resolution_days = Math.round(
-          resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length
-        );
-      }
+      const count = ticketStatsData?.count ?? 0;
 
       return {
         id: contactData.id,
