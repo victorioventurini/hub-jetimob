@@ -1,3 +1,30 @@
+/**
+ * Edge Function: get-public-asset
+ * 
+ * Provides public (unauthenticated) access to asset information for QR code scanning.
+ * Returns sanitized asset details without sensitive holder information.
+ * 
+ * @module assets
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Resolves asset by internal code (handles normalization)
+ * - Returns public-safe asset details (name, brand, model, status)
+ * - Includes related kit items if asset is part of a group
+ * - Returns BU info with formatted CNPJ
+ * 
+ * ## Authentication
+ * - verify_jwt: false
+ * - Public endpoint (no auth required)
+ * 
+ * ## Request
+ * - Method: GET
+ * - Query Params: ?ref={internal_code}
+ * 
+ * ## Response
+ * - Success: { asset, bu, related_items, internal_view_path }
+ * - Error: { error: "Item não encontrado" }
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

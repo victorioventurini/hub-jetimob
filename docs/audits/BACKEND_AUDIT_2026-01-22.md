@@ -286,8 +286,25 @@ CREATE FUNCTION get_okr_health_with_insights(
    - Funções redundantes marcadas como DEPRECATED
 3. ✅ **Fase 3:** Padronizar error handling em Edge Functions (COMPLETO - 2026-01-22)
    - Criado `_shared/error-handler.ts` com tipos, códigos e helpers
-4. ⏳ **Fase 2:** Unificar identity resolution
+4. ✅ **Fase 2:** Unificar identity resolution (COMPLETO - 2026-01-23)
+   - Criada `get_permission_scope(text)` para lookup de escopo
+   - Criada `check_permission_scope_access(uuid, uuid, scope, jsonb)` para validação modular
+   - Refatorada `user_has_permission_ctx()` para usar helpers (redução de complexidade)
+   - Adicionados comentários CANONICAL/ALIAS em funções de identity
+5. ✅ **Fase 4:** JSDoc em Edge Functions simples (COMPLETO - 2026-01-23)
+   - `get-public-asset`, `search-cities`, `search-address`, `get-place-details` documentadas
 
 ---
 
-*Este documento será atualizado conforme as melhorias forem implementadas.*
+## 9. Métricas Finais
+
+| Métrica | Antes | Depois | Status |
+|---------|-------|--------|--------|
+| Funções de cleanup | 3 | 1 | ✅ |
+| Linhas em `user_has_permission_ctx` | ~130 | ~60 (usa helpers) | ✅ |
+| Edge Functions com JSDoc | 6 | 10 | ✅ |
+| Funções de identity documentadas | 0 | 5 | ✅ |
+
+---
+
+*Última atualização: 2026-01-23*

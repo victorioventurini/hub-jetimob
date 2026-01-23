@@ -1,3 +1,30 @@
+/**
+ * Edge Function: get-place-details
+ * 
+ * Retrieves full address details from Google Places API using a place ID.
+ * Used after address autocomplete selection to get structured address components.
+ * 
+ * @module locations
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Fetches detailed address from Google Place Details API
+ * - Parses address components into structured format
+ * - Returns coordinates for map display
+ * - State abbreviation conversion (e.g., "São Paulo" → "SP")
+ * 
+ * ## Authentication
+ * - verify_jwt: false
+ * - Public endpoint (no auth required)
+ * 
+ * ## Request
+ * - Method: POST
+ * - Body: { placeId: string }
+ * 
+ * ## Response
+ * - Success: AddressDetails { formatted_address, address_line_1, city, state, postal_code, latitude, longitude, google_place_id }
+ * - Error: { error: string }
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

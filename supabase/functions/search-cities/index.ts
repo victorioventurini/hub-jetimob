@@ -1,3 +1,30 @@
+/**
+ * Edge Function: search-cities
+ * 
+ * Searches for Brazilian cities using Google Places Autocomplete API.
+ * Includes local cache of 50+ popular cities for instant response.
+ * 
+ * @module locations
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Local cache of 50+ popular Brazilian cities (instant response)
+ * - Memory cache for recent searches (1 hour TTL)
+ * - Google Places API fallback for uncached queries
+ * - Graceful degradation if API is unavailable
+ * 
+ * ## Authentication
+ * - verify_jwt: false
+ * - Public endpoint (no auth required)
+ * 
+ * ## Request
+ * - Method: POST
+ * - Body: { query: string }
+ * 
+ * ## Response
+ * - Success: { predictions: [{ city, state, placeId, description }], cached?: boolean }
+ * - Error: { error: string }
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import {

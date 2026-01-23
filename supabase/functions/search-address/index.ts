@@ -1,3 +1,30 @@
+/**
+ * Edge Function: search-address
+ * 
+ * Searches for Brazilian addresses using Google Places Autocomplete API.
+ * Returns structured address predictions for autocomplete UI.
+ * 
+ * @module locations
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Google Places Autocomplete integration
+ * - Restricted to Brazilian addresses
+ * - Returns structured predictions with main/secondary text
+ * - Graceful degradation with empty results on validation error
+ * 
+ * ## Authentication
+ * - verify_jwt: false
+ * - Public endpoint (no auth required)
+ * 
+ * ## Request
+ * - Method: POST
+ * - Body: { query: string }
+ * 
+ * ## Response
+ * - Success: { predictions: [{ placeId, description, mainText, secondaryText }] }
+ * - Error: { error: string }
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
