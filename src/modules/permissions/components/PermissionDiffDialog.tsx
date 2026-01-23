@@ -73,7 +73,7 @@ export function PermissionDiffDialog({
 
         {noChanges ? (
           <div className="py-8 text-center">
-            <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-3" />
+            <CheckCircle2 className="h-12 w-12 mx-auto text-success mb-3" />
             <p className="text-sm text-muted-foreground">
               Nenhuma alteração detectada. As permissões já estão configuradas conforme selecionado.
             </p>
@@ -108,8 +108,8 @@ export function PermissionDiffDialog({
               {additions.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Plus className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-700">
+                    <Plus className="h-4 w-4 text-success" />
+                    <span className="text-sm font-medium text-success">
                       Permissões a adicionar ({additions.length})
                     </span>
                   </div>
@@ -117,7 +117,7 @@ export function PermissionDiffDialog({
                     <div className="space-y-1">
                       {additions.map((diff, i) => (
                         <div key={i} className="flex items-center justify-between text-xs">
-                          <code className="bg-green-500/10 text-green-700 px-1.5 py-0.5 rounded font-mono">
+                          <code className="bg-success-muted text-success px-1.5 py-0.5 rounded font-mono">
                             {diff.permission_key}
                           </code>
                           <span className="text-muted-foreground">{diff.source_name}</span>

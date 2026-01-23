@@ -57,8 +57,8 @@ export function LeaderPrepWizardCard({
         className={cn(
           "animate-fade-in overflow-hidden transition-all hover:shadow-md cursor-pointer group",
           hasIssues 
-            ? "border-orange-200 dark:border-orange-800/50 bg-gradient-to-r from-orange-50/50 to-transparent dark:from-orange-950/20"
-            : "border-blue-200 dark:border-blue-800/50 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20",
+            ? "border-warning/30 bg-gradient-to-r from-warning-muted/50 to-transparent"
+            : "border-info/30 bg-gradient-to-r from-info-muted/50 to-transparent",
           className
         )}
       >

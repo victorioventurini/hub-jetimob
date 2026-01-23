@@ -90,9 +90,9 @@ export function TeamContributionInsights({ data }: TeamContributionInsightsProps
   }
 
   const iconColors = {
-    info: 'text-blue-500',
-    warning: 'text-yellow-500',
-    success: 'text-green-500',
+    info: 'text-info',
+    warning: 'text-warning',
+    success: 'text-success',
   };
 
   if (insights.length === 0) return null;
@@ -101,7 +101,7 @@ export function TeamContributionInsights({ data }: TeamContributionInsightsProps
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-yellow-500" />
+          <Lightbulb className="h-4 w-4 text-warning" />
           Insights do Time
         </CardTitle>
       </CardHeader>

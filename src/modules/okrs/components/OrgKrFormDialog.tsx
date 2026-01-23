@@ -337,19 +337,19 @@ export function OrgKrFormDialog({
                     <SelectContent>
                       <SelectItem value="up">
                         <span className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          <TrendingUp className="h-4 w-4 text-success" />
                           Crescente (↑)
                         </span>
                       </SelectItem>
                       <SelectItem value="down">
                         <span className="flex items-center gap-2">
-                          <TrendingDown className="h-4 w-4 text-blue-500" />
+                          <TrendingDown className="h-4 w-4 text-info" />
                           Decrescente (↓)
                         </span>
                       </SelectItem>
                       <SelectItem value="maintain">
                         <span className="flex items-center gap-2">
-                          <Equal className="h-4 w-4 text-purple-500" />
+                          <Equal className="h-4 w-4 text-status-purple" />
                           Manter (=)
                         </span>
                       </SelectItem>
@@ -376,9 +376,9 @@ export function OrgKrFormDialog({
               )}
 
               {validation.warnings.length > 0 && (
-                <Alert variant="default" className="border-yellow-500/50 bg-yellow-500/10">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  <AlertDescription className="text-sm text-yellow-700">
+                <Alert variant="default" className="border-warning/50 bg-warning-muted">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <AlertDescription className="text-sm text-warning-muted-foreground">
                     {validation.warnings.map((warning, i) => (
                       <p key={i}>{warning}</p>
                     ))}

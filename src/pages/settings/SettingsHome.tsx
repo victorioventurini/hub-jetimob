@@ -198,7 +198,7 @@ export default function SettingsHome() {
           subtitle="Ativas"
           icon={Building2}
           subtitleIcon={Activity}
-          subtitleIconColor="text-green-500"
+          subtitleIconColor="text-success"
           loading={busLoading}
         />
         <StatCard
@@ -216,7 +216,7 @@ export default function SettingsHome() {
           subtitle="Habilitadas"
           icon={Puzzle}
           subtitleIcon={Zap}
-          subtitleIconColor="text-orange-500"
+          subtitleIconColor="text-status-orange"
           loading={integrationsLoading}
         />
         <StatCard
@@ -225,7 +225,7 @@ export default function SettingsHome() {
           subtitle="Ativos"
           icon={Users}
           subtitleIcon={Activity}
-          subtitleIconColor="text-blue-500"
+          subtitleIconColor="text-info"
           loading={profilesLoading}
         />
       </div>
