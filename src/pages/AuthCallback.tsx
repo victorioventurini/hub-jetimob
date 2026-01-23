@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
 import { Loader2, AlertCircle } from "lucide-react";
 

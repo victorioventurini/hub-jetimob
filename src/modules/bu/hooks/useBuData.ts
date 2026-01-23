@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { supabase as supabaseClient } from "@/integrations/supabase/client";
+import { supabase as supabaseClient } from "@/integrations/supabase/globalClient";
 import { useAuth } from "@/hooks/useAuth";
 import { BuUnit, UserBuMembership } from "../types";
 import { queryKeys } from "@/lib/queryKeys";
@@ -94,7 +94,7 @@ export function useAllBus() {
 
 // Check if email domain is allowed - requires supabase client injection
 import { createBuScopedClient } from "@/integrations/supabase/useBuScopedSupabase";
-import { supabase as supabaseGlobal } from "@/integrations/supabase/client";
+import { supabase as supabaseGlobal } from "@/integrations/supabase/globalClient";
 
 export async function checkEmailDomainAllowed(email: string): Promise<{ allowed: boolean; buId: string | null }> {
   // This is called before BU context exists, so use global client

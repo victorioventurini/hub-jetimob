@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { queryKeys } from "@/lib/queryKeys";
