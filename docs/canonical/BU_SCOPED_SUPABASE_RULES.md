@@ -1,25 +1,38 @@
 # Regras de Uso do Cliente Supabase com Escopo de BU
 
-**Versão**: 3.3.0  
-**Última atualização**: 2026-01-07
+**Versão**: 4.0.0  
+**Última atualização**: 2026-01-23
 
 ## Visão Geral
 
 O Hub da Jet usa um sistema multi-tenant onde cada Business Unit (BU) possui seus próprios dados isolados. Para garantir que as operações Supabase sempre incluam o contexto de BU correto, **todo acesso a tabelas operacionais deve usar o cliente com escopo**.
 
+## Arquitetura de Clientes (v4.0.0)
+
+O Hub usa um padrão **singleton** para evitar múltiplas instâncias de `GoTrueClient`:
+
+| Cliente | Arquivo | Uso | `detectSessionInUrl` |
+|---------|---------|-----|---------------------|
+| **Global Singleton** | `globalClient.ts` | Auth, bootstrap, pré-BU | `false` |
+| **BU-Scoped Singleton** | `buScopedClient.ts` | Dados operacionais | `false` |
+| **Auto-generated** | `client.ts` | ❌ **NÃO USAR** | `true` |
+
+> ⚠️ **CRÍTICO:** O arquivo `client.ts` é auto-gerado pelo Lovable Cloud e **NÃO DEVE SER USADO** diretamente.
+
 ## Regra Principal
 
-> **PROIBIDO usar o cliente global `supabase` para acessar tabelas operacionais.**
+> **PROIBIDO importar de `@/integrations/supabase/client`.**
 
 ### ❌ INCORRETO
 ```typescript
+// ❌ ERRADO: Import do client auto-gerado (causa múltiplas instâncias GoTrueClient)
 import { supabase } from "@/integrations/supabase/client";
 
 // Em qualquer lugar do componente/hook:
 const { data } = await supabase.from("tickets").select("*"); // ❌ PROIBIDO
 ```
 
-### ✅ CORRETO
+### ✅ CORRETO (Dados Operacionais)
 ```typescript
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 
@@ -27,8 +40,16 @@ function MyComponent() {
   const supabase = useBuScopedSupabase();
   
   // Agora todas as operações incluem o header X-Current-Bu-Id
-  const { data } = await supabase.from("tickets").select("*"); // ✅ CORRETO
+  const { data } = await supabase.from("tickets").select("id, title, status"); // ✅ CORRETO
 }
+```
+
+### ✅ CORRETO (Auth e Pré-BU)
+```typescript
+// ✅ CORRETO: Import do singleton global
+import { supabase } from "@/integrations/supabase/globalClient";
+
+await supabase.auth.signInWithOtp({ email }); // ✅ CORRETO
 ```
 
 ## Tabelas Operacionais (DENYLIST)
@@ -44,15 +65,29 @@ Principais categorias:
 - **Notifications**: `notifications`, `user_notification_preferences`
 - **Config**: `bu_*`, `cycles`
 
-## Exceções Autorizadas
+## Exceções Autorizadas (Global Singleton)
 
-| Arquivo | Justificativa |
-|---------|---------------|
-| `src/hooks/useAuth.tsx` | Autenticação ocorre ANTES de haver BU selecionada |
-| `src/components/notifications/NotificationCenter.tsx` | Realtime não suporta headers customizados |
-| `src/modules/bu/hooks/useBuData.ts` | `checkEmailDomainAllowed` valida domínio antes de BU |
-| `src/integrations/supabase/client.ts` | Definição do singleton |
-| `src/integrations/supabase/useBuScopedSupabase.ts` | Wrapper do cliente |
+| Arquivo | Import | Justificativa |
+|---------|--------|---------------|
+| `src/hooks/useAuth.tsx` | `globalClient.ts` | Autenticação ocorre ANTES de haver BU selecionada |
+| `src/components/notifications/NotificationCenter.tsx` | `globalClient.ts` | Realtime não suporta headers customizados |
+| `src/modules/bu/hooks/useBuData.ts` | `globalClient.ts` | `checkEmailDomainAllowed` valida domínio antes de BU |
+| `src/modules/external/hooks/useExternalUser.ts` | `globalClient.ts` | Bootstrap de usuários externos antes de BuProvider |
+| `src/pages/AuthCallback.tsx` | `globalClient.ts` | Processamento de token de auth |
+| `src/integrations/supabase/globalClient.ts` | — | Definição do singleton global |
+| `src/integrations/supabase/buScopedClient.ts` | — | Definição do singleton BU-scoped |
+
+## Por que Singleton com `detectSessionInUrl: false`?
+
+Múltiplas instâncias de `GoTrueClient` com `detectSessionInUrl: true` causam:
+- Warnings de "Multiple GoTrueClient instances detected"
+- Race conditions na captura do `access_token` do URL
+- Comportamento indefinido em auth callbacks
+
+O padrão singleton com `detectSessionInUrl: false` garante que:
+- ✅ Apenas `AuthCallback.tsx` processa tokens de URL via `verifyOtp()`
+- ✅ Sem race conditions entre clientes
+- ✅ Sem warnings no console
 
 ## Operações Afetadas
 

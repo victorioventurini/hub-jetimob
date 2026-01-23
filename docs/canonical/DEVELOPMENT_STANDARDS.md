@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.16.0  
+**Versão:** 1.17.0  
 **Última atualização:** 2026-01-23  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0**
-**Referência:** TCR v2.68.0
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0**
+**Referência:** TCR v2.69.0
 
 ---
 
@@ -43,9 +43,12 @@ O Hub opera em dois contextos distintos baseados na seleção de BU:
 #### Regras PRE-BU
 
 ```typescript
-// ✅ CORRETO: Usando cliente global para auth
-import { supabase } from "@/integrations/supabase/client";
+// ✅ CORRETO: Usando cliente global SINGLETON para auth
+import { supabase } from "@/integrations/supabase/globalClient";
 await supabase.auth.signInWithOtp({ email });
+
+// ❌ ERRADO: Import do client auto-gerado (causa múltiplas instâncias)
+import { supabase } from "@/integrations/supabase/client"; // NÃO USAR!
 
 // ✅ CORRETO: Usando hook opcional com gating
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
@@ -76,18 +79,20 @@ function MyOperationalComponent() {
 }
 
 // ❌ PROIBIDO: Cliente global em módulo operacional
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 const { data } = await supabase.from("tickets").select("*"); // BUG!
 ```
 
-#### Exceções Autorizadas (Cliente Global)
+#### Exceções Autorizadas (Cliente Global Singleton)
 
-| Arquivo/Contexto | Justificativa |
-|------------------|---------------|
-| `useAuth.tsx` | Operações de auth não têm BU |
-| `useUserBus.ts`, `useExternalUser.ts` | Bootstrap antes do BuProvider |
-| `NotificationCenter.tsx` | Realtime subscription global (ver regras abaixo) |
-| `validateDomain.ts` | Validação pré-auth |
+| Arquivo/Contexto | Import Correto | Justificativa |
+|------------------|----------------|---------------|
+| `useAuth.tsx` | `globalClient.ts` | Operações de auth não têm BU |
+| `useUserBus.ts`, `useExternalUser.ts` | `globalClient.ts` | Bootstrap antes do BuProvider |
+| `NotificationCenter.tsx` | `globalClient.ts` | Realtime subscription global (ver regras abaixo) |
+| `validateDomain.ts` | `globalClient.ts` | Validação pré-auth |
+
+> ⚠️ **CRÍTICO:** Nunca importar de `@/integrations/supabase/client`. Sempre usar `globalClient.ts` ou `useBuScopedSupabase()`.
 
 #### Regras para NotificationCenter (Realtime)
 

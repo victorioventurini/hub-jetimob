@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.68.0  
+**Versão:** 2.69.0  
 **Última atualização:** 2026-01-23
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **System Health Score 10/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **System Health Score 10/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -196,12 +196,24 @@ BU (Business Unit)
 
 ### 1.5 Supabase Client Usage
 
-O Hub utiliza dois tipos de clientes Supabase com regras estritas de uso:
+O Hub utiliza um padrão **singleton** para clientes Supabase, evitando múltiplas instâncias GoTrueClient:
+
+#### Arquitetura de Clientes (v2.69.0)
+
+| Cliente | Arquivo | Uso | `detectSessionInUrl` |
+|---------|---------|-----|---------------------|
+| **Global Singleton** | `globalClient.ts` | Auth, bootstrap, pré-BU | `false` |
+| **BU-Scoped Singleton** | `buScopedClient.ts` | Dados operacionais | `false` |
+| **Auto-generated** | `client.ts` | ❌ **NÃO USAR** (apenas para compatibilidade) | `true` |
+
+> ⚠️ **CRÍTICO:** O arquivo `client.ts` é auto-gerado pelo Lovable Cloud e **NÃO DEVE SER USADO** diretamente. Usar sempre `globalClient.ts` ou `useBuScopedSupabase()`.
 
 #### `useBuScopedSupabase()` — Cliente BU-Scoped (OBRIGATÓRIO)
 **Obrigatório para todos os dados operacionais.** Injeta automaticamente o header `x-current-bu-id` em todas as requisições.
 
 ```typescript
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+
 const supabase = useBuScopedSupabase();
 // Todas as queries incluem x-current-bu-id header
 ```
@@ -213,7 +225,17 @@ const supabase = useBuScopedSupabase();
 
 **Guard de segurança:** Lança erro se chamado antes de `BuProvider` inicializar.
 
-#### `supabase` (Cliente Global) — USO RESTRITO
+#### `supabase` (Cliente Global Singleton) — USO RESTRITO
+**Importar de `globalClient.ts`, NUNCA de `client.ts`:**
+
+```typescript
+// ✅ CORRETO: Import do singleton global
+import { supabase } from "@/integrations/supabase/globalClient";
+
+// ❌ ERRADO: Import do client auto-gerado (causa múltiplas instâncias)
+import { supabase } from "@/integrations/supabase/client";
+```
+
 **Permitido APENAS para cenários específicos:**
 
 | Cenário | Justificativa |
@@ -224,8 +246,8 @@ const supabase = useBuScopedSupabase();
 | **Pré-BU Hooks** | Hooks que populam o BuContext |
 
 ```typescript
-// ✅ Correto: Auth
-import { supabase } from "@/integrations/supabase/client";
+// ✅ Correto: Auth com globalClient
+import { supabase } from "@/integrations/supabase/globalClient";
 await supabase.auth.signInWithOtp({ email });
 
 // ❌ ERRADO: Dados operacionais com cliente global
@@ -233,6 +255,18 @@ const { data } = await supabase.from("tickets").select("*"); // BUG!
 ```
 
 **Qualquer uso do cliente global fora dos cenários acima é considerado BUG.**
+
+#### Por que `detectSessionInUrl: false`?
+
+Múltiplas instâncias de `GoTrueClient` com `detectSessionInUrl: true` causam:
+- Warnings de "Multiple GoTrueClient instances detected"
+- Race conditions na captura do `access_token` do URL
+- Comportamento indefinido em auth callbacks
+
+O padrão singleton com `detectSessionInUrl: false` garante que:
+- ✅ Apenas `AuthCallback.tsx` processa tokens de URL
+- ✅ Sem race conditions entre clientes
+- ✅ Sem warnings no console
 
 ---
 
