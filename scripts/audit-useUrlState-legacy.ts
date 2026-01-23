@@ -110,7 +110,7 @@ function main(): void {
   }
 
   console.log('💡 To fix: Replace imports from "@/hooks/useUrlState" with "@/shared/url"');
-  console.log('   See docs/engineering/DEVELOPMENT_STANDARDS.md for the correct API usage.\n');
+  console.log('   See docs/canonical/DEVELOPMENT_STANDARDS.md for the correct API usage.\n');
 
   process.exit(1);
 }

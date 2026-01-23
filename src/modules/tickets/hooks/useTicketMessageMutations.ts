@@ -8,7 +8,7 @@ import { ptBR } from "date-fns/locale";
 import type { CreateMessageData, TicketStatus, TicketType } from "../types";
 
 // NOTA: Este módulo usa profiles.id para author_user_id (identity convention)
-// Ver docs/engineering/IDENTITY_CONVENTION.md para detalhes
+// Ver docs/canonical/IDENTITY_CONVENTION.md para detalhes
 
 // ===========================================
 // TYPES

@@ -6,7 +6,7 @@
  * STORAGE FORMAT: Only digits (e.g., "5551999999999")
  * DISPLAY FORMAT: +55 (XX) XXXXX-XXXX or +55 (XX) XXXX-XXXX
  * 
- * @see docs/engineering/DEVELOPMENT_STANDARDS.md
+ * @see docs/canonical/DEVELOPMENT_STANDARDS.md
  */
 
 /**

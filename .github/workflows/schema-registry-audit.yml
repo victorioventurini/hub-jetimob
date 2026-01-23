@@ -43,7 +43,7 @@ jobs:
       
       - name: Check Registry Exists
         run: |
-          if [ ! -f "docs/engineering/DATA_MODEL_REGISTRY.json" ]; then
+          if [ ! -f "docs/canonical/DATA_MODEL_REGISTRY.json" ]; then
             echo "❌ DATA_MODEL_REGISTRY.json not found!"
             echo "   Run: npx tsx scripts/generate-data-model-registry.ts"
             exit 1
@@ -59,7 +59,7 @@ jobs:
         with:
           name: audit-results
           path: |
-            docs/engineering/DATA_MODEL_REGISTRY.json
+            docs/canonical/DATA_MODEL_REGISTRY.json
             scripts/registry-audit-config.json
           retention-days: 7
 
@@ -74,7 +74,7 @@ jobs:
       
       - name: Check Last Update
         run: |
-          REGISTRY_DATE=$(jq -r '.generated_at' docs/engineering/DATA_MODEL_REGISTRY.json | cut -d'T' -f1)
+          REGISTRY_DATE=$(jq -r '.generated_at' docs/canonical/DATA_MODEL_REGISTRY.json | cut -d'T' -f1)
           TODAY=$(date +%Y-%m-%d)
           
           echo "Registry date: $REGISTRY_DATE"

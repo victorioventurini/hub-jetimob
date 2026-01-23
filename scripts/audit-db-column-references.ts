@@ -12,7 +12,7 @@
  * 2. Scans source code for column references in Supabase queries
  * 3. Compares and reports potential mismatches
  * 
- * @see docs/engineering/DEVELOPMENT_STANDARDS.md
+ * @see docs/canonical/DEVELOPMENT_STANDARDS.md
  */
 
 import * as fs from 'fs';
