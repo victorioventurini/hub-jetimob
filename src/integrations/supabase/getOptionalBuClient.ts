@@ -47,7 +47,7 @@ export interface OptionalBuClientResult {
  * that may render before BU selection.
  */
 export function useOptionalBuClient(): OptionalBuClientResult {
-  const { currentBuId } = useBu();
+  const { currentBuId, buSelected, isLoading } = useBu();
 
   const client = useMemo(() => {
     return getOptionalBuScopedClient(currentBuId);
@@ -55,7 +55,9 @@ export function useOptionalBuClient(): OptionalBuClientResult {
 
   return {
     client,
-    isReady: !!currentBuId,
+    // IMPORTANT: do not consider the client "ready" until BU init completes and a BU is selected.
+    // This prevents early RPC/table calls with stale localStorage BU ids during cold starts.
+    isReady: !!currentBuId && buSelected && !isLoading,
     buId: currentBuId,
   };
 }
