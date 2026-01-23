@@ -74,24 +74,44 @@ function getJwtRole(token: string): string | null {
 }
 
 // ============================================================================
-// SINGLETON CLIENT PATTERN
+// SINGLETON CLIENT PATTERN (HMR-safe)
 // ============================================================================
 // 
 // The key insight: we only need ONE Supabase client with the SAME auth state.
 // The x-current-bu-id header can be injected per-request without creating new clients.
 // This eliminates "Multiple GoTrueClient instances" warnings entirely.
+// 
+// We store the singleton on globalThis to survive Vite HMR module re-evaluations.
 // ============================================================================
 
-let singletonBuClient: SupabaseClient<Database> | null = null;
-let currentBuIdForClient: string | null = null;
+type GlobalThisWithBuSingleton = typeof globalThis & {
+  __hubJet_buScopedClient?: SupabaseClient<Database> | null;
+  __hubJet_currentBuId?: string | null;
+};
+
+function getBuSingleton(): SupabaseClient<Database> | null {
+  return (globalThis as GlobalThisWithBuSingleton).__hubJet_buScopedClient ?? null;
+}
+
+function setBuSingleton(client: SupabaseClient<Database> | null): void {
+  (globalThis as GlobalThisWithBuSingleton).__hubJet_buScopedClient = client;
+}
+
+function getCurrentBuId(): string | null {
+  return (globalThis as GlobalThisWithBuSingleton).__hubJet_currentBuId ?? null;
+}
+
+function setCurrentBuId(buId: string | null): void {
+  (globalThis as GlobalThisWithBuSingleton).__hubJet_currentBuId = buId;
+}
 
 // Custom fetch that injects BU header dynamically per-request
-function createBuAwareFetch(getBuId: () => string | null) {
+function createBuAwareFetch() {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
     
-    // Inject BU header for current request
-    const buId = getBuId();
+    // Inject BU header for current request (read from globalThis)
+    const buId = getCurrentBuId();
     if (buId && !headers.has("x-current-bu-id")) {
       headers.set("x-current-bu-id", buId);
     }
@@ -114,20 +134,23 @@ function createBuAwareFetch(getBuId: () => string | null) {
 /**
  * Returns a singleton Supabase client that injects x-current-bu-id header per-request.
  * This avoids creating multiple GoTrueClient instances while still supporting BU switching.
+ * 
+ * HMR-safe: The singleton is stored on globalThis to survive Vite module re-evaluations.
  */
 export function getBuScopedClient(buId: string): SupabaseClient<Database> {
   // Update current BU ID for the fetch interceptor
-  currentBuIdForClient = buId;
+  setCurrentBuId(buId);
 
   // Return existing singleton if available
-  if (singletonBuClient) {
-    return singletonBuClient;
+  const existing = getBuSingleton();
+  if (existing) {
+    return existing;
   }
 
   // Create singleton client with dynamic BU header injection
-  singletonBuClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const created = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
-      fetch: createBuAwareFetch(() => currentBuIdForClient),
+      fetch: createBuAwareFetch(),
     },
     auth: {
       storage: localStorage,
@@ -139,9 +162,10 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
   });
 
   // Hydrate auth state immediately
-  void singletonBuClient.auth.getSession();
+  void created.auth.getSession();
 
-  return singletonBuClient;
+  setBuSingleton(created);
+  return created;
 }
 
 export function getOptionalBuScopedClient(buId: string | null): SupabaseClient<Database> | null {
@@ -151,8 +175,8 @@ export function getOptionalBuScopedClient(buId: string | null): SupabaseClient<D
 
 export function clearBuClientCache() {
   // Just reset the singleton reference - a new one will be created on next call
-  singletonBuClient = null;
-  currentBuIdForClient = null;
+  setBuSingleton(null);
+  setCurrentBuId(null);
 }
 
 /**
