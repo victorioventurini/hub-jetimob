@@ -1,12 +1,12 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-22  
-**TCR Version:** 2.62.0  
-**System Health:** 9.6/10 ✅
+**Última atualização:** 2026-01-23  
+**TCR Version:** 2.65.0  
+**System Health:** 10/10 ✅
 
 ---
 
-## 🎯 Nova Estrutura de Documentação
+## 🎯 Estrutura de Documentação
 
 ```
 docs/
@@ -29,7 +29,7 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v2.61.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v2.65.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.14.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | Canônico |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.1 |
@@ -45,15 +45,15 @@ docs/
 
 | Documento | Descrição | Data |
 |-----------|-----------|------|
-| `HEALTH_REPORT_2026-01-22.md` | Relatório de saúde atual | 2026-01-22 |
-| `SYSTEMIC_ANALYSIS_2026-01-22.md` | Análise sistêmica completa | 2026-01-22 |
-| `COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md` | Auditoria técnica abrangente | 2026-01-22 |
+| `HEALTH_REPORT_2026-01-22.md` | Relatório de saúde atual (10/10) | 2026-01-23 |
+| `SYSTEMIC_ANALYSIS_2026-01-22.md` | Análise sistêmica completa (10/10) | 2026-01-23 |
+| `COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md` | Auditoria técnica abrangente | 2026-01-23 |
 | `RLS_SECURITY_AUDIT_2026-01-21.md` | Auditoria de segurança RLS | 2026-01-21 |
-| `BACKEND_AUDIT_2026-01-22.md` | Auditoria de Edge Functions | 2026-01-22 |
-| `DATABASE_OPTIMIZATION_AUDIT_2026-01-22.md` | Otimização de banco | 2026-01-22 |
+| `BACKEND_AUDIT_2026-01-22.md` | Auditoria de Edge Functions | 2026-01-23 |
+| `DATABASE_OPTIMIZATION_AUDIT_2026-01-22.md` | Otimização de banco | 2026-01-23 |
 | `FRONTEND_UX_AUDIT_2026-01-22.md` | Auditoria de UX | 2026-01-22 |
 | `SQL_FUNCTIONS_AUDIT_2026-01-22.md` | **Auditoria de 175 funções SQL** | 2026-01-22 |
-| `EDGE_FUNCTIONS_JSDOC_AUDIT_2026-01-22.md` | **Auditoria JSDoc de 16 Edge Functions** | 2026-01-22 |
+| `EDGE_FUNCTIONS_JSDOC_AUDIT_2026-01-22.md` | **Auditoria JSDoc de 18 Edge Functions** | 2026-01-23 |
 
 ---
 
@@ -70,7 +70,6 @@ docs/
 | `PERF_PLAYBOOK.md` | Playbook de performance |
 | `SHARED_COMPONENTS_REGISTRY.md` | Registro de componentes |
 | `HOOKS_CONSOLIDATION_REPORT.md` | Padrão de hooks |
-| `CHATGPT_CUSTOM_GPT_SETUP.md` | Setup do Custom GPT |
 
 ---
 
@@ -87,4 +86,14 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Reorganizado em 2026-01-22 conforme Wave 4.1 do SYSTEMIC_ANALYSIS*
+## 🔒 Linter Warnings Conhecidos (Intencionais)
+
+| Warning | Tabela | Justificativa |
+|---------|--------|---------------|
+| RLS `USING (true)` | `app_error_logs` | Log de erro pre-auth (qualquer usuário pode submeter) |
+| RLS `USING (true)` | `audit_logs` | Log de auditoria (insert pré-contexto BU) |
+| Leaked Password | N/A | Sistema usa **Magic Link**, não senhas |
+
+---
+
+*Atualizado em 2026-01-23 — TCR v2.65.0 — Health Score 10/10*
