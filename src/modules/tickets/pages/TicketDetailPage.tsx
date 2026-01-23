@@ -336,7 +336,10 @@ export default function TicketDetailPage() {
                   >
                     <div className="space-y-4">
                       {messages.filter(m => !m.is_pinned).map((message) => {
-                        const isOwnMessage = message.author_user_id === profileId;
+                        // Check if message is from current user (internal or external)
+                        const isOwnMessage = isExternal
+                          ? message.author_contact_id === currentBuContactId
+                          : message.author_user_id === profileId;
                         const messageAttachments = attachmentsByMessage.get(message.id) || [];
                         
                         return (
@@ -349,6 +352,14 @@ export default function TicketDetailPage() {
                             onTogglePin={(msgId, pin) => pinMessage.mutate({ messageId: msgId, ticketId: ticket.id, pin })}
                             isPinning={pinMessage.isPending}
                             onReply={(msg) => setReplyingTo(msg)}
+                            onScrollToMessage={(messageId) => {
+                              const el = document.getElementById(`message-${messageId}`);
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                el.classList.add('bg-accent/50');
+                                setTimeout(() => el.classList.remove('bg-accent/50'), 2000);
+                              }
+                            }}
                           />
                         );
                       })}
