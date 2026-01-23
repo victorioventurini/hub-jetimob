@@ -34,17 +34,19 @@ export function BuIaSettings() {
     queryFn: async () => {
       if (!currentBu?.id) return null;
 
+      // Use .limit(1) instead of .single() to avoid 406 errors when no config exists
       const { data, error } = await supabase
         .from("bu_ia_config")
         .select("id, bu_id, ia_enabled, ia_mode, max_calls_per_user_day, max_calls_per_bu_day, created_at, updated_at")
         .eq("bu_id", currentBu.id)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         throw error;
       }
 
-      return data;
+      // Return first item or null (safe fallback)
+      return data?.[0] ?? null;
     },
     enabled: !!currentBu?.id,
   });
