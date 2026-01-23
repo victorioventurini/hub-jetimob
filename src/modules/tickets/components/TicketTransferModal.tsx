@@ -23,7 +23,7 @@ import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Search, User, Building2, Check } from "lucide-react";
+import { Search, User, Building2, Check } from "lucide-react"; // Building2 kept for empty state
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
 import { usePartnerCompanyContacts } from "@/modules/tickets/hooks";
 import { getInitials } from "@/lib/mentions";
@@ -202,31 +202,29 @@ export function TicketTransferModal({
                   type="button"
                   onClick={() => setSelectedCandidate(candidate)}
                   className={cn(
-                    "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors",
-                    "hover:bg-accent",
-                    selectedCandidate?.id === candidate.id && "bg-accent ring-1 ring-primary"
+                    "w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors group",
+                    "hover:bg-background",
+                    selectedCandidate?.id === candidate.id && "bg-background ring-1 ring-primary"
                   )}
                 >
-                  {candidate.type === "internal" ? (
-                    <OptimizedAvatar
-                      src={candidate.avatarUrl}
-                      fallback={getInitials(candidate.name)}
-                      size="md"
-                      className="h-10 w-10 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  )}
+                  <OptimizedAvatar
+                    src={candidate.avatarUrl}
+                    fallback={getInitials(candidate.name)}
+                    size="sm"
+                    className="h-10 w-10 ring-2 ring-background flex-shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{candidate.name}</p>
+                    <span className="font-medium text-sm truncate block group-hover:text-primary transition-colors">
+                      {candidate.name}
+                    </span>
                     {candidate.subtitle && (
-                      <p className="text-xs text-muted-foreground truncate">{candidate.subtitle}</p>
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {candidate.subtitle}
+                      </span>
                     )}
                   </div>
                   {candidate.type === "external" && (
-                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 flex-shrink-0">
+                    <Badge variant="secondary" className="text-xs shrink-0">
                       Externo
                     </Badge>
                   )}
