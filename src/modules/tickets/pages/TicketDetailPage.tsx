@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,7 +20,7 @@ import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { TicketTransferModal } from "../components/TicketTransferModal";
 import { TicketDetailSidebar } from "../components/TicketDetailSidebar";
 import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
-import type { TicketStatus } from "../types";
+import type { TicketStatus, TicketMessage } from "../types";
 import type { ParsedMention } from "@/components/mentions";
 
 export default function TicketDetailPage() {
@@ -79,6 +79,9 @@ export default function TicketDetailPage() {
   
   // Transfer modal state
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+  
+  // Reply state - tracks message being replied to
+  const [replyingTo, setReplyingTo] = useState<TicketMessage | null>(null);
 
   // Check if user can pin messages
   const canPin = useMemo(() => {
@@ -144,6 +147,7 @@ export default function TicketDetailPage() {
     content: string;
     mentions: ParsedMention[];
     files: File[];
+    replyToMessageId?: string | null;
   }) => {
     if (!ticket) return;
 
@@ -164,9 +168,12 @@ export default function TicketDetailPage() {
             user_id: m.userId || undefined,
             contact_id: m.contactId || undefined,
           })),
+          reply_to_message_id: data.replyToMessageId ?? null,
         },
       });
       toast.success("Mensagem enviada");
+      // Clear reply state on success
+      setReplyingTo(null);
     } catch (error) {
       // Prefer actionable messages over a generic toast.
       const message =
@@ -341,6 +348,7 @@ export default function TicketDetailPage() {
                             canPin={canPin}
                             onTogglePin={(msgId, pin) => pinMessage.mutate({ messageId: msgId, ticketId: ticket.id, pin })}
                             isPinning={pinMessage.isPending}
+                            onReply={(msg) => setReplyingTo(msg)}
                           />
                         );
                       })}
@@ -359,6 +367,8 @@ export default function TicketDetailPage() {
                 placeholder="Digite sua mensagem... Use @ para mencionar"
                 buName={currentBu?.name}
                 partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_company?.name : undefined}
+                replyingTo={replyingTo}
+                onCancelReply={() => setReplyingTo(null)}
               />
             </CardContent>
           </Card>

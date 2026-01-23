@@ -1,13 +1,21 @@
+// ============================================================
+// TICKET MESSAGE COMPOSER - Hub da Jet
+// ============================================================
+// Composer for ticket messages with reply support.
+// Supports: mentions, file attachments, and reply mode.
+// ============================================================
+
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Send, X, Loader2, FileIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReplyPreview, type GenericMessage } from "@/components/messaging";
 import { 
   MentionInput, 
-  extractMentionsFromText, 
   type ParsedMention 
 } from "@/components/mentions";
 import { toast } from "sonner";
+import type { TicketMessage, RichTextContent } from "../types";
 
 interface SelectedFile {
   file: File;
@@ -20,6 +28,7 @@ interface TicketMessageComposerProps {
     content: string;
     mentions: ParsedMention[];
     files: File[];
+    replyToMessageId?: string | null;
   }) => Promise<void>;
   isSubmitting?: boolean;
   partnerCompanyId?: string | null;
@@ -28,6 +37,10 @@ interface TicketMessageComposerProps {
   buName?: string;
   /** Nome da empresa parceira para exibir na dica de menção (tickets externos) */
   partnerCompanyName?: string;
+  /** Mensagem sendo respondida */
+  replyingTo?: TicketMessage | null;
+  /** Callback para cancelar reply */
+  onCancelReply?: () => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -46,6 +59,42 @@ const ALLOWED_TYPES = [
   "text/csv",
 ];
 
+/**
+ * Extract text content from body_richtext.
+ */
+function getMessageText(bodyRichtext: RichTextContent): string {
+  if (typeof bodyRichtext === "string") {
+    return bodyRichtext;
+  }
+  if (bodyRichtext && typeof bodyRichtext === "object") {
+    const content = (bodyRichtext as any).content;
+    if (typeof content === "string") {
+      return content;
+    }
+  }
+  return "";
+}
+
+/**
+ * Convert TicketMessage to GenericMessage for ReplyPreview.
+ */
+function ticketMessageToGeneric(message: TicketMessage): GenericMessage {
+  const authorName = message.author_user?.display_name ?? message.author_contact?.name ?? "Usuário";
+  const isExternal = message.author_type === "partner_contact";
+
+  return {
+    id: message.id,
+    content: getMessageText(message.body_richtext),
+    createdAt: message.created_at,
+    author: {
+      id: message.author_user_id ?? message.author_contact_id ?? "",
+      name: authorName,
+      photoUrl: (message.author_user as any)?.photo_url ?? null,
+      type: isExternal ? "external" : "internal",
+    },
+  };
+}
+
 export function TicketMessageComposer({
   onSend,
   isSubmitting = false,
@@ -53,6 +102,8 @@ export function TicketMessageComposer({
   placeholder = "Digite sua mensagem... Use @ para mencionar",
   buName,
   partnerCompanyName,
+  replyingTo,
+  onCancelReply,
 }: TicketMessageComposerProps) {
   const [content, setContent] = useState("");
   const [mentions, setMentions] = useState<ParsedMention[]>([]);
@@ -124,6 +175,7 @@ export function TicketMessageComposer({
         content: content.trim(),
         mentions,
         files: selectedFiles.map(sf => sf.file),
+        replyToMessageId: replyingTo?.id ?? null,
       });
 
       // Clear state after successful send
@@ -137,6 +189,11 @@ export function TicketMessageComposer({
         }
       });
       setSelectedFiles([]);
+      
+      // Clear reply mode
+      if (onCancelReply) {
+        onCancelReply();
+      }
     } catch (error) {
       // Error is handled by the parent
       console.error("Failed to send message:", error);
@@ -192,8 +249,19 @@ export function TicketMessageComposer({
         </div>
       )}
 
+      {/* Reply preview */}
+      {replyingTo && onCancelReply && (
+        <ReplyPreview
+          replyingTo={ticketMessageToGeneric(replyingTo)}
+          onCancel={onCancelReply}
+        />
+      )}
+
       {/* Composer area */}
-      <div className="flex gap-2 items-end">
+      <div className={cn(
+        "flex gap-2 items-end",
+        replyingTo && "border border-t-0 border-border rounded-b-lg p-2 -mt-3"
+      )}>
         {/* File upload button */}
         <div>
           <input
