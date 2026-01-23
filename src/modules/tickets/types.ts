@@ -221,12 +221,21 @@ export interface TicketMessage {
   is_pinned: boolean;
   pinned_at: string | null;
   pinned_by_user_id: string | null;
+  // Reply support (v2.72+)
+  reply_to_message_id: string | null;
   // Joined (using actual database field names from profiles table)
   author_user?: { id: string; display_name: string; photo_url: string | null } | null;
   author_contact?: { id: string; name: string; email: string } | null;
   pinned_by?: { id: string; display_name: string } | null;
   attachments?: TicketAttachment[];
   mentions?: TicketMention[];
+  // Reply joined data
+  reply_to?: {
+    id: string;
+    body_richtext: RichTextContent;
+    author_user?: { id: string; display_name: string } | null;
+    author_contact?: { id: string; name: string } | null;
+  } | null;
 }
 
 // Tipo para conteúdo rich text (JSON) - suporta texto simples ou estrutura rica
@@ -410,6 +419,8 @@ export interface CreateMessageData {
     user_id?: string;
     contact_id?: string;
   }[];
+  /** ID da mensagem sendo respondida (reply) */
+  reply_to_message_id?: string | null;
 }
 
 // ===========================================

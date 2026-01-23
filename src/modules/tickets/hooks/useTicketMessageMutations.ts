@@ -88,6 +88,7 @@ export function useCreateMessage(author: CreateMessageAuthor, ticketContext?: Ti
             author_type: "partner_contact" as const,
             author_contact_id: author.contactId,
             body_richtext: data.body_richtext,
+            reply_to_message_id: data.reply_to_message_id ?? null,
           }
         : {
             bu_id: buId,
@@ -95,6 +96,7 @@ export function useCreateMessage(author: CreateMessageAuthor, ticketContext?: Ti
             author_type: "internal_user" as const,
             author_user_id: author.profileId,
             body_richtext: data.body_richtext,
+            reply_to_message_id: data.reply_to_message_id ?? null,
           };
 
       // Create message

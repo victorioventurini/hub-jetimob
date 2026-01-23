@@ -6856,6 +6856,7 @@ export type Database = {
           is_pinned: boolean
           pinned_at: string | null
           pinned_by_user_id: string | null
+          reply_to_message_id: string | null
           ticket_id: string
         }
         Insert: {
@@ -6871,6 +6872,7 @@ export type Database = {
           is_pinned?: boolean
           pinned_at?: string | null
           pinned_by_user_id?: string | null
+          reply_to_message_id?: string | null
           ticket_id: string
         }
         Update: {
@@ -6886,6 +6888,7 @@ export type Database = {
           is_pinned?: boolean
           pinned_at?: string | null
           pinned_by_user_id?: string | null
+          reply_to_message_id?: string | null
           ticket_id?: string
         }
         Relationships: [
@@ -6943,6 +6946,13 @@ export type Database = {
             columns: ["pinned_by_user_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_messages"
             referencedColumns: ["id"]
           },
           {
