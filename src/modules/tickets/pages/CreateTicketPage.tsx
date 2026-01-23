@@ -394,6 +394,8 @@ export default function CreateTicketPage() {
           user_id: m.userId,
           contact_id: m.contactId,
         })),
+        // Pass attachments so mutation knows to create initial message even if text is empty
+        attachments: attachments,
       });
       
       // Upload attachments if any
