@@ -15,12 +15,11 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Lightbulb, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import { useWizardAI, type ObjectiveValidationFeedback } from '@/modules/okrs/hooks';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { ObjectiveInputWithValidation } from './ObjectiveInputWithValidation';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
-import type { ObjectiveValidationFeedback } from '@/modules/okrs/hooks/useWizardDraft';
 
 // ============================================================
 // TYPES

@@ -26,8 +26,7 @@ import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import type { WizardAiInsight, DetectedDependencyDraft } from '@/modules/okrs/hooks/useWizardDraft';
+import { useWizardAI, type WizardAiInsight, type DetectedDependencyDraft } from '@/modules/okrs/hooks';
 import type { DraftTeamKr, DraftTeamDependency } from '@/modules/okrs/types/wizard';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 

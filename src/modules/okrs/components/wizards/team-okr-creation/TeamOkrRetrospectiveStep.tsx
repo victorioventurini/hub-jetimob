@@ -19,8 +19,7 @@ import { cn } from '@/lib/utils';
 import { VicGeneratingCard } from '@/modules/vic';
 import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import type { WizardAiInsight } from '@/modules/okrs/hooks/useWizardDraft';
+import { useWizardAI, type WizardAiInsight } from '@/modules/okrs/hooks';
 import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
 import { RAG_STATUS_COLORS, TREND_COLORS } from '@/lib/colors';
 

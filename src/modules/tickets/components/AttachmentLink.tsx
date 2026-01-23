@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FileIcon, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSignedAttachmentUrl, isStoragePath } from "../hooks/useAttachmentUrl";
+import { getSignedAttachmentUrl, isStoragePath } from "@/modules/tickets/hooks";
 import type { TicketAttachment } from "../types";
 
 interface AttachmentLinkProps {

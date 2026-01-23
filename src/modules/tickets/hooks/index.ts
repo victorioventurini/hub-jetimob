@@ -84,6 +84,7 @@ export {
   usePartnerServices, 
   usePartnerCategories, 
   usePartnerSubcategories, 
+  usePartnersByCategory,
   usePartnerServiceMappings, 
   useCreatePartnerService, 
   useDeletePartnerService, 

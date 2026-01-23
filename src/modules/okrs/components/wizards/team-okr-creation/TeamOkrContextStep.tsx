@@ -23,8 +23,7 @@ import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import type { WizardAiInsight } from '@/modules/okrs/hooks/useWizardDraft';
+import { useWizardAI, type WizardAiInsight } from '@/modules/okrs/hooks';
 
 // ============================================================
 // TYPES

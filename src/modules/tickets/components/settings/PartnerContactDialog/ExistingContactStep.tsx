@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhoneLink } from "@/components/ui/phone-link";
-import { usePartnerContact } from "../../../hooks";
-import { useActivateContactInBu, useContactBuAssociations } from "../../../hooks/usePartnerContactGlobal";
+import { usePartnerContact, useActivateContactInBu, useContactBuAssociations } from "@/modules/tickets/hooks";
 
 interface ExistingContactStepProps {
   contactId: string;
