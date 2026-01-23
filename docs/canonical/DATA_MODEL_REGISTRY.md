@@ -271,7 +271,9 @@ Lista completa das tabelas no schema `public`:
 | `kpi_metrics` | `owner_user_id` | ✅ → `profiles.id` | Owner do KPI |
 | `tickets` | `created_by_user_id` | ✅ → `profiles.id` | Criador do ticket |
 | `tickets` | `assigned_user_id` | ✅ → `profiles.id` | Responsável |
-| `ticket_messages` | `performed_by_user_id` | ✅ → `profiles.id` | Autor da mensagem |
+| `ticket_messages` | `author_user_id` | ✅ → `profiles.id` | Autor interno da mensagem |
+| `ticket_messages` | `author_contact_id` | ✅ → `partner_contacts.id` | Autor externo da mensagem |
+| `ticket_messages` | `reply_to_message_id` | ✅ → `ticket_messages.id` | Mensagem original (reply, v2.73.0) |
 | `ticket_participants` | `profile_id` | ✅ → `profiles.id` | Participante (renomeado de user_id em v2.51.0) |
 | `asset_inventory` | `current_user_id` | ✅ → `profiles.id` | Possuidor atual |
 | `asset_inventory` | `created_by` | ❌ (inferido) | Criador |

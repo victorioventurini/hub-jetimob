@@ -400,7 +400,9 @@
 `id, bu_id, category_id, subcategory_id, assignee_user_ids, assignee_team_ids, assignee_squad_ids, watcher_user_ids, watcher_team_ids, watcher_squad_ids, priority, notes, created_at, created_by, updated_at, deleted_at`
 
 ### ticket_messages
-`id, bu_id, ticket_id, author_type, author_user_id, author_contact_id, body_richtext, created_at, edited_at, deleted_at, is_pinned, pinned_at, pinned_by_user_id`
+`id, bu_id, ticket_id, author_type, author_user_id, author_contact_id, body_richtext, created_at, edited_at, deleted_at, is_pinned, pinned_at, pinned_by_user_id, reply_to_message_id`
+
+> ⚠️ **reply_to_message_id** (v2.73.0): FK self-referencing para suportar replies estilo WhatsApp. Null se não for resposta a outra mensagem.
 
 ### ticket_participants
 `id, bu_id, ticket_id, participant_type, profile_id, partner_contact_id, role, is_active, created_at`
