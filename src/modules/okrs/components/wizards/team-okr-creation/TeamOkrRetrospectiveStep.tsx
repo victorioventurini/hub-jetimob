@@ -219,17 +219,17 @@ export function TeamOkrRetrospectiveStep({
 
               {/* Abandoned KRs (if any) */}
               {analysis.abandonedKrs.length > 0 && (
-                <Card className="border-orange-200 dark:border-orange-800/50">
+                <Card className="border-warning/30">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                    <CardTitle className="text-base flex items-center gap-2 text-warning">
                       <AlertCircle className="h-4 w-4" />
                       KRs sem Atualização
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {analysis.abandonedKrs.slice(0, 3).map(kr => (
-                      <div key={kr.id} className="flex items-center gap-2 text-sm p-2 bg-orange-50 dark:bg-orange-950/20 rounded">
-                        <XCircle className="h-4 w-4 text-orange-500 shrink-0" />
+                      <div key={kr.id} className="flex items-center gap-2 text-sm p-2 bg-warning-muted rounded">
+                        <XCircle className="h-4 w-4 text-warning shrink-0" />
                         <span className="line-clamp-1">{kr.title}</span>
                       </div>
                     ))}

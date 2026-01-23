@@ -31,7 +31,7 @@ export function TestStatusBadge({
       variant: 'default' as const,
       icon: Check,
       label: 'Conexão OK',
-      className: 'bg-green-500 hover:bg-green-600',
+      className: 'bg-success hover:bg-success/90',
     },
     error: {
       variant: 'destructive' as const,

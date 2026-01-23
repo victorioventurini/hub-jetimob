@@ -202,7 +202,7 @@ export function LocationsList({ buId, canManage = false }: LocationsListProps) {
                   <span className="font-medium">{location.name}</span>
                   {location.is_default && !isRoom && (
                     <Badge variant="outline" className="gap-1">
-                      <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                      <Star className="h-3 w-3 fill-warning text-warning" />
                       Padrão
                     </Badge>
                   )}

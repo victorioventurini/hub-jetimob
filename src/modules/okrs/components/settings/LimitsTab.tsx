@@ -109,7 +109,7 @@ export function LimitsTab() {
         <CardContent>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="text-green-500 mt-1">✓</span>
+              <span className="text-success mt-1">✓</span>
               <span>
                 <strong className="text-foreground">KRs cancelados não contam:</strong>{" "}
                 Quando uma KR é cancelada (com motivo registrado), ela não é contabilizada
@@ -117,7 +117,7 @@ export function LimitsTab() {
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-green-500 mt-1">✓</span>
+              <span className="text-success mt-1">✓</span>
               <span>
                 <strong className="text-foreground">Objetivos cancelados não contam:</strong>{" "}
                 Objetivos com status 'cancelled' ou 'discarded' não são contabilizados
@@ -125,7 +125,7 @@ export function LimitsTab() {
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-amber-500 mt-1">!</span>
+              <span className="text-warning mt-1">!</span>
               <span>
                 <strong className="text-foreground">Histórico preservado:</strong>{" "}
                 Mesmo cancelados, os registros permanecem para aprendizado e auditoria.

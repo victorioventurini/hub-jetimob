@@ -186,7 +186,7 @@ export function LeaderPrepStep({
                         className={cn(
                           "p-1.5 rounded-md transition-colors",
                           action === 'discuss_group'
-                            ? "bg-blue-500 text-white"
+                            ? "bg-info text-white"
                             : "bg-muted hover:bg-muted-foreground/10"
                         )}
                         title="Discutir em grupo"
@@ -202,7 +202,7 @@ export function LeaderPrepStep({
                         className={cn(
                           "p-1.5 rounded-md transition-colors",
                           action === 'followup_1on1'
-                            ? "bg-purple-500 text-white"
+                            ? "bg-status-purple text-white"
                             : "bg-muted hover:bg-muted-foreground/10"
                         )}
                         title="Follow-up 1:1"

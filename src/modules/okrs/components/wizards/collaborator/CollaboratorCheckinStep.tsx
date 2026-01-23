@@ -397,13 +397,13 @@ export function CollaboratorCheckinStep({
             onClick={() => setShowBlockerField(true)}
             className="w-full"
           >
-            <AlertTriangle className="h-4 w-4 mr-2 text-orange-500" />
+            <AlertTriangle className="h-4 w-4 mr-2 text-status-orange" />
             Registrar bloqueador
           </Button>
         ) : (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="blocker" className="text-orange-600 dark:text-orange-400">
+              <Label htmlFor="blocker" className="text-status-orange">
                 Bloqueador
               </Label>
               <Button
