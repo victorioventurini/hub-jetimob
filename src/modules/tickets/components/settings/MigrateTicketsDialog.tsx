@@ -21,8 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { usePendingTicketsForContact, useMigrateAndRemoveContact } from "../../hooks/useContactTicketMigration";
-import { usePartnerContacts } from "../../hooks";
+import { usePendingTicketsForContact, useMigrateAndRemoveContact, usePartnerContacts } from "@/modules/tickets/hooks";
 import type { PartnerContact } from "../../types";
 
 interface MigrateTicketsDialogProps {

@@ -29,7 +29,7 @@ import {
   useUpdateGlobalTestStatus,
   useGlobalAgents,
   useAgentLogs,
-} from '../hooks/useIntegrations';
+} from '@/modules/integrations/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useUrlTab } from '@/shared/url';
 

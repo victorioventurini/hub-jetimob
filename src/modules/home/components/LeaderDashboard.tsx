@@ -2,9 +2,7 @@
  * LeaderDashboard - Main dashboard layout for team leaders
  * Note: People blocks and VicCard are rendered by the parent Index.tsx
  */
-import { useLeaderScope } from "../hooks/useLeaderScope";
-import { useLeaderDashboard } from "../hooks/useLeaderDashboard";
-import { useTeamHasActiveOkrs } from "../hooks/useTeamHasActiveOkrs";
+import { useLeaderScope, useLeaderDashboard, useTeamHasActiveOkrs } from "@/modules/home/hooks";
 import { usePermissions } from "@/hooks/usePermissions";
 import { LeaderScopeSelector } from "./LeaderScopeSelector";
 import {

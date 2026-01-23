@@ -31,7 +31,7 @@ import {
   useIntegrationByKey, 
   useAgentLogs,
   useGlobalAgents,
-} from '../hooks/useIntegrations';
+} from '@/modules/integrations/hooks';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AgentLogsPage() {
