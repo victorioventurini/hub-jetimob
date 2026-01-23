@@ -48,7 +48,7 @@ export function TeamOkrSections({
       {/* Section 1: Primary OKRs */}
       <section>
         <div className="flex items-center gap-2 mb-4">
-          <Crown className="h-5 w-5 text-amber-500" />
+          <Crown className="h-5 w-5 text-warning" />
           <h2 className="text-lg font-semibold">OKRs do {teamName}</h2>
           <Badge variant="outline" className="ml-2">
             {primaryObjectives.length} objetivo{primaryObjectives.length !== 1 ? 's' : ''}
@@ -84,11 +84,11 @@ export function TeamOkrSections({
       {hasContributions && (
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-purple-500" />
+            <Users className="h-5 w-5 text-status-purple" />
             <h2 className="text-lg font-semibold">OKRs Compartilhadas</h2>
             <Badge 
               variant="outline" 
-              className="ml-2 bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800"
+              className="ml-2 bg-status-purple-muted text-status-purple border-status-purple/30"
             >
               {contributedObjectives.length} contribuição{contributedObjectives.length !== 1 ? 'ões' : ''}
             </Badge>

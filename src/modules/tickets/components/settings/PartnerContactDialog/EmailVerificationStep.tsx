@@ -235,9 +235,9 @@ export function EmailVerificationStep({
         )}
 
         {contactFound && (
-          <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
+          <Alert className="bg-warning-muted border-warning/30">
+            <AlertCircle className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-warning-muted-foreground">
               <strong>{existingContact.name}</strong> já está cadastrado.
               {existingContact.partner_company && (
                 <span className="block text-sm mt-1">

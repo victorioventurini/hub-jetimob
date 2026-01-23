@@ -54,7 +54,7 @@ export interface ConfirmDialogProps {
 
 const VARIANT_STYLES: Record<ConfirmDialogVariant, string> = {
   destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-  warning: "bg-amber-600 text-white hover:bg-amber-700",
+  warning: "bg-warning text-warning-foreground hover:bg-warning/90",
   info: "bg-primary text-primary-foreground hover:bg-primary/90",
   default: "bg-primary text-primary-foreground hover:bg-primary/90",
 };

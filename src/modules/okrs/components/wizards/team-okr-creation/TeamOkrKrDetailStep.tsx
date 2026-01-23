@@ -396,9 +396,9 @@ export function TeamOkrKrDetailStep({
 
           {/* Preview */}
           {isKrValid && (
-            <Card className="border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-950/20">
+            <Card className="border-success/30 bg-success-muted">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 mb-2">
+                <div className="flex items-center gap-2 text-sm text-success mb-2">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>Preview do KR</span>
                 </div>

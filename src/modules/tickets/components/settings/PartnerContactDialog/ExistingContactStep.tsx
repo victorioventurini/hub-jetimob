@@ -117,9 +117,9 @@ export function ExistingContactStep({
       </Card>
 
       {isAlreadyActive ? (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
-          <CheckCircle className="h-5 w-5 text-emerald-600" />
-          <span className="text-emerald-800 dark:text-emerald-200">
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-success-muted border border-success/30">
+          <CheckCircle className="h-5 w-5 text-success" />
+          <span className="text-success-muted-foreground">
             Este contato já está ativo em <strong>{currentBuName}</strong>
           </span>
         </div>

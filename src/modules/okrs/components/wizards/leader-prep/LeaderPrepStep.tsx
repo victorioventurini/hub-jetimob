@@ -167,10 +167,10 @@ export function LeaderPrepStep({
                 <div
                   className={cn(
                     "rounded-lg border p-3 transition-colors",
-                    action === 'discuss_group' && "border-blue-300 bg-blue-50/50 dark:border-blue-800/50 dark:bg-blue-950/20",
-                    action === 'followup_1on1' && "border-purple-300 bg-purple-50/50 dark:border-purple-800/50 dark:bg-purple-950/20",
-                    !action && kr.is_at_risk && "border-yellow-200",
-                    !action && kr.is_pending && "border-orange-200"
+                    action === 'discuss_group' && "border-info/50 bg-info-muted",
+                    action === 'followup_1on1' && "border-status-purple/50 bg-status-purple-muted",
+                    !action && kr.is_at_risk && "border-warning/50",
+                    !action && kr.is_pending && "border-warning/30"
                   )}
                 >
                   {/* Main row */}
