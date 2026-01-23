@@ -1090,35 +1090,36 @@ function AuthenticatedRoutes() {
                       }
                     />
 
-        {/* BU Areas Settings */}
-        <Route
-          path="/settings/areas"
-          element={
-            <ProtectedRoute>
-              <BuRequiredRoute>
-                <HubLayout>
-                  <AreasPage />
-                </HubLayout>
-              </BuRequiredRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/me/notifications"
-          element={
-            <ProtectedRoute>
-              <BuRequiredRoute>
-                <NotificationsPage />
-              </BuRequiredRoute>
-            </ProtectedRoute>
-          }
-        />
+                    {/* BU Areas Settings */}
+                    <Route
+                      path="/settings/areas"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <HubLayout>
+                              <AreasPage />
+                            </HubLayout>
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* User Notifications */}
+                    <Route
+                      path="/me/notifications"
+                      element={
+                        <ProtectedRoute>
+                          <BuRequiredRoute>
+                            <NotificationsPage />
+                          </BuRequiredRoute>
+                        </ProtectedRoute>
+                      }
+                    />
 
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
-  );
-}
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              );
+            }
 
-export default App;
+            export default App;

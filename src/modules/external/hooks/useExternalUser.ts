@@ -9,13 +9,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthContext } from "@/hooks/useAuth";
+import { AuthContext, type AuthContextType } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";
 
+/**
+ * Hook to detect and fetch external user info.
+ * 
+ * This is a PRE-BU hook - it runs BEFORE BuProvider is initialized.
+ * Uses optional AuthContext access to avoid throwing when outside AuthProvider.
+ * 
+ * @see docs/canonical/DEVELOPMENT_STANDARDS.md - PRE-BU vs POST-BU contexts
+ */
 export function useExternalUser() {
   // Use optional context access to avoid throwing when outside AuthProvider
-  const authContext = useContext(AuthContext);
+  // This is required because BuProvider calls this hook, and BuProvider
+  // is rendered inside AuthProvider but may initialize before auth completes
+  const authContext = useContext(AuthContext) as AuthContextType | undefined;
   const user = authContext?.user ?? null;
   const isAuthLoading = authContext?.isLoading ?? true;
 

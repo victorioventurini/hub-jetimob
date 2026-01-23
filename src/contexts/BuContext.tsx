@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BuUnit, UserBuMembership } from "@/modules/bu/types";
 import { useUserBus } from "@/modules/bu/hooks";
 import { useExternalUserBus } from "@/modules/external/hooks";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthContext, type AuthContextType } from "@/hooks/useAuth";
 
 interface BuContextType {
   /** Selected BU id (available even if bu_unit data isn't loaded) */
@@ -33,7 +33,10 @@ const BU_SELECTED_KEY = "hub_bu_selected";
 
 export function BuProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const { user, isLoading: authLoading } = useAuth();
+  // Use optional AuthContext access to avoid throwing when outside AuthProvider
+  const authContext = useContext(AuthContext) as AuthContextType | undefined;
+  const user = authContext?.user ?? null;
+  const authLoading = authContext?.isLoading ?? true;
   const { data: internalBus = [], isLoading: internalBusLoading } = useUserBus();
   const { data: externalBus = [], isLoading: externalBusLoading } = useExternalUserBus();
   

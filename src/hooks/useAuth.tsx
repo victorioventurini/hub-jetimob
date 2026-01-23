@@ -45,7 +45,7 @@ interface UserRole {
   role: 'super_admin' | 'admin' | 'collaborator' | 'external';
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
@@ -56,7 +56,13 @@ interface AuthContextType {
   isAdmin: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+/**
+ * AuthContext - exported for optional consumption in PRE-BU hooks.
+ * For standard usage, prefer the useAuth() hook which throws if outside AuthProvider.
+ * For PRE-BU hooks (useExternalUser, useUserBus), use useContext(AuthContext) directly
+ * with optional chaining to handle undefined gracefully.
+ */
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
