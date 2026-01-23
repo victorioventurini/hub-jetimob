@@ -2,7 +2,7 @@
  * Hook to fetch teams where the current user (or impersonated user) is a leader
  */
 import { useQuery } from "@tanstack/react-query";
-import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
@@ -10,10 +10,12 @@ import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import type { LeaderTeam } from "../types";
 
 export function useLeaderTeams() {
-  const supabase = useOptionalBuScopedSupabase();
   const { currentBuId } = useBu();
   const { user } = useAuth();
   const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
+
+  // Use optional client with strict gating
+  const { client: supabase, isReady: buIsReady } = useOptionalBuClient();
 
   // Determine effective user ID for data fetching
   const effectiveUserId = isImpersonating && impersonatedUserId 
@@ -58,7 +60,8 @@ export function useLeaderTeams() {
 
       return (data || []) as LeaderTeam[];
     },
-    enabled: !!supabase && !!currentBuId && !!effectiveUserId,
+    // Gate query with buIsReady to prevent premature calls
+    enabled: buIsReady && !!supabase && !!currentBuId && !!effectiveUserId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

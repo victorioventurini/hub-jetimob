@@ -178,20 +178,21 @@ export function useVicEnabled() {
     queryFn: async () => {
       if (!supabase || !isReady || !buId) return null;
 
+      // Use .limit(1) instead of .single() to avoid 406 errors when no config exists
       const { data, error } = await supabase
         .from("bu_ia_config")
         .select(
           "id, bu_id, ia_enabled, ia_mode, max_calls_per_bu_day, max_calls_per_user_day, created_at, updated_at"
         )
         .eq("bu_id", buId)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== "PGRST116") {
-        // PGRST116 = no rows returned
+      if (error) {
         throw error;
       }
 
-      return data as BuIaConfig | null;
+      // Return first item or null (safe fallback)
+      return (data?.[0] as BuIaConfig) ?? null;
     },
     enabled: !!buId && isReady,
   });
