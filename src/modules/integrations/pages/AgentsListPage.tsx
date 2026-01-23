@@ -51,7 +51,7 @@ import {
   useUpdateAgent,
   useDeleteAgent,
   useCreateAgent,
-} from '../hooks/useIntegrations';
+} from '@/modules/integrations/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';

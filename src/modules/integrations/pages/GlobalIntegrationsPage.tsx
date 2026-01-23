@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Plug } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationCard } from '../components/IntegrationCard';
-import { useIntegrationsCatalog, useGlobalConfigs, useUpsertGlobalConfig } from '../hooks/useIntegrations';
+import { useIntegrationsCatalog, useGlobalConfigs, useUpsertGlobalConfig } from '@/modules/integrations/hooks';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function GlobalIntegrationsPage() {

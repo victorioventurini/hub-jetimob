@@ -31,7 +31,7 @@ import {
   useGlobalAgents,
   useCreateAgent,
   useUpdateAgent,
-} from '../hooks/useIntegrations';
+} from '@/modules/integrations/hooks';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { AiAgent } from '../types';
