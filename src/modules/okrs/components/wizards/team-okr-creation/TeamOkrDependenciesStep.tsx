@@ -227,7 +227,7 @@ export function TeamOkrDependenciesStep({
           {detectedDependencies.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-orange-500" />
+                <AlertTriangle className="h-4 w-4 text-status-orange" />
                 Dependências Detectadas
               </h3>
 
@@ -236,8 +236,8 @@ export function TeamOkrDependenciesStep({
                   key={index}
                   className={cn(
                     "transition-all",
-                    dep.severity === 'high' && "border-red-200 dark:border-red-800/50",
-                    dep.severity === 'medium' && "border-orange-200 dark:border-orange-800/50",
+                    dep.severity === 'high' && "border-destructive/30",
+                    dep.severity === 'medium' && "border-warning/30",
                     selectedActions[index] && "opacity-70"
                   )}
                 >

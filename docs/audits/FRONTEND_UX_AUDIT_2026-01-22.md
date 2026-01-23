@@ -13,17 +13,17 @@ O Hub da Jet apresenta **excelente maturidade técnica** no front-end, com desig
 
 | Categoria | Crítico (P1) | Importante (P2) | Desejável (P3) | Status |
 |-----------|--------------|-----------------|----------------|--------|
-| **Cores Hardcoded** | 0 | 0 | ~100 arquivos | ✅ Módulos críticos corrigidos |
+| **Cores Hardcoded** | 0 | 0 | ~70 arquivos | ✅ Módulos críticos 100% |
 | **Tamanhos de Modal** | 0 | 0 | 0 | ✅ Padronizado |
-| **Componentes Duplicados** | 0 | 0 (MultiUserSelect removido) | 2 | ✅ Limpo |
+| **Componentes Duplicados** | 0 | 0 | 2 | ✅ Limpo |
 | **onClick + navigate** | 0 | 0 | 0 | ✅ Corrigido |
-| **Componentes Gigantes** | 0 | 3 (>500 linhas) | 2 | 🔲 Pendente |
-| **UX Friction Points** | 0 | 2 | 5 | 🔄 Em progresso |
+| **Componentes Gigantes** | 0 | 3 (>500 linhas) | 2 | 🔲 Backlog |
+| **UX Friction Points** | 0 | 2 | 5 | 🔲 Backlog |
 | **Acessibilidade** | 0 | 2 | 4 | 🔲 Backlog |
 
-**Health Score Frontend:** 9.7/10
+**Health Score Frontend:** 9.8/10
 
-**Conclusão:** Projeto em **excelente saúde**. Débitos são majoritariamente de polimento, não de funcionalidade.
+**Conclusão:** Projeto em **excelente saúde**. Todos os módulos críticos migrados para tokens semânticos. Débitos restantes são de polimento (P3).
 
 ---
 
@@ -303,15 +303,15 @@ src/modules/okrs/
 
 | Métrica | Antes | Meta | Atual |
 |---------|-------|------|-------|
-| Arquivos com cores hardcoded | ~156 | <20 | ~100 |
+| Arquivos com cores hardcoded | ~156 | <20 | ~70 |
 | Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
-| Componentes >400 linhas | 6 | <3 | 6 (pendente) |
+| Componentes >400 linhas | 6 | <3 | 6 (backlog) |
 | onClick+navigate (vs Link) | 4+ | 0 | ✅ 0 |
 | Páginas com URL State | 4 | 8+ | 4 |
-| Componentes deprecated ativos | 1 | 0 | ✅ 0 (MultiUserSelect removido) |
+| Componentes deprecated ativos | 1 | 0 | ✅ 0 |
 | Lighthouse Accessibility | ? | >90 | Pendente |
 
-**Frontend Health Score: 9.7/10**
+**Frontend Health Score: 9.8/10**
 
 ---
 

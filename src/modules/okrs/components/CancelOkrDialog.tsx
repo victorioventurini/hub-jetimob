@@ -242,7 +242,7 @@ export function CancelOkrDialog({
           {/* Learning - Required */}
           <div className="space-y-2">
             <Label htmlFor="learning" className="flex items-center gap-2">
-              <Lightbulb className="w-4 h-4 text-yellow-500" />
+              <Lightbulb className="w-4 h-4 text-warning" />
               Aprendizado *
             </Label>
             <Textarea

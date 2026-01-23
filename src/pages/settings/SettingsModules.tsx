@@ -396,7 +396,7 @@ export default function SettingsModules() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ToggleLeft className="h-5 w-5 text-blue-500" />
+                <ToggleLeft className="h-5 w-5 text-info" />
                 Módulos Globais
               </CardTitle>
               <CardDescription>

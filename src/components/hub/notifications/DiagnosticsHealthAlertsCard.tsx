@@ -193,7 +193,7 @@ export function DiagnosticsHealthAlertsCard() {
         <CardContent className="space-y-4">
           {activeAlerts.length === 0 && recentResolvedAlerts.length === 0 ? (
             <div className="text-center py-8">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
+              <CheckCircle className="h-12 w-12 text-success mx-auto mb-2" />
               <p className="text-muted-foreground">Nenhum alerta ativo</p>
             </div>
           ) : (

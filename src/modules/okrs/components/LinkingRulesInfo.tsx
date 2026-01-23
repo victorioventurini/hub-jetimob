@@ -181,9 +181,9 @@ export function LinkingRulesDiagram({ className }: LinkingRulesDiagramProps) {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Badge variant="outline" className="text-xs">Time</Badge>
-          <ArrowRight className="w-4 h-4 text-green-500" />
+          <ArrowRight className="w-4 h-4 text-success" />
           <Badge variant="outline" className="text-xs">Org</Badge>
-          <CheckCircle className="w-4 h-4 text-green-500" />
+          <CheckCircle className="w-4 h-4 text-success" />
         </div>
         <div className="flex items-center gap-2 text-sm opacity-50">
           <Badge variant="outline" className="text-xs">Org</Badge>
@@ -200,19 +200,19 @@ export function LinkingRulesDiagram({ className }: LinkingRulesDiagramProps) {
           KR → KR
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Badge className="bg-blue-100 text-blue-800 text-xs">Contribuição</Badge>
-          <ArrowRight className="w-4 h-4 text-green-500" />
+          <Badge className="bg-info-muted text-info text-xs">Contribuição</Badge>
+          <ArrowRight className="w-4 h-4 text-success" />
           <Badge variant="outline" className="text-xs">KR Org</Badge>
-          <CheckCircle className="w-4 h-4 text-green-500" />
+          <CheckCircle className="w-4 h-4 text-success" />
         </div>
         <div className="flex items-center gap-2 text-sm opacity-50">
-          <Badge className="bg-amber-100 text-amber-800 text-xs">Fundacional</Badge>
+          <Badge className="bg-warning-muted text-warning text-xs">Fundacional</Badge>
           <ArrowRight className="w-4 h-4" />
           <Badge variant="outline" className="text-xs">KR Org</Badge>
           <XCircle className="w-4 h-4 text-destructive" />
         </div>
         <div className="flex items-center gap-2 text-sm opacity-50">
-          <Badge className="bg-purple-100 text-purple-800 text-xs">Habilitador</Badge>
+          <Badge className="bg-status-purple/10 text-status-purple text-xs">Habilitador</Badge>
           <ArrowRight className="w-4 h-4" />
           <Badge variant="outline" className="text-xs">KR Org</Badge>
           <XCircle className="w-4 h-4 text-destructive" />
