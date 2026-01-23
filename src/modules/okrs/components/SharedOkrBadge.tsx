@@ -73,7 +73,7 @@ export function SharedOkrBadge({
             <Badge 
               variant="outline" 
               className={cn(
-                "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+                "bg-status-purple-muted text-status-purple border-status-purple/30",
                 className
               )}
             >
@@ -92,11 +92,11 @@ export function SharedOkrBadge({
   // Expanded mode - show all details inline
   if (expanded) {
     return (
-      <div className={cn("space-y-3 p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg", className)}>
+      <div className={cn("space-y-3 p-3 bg-status-purple-muted border border-status-purple/30 rounded-lg", className)}>
         <div className="flex items-center gap-2">
           <Badge 
             variant="outline" 
-            className="bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700"
+            className="bg-status-purple-muted text-status-purple border-status-purple/30"
           >
             <Users className="w-3 h-3 mr-1" />
             OKR Compartilhada
@@ -108,14 +108,14 @@ export function SharedOkrBadge({
         
         <div className="grid gap-2 text-sm">
           <div className="flex items-center gap-2">
-            <Crown className="w-4 h-4 text-amber-500" />
+            <Crown className="w-4 h-4 text-warning" />
             <span className="text-muted-foreground">Time primário:</span>
             <span className="font-medium">{primaryTeamName || "Não definido"}</span>
           </div>
           
           {contributingTeams.length > 0 && (
             <div className="flex items-start gap-2">
-              <Users className="w-4 h-4 text-purple-500 mt-0.5" />
+              <Users className="w-4 h-4 text-status-purple mt-0.5" />
               <span className="text-muted-foreground">Contribuidores:</span>
               <span className="font-medium">{contributingTeams.map(t => t.name).join(", ")}</span>
             </div>
@@ -132,7 +132,7 @@ export function SharedOkrBadge({
           <TooltipTrigger asChild>
             <Badge 
               variant="outline" 
-              className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800"
+              className="bg-status-purple-muted text-status-purple border-status-purple/30"
             >
               <Users className="w-3 h-3 mr-1" />
               Compartilhada
@@ -148,7 +148,7 @@ export function SharedOkrBadge({
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           {isPrimaryTeam ? (
             <>
-              <Crown className="w-3 h-3 text-amber-500" />
+              <Crown className="w-3 h-3 text-warning" />
               <span>Time primário</span>
             </>
           ) : (

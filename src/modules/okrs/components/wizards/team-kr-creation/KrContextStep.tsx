@@ -155,7 +155,7 @@ export function KrContextStep({
                 {/* Primary Team */}
                 {objective.primaryTeamName && (
                   <div className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-yellow-500" />
+                    <Crown className="h-4 w-4 text-warning" />
                     <span className="text-sm">
                       <span className="text-muted-foreground">Time Principal: </span>
                       <span className="font-medium">{objective.primaryTeamName}</span>

@@ -52,8 +52,8 @@ export function WorkAnniversariesBlock() {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: "0.4s" }}>
       <CardHeader className="flex flex-row items-center gap-3 pb-4">
-        <div className="p-2 rounded-lg bg-amber-500/10">
-          <Award className="h-5 w-5 text-amber-500" />
+        <div className="p-2 rounded-lg bg-warning/10">
+          <Award className="h-5 w-5 text-warning" />
         </div>
         <CardTitle className="text-base">
           Próximos Jet Aniversários
@@ -65,16 +65,16 @@ export function WorkAnniversariesBlock() {
             icon={Award}
             title="Nenhum aniversário de empresa"
             description="Não há Jet Aniversários nos próximos 15 dias."
-            iconClassName="text-amber-500"
+            iconClassName="text-warning"
             compact
           />
         ) : (
           <div className="space-y-4">
             {workAnniversaries.map((person) => (
               <div key={person.id} className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border-2 border-amber-200">
+                <Avatar className="h-10 w-10 border-2 border-warning/30">
                   <AvatarImage src={person.photoUrl} />
-                  <AvatarFallback className="bg-amber-50 text-amber-600 text-sm font-semibold">
+                  <AvatarFallback className="bg-warning-muted text-warning text-sm font-semibold">
                     {getInitials(person.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -89,7 +89,7 @@ export function WorkAnniversariesBlock() {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-sm font-semibold text-amber-600">
+                  <p className="text-sm font-semibold text-warning">
                     {person.yearsAtCompany} {person.yearsAtCompany === 1 ? "ano" : "anos"} de Jet
                   </p>
                   <p className="text-xs text-muted-foreground">

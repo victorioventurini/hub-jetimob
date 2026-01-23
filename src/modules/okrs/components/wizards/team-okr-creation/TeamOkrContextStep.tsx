@@ -242,8 +242,8 @@ export function TeamOkrContextStep({
                       </div>
                       <div className={cn(
                         "text-xs mt-1",
-                        kpi.trend === 'up' && "text-green-600",
-                        kpi.trend === 'down' && "text-red-600",
+                        kpi.trend === 'up' && "text-success",
+                        kpi.trend === 'down' && "text-danger",
                         kpi.trend === 'flat' && "text-muted-foreground"
                       )}>
                         {kpi.trend === 'up' && '↑ Subindo'}

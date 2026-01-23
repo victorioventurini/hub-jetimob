@@ -80,8 +80,8 @@ function PartnerCard({ partner, currentBuId }: { partner: GlobalPartnerCompany; 
                 <span className="flex items-center gap-1">
                   {isActiveInCurrentBu ? (
                     <>
-                      <Check className="h-3 w-3 text-emerald-500" />
-                      <span className="text-emerald-600">Ativo na BU</span>
+                      <Check className="h-3 w-3 text-success" />
+                      <span className="text-success">Ativo na BU</span>
                     </>
                   ) : (
                     <>

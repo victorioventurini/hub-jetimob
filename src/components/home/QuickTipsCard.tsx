@@ -26,10 +26,10 @@ export function QuickTipsCard() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-base font-medium">
-            <Lightbulb className="h-4 w-4 text-amber-500" />
+            <Lightbulb className="h-4 w-4 text-warning" />
             Dica do Dia
             {isFromAI && (
-              <Sparkles className="h-3 w-3 text-purple-400" aria-label="Gerada por IA" />
+              <Sparkles className="h-3 w-3 text-status-purple" aria-label="Gerada por IA" />
             )}
           </span>
           <Button 
