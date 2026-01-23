@@ -1,8 +1,8 @@
 # 📊 Relatório de Saúde Técnica - Hub da Jet
 
-> **Data:** 2026-01-22  
-> **TCR Version:** 2.62.0  
-> **Status Geral:** ✅ EXCELENTE (9.6/10)
+> **Data:** 2026-01-23  
+> **TCR Version:** 2.65.0  
+> **Status Geral:** ✅ EXCELENTE (10/10)
 
 ---
 
@@ -141,7 +141,7 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 
 | Documento | Versão | Status |
 |-----------|--------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | v2.62.0 | ✅ Atualizado |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | v2.65.0 | ✅ Atualizado |
 | `COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md` | v1.0 | ✅ |
 | `SYSTEMIC_ANALYSIS_2026-01-22.md` | v1.0 | ✅ **NOVO** |
 | `SQL_FUNCTIONS_AUDIT_2026-01-22.md` | v1.0 | ✅ **NOVO** |
@@ -176,7 +176,14 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 ### Wave 4 (Documentação)
 - ✅ Hierarquia docs reorganizada (CANONICAL/AUDITS/GUIDES/ARCHIVE)
 - ✅ 175 funções SQL auditadas (zero dead-code)
-- ✅ 16 Edge Functions JSDoc padronizado
+- ✅ 18 Edge Functions JSDoc padronizado
+
+### Wave 5 (Correções 2026-01-23)
+- ✅ OTP Code removido (Magic Link é método canônico)
+- ✅ verifyOtp() dead code removido do useAuth.tsx
+- ✅ buildOtpEmailHtml() dead code removido do email-sender.ts
+- ✅ TCR atualizado para v2.65.0
+- ✅ Toda documentação alinhada com Magic Link
 
 ## 📋 Próximos Passos (Manutenção Contínua)
 
@@ -214,4 +221,4 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 
 ---
 
-*Relatório gerado em 2026-01-22. Próxima revisão: 2026-01-29.*
+*Relatório gerado em 2026-01-23 (atualizado). Próxima revisão: 2026-01-30.*

@@ -1,7 +1,7 @@
 # Plano de Higienização e Otimização — Hub da Jet
 
-**Data:** 2026-01-22  
-**Versão TCR:** v2.64.0  
+**Data:** 2026-01-23  
+**Versão TCR:** v2.65.0  
 **Status:** ✅ Health Score 10/10
 
 ---
@@ -176,7 +176,7 @@ O Hub da Jet atingiu score máximo (10/10) após completar todas as ações P1/P
 |---------|--------|---------------|
 | RLS `USING (true)` | `app_error_logs` | Log pre-auth |
 | RLS `USING (true)` | `audit_logs` | Log de auditoria |
-| Leaked Password | - | Sistema usa OTP, não senhas |
+| Leaked Password | - | Sistema usa Magic Link, não senhas |
 
 ---
 
@@ -204,4 +204,4 @@ O Hub da Jet atingiu score máximo (10/10) após completar todas as ações P1/P
 
 ---
 
-*Documento gerado em 2026-01-22 — TCR v2.64.0*
+*Documento gerado em 2026-01-23 — TCR v2.65.0*
