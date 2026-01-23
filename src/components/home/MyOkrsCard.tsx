@@ -160,7 +160,7 @@ export function MyOkrsCard() {
                         : 'hoje'}
                     </>
                   ) : (
-                    <span className="text-amber-600">Nunca atualizado</span>
+                    <span className="text-warning">Nunca atualizado</span>
                   )}
                 </div>
                 <Button

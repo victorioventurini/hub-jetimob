@@ -91,7 +91,7 @@ export function GovernanceTab() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-amber-500" />
+              <Users className="h-4 w-4 text-warning" />
               Sem Template
             </CardTitle>
           </CardHeader>
@@ -176,7 +176,7 @@ export function GovernanceTab() {
                       <TableCell>
                         <Badge 
                           variant={report.risk_level === "high" ? "destructive" : "default"}
-                          className={report.risk_level === "medium" ? "bg-amber-500/20 text-amber-700" : ""}
+                          className={report.risk_level === "medium" ? "bg-warning-muted text-warning-muted-foreground" : ""}
                         >
                           {report.risk_level === "high" ? "Alto" : "Médio"}
                         </Badge>

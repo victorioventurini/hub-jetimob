@@ -93,7 +93,7 @@ export function ObjectiveChecklistCard({
               <div className="flex items-center gap-3 shrink-0">
                 {/* Score */}
                 {isLoading ? (
-                  <div className="flex items-center gap-2 text-blue-600">
+                  <div className="flex items-center gap-2 text-info">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span className="text-xs">Analisando OKR com IA...</span>
                   </div>

@@ -151,10 +151,10 @@ export default function OkrsPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 No Caminho
               </CardTitle>
-              <TrendingUp className="w-4 h-4 text-green-500" />
+              <TrendingUp className="w-4 h-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-success">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.greenKrs}
               </div>
             </CardContent>

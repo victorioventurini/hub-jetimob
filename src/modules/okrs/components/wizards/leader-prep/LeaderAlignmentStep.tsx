@@ -181,7 +181,7 @@ export function LeaderAlignmentStep({
           {parentObjectives.length > 0 && (
             <Card
               className={cn(
-                alignmentStatus === 'aligned' && "border-green-200 bg-green-50/50 dark:border-green-800/50 dark:bg-green-950/20",
+                alignmentStatus === 'aligned' && "border-success/30 bg-success-muted/50",
                 alignmentStatus === 'team_ahead' && "border-info/30 bg-info-muted/50",
                 alignmentStatus === 'team_behind' && "border-warning/30 bg-warning-muted/50"
               )}

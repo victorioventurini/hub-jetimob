@@ -146,7 +146,7 @@ export function ManagersPanoramaStep({
               key={area.teamId}
               className={cn(
                 "transition-colors",
-                area.atRiskCount > 0 && "border-orange-200 dark:border-orange-800/50"
+                area.atRiskCount > 0 && "border-status-orange/30"
               )}
             >
               <CardHeader className="pb-2">
@@ -169,7 +169,7 @@ export function ManagersPanoramaStep({
                     )}
                   />
                   {area.atRiskCount > 0 && (
-                    <p className="text-xs text-orange-600 dark:text-orange-400">
+                    <p className="text-xs text-status-orange">
                       {area.atRiskCount} em risco
                     </p>
                   )}

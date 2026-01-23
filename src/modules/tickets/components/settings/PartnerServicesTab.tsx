@@ -322,7 +322,7 @@ function CategoryCard({
 
             {isGeneralist && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
                 Este parceiro pode atender qualquer subcategoria de {category.name}
               </div>
             )}
@@ -333,7 +333,7 @@ function CategoryCard({
       {isSelected && !hasSubcategories && (
         <CardContent className="pt-0 pb-3 px-4">
           <div className="ml-7 flex items-center gap-2 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <CheckCircle2 className="h-4 w-4 text-success" />
             Esta categoria não possui subcategorias
           </div>
         </CardContent>

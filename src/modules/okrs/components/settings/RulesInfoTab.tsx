@@ -170,8 +170,8 @@ export function RulesInfoTab() {
                   <div className="mt-2 flex items-center gap-2 text-xs">
                     {kr.canLinkToOrg ? (
                       <>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                        <span className="text-green-600">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                        <span className="text-success">
                           Pode vincular a KR organizacional
                         </span>
                       </>

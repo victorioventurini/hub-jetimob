@@ -76,7 +76,7 @@ export function CLevelDirectivesStep({
 
           <Button 
             onClick={onComplete}
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            className="flex-1 bg-success text-success-foreground hover:bg-success/90"
             size="lg"
             disabled={isSubmitting}
           >

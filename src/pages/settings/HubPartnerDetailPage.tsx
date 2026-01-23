@@ -320,7 +320,7 @@ export default function HubPartnerDetailPage() {
                       </TableCell>
                       <TableCell>
                         {isActive ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-600">
+                          <span className="inline-flex items-center gap-1 text-success">
                             <Check className="h-3.5 w-3.5" />
                             Ativo
                           </span>

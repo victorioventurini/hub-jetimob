@@ -415,7 +415,7 @@ export function TemplateEditorSheet({
           <div className="flex items-center justify-between w-full">
             <div className="text-sm text-muted-foreground">
               {hasChanges ? (
-                <span className="text-amber-600">Alterações não salvas</span>
+                <span className="text-warning">Alterações não salvas</span>
               ) : (
                 <span>Nenhuma alteração</span>
               )}

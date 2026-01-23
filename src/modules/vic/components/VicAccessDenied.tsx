@@ -61,7 +61,7 @@ function VicLockedIcon({ size = 'lg' }: { size?: 'sm' | 'md' | 'lg' }) {
     >
       {/* Glow effect */}
       <motion.div
-        className="absolute inset-0 rounded-full bg-amber-500/10 blur-xl"
+        className="absolute inset-0 rounded-full bg-warning/10 blur-xl"
         animate={{
           scale: [1, 1.15, 1],
           opacity: [0.2, 0.4, 0.2],
@@ -84,7 +84,7 @@ function VicLockedIcon({ size = 'lg' }: { size?: 'sm' | 'md' | 'lg' }) {
           delay: 0.3,
         }}
       >
-        <Lock className={cn('text-amber-600 dark:text-amber-400', iconSizeClasses[size])} />
+        <Lock className={cn('text-warning', iconSizeClasses[size])} />
       </motion.div>
 
       {/* Floating sparkles */}

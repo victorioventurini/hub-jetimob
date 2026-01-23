@@ -239,11 +239,11 @@ export function KrCheckinsTable({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button className="p-1 hover:bg-muted rounded" type="button">
-                                <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
                               </button>
                             </TooltipTrigger>
                             <TooltipContent side="left" className="max-w-[300px]">
-                              <p className="text-sm font-medium mb-1 text-amber-600">Bloqueador</p>
+                              <p className="text-sm font-medium mb-1 text-warning">Bloqueador</p>
                               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                                 {checkin.blockers}
                               </p>

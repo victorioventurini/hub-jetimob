@@ -293,7 +293,7 @@ export function UserPermissionsV2Sheet({
                   </Badge>
                 )}
                 {isExternal && (
-                  <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-700">
+                  <Badge variant="outline" className="text-xs border-warning/50 text-warning">
                     Externo
                   </Badge>
                 )}
@@ -342,9 +342,9 @@ export function UserPermissionsV2Sheet({
           {/* Templates Tab */}
           <TabsContent value="templates" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pt-3 data-[state=inactive]:hidden">
             {isExternal && (
-              <Alert className="mb-3 border-amber-500/50 bg-amber-500/10">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-xs text-amber-700">
+              <Alert className="mb-3 border-warning/50 bg-warning-muted">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-xs text-warning-muted-foreground">
                   Usuário externo: apenas templates permitidos estão disponíveis.
                 </AlertDescription>
               </Alert>

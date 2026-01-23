@@ -28,7 +28,7 @@ export default function OkrsSettingsPage() {
 
       {/* Info Banner */}
       <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/30">
-        <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+        <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
         <div className="text-sm">
           <p className="font-medium text-foreground">Configurações globais</p>
           <p className="text-muted-foreground">
