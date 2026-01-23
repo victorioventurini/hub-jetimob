@@ -18,8 +18,20 @@ import type { Database } from "./types";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Singleton instance
-let globalClientInstance: SupabaseClient<Database> | null = null;
+// Singleton instance (HMR-safe)
+// Vite HMR can re-evaluate modules without a full page reload, which would otherwise
+// create multiple GoTrueClient instances under the same storage key.
+type GlobalThisWithSupabaseSingleton = typeof globalThis & {
+  __hubJet_globalSupabaseClient?: SupabaseClient<Database> | null;
+};
+
+function getGlobalSingleton(): SupabaseClient<Database> | null {
+  return (globalThis as GlobalThisWithSupabaseSingleton).__hubJet_globalSupabaseClient ?? null;
+}
+
+function setGlobalSingleton(client: SupabaseClient<Database> | null): void {
+  (globalThis as GlobalThisWithSupabaseSingleton).__hubJet_globalSupabaseClient = client;
+}
 
 /**
  * Returns the singleton global Supabase client.
@@ -29,11 +41,10 @@ let globalClientInstance: SupabaseClient<Database> | null = null;
  * - The AuthCallback page explicitly handles URL session detection via supabase.auth.getSession()
  */
 function createGlobalClient(): SupabaseClient<Database> {
-  if (globalClientInstance) {
-    return globalClientInstance;
-  }
+  const existing = getGlobalSingleton();
+  if (existing) return existing;
 
-  globalClientInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const created = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: localStorage,
       persistSession: true,
@@ -44,7 +55,8 @@ function createGlobalClient(): SupabaseClient<Database> {
     },
   });
 
-  return globalClientInstance;
+  setGlobalSingleton(created);
+  return created;
 }
 
 /**
