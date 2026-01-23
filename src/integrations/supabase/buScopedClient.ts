@@ -17,69 +17,39 @@ const DEFAULT_AUTH_STORAGE_KEY = (() => {
 })();
 
 function readAccessTokenFromStorage(): string | null {
-  // Primary path: canonical storage key derived from project ref.
-  // Fallback path: scan localStorage for any sb-*-auth-token keys.
-  // Why: some environments / SDK configs may vary the storage key; relying on a single key
-  // can cause PostgREST requests to run as anon even when a session exists.
   try {
-    const tryExtractToken = (raw: string | null, sourceKey: string): string | null => {
+    const tryExtractToken = (raw: string | null): string | null => {
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-
-      // Supabase SDK v2.8x+ stores session in different structures depending on version.
-      // Try all known paths in order of likelihood.
-      const token =
-        parsed?.access_token ?? // Direct token (v2.8x+ default)
-        parsed?.session?.access_token ?? // session wrapper
-        parsed?.currentSession?.access_token ?? // currentSession wrapper (legacy)
-        parsed?.user?.session?.access_token ?? // nested user.session (rare)
-        null;
-
-      if (import.meta.env.DEV) {
-        if (token) {
-          console.debug("[BuScopedClient] Token found in storage key:", sourceKey, "| role:", getJwtRole(token));
-        } else {
-          console.debug(
-            "[BuScopedClient] Auth storage found but no token extracted. key:",
-            sourceKey,
-            "| structure:",
-            JSON.stringify(Object.keys(parsed || {}))
-          );
-        }
-      }
-
-      return token;
+      return (
+        parsed?.access_token ??
+        parsed?.session?.access_token ??
+        parsed?.currentSession?.access_token ??
+        parsed?.user?.session?.access_token ??
+        null
+      );
     };
 
     // 1) Canonical key
     if (DEFAULT_AUTH_STORAGE_KEY) {
       const raw = localStorage.getItem(DEFAULT_AUTH_STORAGE_KEY);
-      const token = tryExtractToken(raw, DEFAULT_AUTH_STORAGE_KEY);
+      const token = tryExtractToken(raw);
       if (token) return token;
-      if (import.meta.env.DEV) {
-        console.debug("[BuScopedClient] No auth token found in canonical storage key:", DEFAULT_AUTH_STORAGE_KEY);
-      }
     }
 
     // 2) Fallback scan
-    // Common patterns:
-    // - sb-<projectRef>-auth-token
-    // - sb-<projectRef>-auth-token.<suffix>
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
       if (!key.startsWith("sb-")) continue;
       if (!key.includes("auth-token")) continue;
 
-      const token = tryExtractToken(localStorage.getItem(key), key);
+      const token = tryExtractToken(localStorage.getItem(key));
       if (token) return token;
     }
 
     return null;
-  } catch (e) {
-    if (import.meta.env.DEV) {
-      console.warn("[BuScopedClient] Error reading auth token from storage:", e);
-    }
+  } catch {
     return null;
   }
 }
@@ -103,24 +73,95 @@ function getJwtRole(token: string): string | null {
   return typeof role === "string" ? role : null;
 }
 
-const buClientCache = new Map<string, SupabaseClient<Database>>();
+// ============================================================================
+// SINGLETON CLIENT PATTERN
+// ============================================================================
+// 
+// The key insight: we only need ONE Supabase client with the SAME auth state.
+// The x-current-bu-id header can be injected per-request without creating new clients.
+// This eliminates "Multiple GoTrueClient instances" warnings entirely.
+// ============================================================================
+
+let singletonBuClient: SupabaseClient<Database> | null = null;
+let currentBuIdForClient: string | null = null;
+
+// Custom fetch that injects BU header dynamically per-request
+function createBuAwareFetch(getBuId: () => string | null) {
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
+    
+    // Inject BU header for current request
+    const buId = getBuId();
+    if (buId && !headers.has("x-current-bu-id")) {
+      headers.set("x-current-bu-id", buId);
+    }
+
+    // Inject JWT if needed (avoid anon requests during cold starts)
+    const storedToken = readAccessTokenFromStorage();
+    const currentAuth = headers.get("Authorization") || headers.get("authorization");
+    const currentToken = currentAuth?.startsWith("Bearer ") ? currentAuth.slice(7) : null;
+    const currentRole = currentToken ? getJwtRole(currentToken) : null;
+    const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
+
+    if (storedToken && shouldInjectUserJwt) {
+      headers.set("Authorization", `Bearer ${storedToken}`);
+    }
+
+    return fetch(input, { ...init, headers });
+  };
+}
+
+/**
+ * Returns a singleton Supabase client that injects x-current-bu-id header per-request.
+ * This avoids creating multiple GoTrueClient instances while still supporting BU switching.
+ */
+export function getBuScopedClient(buId: string): SupabaseClient<Database> {
+  // Update current BU ID for the fetch interceptor
+  currentBuIdForClient = buId;
+
+  // Return existing singleton if available
+  if (singletonBuClient) {
+    return singletonBuClient;
+  }
+
+  // Create singleton client with dynamic BU header injection
+  singletonBuClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    global: {
+      fetch: createBuAwareFetch(() => currentBuIdForClient),
+    },
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      // CRITICAL: Disable URL detection to prevent competing with global client
+      detectSessionInUrl: false,
+    },
+  });
+
+  // Hydrate auth state immediately
+  void singletonBuClient.auth.getSession();
+
+  return singletonBuClient;
+}
+
+export function getOptionalBuScopedClient(buId: string | null): SupabaseClient<Database> | null {
+  if (!buId) return null;
+  return getBuScopedClient(buId);
+}
 
 export function clearBuClientCache() {
-  buClientCache.clear();
+  // Just reset the singleton reference - a new one will be created on next call
+  singletonBuClient = null;
+  currentBuIdForClient = null;
 }
 
 /**
  * Hard clears any persisted auth session for this project.
- *
- * Why: in some edge cases (e.g. server-side session already revoked), the SDK call may fail
- * before it removes localStorage keys. This guarantees a true local logout.
  */
 export function clearAuthSessionStorage(): void {
   if (!DEFAULT_AUTH_STORAGE_KEY) return;
 
   try {
-    // Remove the canonical key and any related keys created by the auth client
-    // (e.g. code verifier, provider token, etc.).
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
       if (key && key.startsWith(DEFAULT_AUTH_STORAGE_KEY)) {
@@ -130,73 +171,4 @@ export function clearAuthSessionStorage(): void {
   } catch {
     // ignore
   }
-}
-
-/**
- * Returns a singleton BU-scoped client for the given BU.
- * This avoids creating multiple GoTrueClient instances (which can cause undefined auth behavior).
- */
-export function getBuScopedClient(buId: string): SupabaseClient<Database> {
-  const cached = buClientCache.get(buId);
-  if (cached) return cached;
-
-  const client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    global: {
-      headers: { "x-current-bu-id": buId },
-      // Force JWT as early as possible to avoid anonymous requests under RLS.
-      // This is a pragmatic fix for a known race during cold starts/tab restores.
-      fetch: async (input, init) => {
-        const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
-
-        // Always ensure BU header is present (defense-in-depth).
-        if (!headers.has("x-current-bu-id")) headers.set("x-current-bu-id", buId);
-
-        const storedToken = readAccessTokenFromStorage();
-        const currentAuth = headers.get("Authorization") || headers.get("authorization");
-        const currentToken = currentAuth?.startsWith("Bearer ") ? currentAuth.slice(7) : null;
-        const currentRole = currentToken ? getJwtRole(currentToken) : null;
-
-        // If PostgREST is about to run as anon (common during cold starts/tab restores),
-        // replace it with the persisted user JWT.
-        const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
-
-        if (storedToken && shouldInjectUserJwt) {
-          headers.set("Authorization", `Bearer ${storedToken}`);
-          if (import.meta.env.DEV) {
-            console.debug("[BuScopedClient] Injected JWT from storage for buId:", buId);
-          }
-        }
-
-        // Debug logging in dev mode
-        if (import.meta.env.DEV) {
-          const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
-          const hasAuth = headers.has("Authorization");
-          const authRole = hasAuth ? getJwtRole(headers.get("Authorization")?.slice(7) || "") : null;
-          console.debug(`[BuScopedClient] Request: ${url.split("?")[0]} | BU: ${buId} | Auth: ${hasAuth ? authRole || "jwt" : "none"}`);
-        }
-
-        return fetch(input, { ...init, headers });
-      },
-    },
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-      // CRITICAL: Disable URL detection to prevent multiple GoTrueClient instances
-      // from competing to handle the same auth callback. The global client handles this.
-      detectSessionInUrl: false,
-    },
-  });
-
-  // Hydrate auth state ASAP so PostgREST requests include the user's JWT (otherwise RLS will behave as anon).
-  // Intentionally fire-and-forget: we only need the side-effect of loading session into the auth client.
-  void client.auth.getSession();
-
-  buClientCache.set(buId, client);
-  return client;
-}
-
-export function getOptionalBuScopedClient(buId: string | null): SupabaseClient<Database> | null {
-  if (!buId) return null;
-  return getBuScopedClient(buId);
 }
