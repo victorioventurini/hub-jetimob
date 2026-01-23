@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useBu } from "@/contexts/BuContext";
+import { useEffect, useContext } from "react";
+import { BuContext } from "@/contexts/BuContext";
 
 type PageType = 
   | "login"
@@ -24,6 +24,9 @@ interface UsePageTitleOptions {
  * - Sem BU: "<Título> | Hub"
  * - Só Hub (select-bu): "Hub"
  * 
+ * NOTE: Uses optional BuContext access to work on public routes (e.g., /auth)
+ * where BuProvider is not available.
+ * 
  * @param title - Título da página (ex: "Home", "OKRs", "Configurações")
  * @param options - Opções adicionais
  */
@@ -31,7 +34,10 @@ export function usePageTitle(
   title: string,
   options?: UsePageTitleOptions
 ) {
-  const { currentBu, buSelected } = useBu();
+  // Use optional context access to avoid throwing when outside BuProvider
+  const buContext = useContext(BuContext);
+  const currentBu = buContext?.currentBu ?? null;
+  const buSelected = buContext?.buSelected ?? false;
 
   useEffect(() => {
     let pageTitle: string;

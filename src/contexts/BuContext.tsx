@@ -26,7 +26,7 @@ interface BuContextType {
   clearBuSelection: () => void;
 }
 
-const BuContext = createContext<BuContextType | undefined>(undefined);
+export const BuContext = createContext<BuContextType | undefined>(undefined);
 
 const BU_STORAGE_KEY = "hub_current_bu_id";
 const BU_SELECTED_KEY = "hub_bu_selected";
