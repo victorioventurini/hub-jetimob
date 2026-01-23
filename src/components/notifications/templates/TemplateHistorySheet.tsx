@@ -142,10 +142,10 @@ export function TemplateHistorySheet({
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-mono font-medium">v{version.version}</span>
-                          {isActive && (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          )}
-                        </div>
+                        {isActive && (
+                          <CheckCircle className="h-4 w-4 text-success" />
+                        )}
+                      </div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {format(new Date(version.created_at), 'dd/MM/yy HH:mm', { locale: ptBR })}
                         </div>
@@ -165,7 +165,7 @@ export function TemplateHistorySheet({
                       <span className="flex items-center gap-2">
                         Versão {selectedVersion.version}
                         {selectedVersion.id === template?.current_version_id && (
-                          <Badge className="bg-green-500">Ativa</Badge>
+                          <Badge className="bg-success">Ativa</Badge>
                         )}
                       </span>
                       {canRollback && selectedVersion.id !== template?.current_version_id && (

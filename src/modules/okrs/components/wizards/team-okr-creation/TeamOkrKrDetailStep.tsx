@@ -217,7 +217,7 @@ export function TeamOkrKrDetailStep({
                 key={i}
                 className={cn(
                   "h-2 w-8 rounded-full transition-colors",
-                  i < currentKrIndex && "bg-green-500",
+                  i < currentKrIndex && "bg-success",
                   i === currentKrIndex && "bg-primary",
                   i > currentKrIndex && "bg-muted"
                 )}

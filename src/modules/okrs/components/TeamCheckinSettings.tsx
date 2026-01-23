@@ -121,13 +121,13 @@ export function TeamCheckinSettings({
               <SelectContent>
                 <SelectItem value="weekly">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="h-2 w-2 rounded-full bg-success" />
                     Semanal (recomendado)
                   </span>
                 </SelectItem>
                 <SelectItem value="biweekly">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                    <span className="h-2 w-2 rounded-full bg-warning" />
                     Quinzenal
                   </span>
                 </SelectItem>

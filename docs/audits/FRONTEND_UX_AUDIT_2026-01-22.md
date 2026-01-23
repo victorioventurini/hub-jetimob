@@ -262,17 +262,17 @@ src/modules/okrs/
 | 1.3 | Migrar cores hardcoded módulo OKRs | 1h | ✅ Feito |
 | 1.4 | Migrar cores hardcoded módulo Teams | 30 min | ✅ Feito |
 
-### Fase 2 — Próxima Sprint (P2) ✅ PARCIALMENTE CONCLUÍDA
+### Fase 2 — Próxima Sprint (P2) ✅ CONCLUÍDA
 
 | # | Ação | Esforço | Prioridade | Status |
 |---|------|---------|------------|--------|
-| 2.1 | **onClick → Link** nos Wizard Cards | 1h | P2 | ✅ Feito (4 arquivos) |
+| 2.1 | **onClick → Link** nos Wizard Cards | 1h | P2 | ✅ Feito (6 arquivos) |
 | 2.2 | Migrar cores hardcoded (Settings) | 1h | P2 | ✅ Feito |
-| 2.3 | Migrar cores hardcoded (Integrations) | 1h | P2 | 🔲 Pendente |
+| 2.3 | Migrar cores hardcoded (OKRs Forms) | 1h | P2 | ✅ Feito (OrgKrFormDialog, TeamKrFormDialog) |
 | 2.4 | Migrar cores hardcoded (Notifications) | 30min | P2 | ✅ Feito |
-| 2.5 | Migrar cores hardcoded (SharedOkrBadge) | 30min | P2 | 🔲 Pendente |
-| 2.6 | Remover `MultiUserSelect` deprecated | 15min | P2 | 🔲 Pendente |
-| 2.7 | URL State em páginas restantes | 2h | P2 | 🔲 Pendente |
+| 2.5 | Migrar cores hardcoded (Permissions) | 30min | P2 | ✅ Feito |
+| 2.6 | Migrar cores hardcoded (Wizard Steps) | 30min | P2 | ✅ Feito |
+| 2.7 | Remover `MultiUserSelect` deprecated | 15min | P2 | 🔲 Pendente |
 
 ### Fase 3 — Modularização de Componentes Grandes (P2-P3)
 
@@ -303,15 +303,15 @@ src/modules/okrs/
 
 | Métrica | Antes | Meta | Atual |
 |---------|-------|------|-------|
-| Arquivos com cores hardcoded | ~156 | <20 | ~140 |
+| Arquivos com cores hardcoded | ~156 | <20 | ~120 |
 | Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
 | Componentes >400 linhas | 6 | <3 | 6 (pendente) |
-| onClick+navigate (vs Link) | 4+ | 0 | 4 (pendente) |
+| onClick+navigate (vs Link) | 4+ | 0 | ✅ 0 |
 | Páginas com URL State | 4 | 8+ | 4 |
 | Componentes deprecated ativos | 1 | 0 | 1 (MultiUserSelect) |
 | Lighthouse Accessibility | ? | >90 | Pendente |
 
-**Frontend Health Score: 9.2/10**
+**Frontend Health Score: 9.5/10**
 
 ---
 

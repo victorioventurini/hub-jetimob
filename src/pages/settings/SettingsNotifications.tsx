@@ -822,9 +822,9 @@ export default function SettingsNotifications() {
                             const StatusIcon = item.status === 'sent' ? CheckCircle 
                               : item.status === 'failed' ? AlertCircle 
                               : Clock;
-                            const statusColor = item.status === 'sent' ? 'text-green-500'
+                            const statusColor = item.status === 'sent' ? 'text-success'
                               : item.status === 'failed' ? 'text-destructive'
-                              : 'text-yellow-500';
+                              : 'text-warning';
                             const ChannelIcon = channelIcons[item.channel_slug] || Globe;
                             
                             return (

@@ -240,7 +240,7 @@ export function LateInitiativesBadge({ lateCount, totalCount, className }: LateI
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge variant="outline" className={cn("gap-1 border-orange-500/50 text-orange-600", className)}>
+          <Badge variant="outline" className={cn("gap-1 border-status-orange/50 text-status-orange", className)}>
             <AlertTriangle className="h-3 w-3" />
             {lateCount}/{totalCount} atrasada{lateCount !== 1 ? "s" : ""}
           </Badge>
