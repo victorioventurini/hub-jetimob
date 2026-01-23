@@ -173,19 +173,20 @@ function usePartnerContactProfile(id: string | undefined) {
         }));
       }
 
-      // Fetch ticket count for this contact (reported OR assigned)
+      // Fetch ticket count for this contact (assigned)
+      // Note: tickets don't have reporter_partner_contact_id - only assigned_contact_id exists
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { count } = await (supabase as any)
         .from("tickets")
         .select("id", { count: "exact", head: true })
-        .or(`reporter_partner_contact_id.eq.${id},assigned_contact_id.eq.${id}`);
+        .eq("assigned_contact_id", id);
 
-      // Fetch ticket stats by status (reported OR assigned)
+      // Fetch ticket stats by status (assigned)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: ticketsData } = await (supabase as any)
         .from("tickets")
-        .select("status, created_at, closed_at")
-        .or(`reporter_partner_contact_id.eq.${id},assigned_contact_id.eq.${id}`);
+        .select("status, created_at, updated_at")
+        .eq("assigned_contact_id", id);
 
       const ticketStats = {
         waiting: 0,
@@ -201,10 +202,11 @@ function usePartnerContactProfile(id: string | undefined) {
         if (ticket.status === 'in_progress') ticketStats.in_progress++;
         if (ticket.status === 'done') {
           ticketStats.done++;
-          if (ticket.closed_at && ticket.created_at) {
+          // Use updated_at as proxy for completion date (no closed_at column)
+          if (ticket.updated_at && ticket.created_at) {
             const created = new Date(ticket.created_at);
-            const closed = new Date(ticket.closed_at);
-            const diffDays = Math.ceil((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+            const completed = new Date(ticket.updated_at);
+            const diffDays = Math.ceil((completed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
             resolutionTimes.push(diffDays);
           }
         }
