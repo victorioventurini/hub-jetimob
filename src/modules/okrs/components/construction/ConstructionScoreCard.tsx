@@ -109,17 +109,17 @@ export function ConstructionScoreCard({
         {/* Status breakdown */}
         <div className="grid grid-cols-3 gap-2 pt-2 border-t">
           <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-success" />
             <span className="text-sm font-medium">{approvedCount}</span>
             <span className="text-xs text-muted-foreground">OK</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertTriangle className="w-4 h-4 text-warning" />
             <span className="text-sm font-medium">{needsImprovementCount}</span>
             <span className="text-xs text-muted-foreground">Melhorar</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Loader2 className={cn("w-4 h-4 text-muted-foreground", hasAnalyzing && "animate-spin text-blue-600")} />
+            <Loader2 className={cn("w-4 h-4 text-muted-foreground", hasAnalyzing && "animate-spin text-info")} />
             <span className="text-sm font-medium">{analyzingCount}</span>
             <span className="text-xs text-muted-foreground">Pendente</span>
           </div>
@@ -164,7 +164,7 @@ export function ConstructionScoreCard({
               {teamAnalysis.orgAlignmentAnalysis.feedback}
             </p>
             {teamAnalysis.orgAlignmentAnalysis.uncoveredOrgObjectives?.length > 0 && (
-              <p className="text-[10px] text-amber-600 mt-1.5">
+              <p className="text-[10px] text-warning mt-1.5">
                 ⚠️ OKRs Org. não cobertos: {teamAnalysis.orgAlignmentAnalysis.uncoveredOrgObjectives.join(', ')}
               </p>
             )}

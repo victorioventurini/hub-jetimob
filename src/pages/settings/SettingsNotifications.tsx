@@ -492,7 +492,7 @@ export default function SettingsNotifications() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{channel.name}</span>
                             {needsConfig && !isConfigured && (
-                              <Badge variant="outline" className="text-xs gap-1 text-yellow-600">
+                              <Badge variant="outline" className="text-xs gap-1 text-warning">
                                 <AlertTriangle className="w-3 h-3" />
                                 Não configurado
                               </Badge>

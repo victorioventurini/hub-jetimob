@@ -48,9 +48,9 @@ export function OrgObjectiveHealthCard({
   const analysis = review.aiAnalysis;
 
   const getProgressColor = (progress: number) => {
-    if (progress >= 70) return 'text-green-600';
-    if (progress >= 40) return 'text-amber-600';
-    return 'text-red-600';
+    if (progress >= 70) return 'text-success';
+    if (progress >= 40) return 'text-warning';
+    return 'text-danger';
   };
 
   return (
@@ -107,8 +107,8 @@ export function OrgObjectiveHealthCard({
                       <span className="text-lg">{getHealthStatusEmoji(review.healthStatus)}</span>
                       <span className={cn(
                         "text-lg font-bold",
-                        review.healthStatus === 'healthy' ? 'text-green-600' :
-                        review.healthStatus === 'attention' ? 'text-amber-600' : 'text-red-600'
+                        review.healthStatus === 'healthy' ? 'text-success' :
+                        review.healthStatus === 'attention' ? 'text-warning' : 'text-danger'
                       )}>
                         {review.healthScore}
                       </span>
@@ -170,15 +170,15 @@ export function OrgObjectiveHealthCard({
 
                 {/* Strengths and Risks */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {analysis.strengths?.length > 0 && (
+                {analysis.strengths?.length > 0 && (
                     <div className="space-y-2">
-                      <h5 className="text-xs font-medium text-green-600 flex items-center gap-1">
+                      <h5 className="text-xs font-medium text-success flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Pontos Fortes
                       </h5>
                       <ul className="space-y-1">
                         {analysis.strengths.map((s, i) => (
-                          <li key={i} className="text-xs text-muted-foreground pl-4 relative before:content-['•'] before:absolute before:left-1 before:text-green-600">
+                          <li key={i} className="text-xs text-muted-foreground pl-4 relative before:content-['•'] before:absolute before:left-1 before:text-success">
                             {s}
                           </li>
                         ))}
@@ -188,13 +188,13 @@ export function OrgObjectiveHealthCard({
 
                   {analysis.risks?.length > 0 && (
                     <div className="space-y-2">
-                      <h5 className="text-xs font-medium text-red-600 flex items-center gap-1">
+                      <h5 className="text-xs font-medium text-danger flex items-center gap-1">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         Riscos Identificados
                       </h5>
                       <ul className="space-y-1">
                         {analysis.risks.map((r, i) => (
-                          <li key={i} className="text-xs text-muted-foreground pl-4 relative before:content-['•'] before:absolute before:left-1 before:text-red-600">
+                          <li key={i} className="text-xs text-muted-foreground pl-4 relative before:content-['•'] before:absolute before:left-1 before:text-danger">
                             {r}
                           </li>
                         ))}

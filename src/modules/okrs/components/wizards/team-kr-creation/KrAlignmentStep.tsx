@@ -183,8 +183,8 @@ export function KrAlignmentStep({
                         <Badge 
                           variant="outline" 
                           className={
-                            kpi.trend === 'up' ? 'text-green-600' :
-                            kpi.trend === 'down' ? 'text-red-600' : ''
+                            kpi.trend === 'up' ? 'text-success' :
+                            kpi.trend === 'down' ? 'text-danger' : ''
                           }
                         >
                           {kpi.trend === 'up' ? '↑' : kpi.trend === 'down' ? '↓' : '→'}

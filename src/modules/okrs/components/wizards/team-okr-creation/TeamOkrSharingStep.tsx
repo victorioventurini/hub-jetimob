@@ -297,7 +297,7 @@ export function TeamOkrSharingStep({
                 placeholder="Selecione os times contribuidores"
               />
               {contributingTeamIds.length === 0 && isShared && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <p className="text-xs text-warning flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   Selecione pelo menos um time contribuidor
                 </p>

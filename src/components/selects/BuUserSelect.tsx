@@ -268,7 +268,7 @@ function UserStatusBadges({ profile }: { profile: DirectoryProfile }) {
   return (
     <>
       {!profile.onboarding_completed && (
-        <Badge variant="outline" className="h-4 px-1 text-[10px] gap-0.5 text-amber-600 border-amber-300">
+        <Badge variant="outline" className="h-4 px-1 text-[10px] gap-0.5 text-warning border-warning/30">
           <Clock className="h-2.5 w-2.5" />
           Pendente
         </Badge>

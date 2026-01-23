@@ -157,7 +157,7 @@ export function KitCheckoutInfo({
               >
                 <div className="flex items-center gap-2">
                   {canCheckout ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-success" />
                   ) : (
                     <XCircle className="h-4 w-4 text-destructive" />
                   )}

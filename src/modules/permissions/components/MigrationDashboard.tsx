@@ -118,10 +118,10 @@ export function MigrationDashboard({ compact = false }: MigrationDashboardProps)
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Verificados</CardDescription>
-            <CardTitle className="text-2xl text-green-600">{status.verified_users}</CardTitle>
+            <CardTitle className="text-2xl text-success">{status.verified_users}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-1 text-xs text-green-600">
+            <div className="flex items-center gap-1 text-xs text-success">
               <CheckCircle2 className="h-3 w-3" />
               confirmados OK
             </div>
@@ -131,10 +131,10 @@ export function MigrationDashboard({ compact = false }: MigrationDashboardProps)
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Pendentes</CardDescription>
-            <CardTitle className="text-2xl text-amber-600">{status.not_started_users}</CardTitle>
+            <CardTitle className="text-2xl text-warning">{status.not_started_users}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-1 text-xs text-amber-600">
+            <div className="flex items-center gap-1 text-xs text-warning">
               <AlertTriangle className="h-3 w-3" />
               aguardando migração
             </div>

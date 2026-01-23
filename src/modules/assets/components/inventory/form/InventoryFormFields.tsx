@@ -114,12 +114,12 @@ export function InventoryFormFields({
               <SelectContent>
                 {itemHasParentCategory && isEditing && (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-amber-600 bg-amber-50">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-warning bg-warning-muted">
                       Categoria atual (legado)
                     </div>
                     <SelectItem 
                       value={itemHasParentCategory.id} 
-                      className="pl-6 text-amber-700"
+                      className="pl-6 text-warning"
                     >
                       {itemHasParentCategory.name} (categoria pai)
                     </SelectItem>
