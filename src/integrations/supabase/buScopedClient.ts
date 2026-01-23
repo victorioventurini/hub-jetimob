@@ -179,9 +179,12 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
       },
     },
     auth: {
-      storage: localStorage, // share storage with global client
+      storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
+      // CRITICAL: Disable URL detection to prevent multiple GoTrueClient instances
+      // from competing to handle the same auth callback. The global client handles this.
+      detectSessionInUrl: false,
     },
   });
 
