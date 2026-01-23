@@ -143,6 +143,6 @@ export const ALLOWED_GLOBAL_CLIENT_FILES = [
   'src/hooks/useAuth.tsx',
   'src/components/notifications/NotificationCenter.tsx',
   'src/modules/bu/hooks/useBuData.ts',
-  'src/integrations/supabase/client.ts',
+  'src/integrations/supabase/globalClient.ts',
   'src/integrations/supabase/useBuScopedSupabase.ts',
 ] as const;
