@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, forwardRef } from "react";
 import { useNavigate, useLocation, type Location } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
@@ -45,7 +45,11 @@ function saveEmail(email: string) {
 
 type AuthState = "first-access" | "returning" | "link-sent";
 
-export default function Auth() {
+/**
+ * Auth page component.
+ * Uses forwardRef to avoid React Router warnings about refs on function components.
+ */
+const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   usePageTitle("Login", {
     skipBu: true
   });
@@ -410,7 +414,9 @@ export default function Auth() {
       </div>
     </div>
   );
-}
+});
+
+export default Auth;
 
 // Reusable branding side component
 function BrandingSide() {

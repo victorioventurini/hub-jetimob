@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
@@ -8,12 +8,13 @@ import { Loader2, AlertCircle } from "lucide-react";
  * AuthCallback
  * 
  * Handles Magic Link authentication callback.
+ * Uses forwardRef to avoid React Router warnings about refs on function components.
  * 
  * The Magic Link email includes token_hash and type as query params (not hash fragment)
  * because SendGrid click tracking strips the hash. We call supabase.auth.verifyOtp() 
  * with token_hash and type="magiclink" to complete the authentication.
  */
-export default function AuthCallback() {
+const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, ref) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -187,4 +188,6 @@ export default function AuthCallback() {
       </div>
     </div>
   );
-}
+});
+
+export default AuthCallback;
