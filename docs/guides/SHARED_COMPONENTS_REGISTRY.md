@@ -365,7 +365,7 @@ function useTickets() {
 
 ### Cliente Global (PRE-BU only)
 
-**Caminho:** `src/integrations/supabase/client.ts`
+**Caminho:** `src/integrations/supabase/globalClient.ts`
 
 **Uso APENAS para:**
 - `auth.*` operations
@@ -373,7 +373,7 @@ function useTickets() {
 - `bu_units`, `bu_user_memberships` (listagem pré-seleção)
 
 ```tsx
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 
 // ✅ CORRETO: Auth
 const { data } = await supabase.auth.getSession();
