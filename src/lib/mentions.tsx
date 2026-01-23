@@ -8,7 +8,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { UserHoverCard } from '@/components/user/UserHoverCard';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ContactHoverCard } from '@/components/contact/ContactHoverCard';
 import { Building2 } from 'lucide-react';
 
 // ============================================================
@@ -174,21 +174,18 @@ export function parseMentionsForDisplay(text: string): React.ReactNode[] {
     const isExternal = typeOrId === 'external';
 
     if (isExternal) {
-      // External contact - show tooltip
+      // External contact - use ContactHoverCard with Link
       parts.push(
-        <TooltipProvider key={`${id}-${match.index}`}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-0.5 rounded bg-status-yellow-muted/50 text-status-yellow dark:text-status-yellow text-sm font-medium cursor-default">
-                <Building2 className="w-3 h-3" />
-                @{displayName}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Contato externo (parceiro)</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <ContactHoverCard key={`${id}-${match.index}`} contactId={id}>
+          <Link
+            to={`/contacts/${id}`}
+            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-0.5 rounded bg-status-yellow-muted/50 text-status-yellow dark:text-status-yellow text-sm font-medium hover:bg-status-yellow-muted/70 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Building2 className="w-3 h-3" />
+            @{displayName}
+          </Link>
+        </ContactHoverCard>
       );
     } else {
       // Internal user - use UserHoverCard with Link

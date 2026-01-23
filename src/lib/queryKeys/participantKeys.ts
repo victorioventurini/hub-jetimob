@@ -43,4 +43,10 @@ export const participantKeys = {
    */
   resolve: (participantId: string | null, buId: string | null) =>
     ['participant', 'resolve', participantId, buId] as const,
+
+  /**
+   * Contact hover card data
+   */
+  contactHoverCard: (contactId: string | null) =>
+    ['participant', 'contact-hover', contactId] as const,
 } as const;
