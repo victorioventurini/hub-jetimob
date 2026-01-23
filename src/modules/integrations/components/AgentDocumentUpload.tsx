@@ -25,8 +25,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { useAgentDocuments, useUploadAgentDocument, useDeleteAgentDocument } from '../hooks/useAgentDocuments';
-import { AgentDocument } from '../types/agentDocument';
+import { useAgentDocuments, useUploadAgentDocument, useDeleteAgentDocument } from '@/modules/integrations/hooks';
+import type { AgentDocument } from '../types/agentDocument';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

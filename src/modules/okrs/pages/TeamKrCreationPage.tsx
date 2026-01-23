@@ -14,8 +14,7 @@ import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
 import { WIZARD_CONFIGS } from '../types/wizard';
-import { useKrWizardDraft, type KrWizardStep } from '../hooks/useKrWizardDraft';
-import { useCreateTeamKrBundle } from '../hooks/useCreateTeamKrBundle';
+import { useKrWizardDraft, useCreateTeamKrBundle, type KrWizardStep } from '@/modules/okrs/hooks';
 import { useTeam } from '@/modules/teams/hooks';
 
 // Steps

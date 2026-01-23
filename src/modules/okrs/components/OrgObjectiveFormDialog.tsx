@@ -4,7 +4,7 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
-import { useCanManageOrgOkr } from '../hooks/useCanManageTeamOkr';
+import { useCanManageOrgOkr, useCancelOrgObjective } from '@/modules/okrs/hooks';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useCancelOrgObjective } from '../hooks/useOkrMutations';
 import type { OkrStatus } from '../types';
 
 interface OrgObjectiveFormDialogProps {

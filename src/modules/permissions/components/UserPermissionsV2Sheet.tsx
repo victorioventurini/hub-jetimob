@@ -28,13 +28,17 @@ import {
   UserX
 } from "lucide-react";
 import { toast } from "sonner";
-import { useUserEffectivePermissions } from "../hooks/useBuPermissions";
-import { usePermissionTemplatesV2, useUserTemplatesV2 } from "../hooks/usePermissionsV2";
-import { usePermissionDiff, useLogPermissionChange } from "../hooks/usePermissionGovernance";
+import { 
+  useUserEffectivePermissions, 
+  usePermissionTemplatesV2, 
+  useUserTemplatesV2,
+  usePermissionDiff, 
+  useLogPermissionChange,
+  type PermissionTemplateV2,
+} from "@/modules/permissions/hooks";
 import { PermissionDiffDialog } from "./PermissionDiffDialog";
 import { RevokeAccessDialog } from "./RevokeAccessDialog";
 import { useAuth } from "@/hooks/useAuth";
-import type { PermissionTemplateV2 } from "../hooks/usePermissionsV2";
 import { SURFACE_COLORS } from "@/lib/colors";
 
 const SURFACE_ICONS = {

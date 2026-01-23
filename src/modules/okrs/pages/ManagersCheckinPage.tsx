@@ -6,10 +6,14 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
+import { 
+  useGenericWizardDraft,
+  useActiveCycles, 
+  useManagersPanorama, 
+  useCrossDependencies 
+} from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
-import { useActiveCycles, useManagersPanorama, useCrossDependencies } from '@/modules/okrs/hooks';
 
 // Step components
 import { ManagersPanoramaStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersPanoramaStep';
