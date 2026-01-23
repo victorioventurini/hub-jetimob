@@ -267,7 +267,7 @@ export function CyclesTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-5 w-5 text-amber-500" />
+              <Calendar className="h-5 w-5 text-warning" />
               Ciclos Trimestrais (sem vínculo)
             </CardTitle>
             <CardDescription>

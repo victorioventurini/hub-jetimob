@@ -140,7 +140,7 @@ export function InventoryFormFields({
               </SelectContent>
             </Select>
             {itemHasParentCategory && isEditing && (
-              <p className="text-xs text-amber-600">
+              <p className="text-xs text-warning">
                 Este item foi importado com uma categoria pai. Selecione uma subcategoria para melhor organização.
               </p>
             )}

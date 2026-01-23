@@ -347,7 +347,7 @@ export function CategoryImportDialog({ open, onOpenChange }: CategoryImportDialo
               {result.ignoredRows.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                    <AlertCircle className="h-4 w-4 text-warning" />
                     <span className="text-sm font-medium">
                       {result.ignoredRows.length} linha(s) ignorada(s)
                     </span>

@@ -84,7 +84,7 @@ export function ConstructionScoreCard({
           </div>
           <p className="text-sm text-muted-foreground mt-1">Score Médio</p>
           {hasAnalyzing && (
-            <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-blue-600">
+            <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-info">
               <Loader2 className="w-3 h-3 animate-spin" />
               Analisando OKR com IA...
             </div>
@@ -127,7 +127,7 @@ export function ConstructionScoreCard({
 
         {teamAnalysisLoading && (
           <div className="pt-3 border-t">
-            <div className="flex items-center gap-2 text-xs text-blue-600">
+            <div className="flex items-center gap-2 text-xs text-info">
               <Loader2 className="w-3 h-3 animate-spin" />
               Analisando OKR com IA...
             </div>

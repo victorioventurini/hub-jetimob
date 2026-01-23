@@ -172,7 +172,7 @@ export default function BuPermissionsPage() {
                       className={cn(
                         "cursor-pointer hover:bg-muted/50 transition-colors",
                         user.role_in_bu === "admin" && "bg-primary/5",
-                        user.role_in_bu === "external" && "bg-amber-500/5"
+                        user.role_in_bu === "external" && "bg-warning/5"
                       )}
                       onClick={() => setSelectedUser(user)}
                     >

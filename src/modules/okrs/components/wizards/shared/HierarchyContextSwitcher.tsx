@@ -314,7 +314,7 @@ export function HierarchyContextSwitcher({
           className
         )}
       >
-        {isAdminLevel && <Shield className="h-3 w-3 text-amber-500" />}
+        {isAdminLevel && <Shield className="h-3 w-3 text-warning" />}
         <Icon className="h-3.5 w-3.5" />
         <span className="max-w-[120px] truncate text-xs font-normal">
           {currentLabel}
@@ -327,7 +327,7 @@ export function HierarchyContextSwitcher({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {isAdminLevel && <Shield className="h-4 w-4 text-amber-500" />}
+              {isAdminLevel && <Shield className="h-4 w-4 text-warning" />}
               {title}
             </DialogTitle>
             <DialogDescription>{description}</DialogDescription>

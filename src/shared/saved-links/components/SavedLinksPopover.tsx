@@ -169,7 +169,7 @@ export function SavedLinksPopover({ moduleSlug, className }: SavedLinksPopoverPr
                       >
                         <div className="flex items-center gap-2">
                           {link.is_favorite && (
-                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                            <Star className="h-3.5 w-3.5 fill-warning text-warning shrink-0" />
                           )}
                           <span
                             className={cn(
@@ -222,7 +222,7 @@ export function SavedLinksPopover({ moduleSlug, className }: SavedLinksPopoverPr
           {favoriteLink && (
             <div className="border-t px-3 py-2 bg-muted/30">
               <p className="text-xs text-muted-foreground">
-                <Star className="inline h-3 w-3 fill-amber-400 text-amber-400 mr-1" />
+                <Star className="inline h-3 w-3 fill-warning text-warning mr-1" />
                 <strong>{favoriteLink.label}</strong> será aberto ao clicar no menu
               </p>
             </div>
