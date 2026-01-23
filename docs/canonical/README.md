@@ -13,8 +13,8 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio | v2.61.0 |
-| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.14.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio | v2.70.0 |
+| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.17.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | Canônico |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.1 |
 | `PERMISSIONS_AND_RBAC_MODEL.md` | Modelo completo de permissões V2 | v1.2.0 |
