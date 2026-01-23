@@ -3,8 +3,10 @@
  * 
  * Exibe a estrutura hierárquica da organização:
  * CEO → Áreas → Times → Subtimes → Squads → Membros
+ * 
+ * URL State: searchTerm, showMembers, showSquads são persistidos na URL
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Network, ArrowLeft, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -15,7 +17,7 @@ import { OrganogramChart, OrganogramControls } from "../components/organogram";
 import { useOrganogramData } from "../hooks";
 import { OrganogramFilters, OrganogramControlsState } from "../types/organogram";
 import { useBu } from "@/contexts/BuContext";
-import { cn } from "@/lib/utils";
+import { useUrlState, useUrlSearch } from "@/shared/url";
 
 export default function OrganogramPage() {
   const { currentBu } = useBu();
@@ -23,12 +25,40 @@ export default function OrganogramPage() {
   const [searchParams] = useSearchParams();
   const isFullscreen = searchParams.get("fullscreen") === "true";
 
-  // Filters state - start with members visible, squads hidden
-  const [filters, setFilters] = useState<OrganogramFilters>({
-    showMembers: true,
-    showSquads: false,
-    searchTerm: "",
+  // URL State for filters - persisted across refresh and shareable
+  const { value: searchTerm, set: setSearchTerm } = useUrlSearch("q", 300);
+  const { value: showMembersParam, set: setShowMembersParam } = useUrlState<string>({ 
+    key: "members", 
+    defaultValue: "true" 
   });
+  const { value: showSquadsParam, set: setShowSquadsParam } = useUrlState<string>({ 
+    key: "squads", 
+    defaultValue: "false" 
+  });
+
+  // Convert URL params to boolean
+  const showMembers = showMembersParam === "true";
+  const showSquads = showSquadsParam === "true";
+
+  // Memoized filters object for child components
+  const filters: OrganogramFilters = useMemo(() => ({
+    showMembers,
+    showSquads,
+    searchTerm: searchTerm || "",
+  }), [showMembers, showSquads, searchTerm]);
+
+  // Handler for filter changes from controls
+  const handleFiltersChange = useCallback((newFilters: OrganogramFilters) => {
+    if (newFilters.searchTerm !== filters.searchTerm) {
+      setSearchTerm(newFilters.searchTerm);
+    }
+    if (newFilters.showMembers !== filters.showMembers) {
+      setShowMembersParam(newFilters.showMembers ? "true" : "false");
+    }
+    if (newFilters.showSquads !== filters.showSquads) {
+      setShowSquadsParam(newFilters.showSquads ? "true" : "false");
+    }
+  }, [filters, setSearchTerm, setShowMembersParam, setShowSquadsParam]);
 
   // Controls state - start at 100% for best fit, default expansion mode
   const [controls, setControls] = useState<OrganogramControlsState>({
@@ -88,7 +118,7 @@ export default function OrganogramPage() {
               {/* Compact controls */}
               <OrganogramControls
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={handleFiltersChange}
                 controls={controls}
                 onControlsChange={setControls}
                 onFitToScreen={handleFitToScreen}
@@ -165,7 +195,7 @@ export default function OrganogramPage() {
         {/* Controls */}
         <OrganogramControls
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={handleFiltersChange}
           controls={controls}
           onControlsChange={setControls}
           onFitToScreen={handleFitToScreen}

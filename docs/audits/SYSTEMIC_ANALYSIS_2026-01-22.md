@@ -274,7 +274,7 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 2. ~~**Correção das RLS policies**~~ — ✅ Já intencionais (catálogos globais)
 3. ~~**Habilitar password protection**~~ — ✅ N/A (sistema usa **Magic Link**)
 
-### Saúde Geral do Projeto: **10/10** ⭐ (Waves 1-5 concluídas)
+### Saúde Geral do Projeto: **10/10** ⭐ (Waves 1-7 concluídas)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
@@ -288,6 +288,8 @@ O projeto demonstra:
 - ✅ 18 Edge Functions documentadas com JSDoc
 - ✅ **Magic Link como método canônico de autenticação**
 - ✅ **Dead code OTP removido (verifyOtp, buildOtpEmailHtml)**
+- ✅ **Wave 6: Hooks/Queries Barrel Consolidation**
+- ✅ **Wave 7: URL State em OrganogramPage + Mutations com campos explícitos**
 
 **Próximos Passos (Manutenção Contínua):**
 - Monitorar crescimento de logs via alertas

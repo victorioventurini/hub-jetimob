@@ -167,7 +167,7 @@ export function useCreateSquad() {
         throw new Error("Nenhuma BU selecionada");
       }
 
-      // Create squad
+      // Create squad - use explicit fields to avoid overfetch
       const { data: squad, error } = await supabase
         .from("squads")
         .insert({
@@ -177,7 +177,7 @@ export function useCreateSquad() {
           status: data.status,
           bu_id: currentBu.id,
         })
-        .select()
+        .select(SQUAD_FIELDS)
         .single();
 
       if (error) throw error;
@@ -230,11 +230,12 @@ export function useUpdateSquad() {
       if (data.products !== undefined) updateData.products = data.products;
       if (data.status !== undefined) updateData.status = data.status;
 
+      // Update squad - use explicit fields to avoid overfetch
       const { data: squad, error } = await supabase
         .from("squads")
         .update(updateData)
         .eq("id", id)
-        .select()
+        .select(SQUAD_FIELDS)
         .single();
 
       if (error) throw error;
@@ -292,6 +293,7 @@ export function useAddSquadMember() {
         throw new Error("Nenhuma BU selecionada");
       }
 
+      // Add member - use explicit fields to avoid overfetch
       const { data: membership, error } = await supabase
         .from("squad_memberships")
         .insert({
@@ -300,7 +302,7 @@ export function useAddSquadMember() {
           role: data.role,
           bu_id: currentBu.id,
         })
-        .select()
+        .select("id, squad_id, user_id, role, bu_id, created_at, updated_at")
         .single();
 
       if (error) {
