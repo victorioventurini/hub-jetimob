@@ -210,7 +210,7 @@ export function TeamOkrShareStep({
                   className="gap-2"
                 >
                   {copied ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <CheckCircle2 className="h-4 w-4 text-success" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -339,7 +339,7 @@ export function TeamOkrShareStep({
           <button
             onClick={onSubmit}
             disabled={isGenerating || isSubmitting}
-            className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-green-600 text-white h-10 px-4 py-2 hover:bg-green-700 disabled:opacity-50 disabled:pointer-events-none"
+            className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-success text-success-foreground h-10 px-4 py-2 hover:bg-success/90 disabled:opacity-50 disabled:pointer-events-none"
           >
             {isSubmitting ? (
               <>

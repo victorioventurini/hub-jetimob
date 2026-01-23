@@ -237,7 +237,7 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
                   {results.filter(r => r.blocker).map(result => (
                     <div 
                       key={result.krId}
-                      className="rounded-lg border border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 p-3"
+                      className="rounded-lg border border-status-orange/30 bg-status-orange-muted p-3"
                     >
                       <p className="font-medium text-sm">{result.krTitle}</p>
                       <p className="text-sm mt-1">{result.blocker}</p>

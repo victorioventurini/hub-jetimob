@@ -45,9 +45,9 @@ export function KrSharedCheckStep({
             </p>
           </div>
 
-          <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/50">
+          <div className="p-4 border rounded-lg bg-info-muted border-info/30">
             <div className="flex items-start gap-3">
-              <Users className="h-5 w-5 text-blue-600 shrink-0" />
+              <Users className="h-5 w-5 text-info shrink-0" />
               <div>
                 <p className="text-sm font-medium">Objetivo compartilhado</p>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -61,9 +61,9 @@ export function KrSharedCheckStep({
           </div>
 
           {hasMultipleFoundational && (
-            <Card className="border-orange-200 dark:border-orange-800/50">
+            <Card className="border-status-orange/30">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2 text-orange-600">
+                <CardTitle className="text-sm flex items-center gap-2 text-status-orange">
                   <AlertTriangle className="h-4 w-4" />
                   Atenção: Múltiplos KRs Fundacionais
                 </CardTitle>

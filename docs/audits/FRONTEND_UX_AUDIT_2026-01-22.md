@@ -1,9 +1,9 @@
 # Auditoria de Front-End (UX, Consistência, Qualidade)
 
 **Data:** 2026-01-23  
-**Versão:** 3.3.0  
+**Versão:** 3.4.0  
 **TCR Consultado:** v2.64.0  
-**Status:** ✅ AUDITORIA COMPLETA + P2/P3 FINALIZADA
+**Status:** ✅ AUDITORIA COMPLETA + P2/P3/P4 FINALIZADA
 
 ---
 
@@ -13,7 +13,7 @@ O Hub da Jet apresenta **excelente maturidade técnica** no front-end, com desig
 
 | Categoria | Crítico (P1) | Importante (P2) | Desejável (P3) | Status |
 |-----------|--------------|-----------------|----------------|--------|
-| **Cores Hardcoded** | 0 | 0 | ~10 arquivos | ✅ Módulos críticos 100% |
+| **Cores Hardcoded** | 0 | 0 | ~5 arquivos | ✅ Módulos críticos 100% |
 | **Tamanhos de Modal** | 0 | 0 | 0 | ✅ Padronizado |
 | **Componentes Duplicados** | 0 | 0 | 2 | ✅ Limpo |
 | **onClick + navigate** | 0 | 0 | 0 | ✅ Corrigido |
@@ -294,6 +294,20 @@ src/modules/okrs/
 | 3.10 | confirm-dialog.tsx (amber → warning) | 5min | ✅ Feito (2026-01-23) |
 | 3.11 | HubNotifications (green/amber → success/warning) | 5min | ✅ Feito (2026-01-23) |
 
+### Fase 3.2 — Migração Wizard & Dialogs (P3) ✅ CONCLUÍDA
+
+| # | Ação | Esforço | Status |
+|---|------|---------|--------|
+| 3.12 | KrSharedCheckStep (blue/orange → info/status-orange) | 5min | ✅ Feito (2026-01-23) |
+| 3.13 | KrTypeStep (orange → status-orange) | 5min | ✅ Feito (2026-01-23) |
+| 3.14 | TeamOkrShareStep (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 3.15 | WizardStepFooter (green → success) | 5min | ✅ Feito (2026-01-23) |
+| 3.16 | PermissionDiffDialog (amber → warning) | 5min | ✅ Feito (2026-01-23) |
+| 3.17 | CollaboratorSummary (orange → status-orange) | 5min | ✅ Feito (2026-01-23) |
+| 3.18 | ManagersCrossIssuesStep (green/red/yellow → success/destructive/warning) | 5min | ✅ Feito (2026-01-23) |
+| 3.19 | InventoryImportDialog (green/amber/red → success/warning/destructive) | 5min | ✅ Feito (2026-01-23) |
+| 3.20 | VicTestPage (green/red → success/destructive) | 5min | ✅ Feito (2026-01-23) |
+
 ### Fase 3 — Modularização de Componentes Grandes (P2-P3)
 
 | # | Arquivo | Linhas | Ação | Prioridade |
@@ -323,7 +337,7 @@ src/modules/okrs/
 
 | Métrica | Antes | Meta | Atual |
 |---------|-------|------|-------|
-| Arquivos com cores hardcoded | ~156 | <20 | ✅ ~10 |
+| Arquivos com cores hardcoded | ~156 | <20 | ✅ ~5 |
 | Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
 | Componentes >400 linhas | 6 | <3 | 6 (backlog P4) |
 | onClick+navigate (vs Link) | 4+ | 0 | ✅ 0 |

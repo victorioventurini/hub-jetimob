@@ -125,7 +125,7 @@ export function WizardStepFooter({
               onClick={onPrimary}
               disabled={primaryDisabled || primaryLoading}
               className={cn(
-                primaryVariant === 'success' && 'bg-green-600 hover:bg-green-700'
+                primaryVariant === 'success' && 'bg-success text-success-foreground hover:bg-success/90'
               )}
             >
               {primaryLoading ? (
