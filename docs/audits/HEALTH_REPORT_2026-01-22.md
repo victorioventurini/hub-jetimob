@@ -1,7 +1,7 @@
 # 📊 Relatório de Saúde Técnica - Hub da Jet
 
 > **Data:** 2026-01-23  
-> **TCR Version:** 2.65.0  
+> **TCR Version:** 2.66.0  
 > **Status Geral:** ✅ EXCELENTE (10/10)
 
 ---
@@ -10,7 +10,7 @@
 
 O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria completa realizada em 2026-01-22. Principais melhorias desde o último relatório (2026-01-13):
 
-### Principais Marcos 2026-01-22
+### Principais Marcos 2026-01-22/23
 
 | Item | Tipo | Status |
 |------|------|--------|
@@ -19,13 +19,16 @@ O Hub da Jet mantém **excelente estado de saúde técnica** após auditoria com
 | **get_visible_ticket_ids_for_impersonation** | RPC | ✅ Corrigido (external contacts) |
 | **External User Home Dashboard** | UX | ✅ Cards internos ocultados |
 | **Auditoria Técnica Completa** | Análise | ✅ Concluída |
-| **7 Partial Indexes Soft-Delete** | Performance | ✅ **NOVO** |
-| **pg_cron Cleanup Semanal** | Infra | ✅ **NOVO** |
-| **Fix user_team_memberships.is_active** | Bugfix | ✅ **NOVO** |
+| **7 Partial Indexes Soft-Delete** | Performance | ✅ |
+| **pg_cron Cleanup Semanal** | Infra | ✅ |
+| **Fix user_team_memberships.is_active** | Bugfix | ✅ |
 | **TCR Edge Functions (18)** | Docs | ✅ |
-| **Wave 4.1 Docs Hierarchy** | Docs | ✅ **NOVO** |
-| **Wave 4.2 SQL Audit (175)** | DB | ✅ **NOVO** |
-| **Wave 4.3 JSDoc Audit (16)** | Backend | ✅ **NOVO** |
+| **Wave 4.1 Docs Hierarchy** | Docs | ✅ |
+| **Wave 4.2 SQL Audit (175)** | DB | ✅ |
+| **Wave 4.3 JSDoc Audit (18)** | Backend | ✅ |
+| **Wave 6: Hooks/Queries Barrel Consolidation** | Frontend | ✅ **NOVO** |
+| **Wave 7: URL State OrganogramPage** | Frontend | ✅ **NOVO** |
+| **Wave 7: Mutations campos explícitos** | Performance | ✅ **NOVO** |
 
 ---
 

@@ -1,7 +1,7 @@
 # Análise Sistêmica do Hub — Janeiro 2026
 
 **Data:** 2026-01-23  
-**Versão TCR:** 2.65.0  
+**Versão TCR:** 2.66.0  
 **Status:** ✅ Análise Completa — Health Score 10/10  
 **Autor:** AI Audit Agent
 
@@ -297,4 +297,4 @@ O projeto demonstra:
 
 ---
 
-*Este relatório foi atualizado em 2026-01-23 — TCR v2.65.0*
+*Este relatório foi atualizado em 2026-01-23 — TCR v2.66.0*

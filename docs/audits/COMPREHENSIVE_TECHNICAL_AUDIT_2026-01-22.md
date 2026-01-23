@@ -1,8 +1,8 @@
 # 📊 Auditoria Técnica Completa — Hub da Jet
 
 **Data:** 2026-01-23  
-**Versão TCR:** 2.65.0  
-**Atualizado:** 2026-01-23 (pós-remoção OTP Code)
+**Versão TCR:** 2.66.0  
+**Atualizado:** 2026-01-23 (Wave 6-7 completas)
 **Status Geral:** ✅ **EXCELENTE** (Health Score 10/10)
 
 ---
@@ -27,7 +27,7 @@ O Hub da Jet encontra-se em **excelente estado de saúde técnica** após múlti
 
 ## 1. ANÁLISE DO TCR E DOCUMENTAÇÃO
 
-### 1.1 Estado Atual do TCR (v2.65.0)
+### 1.1 Estado Atual do TCR (v2.66.0)
 
 | Seção | Status | Notas |
 |-------|--------|-------|
@@ -325,21 +325,25 @@ O **Hub da Jet** encontra-se em **excelente estado técnico** com:
 ✅ **Segurança:** 100% RLS V2, identity convention, RBAC templates  
 ✅ **Performance:** RPCs agregadoras, staleTime configurado, **7 novos partial indexes**  
 ✅ **Manutenibilidade:** Arquivos dentro dos limites, código modular  
-✅ **Documentação:** TCR v2.65.0 atualizado, 24 documentos ativos  
+✅ **Documentação:** TCR v2.66.0 atualizado, 24 documentos ativos  
 ✅ **Autenticação:** Magic Link (OTP Code removido em v2.65.0)
+✅ **Hooks Consolidados:** 100% via barrel exports (Wave 6-7)
 
 **Ações Concluídas (2026-01-22 a 2026-01-23):**
 - ✅ 7 partial indexes criados para soft-delete
-- ✅ TCR atualizado para v2.65.0
+- ✅ TCR atualizado para v2.66.0
 - ✅ HEALTH_REPORT_2026-01-22.md criado
 - ✅ COMPREHENSIVE_TECHNICAL_AUDIT atualizado
 - ✅ **OTP Code removido** — Magic Link é método canônico
 - ✅ **verifyOtp() dead code removido** do useAuth.tsx
 - ✅ **buildOtpEmailHtml() dead code removido** do email-sender.ts
 - ✅ **18 Edge Functions com JSDoc** padronizado
+- ✅ **Wave 6: Hooks/Queries Barrel Consolidation** — 32+ arquivos migrados
+- ✅ **Wave 7: URL State em OrganogramPage** — searchTerm, showMembers, showSquads
+- ✅ **Wave 7: Mutations com campos explícitos** — useSquads.ts
 
 **Próxima Revisão:** 2026-01-30
 
 ---
 
-*Relatório atualizado em 2026-01-23 — TCR v2.65.0*
+*Relatório atualizado em 2026-01-23 — TCR v2.66.0*
