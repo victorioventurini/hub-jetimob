@@ -455,7 +455,7 @@ export function UserPermissionsV2Sheet({
                 <div className="text-xs text-muted-foreground">
                   {selectedTemplateIds.size} template{selectedTemplateIds.size !== 1 ? "s" : ""}
                   {hasChanges && (
-                    <span className="ml-2 text-amber-600">
+                    <span className="ml-2 text-warning">
                       • {additions.length} a adicionar, {removals.length} a remover
                     </span>
                   )}

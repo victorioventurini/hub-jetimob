@@ -152,7 +152,7 @@ function LoanStatusCard({ item, movements }: { item: AssetInventory; movements: 
                   </span>
                 )}
                 {!isOverdue && daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0 && (
-                  <span className="block text-xs text-amber-600">
+                  <span className="block text-xs text-warning">
                     ({daysUntilDue === 0 ? "Vence hoje" : `${daysUntilDue} dias restantes`})
                   </span>
                 )}

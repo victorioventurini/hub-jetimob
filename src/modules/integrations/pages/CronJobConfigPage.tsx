@@ -342,12 +342,12 @@ export default function CronJobConfigPage() {
               </Button>
             </div>
             {hasUnsavedChanges && (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
+              <p className="text-sm text-warning">
                 ⚠️ Clique em "Salvar" para confirmar as alterações
               </p>
             )}
             {isSecretConfigured && (
-              <p className="text-sm text-green-600 dark:text-green-400">
+              <p className="text-sm text-success">
                 ✓ Secret configurado
               </p>
             )}
