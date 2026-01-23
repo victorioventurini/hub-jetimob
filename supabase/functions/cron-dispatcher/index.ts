@@ -1,3 +1,34 @@
+/**
+ * Edge Function: cron-dispatcher
+ * 
+ * Central cron job dispatcher for scheduled background tasks.
+ * Called by external cron service (cron-job.org) to orchestrate:
+ * - Notification outbox processing
+ * - System health evaluation
+ * - Database maintenance and cleanup
+ * 
+ * @module cron
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Processes pending notification outbox items via dedicated edge function
+ * - Evaluates notification health and creates/resolves alerts
+ * - Runs database cleanup: wizard sessions, agent logs, cron logs, perf snapshots
+ * - Collects performance metrics for dashboards
+ * - Initializes counting columns for materialized views
+ * 
+ * ## Authentication
+ * - verify_jwt: false (no JWT required)
+ * - Requires: x-cron-secret header matching value stored in hub_integrations_global_config
+ * 
+ * ## Request
+ * - Method: POST
+ * - Headers: x-cron-secret (required)
+ * 
+ * ## Response
+ * - Success: {@link ExecutionResult} with outbox, health, maintenance stats
+ * - Error: { error: string, correlation_id?: string }
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

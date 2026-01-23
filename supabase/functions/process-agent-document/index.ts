@@ -1,3 +1,39 @@
+/**
+ * Edge Function: process-agent-document
+ * 
+ * Processes uploaded documents for AI agents, extracting text content
+ * for use in agent context and knowledge base.
+ * 
+ * @module ai-agents
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Downloads document from Supabase Storage (agent-documents bucket)
+ * - Extracts text from supported formats: TXT, MD, PDF, DOCX
+ * - Stores extracted content in ai_agent_documents.extracted_content
+ * - Updates document status: processing → completed/error
+ * 
+ * ## Supported Formats
+ * - TXT/MD: Direct text extraction
+ * - PDF: Basic text extraction (limited, may require advanced processing)
+ * - DOCX: XML-based text extraction
+ * 
+ * ## Authentication
+ * - verify_jwt: false (internal service call)
+ * - Uses SUPABASE_SERVICE_ROLE_KEY for storage/database access
+ * 
+ * ## Request
+ * - Method: POST
+ * - Body: { documentId: string } (UUID of ai_agent_documents record)
+ * 
+ * ## Response
+ * - Success: { success: true, documentId: string, contentLength: number }
+ * - Error: { error: string }
+ * 
+ * ## Limitations
+ * - PDF extraction is basic; complex PDFs may need external OCR
+ * - Content limited to ~500KB per document
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
