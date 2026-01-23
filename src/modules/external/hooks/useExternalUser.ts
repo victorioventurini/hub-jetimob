@@ -8,7 +8,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useContext } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { AuthContext, type AuthContextType } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
 import type { ExternalContactRecord, ExternalUserData, ExternalUserInfo } from "../types";

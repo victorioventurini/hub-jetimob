@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { queryKeys } from "@/lib/queryKeys";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { toast } from "sonner";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 

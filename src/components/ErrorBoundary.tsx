@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { VicErrorState } from '@/modules/vic/components/VicErrorState';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/globalClient';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
