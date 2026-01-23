@@ -72,8 +72,8 @@ const CeoCard = memo(function CeoCard({
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-amber-400 bg-card shadow-sm transition-all",
-          "hover:shadow-md hover:border-amber-500 focus:outline-none focus:ring-2 focus:ring-ring",
+          "flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-warning/60 bg-card shadow-sm transition-all",
+          "hover:shadow-md hover:border-warning focus:outline-none focus:ring-2 focus:ring-ring",
           "min-w-[140px] max-w-[200px]"
         )}
         onClick={(e) => e.stopPropagation()}
@@ -90,7 +90,7 @@ const CeoCard = memo(function CeoCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{node.name}</p>
-          <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">CEO</p>
+          <p className="text-xs text-warning font-medium">CEO</p>
         </div>
       </Link>
 

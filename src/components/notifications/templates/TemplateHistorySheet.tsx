@@ -136,7 +136,7 @@ export function TemplateHistorySheet({
                         className={cn(
                           "p-2 rounded cursor-pointer transition-colors",
                           isSelected ? "bg-primary/10" : "hover:bg-muted",
-                          isActive && "ring-1 ring-green-500"
+                          isActive && "ring-1 ring-success"
                         )}
                         onClick={() => setSelectedVersion(version)}
                       >

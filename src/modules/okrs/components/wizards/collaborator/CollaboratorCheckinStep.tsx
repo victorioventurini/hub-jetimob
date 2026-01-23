@@ -422,7 +422,7 @@ export function CollaboratorCheckinStep({
               value={blocker}
               onChange={(e) => setBlocker(e.target.value)}
               placeholder="Descreva o que está impedindo o progresso..."
-              className="min-h-[80px] resize-none border-orange-300 focus:border-orange-500"
+              className="min-h-[80px] resize-none border-warning/50 focus:border-warning"
             />
           </div>
         )}

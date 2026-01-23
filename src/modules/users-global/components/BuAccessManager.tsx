@@ -140,7 +140,7 @@ export function BuAccessManager({ userId, buAccesses }: BuAccessManagerProps) {
             >
               <div className="flex items-center gap-2">
                 {access.is_default && (
-                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                  <Star className="h-4 w-4 text-warning fill-warning" />
                 )}
                 <span className="font-medium">{access.bu_name}</span>
                 <Badge variant="secondary" className="text-xs">
