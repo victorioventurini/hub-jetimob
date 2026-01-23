@@ -53,7 +53,7 @@ import {
   useActivatePartnerInBuGlobal,
   useDeactivatePartnerInBuGlobal,
 } from "@/modules/partners/hooks";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { useQuery } from "@tanstack/react-query";
 
 function formatDocument(doc: string | null, type: string | null): string {

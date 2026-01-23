@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase as authSupabase } from "@/integrations/supabase/client";
+import { supabase as authSupabase } from "@/integrations/supabase/globalClient";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useBu } from "@/contexts/BuContext";
 import { toast } from "sonner";

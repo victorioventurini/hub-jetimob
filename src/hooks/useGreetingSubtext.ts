@@ -21,7 +21,7 @@ import { useLeaderTeams } from "@/modules/home/hooks";
 import { useVicAgent } from "@/modules/vic/hooks";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 
 const CACHE_KEY = "greeting_subtext_ai";
 

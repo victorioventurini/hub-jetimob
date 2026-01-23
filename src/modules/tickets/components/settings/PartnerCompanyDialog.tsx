@@ -30,7 +30,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DocumentInput, type DocumentType } from "@/components/ui/document-input";
 import { Loader2, Building2, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/globalClient";
 import { useBu } from "@/contexts/BuContext";
 import { useCreatePartnerCompany, useUpdatePartnerCompany } from "../../hooks";
 import { useActivatePartnerInBu } from "@/modules/partners/hooks/usePartnerBuAssociations";

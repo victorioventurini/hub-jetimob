@@ -7,7 +7,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { queryKeys } from '@/lib/queryKeys';
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/globalClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
