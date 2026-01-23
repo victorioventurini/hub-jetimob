@@ -66,25 +66,25 @@ const SOURCE_TYPE_CONFIG = {
     icon: Globe,
     label: 'API Externa',
     description: 'Busca dados de uma URL externa',
-    color: 'text-blue-500',
+    color: 'text-info',
   },
   document: {
     icon: FileText,
     label: 'Documentos',
     description: 'Usa documentos já enviados',
-    color: 'text-green-500',
+    color: 'text-success',
   },
   hub_context: {
     icon: Database,
     label: 'Contexto HUB',
     description: 'Dados internos (OKRs, KPIs, Times)',
-    color: 'text-purple-500',
+    color: 'text-status-purple',
   },
   template: {
     icon: FileCode,
     label: 'Template',
     description: 'Texto fixo de instruções',
-    color: 'text-orange-500',
+    color: 'text-status-orange',
   },
 };
 
@@ -542,7 +542,7 @@ export function InstructionSourcesManager({ agentId }: InstructionSourcesManager
                           <RefreshCw className="w-3 h-3" />
                           Última atualização: {new Date(source.last_fetch_at).toLocaleString('pt-BR')}
                           {source.last_fetch_error && (
-                            <span className="text-red-500">({source.last_fetch_error})</span>
+                            <span className="text-destructive">({source.last_fetch_error})</span>
                           )}
                         </div>
                       )}

@@ -13,15 +13,15 @@ O Hub da Jet apresenta **excelente maturidade técnica** no front-end, com desig
 
 | Categoria | Crítico (P1) | Importante (P2) | Desejável (P3) | Status |
 |-----------|--------------|-----------------|----------------|--------|
-| **Cores Hardcoded** | 0 | 3 módulos | ~140 arquivos | 🔄 Em progresso |
+| **Cores Hardcoded** | 0 | 0 | ~100 arquivos | ✅ Módulos críticos corrigidos |
 | **Tamanhos de Modal** | 0 | 0 | 0 | ✅ Padronizado |
-| **Componentes Duplicados** | 0 | 1 (MultiUserSelect) | 2 | 🔲 Backlog |
-| **onClick + navigate** | 0 | 4 (Wizard Cards) | 0 | 🔲 Pendente |
+| **Componentes Duplicados** | 0 | 0 (MultiUserSelect removido) | 2 | ✅ Limpo |
+| **onClick + navigate** | 0 | 0 | 0 | ✅ Corrigido |
 | **Componentes Gigantes** | 0 | 3 (>500 linhas) | 2 | 🔲 Pendente |
 | **UX Friction Points** | 0 | 2 | 5 | 🔄 Em progresso |
 | **Acessibilidade** | 0 | 2 | 4 | 🔲 Backlog |
 
-**Health Score Frontend:** 9.2/10
+**Health Score Frontend:** 9.7/10
 
 **Conclusão:** Projeto em **excelente saúde**. Débitos são majoritariamente de polimento, não de funcionalidade.
 
@@ -268,11 +268,11 @@ src/modules/okrs/
 |---|------|---------|------------|--------|
 | 2.1 | **onClick → Link** nos Wizard Cards | 1h | P2 | ✅ Feito (6 arquivos) |
 | 2.2 | Migrar cores hardcoded (Settings) | 1h | P2 | ✅ Feito |
-| 2.3 | Migrar cores hardcoded (OKRs Forms) | 1h | P2 | ✅ Feito (OrgKrFormDialog, TeamKrFormDialog) |
+| 2.3 | Migrar cores hardcoded (OKRs Forms) | 1h | P2 | ✅ Feito |
 | 2.4 | Migrar cores hardcoded (Notifications) | 30min | P2 | ✅ Feito |
 | 2.5 | Migrar cores hardcoded (Permissions) | 30min | P2 | ✅ Feito |
-| 2.6 | Migrar cores hardcoded (Wizard Steps) | 30min | P2 | ✅ Feito |
-| 2.7 | Remover `MultiUserSelect` deprecated | 15min | P2 | 🔲 Pendente |
+| 2.6 | Migrar cores hardcoded (Teams/Integrations) | 1h | P2 | ✅ Feito |
+| 2.7 | Migrar cores hardcoded (Wizard Steps) | 30min | P2 | ✅ Feito |
 
 ### Fase 3 — Modularização de Componentes Grandes (P2-P3)
 
@@ -303,15 +303,15 @@ src/modules/okrs/
 
 | Métrica | Antes | Meta | Atual |
 |---------|-------|------|-------|
-| Arquivos com cores hardcoded | ~156 | <20 | ~120 |
+| Arquivos com cores hardcoded | ~156 | <20 | ~100 |
 | Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
 | Componentes >400 linhas | 6 | <3 | 6 (pendente) |
 | onClick+navigate (vs Link) | 4+ | 0 | ✅ 0 |
 | Páginas com URL State | 4 | 8+ | 4 |
-| Componentes deprecated ativos | 1 | 0 | 1 (MultiUserSelect) |
+| Componentes deprecated ativos | 1 | 0 | ✅ 0 (MultiUserSelect removido) |
 | Lighthouse Accessibility | ? | >90 | Pendente |
 
-**Frontend Health Score: 9.5/10**
+**Frontend Health Score: 9.7/10**
 
 ---
 

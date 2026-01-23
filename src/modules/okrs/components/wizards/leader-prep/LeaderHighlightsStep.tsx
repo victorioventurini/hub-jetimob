@@ -143,7 +143,7 @@ export function LeaderHighlightsStep({
         <div className="p-6 space-y-6">
           {!hasContent ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Sparkles className="h-12 w-12 text-green-500 mb-4" />
+              <Sparkles className="h-12 w-12 text-success mb-4" />
               <h4 className="font-medium text-lg">Tudo em ordem!</h4>
               <p className="text-sm text-muted-foreground mt-1 max-w-sm">
                 Não foram identificados pontos críticos que precisem de atenção imediata.
