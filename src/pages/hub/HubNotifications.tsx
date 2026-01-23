@@ -480,7 +480,7 @@ export default function HubNotifications() {
                             <div className="flex items-center gap-1">
                               <SeverityIcon className={cn("w-4 h-4", {
                                 'text-muted-foreground': event.severity === 'info',
-                                'text-yellow-500': event.severity === 'warning',
+                                'text-warning': event.severity === 'warning',
                                 'text-destructive': event.severity === 'critical',
                               })} />
                               <span className="text-sm capitalize">{event.severity}</span>
@@ -635,7 +635,7 @@ export default function HubNotifications() {
                   <Clock className="w-4 h-4" />
                   Pendentes
                 </CardDescription>
-                <CardTitle className="text-2xl text-yellow-500">
+                <CardTitle className="text-2xl text-warning">
                   {statsLoading ? <Skeleton className="h-8 w-16" /> : outboxStats?.pending || 0}
                 </CardTitle>
               </CardHeader>
@@ -652,7 +652,7 @@ export default function HubNotifications() {
                   <CheckCircle className="w-4 h-4" />
                   Enviadas
                 </CardDescription>
-                <CardTitle className="text-2xl text-green-500">
+                <CardTitle className="text-2xl text-success">
                   {statsLoading ? <Skeleton className="h-8 w-16" /> : outboxStats?.sent || 0}
                 </CardTitle>
               </CardHeader>

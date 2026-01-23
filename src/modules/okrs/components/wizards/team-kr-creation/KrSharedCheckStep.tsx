@@ -81,9 +81,9 @@ export function KrSharedCheckStep({
           )}
 
           {!hasMultipleFoundational && hasFoundational && (
-            <Card className="border-green-200 dark:border-green-800/50">
+            <Card className="border-success/30">
               <CardContent className="p-6 text-center">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
                 <h3 className="font-medium mb-2">Configuração adequada</h3>
                 <p className="text-sm text-muted-foreground">
                   Seus KRs estão bem distribuídos para um contexto colaborativo.

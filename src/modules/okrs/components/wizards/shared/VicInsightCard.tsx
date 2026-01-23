@@ -65,13 +65,13 @@ const TYPE_LABELS: Record<VicInsightType, string> = {
 
 const PRIORITY_STYLES: Record<VicInsightPriority, string> = {
   high: 'border-destructive/50 bg-destructive/5 dark:bg-destructive/10',
-  medium: 'border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-950/20',
+  medium: 'border-warning/50 bg-warning-muted',
   low: 'border-primary/30 bg-primary/5 dark:bg-primary/10',
 };
 
 const PRIORITY_ICON_STYLES: Record<VicInsightPriority, string> = {
   high: 'text-destructive',
-  medium: 'text-yellow-600 dark:text-yellow-400',
+  medium: 'text-warning',
   low: 'text-primary',
 };
 

@@ -31,10 +31,10 @@ export function CLevelDirectivesStep({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-green-500/5 to-transparent">
+      <div className="px-6 py-4 border-b bg-gradient-to-r from-success/5 to-transparent">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-green-500/10">
-            <Megaphone className="h-5 w-5 text-green-500" />
+          <div className="p-2 rounded-lg bg-success/10">
+            <Megaphone className="h-5 w-5 text-success" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">Diretrizes para a Organização</h3>

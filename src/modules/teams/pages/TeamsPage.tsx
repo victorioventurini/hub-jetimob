@@ -214,11 +214,11 @@ export default function TeamsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-blue-500">
+          <Card className="border-l-4 border-l-info">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Layers3 className="h-5 w-5 text-blue-500" />
+                <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
+                  <Layers3 className="h-5 w-5 text-info" />
                 </div>
                 <div>
                   {isLoading ? (
@@ -234,11 +234,11 @@ export default function TeamsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-purple-500">
+          <Card className="border-l-4 border-l-status-purple">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <Box className="h-5 w-5 text-purple-500" />
+                <div className="h-10 w-10 rounded-lg bg-status-purple/10 flex items-center justify-center">
+                  <Box className="h-5 w-5 text-status-purple" />
                 </div>
                 <div>
                   {isLoadingSquads ? (
@@ -392,8 +392,8 @@ export default function TeamsPage() {
               {/* SUB-TIMES SECTION */}
               <section>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <Layers3 className="h-4 w-4 text-blue-500" />
+                  <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center">
+                    <Layers3 className="h-4 w-4 text-info" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">Sub-times</h2>
@@ -427,8 +427,8 @@ export default function TeamsPage() {
               {/* SQUADS SECTION */}
               <section>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <Box className="h-4 w-4 text-purple-500" />
+                  <div className="h-8 w-8 rounded-lg bg-status-purple/10 flex items-center justify-center">
+                    <Box className="h-4 w-4 text-status-purple" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">Squads</h2>
