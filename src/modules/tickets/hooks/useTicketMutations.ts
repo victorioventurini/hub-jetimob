@@ -92,7 +92,22 @@ export function useCreateTicket(profileId: string | null) {
       }
 
       // Add initial message if provided with profileId
-      if (data.initial_message && Object.keys(data.initial_message).length > 0) {
+      // Check if there's actual content (not just empty text)
+      const hasInitialMessage = data.initial_message && 
+        typeof data.initial_message === 'object' &&
+        'content' in data.initial_message &&
+        typeof data.initial_message.content === 'string' &&
+        data.initial_message.content.trim().length > 0;
+      
+      // Also check if we need to create a message for attachments
+      const hasAttachments = data.attachments && data.attachments.length > 0;
+      const shouldCreateMessage = hasInitialMessage || hasAttachments;
+      
+      if (shouldCreateMessage) {
+        const messageContent = hasInitialMessage 
+          ? data.initial_message 
+          : { type: "text", content: "" }; // Empty message for attachment-only case
+          
         const { data: message, error: messageError } = await supabase
           .from("ticket_messages")
           .insert({
@@ -100,7 +115,7 @@ export function useCreateTicket(profileId: string | null) {
             ticket_id: ticket.id,
             author_type: "internal_user" as const,
             author_user_id: profileId,
-            body_richtext: data.initial_message,
+            body_richtext: messageContent,
           } as any)
           .select("id")
           .single();
