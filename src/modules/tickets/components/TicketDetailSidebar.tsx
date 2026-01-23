@@ -335,7 +335,12 @@ function MentionsSection({ mentions }: { mentions: Mention[] }) {
                 className="text-xs"
               />
             ) : (
-              <span className="text-xs">{mention.display_name}</span>
+              <ContactLink
+                contactId={mention.id}
+                displayName={mention.display_name || "Contato"}
+                openInNewTab
+                className="text-xs"
+              />
             )}
             {mention.type === "contact" && (
               <Badge variant="outline" className="text-[10px] px-1 py-0">
