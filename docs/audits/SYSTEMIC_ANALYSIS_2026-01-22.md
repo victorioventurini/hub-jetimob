@@ -1,8 +1,8 @@
 # Análise Sistêmica do Hub — Janeiro 2026
 
-**Data:** 2026-01-22  
-**Versão TCR:** 2.61.0  
-**Status:** Análise Completa  
+**Data:** 2026-01-23  
+**Versão TCR:** 2.65.0  
+**Status:** ✅ Análise Completa — Health Score 10/10  
 **Autor:** AI Audit Agent
 
 ---
@@ -202,7 +202,7 @@ docs/engineering/
 | # | Ação | Tipo | Responsável | Status |
 |---|------|------|-------------|--------|
 | 1.1 | Cleanup de logs via `cleanup_old_logs(14)` | DB | Operações | ✅ Cron ativo (`cleanup-old-logs-weekly`), dados dentro da janela de 14 dias |
-| 1.2 | Leaked Password Protection | Auth Config | N/A | ✅ Não necessário — sistema usa OTP/Magic Link (sem senhas) |
+| 1.2 | Leaked Password Protection | Auth Config | N/A | ✅ Não necessário — sistema usa **Magic Link** (sem senhas) |
 
 > ✅ **RLS Policies Analisadas:** As 23 policies com `USING(true)` são **intencionais** (catálogos globais e logs de auditoria). Não requerem ação.
 
@@ -272,9 +272,9 @@ O Hub da Jet está em **excelente estado técnico** para um produto do seu taman
 ### Prioridades Absolutas:
 1. ~~**Limpeza de logs**~~ — ✅ Cron job ativo, dados dentro da janela
 2. ~~**Correção das RLS policies**~~ — ✅ Já intencionais (catálogos globais)
-3. ~~**Habilitar password protection**~~ — ✅ N/A (sistema usa OTP)
+3. ~~**Habilitar password protection**~~ — ✅ N/A (sistema usa **Magic Link**)
 
-### Saúde Geral do Projeto: **9.6/10** ⭐ (Waves 1-4 concluídas)
+### Saúde Geral do Projeto: **10/10** ⭐ (Waves 1-5 concluídas)
 
 O projeto demonstra:
 - ✅ Excelente governança de segurança (RLS 100%)
@@ -285,13 +285,14 @@ O projeto demonstra:
 - ✅ Query keys centralizadas
 - ✅ Documentação reorganizada (hierarquia CANONICAL/AUDITS/GUIDES/ARCHIVE)
 - ✅ 175 funções SQL auditadas (sem dead-code)
-- ✅ 16 Edge Functions documentadas
+- ✅ 18 Edge Functions documentadas com JSDoc
+- ✅ **Magic Link como método canônico de autenticação**
+- ✅ **Dead code OTP removido (verifyOtp, buildOtpEmailHtml)**
 
 **Próximos Passos (Manutenção Contínua):**
 - Monitorar crescimento de logs via alertas
 - Revisar documentação a cada release
-- Adicionar JSDoc em Edge Functions simples conforme modificadas
 
 ---
 
-*Este relatório foi gerado após análise do TCR v2.61.0, DEVELOPMENT_STANDARDS.md, DATA_MODEL_REGISTRY.md, PERMISSIONS_AND_RBAC_MODEL.md, e consultas diretas ao banco de dados.*
+*Este relatório foi atualizado em 2026-01-23 — TCR v2.65.0*
