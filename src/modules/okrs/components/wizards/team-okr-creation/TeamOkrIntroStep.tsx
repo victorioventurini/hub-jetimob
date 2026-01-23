@@ -16,8 +16,8 @@ import {
   Quote,
 } from 'lucide-react';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import { useVicEnabled } from '@/modules/vic/hooks/useVicAgent';
+import { useWizardAI } from '@/modules/okrs/hooks';
+import { useVicEnabled } from '@/modules/vic/hooks';
 import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
 // ============================================================
 // TYPES

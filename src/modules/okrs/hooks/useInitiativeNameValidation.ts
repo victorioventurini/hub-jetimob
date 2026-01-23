@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebounce';
-import { useVicAgent, useVicEnabled } from '@/modules/vic/hooks/useVicAgent';
+import { useVicAgent, useVicEnabled } from '@/modules/vic/hooks';
 
 export type InitiativeNameFeedbackType = 'warning' | 'suggestion' | 'success';
 
