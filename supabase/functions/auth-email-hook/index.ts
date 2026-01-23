@@ -1,3 +1,35 @@
+/**
+ * Edge Function: auth-email-hook
+ * 
+ * Supabase Auth email hook for sending custom magic link emails.
+ * Validates email domain against BU settings before sending.
+ * 
+ * @module auth
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Receives auth email events from Supabase Auth
+ * - Validates email domain against bu_units.allowed_email_domains
+ * - Builds custom magic link email with Hub branding
+ * - Sends via SendGrid (with Resend fallback)
+ * 
+ * ## Authentication
+ * - verify_jwt: false (called by Supabase Auth system)
+ * - Uses SUPABASE_SERVICE_ROLE_KEY for domain validation
+ * 
+ * ## Request
+ * - Method: POST
+ * - Body: {@link AuthEmailPayload} from Supabase Auth
+ * 
+ * ## Response
+ * - Success: { success: true, provider: string }
+ * - Error: { error: { http_code: number, message: string } }
+ * 
+ * ## Notes
+ * - This is a Supabase Auth Hook, not called directly by frontend
+ * - Domain validation prevents unauthorized email domains
+ * - Magic link URL construction uses Supabase verify endpoint
+ */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { sendEmail, buildMagicLinkEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";

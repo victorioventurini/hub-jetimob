@@ -1,3 +1,38 @@
+/**
+ * Edge Function: process-notification-outbox
+ * 
+ * Processes pending notification outbox items and delivers them via configured channels.
+ * Supports multiple channels: email (SendGrid), Slack, webhook, in_app.
+ * 
+ * @module notifications
+ * @version 1.0.0
+ * 
+ * ## Features
+ * - Fetches pending outbox items with retry logic
+ * - Resolves notification templates per event/channel/BU
+ * - Sends via appropriate provider (email, Slack, webhook)
+ * - Implements exponential backoff for retries (max 10 attempts)
+ * - Logs success/failure status back to notification_outbox
+ * 
+ * ## Authentication
+ * - verify_jwt: false (called by cron-dispatcher with service role key)
+ * - Uses SUPABASE_SERVICE_ROLE_KEY for database access
+ * 
+ * ## Request
+ * - Method: POST
+ * - Body: { source?: string } (optional, for logging)
+ * 
+ * ## Response
+ * - Success: { processed: number, success: number, failed: number }
+ * - Error: { error: string }
+ * 
+ * ## Channels Supported
+ * - email: Via SendGrid (configured per BU)
+ * - slack: Via Slack webhook or bot token (configured per BU)
+ * - webhook: Via HTTP POST to configured URL (configured per BU)
+ * - in_app: Marked as sent immediately (handled by frontend)
+ * - whatsapp: Not yet implemented (Phase 4+)
+ */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import {

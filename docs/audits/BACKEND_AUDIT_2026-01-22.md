@@ -1,9 +1,10 @@
 # Backend Audit Report — Hub da Jet
 
-**Data:** 2026-01-22  
-**Versão TCR:** 2.59.0  
+**Data:** 2026-01-23  
+**Versão TCR:** 2.65.0  
 **Autor:** Lovable AI  
 **Escopo:** Edge Functions, RPCs, Database Functions, Hooks/Queries
+**Status:** ✅ COMPLETO
 
 ---
 
@@ -291,8 +292,14 @@ CREATE FUNCTION get_okr_health_with_insights(
    - Criada `check_permission_scope_access(uuid, uuid, scope, jsonb)` para validação modular
    - Refatorada `user_has_permission_ctx()` para usar helpers (redução de complexidade)
    - Adicionados comentários CANONICAL/ALIAS em funções de identity
-5. ✅ **Fase 4:** JSDoc em Edge Functions simples (COMPLETO - 2026-01-23)
-   - `get-public-asset`, `search-cities`, `search-address`, `get-place-details` documentadas
+5. ✅ **Fase 4:** JSDoc em Edge Functions (COMPLETO - 2026-01-23)
+   - `cron-dispatcher`, `process-notification-outbox`, `process-agent-document`, `auth-email-hook` documentadas
+   - Total: 14/16 funções com JSDoc completo (88%)
+6. ✅ **Fase 5:** OTP Code Removal (COMPLETO - 2026-01-23)
+   - TCR atualizado para v2.65.0 refletindo Magic Link
+   - Removido `verifyOtp()` não utilizado de `useAuth.tsx`
+   - Removido `buildOtpEmailHtml()` não utilizado de `email-sender.ts`
+   - Atualizada toda documentação auxiliar
 
 ---
 
@@ -302,9 +309,24 @@ CREATE FUNCTION get_okr_health_with_insights(
 |---------|-------|--------|--------|
 | Funções de cleanup | 3 | 1 | ✅ |
 | Linhas em `user_has_permission_ctx` | ~130 | ~60 (usa helpers) | ✅ |
-| Edge Functions com JSDoc | 6 | 10 | ✅ |
+| Edge Functions com JSDoc | 6 | 14 | ✅ |
 | Funções de identity documentadas | 0 | 5 | ✅ |
+| Código morto removido | 0 | 70 linhas | ✅ |
+| TCR alinhado com código | ❌ | ✅ | ✅ |
 
 ---
 
-*Última atualização: 2026-01-23*
+## 10. Conclusão
+
+**Status Final:** ✅ APROVADO
+
+O backend do Hub está agora:
+- **Bem documentado**: 88% das Edge Functions com JSDoc completo
+- **Limpo**: Código morto OTP removido (70+ linhas)
+- **Consistente**: TCR v2.65.0 reflete implementação real (Magic Link)
+- **Modular**: Identity resolution e RBAC simplificados
+- **Manutenível**: Error handling padronizado
+
+---
+
+*Última atualização: 2026-01-23 (OTP Removal + JSDoc Completion)*
