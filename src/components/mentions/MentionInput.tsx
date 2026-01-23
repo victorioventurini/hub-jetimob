@@ -508,7 +508,7 @@ export function MentionInput({
                       "w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors",
                       "hover:bg-primary/10",
                       index === selectedIndex && "bg-primary/10",
-                      isExternal && showExternalBadges && "bg-amber-500/5"
+                      isExternal && showExternalBadges && "bg-warning/5"
                     )}
                   >
                     <div className="relative">
@@ -517,14 +517,14 @@ export function MentionInput({
                         <AvatarFallback className={cn(
                           "text-xs",
                           isExternal && showExternalBadges
-                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" 
+                            ? "bg-warning/15 text-warning" 
                             : "bg-primary/10 text-primary"
                         )}>
                           {getInitials(candidate.display_name)}
                         </AvatarFallback>
                       </Avatar>
                       {isExternal && showExternalBadges && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 flex items-center justify-center">
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-warning flex items-center justify-center">
                           <Building2 className="w-2 h-2 text-white" />
                         </div>
                       )}
@@ -534,7 +534,7 @@ export function MentionInput({
                         <span className="text-sm font-medium truncate">{candidate.display_name}</span>
                         {showExternalBadges && (
                           isExternal ? (
-                            <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                            <Badge variant="outline" className="text-[10px] h-4 px-1 bg-warning/10 text-warning border-warning/30">
                               Externo
                             </Badge>
                           ) : (
