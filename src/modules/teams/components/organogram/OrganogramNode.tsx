@@ -23,7 +23,7 @@ const TYPE_CONFIG = {
     icon: Crown,
     bgClass: "bg-card",
     borderClass: "border-2",
-    iconClass: "text-amber-600 dark:text-amber-400",
+    iconClass: "text-warning",
   },
   area: {
     icon: Layers,

@@ -168,7 +168,7 @@ export function TeamObjectiveFormFields({
       {/* Shared OKR Toggle */}
       <div className="flex items-center justify-between py-3 px-4 rounded-lg border bg-muted/30">
         <div className="flex items-center gap-3">
-          <Users className="w-5 h-5 text-purple-600" />
+          <Users className="w-5 h-5 text-status-purple" />
           <div>
             <Label htmlFor="is-shared" className="text-sm font-medium cursor-pointer">
               OKR Compartilhada

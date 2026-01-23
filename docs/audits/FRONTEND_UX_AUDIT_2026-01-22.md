@@ -274,8 +274,9 @@ src/modules/okrs/
 | 2.6 | Migrar cores hardcoded (Teams/Integrations) | 1h | P2 | ✅ Feito |
 | 2.7 | Migrar cores hardcoded (Wizard Steps) | 30min | P2 | ✅ Feito |
 | 2.8 | Migrar cores hardcoded (Home/Partners/UI) | 30min | P2 | ✅ Feito |
-| 2.9 | Migrar cores hardcoded (Health/Construction/Permissions) | 30min | P2 | ✅ Feito (2026-01-23) |
-| 2.10 | Migrar cores hardcoded (MentionInput/BuUserSelect) | 15min | P2 | ✅ Feito (2026-01-23) |
+| 2.9 | Migrar cores hardcoded (Health/Construction/Permissions) | 30min | P2 | ✅ Feito |
+| 2.10 | Migrar cores hardcoded (MentionInput/BuUserSelect) | 15min | P2 | ✅ Feito |
+| 2.11 | Migrar cores hardcoded (Tickets/Organogram/CronJob) | 30min | P2 | ✅ Feito (2026-01-23) |
 
 ### Fase 3 — Modularização de Componentes Grandes (P2-P3)
 
@@ -306,7 +307,7 @@ src/modules/okrs/
 
 | Métrica | Antes | Meta | Atual |
 |---------|-------|------|-------|
-| Arquivos com cores hardcoded | ~156 | <20 | ~30 |
+| Arquivos com cores hardcoded | ~156 | <20 | ~18 |
 | Variações de modal size | 5+ | 4 (sm/md/lg/xl) | ✅ 4 |
 | Componentes >400 linhas | 6 | <3 | 6 (backlog) |
 | onClick+navigate (vs Link) | 4+ | 0 | ✅ 0 |

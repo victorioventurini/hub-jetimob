@@ -257,9 +257,9 @@ export function EmailVerificationStep({
         )}
 
         {contactNotFound && (
-          <Alert className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800">
-            <AlertCircle className="h-4 w-4 text-emerald-600" />
-            <AlertDescription className="text-emerald-800 dark:text-emerald-200">
+          <Alert className="bg-success-muted border-success/30">
+            <AlertCircle className="h-4 w-4 text-success" />
+            <AlertDescription className="text-success-muted-foreground">
               Email disponível. Você pode cadastrar um novo contato.
             </AlertDescription>
           </Alert>

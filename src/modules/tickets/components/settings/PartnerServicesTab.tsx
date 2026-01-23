@@ -199,9 +199,9 @@ export function PartnerServicesTab({ partner }: PartnerServicesTabProps) {
       </div>
 
       {hasChanges && (
-        <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
-          <AlertCircle className="h-4 w-4 text-amber-500" />
-          <AlertDescription className="text-amber-700 dark:text-amber-300">
+        <Alert variant="default" className="border-warning/50 bg-warning-muted">
+          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertDescription className="text-warning-muted-foreground">
             Você tem alterações não salvas.
           </AlertDescription>
         </Alert>

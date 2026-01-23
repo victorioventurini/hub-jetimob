@@ -60,8 +60,8 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
           <DialogHeader>
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Key className="h-5 w-5 text-amber-600" />
+                <div className="p-2 rounded-lg bg-warning-muted">
+                  <Key className="h-5 w-5 text-warning" />
                 </div>
                 <div>
                   <DialogTitle className="text-lg">Chaveiro {keyring.tag_number}</DialogTitle>

@@ -86,10 +86,10 @@ export function ManagersPanoramaStep({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-purple-500/10 to-transparent">
+      <div className="px-6 py-4 border-b bg-gradient-to-r from-status-purple/10 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-            <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+          <div className="p-2 rounded-lg bg-status-purple-muted">
+            <Building2 className="h-5 w-5 text-status-purple" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
