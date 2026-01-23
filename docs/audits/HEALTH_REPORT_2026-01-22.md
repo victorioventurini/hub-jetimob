@@ -1,8 +1,9 @@
 # 📊 Relatório de Saúde Técnica - Hub da Jet
 
 > **Data:** 2026-01-23  
-> **TCR Version:** 2.66.0  
+> **TCR Version:** 2.73.0  
 > **Status Geral:** ✅ EXCELENTE (10/10)
+> **Análise Sistêmica:** [SYSTEMIC_HEALTH_ANALYSIS_2026-01-23.md](./SYSTEMIC_HEALTH_ANALYSIS_2026-01-23.md)
 
 ---
 
