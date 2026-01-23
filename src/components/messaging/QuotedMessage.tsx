@@ -38,6 +38,12 @@ export function QuotedMessage({
     }
   };
 
+  // Don't render if content is empty/invalid
+  const hasContent = replyTo.content && replyTo.content.trim().length > 0;
+  if (!hasContent) {
+    return null;
+  }
+
   return (
     <button
       type="button"

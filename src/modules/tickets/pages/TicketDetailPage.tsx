@@ -213,7 +213,7 @@ export default function TicketDetailPage() {
       ? {
           type: "internal" as const,
           id: ticket.owner.id,
-          name: ticket.owner.display_name || "Usuário",
+          name: ticket.owner.display_name || "Alguém",
         }
       : null;
 

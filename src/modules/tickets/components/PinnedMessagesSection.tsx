@@ -72,7 +72,7 @@ function PinnedMessageCard({
   isUnpinning = false,
 }: PinnedMessageCardProps) {
   // Extract author info
-  const authorName = message.author_user?.display_name || message.author_contact?.name || "Usuário";
+  const authorName = message.author_user?.display_name || message.author_contact?.name || "Alguém";
   const authorInitials = authorName.slice(0, 2).toUpperCase();
   const authorPhoto = message.author_user?.photo_url;
   const isExternalAuthor = message.author_type === "partner_contact";

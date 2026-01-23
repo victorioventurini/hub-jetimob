@@ -47,7 +47,7 @@ function getMessageText(bodyRichtext: RichTextContent): string {
  * Get author name from ticket message.
  */
 function getAuthorName(message: TicketMessage): string {
-  return message.author_user?.display_name ?? message.author_contact?.name ?? "Usuário";
+  return message.author_user?.display_name ?? message.author_contact?.name ?? "Alguém";
 }
 
 export function TicketMessageBubble({
@@ -66,19 +66,22 @@ export function TicketMessageBubble({
     const authorName = getAuthorName(message);
     const isExternalAuthor = message.author_type === "partner_contact";
 
-    // Build reply_to data if exists
+    // Build reply_to data if exists and has valid content
     let replyTo = null;
     if (message.reply_to) {
-      const replyAuthorName = 
-        message.reply_to.author_user?.display_name ?? 
-        message.reply_to.author_contact?.name ?? 
-        "Usuário";
       const replyContent = getMessageText(message.reply_to.body_richtext);
-      replyTo = {
-        id: message.reply_to.id,
-        content: replyContent,
-        authorName: replyAuthorName,
-      };
+      // Only show reply citation if there's actual content
+      if (replyContent && replyContent.trim().length > 0) {
+        const replyAuthorName = 
+          message.reply_to.author_user?.display_name ?? 
+          message.reply_to.author_contact?.name ?? 
+          "Alguém";
+        replyTo = {
+          id: message.reply_to.id,
+          content: replyContent,
+          authorName: replyAuthorName,
+        };
+      }
     }
 
     // Convert attachments to generic format
