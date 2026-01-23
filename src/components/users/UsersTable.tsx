@@ -4,7 +4,7 @@
  * Displays a table of user profiles with selection, actions, and empty states.
  * Extracted from Users.tsx for better modularity.
  * 
- * @see docs/engineering/DEVELOPMENT_STANDARDS.md for component guidelines
+ * @see docs/canonical/DEVELOPMENT_STANDARDS.md for component guidelines
  */
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

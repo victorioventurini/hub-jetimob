@@ -1,55 +1,46 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.71.0  
+**Versão:** 2.72.0  
 **Última atualização:** 2026-01-23
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **System Health Score 10/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **System Health Score 10/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
 > ### Padrões de Desenvolvimento
-> - [DEVELOPMENT_STANDARDS.md v1.2.0](./engineering/DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
-> - [QUERY_KEYS_STANDARD.md](./engineering/QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
-> - [BU_SCOPED_SUPABASE_RULES.md](./engineering/BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
+> - [DEVELOPMENT_STANDARDS.md v1.17.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
+> - [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
+> - [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state para filtros e paginação
 >
 > ### Modelo de Dados e Banco
-> - [DATA_MODEL_REGISTRY.md](./engineering/DATA_MODEL_REGISTRY.md) — **Fonte única de verdade para schema** (tabelas, views, funções, enums)
-> - [DATA_MODEL_REGISTRY.json](./engineering/DATA_MODEL_REGISTRY.json) — Versão JSON para automação
+> - [DATA_MODEL_REGISTRY.md](./DATA_MODEL_REGISTRY.md) — **Fonte única de verdade para schema** (tabelas, views, funções, enums)
+> - [DATA_MODEL_REGISTRY.json](./DATA_MODEL_REGISTRY.json) — Versão JSON para automação
 >
 > ### Identidade e Permissões
 > - [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) — Convenção `user_id` (auth) vs `profile_id` (domínio)
-> - [EXTERNAL_USER_IDENTITY_PATTERN.md](./engineering/EXTERNAL_USER_IDENTITY_PATTERN.md) — **Padrão para usuários externos (partner_contacts)** ⭐ NOVO
-> - [UNIFIED_PARTICIPANT_LAYER.md](./engineering/UNIFIED_PARTICIPANT_LAYER.md) — Camada unificada interno/externo
-> - [PERMISSIONS_AND_RBAC_MODEL.md](./engineering/PERMISSIONS_AND_RBAC_MODEL.md) — Modelo completo de permissões V2
+> - [EXTERNAL_USER_IDENTITY_PATTERN.md](../guides/EXTERNAL_USER_IDENTITY_PATTERN.md) — **Padrão para usuários externos (partner_contacts)** ⭐
+> - [UNIFIED_PARTICIPANT_LAYER.md](../guides/UNIFIED_PARTICIPANT_LAYER.md) — Camada unificada interno/externo
+> - [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md) — Modelo completo de permissões V2
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
 >
 > ### Relatórios de Saúde e Compliance
-> - [HEALTH_REPORT_2026-01-22.md](./engineering/HEALTH_REPORT_2026-01-22.md) — **Relatório de saúde técnica atual**
-> - [COMPLIANCE_BASELINE.md](./engineering/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
-> - [FINAL_COMPLIANCE_CHECKLIST.md](./engineering/FINAL_COMPLIANCE_CHECKLIST.md) — Checklist de conformidade
-> - [SYSTEM_STATE_FINAL_REPORT.md](./engineering/SYSTEM_STATE_FINAL_REPORT.md) — Estado final do sistema
+> - [HEALTH_REPORT_2026-01-22.md](../audits/HEALTH_REPORT_2026-01-22.md) — **Relatório de saúde técnica atual**
+> - [COMPLIANCE_BASELINE.md](../audits/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
 >
 > ### Testes Automatizados
-> - [TESTING_GUIDE.md](./engineering/TESTING_GUIDE.md) — **Guia completo de testes (Vitest + Playwright)** ⭐ NOVO
+> - [TESTING_GUIDE.md](../guides/TESTING_GUIDE.md) — **Guia completo de testes (Vitest + Playwright)** ⭐
 >
 > ### Operações
-> - [BACKUP_RESTORE_PLAYBOOK.md](./ops/BACKUP_RESTORE_PLAYBOOK.md) — Playbook de backup e restore
-> - [GO_LIVE_CHECKLIST.md](./ops/GO_LIVE_CHECKLIST.md) — Checklist de go-live
->
-> ### Auditoria e Higienização
-> - [AUDIT_REPORT_2026-01-11_v3.md](./engineering/AUDIT_REPORT_2026-01-11_v3.md) — Último relatório de auditoria
-> - [TECHNICAL_DEBT_ANALYSIS_2026-01-13.md](./engineering/TECHNICAL_DEBT_ANALYSIS_2026-01-13.md) — **Análise de Débitos Técnicos**
-> - [CODEBASE_HYGIENE_ROADMAP.md](./CODEBASE_HYGIENE_ROADMAP.md) — Roadmap de limpeza de código
-> - [LEGACY_CLASSIFICATION_MATRIX.md](./LEGACY_CLASSIFICATION_MATRIX.md) — Matriz de classificação de código legado
-> - [HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md](./engineering/HYGIENE_AND_OPTIMIZATION_PLAN_2026-01.md) — **Plano de Higienização e Otimização 2026-01**
+> - [BACKUP_RESTORE_PLAYBOOK.md](../guides/BACKUP_RESTORE_PLAYBOOK.md) — Playbook de backup e restore
+> - [GO_LIVE_CHECKLIST.md](../guides/GO_LIVE_CHECKLIST.md) — Checklist de go-live
 
 > ⚠️ **Data Model Registry (Canonical)**
-> - Arquivo: `docs/engineering/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)
+> - Arquivo: `docs/canonical/DATA_MODEL_REGISTRY.md` (humano) + `.json` (máquina)
 > - Regra: **NUNCA inventar nomes de tabela/view/função**. Usar exclusivamente o registry.
 > - Regenerar: `npx tsx scripts/generate-data-model-registry.ts`
 > 
-> 📑 **Índice Completo de Documentação:** [DOCUMENTATION_INDEX.md](./engineering/DOCUMENTATION_INDEX.md)
+> 📑 **Índice Completo de Documentação:** [../DOCUMENTATION_INDEX.md](../DOCUMENTATION_INDEX.md)
 
 ---
 

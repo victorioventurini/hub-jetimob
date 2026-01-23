@@ -4,7 +4,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import type { TicketMessage, TicketAttachment } from "../types";
 
 // NOTA: Este módulo usa profiles.id para author_user_id (identity convention)
-// Ver docs/engineering/IDENTITY_CONVENTION.md para detalhes
+// Ver docs/canonical/IDENTITY_CONVENTION.md para detalhes
 
 /**
  * Fetches messages for a specific ticket.

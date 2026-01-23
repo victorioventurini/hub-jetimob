@@ -543,7 +543,7 @@ $$ LANGUAGE sql STABLE;
 ✅ OBRIGATÓRIO: Usar exclusivamente o DATA_MODEL_REGISTRY.
 ```
 
-- **Fonte única:** `docs/engineering/DATA_MODEL_REGISTRY.md` + `.json`
+- **Fonte única:** `docs/canonical/DATA_MODEL_REGISTRY.md` + `.json`
 - **Regenerar:** `npx tsx scripts/generate-data-model-registry.ts`
 - **Quando:** Após cada migration
 

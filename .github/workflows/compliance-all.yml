@@ -60,7 +60,7 @@ jobs:
           echo "Checking if DATA_MODEL_REGISTRY.json is up-to-date..."
           
           # Backup current registry
-          cp docs/engineering/DATA_MODEL_REGISTRY.json /tmp/registry-before.json 2>/dev/null || echo "{}" > /tmp/registry-before.json
+          cp docs/canonical/DATA_MODEL_REGISTRY.json /tmp/registry-before.json 2>/dev/null || echo "{}" > /tmp/registry-before.json
           
           # Generate fresh registry (if generator exists)
           if [ -f "scripts/generate-data-model-registry.ts" ]; then
@@ -117,8 +117,8 @@ jobs:
             
             ### Documentation
             
-            - [Compliance Baseline](docs/engineering/COMPLIANCE_BASELINE.md)
-            - [Development Standards](docs/engineering/DEVELOPMENT_STANDARDS.md)
+            - [Compliance Baseline](docs/audits/COMPLIANCE_BASELINE.md)
+            - [Development Standards](docs/canonical/DEVELOPMENT_STANDARDS.md)
             
             ---
             *This comment was generated automatically by the Compliance CI Gate.*`;

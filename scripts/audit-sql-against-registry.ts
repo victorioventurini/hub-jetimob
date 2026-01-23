@@ -21,7 +21,7 @@ import * as path from 'path';
 // CONFIGURATION
 // ==========================
 
-const REGISTRY_PATH = 'docs/engineering/DATA_MODEL_REGISTRY.json';
+const REGISTRY_PATH = 'docs/canonical/DATA_MODEL_REGISTRY.json';
 const CONFIG_PATH = 'scripts/registry-audit-config.json';
 
 // Directories to scan

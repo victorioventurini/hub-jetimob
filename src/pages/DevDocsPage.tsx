@@ -57,20 +57,20 @@ const PRE_IMPLEMENTATION_CHECKLIST: ChecklistItem[] = [
     id: "permissions",
     label: "Verificar PERMISSIONS_AND_RBAC_MODEL.md",
     description: "Se envolver permissões, usar permission keys (nunca hardcode roles)",
-    docLink: "/docs/engineering/PERMISSIONS_AND_RBAC_MODEL.md",
+    docLink: "/docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md",
   },
   {
     id: "data_model",
     label: "Consultar DATA_MODEL_REGISTRY.md",
     description: "Nunca inventar nomes de tabela/view/função. Usar exclusivamente o registry.",
-    docLink: "/docs/engineering/DATA_MODEL_REGISTRY.md",
+    docLink: "/docs/canonical/DATA_MODEL_REGISTRY.md",
     critical: true,
   },
   {
     id: "dev_standards",
     label: "Revisar DEVELOPMENT_STANDARDS.md",
     description: "PRE-BU/POST-BU, Query Keys, URL State, limites de código",
-    docLink: "/docs/engineering/DEVELOPMENT_STANDARDS.md",
+    docLink: "/docs/canonical/DEVELOPMENT_STANDARDS.md",
   },
   {
     id: "existing_impl",
