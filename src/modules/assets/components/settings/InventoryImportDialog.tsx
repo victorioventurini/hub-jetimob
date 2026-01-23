@@ -496,15 +496,15 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-muted rounded-lg text-center">
-                  <p className="text-2xl font-semibold text-green-600">{result.itemsCreated}</p>
+                  <p className="text-2xl font-semibold text-success">{result.itemsCreated}</p>
                   <p className="text-xs text-muted-foreground">Criados</p>
                 </div>
                 <div className="p-3 bg-muted rounded-lg text-center">
-                  <p className="text-2xl font-semibold text-amber-600">{result.itemsSkipped}</p>
+                  <p className="text-2xl font-semibold text-warning">{result.itemsSkipped}</p>
                   <p className="text-xs text-muted-foreground">Duplicados</p>
                 </div>
                 <div className="p-3 bg-muted rounded-lg text-center">
-                  <p className="text-2xl font-semibold text-red-600">{result.ignoredRows.length - result.itemsSkipped}</p>
+                  <p className="text-2xl font-semibold text-destructive">{result.ignoredRows.length - result.itemsSkipped}</p>
                   <p className="text-xs text-muted-foreground">Erros</p>
                 </div>
               </div>
@@ -512,7 +512,7 @@ export function InventoryImportDialog({ open, onOpenChange }: InventoryImportDia
               {result.warnings.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                    <AlertCircle className="h-4 w-4 text-warning" />
                     <span className="text-sm font-medium">
                       {result.warnings.length} aviso(s)
                     </span>

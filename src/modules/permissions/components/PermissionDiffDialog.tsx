@@ -81,7 +81,7 @@ export function PermissionDiffDialog({
         ) : (
           <>
             {riskLevel !== "low" && (
-              <Alert variant={riskLevel === "high" ? "destructive" : "default"} className="border-amber-500/50 bg-amber-500/10">
+              <Alert variant={riskLevel === "high" ? "destructive" : "default"} className="border-warning/50 bg-warning-muted">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-sm">
                   {riskLevel === "high" 
@@ -98,7 +98,7 @@ export function PermissionDiffDialog({
                 <span className="text-sm text-muted-foreground">Nível de risco:</span>
                 <Badge 
                   variant={riskLevel === "high" ? "destructive" : riskLevel === "medium" ? "default" : "secondary"}
-                  className={riskLevel === "medium" ? "bg-amber-500/20 text-amber-700 border-amber-500/30" : ""}
+                  className={riskLevel === "medium" ? "bg-warning-muted text-warning-muted-foreground border-warning/30" : ""}
                 >
                   {riskLevel === "high" ? "Alto" : riskLevel === "medium" ? "Médio" : "Baixo"}
                 </Badge>

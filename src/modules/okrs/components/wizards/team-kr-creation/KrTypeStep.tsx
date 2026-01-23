@@ -226,7 +226,7 @@ export function KrTypeStep({
                     </div>
                     
                     {showSharedWarning && (
-                      <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 p-2 rounded">
+                      <div className="flex items-center gap-2 text-xs text-status-orange bg-status-orange-muted p-2 rounded">
                         <Info className="h-3 w-3 shrink-0" />
                         <span>{krType.sharedWarning}</span>
                       </div>

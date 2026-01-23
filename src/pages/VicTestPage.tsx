@@ -168,7 +168,7 @@ export default function VicTestPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                     {dbAgents.map(agent => (
                       <div key={agent.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="h-4 w-4 text-success" />
                         <span className="font-medium">{agent.name}</span>
                         <span className="text-muted-foreground">({agent.slug})</span>
                       </div>
@@ -296,7 +296,7 @@ export default function VicTestPage() {
                         {result.response}
                       </pre>
                     ) : (
-                      <p className="text-red-600 dark:text-red-400">
+                      <p className="text-destructive">
                         Erro: {result.error}
                       </p>
                     )}

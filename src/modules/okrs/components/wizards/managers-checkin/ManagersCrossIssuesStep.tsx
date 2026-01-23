@@ -129,7 +129,7 @@ export function ManagersCrossIssuesStep({
         <div className="p-6 space-y-3">
           {sortedDependencies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+              <CheckCircle2 className="h-12 w-12 text-success mb-4" />
               <h4 className="font-medium text-lg">Sem dependências críticas</h4>
               <p className="text-sm text-muted-foreground mt-1">
                 Todas as dependências entre áreas estão saudáveis.
@@ -145,8 +145,8 @@ export function ManagersCrossIssuesStep({
                   key={dep.id}
                   className={cn(
                     "transition-colors",
-                    dep.status === 'blocked' && "border-red-200 dark:border-red-800/50",
-                    dep.status === 'at_risk' && "border-yellow-200 dark:border-yellow-800/50"
+                    dep.status === 'blocked' && "border-destructive/30",
+                    dep.status === 'at_risk' && "border-warning/30"
                   )}
                 >
                   <CardContent className="p-4">
