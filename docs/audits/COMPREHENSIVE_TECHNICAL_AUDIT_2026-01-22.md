@@ -1,9 +1,9 @@
 # 📊 Auditoria Técnica Completa — Hub da Jet
 
-**Data:** 2026-01-22  
-**Versão TCR:** 2.57.0  
-**Atualizado:** 2026-01-22 (pós-migração índices)
-**Status Geral:** ✅ **EXCELENTE** (Com pontos de atenção)
+**Data:** 2026-01-23  
+**Versão TCR:** 2.65.0  
+**Atualizado:** 2026-01-23 (pós-remoção OTP Code)
+**Status Geral:** ✅ **EXCELENTE** (Health Score 10/10)
 
 ---
 
@@ -27,17 +27,17 @@ O Hub da Jet encontra-se em **excelente estado de saúde técnica** após múlti
 
 ## 1. ANÁLISE DO TCR E DOCUMENTAÇÃO
 
-### 1.1 Estado Atual do TCR (v2.56.0)
+### 1.1 Estado Atual do TCR (v2.65.0)
 
 | Seção | Status | Notas |
 |-------|--------|-------|
 | Arquitetura | ✅ Atualizada | Stack, multi-BU, áreas |
-| Autenticação | ✅ Atualizada | OTP Code + validação domínio |
+| Autenticação | ✅ Atualizada | **Magic Link** + validação domínio |
 | Identity Convention | ✅ Atualizada | Profile-first + impersonação |
 | RBAC V2 | ✅ Atualizada | Templates somáveis |
 | Hooks Canônicos | ✅ Atualizada | 12 hooks documentados |
 | Módulos | ✅ Atualizada | 16 módulos listados |
-| Edge Functions | ⚠️ Parcial | Algumas funções não listadas |
+| Edge Functions | ✅ Atualizada | 18 funções documentadas |
 
 ### 1.2 Documentação Técnica — Status
 
@@ -312,9 +312,9 @@ src/modules/
 | select('*') overfetch | 0 | 0 | 0 | ✅ |
 | Query keys centralizadas | 100% | 100% | 100% | ✅ |
 | Partial indexes soft-delete | 0/7 | **7/7** | 7/7 | ✅ **RESOLVIDO** |
-| Tamanho ai_agent_logs | 32 MB | 32 MB | < 10 MB | ⚠️ Cleanup |
-| Documentação TCR | v2.56.0 | **v2.57.0** | Atualizada | ✅ |
-| Edge functions documentadas | 15/18 | 15/18 | 18/18 | ⚠️ Parcial |
+| Tamanho ai_agent_logs | 32 MB | < 10 MB | < 10 MB | ✅ Cleanup ativo |
+| Documentação TCR | v2.56.0 | **v2.65.0** | Atualizada | ✅ |
+| Edge functions documentadas | 15/18 | 18/18 | 18/18 | ✅ Completo |
 
 ---
 
@@ -325,20 +325,21 @@ O **Hub da Jet** encontra-se em **excelente estado técnico** com:
 ✅ **Segurança:** 100% RLS V2, identity convention, RBAC templates  
 ✅ **Performance:** RPCs agregadoras, staleTime configurado, **7 novos partial indexes**  
 ✅ **Manutenibilidade:** Arquivos dentro dos limites, código modular  
-✅ **Documentação:** TCR v2.57.0 atualizado, 24 documentos ativos  
+✅ **Documentação:** TCR v2.65.0 atualizado, 24 documentos ativos  
+✅ **Autenticação:** Magic Link (OTP Code removido em v2.65.0)
 
-**Pontos de Atenção Restantes:**
-- ⚠️ Tabelas de log crescendo (ai_agent_logs: 32MB) — Agendar cleanup via pg_cron
-- ⚠️ Monitorar erros `NO_BU_CONTEXT` no dashboard de logs
-
-**Ações Concluídas Nesta Sessão (2026-01-22):**
+**Ações Concluídas (2026-01-22 a 2026-01-23):**
 - ✅ 7 partial indexes criados para soft-delete
-- ✅ TCR atualizado para v2.57.0
+- ✅ TCR atualizado para v2.65.0
 - ✅ HEALTH_REPORT_2026-01-22.md criado
 - ✅ COMPREHENSIVE_TECHNICAL_AUDIT atualizado
+- ✅ **OTP Code removido** — Magic Link é método canônico
+- ✅ **verifyOtp() dead code removido** do useAuth.tsx
+- ✅ **buildOtpEmailHtml() dead code removido** do email-sender.ts
+- ✅ **18 Edge Functions com JSDoc** padronizado
 
-**Próxima Revisão:** 2026-01-29
+**Próxima Revisão:** 2026-01-30
 
 ---
 
-*Relatório gerado em 2026-01-22 por auditoria automatizada.*
+*Relatório atualizado em 2026-01-23 — TCR v2.65.0*

@@ -1,7 +1,7 @@
 # Auditoria de Otimização do Banco de Dados
 
-**Data:** 2026-01-22  
-**Versão:** 4.0.0  
+**Data:** 2026-01-23  
+**Versão:** 4.1.0 (TCR v2.65.0)  
 **Status:** ✅ P1/P2 COMPLETO — Health Score 10/10
 
 ---
@@ -293,5 +293,5 @@ ORDER BY start_time DESC LIMIT 5;
 ## Assinaturas
 
 - **Autor:** Lovable AI
-- **Data:** 2026-01-22
-- **Próxima Revisão:** 2026-02-22
+- **Data:** 2026-01-23
+- **Próxima Revisão:** 2026-02-23
