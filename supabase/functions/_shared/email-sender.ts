@@ -31,6 +31,23 @@ export interface EmailResult {
   error?: string;
 }
 
+function getRecipientDomain(to: string): string | null {
+  const domain = to.split("@")[1]?.trim().toLowerCase();
+  return domain || null;
+}
+
+/**
+ * Some recipient domains aggressively filter SendGrid.
+ * For authentication emails, we prefer Resend first for these domains.
+ */
+function shouldPreferResend(to: string): boolean {
+  const domain = getRecipientDomain(to);
+  if (!domain) return false;
+
+  // NOTE: Keep this list small and explicit. Expand only when confirmed.
+  return ["jetimob.com"].includes(domain);
+}
+
 // Get integration API key from hub_integrations_global_config
 async function getIntegrationApiKey(integrationKey: string): Promise<string | null> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -130,37 +147,72 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
  * @returns Result indicating success, provider used, and any error
  */
 export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
-  // Try SendGrid first
+
+  const preferResend = shouldPreferResend(options.to);
+  const domain = getRecipientDomain(options.to);
+  console.log(
+    `[EmailSender] Delivery strategy for ${options.to}: preferResend=${preferResend}${domain ? ` (domain=${domain})` : ""}`
+  );
+
+  // Strategy A: Prefer Resend (for specific recipient domains)
+  if (preferResend) {
+    // Try Resend first
+    try {
+      const resendApiKey = await getIntegrationApiKey("resend");
+      if (resendApiKey) {
+        await sendViaResend(options, resendApiKey);
+        return { success: true, provider: "resend" };
+      }
+      console.warn("[EmailSender] Resend not configured, trying SendGrid...");
+    } catch (error: any) {
+      console.error("[EmailSender] Resend failed:", error.message);
+      console.log("[EmailSender] Attempting fallback to SendGrid...");
+    }
+
+    // Fallback to SendGrid
+    try {
+      const sendgridApiKey = await getIntegrationApiKey("sendgrid");
+      if (sendgridApiKey) {
+        await sendViaSendGrid(options, sendgridApiKey);
+        return { success: true, provider: "sendgrid" };
+      }
+      console.warn("[EmailSender] SendGrid fallback not configured");
+    } catch (error: any) {
+      console.error("[EmailSender] SendGrid fallback also failed:", error.message);
+      return {
+        success: false,
+        provider: "sendgrid",
+        error: `Both Resend and SendGrid failed. Last error: ${error.message}`,
+      };
+    }
+  }
+
+  // Strategy B: Default (SendGrid first, then Resend)
   try {
     const sendgridApiKey = await getIntegrationApiKey("sendgrid");
-    
     if (sendgridApiKey) {
       await sendViaSendGrid(options, sendgridApiKey);
       return { success: true, provider: "sendgrid" };
-    } else {
-      console.warn("[EmailSender] SendGrid not configured, trying fallback...");
     }
+    console.warn("[EmailSender] SendGrid not configured, trying fallback...");
   } catch (error: any) {
     console.error("[EmailSender] SendGrid failed:", error.message);
     console.log("[EmailSender] Attempting fallback to Resend...");
   }
 
-  // Fallback to Resend (from hub_integrations_global_config)
   try {
     const resendApiKey = await getIntegrationApiKey("resend");
-    
     if (resendApiKey) {
       await sendViaResend(options, resendApiKey);
       return { success: true, provider: "resend" };
-    } else {
-      console.warn("[EmailSender] Resend fallback not configured");
     }
+    console.warn("[EmailSender] Resend fallback not configured");
   } catch (error: any) {
     console.error("[EmailSender] Resend fallback also failed:", error.message);
-    return { 
-      success: false, 
+    return {
+      success: false,
       provider: "resend",
-      error: `Both SendGrid and Resend failed. Last error: ${error.message}`
+      error: `Both SendGrid and Resend failed. Last error: ${error.message}`,
     };
   }
 
