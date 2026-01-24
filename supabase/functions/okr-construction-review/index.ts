@@ -23,6 +23,7 @@ interface KeyResult {
 }
 
 interface RequestBody {
+  buId?: string; // Fallback when header is not passed
   mode?: 'objective' | 'team-analysis';
   // Modo objective (padrão)
   objectiveId?: string;
@@ -259,26 +260,54 @@ serve(async (req) => {
   }
 
   try {
-    // Forward auth headers
+    // Forward auth headers - check multiple variations
     const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
-    const buId = req.headers.get("x-current-bu-id");
+    const buIdFromHeader = req.headers.get("x-current-bu-id");
     const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
 
+    // Debug logging
+    console.log("[okr-construction-review] Headers debug:", {
+      hasAuth: !!authHeader,
+      authPrefix: authHeader?.substring(0, 15),
+      buId: buIdFromHeader,
+      correlationId,
+    });
+
     if (!authHeader) {
+      console.error("[okr-construction-review] Missing Authorization header");
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Try to get BU ID from header or from body (fallback)
+    let buId = buIdFromHeader;
+    
+    // If no BU header, try to peek at body for buId (some clients send it there)
     if (!buId) {
+      try {
+        const bodyText = await req.text();
+        const bodyJson = JSON.parse(bodyText);
+        buId = bodyJson.buId;
+        // Re-create request body for later use
+        (req as any)._parsedBody = bodyJson;
+        console.log("[okr-construction-review] BU ID from body:", buId);
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    if (!buId) {
+      console.error("[okr-construction-review] Missing BU ID in header and body");
       return new Response(
-        JSON.stringify({ error: "BU ID required (x-current-bu-id header)" }),
+        JSON.stringify({ error: "BU ID required (x-current-bu-id header or buId in body)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const body: RequestBody = await req.json();
+    // Use already parsed body if available, otherwise parse now
+    const body: RequestBody = (req as any)._parsedBody || await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     if (!supabaseUrl) {
       throw new Error("SUPABASE_URL não configurada");
