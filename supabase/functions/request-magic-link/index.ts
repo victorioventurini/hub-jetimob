@@ -25,6 +25,7 @@ interface MagicLinkRequest {
 }
 
 // Check if email domain is allowed in any active BU
+// OPTIMIZED: Parallel queries for faster response
 async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   
@@ -34,30 +35,53 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     return { allowed: false, buName: null, isPartnerContact: false };
   }
 
-  // 1. Check if email is a registered partner contact (Modo B - external users)
-  // Query using global email identity model with BU associations
-  const { data: partnerContact, error: partnerError } = await supabase
-    .from("partner_contacts")
-    .select(`
-      id,
-      name,
-      partner_company:partner_companies!inner(id, name, status)
-    `)
-    .eq("email", emailLower)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .maybeSingle();
+  // Run all checks in PARALLEL for speed
+  const [
+    partnerContactResult,
+    partnerBuAssociationsResult,
+    buUnitsResult
+  ] = await Promise.all([
+    // 1. Check partner contacts
+    supabase
+      .from("partner_contacts")
+      .select(`
+        id,
+        name,
+        partner_company:partner_companies!inner(id, name, status)
+      `)
+      .eq("email", emailLower)
+      .eq("status", "active")
+      .is("deleted_at", null)
+      .maybeSingle(),
+    
+    // 2. Check partner company domain associations
+    supabase
+      .from("partner_company_bu_associations")
+      .select(`
+        id,
+        bu_id,
+        is_active,
+        partner_company:partner_companies!inner(id, name, allowed_domains, status),
+        bu:bu_units!inner(id, name, status)
+      `)
+      .eq("is_active", true)
+      .is("deleted_at", null),
+    
+    // 3. Get all active BUs with their domains
+    supabase
+      .from("bu_units")
+      .select("id, name, allowed_email_domains")
+      .eq("status", "active")
+  ]);
 
-  if (partnerError) {
-    console.error("Error checking partner contact:", partnerError);
-  }
-
+  // Process partner contact (Mode B - external users)
+  const partnerContact = partnerContactResult.data;
   if (partnerContact) {
     const company = partnerContact.partner_company as unknown as { id: string; name: string; status: string } | null;
     
     if (company?.status === 'active') {
-      // Check for active BU associations
-      const { data: associations, error: assocError } = await supabase
+      // Check for active BU associations in parallel
+      const { data: associations } = await supabase
         .from("partner_contact_bu_associations")
         .select(`
           id,
@@ -69,10 +93,6 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
         .eq("is_active", true)
         .is("deleted_at", null);
 
-      if (assocError) {
-        console.warn("Error checking partner contact associations:", assocError);
-      }
-
       if (associations && associations.length > 0) {
         const firstActiveBu = associations.find(a => {
           const bu = a.bu as unknown as { id: string; name: string; status: string } | null;
@@ -81,12 +101,12 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
         
         if (firstActiveBu) {
           const bu = firstActiveBu.bu as unknown as { id: string; name: string } | null;
-          console.log(`Partner contact found: ${emailLower} from ${company.name} with active BU association`);
+          console.log(`Partner contact: ${emailLower} (${company.name})`);
           return { allowed: true, buName: bu?.name || null, isPartnerContact: true };
         }
       }
       
-      // Fallback: check legacy bu_id field (for contacts not yet migrated to associations)
+      // Fallback: check legacy bu_id field
       const { data: legacyContact } = await supabase
         .from("partner_contacts")
         .select(`bu:bu_units!inner(id, name, status)`)
@@ -96,79 +116,48 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
       if (legacyContact) {
         const bu = legacyContact.bu as unknown as { id: string; name: string; status: string } | null;
         if (bu?.status === 'active') {
-          console.log(`Partner contact found via legacy bu_id: ${emailLower} from ${company.name}`);
+          console.log(`Partner contact (legacy): ${emailLower}`);
           return { allowed: true, buName: bu.name, isPartnerContact: true };
         }
       }
     }
   }
 
-  // 2. Check if domain is in partner_companies.allowed_domains via BU associations
-  // Query partner companies with active BU associations
-  const { data: partnerBuAssociations, error: partnerCompanyError } = await supabase
-    .from("partner_company_bu_associations")
-    .select(`
-      id,
-      bu_id,
-      is_active,
-      partner_company:partner_companies!inner(id, name, allowed_domains, status),
-      bu:bu_units!inner(id, name, status)
-    `)
-    .eq("is_active", true)
-    .is("deleted_at", null);
-
-  if (partnerCompanyError) {
-    console.error("Error checking partner company domains:", partnerCompanyError);
-  }
-
-  if (partnerBuAssociations) {
-    for (const assoc of partnerBuAssociations) {
+  // Check partner company domain associations
+  if (partnerBuAssociationsResult.data) {
+    for (const assoc of partnerBuAssociationsResult.data) {
       const company = assoc.partner_company as unknown as { id: string; name: string; allowed_domains: string[]; status: string } | null;
       const bu = assoc.bu as unknown as { id: string; name: string; status: string } | null;
       const allowedDomains = company?.allowed_domains || [];
       
       if (company?.status === 'active' && bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
-        console.log(`Partner company domain authorized: ${domain} from ${company.name} in BU ${bu.name}`);
+        console.log(`Partner domain: ${domain} (${company.name})`);
         return { allowed: true, buName: bu.name, isPartnerContact: true };
       }
     }
   }
 
-  // 3. Check if domain is allowed in any BU (internal users)
-  // IMPORTANT: Internal users MUST have a pre-existing profile to receive magic link
-  const { data, error } = await supabase
-    .from("bu_units")
-    .select("id, name, allowed_email_domains")
-    .eq("status", "active");
+  // Check internal users (domain + profile check)
+  if (buUnitsResult.data) {
+    for (const bu of buUnitsResult.data as { id: string; name: string; allowed_email_domains: string[] }[]) {
+      const allowedDomains = bu.allowed_email_domains || [];
+      if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+        // Domain matches - verify user has a pre-existing profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("work_email", emailLower)
+          .is("deleted_at", null)
+          .limit(1);
 
-  if (error) {
-    console.error("Error checking email domain:", error);
-    return { allowed: false, buName: null, isPartnerContact: false };
-  }
+        if (!profileData || profileData.length === 0) {
+          console.warn(`Internal user ${emailLower} - NO profile - DENIED`);
+          return { allowed: false, buName: null, isPartnerContact: false };
+        }
 
-  for (const bu of (data as { id: string; name: string; allowed_email_domains: string[] }[]) || []) {
-    const allowedDomains = bu.allowed_email_domains || [];
-    if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
-      // Domain matches - now verify user has a pre-existing profile
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, work_email")
-        .eq("work_email", emailLower)
-        .is("deleted_at", null)
-        .limit(1);
-
-      if (profileError) {
-        console.error("Error checking user profile:", profileError);
-        return { allowed: false, buName: null, isPartnerContact: false };
+        console.log(`Internal user: ${emailLower}`);
+        return { allowed: true, buName: bu.name, isPartnerContact: false };
       }
-
-      if (!profileData || profileData.length === 0) {
-        console.warn(`Internal user ${emailLower} has valid domain but NO pre-existing profile - ACCESS DENIED`);
-        return { allowed: false, buName: null, isPartnerContact: false };
-      }
-
-      console.log(`Internal user ${emailLower} verified with pre-existing profile`);
-      return { allowed: true, buName: bu.name, isPartnerContact: false };
     }
   }
 
