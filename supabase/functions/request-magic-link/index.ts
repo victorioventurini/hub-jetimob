@@ -25,7 +25,7 @@ interface MagicLinkRequest {
 }
 
 // Check if email domain is allowed in any active BU
-// OPTIMIZED: Parallel queries for faster response
+// OPTIMIZED v2: ALL queries in parallel, no sequential follow-ups
 async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   
@@ -35,19 +35,30 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     return { allowed: false, buName: null, isPartnerContact: false };
   }
 
-  // Run all checks in PARALLEL for speed
+  // Run ALL checks in PARALLEL for maximum speed - no sequential follow-ups
   const [
-    partnerContactResult,
+    partnerContactWithAssociationsResult,
     partnerBuAssociationsResult,
-    buUnitsResult
+    buUnitsResult,
+    profileResult
   ] = await Promise.all([
-    // 1. Check partner contacts
+    // 1. Check partner contacts WITH their BU associations in one query
     supabase
       .from("partner_contacts")
       .select(`
         id,
         name,
-        partner_company:partner_companies!inner(id, name, status)
+        email,
+        bu_id,
+        partner_company:partner_companies!inner(id, name, status),
+        partner_contact_bu_associations!left(
+          id,
+          bu_id,
+          is_active,
+          deleted_at,
+          bu:bu_units!inner(id, name, status)
+        ),
+        legacy_bu:bu_units!partner_contacts_bu_id_fkey(id, name, status)
       `)
       .eq("email", emailLower)
       .eq("status", "active")
@@ -71,54 +82,50 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     supabase
       .from("bu_units")
       .select("id, name, allowed_email_domains")
-      .eq("status", "active")
+      .eq("status", "active"),
+    
+    // 4. Check if internal user has profile (for domain validation)
+    supabase
+      .from("profiles")
+      .select("id")
+      .eq("work_email", emailLower)
+      .is("deleted_at", null)
+      .limit(1)
   ]);
 
   // Process partner contact (Mode B - external users)
-  const partnerContact = partnerContactResult.data;
+  const partnerContact = partnerContactWithAssociationsResult.data;
   if (partnerContact) {
     const company = partnerContact.partner_company as unknown as { id: string; name: string; status: string } | null;
     
     if (company?.status === 'active') {
-      // Check for active BU associations in parallel
-      const { data: associations } = await supabase
-        .from("partner_contact_bu_associations")
-        .select(`
-          id,
-          bu_id,
-          is_active,
-          bu:bu_units!inner(id, name, status)
-        `)
-        .eq("partner_contact_id", partnerContact.id)
-        .eq("is_active", true)
-        .is("deleted_at", null);
+      // Check active BU associations from the pre-fetched data
+      const associations = partnerContact.partner_contact_bu_associations as unknown as Array<{
+        id: string;
+        bu_id: string;
+        is_active: boolean;
+        deleted_at: string | null;
+        bu: { id: string; name: string; status: string } | null;
+      }> | null;
 
       if (associations && associations.length > 0) {
-        const firstActiveBu = associations.find(a => {
-          const bu = a.bu as unknown as { id: string; name: string; status: string } | null;
-          return bu?.status === 'active';
-        });
+        const firstActiveBu = associations.find(a => 
+          a.is_active && 
+          !a.deleted_at && 
+          a.bu?.status === 'active'
+        );
         
-        if (firstActiveBu) {
-          const bu = firstActiveBu.bu as unknown as { id: string; name: string } | null;
+        if (firstActiveBu?.bu) {
           console.log(`Partner contact: ${emailLower} (${company.name})`);
-          return { allowed: true, buName: bu?.name || null, isPartnerContact: true };
+          return { allowed: true, buName: firstActiveBu.bu.name, isPartnerContact: true };
         }
       }
       
-      // Fallback: check legacy bu_id field
-      const { data: legacyContact } = await supabase
-        .from("partner_contacts")
-        .select(`bu:bu_units!inner(id, name, status)`)
-        .eq("id", partnerContact.id)
-        .maybeSingle();
-
-      if (legacyContact) {
-        const bu = legacyContact.bu as unknown as { id: string; name: string; status: string } | null;
-        if (bu?.status === 'active') {
-          console.log(`Partner contact (legacy): ${emailLower}`);
-          return { allowed: true, buName: bu.name, isPartnerContact: true };
-        }
+      // Fallback: check legacy bu_id field (already fetched)
+      const legacyBu = partnerContact.legacy_bu as unknown as { id: string; name: string; status: string } | null;
+      if (legacyBu?.status === 'active') {
+        console.log(`Partner contact (legacy): ${emailLower}`);
+        return { allowed: true, buName: legacyBu.name, isPartnerContact: true };
       }
     }
   }
@@ -137,20 +144,13 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     }
   }
 
-  // Check internal users (domain + profile check)
+  // Check internal users (domain + profile check) - profile already fetched in parallel
   if (buUnitsResult.data) {
     for (const bu of buUnitsResult.data as { id: string; name: string; allowed_email_domains: string[] }[]) {
       const allowedDomains = bu.allowed_email_domains || [];
       if (allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
-        // Domain matches - verify user has a pre-existing profile
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("work_email", emailLower)
-          .is("deleted_at", null)
-          .limit(1);
-
-        if (!profileData || profileData.length === 0) {
+        // Domain matches - use pre-fetched profile check
+        if (!profileResult.data || profileResult.data.length === 0) {
           console.warn(`Internal user ${emailLower} - NO profile - DENIED`);
           return { allowed: false, buName: null, isPartnerContact: false };
         }
