@@ -291,9 +291,10 @@ export function useConstructionReview(
     setAiErrors(prev => ({ ...prev, [obj.id]: '' }));
 
     try {
-      // Use BU-scoped supabase to automatically include auth + BU headers
+      // Pass buId in body as fallback since SDK may not inject header for functions.invoke
       const { data, error } = await buSupabase.functions.invoke('okr-construction-review', {
         body: { 
+          buId: currentBuId, // Fallback for header injection issues
           objectiveId: obj.id,
           objectiveTitle: obj.title,
           objectiveDescription: obj.description,
@@ -387,6 +388,7 @@ export function useConstructionReview(
     try {
       const { data, error } = await buSupabase.functions.invoke('okr-construction-review', {
         body: { 
+          buId: currentBuId, // Fallback for header injection issues
           mode: 'team-analysis',
           teamId,
           teamName: rawObjectives[0]?.team?.name,
