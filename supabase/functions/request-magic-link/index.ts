@@ -273,7 +273,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
 
   return new Response(JSON.stringify({ 
     success: true, 
-    provider: "sendgrid",
+    provider: emailResult.provider,
     message: "Link de acesso enviado por email",
     requestId,
   }), {
