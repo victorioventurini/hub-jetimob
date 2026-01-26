@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Lightbulb, AlertCircle } from "lucide-react";
-import { useKrInitiatives, useDeleteInitiative } from "../../hooks";
+import { useKrInitiatives, useDeleteInitiative, useCanManageTeamOkr } from "../../hooks";
 import { InitiativeCard } from "./InitiativeCard";
 import { InitiativeDialog } from "./InitiativeDialog";
 import { InitiativeQuickUpdateDialog } from "./InitiativeQuickUpdateDialog";
@@ -21,24 +21,37 @@ interface InitiativesListProps {
   krId: string;
   krTitle?: string;
   krContext?: KrContext;
+  /** ID do time do KR (para verificação de liderança) */
+  krTeamId?: string;
   canEdit?: boolean;
   /** Se presente, filtra apenas iniciativas deste usuário (usado na view "Minhas OKRs") */
   filterForUserId?: string;
 }
 
-export function InitiativesList({ krId, krTitle, krContext, canEdit = true, filterForUserId }: InitiativesListProps) {
+export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = true, filterForUserId }: InitiativesListProps) {
   const profileId = useProfileId();
   const { data: initiatives, isLoading } = useKrInitiatives(krId);
   const deleteMutation = useDeleteInitiative();
+  const { canManage: canManageTeam } = useCanManageTeamOkr(krTeamId);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
   const [deletingInitiative, setDeletingInitiative] = useState<Initiative | null>(null);
   const [quickUpdateInitiative, setQuickUpdateInitiative] = useState<Initiative | null>(null);
   
-  // Check if user can edit a specific initiative (owner or general canEdit)
+  // Check if user can edit a specific initiative
+  // Regras: Owner, Contributor, ou Líder do time do KR
   const canEditInitiative = (initiative: Initiative) => {
-    return canEdit || initiative.owner_user_id === profileId;
+    // Prop canEdit indica permissão geral (ex: Admin)
+    if (canEdit) return true;
+    // Owner pode editar
+    if (initiative.owner_user_id === profileId) return true;
+    // Contributor pode editar
+    if (initiative.contributors?.includes(profileId)) return true;
+    // Líder do time do KR pode editar
+    if (canManageTeam) return true;
+    
+    return false;
   };
 
   const handleEdit = (initiative: Initiative) => {
