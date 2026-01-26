@@ -1,6 +1,6 @@
 # QA - OKR Team Scope Hardening
 
-**Versão:** 1.1.0  
+**Versão:** 1.2.0  
 **Data:** 2026-01-26  
 **Status:** ✅ PASS
 
@@ -193,7 +193,19 @@
 | Data | Versão | Alteração |
 |------|--------|-----------|
 | 2026-01-09 | 1.0.0 | Cenários iniciais de Objetivos de Time |
-| 2026-01-26 | 1.1.0 | Adicionados cenários de KRs e Iniciativas |
+| 2026-01-26 | 1.1.0 | Adicionados cenários de KRs e Iniciativas, hooks de permissão |
+| 2026-01-26 | 1.2.0 | Revisão de Dashboard (ObjectiveListItem), verificação de co-responsáveis, passagem de krTeamId |
+
+---
+
+## Componentes UI Validados
+
+| Componente | Verificação | Status |
+|------------|-------------|--------|
+| `TeamObjectiveCard.tsx` | Usa `KrActionButtons` com hook de permissão | ✅ |
+| `ObjectiveListItem.tsx` | Verifica owner/co-responsáveis, passa `krTeamId` | ✅ |
+| `InitiativesList.tsx` | Usa `useCanManageTeamOkr(krTeamId)` | ✅ |
+| `KrActionButtons.tsx` | Usa `useCanEditKr` hook | ✅ |
 
 ---
 
