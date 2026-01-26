@@ -101,7 +101,7 @@ export function TeamOkrShareStep({
 
         // Generate reflection questions
         const questionsResponse = await invokeVic(
-          'coach-okrs',
+          'validador-metodologico-okrs',
           'okr-review-quality',
           {
             type: 'reflection',

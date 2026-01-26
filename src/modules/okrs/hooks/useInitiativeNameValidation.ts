@@ -91,7 +91,7 @@ Responda APENAS com JSON válido, sem markdown:
 {"type": "warning|suggestion|success", "message": "mensagem curta", "suggestion": "sugestão de reformulação se aplicável"}`;
 
         const response = await invoke(
-          'coach-okrs',
+          'validador-metodologico-okrs',
           'okr-initiative-review',
           {
             type: 'initiative-validation',

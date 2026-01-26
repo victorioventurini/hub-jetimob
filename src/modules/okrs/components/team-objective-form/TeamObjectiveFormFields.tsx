@@ -235,7 +235,7 @@ export function TeamObjectiveFormFields({
           <Label htmlFor="title">Título *</Label>
           {!isEditing && title.trim() && (
             <VicActionButton
-              agentSlug="coach-okrs"
+              agentSlug="validador-metodologico-okrs"
               actionContext="okr-create-objective"
               context={{
                 type: "Objetivo de Time",

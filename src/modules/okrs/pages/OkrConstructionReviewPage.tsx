@@ -93,7 +93,7 @@ export default function OkrConstructionReviewPage() {
     if (!teamReview?.teamAnalysis?.orgAlignmentAnalysis || !selectedTeam) return;
     
     openPanel({
-      agentSlug: 'coach-okrs',
+      agentSlug: 'validador-metodologico-okrs',
       actionContext: 'okr-check-alignment',
       context: {
         type: 'alignment-analysis',
@@ -117,7 +117,7 @@ export default function OkrConstructionReviewPage() {
     if (!selectedTeam) return;
     
     openPanel({
-      agentSlug: 'coach-okrs',
+      agentSlug: 'validador-metodologico-okrs',
       actionContext: 'okr-overview-insights',
       context: {
         type: 'collaboration-suggestion',

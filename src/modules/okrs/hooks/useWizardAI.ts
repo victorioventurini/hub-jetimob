@@ -122,9 +122,13 @@ export function useWizardAI() {
     
     try {
       // Determine which agent to use based on persona
-      let agentSlug: VicAgentSlug = 'coach-okrs';
+      // For creation personas, use validador-metodologico-okrs
+      // For check-in personas, use coach-okrs or alinhamento-estrategico
+      let agentSlug: VicAgentSlug = 'validador-metodologico-okrs';
       if (persona === 'managers-checkin' || persona === 'clevel-checkin') {
         agentSlug = 'alinhamento-estrategico';
+      } else if (persona === 'team-checkin' || persona === 'collaborator' || persona === 'leader-prep') {
+        agentSlug = 'coach-okrs';
       }
 
       // Build context
@@ -185,6 +189,7 @@ export function useWizardAI() {
         const context = buildKrContext(krContext.kr);
         
         // Don't await - let it run in background and update later
+        // Use coach-okrs for check-in guiding questions (not validation)
         vicAgent.invoke(
           'coach-okrs',
           'okr-review-quality',

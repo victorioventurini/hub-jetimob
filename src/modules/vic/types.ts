@@ -3,6 +3,7 @@
 export type VicAgentSlug =
   | "cultura"
   | "coach-okrs"
+  | "validador-metodologico-okrs"
   | "analista-kpis"
   | "facilitador-decisoes"
   | "alinhamento-estrategico"
@@ -110,6 +111,11 @@ export const VIC_AGENTS: Record<VicAgentSlug, { name: string; description: strin
     name: "Coach de OKRs",
     description: "Ajuda a escrever objetivos e KRs claros e mensuráveis",
     icon: "Target",
+  },
+  "validador-metodologico-okrs": {
+    name: "Validador Metodológico de OKRs",
+    description: "Avalia aderência metodológica de OKRs já escritos",
+    icon: "ClipboardCheck",
   },
   "analista-kpis": {
     name: "Analista de KPIs",
