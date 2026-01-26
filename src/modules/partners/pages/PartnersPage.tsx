@@ -186,6 +186,8 @@ export default function PartnersPage() {
         <PageHeader
           title="Empresas Parceiras"
           description="Cadastro global de parceiros com ativação por unidade de negócio"
+          backTo="/settings"
+          backLabel="Voltar para Configurações"
           actions={
             <Button asChild>
               <Link to="/settings/partners/new">
