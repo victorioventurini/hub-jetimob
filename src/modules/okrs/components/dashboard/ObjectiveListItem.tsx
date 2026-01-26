@@ -494,14 +494,18 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   const currentProfileId = useProfileId();
   
-  // Verifica se o usuário atual é o responsável pela KR
-  const isKrOwner = currentProfileId && (
+  // Verifica se o usuário atual é o responsável ou co-responsável pela KR
+  const isKrOwnerOrCoResponsible = currentProfileId && (
     kr.owner_user_id === currentProfileId || 
-    kr.owner?.id === currentProfileId
+    kr.owner?.id === currentProfileId ||
+    (kr as KeyResult & { co_responsibles?: string[] }).co_responsibles?.includes(currentProfileId)
   );
   
-  // Pode fazer check-in se: já tem permissão via prop OU é o responsável pela KR
-  const canDoCheckin = canCheckin || isKrOwner;
+  // Pode editar se: já tem permissão via prop OU é o responsável/co-responsável pela KR
+  const canDoEdit = canEdit || isKrOwnerOrCoResponsible;
+  
+  // Pode fazer check-in se: já tem permissão via prop OU é o responsável/co-responsável pela KR
+  const canDoCheckin = canCheckin || isKrOwnerOrCoResponsible;
   
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
@@ -593,7 +597,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
                     <History className="w-3 h-3" />
                   </Button>
                   
-                  {canEdit && (
+                  {canDoEdit && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -654,7 +658,8 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
               objectiveTitle,
               teamName,
             }}
-            canEdit={canEdit || canCheckin}
+            krTeamId={kr.team_id}
+            canEdit={canDoEdit || canDoCheckin}
             filterForUserId={filterInitiativesForUser}
           />
         </div>
