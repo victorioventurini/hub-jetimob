@@ -214,6 +214,10 @@ export const okrsKeys = {
   // Company OKRs (C-Level Wizard)
   companyOkrs: (buId: string | null, year: number) =>
     ['company-okrs', buId, year] as const,
+    
+  // Org Construction Review (avaliação de qualidade de OKRs organizacionais)
+  orgConstructionReview: (buId: string | null, year: number | null) =>
+    ['okr-org-construction-review', buId, year] as const,
 } as const;
 
 export const kpisKeys = {

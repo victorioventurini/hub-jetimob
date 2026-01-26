@@ -24,14 +24,17 @@ interface KeyResult {
 
 interface RequestBody {
   buId?: string; // Fallback when header is not passed
-  mode?: 'objective' | 'team-analysis';
-  // Modo objective (padrão)
+  mode?: 'objective' | 'team-analysis' | 'org-objective';
+  // Flag para contexto organizacional (alternativa ao mode='org-objective')
+  isOrgLevel?: boolean;
+  // Modo objective/org-objective
   objectiveId?: string;
   objectiveTitle?: string;
   objectiveDescription?: string;
   teamName?: string;
   orgObjectiveTitle?: string;
   keyResults?: KeyResult[];
+  year?: number; // Para contexto organizacional
   // Modo team-analysis
   teamId?: string;
   cycleId?: string;
@@ -453,12 +456,169 @@ Responda com JSON válido no formato EXATO abaixo:
     }
 
     // ────────────────────────────────────────────────────────────
-    // MODO: OBJECTIVE (avaliação individual - padrão)
+    // MODO: ORG-OBJECTIVE (avaliação de objetivo organizacional)
+    // ────────────────────────────────────────────────────────────
+    const isOrgLevel = body.mode === 'org-objective' || body.isOrgLevel === true;
+    
+    if (isOrgLevel) {
+      console.log("[okr-construction-review] Mode: org-objective (organizational level)");
+      const { objectiveId, objectiveTitle, objectiveDescription, keyResults: orgKrs, year } = body;
+      const krs = orgKrs || [];
+
+      console.log("[okr-construction-review] Processing org objective:", objectiveTitle);
+      console.log("[okr-construction-review] Key Results count:", krs.length);
+
+      // Build context for organizational objective
+      const krList = krs.map((kr, i) =>
+        `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Responsável: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
+      ).join('\n');
+
+      const contextData = {
+        type: "okr_org_construction_review",
+        objective: {
+          id: objectiveId,
+          title: objectiveTitle,
+          description: objectiveDescription,
+        },
+        level: "organizational",
+        year,
+        keyResults: krs.map(kr => ({
+          id: kr.id,
+          title: kr.title,
+          type: kr.type,
+          baseline: kr.baseline,
+          target: kr.target,
+          unit: kr.unit,
+          hasOwner: !!kr.owner_user_id,
+        })),
+      };
+
+      // Prompt específico para OKRs organizacionais
+      const userQuestion = `Avalie a qualidade de CONSTRUÇÃO deste **OBJETIVO ORGANIZACIONAL** (nível empresa/C-Level) e responda OBRIGATORIAMENTE em JSON:
+
+**OBJETIVO ORGANIZACIONAL:** ${objectiveTitle}
+${objectiveDescription ? `**DESCRIÇÃO:** ${objectiveDescription}` : ''}
+**ANO:** ${year || 'Não especificado'}
+
+**KEY RESULTS ORGANIZACIONAIS (${krs.length}):**
+${krList || 'CRÍTICO: Nenhum KR definido!'}
+
+---
+
+⚠️ CONTEXTO IMPORTANTE: Este é um OBJETIVO ORGANIZACIONAL, não de time.
+
+CRITÉRIOS ESPECIAIS para OKRs Organizacionais:
+- **Clareza**: Deve INSPIRAR e ser compreensível por TODA a organização
+- **Ambição**: Deve representar um SALTO ESTRATÉGICO de 12+ meses, não melhorias incrementais
+- **Mensurabilidade**: KRs devem ter MÉTRICAS DE ALTO NÍVEL (market share, receita, NPS, etc.)
+- **Responsabilidade**: Cada KR deve ter um SPONSOR C-Level ou equivalente
+- **Cascading**: Deve ser possível DERIVAR OKRs de times a partir deste objetivo
+
+---
+
+Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS JSON):
+{
+  "overallScore": number (0-100),
+  "summary": "Resumo executivo em 2-3 frases focando no impacto estratégico",
+  "strengths": ["ponto forte 1", "ponto forte 2"],
+  "improvements": ["sugestão 1", "sugestão 2"],
+  "alignmentSuggestion": "Sugestão de como os times podem derivar seus OKRs a partir deste",
+  "criteriaScores": {
+    "clarity": { "score": number, "feedback": "texto focando em clareza inspiracional para toda a org" },
+    "measurability": { "score": number, "feedback": "texto focando em métricas de alto nível" },
+    "ambition": { "score": number, "feedback": "texto focando em salto estratégico de longo prazo" },
+    "alignment": { "score": number, "feedback": "texto focando em potencial de cascading para times" },
+    "ownership": { "score": number, "feedback": "texto focando em responsabilidade C-Level" }
+  },
+  "krFeedback": [
+    { "krId": "${krs[0]?.id || 'id'}", "krTitle": "título", "score": number, "strengths": [], "improvements": [], "isTask": boolean }
+  ]
+}`;
+
+      // Call invoke-vic with validador-metodologico-okrs agent
+      console.log("[okr-construction-review] Calling invoke-vic for org objective...");
+
+      const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
+        method: "POST",
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json",
+          "x-current-bu-id": buId,
+          "x-correlation-id": correlationId,
+        },
+        body: JSON.stringify({
+          buId,
+          agentSlug: "validador-metodologico-okrs",
+          actionContext: "okr_org_construction_review",
+          context: contextData,
+          userQuestion,
+          stream: false,
+        }),
+      });
+
+      console.log("[okr-construction-review] invoke-vic response status:", vicResponse.status);
+
+      if (!vicResponse.ok) {
+        const errorText = await vicResponse.text();
+        console.error("[okr-construction-review] invoke-vic error:", vicResponse.status, errorText);
+        
+        // Forward specific error codes
+        if (vicResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (vicResponse.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Créditos de IA esgotados." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (vicResponse.status === 404) {
+          return new Response(
+            JSON.stringify({ error: "Agente validador-metodologico-okrs não encontrado. Configure o agente em Integrações." }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (vicResponse.status === 403) {
+          return new Response(
+            JSON.stringify({ error: "Agente validador-metodologico-okrs não está ativado para esta BU." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        throw new Error(`invoke-vic error: ${vicResponse.status}`);
+      }
+
+      const vicData = await vicResponse.json();
+      const content = vicData.response || vicData.content || vicData.message;
+
+      console.log("[okr-construction-review] AI content received, length:", content?.length || 0);
+
+      if (!content) {
+        console.error("[okr-construction-review] org-objective: empty response from agent", JSON.stringify(vicData));
+        throw new Error("Resposta vazia do agente");
+      }
+
+      // Parse the response into structured assessment
+      const assessment = parseAiResponse(content, krs);
+
+      console.log("[okr-construction-review] Org assessment generated, score:", assessment.overallScore);
+
+      return new Response(
+        JSON.stringify({ assessment }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // MODO: OBJECTIVE (avaliação individual de time - padrão)
     // ────────────────────────────────────────────────────────────
     const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
     const krs = keyResults || [];
 
-    console.log("[okr-construction-review] Mode: objective (default)");
+    console.log("[okr-construction-review] Mode: objective (team level - default)");
     console.log("[okr-construction-review] Processing objective:", objectiveTitle);
     console.log("[okr-construction-review] Key Results count:", krs.length);
 

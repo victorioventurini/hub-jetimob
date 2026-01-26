@@ -29,6 +29,7 @@ const ManagersCheckinPage = lazy(() => import('@/modules/okrs/pages/ManagersChec
 const CLevelCheckinPage = lazy(() => import('@/modules/okrs/pages/CLevelCheckinPage'));
 const OkrQualityPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrQualityPage'));
 const OkrConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrConstructionReviewPage'));
+const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgConstructionReviewPage'));
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
 
@@ -73,6 +74,7 @@ export const okrRoutes = (
     {/* Quality & Analysis */}
     <Route path="/okrs/quality" element={<OkrRoute><OkrQualityPage /></OkrRoute>} />
     <Route path="/okrs/construction-review" element={<OkrRoute><OkrConstructionReviewPage /></OkrRoute>} />
+    <Route path="/okrs/org-construction-review" element={<OkrRoute requiresBuAdmin><OrgConstructionReviewPage /></OkrRoute>} />
     <Route path="/okrs/analysis" element={<OkrRoute requiresBuAdmin><OrgAnalysisPage /></OkrRoute>} />
     <Route path="/okrs/health" element={<OkrRoute requiresBuAdmin><OkrHealthPage /></OkrRoute>} />
     
