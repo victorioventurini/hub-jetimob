@@ -122,10 +122,12 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkins(kr.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null) });
+      // Use refetchType: 'active' para atualização imediata na UI
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkins(kr.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast({ title: '✓ Check-in registrado', description: 'O progresso foi atualizado com sucesso.' });
       onOpenChange(false);
     },
