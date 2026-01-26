@@ -420,7 +420,7 @@ Responda com JSON válido no formato EXATO abaixo:
         },
         body: JSON.stringify({
           buId,
-          agentSlug: "coach-okrs",
+          agentSlug: "validador-metodologico-okrs",
           actionContext: "okr_team_analysis",
           context: contextData,
           userQuestion,
@@ -531,7 +531,7 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
       },
       body: JSON.stringify({
         buId,
-        agentSlug: "coach-okrs",
+        agentSlug: "validador-metodologico-okrs",
         actionContext: "okr_construction_review",
         context: contextData,
         userQuestion,
@@ -560,13 +560,13 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
       }
       if (vicResponse.status === 404) {
         return new Response(
-          JSON.stringify({ error: "Agente coach-okrs não encontrado. Configure o agente em Integrações." }),
+          JSON.stringify({ error: "Agente validador-metodologico-okrs não encontrado. Configure o agente em Integrações." }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (vicResponse.status === 403) {
         return new Response(
-          JSON.stringify({ error: "Agente coach-okrs não está ativado para esta BU." }),
+          JSON.stringify({ error: "Agente validador-metodologico-okrs não está ativado para esta BU." }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

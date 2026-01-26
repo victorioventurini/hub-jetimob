@@ -94,7 +94,7 @@ export function TeamOkrObjectiveStep({
     
     try {
       const response = await invokeVic(
-        'coach-okrs',
+        'validador-metodologico-okrs',
         'okr-review-quality',
         {
           type: 'objective-creation',

@@ -83,9 +83,9 @@ export function TeamOkrIntroStep({
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
-        // Get greeting using coach-okrs agent
+        // Get greeting using validador-metodologico-okrs agent
         const greetingResponse = await invokeVic(
-          'coach-okrs',
+          'validador-metodologico-okrs',
           'okr-create-objective',
           { type: 'wizard-intro', additionalData: { userName, teamName } },
           'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',

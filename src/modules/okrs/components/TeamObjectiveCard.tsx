@@ -168,7 +168,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
                       <DropdownMenuItem
                         onClick={() => {
                           openPanel({
-                            agentSlug: "coach-okrs",
+                            agentSlug: "validador-metodologico-okrs",
                             actionContext: "okr-review-quality",
                             context: {
                               type: "Objetivo de Time",

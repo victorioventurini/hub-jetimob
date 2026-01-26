@@ -432,7 +432,7 @@ export function TeamOkrSharingStep({
         {/* VIC Button */}
         <div className="pt-2">
           <VicActionButton
-            agentSlug="coach-okrs"
+            agentSlug="validador-metodologico-okrs"
             actionContext="okr-check-alignment"
             context={{
               type: 'OKR Compartilhada',

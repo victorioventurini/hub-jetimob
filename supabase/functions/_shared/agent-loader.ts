@@ -29,6 +29,7 @@ Regras gerais:
 const AGENT_SLUGS: Record<string, string> = {
   cultura: "Guardião da Cultura",
   "coach-okrs": "Coach de OKRs",
+  "validador-metodologico-okrs": "Validador Metodológico de OKRs",
   "analista-kpis": "Analista de KPIs",
   "facilitador-decisoes": "Facilitador de Decisões",
   "alinhamento-estrategico": "Alinhamento Estratégico",
