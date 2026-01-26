@@ -1,264 +1,292 @@
 
-# Plano: Correção de Permissões de Edição de KRs e Iniciativas
+# Plano: Integração do Agente "Validador Metodológico de OKRs"
 
 ## Resumo Executivo
 
-Foi identificada uma **falha crítica de segurança** nas políticas RLS de `okr_initiatives`: qualquer usuário com a permission key `okrs.initiative.update:self_or_owner` pode editar **todas** as iniciativas da BU, não apenas as suas.
+O agente **"Validador Metodológico de OKRs"** já existe no banco de dados (`ai_agents.id: 8027de04-b987-45b6-9ce6-16296860e6b3`) mas ainda **não possui slug** e não está integrado ao frontend.
 
-Este plano corrige as políticas de backend e melhora os controles de UI no frontend.
+Este plano substitui o uso do `coach-okrs` pelo novo agente `validador-metodologico-okrs` em todos os contextos de **criação e validação de OKRs**.
 
 ---
 
-## 1. Situação Atual
+## 1. Análise de Pré-requisitos Consultados
 
-| Entidade | Backend (RLS) | Frontend (UI) | Diagnóstico |
-|----------|---------------|---------------|-------------|
-| **KRs de Time** | ✅ Correto | ⚠️ Botões sempre visíveis | Funciona, mas UI não otimizada |
-| **Iniciativas** | ❌ Falha crítica | ⚠️ Lógica simplificada | **VULNERABILIDADE** |
+| Documento | Versão | Status |
+|-----------|--------|--------|
+| TCR | v2.74.0 | ✅ Consultado |
+| IDENTITY_CONVENTION | v2.1.1 | ✅ Consultado |
+| DATA_MODEL_REGISTRY | v2.51.0 | ✅ Consultado |
+| DEVELOPMENT_STANDARDS | v1.17.0 | ✅ Consultado |
 
-### Detalhamento do Problema
+---
 
-**RLS de Iniciativas (atual):**
-```sql
-CREATE POLICY "okr_initiatives_update_v2" ON public.okr_initiatives
-FOR UPDATE USING (
-  has_permission(my_profile_id(), bu_id, 'okrs.initiative.update:self_or_owner')
-)
+## 2. Estado Atual
+
+### Agente no Banco de Dados
+```
+id: 8027de04-b987-45b6-9ce6-16296860e6b3
+name: "Validador Metodológico de OKRs"
+slug: NULL (precisa definir)
+is_active: true
+model_name: gpt-4o-mini
 ```
 
-**Problema:** A política verifica apenas a permission key, sem validar ownership ou liderança.
+### Uso Atual do `coach-okrs` em Contextos de Criação
+
+| Arquivo | Contexto | Linha |
+|---------|----------|-------|
+| `types.ts` | VicAgentSlug type | 5 |
+| `ask-to-vic.ts` | WIZARD_AGENT_MAP (creation) | 322-329 |
+| `ask-to-vic.ts` | MODULE_AGENT_MAP | 370 |
+| `useAskToVic.ts` | Fallback agent | 34 |
+| `useWizardAI.ts` | Default agent | 125 |
+| `TeamOkrIntroStep.tsx` | Greeting | 88 |
+| `TeamOkrObjectiveStep.tsx` | Validação objetivo | 97 |
+| `TeamOkrShareStep.tsx` | Reflection questions | 104 |
+| `TeamOkrSharingStep.tsx` | VicActionButton | 435 |
+| `useInitiativeNameValidation.ts` | Initiative validation | 94 |
+| `okr-construction-review` edge fn | Team analysis | 423, 534 |
+| `OkrConstructionReviewPage.tsx` | Alignment handler | 96 |
+| `TeamObjectiveCard.tsx` | Improve dropdown | 171 |
+| `TeamObjectiveFormFields.tsx` | Improve button | 238 |
+| `agent-loader.ts` | Slug mapping | 31 |
 
 ---
 
-## 2. Correções Planejadas
+## 3. Plano de Implementação
 
-### Fase 1: Migration SQL — Corrigir RLS de Iniciativas
+### Fase 1: Atualizar Slug no Banco de Dados
 
-**Arquivo:** `supabase/migrations/YYYYMMDD_fix_initiatives_rls.sql`
+**Arquivo:** Nova migration SQL
+
+**SQL:**
+```sql
+-- Define o slug do novo agente
+UPDATE public.ai_agents 
+SET slug = 'validador-metodologico-okrs' 
+WHERE id = '8027de04-b987-45b6-9ce6-16296860e6b3';
+```
+
+---
+
+### Fase 2: Atualizar Types do Frontend
+
+**Arquivo:** `src/modules/vic/types.ts`
 
 **Alterações:**
-1. Recriar política `okr_initiatives_update_v2` com validação de ownership
-2. Recriar política `okr_initiatives_delete_v2` com validação de ownership
-3. Usar função existente `can_manage_team_okr_by_profile()` para liderança
-
-**SQL proposto:**
-```sql
--- DROP existing policies
-DROP POLICY IF EXISTS okr_initiatives_update_v2 ON okr_initiatives;
-DROP POLICY IF EXISTS okr_initiatives_delete_v2 ON okr_initiatives;
-
--- UPDATE: Requires permission + (owner OR contributor OR team leader)
-CREATE POLICY okr_initiatives_update_v2 ON okr_initiatives
-FOR UPDATE USING (
-  has_permission(my_profile_id(), bu_id, 'okrs.initiative.update:self_or_owner')
-  AND (
-    owner_user_id = my_profile_id()
-    OR my_profile_id() = ANY(contributors)
-    OR can_manage_team_okr_by_profile(
-      my_profile_id(), 
-      (SELECT team_id FROM okr_team_key_results WHERE id = kr_id)
-    )
-  )
-);
-
--- DELETE: Requires permission + (owner OR team leader)
-CREATE POLICY okr_initiatives_delete_v2 ON okr_initiatives
-FOR DELETE USING (
-  has_permission(my_profile_id(), bu_id, 'okrs.initiative.delete:self_or_owner')
-  AND (
-    owner_user_id = my_profile_id()
-    OR can_manage_team_okr_by_profile(
-      my_profile_id(), 
-      (SELECT team_id FROM okr_team_key_results WHERE id = kr_id)
-    )
-  )
-);
-```
-
----
-
-### Fase 2: Hook de Permissão para KRs
-
-**Arquivo:** `src/modules/okrs/hooks/useCanEditKr.ts`
-
-**Propósito:** Verificar se usuário pode editar um KR específico (para controle de UI)
+1. Adicionar `validador-metodologico-okrs` ao type `VicAgentSlug`
+2. Adicionar metadata do agente no `VIC_AGENTS`
 
 ```typescript
-import { useMemo } from "react";
-import { useProfileId } from "@/hooks/useIdentity";
-import { useCanManageTeamOkr } from "./useCanManageTeamOkr";
+export type VicAgentSlug =
+  | "cultura"
+  | "coach-okrs"
+  | "validador-metodologico-okrs" // NOVO
+  | "analista-kpis"
+  // ...
 
-interface KrForPermission {
-  team_id: string;
-  owner_user_id: string | null;
-  co_responsibles?: string[] | null;
-}
-
-export function useCanEditKr(kr: KrForPermission | null | undefined) {
-  const profileId = useProfileId();
-  const { canManage, isLoading } = useCanManageTeamOkr(kr?.team_id);
-  
-  const canEdit = useMemo(() => {
-    if (!kr || !profileId) return false;
-    
-    // Owner pode editar
-    if (kr.owner_user_id === profileId) return true;
-    // Co-responsável pode editar
-    if (kr.co_responsibles?.includes(profileId)) return true;
-    // Líder do time pode editar
-    if (canManage) return true;
-    
-    return false;
-  }, [kr, profileId, canManage]);
-  
-  return { canEdit, isLoading };
-}
-```
-
----
-
-### Fase 3: Hook de Permissão para Iniciativas
-
-**Arquivo:** `src/modules/okrs/hooks/useCanEditInitiative.ts`
-
-```typescript
-import { useMemo } from "react";
-import { useProfileId } from "@/hooks/useIdentity";
-import { useCanManageTeamOkr } from "./useCanManageTeamOkr";
-
-interface InitiativeForPermission {
-  owner_user_id: string;
-  contributors?: string[] | null;
-}
-
-export function useCanEditInitiative(
-  initiative: InitiativeForPermission | null | undefined,
-  krTeamId: string | null | undefined
-) {
-  const profileId = useProfileId();
-  const { canManage, isLoading } = useCanManageTeamOkr(krTeamId);
-  
-  const canEdit = useMemo(() => {
-    if (!initiative || !profileId) return false;
-    
-    // Owner pode editar
-    if (initiative.owner_user_id === profileId) return true;
-    // Contributor pode editar
-    if (initiative.contributors?.includes(profileId)) return true;
-    // Líder do time do KR pode editar
-    if (canManage) return true;
-    
-    return false;
-  }, [initiative, profileId, canManage]);
-  
-  return { canEdit, isLoading };
-}
-```
-
----
-
-### Fase 4: Atualizar UI — TeamObjectiveCard
-
-**Arquivo:** `src/modules/okrs/components/TeamObjectiveCard.tsx`
-
-**Alteração:** Condicionar renderização de botões de edição/check-in de KRs
-
-```typescript
-// Adicionar import do hook
-import { useCanEditKr } from "../hooks/useCanEditKr";
-
-// Dentro do map de KRs, usar o hook para cada KR
-// Nota: Como hooks não podem ser usados em loops, 
-// extrair para componente filho KrActionButtons
-```
-
-**Abordagem:** Criar componente `KrActionButtons` que encapsula a lógica de permissão:
-
-```typescript
-function KrActionButtons({ kr, onEdit, onCheckin }) {
-  const { canEdit } = useCanEditKr(kr);
-  
-  if (!canEdit) return <OkrStatusBadge status={kr.status} type="kr" />;
-  
-  return (
-    <>
-      <Button onClick={onEdit}>Editar</Button>
-      <Button onClick={onCheckin}>Check-in</Button>
-      <OkrStatusBadge status={kr.status} type="kr" />
-    </>
-  );
-}
-```
-
----
-
-### Fase 5: Atualizar UI — InitiativesList
-
-**Arquivo:** `src/modules/okrs/components/initiatives/InitiativesList.tsx`
-
-**Alteração atual (linha 40-42):**
-```typescript
-const canEditInitiative = (initiative: Initiative) => {
-  return canEdit || initiative.owner_user_id === profileId;
-};
-```
-
-**Correção:** Adicionar verificação de liderança do time do KR
-
-```typescript
-// Usar hook useCanManageTeamOkr para verificar liderança
-const { canManage: canManageTeam } = useCanManageTeamOkr(krTeamId);
-
-const canEditInitiative = (initiative: Initiative) => {
-  // Prop canEdit indica permissão geral
-  if (canEdit) return true;
-  // Owner pode editar
-  if (initiative.owner_user_id === profileId) return true;
-  // Contributor pode editar
-  if (initiative.contributors?.includes(profileId)) return true;
-  // Líder do time pode editar
-  if (canManageTeam) return true;
-  
-  return false;
+export const VIC_AGENTS: Record<VicAgentSlug, { name: string; description: string; icon: string }> = {
+  // ...
+  "validador-metodologico-okrs": {
+    name: "Validador Metodológico de OKRs",
+    description: "Avalia aderência metodológica de OKRs já escritos",
+    icon: "ClipboardCheck",
+  },
+  // ...
 };
 ```
 
 ---
 
-### Fase 6: Atualizar Exports
+### Fase 3: Atualizar Mapeamento de Wizards
 
-**Arquivo:** `src/modules/okrs/hooks/index.ts`
+**Arquivo:** `src/modules/vic/types/ask-to-vic.ts`
 
-Adicionar exports dos novos hooks:
+**Alterações no `WIZARD_AGENT_MAP`:**
+- Substituir `coach-okrs` por `validador-metodologico-okrs` nos steps de **criação** do wizard `creation`
+- Manter `coach-okrs` para steps de check-in (onde o coaching ainda faz sentido)
+
 ```typescript
-export { useCanEditKr } from "./useCanEditKr";
-export { useCanEditInitiative } from "./useCanEditInitiative";
+export const WIZARD_AGENT_MAP: Record<OkrWizardType, Record<string, VicAgentSlug>> = {
+  'creation': {
+    'intro': 'onboarding-buddy',
+    'context': 'analista-kpis',
+    'retrospective': 'analista-kpis',
+    'objective': 'validador-metodologico-okrs',     // ALTERADO
+    'sharing': 'alinhamento-estrategico',
+    'kr-type': 'validador-metodologico-okrs',       // ALTERADO
+    'kr-detail': 'validador-metodologico-okrs',     // ALTERADO
+    'dependencies': 'alinhamento-estrategico',
+    'initiatives': 'validador-metodologico-okrs',   // ALTERADO
+    'share': 'revisor-comunicacao',
+    'default': 'validador-metodologico-okrs',       // ALTERADO
+  },
+  // ... outros wizards mantidos
+};
+```
+
+**Alterações no `MODULE_AGENT_MAP`:**
+- Manter `coach-okrs` como padrão do módulo (para contextos gerais)
+- A orquestração por wizard/step já usa o validador nos contextos certos
+
+---
+
+### Fase 4: Atualizar Wizard Components
+
+**4.1 `TeamOkrIntroStep.tsx` (linha 88)**
+- Trocar `coach-okrs` → `validador-metodologico-okrs`
+
+```typescript
+const greetingResponse = await invokeVic(
+  'validador-metodologico-okrs', // ALTERADO
+  'okr-create-objective',
+  { type: 'wizard-intro', additionalData: { userName, teamName } },
+  'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
+  { silent: true }
+);
+```
+
+**4.2 `TeamOkrObjectiveStep.tsx` (linha 97)**
+- Trocar `coach-okrs` → `validador-metodologico-okrs`
+
+```typescript
+const response = await invokeVic(
+  'validador-metodologico-okrs', // ALTERADO
+  'okr-review-quality',
+  // ...
+);
+```
+
+**4.3 `TeamOkrShareStep.tsx` (linha 104)**
+- Trocar `coach-okrs` → `validador-metodologico-okrs`
+
+**4.4 `TeamOkrSharingStep.tsx` (linha 435)**
+- Trocar `agentSlug="coach-okrs"` → `agentSlug="validador-metodologico-okrs"`
+
+---
+
+### Fase 5: Atualizar Hooks de Validação
+
+**5.1 `useInitiativeNameValidation.ts` (linha 94)**
+- Trocar `coach-okrs` → `validador-metodologico-okrs`
+
+```typescript
+const response = await invoke(
+  'validador-metodologico-okrs', // ALTERADO
+  'okr-initiative-review',
+  // ...
+);
+```
+
+**5.2 `useWizardAI.ts` (linha 125)**
+- Trocar default de `coach-okrs` → `validador-metodologico-okrs`
+
+```typescript
+let agentSlug: VicAgentSlug = 'validador-metodologico-okrs'; // ALTERADO
+if (persona === 'managers-checkin' || persona === 'clevel-checkin') {
+  agentSlug = 'alinhamento-estrategico';
+}
 ```
 
 ---
 
-### Fase 7: Atualizar Documentação de QA
+### Fase 6: Atualizar Edge Function de Construction Review
 
-**Arquivo:** `docs/qa/QA_OKR_TEAM_SCOPE.md`
+**Arquivo:** `supabase/functions/okr-construction-review/index.ts`
 
-Adicionar seção para iniciativas com cenários:
-- Owner de iniciativa pode editar
-- Contributor de iniciativa pode editar
-- Líder do time do KR pode editar
-- Colaborador comum NÃO pode editar
+**6.1 Linha 423 (team-analysis mode):**
+```typescript
+body: JSON.stringify({
+  buId,
+  agentSlug: "validador-metodologico-okrs", // ALTERADO
+  actionContext: "okr_team_analysis",
+  // ...
+}),
+```
+
+**6.2 Linha 534 (objective mode):**
+```typescript
+body: JSON.stringify({
+  buId,
+  agentSlug: "validador-metodologico-okrs", // ALTERADO
+  actionContext: "okr_construction_review",
+  // ...
+}),
+```
 
 ---
 
-## 3. Regras de Negócio Garantidas
+### Fase 7: Atualizar Agent Loader
 
-| Regra | KRs | Iniciativas | Enforcement |
-|-------|-----|-------------|-------------|
-| Owner pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
-| Co-responsável/Contributor pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
-| Líder do time pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
-| Líder de sub-time pode editar itens do sub-time | ✅ | ✅ | Backend RLS |
-| Líder de sub-time NÃO pode editar itens do time pai | ✅ | ✅ | Backend RLS |
-| Colaborador comum NÃO pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
+**Arquivo:** `supabase/functions/_shared/agent-loader.ts` (linha 29-37)
+
+```typescript
+const AGENT_SLUGS: Record<string, string> = {
+  cultura: "Guardião da Cultura",
+  "coach-okrs": "Coach de OKRs",
+  "validador-metodologico-okrs": "Validador Metodológico de OKRs", // NOVO
+  "analista-kpis": "Analista de KPIs",
+  // ...
+};
+```
+
+---
+
+### Fase 8: Atualizar Página de Construction Review
+
+**Arquivo:** `src/modules/okrs/pages/OkrConstructionReviewPage.tsx`
+
+**8.1 Linha 96 (handleAskVicAboutAlignment):**
+```typescript
+openPanel({
+  agentSlug: 'validador-metodologico-okrs', // ALTERADO
+  actionContext: 'okr-check-alignment',
+  // ...
+});
+```
+
+**8.2 Linha 120 (handleAskVicAboutCollaboration):**
+```typescript
+openPanel({
+  agentSlug: 'validador-metodologico-okrs', // ALTERADO
+  actionContext: 'okr-overview-insights',
+  // ...
+});
+```
+
+---
+
+### Fase 9: Atualizar Componentes de Edição
+
+**9.1 `TeamObjectiveCard.tsx` (linha 171)**
+```typescript
+openPanel({
+  agentSlug: "validador-metodologico-okrs", // ALTERADO
+  actionContext: "okr-review-quality",
+  // ...
+});
+```
+
+**9.2 `TeamObjectiveFormFields.tsx` (linha 238)**
+```typescript
+<VicActionButton
+  agentSlug="validador-metodologico-okrs" // ALTERADO
+  actionContext="okr-create-objective"
+  // ...
+/>
+```
+
+---
+
+### Fase 10: Atualizar useAskToVic
+
+**Arquivo:** `src/modules/vic/hooks/useAskToVic.ts` (linha 34)
+
+**Decisão:** Manter `coach-okrs` como fallback geral porque:
+- O validador é específico para contextos de criação/validação
+- Contextos gerais (dashboard, check-ins) ainda usam o coach
+
+O WIZARD_AGENT_MAP já sobrescreve para os contextos certos.
 
 ---
 
@@ -266,40 +294,89 @@ Adicionar seção para iniciativas com cenários:
 
 | Arquivo | Operação | Propósito |
 |---------|----------|-----------|
-| `supabase/migrations/YYYYMMDD_fix_initiatives_rls.sql` | Criar | Corrigir RLS |
-| `src/modules/okrs/hooks/useCanEditKr.ts` | Criar | Hook de permissão KR |
-| `src/modules/okrs/hooks/useCanEditInitiative.ts` | Criar | Hook de permissão Iniciativa |
-| `src/modules/okrs/hooks/index.ts` | Modificar | Adicionar exports |
-| `src/modules/okrs/components/TeamObjectiveCard.tsx` | Modificar | Condicionar botões |
-| `src/modules/okrs/components/initiatives/InitiativesList.tsx` | Modificar | Melhorar lógica |
-| `docs/qa/QA_OKR_TEAM_SCOPE.md` | Modificar | Adicionar cenários |
+| `supabase/migrations/YYYYMMDD_add_validador_slug.sql` | Criar | Define slug do agente |
+| `src/modules/vic/types.ts` | Modificar | Adicionar type e metadata |
+| `src/modules/vic/types/ask-to-vic.ts` | Modificar | Atualizar mapeamentos |
+| `src/modules/vic/hooks/useAskToVic.ts` | Manter | Fallback continua coach-okrs |
+| `src/modules/okrs/hooks/useWizardAI.ts` | Modificar | Trocar default |
+| `src/modules/okrs/hooks/useInitiativeNameValidation.ts` | Modificar | Trocar agente |
+| `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrIntroStep.tsx` | Modificar | Trocar agente |
+| `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrObjectiveStep.tsx` | Modificar | Trocar agente |
+| `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrShareStep.tsx` | Modificar | Trocar agente |
+| `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrSharingStep.tsx` | Modificar | Trocar agente |
+| `src/modules/okrs/pages/OkrConstructionReviewPage.tsx` | Modificar | Trocar agente |
+| `src/modules/okrs/components/TeamObjectiveCard.tsx` | Modificar | Trocar agente |
+| `src/modules/okrs/components/team-objective-form/TeamObjectiveFormFields.tsx` | Modificar | Trocar agente |
+| `supabase/functions/okr-construction-review/index.ts` | Modificar | Trocar agente |
+| `supabase/functions/_shared/agent-loader.ts` | Modificar | Adicionar mapeamento |
 
 ---
 
-## 5. Riscos e Mitigações
+## 5. O que NÃO muda
+
+O agente `coach-okrs` continua sendo usado em:
+
+| Contexto | Justificativa |
+|----------|---------------|
+| Dashboard (VicCard.tsx) | Análise geral de OKRs, não validação metodológica |
+| Check-ins de time/colaborador | Foco em acompanhamento, não validação de construção |
+| Fallback geral do módulo OKRs | Contextos não mapeados |
+
+---
+
+## 6. Diferença Conceitual
+
+| Agente | Papel | Quando Usar |
+|--------|-------|-------------|
+| **Coach de OKRs** | Ajuda a **pensar e construir** | Brainstorming, check-ins, coaching |
+| **Validador Metodológico** | **Valida** o que foi construído | Criação de OKRs, construction review |
+
+Esta separação está alinhada com o prompt do Validador:
+> "O Coach de OKRs ajuda a pensar e construir. Você valida o que foi construído."
+
+---
+
+## 7. Riscos e Mitigações
 
 | Risco | Probabilidade | Impacto | Mitigação |
 |-------|--------------|---------|-----------|
-| Subquery em RLS impacta performance | Baixa | Médio | Índice já existe em `okr_team_key_results(id)` |
-| Usuários perdem acesso atual | Esperado | Baixo | Correção de segurança (comportamento correto) |
-| Hook causa re-renders | Baixa | Baixo | Memoização com `useMemo` |
+| Agente não ativado em alguma BU | Média | Médio | Fallback para coach-okrs no frontend |
+| Prompt do validador muito rigoroso | Baixa | Baixo | Ajustar prompt via admin se necessário |
+| Cache de agente stale | Baixa | Baixo | TTL de 60s já implementado |
 
 ---
 
-## 6. Compatibilidade
+## 8. Compatibilidade
 
 | Padrão | Status |
 |--------|--------|
 | TCR v2.74.0 | ✅ Compatível |
-| IDENTITY_CONVENTION v2.1.1 | ✅ Usa `my_profile_id()` |
-| PERMISSIONS_AND_RBAC_MODEL v1.2.0 | ✅ Usa `has_permission()` |
 | DEVELOPMENT_STANDARDS v1.17.0 | ✅ Seguido |
+| Vic Module Pattern | ✅ Compatível |
 
 ---
 
-## 7. Ordem de Execução
+## 9. Ordem de Execução
 
-1. **Migration SQL** — Corrigir RLS no backend (proteção imediata)
-2. **Hooks de permissão** — Criar lógica de verificação no frontend
-3. **Componentes UI** — Ocultar botões para quem não pode editar
-4. **Documentação** — Atualizar QA checklists
+1. **Migration SQL** — Definir slug do agente no banco
+2. **Types** — Adicionar ao VicAgentSlug e VIC_AGENTS
+3. **Agent Loader** — Adicionar mapeamento de slug
+4. **Ask-to-Vic types** — Atualizar WIZARD_AGENT_MAP
+5. **Hooks** — useWizardAI, useInitiativeNameValidation
+6. **Wizard Components** — TeamOkrIntroStep, ObjectiveStep, ShareStep, SharingStep
+7. **Edge Function** — okr-construction-review
+8. **Pages** — OkrConstructionReviewPage
+9. **Components** — TeamObjectiveCard, TeamObjectiveFormFields
+
+---
+
+## 10. Validação Pós-Implementação
+
+Cenários de teste:
+
+1. ✅ Wizard de criação de OKRs usa validador metodológico
+2. ✅ Página /construction-review usa validador metodológico
+3. ✅ Dropdown "Melhorar" em objetivo usa validador metodológico
+4. ✅ Dashboard VicCard continua usando coach-okrs
+5. ✅ Check-ins continuam usando coach-okrs
+6. ✅ Fallback funciona se agente não estiver ativado na BU
