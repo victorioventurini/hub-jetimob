@@ -1,276 +1,305 @@
 
+# Plano: Correção de Permissões de Edição de KRs e Iniciativas
 
-# Plano: Sistema de Reply + Componentes de Mensagens Reutilizáveis
+## Resumo Executivo
 
-## Objetivo
-Implementar funcionalidade de **reply** (resposta a mensagem) estilo WhatsApp no módulo de tickets, criando uma estrutura de componentes genérica e reutilizável para futuros módulos (projetos, etc.).
+Foi identificada uma **falha crítica de segurança** nas políticas RLS de `okr_initiatives`: qualquer usuário com a permission key `okrs.initiative.update:self_or_owner` pode editar **todas** as iniciativas da BU, não apenas as suas.
 
----
-
-## Arquitetura Proposta
-
-```text
-src/components/messaging/          ← NOVO: Componentes genéricos
-├── types.ts                       ← Interfaces base para qualquer módulo
-├── MessageThread.tsx              ← Container scrollável com auto-scroll
-├── MessageBubble.tsx              ← Bolha genérica (quote + content + actions)
-├── MessageComposer.tsx            ← Compositor com reply mode + mentions + files
-├── QuotedMessage.tsx              ← Citação inline (estilo WhatsApp)
-├── ReplyPreview.tsx               ← Preview no compositor ("Respondendo a...")
-└── index.ts                       ← Barrel export
-
-src/modules/tickets/components/
-├── TicketMessageBubble.tsx        → Adapta MessageBubble para contexto de tickets
-├── TicketMessageComposer.tsx      → Adapta MessageComposer para contexto de tickets
-└── ... (demais componentes)
-```
+Este plano corrige as políticas de backend e melhora os controles de UI no frontend.
 
 ---
 
-## Etapas de Implementação
+## 1. Situação Atual
 
-### Etapa 1: Migração de Banco de Dados
+| Entidade | Backend (RLS) | Frontend (UI) | Diagnóstico |
+|----------|---------------|---------------|-------------|
+| **KRs de Time** | ✅ Correto | ⚠️ Botões sempre visíveis | Funciona, mas UI não otimizada |
+| **Iniciativas** | ❌ Falha crítica | ⚠️ Lógica simplificada | **VULNERABILIDADE** |
 
-Adicionar coluna `reply_to_message_id` na tabela `ticket_messages`.
+### Detalhamento do Problema
 
+**RLS de Iniciativas (atual):**
 ```sql
-ALTER TABLE public.ticket_messages
-ADD COLUMN reply_to_message_id uuid REFERENCES public.ticket_messages(id);
-
-CREATE INDEX idx_ticket_messages_reply_to ON public.ticket_messages(reply_to_message_id)
-WHERE reply_to_message_id IS NOT NULL;
-
-COMMENT ON COLUMN public.ticket_messages.reply_to_message_id IS
-  'Referência à mensagem original quando esta é uma resposta (reply)';
+CREATE POLICY "okr_initiatives_update_v2" ON public.okr_initiatives
+FOR UPDATE USING (
+  has_permission(my_profile_id(), bu_id, 'okrs.initiative.update:self_or_owner')
+)
 ```
 
----
-
-### Etapa 2: Tipos Genéricos de Mensagens
-
-Criar arquivo `src/components/messaging/types.ts`:
-
-```typescript
-// Participante genérico (interno ou externo)
-export interface MessageParticipant {
-  id: string;
-  name: string;
-  photoUrl?: string | null;
-  type: 'internal' | 'external';
-}
-
-// Anexo genérico
-export interface MessageAttachment {
-  id: string;
-  fileName: string;
-  fileSize: number | null;
-  mimeType: string | null;
-  url: string;
-}
-
-// Mensagem genérica (base para todos os módulos)
-export interface GenericMessage {
-  id: string;
-  content: string;
-  createdAt: string;
-  editedAt?: string | null;
-  author: MessageParticipant;
-  isPinned?: boolean;
-  attachments?: MessageAttachment[];
-  // Reply support
-  replyTo?: {
-    id: string;
-    content: string;
-    authorName: string;
-  } | null;
-}
-
-// Configuração do thread de mensagens
-export interface MessageThreadConfig {
-  /** Se o módulo suporta participantes externos */
-  allowExternalParticipants: boolean;
-  /** Se permite fixar mensagens */
-  allowPinning: boolean;
-  /** Se permite reply */
-  allowReply: boolean;
-  /** Se permite anexos */
-  allowAttachments: boolean;
-}
-```
+**Problema:** A política verifica apenas a permission key, sem validar ownership ou liderança.
 
 ---
 
-### Etapa 3: Componente QuotedMessage
+## 2. Correções Planejadas
 
-Renderiza a citação da mensagem original dentro da bolha de resposta.
+### Fase 1: Migration SQL — Corrigir RLS de Iniciativas
 
-**UX (estilo WhatsApp):**
-- Barra vertical colorida à esquerda
-- Nome do autor original em bold
-- Trecho do texto original (truncado se muito longo)
-- Clicável para scroll até a mensagem original
+**Arquivo:** `supabase/migrations/YYYYMMDD_fix_initiatives_rls.sql`
 
----
+**Alterações:**
+1. Recriar política `okr_initiatives_update_v2` com validação de ownership
+2. Recriar política `okr_initiatives_delete_v2` com validação de ownership
+3. Usar função existente `can_manage_team_okr_by_profile()` para liderança
 
-### Etapa 4: Componente ReplyPreview
+**SQL proposto:**
+```sql
+-- DROP existing policies
+DROP POLICY IF EXISTS okr_initiatives_update_v2 ON okr_initiatives;
+DROP POLICY IF EXISTS okr_initiatives_delete_v2 ON okr_initiatives;
 
-Aparece acima do compositor quando usuário clica em "Responder".
-
-**UX:**
-- Banner fixo mostrando "Respondendo a [Nome]"
-- Trecho da mensagem
-- Botão X para cancelar reply
-
----
-
-### Etapa 5: Componente MessageBubble Genérico
-
-Componente base que aceita:
-- `message: GenericMessage`
-- `isOwnMessage: boolean`
-- `onReply?: (message) => void`
-- `onPin?: (messageId, pin) => void`
-- `config: MessageThreadConfig`
-- Slots para ações customizadas
-
-Renderiza:
-1. `QuotedMessage` se `message.replyTo` existir
-2. Conteúdo da mensagem
-3. Anexos
-4. Ações (reply, pin) no hover
-
----
-
-### Etapa 6: Componente MessageComposer Genérico
-
-Refatorar `TicketMessageComposer` para ser genérico:
-- Props para configurar features (mentions, files, reply)
-- Estado `replyingTo` para modo de resposta
-- Emite `onSend({ content, mentions, files, replyToMessageId })`
-
----
-
-### Etapa 7: Atualizar Hook useCreateMessage
-
-Modificar para aceitar `replyToMessageId` no payload:
-
-```typescript
-interface CreateMessageData {
-  body_richtext: RichTextContent;
-  attachments?: File[];
-  mentions?: { user_id?: string; contact_id?: string }[];
-  reply_to_message_id?: string; // NOVO
-}
-```
-
----
-
-### Etapa 8: Atualizar Query de Mensagens
-
-Modificar `useTicketMessages` para buscar dados da mensagem respondida:
-
-```typescript
-.select(`
-  ...,
-  reply_to:ticket_messages!reply_to_message_id(
-    id,
-    body_richtext,
-    author_user:profiles!author_user_id(id, display_name),
-    author_contact:partner_contacts(id, name)
+-- UPDATE: Requires permission + (owner OR contributor OR team leader)
+CREATE POLICY okr_initiatives_update_v2 ON okr_initiatives
+FOR UPDATE USING (
+  has_permission(my_profile_id(), bu_id, 'okrs.initiative.update:self_or_owner')
+  AND (
+    owner_user_id = my_profile_id()
+    OR my_profile_id() = ANY(contributors)
+    OR can_manage_team_okr_by_profile(
+      my_profile_id(), 
+      (SELECT team_id FROM okr_team_key_results WHERE id = kr_id)
+    )
   )
-`)
+);
+
+-- DELETE: Requires permission + (owner OR team leader)
+CREATE POLICY okr_initiatives_delete_v2 ON okr_initiatives
+FOR DELETE USING (
+  has_permission(my_profile_id(), bu_id, 'okrs.initiative.delete:self_or_owner')
+  AND (
+    owner_user_id = my_profile_id()
+    OR can_manage_team_okr_by_profile(
+      my_profile_id(), 
+      (SELECT team_id FROM okr_team_key_results WHERE id = kr_id)
+    )
+  )
+);
 ```
 
 ---
 
-### Etapa 9: Atualizar TicketDetailPage
+### Fase 2: Hook de Permissão para KRs
 
-Adicionar estado de reply e conectar componentes:
+**Arquivo:** `src/modules/okrs/hooks/useCanEditKr.ts`
+
+**Propósito:** Verificar se usuário pode editar um KR específico (para controle de UI)
 
 ```typescript
-const [replyingTo, setReplyingTo] = useState<TicketMessage | null>(null);
+import { useMemo } from "react";
+import { useProfileId } from "@/hooks/useIdentity";
+import { useCanManageTeamOkr } from "./useCanManageTeamOkr";
 
-// No MessageBubble
-onReply={(msg) => setReplyingTo(msg)}
+interface KrForPermission {
+  team_id: string;
+  owner_user_id: string | null;
+  co_responsibles?: string[] | null;
+}
 
-// No Composer
-replyingTo={replyingTo}
-onCancelReply={() => setReplyingTo(null)}
+export function useCanEditKr(kr: KrForPermission | null | undefined) {
+  const profileId = useProfileId();
+  const { canManage, isLoading } = useCanManageTeamOkr(kr?.team_id);
+  
+  const canEdit = useMemo(() => {
+    if (!kr || !profileId) return false;
+    
+    // Owner pode editar
+    if (kr.owner_user_id === profileId) return true;
+    // Co-responsável pode editar
+    if (kr.co_responsibles?.includes(profileId)) return true;
+    // Líder do time pode editar
+    if (canManage) return true;
+    
+    return false;
+  }, [kr, profileId, canManage]);
+  
+  return { canEdit, isLoading };
+}
 ```
 
 ---
 
-### Etapa 10: Atualizar Documentação
+### Fase 3: Hook de Permissão para Iniciativas
 
-- Atualizar `SCHEMA_QUICK_REFERENCE.md` com nova coluna
-- Atualizar `DATA_MODEL_REGISTRY.md`
-- Documentar componentes genéricos no TCR
+**Arquivo:** `src/modules/okrs/hooks/useCanEditInitiative.ts`
 
----
+```typescript
+import { useMemo } from "react";
+import { useProfileId } from "@/hooks/useIdentity";
+import { useCanManageTeamOkr } from "./useCanManageTeamOkr";
 
-## Estrutura de Arquivos a Criar/Modificar
+interface InitiativeForPermission {
+  owner_user_id: string;
+  contributors?: string[] | null;
+}
 
-| Ação | Arquivo | Descrição |
-|------|---------|-----------|
-| **Criar** | `supabase/migrations/xxx_add_reply_to_message.sql` | Migração DB |
-| **Criar** | `src/components/messaging/types.ts` | Tipos genéricos |
-| **Criar** | `src/components/messaging/QuotedMessage.tsx` | Citação inline |
-| **Criar** | `src/components/messaging/ReplyPreview.tsx` | Preview no compositor |
-| **Criar** | `src/components/messaging/MessageBubble.tsx` | Bolha genérica |
-| **Criar** | `src/components/messaging/MessageComposer.tsx` | Compositor genérico |
-| **Criar** | `src/components/messaging/MessageThread.tsx` | Container com scroll |
-| **Criar** | `src/components/messaging/index.ts` | Barrel export |
-| **Modificar** | `src/modules/tickets/types.ts` | Adicionar `reply_to_message_id` |
-| **Modificar** | `src/modules/tickets/hooks/useTicketMessageQueries.ts` | Buscar reply_to |
-| **Modificar** | `src/modules/tickets/hooks/useTicketMessageMutations.ts` | Aceitar reply_to |
-| **Modificar** | `src/modules/tickets/components/TicketMessageBubble.tsx` | Usar MessageBubble |
-| **Modificar** | `src/modules/tickets/components/TicketMessageComposer.tsx` | Usar MessageComposer |
-| **Modificar** | `src/modules/tickets/pages/TicketDetailPage.tsx` | Estado de reply |
-| **Modificar** | `docs/canonical/SCHEMA_QUICK_REFERENCE.md` | Documentar coluna |
-
----
-
-## Considerações Técnicas
-
-### Identity Convention
-- Autores internos usam `profiles.id` (via `useIdentity().realProfileId`)
-- Autores externos usam `partner_contacts.id`
-- Componentes genéricos abstraem isso via interface `MessageParticipant`
-
-### Query Keys
-- Usar `queryKeys.tickets.messages(ticketId)` existente
-- Invalidações já configuradas em `useCreateMessage`
-
-### Reutilização Futura
-- Para módulo de Projetos: criar `ProjectMessageBubble` que usa `MessageBubble`
-- Configurar `allowExternalParticipants: false` se não houver externos
-- Mesma estrutura de DB pode ser replicada para `project_messages`
-
----
-
-## Resultado Visual Esperado
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │ 📌 Mensagens Fixadas (colapsável)                    │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌── Avatar ── [Nome do Autor] ── há 2 min ── [↩️ 📌] ──┐  │
-│  │  ┌─────────────────────────────────────────────────┐ │  │
-│  │  │ ▌ João: "Qual o prazo do projeto?"              │ │  │  ← QuotedMessage
-│  │  └─────────────────────────────────────────────────┘ │  │
-│  │  O prazo é 15/02. Precisamos acelerar a entrega.     │  │  ← Conteúdo
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ... mais mensagens ...                                     │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │ ↩️ Respondendo a João                            [X] │  │  ← ReplyPreview
-│  │   "Qual o prazo do projeto?"                         │  │
-│  ├──────────────────────────────────────────────────────┤  │
-│  │ [📎] [ Digite sua mensagem... @mencionar ]    [➤]    │  │  ← Composer
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+export function useCanEditInitiative(
+  initiative: InitiativeForPermission | null | undefined,
+  krTeamId: string | null | undefined
+) {
+  const profileId = useProfileId();
+  const { canManage, isLoading } = useCanManageTeamOkr(krTeamId);
+  
+  const canEdit = useMemo(() => {
+    if (!initiative || !profileId) return false;
+    
+    // Owner pode editar
+    if (initiative.owner_user_id === profileId) return true;
+    // Contributor pode editar
+    if (initiative.contributors?.includes(profileId)) return true;
+    // Líder do time do KR pode editar
+    if (canManage) return true;
+    
+    return false;
+  }, [initiative, profileId, canManage]);
+  
+  return { canEdit, isLoading };
+}
 ```
 
+---
+
+### Fase 4: Atualizar UI — TeamObjectiveCard
+
+**Arquivo:** `src/modules/okrs/components/TeamObjectiveCard.tsx`
+
+**Alteração:** Condicionar renderização de botões de edição/check-in de KRs
+
+```typescript
+// Adicionar import do hook
+import { useCanEditKr } from "../hooks/useCanEditKr";
+
+// Dentro do map de KRs, usar o hook para cada KR
+// Nota: Como hooks não podem ser usados em loops, 
+// extrair para componente filho KrActionButtons
+```
+
+**Abordagem:** Criar componente `KrActionButtons` que encapsula a lógica de permissão:
+
+```typescript
+function KrActionButtons({ kr, onEdit, onCheckin }) {
+  const { canEdit } = useCanEditKr(kr);
+  
+  if (!canEdit) return <OkrStatusBadge status={kr.status} type="kr" />;
+  
+  return (
+    <>
+      <Button onClick={onEdit}>Editar</Button>
+      <Button onClick={onCheckin}>Check-in</Button>
+      <OkrStatusBadge status={kr.status} type="kr" />
+    </>
+  );
+}
+```
+
+---
+
+### Fase 5: Atualizar UI — InitiativesList
+
+**Arquivo:** `src/modules/okrs/components/initiatives/InitiativesList.tsx`
+
+**Alteração atual (linha 40-42):**
+```typescript
+const canEditInitiative = (initiative: Initiative) => {
+  return canEdit || initiative.owner_user_id === profileId;
+};
+```
+
+**Correção:** Adicionar verificação de liderança do time do KR
+
+```typescript
+// Usar hook useCanManageTeamOkr para verificar liderança
+const { canManage: canManageTeam } = useCanManageTeamOkr(krTeamId);
+
+const canEditInitiative = (initiative: Initiative) => {
+  // Prop canEdit indica permissão geral
+  if (canEdit) return true;
+  // Owner pode editar
+  if (initiative.owner_user_id === profileId) return true;
+  // Contributor pode editar
+  if (initiative.contributors?.includes(profileId)) return true;
+  // Líder do time pode editar
+  if (canManageTeam) return true;
+  
+  return false;
+};
+```
+
+---
+
+### Fase 6: Atualizar Exports
+
+**Arquivo:** `src/modules/okrs/hooks/index.ts`
+
+Adicionar exports dos novos hooks:
+```typescript
+export { useCanEditKr } from "./useCanEditKr";
+export { useCanEditInitiative } from "./useCanEditInitiative";
+```
+
+---
+
+### Fase 7: Atualizar Documentação de QA
+
+**Arquivo:** `docs/qa/QA_OKR_TEAM_SCOPE.md`
+
+Adicionar seção para iniciativas com cenários:
+- Owner de iniciativa pode editar
+- Contributor de iniciativa pode editar
+- Líder do time do KR pode editar
+- Colaborador comum NÃO pode editar
+
+---
+
+## 3. Regras de Negócio Garantidas
+
+| Regra | KRs | Iniciativas | Enforcement |
+|-------|-----|-------------|-------------|
+| Owner pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
+| Co-responsável/Contributor pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
+| Líder do time pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
+| Líder de sub-time pode editar itens do sub-time | ✅ | ✅ | Backend RLS |
+| Líder de sub-time NÃO pode editar itens do time pai | ✅ | ✅ | Backend RLS |
+| Colaborador comum NÃO pode editar | ✅ | ✅ | Backend RLS + Frontend UI |
+
+---
+
+## 4. Arquivos Modificados/Criados
+
+| Arquivo | Operação | Propósito |
+|---------|----------|-----------|
+| `supabase/migrations/YYYYMMDD_fix_initiatives_rls.sql` | Criar | Corrigir RLS |
+| `src/modules/okrs/hooks/useCanEditKr.ts` | Criar | Hook de permissão KR |
+| `src/modules/okrs/hooks/useCanEditInitiative.ts` | Criar | Hook de permissão Iniciativa |
+| `src/modules/okrs/hooks/index.ts` | Modificar | Adicionar exports |
+| `src/modules/okrs/components/TeamObjectiveCard.tsx` | Modificar | Condicionar botões |
+| `src/modules/okrs/components/initiatives/InitiativesList.tsx` | Modificar | Melhorar lógica |
+| `docs/qa/QA_OKR_TEAM_SCOPE.md` | Modificar | Adicionar cenários |
+
+---
+
+## 5. Riscos e Mitigações
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|-------|--------------|---------|-----------|
+| Subquery em RLS impacta performance | Baixa | Médio | Índice já existe em `okr_team_key_results(id)` |
+| Usuários perdem acesso atual | Esperado | Baixo | Correção de segurança (comportamento correto) |
+| Hook causa re-renders | Baixa | Baixo | Memoização com `useMemo` |
+
+---
+
+## 6. Compatibilidade
+
+| Padrão | Status |
+|--------|--------|
+| TCR v2.74.0 | ✅ Compatível |
+| IDENTITY_CONVENTION v2.1.1 | ✅ Usa `my_profile_id()` |
+| PERMISSIONS_AND_RBAC_MODEL v1.2.0 | ✅ Usa `has_permission()` |
+| DEVELOPMENT_STANDARDS v1.17.0 | ✅ Seguido |
+
+---
+
+## 7. Ordem de Execução
+
+1. **Migration SQL** — Corrigir RLS no backend (proteção imediata)
+2. **Hooks de permissão** — Criar lógica de verificação no frontend
+3. **Componentes UI** — Ocultar botões para quem não pode editar
+4. **Documentação** — Atualizar QA checklists
