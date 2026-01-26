@@ -148,6 +148,8 @@ export {
 // =========================
 export { useManageableTeams, useManageableTeamsFlat } from './useManageableTeams';
 export { useCanManageTeamOkr, useCanManageOrgOkr } from './useCanManageTeamOkr';
+export { useCanEditKr } from './useCanEditKr';
+export { useCanEditInitiative } from './useCanEditInitiative';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
 export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';

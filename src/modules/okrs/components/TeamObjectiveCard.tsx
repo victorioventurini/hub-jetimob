@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil, RefreshCw, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, Plus, MoreHorizontal, Pencil, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { SharedOkrBadge } from './SharedOkrBadge';
+import { KrActionButtons } from './KrActionButtons';
 import { useTeamKeyResults, useObjectiveContributors } from '../hooks';
 import { useBu } from '@/contexts/BuContext';
 import { TeamKrFormDialog } from './TeamKrFormDialog';
@@ -304,11 +305,13 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
                         />
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setEditingKr({
+                        <KrActionButtons
+                          kr={{
+                            ...kr,
+                            direction: kr.direction as 'up' | 'down',
+                            status: kr.status as 'green' | 'yellow' | 'red' | 'not_started',
+                          }}
+                          onEdit={() => setEditingKr({
                             id: kr.id,
                             team_id: kr.team_id,
                             team_objective_id: kr.team_objective_id,
@@ -322,15 +325,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
                             status: kr.status as OkrRagStatus,
                             owner_user_id: kr.owner_user_id,
                           })}
-                          title="Editar KR"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setCheckinKr({
+                          onCheckin={() => setCheckinKr({
                             id: kr.id,
                             title: kr.title,
                             baseline: kr.baseline,
@@ -341,11 +336,7 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
                             status: kr.status as 'green' | 'yellow' | 'red' | 'not_started',
                             team_id: kr.team_id,
                           })}
-                          title="Registrar check-in"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                        </Button>
-                        <OkrStatusBadge status={kr.status as 'green' | 'yellow' | 'red' | 'not_started'} type="kr" />
+                        />
                       </div>
                     </div>
                   </div>
