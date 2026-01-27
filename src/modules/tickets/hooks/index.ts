@@ -168,3 +168,9 @@ export {
 
 // Viewers and mentions (for ticket detail page)
 export { useTicketViewersAndMentions } from './useTicketViewersAndMentions';
+
+// Partner company supervisors
+export {
+  usePartnerSupervisors,
+  useUpdatePartnerSupervisors,
+} from './usePartnerSupervisors';

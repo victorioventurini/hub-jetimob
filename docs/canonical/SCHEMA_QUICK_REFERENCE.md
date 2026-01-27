@@ -302,7 +302,9 @@
 `id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at, person_type, document, document_type`
 
 ### partner_company_bu_associations
-`id, partner_company_id, bu_id, is_active, notes, created_at, created_by, updated_at, deleted_at, default_contact_ids`
+`id, partner_company_id, bu_id, is_active, notes, created_at, created_by, updated_at, deleted_at, default_contact_ids, supervisor_profile_ids`
+
+> **supervisor_profile_ids** (v2.75.0): Array de profiles.id que supervisionam esta empresa parceira na BU. Supervisores são automaticamente adicionados como watchers em novos tickets externos via trigger `trg_auto_add_supervisors`.
 
 ### partner_contact_bu_associations
 `id, partner_contact_id, bu_id, is_active, notes, created_at, created_by, updated_at, deleted_at`
