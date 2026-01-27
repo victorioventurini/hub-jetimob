@@ -5493,6 +5493,7 @@ export type Database = {
           is_active: boolean
           notes: string | null
           partner_company_id: string
+          supervisor_profile_ids: string[] | null
           updated_at: string
         }
         Insert: {
@@ -5505,6 +5506,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           partner_company_id: string
+          supervisor_profile_ids?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -5517,6 +5519,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           partner_company_id?: string
+          supervisor_profile_ids?: string[] | null
           updated_at?: string
         }
         Relationships: [

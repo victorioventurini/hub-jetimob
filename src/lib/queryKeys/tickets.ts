@@ -64,4 +64,8 @@ export const ticketsKeys = {
   // Ticket viewers and mentions
   viewers: (ticketId: string | null) =>
     ['ticket-viewers', ticketId] as const,
+    
+  // Partner company supervisors
+  partnerSupervisors: (companyId: string | null, buId: string | null) =>
+    ['tickets', 'partner-supervisors', companyId, buId] as const,
 } as const;
