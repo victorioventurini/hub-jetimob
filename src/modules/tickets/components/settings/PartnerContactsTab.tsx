@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Users, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,15 +28,29 @@ import { PartnerContactDialog } from "./PartnerContactDialog";
 import { PartnerContactHoverCard } from "./PartnerContactHoverCard";
 import { MigrateTicketsDialog } from "./MigrateTicketsDialog";
 import { PartnerContact } from "../../types";
+import { useLocalSearch } from "@/shared/url/useLocalSearch";
+import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
 
 export function PartnerContactsTab() {
   const { data: companies = [], isLoading: loadingCompanies } = usePartnerCompanies();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>();
   const { data: contacts = [], isLoading: loadingContacts } = usePartnerContacts(selectedCompanyId);
   
+  const { value: search, setValue: setSearch } = useLocalSearch("contactSearch", 300);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<PartnerContact | null>(null);
   const [contactToRemove, setContactToRemove] = useState<PartnerContact | null>(null);
+
+  // Filter contacts by search term
+  const filteredContacts = useMemo(() => {
+    if (!search.trim()) return contacts;
+    const term = search.toLowerCase();
+    return contacts.filter((c) =>
+      c.name.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term) ||
+      c.phone?.includes(term)
+    );
+  }, [contacts, search]);
 
   const handleEdit = (contact: PartnerContact) => {
     setEditingContact(contact);
@@ -70,6 +84,12 @@ export function PartnerContactsTab() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <UrlSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar contato..."
+              className="w-[200px]"
+            />
             <Select
               value={selectedCompanyId || "all"}
               onValueChange={(v) => setSelectedCompanyId(v === "all" ? undefined : v)}
@@ -100,11 +120,11 @@ export function PartnerContactsTab() {
               description="Crie uma empresa parceira primeiro para adicionar contatos."
               compact
             />
-          ) : contacts.length === 0 ? (
+          ) : filteredContacts.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="Nenhum contato encontrado"
-              description={selectedCompanyId ? "Esta empresa ainda não tem contatos cadastrados." : "Adicione contatos às empresas parceiras."}
+              title={search ? "Nenhum contato encontrado" : "Nenhum contato cadastrado"}
+              description={search ? "Tente outro termo de busca." : (selectedCompanyId ? "Esta empresa ainda não tem contatos cadastrados." : "Adicione contatos às empresas parceiras.")}
               compact
             />
           ) : (
@@ -119,7 +139,7 @@ export function PartnerContactsTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
+                {filteredContacts.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell>
                       <Link

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Building2, Plus, Pencil, Trash2, Globe, Settings, User, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,16 +27,32 @@ import { PartnerServicesTab } from "./PartnerServicesTab";
 import { FallbackContactsEditor } from "./FallbackContactsEditor";
 import { PartnerCompany } from "../../types";
 import { Separator } from "@/components/ui/separator";
+import { useLocalSearch } from "@/shared/url/useLocalSearch";
+import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
 
 export function PartnerCompaniesTab() {
   const { data: rawCompanies = [], isLoading } = usePartnerCompanies();
   // Force type to PartnerCompany[] to avoid Supabase type inference issues
   const companies = rawCompanies as unknown as PartnerCompany[];
   const { mutate: deleteCompany, isPending: isDeleting } = useDeletePartnerCompany();
+  
+  const { value: search, setValue: setSearch } = useLocalSearch("partnerSearch", 300);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<PartnerCompany | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [servicesCompany, setServicesCompany] = useState<PartnerCompany | null>(null);
+
+  // Filter companies by search term
+  const filteredCompanies = useMemo(() => {
+    if (!search.trim()) return companies;
+    const term = search.toLowerCase();
+    return companies.filter((c) =>
+      c.name.toLowerCase().includes(term) ||
+      c.legal_name?.toLowerCase().includes(term) ||
+      c.document?.includes(term) ||
+      c.allowed_domains?.some((d) => d.toLowerCase().includes(term))
+    );
+  }, [companies, search]);
 
   const handleEdit = (company: PartnerCompany) => {
     setEditingCompany(company);
@@ -74,17 +90,25 @@ export function PartnerCompaniesTab() {
               Gerencie empresas externas que podem criar tickets
             </CardDescription>
           </div>
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Empresa
-          </Button>
+          <div className="flex items-center gap-2">
+            <UrlSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar empresa..."
+              className="w-[250px]"
+            />
+            <Button onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Empresa
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {companies.length === 0 ? (
+          {filteredCompanies.length === 0 ? (
             <EmptyState
               icon={Building2}
-              title="Nenhuma empresa parceira"
-              description="Adicione empresas parceiras para permitir tickets externos."
+              title={search ? "Nenhuma empresa encontrada" : "Nenhuma empresa parceira"}
+              description={search ? "Tente outro termo de busca." : "Adicione empresas parceiras para permitir tickets externos."}
               compact
             />
           ) : (
@@ -100,7 +124,7 @@ export function PartnerCompaniesTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {companies.map((company) => (
+                {filteredCompanies.map((company) => (
                   <CompanyRow
                     key={company.id}
                     company={company}

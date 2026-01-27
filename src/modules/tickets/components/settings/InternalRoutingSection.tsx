@@ -3,7 +3,7 @@
 // Seção de regras de roteamento interno na página de configurações
 // ============================================================
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Route, Plus, Pencil, Trash2, Users, Building2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,12 +26,15 @@ import {
 } from "../../hooks";
 import { InternalRoutingRuleDialog } from "./InternalRoutingRuleDialog";
 import { TicketInternalRoutingRule } from "../../types";
+import { useLocalSearch } from "@/shared/url/useLocalSearch";
+import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
 
 export function InternalRoutingSection() {
   const { data: rules = [], isLoading: loadingRules } = useInternalRoutingRules();
   const { data: categories = [], isLoading: loadingCategories } = useTicketCategories();
   const { mutate: deleteRule, isPending: isDeleting } = useDeleteInternalRoutingRule();
 
+  const { value: search, setValue: setSearch } = useLocalSearch("routingSearch", 300);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<TicketInternalRoutingRule | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -40,6 +43,18 @@ export function InternalRoutingSection() {
   const internalCategories = categories.filter(
     (c) => c.scope === "internal" || c.scope === "both"
   );
+
+  // Filter rules by search term (category/subcategory name, notes)
+  const filteredRules = useMemo(() => {
+    if (!search.trim()) return rules;
+    const term = search.toLowerCase();
+    return rules.filter((rule) => {
+      const catName = rule.category?.name?.toLowerCase() || "";
+      const subName = rule.subcategory?.name?.toLowerCase() || "";
+      const notes = rule.notes?.toLowerCase() || "";
+      return catName.includes(term) || subName.includes(term) || notes.includes(term);
+    });
+  }, [rules, search]);
 
   const handleEdit = (rule: TicketInternalRoutingRule) => {
     setEditingRule(rule);
@@ -149,10 +164,18 @@ export function InternalRoutingSection() {
               Configure atribuição automática de tickets internos por categoria ou subcategoria
             </CardDescription>
           </div>
-          <Button onClick={handleCreate} disabled={internalCategories.length === 0}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Regra
-          </Button>
+          <div className="flex items-center gap-2">
+            <UrlSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar regra..."
+              className="w-[200px]"
+            />
+            <Button onClick={handleCreate} disabled={internalCategories.length === 0}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Regra
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {internalCategories.length === 0 ? (
@@ -162,11 +185,11 @@ export function InternalRoutingSection() {
               description="Crie categorias com escopo 'Interno' ou 'Ambos' para configurar regras de roteamento."
               compact
             />
-          ) : rules.length === 0 ? (
+          ) : filteredRules.length === 0 ? (
             <EmptyState
               icon={Route}
-              title="Nenhuma regra de roteamento interno"
-              description="Crie regras para atribuir automaticamente tickets internos a usuários, times ou squads."
+              title={search ? "Nenhuma regra encontrada" : "Nenhuma regra de roteamento interno"}
+              description={search ? "Tente outro termo de busca." : "Crie regras para atribuir automaticamente tickets internos a usuários, times ou squads."}
               compact
             />
           ) : (
@@ -181,7 +204,7 @@ export function InternalRoutingSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rules.map((rule) => {
+                {filteredRules.map((rule) => {
                   const assigneeBadges = getAssigneeBadges(rule);
                   const watcherBadges = getWatcherBadges(rule);
 

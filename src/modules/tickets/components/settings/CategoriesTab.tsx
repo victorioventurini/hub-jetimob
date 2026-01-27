@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FolderTree, Plus, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { useTicketCategories, useDeleteTicketCategory, useDeleteTicketSubcategor
 import { CategoryDialog } from "./CategoryDialog";
 import { SubcategoryDialog } from "./SubcategoryDialog";
 import { TicketCategory, TicketSubcategory } from "../../types";
+import { useLocalSearch } from "@/shared/url/useLocalSearch";
+import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
 
 const SCOPE_LABELS: Record<string, string> = {
   internal: "Interno",
@@ -23,6 +25,7 @@ export function CategoriesTab() {
   const { mutate: deleteCategory, isPending: isDeletingCategory } = useDeleteTicketCategory();
   const { mutate: deleteSubcategory, isPending: isDeletingSubcategory } = useDeleteTicketSubcategory();
   
+  const { value: search, setValue: setSearch } = useLocalSearch("categorySearch", 300);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [subcategoryDialogOpen, setSubcategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
@@ -30,6 +33,16 @@ export function CategoriesTab() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "subcategory"; id: string } | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Filter categories by search term (also searches in subcategories)
+  const filteredCategories = useMemo(() => {
+    if (!search.trim()) return categories;
+    const term = search.toLowerCase();
+    return categories.filter((cat) =>
+      cat.name.toLowerCase().includes(term) ||
+      cat.subcategories?.some((sub) => sub.name.toLowerCase().includes(term))
+    );
+  }, [categories, search]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
@@ -95,22 +108,30 @@ export function CategoriesTab() {
               Organize os tickets por categoria para facilitar o roteamento e filtros
             </CardDescription>
           </div>
-          <Button onClick={handleCreateCategory}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Categoria
-          </Button>
+          <div className="flex items-center gap-2">
+            <UrlSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar categoria..."
+              className="w-[200px]"
+            />
+            <Button onClick={handleCreateCategory}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Categoria
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {categories.length === 0 ? (
+          {filteredCategories.length === 0 ? (
             <EmptyState
               icon={FolderTree}
-              title="Nenhuma categoria"
-              description="Crie categorias para organizar os tickets."
+              title={search ? "Nenhuma categoria encontrada" : "Nenhuma categoria"}
+              description={search ? "Tente outro termo de busca." : "Crie categorias para organizar os tickets."}
               compact
             />
           ) : (
             <div className="space-y-2">
-              {categories.map((category) => (
+              {filteredCategories.map((category) => (
                 <Collapsible
                   key={category.id}
                   open={expandedCategories.has(category.id)}
