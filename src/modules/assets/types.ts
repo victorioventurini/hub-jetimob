@@ -211,13 +211,23 @@ export interface AssetGiftItem {
   id: string;
   bu_id: string;
   name: string;
-  category: string | null;
+  category: string | null;              // LEGADO (texto livre)
+  category_id: string | null;           // FK para asset_categories (subcategoria)
+  supplier_id: string | null;           // FK para external_companies
+  home_location_id: string | null;      // FK para bu_locations
+  acquired_at: string | null;           // Data de aquisição
+  acquisition_value: number | null;     // Valor total
+  quantity_total: number;               // Quantidade cadastrada
   status: GiftItemStatus;
   notes: string | null;
   created_at: string;
   created_by: string | null;
   updated_at: string;
   deleted_at: string | null;
+  // Joined
+  subcategory?: { id: string; name: string; parent_id: string | null } | null;
+  supplier?: { id: string; name: string; document: string | null } | null;
+  home_location?: { id: string; name: string } | null;
   // Computed
   total_quantity?: number;
   available_quantity?: number;

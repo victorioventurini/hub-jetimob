@@ -700,39 +700,57 @@ export type Database = {
       }
       asset_gift_items: {
         Row: {
+          acquired_at: string | null
+          acquisition_value: number | null
           bu_id: string
           category: string | null
+          category_id: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          home_location_id: string | null
           id: string
           name: string
           notes: string | null
+          quantity_total: number | null
           status: Database["public"]["Enums"]["gift_item_status"]
+          supplier_id: string | null
           updated_at: string
         }
         Insert: {
+          acquired_at?: string | null
+          acquisition_value?: number | null
           bu_id: string
           category?: string | null
+          category_id?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          home_location_id?: string | null
           id?: string
           name: string
           notes?: string | null
+          quantity_total?: number | null
           status?: Database["public"]["Enums"]["gift_item_status"]
+          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
+          acquired_at?: string | null
+          acquisition_value?: number | null
           bu_id?: string
           category?: string | null
+          category_id?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          home_location_id?: string | null
           id?: string
           name?: string
           notes?: string | null
+          quantity_total?: number | null
           status?: Database["public"]["Enums"]["gift_item_status"]
+          supplier_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -741,6 +759,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_gift_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_gift_items_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_gift_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
