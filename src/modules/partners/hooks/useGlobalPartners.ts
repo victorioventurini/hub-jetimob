@@ -18,8 +18,8 @@ import type {
 const PARTNER_FIELDS = `
   id, name, legal_name, person_type, document, document_type,
   allowed_domains, notes, status, created_at, updated_at, deleted_at, bu_id,
-  bu_associations:partner_company_bu_associations(
-    id, bu_id, is_active, notes, created_at, updated_at,
+  bu_associations:external_company_bu_associations(
+    id, bu_id, is_active, notes, created_at, updated_at, role,
     bu:bu_units(id, name)
   )
 `;
@@ -32,17 +32,17 @@ export function useGlobalPartners() {
     queryKey: partnersKeys.list(),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .select(PARTNER_FIELDS)
         .is("deleted_at", null)
         .order("name");
 
       if (error) throw error;
 
-      // Compute active_bus_count
+      // Compute active_bus_count (only partner role)
       return (data as GlobalPartnerCompany[]).map((partner) => ({
         ...partner,
-        active_bus_count: partner.bu_associations?.filter((a) => a.is_active).length ?? 0,
+        active_bus_count: partner.bu_associations?.filter((a) => a.is_active && a.role === 'partner').length ?? 0,
       }));
     },
   });
@@ -58,7 +58,7 @@ export function usePartnerDetail(partnerId: string | null) {
       if (!partnerId) return null;
 
       const { data, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .select(PARTNER_FIELDS)
         .eq("id", partnerId)
         .is("deleted_at", null)
@@ -83,7 +83,7 @@ export function useSearchPartnerByDocument(document: string | null) {
       if (!normalizedDoc || normalizedDoc.length < 11) return null;
 
       const { data, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .select("id, name, document, person_type, document_type, status")
         .eq("document", normalizedDoc)
         .is("deleted_at", null)
@@ -105,7 +105,7 @@ export function useCreateGlobalPartner() {
   return useMutation({
     mutationFn: async (data: CreatePartnerCompanyData) => {
       const { data: created, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .insert([{
           name: data.name,
           legal_name: data.legal_name || null,
@@ -129,7 +129,7 @@ export function useCreateGlobalPartner() {
     },
     onError: (error: Error) => {
       console.error("[useCreateGlobalPartner] Error:", error);
-      if (error.message.includes("idx_partner_companies_document_unique")) {
+      if (error.message.includes("idx_partner_companies_document_unique") || error.message.includes("idx_external_companies_document_unique")) {
         toast.error("Já existe uma empresa cadastrada com este CPF/CNPJ");
       } else {
         toast.error("Erro ao criar empresa parceira: " + error.message);
@@ -149,7 +149,7 @@ export function useUpdateGlobalPartner() {
       const { id, ...updateData } = data;
 
       const { error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .update({
           ...updateData,
           updated_at: new Date().toISOString(),
@@ -180,7 +180,7 @@ export function useDeleteGlobalPartner() {
   return useMutation({
     mutationFn: async (partnerId: string) => {
       const { error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", partnerId);
 

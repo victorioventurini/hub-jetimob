@@ -7,13 +7,15 @@
 export type PersonType = 'pf' | 'pj';
 export type DocumentType = 'cpf' | 'cnpj';
 export type PartnerStatus = 'active' | 'inactive';
+export type ExternalCompanyRole = 'partner' | 'supplier' | 'customer';
 
 export interface PartnerBuAssociation {
   id: string;
-  partner_company_id: string;
+  external_company_id: string;
   bu_id: string;
   is_active: boolean;
   notes: string | null;
+  role: ExternalCompanyRole;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

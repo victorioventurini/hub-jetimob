@@ -7,7 +7,7 @@
  * - Internos: profiles.id (usuários da BU)
  * - Externos: partner_contacts.id (contatos da empresa parceira)
  * 
- * @see docs/canonical/SCHEMA_QUICK_REFERENCE.md (partner_company_bu_associations)
+ * @see docs/canonical/SCHEMA_QUICK_REFERENCE.md (external_company_bu_associations)
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,10 +58,11 @@ export function usePartnerSupervisors(companyId: string | null) {
 
       // Buscar associação com supervisor_profile_ids e supervisor_contact_ids
       const { data: assoc, error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .select("supervisor_profile_ids, supervisor_contact_ids")
-        .eq("partner_company_id", companyId)
+        .eq("external_company_id", companyId)
         .eq("bu_id", buId)
+        .eq("role", "partner")
         .eq("is_active", true)
         .is("deleted_at", null)
         .maybeSingle();
@@ -128,14 +129,15 @@ export function useUpdatePartnerSupervisors() {
       if (!buId) throw new Error("BU não selecionada");
 
       const { error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .update({ 
           supervisor_profile_ids: internalSupervisorIds,
           supervisor_contact_ids: externalSupervisorIds,
           updated_at: new Date().toISOString(),
         })
-        .eq("partner_company_id", companyId)
+        .eq("external_company_id", companyId)
         .eq("bu_id", buId)
+        .eq("role", "partner")
         .is("deleted_at", null);
 
       if (error) throw error;

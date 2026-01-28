@@ -21,12 +21,13 @@ export function usePartnerBuAssociations(partnerId: string | null) {
       if (!partnerId) return [];
 
       const { data, error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .select(`
-          id, partner_company_id, bu_id, is_active, notes, created_at, updated_at,
+          id, external_company_id, bu_id, is_active, notes, created_at, updated_at, role,
           bu:bu_units(id, name)
         `)
-        .eq("partner_company_id", partnerId)
+        .eq("external_company_id", partnerId)
+        .eq("role", "partner")
         .is("deleted_at", null)
         .order("created_at");
 
@@ -50,24 +51,25 @@ export function usePartnersByBu() {
       if (!currentBuId || !supabaseBu) return [];
 
       const { data, error } = await supabaseBu
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .select(`
-          id, is_active, notes,
-          partner_company:partner_companies(
+          id, is_active, notes, role,
+          external_company:external_companies(
             id, name, legal_name, person_type, document, document_type, status
           )
         `)
         .eq("bu_id", currentBuId)
         .eq("is_active", true)
+        .eq("role", "partner")
         .is("deleted_at", null);
 
       if (error) throw error;
 
       // Flatten para retornar apenas os parceiros
       return data
-        .filter((d) => d.partner_company)
+        .filter((d) => d.external_company)
         .map((d) => ({
-          ...d.partner_company,
+          ...d.external_company,
           association_id: d.id,
         }));
     },
@@ -88,17 +90,18 @@ export function useActivatePartnerInBu() {
     mutationFn: async (data: PartnerBuAssociationData) => {
       // Upsert: se já existe, atualiza; se não, cria
       const { error } = await supabaseBu
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .upsert(
           {
-            partner_company_id: data.partner_company_id,
+            external_company_id: data.partner_company_id,
             bu_id: data.bu_id,
             is_active: data.is_active ?? true,
             notes: data.notes || null,
+            role: "partner",
             updated_at: new Date().toISOString(),
           },
           {
-            onConflict: "partner_company_id,bu_id",
+            onConflict: "external_company_id,bu_id,role",
           }
         );
 
@@ -137,13 +140,14 @@ export function useDeactivatePartnerInBu() {
       buId: string;
     }) => {
       const { error } = await supabaseBu
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .update({
           is_active: false,
           updated_at: new Date().toISOString(),
         })
-        .eq("partner_company_id", partnerId)
-        .eq("bu_id", buId);
+        .eq("external_company_id", partnerId)
+        .eq("bu_id", buId)
+        .eq("role", "partner");
 
       if (error) throw error;
     },
@@ -198,17 +202,18 @@ export function useActivatePartnerInBuGlobal() {
   return useMutation({
     mutationFn: async (data: PartnerBuAssociationData) => {
       const { error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .upsert(
           {
-            partner_company_id: data.partner_company_id,
+            external_company_id: data.partner_company_id,
             bu_id: data.bu_id,
             is_active: data.is_active ?? true,
             notes: data.notes || null,
+            role: "partner",
             updated_at: new Date().toISOString(),
           },
           {
-            onConflict: "partner_company_id,bu_id",
+            onConflict: "external_company_id,bu_id,role",
           }
         );
 
@@ -243,13 +248,14 @@ export function useDeactivatePartnerInBuGlobal() {
       buId: string;
     }) => {
       const { error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .update({
           is_active: false,
           updated_at: new Date().toISOString(),
         })
-        .eq("partner_company_id", partnerId)
-        .eq("bu_id", buId);
+        .eq("external_company_id", partnerId)
+        .eq("bu_id", buId)
+        .eq("role", "partner");
 
       if (error) throw error;
     },

@@ -21,22 +21,23 @@ export function usePartnerCompanies() {
 
       // Query parceiros ativos na BU via associação
       const { data, error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .select(`
-          partner_company:partner_companies(
+          external_company:external_companies(
             id, name, legal_name, person_type, document, document_type,
             allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at
           )
         `)
         .eq("bu_id", buId)
         .eq("is_active", true)
+        .eq("role", "partner")
         .is("deleted_at", null);
 
       if (error) throw error;
       
       // Flatten e filtrar parceiros válidos
       const partners = (data || [])
-        .map((row) => row.partner_company)
+        .map((row) => row.external_company)
         .filter((p): p is NonNullable<typeof p> => p !== null && p.deleted_at === null)
         .sort((a, b) => a.name.localeCompare(b.name));
       
@@ -56,7 +57,7 @@ export function usePartnerCompany(id: string | null) {
       if (!id) return null;
 
       const { data, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .select("id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
         .eq("id", id)
         .is("deleted_at", null)
@@ -94,7 +95,7 @@ export function useCreatePartnerCompany() {
 
       // 1. Criar parceiro global (sem bu_id)
       const { data: company, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .insert({
           bu_id: null, // Parceiro global
           name: data.name,
@@ -114,11 +115,12 @@ export function useCreatePartnerCompany() {
 
       // 2. Criar associação com a BU atual
       const { error: assocError } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .insert({
-          partner_company_id: company.id,
+          external_company_id: company.id,
           bu_id: buId,
           is_active: true,
+          role: "partner",
         });
 
       if (assocError) {
@@ -163,7 +165,7 @@ export function useUpdatePartnerCompany() {
       };
 
       const { data: company, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .update(updateData)
         .eq("id", id)
         .select("id, name, legal_name, person_type, document, document_type, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
@@ -188,7 +190,7 @@ export function useDeletePartnerCompany() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
 
@@ -222,8 +224,8 @@ export function usePartnerContacts(companyId?: string) {
           id,
           is_active,
           partner_contact:partner_contacts!inner (
-            id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-            partner_company:partner_companies(id, name)
+            id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+            external_company:external_companies(id, name)
           )
         `)
         .eq("bu_id", buId)
@@ -236,15 +238,15 @@ export function usePartnerContacts(companyId?: string) {
         let query = supabase
           .from("partner_contacts")
           .select(`
-            id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-            partner_company:partner_companies(id, name)
+            id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+            external_company:external_companies(id, name)
           `)
           .eq("bu_id", buId)
           .is("deleted_at", null)
           .order("name");
 
         if (companyId) {
-          query = query.eq("partner_company_id", companyId);
+          query = query.eq("external_company_id", companyId);
         }
 
         const { data, error } = await query;
@@ -259,7 +261,7 @@ export function usePartnerContacts(companyId?: string) {
 
       // Filter by company if specified
       if (companyId) {
-        contacts = contacts.filter((c) => c.partner_company_id === companyId);
+        contacts = contacts.filter((c) => c.external_company_id === companyId);
       }
 
       // Sort by name
@@ -283,8 +285,8 @@ export function usePartnerContact(id: string | null) {
       const { data, error } = await supabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-          partner_company:partner_companies(id, name)
+          id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+          external_company:external_companies(id, name)
         `)
         .eq("id", id)
         .is("deleted_at", null)
@@ -322,7 +324,7 @@ export function useCreatePartnerContact() {
         .from("partner_contacts")
         .insert({
           bu_id: buId,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.partner_company_id,
           name: data.name,
           email: data.email.toLowerCase(),
           phone: data.phone || null,

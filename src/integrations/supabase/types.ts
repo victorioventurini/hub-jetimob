@@ -2942,6 +2942,149 @@ export type Database = {
           },
         ]
       }
+      external_companies: {
+        Row: {
+          allowed_domains: string[] | null
+          bu_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          document: string | null
+          document_type: string | null
+          id: string
+          legal_name: string | null
+          name: string
+          notes: string | null
+          person_type: string | null
+          status: Database["public"]["Enums"]["partner_company_status"]
+          updated_at: string
+        }
+        Insert: {
+          allowed_domains?: string[] | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          document?: string | null
+          document_type?: string | null
+          id?: string
+          legal_name?: string | null
+          name: string
+          notes?: string | null
+          person_type?: string | null
+          status?: Database["public"]["Enums"]["partner_company_status"]
+          updated_at?: string
+        }
+        Update: {
+          allowed_domains?: string[] | null
+          bu_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          document?: string | null
+          document_type?: string | null
+          id?: string
+          legal_name?: string | null
+          name?: string
+          notes?: string | null
+          person_type?: string | null
+          status?: Database["public"]["Enums"]["partner_company_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_companies_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_company_bu_associations: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          default_contact_ids: string[] | null
+          deleted_at: string | null
+          external_company_id: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          role: string
+          supervisor_contact_ids: string[] | null
+          supervisor_profile_ids: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          default_contact_ids?: string[] | null
+          deleted_at?: string | null
+          external_company_id: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          role?: string
+          supervisor_contact_ids?: string[] | null
+          supervisor_profile_ids?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          default_contact_ids?: string[] | null
+          deleted_at?: string | null
+          external_company_id?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          role?: string
+          supervisor_contact_ids?: string[] | null
+          supervisor_profile_ids?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_company_bu_associations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_company_bu_associations_partner_company_id_fkey"
+            columns: ["external_company_id"]
+            isOneToOne: false
+            referencedRelation: "external_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hub_integrations_catalog: {
         Row: {
           color: string | null
@@ -5423,146 +5566,6 @@ export type Database = {
           },
         ]
       }
-      partner_companies: {
-        Row: {
-          allowed_domains: string[] | null
-          bu_id: string | null
-          created_at: string
-          created_by: string | null
-          deleted_at: string | null
-          document: string | null
-          document_type: string | null
-          id: string
-          legal_name: string | null
-          name: string
-          notes: string | null
-          person_type: string | null
-          status: Database["public"]["Enums"]["partner_company_status"]
-          updated_at: string
-        }
-        Insert: {
-          allowed_domains?: string[] | null
-          bu_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          deleted_at?: string | null
-          document?: string | null
-          document_type?: string | null
-          id?: string
-          legal_name?: string | null
-          name: string
-          notes?: string | null
-          person_type?: string | null
-          status?: Database["public"]["Enums"]["partner_company_status"]
-          updated_at?: string
-        }
-        Update: {
-          allowed_domains?: string[] | null
-          bu_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          deleted_at?: string | null
-          document?: string | null
-          document_type?: string | null
-          id?: string
-          legal_name?: string | null
-          name?: string
-          notes?: string | null
-          person_type?: string | null
-          status?: Database["public"]["Enums"]["partner_company_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "partner_companies_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      partner_company_bu_associations: {
-        Row: {
-          bu_id: string
-          created_at: string
-          created_by: string | null
-          default_contact_ids: string[] | null
-          deleted_at: string | null
-          id: string
-          is_active: boolean
-          notes: string | null
-          partner_company_id: string
-          supervisor_contact_ids: string[] | null
-          supervisor_profile_ids: string[] | null
-          updated_at: string
-        }
-        Insert: {
-          bu_id: string
-          created_at?: string
-          created_by?: string | null
-          default_contact_ids?: string[] | null
-          deleted_at?: string | null
-          id?: string
-          is_active?: boolean
-          notes?: string | null
-          partner_company_id: string
-          supervisor_contact_ids?: string[] | null
-          supervisor_profile_ids?: string[] | null
-          updated_at?: string
-        }
-        Update: {
-          bu_id?: string
-          created_at?: string
-          created_by?: string | null
-          default_contact_ids?: string[] | null
-          deleted_at?: string | null
-          id?: string
-          is_active?: boolean
-          notes?: string | null
-          partner_company_id?: string
-          supervisor_contact_ids?: string[] | null
-          supervisor_profile_ids?: string[] | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "partner_company_bu_associations_bu_id_fkey"
-            columns: ["bu_id"]
-            isOneToOne: false
-            referencedRelation: "bu_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_bu_all_profiles_admin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "partner_company_bu_associations_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "v_profiles_directory"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "partner_company_bu_associations_partner_company_id_fkey"
-            columns: ["partner_company_id"]
-            isOneToOne: false
-            referencedRelation: "partner_companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       partner_contact_bu_associations: {
         Row: {
           bu_id: string
@@ -5701,7 +5704,7 @@ export type Database = {
             foreignKeyName: "partner_contact_capabilities_partner_company_id_fkey"
             columns: ["partner_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
@@ -5720,9 +5723,9 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           email: string
+          external_company_id: string
           id: string
           name: string
-          partner_company_id: string
           phone: string | null
           profile_user_id: string | null
           status: Database["public"]["Enums"]["partner_contact_status"]
@@ -5735,9 +5738,9 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           email: string
+          external_company_id: string
           id?: string
           name: string
-          partner_company_id: string
           phone?: string | null
           profile_user_id?: string | null
           status?: Database["public"]["Enums"]["partner_contact_status"]
@@ -5750,9 +5753,9 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           email?: string
+          external_company_id?: string
           id?: string
           name?: string
-          partner_company_id?: string
           phone?: string | null
           profile_user_id?: string | null
           status?: Database["public"]["Enums"]["partner_contact_status"]
@@ -5769,9 +5772,9 @@ export type Database = {
           },
           {
             foreignKeyName: "partner_contacts_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
         ]
@@ -5783,9 +5786,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          external_company_id: string
           id: string
           notes: string | null
-          partner_company_id: string
           status: Database["public"]["Enums"]["partner_service_status"]
           subcategory_id: string | null
           updated_at: string
@@ -5796,9 +5799,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          external_company_id: string
           id?: string
           notes?: string | null
-          partner_company_id: string
           status?: Database["public"]["Enums"]["partner_service_status"]
           subcategory_id?: string | null
           updated_at?: string
@@ -5809,9 +5812,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          external_company_id?: string
           id?: string
           notes?: string | null
-          partner_company_id?: string
           status?: Database["public"]["Enums"]["partner_service_status"]
           subcategory_id?: string | null
           updated_at?: string
@@ -5833,9 +5836,9 @@ export type Database = {
           },
           {
             foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
@@ -7056,9 +7059,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          external_company_id: string | null
           id: string
           notes: string | null
-          partner_company_id: string | null
           subcategory_id: string | null
           updated_at: string
           watcher_contact_ids: string[] | null
@@ -7069,9 +7072,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          external_company_id?: string | null
           id?: string
           notes?: string | null
-          partner_company_id?: string | null
           subcategory_id?: string | null
           updated_at?: string
           watcher_contact_ids?: string[] | null
@@ -7082,9 +7085,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          external_company_id?: string | null
           id?: string
           notes?: string | null
-          partner_company_id?: string | null
           subcategory_id?: string | null
           updated_at?: string
           watcher_contact_ids?: string[] | null
@@ -7099,9 +7102,9 @@ export type Database = {
           },
           {
             foreignKeyName: "ticket_routing_rules_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
@@ -7175,9 +7178,9 @@ export type Database = {
           deleted_at: string | null
           expected_due_at: string | null
           external_assignee_contact_ids: string[] | null
+          external_company_id: string | null
           id: string
           owner_user_id: string | null
-          partner_company_id: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           subcategory_id: string | null
           title: string
@@ -7198,9 +7201,9 @@ export type Database = {
           deleted_at?: string | null
           expected_due_at?: string | null
           external_assignee_contact_ids?: string[] | null
+          external_company_id?: string | null
           id?: string
           owner_user_id?: string | null
-          partner_company_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           subcategory_id?: string | null
           title: string
@@ -7221,9 +7224,9 @@ export type Database = {
           deleted_at?: string | null
           expected_due_at?: string | null
           external_assignee_contact_ids?: string[] | null
+          external_company_id?: string | null
           id?: string
           owner_user_id?: string | null
-          partner_company_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           subcategory_id?: string | null
           title?: string
@@ -7300,9 +7303,9 @@ export type Database = {
           },
           {
             foreignKeyName: "tickets_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
@@ -8134,7 +8137,7 @@ export type Database = {
             foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
             columns: ["partner_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
@@ -8180,7 +8183,7 @@ export type Database = {
             foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
             columns: ["partner_company_id"]
             isOneToOne: false
-            referencedRelation: "partner_companies"
+            referencedRelation: "external_companies"
             referencedColumns: ["id"]
           },
           {
