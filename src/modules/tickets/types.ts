@@ -44,7 +44,9 @@ export interface PartnerCompany {
 export interface PartnerServiceMapping {
   id: string;
   bu_id: string;
-  partner_company_id: string;
+  external_company_id: string;
+  /** @deprecated Use external_company_id - kept for backward compat */
+  partner_company_id?: string;
   category_id: string;
   subcategory_id: string | null;
   status: 'active' | 'inactive';
@@ -58,7 +60,9 @@ export interface PartnerServiceMapping {
 export interface PartnerContact {
   id: string;
   bu_id: string;
-  partner_company_id: string;
+  external_company_id: string;
+  /** @deprecated Use external_company_id - kept for backward compat */
+  partner_company_id?: string;
   profile_user_id: string | null;
   name: string;
   email: string;
@@ -70,6 +74,7 @@ export interface PartnerContact {
   deleted_at: string | null;
   // Joined
   partner_company?: { id: string; name: string } | null;
+  external_company?: { id: string; name: string } | null;
 }
 
 // Categoria de Ticket
@@ -107,7 +112,9 @@ export interface TicketSubcategory {
 export interface TicketRoutingRule {
   id: string;
   bu_id: string;
-  partner_company_id: string | null;
+  external_company_id: string | null;
+  /** @deprecated Use external_company_id */
+  partner_company_id?: string | null;
   subcategory_id: string | null;
   assignee_contact_ids: string[];
   watcher_contact_ids: string[];
@@ -118,6 +125,7 @@ export interface TicketRoutingRule {
   deleted_at: string | null;
   // Joined
   partner_company?: { id: string; name: string } | null;
+  external_company?: { id: string; name: string } | null;
   subcategory?: { id: string; name: string; category?: { id: string; name: string } } | null;
   assignee_contacts?: PartnerContact[];
   watcher_contacts?: PartnerContact[];
