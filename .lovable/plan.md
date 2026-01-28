@@ -1,393 +1,216 @@
 
-# Plano: Upload de Fotos nos Módulos de Assets
 
-## 1. Análise do Contexto Atual
+# Plano: Atualização da Documentação Técnica
 
-### Estado das Tabelas
+## 1. Resumo das Implementações Recentes
 
-| Tabela | Campo `photos` | Status |
-|--------|----------------|--------|
-| `asset_inventory` | ✅ Existe (`photos: string[]`) | Falta apenas UI |
-| `asset_gift_items` | ❌ Não existe | Precisa migration |
-| `asset_keyrings` | ❌ Não existe | Precisa migration |
+As seguintes features foram implementadas e precisam ser documentadas:
 
-### Otimização Existente (Reutilizável)
-
-O `src/lib/imageUtils.ts` já usa **Supabase Image Transformations**:
-
-```typescript
-// Transforma URL de storage em versão otimizada:
-// /storage/v1/object/public/bucket/path
-// → /storage/v1/render/image/public/bucket/path?width=X&height=X&resize=cover&quality=80
-```
-
-**Vantagem:** Não precisamos redimensionar no upload. A otimização é feita sob demanda pelo Supabase, gerando thumbnails automaticamente.
-
-### Buckets Existentes
-
-| Bucket | Público | Upload Policy |
-|--------|---------|---------------|
-| `avatars` | ✅ | Usuário autenticado |
-| `bu-assets` | ✅ | Apenas platform_admin ❌ |
-| `ticket-attachments` | ❌ | BU-scoped |
-
-**Problema:** `bu-assets` é muito restritivo. Gestores de assets não conseguem fazer upload.
+| Feature | Descrição |
+|---------|-----------|
+| **Asset Gifts Structured Fields v1.0** | Novos campos em `asset_gift_items`: `category_id`, `supplier_id`, `home_location_id`, `acquired_at`, `acquisition_value`, `quantity_total`, `photos` |
+| **Asset Photo Upload System v1.0** | Upload de fotos para Inventory, Gifts e Keys via bucket `asset-photos` com RLS |
+| **Suppliers Module v1.0** | Novo módulo em `src/modules/suppliers/` com hooks e tipos para fornecedores |
+| **has_any_asset_permission() v1.0** | Nova função SQL para RLS do bucket de fotos |
 
 ---
 
-## 2. Arquitetura Proposta
+## 2. Arquivos a Atualizar
 
-### 2.1 Novo Bucket: `asset-photos`
+### 2.1 SCHEMA_QUICK_REFERENCE.md
 
-```sql
--- Bucket público para leitura (thumbnails via Image Transformations)
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'asset-photos', 
-  'asset-photos', 
-  true,
-  5242880, -- 5MB
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
-);
+Atualizar a seção Assets:
 
--- RLS: Upload para quem tem permissão de gestão de assets
-CREATE POLICY "Asset managers can upload photos"
-ON storage.objects FOR INSERT
-WITH CHECK (
-  bucket_id = 'asset-photos' 
-  AND has_any_asset_permission(auth.uid())
-);
+**asset_gift_items** (linha 44):
+```
+ANTES:
+`id, bu_id, name, category, status, notes, created_at, created_by, updated_at, deleted_at`
 
--- RLS: Update para quem tem permissão
-CREATE POLICY "Asset managers can update photos"
-ON storage.objects FOR UPDATE
-USING (
-  bucket_id = 'asset-photos' 
-  AND has_any_asset_permission(auth.uid())
-);
-
--- RLS: Delete para quem tem permissão
-CREATE POLICY "Asset managers can delete photos"
-ON storage.objects FOR DELETE
-USING (
-  bucket_id = 'asset-photos' 
-  AND has_any_asset_permission(auth.uid())
-);
-
--- RLS: Leitura pública (bucket é público)
-CREATE POLICY "Public can view asset photos"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'asset-photos');
+DEPOIS:
+`id, bu_id, name, category, category_id, supplier_id, home_location_id, acquired_at, acquisition_value, quantity_total, photos, status, notes, created_at, created_by, updated_at, deleted_at`
 ```
 
-### 2.2 Função Helper para RLS
+**asset_keyrings** (linha 65):
+```
+ANTES:
+`id, bu_id, claviculary_id, hook_id, name, tag_number, status, current_user_id, notes, created_at, created_by, updated_at, deleted_at`
 
-```sql
-CREATE OR REPLACE FUNCTION public.has_any_asset_permission(p_user_id uuid)
-RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM bu_user_permission_templates_v2 bupt
-    JOIN permission_template_items_v2 pti ON pti.template_id = bupt.template_id
-    WHERE bupt.user_id = (SELECT id FROM profiles WHERE user_id = p_user_id)
-    AND pti.permission_key LIKE 'assets.%'
-  )
-  OR public.is_platform_admin(p_user_id);
-$$;
+DEPOIS:
+`id, bu_id, claviculary_id, hook_id, name, tag_number, status, current_user_id, photos, notes, created_at, created_by, updated_at, deleted_at`
+```
+
+**Adicionar seção External Companies** (se não existir):
+```markdown
+## External Companies (Suppliers/Partners)
+
+### external_companies
+`id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at, person_type, document, document_type`
+
+> Usado para Parceiros (role='partner') e Fornecedores (role='supplier') via `external_company_bu_associations.role`
+
+### external_company_bu_associations
+`id, external_company_id, bu_id, is_active, notes, role, created_at, created_by, updated_at, deleted_at, default_contact_ids, supervisor_profile_ids, supervisor_contact_ids`
 ```
 
 ---
 
-## 3. Expansão do imageUtils.ts
+### 2.2 TECHNICAL_CONTEXT_REGISTRY.md
 
-### Novos Tipos de Tamanho
-
-```typescript
-export type AssetPhotoSize = 'thumbnail' | 'preview' | 'full';
-
-const ASSET_PHOTO_SIZES: Record<AssetPhotoSize, { width: number; height: number }> = {
-  thumbnail: { width: 100, height: 100 },   // Para listagens e cards
-  preview: { width: 400, height: 400 },     // Para modal de preview
-  full: { width: 1200, height: 1200 },      // Para download/visualização completa
-};
-
-/**
- * Gera URL otimizada para foto de asset usando Image Transformations.
- */
-export function getOptimizedAssetPhotoUrl(
-  url: string | null | undefined,
-  size: AssetPhotoSize = 'preview'
-): string | undefined {
-  if (!url) return undefined;
-  
-  const isSupabaseStorage = url.includes('/storage/v1/object/public/');
-  if (!isSupabaseStorage) return url;
-  
-  const { width, height } = ASSET_PHOTO_SIZES[size];
-  
-  const transformedUrl = url.replace(
-    '/storage/v1/object/public/',
-    '/storage/v1/render/image/public/'
-  );
-  
-  const separator = transformedUrl.includes('?') ? '&' : '?';
-  return `${transformedUrl}${separator}width=${width}&height=${height}&resize=contain&quality=80`;
-}
+**Atualizar versão** (linha 3):
+```markdown
+**Versão:** 2.75.0
 ```
 
----
-
-## 4. Componente Reutilizável: AssetPhotoUpload
-
-### Interface
-
-```typescript
-interface AssetPhotoUploadProps {
-  /** Array de URLs das fotos */
-  value: string[];
-  
-  /** Callback quando array muda */
-  onChange: (urls: string[]) => void;
-  
-  /** Máximo de fotos permitidas */
-  maxPhotos?: number;
-  
-  /** Pasta no bucket (inventory, gifts, keys) */
-  folder: 'inventory' | 'gifts' | 'keys';
-  
-  /** ID do item (para organização no storage) */
-  itemId: string;
-  
-  /** Desabilitar upload */
-  disabled?: boolean;
-}
+**Atualizar última atualização** (linha 4):
+```markdown
+**Última atualização:** 2026-01-28
 ```
 
-### Funcionalidades
-
-- Upload múltiplo (drag & drop)
-- Preview com thumbnails otimizados
-- Reordenação (drag & drop)
-- Remoção individual
-- Limite configurável (default: 5 fotos)
-- Validação de tipo (JPG, PNG, WebP)
-- Validação de tamanho (max 5MB)
-- Loading states
-
-### Layout
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Fotos                                                          │
-│                                                                 │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌────────────────┐                  │
-│  │ 📷   │ │ 📷   │ │ 📷   │ │  + Adicionar   │                  │
-│  │ [x]  │ │ [x]  │ │ [x]  │ │    foto        │                  │
-│  └──────┘ └──────┘ └──────┘ └────────────────┘                  │
-│                                                                 │
-│  Arraste para reordenar • Máx. 5 fotos • JPG, PNG ou WebP       │
-└─────────────────────────────────────────────────────────────────┘
+**Atualizar Status** (linha 6) - adicionar no final:
+```markdown
+| **Asset Gifts Structured Fields v1.0** | **Asset Photo Upload System v1.0** | **Suppliers Module v1.0**
 ```
 
----
+**Adicionar nova seção no domínio Assets** (após seção existente de Asset):
 
-## 5. Componente: AssetPhotoGallery
+```markdown
+#### **asset-photos** — Storage Bucket (v2.75.0)
 
-Para exibição nas páginas de detalhe:
+Bucket público para fotos de ativos com RLS baseada em permissões.
 
-```typescript
-interface AssetPhotoGalleryProps {
-  photos: string[];
-  alt?: string;
-}
+| Característica | Valor |
+|---------------|-------|
+| Bucket ID | `asset-photos` |
+| Público | ✅ (leitura via Image Transformations) |
+| Limite de Tamanho | 5MB |
+| Tipos Permitidos | image/jpeg, image/png, image/webp |
+| RLS | `has_any_asset_permission(auth.uid())` |
+
+**Organização:**
+```
+asset-photos/
+├── inventory/{item_id}/
+├── gifts/{item_id}/
+└── keys/{keyring_id}/
 ```
 
-### Funcionalidades
-
-- Grid responsivo de thumbnails
-- Lightbox ao clicar (modal fullscreen)
-- Navegação entre fotos (setas)
-- Download da foto original
-- Keyboard navigation (← → Esc)
-
----
-
-## 6. Migration: Adicionar campos photos
-
-```sql
--- Adicionar campo photos em asset_gift_items
-ALTER TABLE asset_gift_items
-ADD COLUMN photos TEXT[] DEFAULT '{}';
-
-COMMENT ON COLUMN asset_gift_items.photos IS 'Array de URLs de fotos do item de brinde';
-
--- Adicionar campo photos em asset_keyrings
-ALTER TABLE asset_keyrings  
-ADD COLUMN photos TEXT[] DEFAULT '{}';
-
-COMMENT ON COLUMN asset_keyrings.photos IS 'Array de URLs de fotos do chaveiro';
+**Otimização:** URLs são transformadas via `getOptimizedAssetPhotoUrl()` para thumbnails sob demanda.
 ```
 
----
+**Adicionar entrada no módulo Suppliers:**
 
-## 7. Integração nos Formulários
+```markdown
+#### **Suppliers Module** (v2.75.0)
 
-### 7.1 InventoryFormFields.tsx
-
-Adicionar seção de fotos após "Observações":
-
-```tsx
-{/* Seção de Fotos */}
-<FormField
-  control={form.control}
-  name="photos"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Fotos</FormLabel>
-      <FormControl>
-        <AssetPhotoUpload
-          value={field.value || []}
-          onChange={field.onChange}
-          folder="inventory"
-          itemId={item?.id || 'new'}
-          disabled={!canManageInventory}
-        />
-      </FormControl>
-      <FormDescription>
-        Adicione fotos do item para referência visual
-      </FormDescription>
-    </FormItem>
-  )}
-/>
-```
-
-### 7.2 GiftItemDialog.tsx
-
-Adicionar campo photos no schema e formulário.
-
-### 7.3 KeyringDialog.tsx
-
-Adicionar campo photos no schema e formulário.
-
----
-
-## 8. Integração nas Views de Detalhe
-
-### InventoryDetailView.tsx
-
-Na seção de informações do item:
-
-```tsx
-{item.photos && item.photos.length > 0 && (
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-base">Fotos</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <AssetPhotoGallery 
-        photos={item.photos} 
-        alt={item.name}
-      />
-    </CardContent>
-  </Card>
-)}
-```
-
----
-
-## 9. Arquivos a Criar/Modificar
-
-### Criar
+Módulo de fornecedores que reutiliza `external_companies` com `role='supplier'`.
 
 | Arquivo | Propósito |
 |---------|-----------|
-| Migration SQL | Bucket + photos em gifts/keyrings |
-| `src/lib/imageUtils.ts` | Expandir com `getOptimizedAssetPhotoUrl` |
-| `src/modules/assets/components/shared/AssetPhotoUpload.tsx` | Componente de upload |
-| `src/modules/assets/components/shared/AssetPhotoGallery.tsx` | Componente de galeria |
-| `src/modules/assets/components/shared/index.ts` | Barrel exports |
+| `src/modules/suppliers/types.ts` | Tipos `Supplier`, `SupplierBuAssociation`, `SearchedCompany` |
+| `src/modules/suppliers/hooks/useSuppliers.ts` | Lista fornecedores da BU |
+| `src/modules/suppliers/hooks/useSearchExternalCompany.ts` | Busca global por nome/CNPJ |
+| `src/modules/suppliers/hooks/useEnsureSupplierInBu.ts` | Auto-associa empresa como supplier |
+| `src/lib/queryKeys/suppliers.ts` | Query keys centralizadas |
 
-### Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/modules/assets/types.ts` | Adicionar `photos` em `AssetGiftItem` e `AssetKeyring` |
-| `src/modules/assets/hooks/useGifts.ts` | Query incluir `photos` |
-| `src/modules/assets/hooks/useKeys.ts` | Query incluir `photos` |
-| `src/modules/assets/components/inventory/form/inventoryFormSchema.ts` | Adicionar `photos` |
-| `src/modules/assets/components/inventory/form/InventoryFormFields.tsx` | Adicionar seção |
-| `src/modules/assets/components/inventory/InventoryDetailView.tsx` | Adicionar galeria |
-| `src/modules/assets/components/gifts/GiftItemDialog.tsx` | Adicionar campo |
-| `src/modules/assets/components/keys/KeyringDialog.tsx` | Adicionar campo |
-| `docs/canonical/SCHEMA_QUICK_REFERENCE.md` | Documentar novos campos |
+**Regra:** Fornecedores são empresas globais (`external_companies`) associadas à BU com `role='supplier'` via `external_company_bu_associations`.
+```
 
 ---
 
-## 10. Ordem de Execução
+### 2.3 DATA_MODEL_REGISTRY.md
 
-1. **Migration SQL** — Bucket + campos photos
-2. **imageUtils.ts** — Expandir com tamanhos de asset
-3. **AssetPhotoUpload** — Componente de upload
-4. **AssetPhotoGallery** — Componente de visualização
-5. **Types** — Atualizar interfaces
-6. **Hooks** — Incluir photos nas queries
-7. **Formulários** — Integrar upload
-8. **Views de Detalhe** — Integrar galeria
-9. **Documentação** — SCHEMA_QUICK_REFERENCE
+Adicionar nota de regeneração necessária no topo:
+
+```markdown
+> ⚠️ **REGENERAÇÃO PENDENTE** (2026-01-28)
+> Novos campos adicionados: `asset_gift_items.{category_id, supplier_id, home_location_id, acquired_at, acquisition_value, quantity_total, photos}`, `asset_keyrings.photos`
+> Nova função: `has_any_asset_permission()`
+> Novo bucket: `asset-photos`
+> Regenerar com: `npx tsx scripts/generate-data-model-registry.ts`
+```
 
 ---
 
-## 11. Benefícios da Otimização sob Demanda
+### 2.4 Hooks Canônicos (atualizar seção 1.6 do TCR)
 
-| Aspecto | Abordagem Tradicional | Nossa Abordagem |
-|---------|----------------------|-----------------|
-| **Upload** | Resize no client antes do upload | Upload original (até 5MB) |
-| **Storage** | Múltiplas versões por foto | Uma versão por foto |
-| **Thumbnails** | Pré-gerados | Gerados sob demanda |
-| **Qualidade** | Perda na conversão | Original preservado |
-| **Simplicidade** | Complexo | Simples (só URL) |
+Adicionar na tabela de hooks canônicos:
 
-A Supabase Image Transformations gera os thumbnails automaticamente na primeira requisição e os cacheia para requisições subsequentes.
+```markdown
+| **Fornecedores** | `useSuppliers()` | Lista suppliers da BU atual |
+| **Busca Empresas** | `useSearchExternalCompany()` | Busca global em external_companies |
+| **Permissões Assets** | `useAssetPermissionsV2()` | Permissões do módulo Assets via V2 |
+```
 
 ---
 
-## 12. Seção Técnica
+### 2.5 Componentes Canônicos (atualizar seção 1.6 do TCR)
 
-### RLS do Bucket
+Adicionar na tabela de componentes:
 
-```sql
--- A função has_any_asset_permission verifica se o usuário tem
--- QUALQUER permissão do módulo assets (inventory, keys ou gifts)
--- Isso permite que gestores façam upload para seu sub-módulo
+```markdown
+| **Upload de fotos** | `AssetPhotoUpload` | Upload múltiplo de fotos para assets |
+| **Galeria de fotos** | `AssetPhotoGallery` | Grid com lightbox para visualização |
+| **Select de fornecedor** | `SupplierCombobox` | Combobox de busca/seleção de fornecedor |
 ```
 
-### Organização no Storage
+---
 
+### 2.6 imageUtils.ts (documentar no TCR)
+
+Adicionar seção de utilitários de imagem:
+
+```markdown
+#### Image Utilities (v2.75.0)
+
+| Função | Descrição |
+|--------|-----------|
+| `getOptimizedAvatarUrl(url, size)` | URL otimizada para avatars (sm/md/lg) |
+| `getOptimizedAssetPhotoUrl(url, size)` | URL otimizada para fotos de assets (thumbnail/preview/full) |
+| `preloadAvatarImages(urls, size)` | Pré-carrega avatars |
+| `preloadAssetPhotos(urls, size)` | Pré-carrega fotos de assets |
+
+**Tamanhos de Asset Photo:**
+- `thumbnail`: 100x100px (listagens)
+- `preview`: 400x400px (modais)
+- `full`: 1200x1200px (download)
 ```
-asset-photos/
-├── inventory/
-│   └── {item_id}/
-│       ├── photo1.jpg
-│       └── photo2.jpg
-├── gifts/
-│   └── {item_id}/
-│       └── photo1.jpg
-└── keys/
-    └── {keyring_id}/
-        └── photo1.jpg
-```
 
-### Limpeza de Fotos Órfãs
+---
 
-Quando um item é deletado (soft delete), as fotos permanecem no storage. Implementar cleanup periódico via pg_cron se necessário (baixa prioridade).
+## 3. Checklist de Atualização
 
-### Conformidade com Padrões
+| Arquivo | Seção | Status |
+|---------|-------|--------|
+| `SCHEMA_QUICK_REFERENCE.md` | asset_gift_items | Atualizar colunas |
+| `SCHEMA_QUICK_REFERENCE.md` | asset_keyrings | Atualizar colunas |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Versão | 2.74.0 → 2.75.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Status | Adicionar features |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Assets domain | Adicionar bucket |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Suppliers module | Nova seção |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Hooks canônicos | Adicionar suppliers |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Componentes | Adicionar upload/gallery |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | Image utils | Nova seção |
+| `DATA_MODEL_REGISTRY.md` | Header | Nota de regeneração |
+
+---
+
+## 4. Ordem de Execução
+
+1. **SCHEMA_QUICK_REFERENCE.md** — Atualizar colunas das tabelas
+2. **TECHNICAL_CONTEXT_REGISTRY.md** — Incrementar versão e adicionar todas as seções
+3. **DATA_MODEL_REGISTRY.md** — Adicionar nota de regeneração
+
+---
+
+## 5. Conformidade
 
 | Regra | Status |
 |-------|--------|
-| POST-BU: usar `useBuScopedSupabase()` | ✅ |
-| Proibido `select('*')` | ✅ Campos explícitos |
-| Query keys via `queryKeys` | ✅ |
-| RLS configurada | ✅ |
-| Otimização de imagens | ✅ Via Image Transformations |
+| Versão incrementada | ✅ 2.74.0 → 2.75.0 |
+| Data atualizada | ✅ 2026-01-28 |
+| Status atualizado | ✅ Features adicionadas |
+| Schema documentado | ✅ Novos campos |
+| Hooks documentados | ✅ Suppliers hooks |
+| Componentes documentados | ✅ Upload/Gallery |
+| Bucket documentado | ✅ asset-photos |
+
