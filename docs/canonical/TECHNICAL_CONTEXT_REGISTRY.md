@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.74.0  
-**Última atualização:** 2026-01-23
+**Versão:** 2.75.0  
+**Última atualização:** 2026-01-28
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v1.0** | **Log Cleanup Executed** | **System Health Score 10/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v1.0** | **Log Cleanup Executed** | **System Health Score 10/10** | **Asset Gifts Structured Fields v1.0** | **Asset Photo Upload System v1.0** | **Suppliers Module v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -280,6 +280,9 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 | **BU Context** | `useBu()` | Acesso ao contexto da BU atual |
 | **Impersonação** | `useImpersonation()` | Estado de simulação visual (super_admin) |
 | **Impersonação opcional** | `useOptionalImpersonation()` | Retorna null se fora do contexto de impersonação |
+| **Fornecedores** | `useSuppliers()` | Lista suppliers da BU atual (v2.75.0) |
+| **Busca Empresas** | `useSearchExternalCompany()` | Busca global em external_companies (v2.75.0) |
+| **Permissões Assets** | `useAssetPermissionsV2()` | Permissões do módulo Assets via V2 (v2.75.0) |
 
 #### Componentes Canônicos por Domínio
 
@@ -290,6 +293,9 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 | **Avatar otimizado** | `OptimizedAvatar` | Avatar com lazy loading e fallback |
 | **Guard de permissão** | `PermissionGuard` | Renderiza children se permissão existe |
 | **Require permissão** | `RequirePermission` | Bloqueia acesso se permissão não existe |
+| **Upload de fotos** | `AssetPhotoUpload` | Upload múltiplo de fotos para assets (v2.75.0) |
+| **Galeria de fotos** | `AssetPhotoGallery` | Grid com lightbox para visualização (v2.75.0) |
+| **Select de fornecedor** | `SupplierCombobox` | Combobox de busca/seleção de fornecedor (v2.75.0) |
 
 #### Views Canônicas (Supabase)
 
@@ -992,6 +998,66 @@ Entradas e saídas de brindes.
 | notes | text | Observações |
 
 **Regra:** Não permitir `out` se `quantity_available` insuficiente.
+
+---
+
+#### **asset-photos** — Storage Bucket (v2.75.0)
+
+Bucket público para fotos de ativos com RLS baseada em permissões.
+
+| Característica | Valor |
+|---------------|-------|
+| Bucket ID | `asset-photos` |
+| Público | ✅ (leitura via Image Transformations) |
+| Limite de Tamanho | 5MB |
+| Tipos Permitidos | image/jpeg, image/png, image/webp |
+| RLS | `has_any_asset_permission(auth.uid())` |
+
+**Organização:**
+```
+asset-photos/
+├── inventory/{item_id}/
+├── gifts/{item_id}/
+└── keys/{keyring_id}/
+```
+
+**Otimização:** URLs são transformadas via `getOptimizedAssetPhotoUrl()` para thumbnails sob demanda.
+
+---
+
+#### **Suppliers Module** (v2.75.0)
+
+Módulo de fornecedores que reutiliza `external_companies` com `role='supplier'`.
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/suppliers/types.ts` | Tipos `Supplier`, `SupplierBuAssociation`, `SearchedCompany` |
+| `src/modules/suppliers/hooks/useSuppliers.ts` | Lista fornecedores da BU |
+| `src/modules/suppliers/hooks/useSearchExternalCompany.ts` | Busca global por nome/CNPJ |
+| `src/modules/suppliers/hooks/useEnsureSupplierInBu.ts` | Auto-associa empresa como supplier |
+| `src/lib/queryKeys/suppliers.ts` | Query keys centralizadas |
+
+**Regra:** Fornecedores são empresas globais (`external_companies`) associadas à BU com `role='supplier'` via `external_company_bu_associations`.
+
+---
+
+#### **Image Utilities** (v2.75.0)
+
+Utilitários para otimização de imagens via Supabase Image Transformations.
+
+| Função | Descrição |
+|--------|-----------|
+| `getOptimizedAvatarUrl(url, size)` | URL otimizada para avatars (sm/md/lg) |
+| `getOptimizedAssetPhotoUrl(url, size)` | URL otimizada para fotos de assets (thumbnail/preview/full) |
+| `preloadAvatarImages(urls, size)` | Pré-carrega avatars |
+| `preloadAssetPhotos(urls, size)` | Pré-carrega fotos de assets |
+
+**Tamanhos de Asset Photo:**
+- `thumbnail`: 100x100px (listagens)
+- `preview`: 400x400px (modais)
+- `full`: 1200x1200px (download)
+
+**Arquivo:** `src/lib/imageUtils.ts`
 
 ---
 
