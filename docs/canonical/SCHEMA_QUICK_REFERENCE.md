@@ -41,7 +41,9 @@
 `id, bu_id, gift_item_id, batch_code, acquired_at, quantity_in, quantity_available, cost_center, campaign, notes, created_at, created_by, updated_at, deleted_at`
 
 ### asset_gift_items
-`id, bu_id, name, category, status, notes, created_at, created_by, updated_at, deleted_at`
+`id, bu_id, name, category, category_id, supplier_id, home_location_id, acquired_at, acquisition_value, quantity_total, photos, status, notes, created_at, created_by, updated_at, deleted_at`
+
+> **v2.75.0**: Novos campos estruturados para gestão de brindes: `category_id` (FK asset_categories), `supplier_id` (FK external_companies), `home_location_id` (FK bu_locations), `acquired_at`, `acquisition_value`, `quantity_total`, `photos` (TEXT[]).
 
 ### asset_gift_movements
 `id, bu_id, gift_item_id, batch_id, movement_type, quantity, destination_type, destination_description, performed_by_user_id, occurred_at, notes, created_at`
@@ -62,7 +64,9 @@
 `id, bu_id, keyring_id, movement_type, user_id, from_claviculary_id, from_hook_id, to_claviculary_id, to_hook_id, authorized_by_user_id, performed_by_user_id, occurred_at, due_at, notes, created_at`
 
 ### asset_keyrings
-`id, bu_id, claviculary_id, hook_id, name, tag_number, status, current_user_id, notes, created_at, created_by, updated_at, deleted_at`
+`id, bu_id, claviculary_id, hook_id, name, tag_number, status, current_user_id, photos, notes, created_at, created_by, updated_at, deleted_at`
+
+> **v2.75.0**: Novo campo `photos` (TEXT[]) para upload de fotos de chaveiros.
 
 ### asset_keys
 `id, bu_id, keyring_id, tag_number, description, access_type, status, notes, created_at, created_by, updated_at, deleted_at`
