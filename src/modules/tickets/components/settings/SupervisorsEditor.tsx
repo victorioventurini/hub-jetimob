@@ -1,19 +1,24 @@
 /**
  * Editor de supervisores de empresa parceira.
  * 
- * Supervisores são usuários internos que acompanham automaticamente
- * todos os tickets de uma empresa parceira como watchers.
+ * Supervisores são usuários (internos ou externos) que acompanham
+ * automaticamente todos os tickets de uma empresa parceira como watchers.
  * 
- * Usa BuUserMultiSelect (componente canônico) para seleção.
+ * - Internos: Usa BuUserMultiSelect (usuários da BU)
+ * - Externos: Lista checkboxes com contatos da empresa
  */
 
 import { useState, useEffect } from "react";
-import { Users, Info } from "lucide-react";
+import { Users, Info, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { usePartnerSupervisors, useUpdatePartnerSupervisors } from "../../hooks";
+import { usePartnerCompanyContacts } from "../../hooks/usePartnerCompanyContacts";
 
 interface SupervisorsEditorProps {
   companyId: string;
@@ -21,42 +26,62 @@ interface SupervisorsEditorProps {
 
 export function SupervisorsEditor({ companyId }: SupervisorsEditorProps) {
   const { data, isLoading } = usePartnerSupervisors(companyId);
+  const { data: companyContacts = [], isLoading: isLoadingContacts } = usePartnerCompanyContacts({ partnerCompanyId: companyId });
   const { mutate: updateSupervisors, isPending } = useUpdatePartnerSupervisors();
   
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [internalIds, setInternalIds] = useState<string[]>([]);
+  const [externalIds, setExternalIds] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Sync local state with fetched data
   useEffect(() => {
-    if (data?.supervisorIds) {
-      setSelectedIds(data.supervisorIds);
+    if (data) {
+      setInternalIds(data.internalSupervisorIds);
+      setExternalIds(data.externalSupervisorIds);
       setHasChanges(false);
     }
-  }, [data?.supervisorIds]);
+  }, [data]);
 
-  const handleChange = (ids: string[]) => {
-    setSelectedIds(ids);
+  const handleInternalChange = (ids: string[]) => {
+    setInternalIds(ids);
+    setHasChanges(true);
+  };
+
+  const handleExternalToggle = (contactId: string) => {
+    setExternalIds(prev => 
+      prev.includes(contactId) 
+        ? prev.filter(id => id !== contactId)
+        : [...prev, contactId]
+    );
     setHasChanges(true);
   };
 
   const handleSave = () => {
     updateSupervisors(
-      { companyId, supervisorIds: selectedIds },
+      { 
+        companyId, 
+        internalSupervisorIds: internalIds,
+        externalSupervisorIds: externalIds,
+      },
       { onSuccess: () => setHasChanges(false) }
     );
   };
 
   const handleCancel = () => {
-    setSelectedIds(data?.supervisorIds ?? []);
+    setInternalIds(data?.internalSupervisorIds ?? []);
+    setExternalIds(data?.externalSupervisorIds ?? []);
     setHasChanges(false);
   };
 
-  if (isLoading) {
-    return <Skeleton className="h-24 w-full" />;
+  // Contacts are already filtered as active by the hook
+  const activeContacts = companyContacts;
+
+  if (isLoading || isLoadingContacts) {
+    return <Skeleton className="h-32 w-full" />;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center gap-2">
         <Users className="h-4 w-4 text-muted-foreground" />
         <h4 className="font-medium">Supervisores</h4>
@@ -70,16 +95,71 @@ export function SupervisorsEditor({ companyId }: SupervisorsEditorProps) {
         </AlertDescription>
       </Alert>
 
-      <BuUserMultiSelect
-        value={selectedIds}
-        onValueChange={handleChange}
-        placeholder="Selecione supervisores..."
-        excludeExternal
-        disabled={isPending}
-      />
+      {/* Supervisores Internos */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5" />
+          Supervisores Internos
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          Usuários da BU que acompanham os tickets desta empresa.
+        </p>
+        <BuUserMultiSelect
+          value={internalIds}
+          onValueChange={handleInternalChange}
+          placeholder="Selecione usuários internos..."
+          excludeExternal
+          disabled={isPending}
+        />
+      </div>
+
+      {/* Supervisores Externos */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium flex items-center gap-1.5">
+          <Building2 className="h-3.5 w-3.5" />
+          Supervisores Externos
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          Contatos da empresa parceira que acompanham os tickets.
+        </p>
+        
+        {activeContacts.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-3 px-4 bg-muted/50 rounded-md">
+            Nenhum contato ativo cadastrado para esta empresa.
+          </div>
+        ) : (
+          <div className="space-y-2 border rounded-md p-3 max-h-48 overflow-y-auto">
+            {activeContacts.map(contact => (
+              <div 
+                key={contact.id} 
+                className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer"
+                onClick={() => handleExternalToggle(contact.id)}
+              >
+                <Checkbox
+                  id={`contact-${contact.id}`}
+                  checked={externalIds.includes(contact.id)}
+                  onCheckedChange={() => handleExternalToggle(contact.id)}
+                  disabled={isPending}
+                />
+                <OptimizedAvatar
+                  src={null}
+                  fallback={contact.name.slice(0, 2).toUpperCase()}
+                  size="sm"
+                  className="h-7 w-7"
+                  fallbackClassName="text-[10px]"
+                />
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-sm font-medium truncate">{contact.name}</span>
+                  <span className="text-xs text-muted-foreground truncate">{contact.email}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {hasChanges && (
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-2">
           <Button 
             variant="outline" 
             size="sm" 

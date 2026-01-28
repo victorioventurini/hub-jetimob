@@ -1,10 +1,13 @@
 /**
  * Hook para gerenciar supervisores de uma empresa parceira.
  * 
- * Supervisores são usuários internos que acompanham automaticamente todos
- * os tickets de uma empresa parceira específica como watchers.
+ * Supervisores são usuários (internos ou externos) que acompanham automaticamente
+ * todos os tickets de uma empresa parceira específica como watchers.
  * 
- * @see docs/canonical/SCHEMA_QUICK_REFERENCE.md (partner_company_bu_associations.supervisor_profile_ids)
+ * - Internos: profiles.id (usuários da BU)
+ * - Externos: partner_contacts.id (contatos da empresa parceira)
+ * 
+ * @see docs/canonical/SCHEMA_QUICK_REFERENCE.md (partner_company_bu_associations)
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,13 +23,21 @@ interface SupervisorProfile {
   job_title_name?: string | null;
 }
 
+interface SupervisorContact {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface PartnerSupervisorsData {
-  supervisorIds: string[];
-  profiles: SupervisorProfile[];
+  internalSupervisorIds: string[];
+  externalSupervisorIds: string[];
+  internalProfiles: SupervisorProfile[];
+  externalContacts: SupervisorContact[];
 }
 
 /**
- * Busca supervisores de uma empresa parceira na BU atual.
+ * Busca supervisores (internos e externos) de uma empresa parceira na BU atual.
  */
 export function usePartnerSupervisors(companyId: string | null) {
   const supabase = useBuScopedSupabase();
@@ -36,12 +47,19 @@ export function usePartnerSupervisors(companyId: string | null) {
   return useQuery<PartnerSupervisorsData>({
     queryKey: ticketsKeys.partnerSupervisors(companyId, buId),
     queryFn: async () => {
-      if (!companyId || !buId) return { supervisorIds: [], profiles: [] };
+      if (!companyId || !buId) {
+        return { 
+          internalSupervisorIds: [], 
+          externalSupervisorIds: [], 
+          internalProfiles: [], 
+          externalContacts: [] 
+        };
+      }
 
-      // Buscar associação com supervisor_profile_ids
+      // Buscar associação com supervisor_profile_ids e supervisor_contact_ids
       const { data: assoc, error } = await supabase
         .from("partner_company_bu_associations")
-        .select("supervisor_profile_ids")
+        .select("supervisor_profile_ids, supervisor_contact_ids")
         .eq("partner_company_id", companyId)
         .eq("bu_id", buId)
         .eq("is_active", true)
@@ -50,23 +68,38 @@ export function usePartnerSupervisors(companyId: string | null) {
 
       if (error) throw error;
 
-      const supervisorIds = (assoc?.supervisor_profile_ids as string[] | null) ?? [];
+      const internalSupervisorIds = (assoc?.supervisor_profile_ids as string[] | null) ?? [];
+      const externalSupervisorIds = (assoc?.supervisor_contact_ids as string[] | null) ?? [];
       
-      if (supervisorIds.length === 0) {
-        return { supervisorIds: [], profiles: [] };
+      // Buscar profiles dos supervisores internos
+      let internalProfiles: SupervisorProfile[] = [];
+      if (internalSupervisorIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("v_bu_active_profiles")
+          .select("id, display_name, photo_url, job_title_name")
+          .in("id", internalSupervisorIds);
+
+        if (profilesError) throw profilesError;
+        internalProfiles = (profiles ?? []) as SupervisorProfile[];
       }
 
-      // Buscar profiles dos supervisores
-      const { data: profiles, error: profilesError } = await supabase
-        .from("v_bu_active_profiles")
-        .select("id, display_name, photo_url, job_title_name")
-        .in("id", supervisorIds);
+      // Buscar contatos dos supervisores externos
+      let externalContacts: SupervisorContact[] = [];
+      if (externalSupervisorIds.length > 0) {
+        const { data: contacts, error: contactsError } = await supabase
+          .from("partner_contacts")
+          .select("id, name, email")
+          .in("id", externalSupervisorIds);
 
-      if (profilesError) throw profilesError;
+        if (contactsError) throw contactsError;
+        externalContacts = (contacts ?? []) as SupervisorContact[];
+      }
 
       return { 
-        supervisorIds, 
-        profiles: (profiles ?? []) as SupervisorProfile[] 
+        internalSupervisorIds, 
+        externalSupervisorIds,
+        internalProfiles,
+        externalContacts,
       };
     },
     enabled: !!companyId && !!buId,
@@ -74,7 +107,7 @@ export function usePartnerSupervisors(companyId: string | null) {
 }
 
 /**
- * Mutation para atualizar supervisores de uma empresa parceira.
+ * Mutation para atualizar supervisores (internos e externos) de uma empresa parceira.
  */
 export function useUpdatePartnerSupervisors() {
   const queryClient = useQueryClient();
@@ -85,17 +118,20 @@ export function useUpdatePartnerSupervisors() {
   return useMutation({
     mutationFn: async ({ 
       companyId, 
-      supervisorIds 
+      internalSupervisorIds,
+      externalSupervisorIds,
     }: { 
       companyId: string; 
-      supervisorIds: string[]; 
+      internalSupervisorIds: string[];
+      externalSupervisorIds: string[];
     }) => {
       if (!buId) throw new Error("BU não selecionada");
 
       const { error } = await supabase
         .from("partner_company_bu_associations")
         .update({ 
-          supervisor_profile_ids: supervisorIds,
+          supervisor_profile_ids: internalSupervisorIds,
+          supervisor_contact_ids: externalSupervisorIds,
           updated_at: new Date().toISOString(),
         })
         .eq("partner_company_id", companyId)
