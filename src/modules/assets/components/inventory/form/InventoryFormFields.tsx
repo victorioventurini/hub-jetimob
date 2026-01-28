@@ -17,15 +17,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus } from "lucide-react";
+import { UserPlus, ImageIcon } from "lucide-react";
 import { BuUserSelect } from "@/components/selects";
 import { AutocompleteInput } from "../AutocompleteInput";
+import { AssetPhotoUpload } from "../../shared/AssetPhotoUpload";
 import type { InventoryFormData, SubcategoryItem } from "./inventoryFormSchema";
 
 interface InventoryFormFieldsProps {
   form: UseFormReturn<InventoryFormData>;
   isEditing: boolean;
   isInventoryAdmin: boolean;
+  canManageInventory: boolean;
   subcategories: SubcategoryItem[];
   groupedSubcategories: Record<string, SubcategoryItem[]>;
   itemHasParentCategory: { id: string; name: string } | null;
@@ -34,12 +36,14 @@ interface InventoryFormFieldsProps {
   brands: string[];
   duplicateError: string | null;
   onCodeChange: (value: string, onChange: (value: string) => void) => void;
+  itemId?: string;
 }
 
 export function InventoryFormFields({
   form,
   isEditing,
   isInventoryAdmin,
+  canManageInventory,
   groupedSubcategories,
   itemHasParentCategory,
   rootLocations,
@@ -47,6 +51,7 @@ export function InventoryFormFields({
   brands,
   duplicateError,
   onCodeChange,
+  itemId,
 }: InventoryFormFieldsProps) {
   const watchNoSerialNumber = form.watch("no_serial_number");
   const watchAssignedTo = form.watch("assigned_to_user_id");
@@ -336,7 +341,36 @@ export function InventoryFormFields({
         </div>
       )}
 
-      {/* Row 7: Notes */}
+      {/* Row 7: Photos */}
+      <div className="space-y-2 p-4 bg-muted/50 rounded-lg border border-border">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+          <ImageIcon className="h-4 w-4" />
+          <span>Fotos do Item</span>
+        </div>
+        <FormField
+          control={form.control}
+          name="photos"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <AssetPhotoUpload
+                  value={field.value || []}
+                  onChange={field.onChange}
+                  folder="inventory"
+                  itemId={itemId || "new"}
+                  disabled={!canManageInventory}
+                />
+              </FormControl>
+              <FormDescription>
+                Adicione fotos do item para referência visual
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {/* Row 8: Notes */}
       <FormField
         control={form.control}
         name="notes"

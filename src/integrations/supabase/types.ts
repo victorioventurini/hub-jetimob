@@ -712,6 +712,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          photos: string[] | null
           quantity_total: number | null
           status: Database["public"]["Enums"]["gift_item_status"]
           supplier_id: string | null
@@ -730,6 +731,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          photos?: string[] | null
           quantity_total?: number | null
           status?: Database["public"]["Enums"]["gift_item_status"]
           supplier_id?: string | null
@@ -748,6 +750,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          photos?: string[] | null
           quantity_total?: number | null
           status?: Database["public"]["Enums"]["gift_item_status"]
           supplier_id?: string | null
@@ -1307,6 +1310,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          photos: string[] | null
           status: Database["public"]["Enums"]["keyring_status"]
           tag_number: string
           updated_at: string
@@ -1322,6 +1326,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          photos?: string[] | null
           status?: Database["public"]["Enums"]["keyring_status"]
           tag_number: string
           updated_at?: string
@@ -1337,6 +1342,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          photos?: string[] | null
           status?: Database["public"]["Enums"]["keyring_status"]
           tag_number?: string
           updated_at?: string
@@ -9182,6 +9188,10 @@ export type Database = {
       get_visible_ticket_ids_for_impersonation: {
         Args: { p_profile_id: string }
         Returns: string[]
+      }
+      has_any_asset_permission: {
+        Args: { p_user_id: string }
+        Returns: boolean
       }
       has_asset_permission: {
         Args: {
