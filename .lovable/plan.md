@@ -1,296 +1,338 @@
 
-# Plano: External Companies — Entidade Unificada com Múltiplos Papéis
+# Plano: Expansão do Módulo Gifts com Campos Estruturados
 
-## 1. Documentação Validada
+## 1. Análise de Reaproveitamento (Conforme TCR + DEVELOPMENT_STANDARDS)
 
-| Documento | Status |
-|-----------|--------|
-| SCHEMA_QUICK_REFERENCE.md | ✅ Analisado |
-| Código-fonte (19+ arquivos) | ✅ Mapeado |
+### Recursos Reutilizáveis do Inventory
 
----
+| Recurso | Localização | Reaproveitamento |
+|---------|-------------|------------------|
+| `asset_categories` | Tabela (parent_id para hierarquia) | ✅ Compartilhar com Gifts |
+| `bu_locations` | Tabela | ✅ Usar para localização |
+| `useLocations()` | Hook existente | ✅ Reaproveitar diretamente |
+| `useAssetCategoriesQuery()` | Hook existente | ✅ Reaproveitar diretamente |
+| `buildSubcategoryList()` | Utility existente | ✅ Reaproveitar para agrupar |
+| `external_companies` + `external_company_bu_associations` | Tabelas existentes | ✅ Usar com `role='supplier'` |
 
-## 2. Arquitetura Proposta
+### Estado Atual do Banco
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         EXTERNAL_COMPANIES (Global)                          │
-│  ┌─────────────────────────────────────────────────────────────────────────┐ │
-│  │ id, name, legal_name, person_type, document, document_type,             │ │
-│  │ allowed_domains, status, notes, created_at, updated_at, deleted_at      │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-│                                    │                                         │
-│                    ┌───────────────┴───────────────┐                         │
-│                    ▼                               ▼                         │
-│  ┌─────────────────────────────────┐ ┌─────────────────────────────────┐    │
-│  │ external_company_bu_associations│ │ external_company_bu_associations│    │
-│  │ role = 'partner'                │ │ role = 'supplier'               │    │
-│  │ + supervisor_profile_ids        │ │ (future: customer)              │    │
-│  │ + supervisor_contact_ids        │ │                                 │    │
-│  │ + default_contact_ids           │ │                                 │    │
-│  └─────────────────────────────────┘ └─────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-              /settings/       /settings/      (futuro)
-              partners         suppliers       /settings/customers
+**asset_gift_items (atual):**
+```
+id, bu_id, name, category (TEXT), status, notes, created_at, created_by, updated_at, deleted_at
 ```
 
-### Modelo de Dados
-
-**Uma empresa** (CPF/CNPJ único) pode ter **múltiplos papéis** em uma BU:
-- Parceiro de serviços (tickets externos)
-- Fornecedor (brindes, inventário)
-- Cliente (futuro)
+**external_company_bu_associations (confirmado):**
+```
+id, external_company_id, bu_id, is_active, notes, role, ...
+```
+O campo `role` existe e suporta: `partner`, `supplier`, `customer`
 
 ---
 
-## 3. Estratégia de Migration
-
-### Fase 1: Renomear Tabelas (Atomic)
+## 2. Migration: Expandir asset_gift_items
 
 ```sql
--- Renomear tabela principal
-ALTER TABLE partner_companies RENAME TO external_companies;
+-- Adicionar campos estruturados (semelhante ao asset_inventory)
+ALTER TABLE asset_gift_items
+  ADD COLUMN category_id UUID REFERENCES asset_categories(id),
+  ADD COLUMN supplier_id UUID REFERENCES external_companies(id),
+  ADD COLUMN home_location_id UUID REFERENCES bu_locations(id),
+  ADD COLUMN acquired_at DATE,
+  ADD COLUMN acquisition_value NUMERIC(12,2),
+  ADD COLUMN quantity_total INTEGER DEFAULT 0;
 
--- Renomear tabela de associações
-ALTER TABLE partner_company_bu_associations 
-  RENAME TO external_company_bu_associations;
+-- Índices para performance
+CREATE INDEX idx_gift_items_category ON asset_gift_items(category_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_gift_items_supplier ON asset_gift_items(supplier_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_gift_items_location ON asset_gift_items(home_location_id) WHERE deleted_at IS NULL;
 
--- Renomear coluna FK
-ALTER TABLE external_company_bu_associations 
-  RENAME COLUMN partner_company_id TO external_company_id;
-
--- Adicionar coluna de papel com default 'partner'
-ALTER TABLE external_company_bu_associations
-  ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'partner' NOT NULL;
-
--- Constraint para valores válidos
-ALTER TABLE external_company_bu_associations
-  ADD CONSTRAINT chk_bu_assoc_role CHECK (role IN ('partner', 'supplier', 'customer'));
-
--- Índice único: uma empresa só pode ter um papel por BU
-CREATE UNIQUE INDEX idx_ext_company_bu_role 
-  ON external_company_bu_associations(external_company_id, bu_id, role)
-  WHERE deleted_at IS NULL;
+-- Comentários de documentação
+COMMENT ON COLUMN asset_gift_items.category_id IS 'FK para asset_categories (subcategoria hierárquica)';
+COMMENT ON COLUMN asset_gift_items.supplier_id IS 'FK para external_companies (fornecedor)';
+COMMENT ON COLUMN asset_gift_items.home_location_id IS 'FK para bu_locations (localização base)';
+COMMENT ON COLUMN asset_gift_items.category IS 'LEGADO: Campo texto livre. Preferir category_id.';
 ```
-
-### Fase 2: Views de Compatibilidade
-
-Para minimizar impacto no código existente, criar views que mantêm os nomes antigos:
-
-```sql
--- View que mapeia para código legado (pode ser removida depois)
-CREATE OR REPLACE VIEW partner_companies AS
-SELECT * FROM external_companies;
-
-CREATE OR REPLACE VIEW partner_company_bu_associations AS
-SELECT 
-  id, external_company_id AS partner_company_id, bu_id, is_active,
-  notes, created_at, created_by, updated_at, deleted_at,
-  default_contact_ids, supervisor_profile_ids, supervisor_contact_ids
-FROM external_company_bu_associations
-WHERE role = 'partner';
-```
-
-### Fase 3: Atualizar Tabelas Relacionadas
-
-```sql
--- partner_contacts → external_contacts (ou manter e adicionar FK)
-ALTER TABLE partner_contacts 
-  RENAME COLUMN partner_company_id TO external_company_id;
-
--- partner_service_mappings 
-ALTER TABLE partner_service_mappings
-  RENAME COLUMN partner_company_id TO external_company_id;
-
--- ticket_routing_rules
-ALTER TABLE ticket_routing_rules
-  RENAME COLUMN partner_company_id TO external_company_id;
-
--- tickets
-ALTER TABLE tickets
-  RENAME COLUMN partner_company_id TO external_company_id;
-```
-
-### Fase 4: Atualizar RLS Policies
-
-Recriar policies com novos nomes de tabela.
 
 ---
 
-## 4. Impacto no Código
+## 3. Módulo Suppliers (Novo)
 
-### 4.1 Arquivos que Precisam Ser Atualizados
+### 3.1 Query Keys
 
-| Módulo | Arquivos | Mudança |
-|--------|----------|---------|
-| **Partners** | `useGlobalPartners.ts`, `usePartnerBuAssociations.ts`, tipos | Trocar nomes de tabela |
-| **Tickets** | `usePartners.ts`, `usePartnerSupervisors.ts`, `useAvailableExternalContacts.ts` | Trocar nomes de tabela |
-| **External** | `request-magic-link/index.ts` | Trocar nomes de tabela |
-| **Components** | `ContactHoverCard.tsx`, `PartnerContactHoverCard.tsx` | Trocar nomes de tabela |
-
-### 4.2 Abordagem: Views ou Refactor Completo?
-
-**Opção A - Views (Incremental):**
-- Criar views com nomes antigos
-- Código continua funcionando
-- Gradualmente migrar para novos nomes
-- Remover views quando migração estiver completa
-
-**Opção B - Refactor Completo (Recomendado):**
-- Atualizar todos os arquivos de uma vez
-- Mais limpo a longo prazo
-- Maior risco de bugs temporários
-
-**Decisão sugerida:** Opção B — refactor completo com find/replace cuidadoso.
-
----
-
-## 5. Novo Módulo: Suppliers
-
-### 5.1 Estrutura de Arquivos
-
-```
-src/modules/suppliers/
-├── hooks/
-│   ├── useSuppliers.ts          # Lista suppliers da BU
-│   ├── useSupplierDetail.ts     # Detalhe de um supplier
-│   └── index.ts
-├── pages/
-│   ├── SuppliersPage.tsx        # Lista /settings/suppliers
-│   ├── SupplierDetailPage.tsx   # Detalhe /settings/suppliers/:id
-│   └── index.ts
-├── types.ts
-└── index.ts
-```
-
-### 5.2 Hook Principal
+**Arquivo:** `src/lib/queryKeys/suppliers.ts`
 
 ```typescript
-// useSuppliers.ts
-export function useSuppliers() {
-  const { currentBuId } = useBu();
-  const supabase = useBuScopedSupabase();
-
-  return useQuery({
-    queryKey: suppliersKeys.list(currentBuId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("external_company_bu_associations")
-        .select(`
-          id, is_active, notes,
-          external_company:external_companies(
-            id, name, legal_name, person_type, document, document_type, status
-          )
-        `)
-        .eq("bu_id", currentBuId)
-        .eq("role", "supplier")  // ← Filtro por papel
-        .is("deleted_at", null);
-
-      if (error) throw error;
-      return data;
-    },
-  });
-}
+export const suppliersKeys = {
+  all: (buId: string | null) => ['suppliers', buId] as const,
+  list: (buId: string | null, filters?: { search?: string }) => 
+    ['suppliers', 'list', buId, filters] as const,
+  search: (term: string | null) => 
+    ['suppliers', 'search', term] as const,
+} as const;
 ```
 
-### 5.3 UI — SuppliersPage
+### 3.2 Hook: useSuppliers
 
-Reutilizar estrutura do PartnersPage com ajustes:
-- Título: "Fornecedores"
-- Filtro de role fixo em 'supplier'
-- Botão "Novo Fornecedor" que:
-  1. Busca por CNPJ
-  2. Se encontrar empresa existente → Ativar como supplier na BU
-  3. Se não encontrar → Criar empresa + associação com role='supplier'
+**Arquivo:** `src/modules/suppliers/hooks/useSuppliers.ts`
+
+Lista empresas com `role='supplier'` associadas à BU atual via `external_company_bu_associations`.
+
+Padrão conforme DEVELOPMENT_STANDARDS:
+- Usar `useBuScopedSupabase()` (POST-BU)
+- Campos explícitos (proibido `select('*')`)
+- staleTime de 5 minutos
+
+### 3.3 Hook: useSearchExternalCompany
+
+**Arquivo:** `src/modules/suppliers/hooks/useSearchExternalCompany.ts`
+
+Busca global em `external_companies` por nome ou CNPJ:
+- Se termo >= 11 dígitos numéricos → busca por `document`
+- Se termo >= 3 caracteres → busca por `name` (ilike)
+- Usa cliente global (tabela não é BU-scoped)
+
+### 3.4 Hook: useEnsureSupplierInBu
+
+**Arquivo:** `src/modules/suppliers/hooks/useEnsureSupplierInBu.ts`
+
+Ao selecionar empresa no combobox:
+1. Verifica se já existe associação com `role='supplier'` na BU
+2. Se não existe → cria via `external_company_bu_associations`
+3. Retorna para o formulário usar
 
 ---
 
-## 6. Fluxo de Cadastro de Fornecedor para Brindes
+## 4. Componente: SupplierCombobox
 
-```text
+**Arquivo:** `src/modules/assets/components/gifts/SupplierCombobox.tsx`
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Fornecedor                                          │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Buscar por nome ou CNPJ...                   ▾  │ │
+│ └─────────────────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Gráfica ABC             12.345.678/0001-90      │ │
+│ │ Brindes XYZ             98.765.432/0001-10      │ │
+│ │ ──────────────────────────────────────────────  │ │
+│ │ + Cadastrar "Nova Gráfica"                      │ │
+│ └─────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+```
+
+Usa Popover + Command (cmdk) seguindo padrão existente do Hub.
+
+---
+
+## 5. Atualização: GiftItemDialog
+
+### Novo Schema (Zod)
+
+```typescript
+const schema = z.object({
+  name: z.string().min(1, "Nome obrigatório"),
+  category_id: z.string().uuid("Subcategoria obrigatória"),
+  supplier_id: z.string().uuid().optional().nullable(),
+  home_location_id: z.string().uuid("Localização obrigatória"),
+  room_id: z.string().uuid().optional(), // Sala dependente da localização
+  acquired_at: z.string().optional(),
+  acquisition_value: z.coerce.number().min(0).optional(),
+  quantity_total: z.coerce.number().int().min(1, "Quantidade deve ser >= 1"),
+  notes: z.string().optional(),
+});
+```
+
+### Layout do Formulário
+
+```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Cadastrar Brinde                                               │
-│  ─────────────────────────────────────────────────────────────  │
+│  Novo Item de Brinde                                            │
+├─────────────────────────────────────────────────────────────────┤
+│  Nome *                                                         │
+│  [Camiseta Oficial_________________________________]            │
+│                                                                 │
+│  Subcategoria *                                                 │
+│  [▼ Selecione a subcategoria...                    ]            │
+│    ┌────────────────────────────────────────────┐               │
+│    │ Vestuário                                  │               │
+│    │   └ Camisetas                              │               │
+│    │   └ Bonés                                  │               │
+│    │ Escritório                                 │               │
+│    │   └ Canetas                                │               │
+│    │   └ Cadernos                               │               │
+│    └────────────────────────────────────────────┘               │
 │                                                                 │
 │  Fornecedor                                                     │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ [Buscar por CNPJ...]                                      │  │
-│  │                                                           │  │
-│  │ ┌─────────────────────────────────────────────────────┐   │  │
-│  │ │ Empresa ABC Ltda - 12.345.678/0001-90             │   │  │
-│  │ │ ✓ Já cadastrada como Parceiro                      │   │  │
-│  │ │ [Usar este fornecedor]                             │   │  │
-│  │ └─────────────────────────────────────────────────────┘   │  │
-│  │                                                           │  │
-│  │ OU                                                        │  │
-│  │                                                           │  │
-│  │ ┌─────────────────────────────────────────────────────┐   │  │
-│  │ │ CNPJ não encontrado                                │   │  │
-│  │ │ [Cadastrar nova empresa]                           │   │  │
-│  │ └─────────────────────────────────────────────────────┘   │  │
-│  └───────────────────────────────────────────────────────────┘  │
+│  [Buscar por nome ou CNPJ...                     ▾]             │
+│                                                                 │
+│  ┌─────────────────────────┐ ┌─────────────────────────┐        │
+│  │ Localização *           │ │ Sala                    │        │
+│  │ [▼ Selecione...      ]  │ │ [▼ Selecione...      ]  │        │
+│  └─────────────────────────┘ └─────────────────────────┘        │
+│                                                                 │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐         │
+│  │ Data Aquisição │ Valor Total  │ │ Quantidade *   │         │
+│  │ [____/__/____] │ [R$ 0,00___] │ │ [___1________] │         │
+│  └──────────────┘ └──────────────┘ └──────────────────┘         │
+│                                                                 │
+│  Observações                                                    │
+│  [___________________________________________________]          │
+│                                                                 │
+│                              [Cancelar] [Salvar]                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 7. Ordem de Implementação
+## 6. Atualização: useGifts Hook
 
-### Sprint 1: Foundation (Migration + Refactor)
-1. **Migration SQL** — Renomear tabelas e adicionar coluna role
-2. **Refactor código** — Find/replace em todos os arquivos
-3. **Testes** — Validar que Partners continua funcionando
+### Campos da Query (POST-BU, campos explícitos)
 
-### Sprint 2: Suppliers Module
-4. **Query Keys** — `src/lib/queryKeys/suppliers.ts`
-5. **Hooks** — `useSuppliers`, `useCreateSupplier`, etc.
-6. **Pages** — `SuppliersPage`, `SupplierDetailPage`
-7. **Rotas** — Adicionar em `/settings/suppliers`
+```typescript
+const GIFT_ITEM_FIELDS = `
+  id, bu_id, name, category, category_id, supplier_id, home_location_id,
+  acquired_at, acquisition_value, quantity_total, status, notes,
+  created_at, created_by, updated_at,
+  subcategory:asset_categories!category_id(id, name, parent_id),
+  supplier:external_companies!supplier_id(id, name, document),
+  home_location:bu_locations!home_location_id(id, name)
+`;
+```
 
-### Sprint 3: Integration com Gifts
-8. **GiftItemDialog** — Adicionar campo Fornecedor com autocomplete de suppliers
-9. **Atualizar `asset_gift_items`** — Adicionar `supplier_id UUID REFERENCES external_companies(id)`
+### createItem Mutation Atualizado
 
----
-
-## 8. Arquivos a Criar/Modificar
-
-| Arquivo | Operação | Propósito |
-|---------|----------|-----------|
-| Migration SQL | **Criar** | Renomear tabelas, adicionar role |
-| `src/lib/queryKeys/suppliers.ts` | **Criar** | Query keys para suppliers |
-| `src/lib/queryKeys/externalCompanies.ts` | **Criar** | Query keys globais |
-| `src/modules/suppliers/` | **Criar** | Novo módulo completo |
-| `src/modules/partners/hooks/*.ts` | **Modificar** | Trocar nomes de tabela |
-| `src/modules/tickets/hooks/*.ts` | **Modificar** | Trocar nomes de tabela |
-| `src/modules/external/hooks/*.ts` | **Modificar** | Trocar nomes de tabela |
-| `src/components/contact/*.tsx` | **Modificar** | Trocar nomes de tabela |
-| `supabase/functions/request-magic-link/index.ts` | **Modificar** | Trocar nomes de tabela |
-| `docs/canonical/SCHEMA_QUICK_REFERENCE.md` | **Modificar** | Documentar mudanças |
-| Rotas | **Modificar** | Adicionar /settings/suppliers |
-
----
-
-## 9. Riscos e Mitigações
-
-| Risco | Mitigação |
-|-------|-----------|
-| Quebra de queries existentes | Views de compatibilidade temporárias |
-| RLS quebrada | Recriar todas as policies na mesma migration |
-| Triggers quebrados | Atualizar função do trigger de supervisores |
-| Edge function quebrada | Atualizar request-magic-link |
+```typescript
+mutationFn: async (data: CreateGiftItemData) => {
+  await client.from("asset_gift_items").insert({
+    bu_id: buId!,
+    created_by: user?.id,
+    name: data.name,
+    category_id: data.category_id,
+    supplier_id: data.supplier_id || null,
+    home_location_id: data.home_location_id,
+    acquired_at: data.acquired_at || null,
+    acquisition_value: data.acquisition_value || null,
+    quantity_total: data.quantity_total || 0,
+    notes: data.notes || null,
+  });
+}
+```
 
 ---
 
-## 10. Validação Pós-Implementação
+## 7. Atualização: Tipos
 
-| Cenário | Esperado |
-|---------|----------|
-| Criar parceiro existente | ✅ Partners continua funcionando |
-| Ativar empresa como supplier | ✅ Cria associação com role='supplier' |
-| Mesma empresa como partner E supplier | ✅ Duas associações distintas |
-| Buscar por CNPJ existente | ✅ Retorna empresa única |
-| Cadastrar brinde com fornecedor | ✅ Seleciona supplier da BU |
+### AssetGiftItem Expandido
+
+```typescript
+export interface AssetGiftItem {
+  id: string;
+  bu_id: string;
+  name: string;
+  category: string | null;              // LEGADO (texto livre)
+  category_id: string | null;           // NOVO (FK estruturada)
+  supplier_id: string | null;           // NOVO
+  home_location_id: string | null;      // NOVO
+  acquired_at: string | null;           // NOVO
+  acquisition_value: number | null;     // NOVO
+  quantity_total: number;               // NOVO
+  status: GiftItemStatus;
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  subcategory?: { id: string; name: string; parent_id: string | null } | null;
+  supplier?: { id: string; name: string; document: string | null } | null;
+  home_location?: { id: string; name: string } | null;
+}
+```
+
+---
+
+## 8. Atualização: GiftsTable
+
+### Colunas Atualizadas
+
+| Coluna | Dado | Fonte |
+|--------|------|-------|
+| Item | Nome + ícone | `name` |
+| Categoria | Pai → Subcategoria | `subcategory.parent.name` → `subcategory.name` |
+| Fornecedor | Nome + doc | `supplier.name`, `supplier.document` |
+| Localização | Nome | `home_location.name` |
+| Qtd | Quantidade inicial | `quantity_total` |
+| Disponível | Calculado | `getItemTotals()` |
+| Status | Badge | Baseado em disponível |
+
+---
+
+## 9. Arquivos a Criar/Modificar
+
+### Criar
+
+| Arquivo | Propósito |
+|---------|-----------|
+| Migration SQL | Expandir asset_gift_items |
+| `src/lib/queryKeys/suppliers.ts` | Query keys de suppliers |
+| `src/modules/suppliers/types.ts` | Tipos de supplier |
+| `src/modules/suppliers/hooks/useSuppliers.ts` | Lista suppliers da BU |
+| `src/modules/suppliers/hooks/useSearchExternalCompany.ts` | Busca global |
+| `src/modules/suppliers/hooks/useEnsureSupplierInBu.ts` | Auto-ativa supplier |
+| `src/modules/suppliers/hooks/index.ts` | Barrel exports |
+| `src/modules/suppliers/index.ts` | Module exports |
+| `src/modules/assets/components/gifts/SupplierCombobox.tsx` | Combobox de fornecedor |
+
+### Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/modules/assets/types.ts` | Expandir `AssetGiftItem` |
+| `src/modules/assets/hooks/useGifts.ts` | Expandir query + mutation |
+| `src/modules/assets/components/gifts/GiftItemDialog.tsx` | Novo formulário completo |
+| `src/modules/assets/components/gifts/GiftsTable.tsx` | Novas colunas |
+| `docs/canonical/SCHEMA_QUICK_REFERENCE.md` | Documentar novos campos |
+
+---
+
+## 10. Ordem de Execução
+
+1. **Migration SQL** — Adicionar colunas em asset_gift_items
+2. **suppliersKeys** — Query keys de suppliers
+3. **Tipos** — Atualizar `AssetGiftItem` + criar tipos de supplier
+4. **Hooks Suppliers** — `useSuppliers`, `useSearchExternalCompany`, `useEnsureSupplierInBu`
+5. **SupplierCombobox** — Componente de seleção de fornecedor
+6. **useGifts** — Atualizar query com joins e mutation com novos campos
+7. **GiftItemDialog** — Novo formulário completo
+8. **GiftsTable** — Novas colunas
+9. **Documentação** — Atualizar SCHEMA_QUICK_REFERENCE.md
+
+---
+
+## 11. Conformidade com Padrões (TCR + DEVELOPMENT_STANDARDS)
+
+| Regra | Status |
+|-------|--------|
+| POST-BU: usar `useBuScopedSupabase()` | ✅ |
+| Proibido `select('*')` | ✅ Campos explícitos |
+| Query keys via `queryKeys` | ✅ Criando `suppliersKeys` |
+| Identity: usar `profiles.id` | ✅ `created_by` é profile |
+| staleTime configurado | ✅ 5min categorias, 2min items |
+| Insert com `bu_id` explícito | ✅ |
+| RLS existente aproveitada | ✅ `asset_gift_items` já tem RLS |
+
+---
+
+## 12. Considerações de Segurança
+
+### RLS
+
+- `asset_gift_items` já possui RLS BU-scoped existente
+- `external_companies` é global (sem BU) — busca usa client global
+- `external_company_bu_associations` tem RLS BU-scoped
+- Joins funcionam via FK, RLS valida acesso
+
+### Busca de Fornecedores
+
+A busca global em `external_companies` é intencional (empresas são globais). A associação como supplier na BU é criada automaticamente ao selecionar, garantindo visibilidade futura.
