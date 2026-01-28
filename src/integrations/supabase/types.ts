@@ -5493,6 +5493,7 @@ export type Database = {
           is_active: boolean
           notes: string | null
           partner_company_id: string
+          supervisor_contact_ids: string[] | null
           supervisor_profile_ids: string[] | null
           updated_at: string
         }
@@ -5506,6 +5507,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           partner_company_id: string
+          supervisor_contact_ids?: string[] | null
           supervisor_profile_ids?: string[] | null
           updated_at?: string
         }
@@ -5519,6 +5521,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           partner_company_id?: string
+          supervisor_contact_ids?: string[] | null
           supervisor_profile_ids?: string[] | null
           updated_at?: string
         }
