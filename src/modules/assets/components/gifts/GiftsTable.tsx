@@ -97,6 +97,7 @@ export function GiftsTable({ items, batches, getItemTotals, onItemClick }: Gifts
             <TableHead>Categoria</TableHead>
             <TableHead>Fornecedor</TableHead>
             <TableHead>Localização</TableHead>
+            <TableHead className="text-right">Valor Und</TableHead>
             <TableHead className="text-right">Qtd</TableHead>
             <TableHead className="text-right">Disponível</TableHead>
             <TableHead>Status</TableHead>
@@ -171,6 +172,19 @@ export function GiftsTable({ items, batches, getItemTotals, onItemClick }: Gifts
                       <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>{item.home_location.name}</span>
                     </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+
+                {/* Valor Unitário */}
+                <TableCell className="text-right">
+                  {item.acquisition_value && item.quantity_total && item.quantity_total > 0 ? (
+                    <span className="text-sm">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                        item.acquisition_value / item.quantity_total
+                      )}
+                    </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
