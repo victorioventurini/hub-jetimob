@@ -65,6 +65,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
               form={form}
               isEditing={isEditing}
               isInventoryAdmin={isInventoryAdmin}
+              canManageInventory={canManageInventory}
               subcategories={subcategories}
               groupedSubcategories={groupedSubcategories}
               itemHasParentCategory={itemHasParentCategory}
@@ -73,6 +74,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
               brands={brands}
               duplicateError={duplicateError}
               onCodeChange={handleCodeChange}
+              itemId={item?.id}
             />
 
             <div className="flex justify-end gap-2 pt-4">

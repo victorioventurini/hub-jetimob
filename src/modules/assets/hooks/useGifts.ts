@@ -34,7 +34,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
         .from("asset_gift_items")
         .select(`
           id, bu_id, name, category, category_id, supplier_id, home_location_id,
-          acquired_at, acquisition_value, quantity_total, status, notes,
+          acquired_at, acquisition_value, quantity_total, photos, status, notes,
           created_at, created_by, updated_at,
           subcategory:asset_categories!category_id(id, name, parent_id),
           supplier:external_companies!supplier_id(id, name, document),
@@ -136,6 +136,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       acquired_at?: string | null;
       acquisition_value?: number | null;
       quantity_total?: number;
+      photos?: string[];
       notes?: string;
     }) => {
       const client = assertSupabaseClient(supabase, "createGiftItem");
@@ -151,6 +152,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
           acquired_at: data.acquired_at || null,
           acquisition_value: data.acquisition_value || null,
           quantity_total: data.quantity_total || 0,
+          photos: data.photos || [],
           notes: data.notes || null,
         })
         .select()
@@ -179,6 +181,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       acquired_at?: string | null;
       acquisition_value?: number | null;
       quantity_total?: number;
+      photos?: string[];
       status?: 'active' | 'inactive';
       notes?: string;
     }) => {

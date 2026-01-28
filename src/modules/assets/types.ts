@@ -151,6 +151,7 @@ export interface AssetKeyring {
   tag_number: string;
   status: KeyringStatus;
   current_user_id: string | null;
+  photos: string[];
   notes: string | null;
   created_at: string;
   created_by: string | null;
@@ -218,6 +219,7 @@ export interface AssetGiftItem {
   acquired_at: string | null;           // Data de aquisição
   acquisition_value: number | null;     // Valor total
   quantity_total: number;               // Quantidade cadastrada
+  photos: string[];                     // Array de URLs de fotos
   status: GiftItemStatus;
   notes: string | null;
   created_at: string;

@@ -3,13 +3,13 @@
  * Usa campos estruturados: categoria, fornecedor, localização, etc.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ImageIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useGifts, useAssetCategoriesQuery, useLocations } from "../../hooks";
 import { SupplierCombobox } from "./SupplierCombobox";
+import { AssetPhotoUpload } from "../shared/AssetPhotoUpload";
 import { buildSubcategoryList } from "../inventory/form/inventoryFormSchema";
 
 const schema = z.object({
@@ -57,6 +58,7 @@ const schema = z.object({
   acquired_at: z.string().optional(),
   acquisition_value: z.coerce.number().min(0, "Valor inválido").optional(),
   quantity_total: z.coerce.number().int().min(1, "Quantidade deve ser >= 1"),
+  photos: z.array(z.string()).optional(),
   notes: z.string().max(2000, "Observações muito longas").optional(),
 });
 
@@ -71,6 +73,7 @@ export function GiftItemDialog({ open, onOpenChange }: GiftItemDialogProps) {
   const { createItem, isCreatingItem } = useGifts();
   const { data: categories = [] } = useAssetCategoriesQuery();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
+  const [tempItemId] = useState(() => `new-${Date.now()}`);
 
   // Build subcategory list grouped by parent
   const subcategories = useMemo(() => buildSubcategoryList(categories), [categories]);
@@ -96,6 +99,7 @@ export function GiftItemDialog({ open, onOpenChange }: GiftItemDialogProps) {
       acquired_at: "",
       acquisition_value: undefined,
       quantity_total: 1,
+      photos: [],
       notes: "",
     },
   });
@@ -115,6 +119,7 @@ export function GiftItemDialog({ open, onOpenChange }: GiftItemDialogProps) {
         acquired_at: "",
         acquisition_value: undefined,
         quantity_total: 1,
+        photos: [],
         notes: "",
       });
     }
@@ -137,6 +142,7 @@ export function GiftItemDialog({ open, onOpenChange }: GiftItemDialogProps) {
       acquired_at: data.acquired_at || null,
       acquisition_value: data.acquisition_value || null,
       quantity_total: data.quantity_total,
+      photos: data.photos || [],
       notes: data.notes || undefined,
     });
     onOpenChange(false);
@@ -349,6 +355,31 @@ export function GiftItemDialog({ open, onOpenChange }: GiftItemDialogProps) {
                         type="number"
                         min="1"
                         {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Fotos */}
+            <div className="space-y-2 p-4 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                <ImageIcon className="h-4 w-4" />
+                <span>Fotos do Item</span>
+              </div>
+              <FormField
+                control={form.control}
+                name="photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <AssetPhotoUpload
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        folder="gifts"
+                        itemId={tempItemId}
                       />
                     </FormControl>
                     <FormMessage />

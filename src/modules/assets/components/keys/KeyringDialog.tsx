@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { ImageIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClavicularySelect } from "@/components/selects";
+import { AssetPhotoUpload } from "../shared/AssetPhotoUpload";
 import { useKeys } from "../../hooks";
 import type { AssetHook, AssetKeyring } from "../../types";
 
@@ -34,11 +36,13 @@ const createSchema = z.object({
   tag_number: z.string().min(1, "Número do chaveiro obrigatório"),
   claviculary_id: z.string().min(1, "Claviculário obrigatório"),
   hook_id: z.string().min(1, "Gancho obrigatório"),
+  photos: z.array(z.string()).optional(),
   notes: z.string().optional(),
 });
 
 const editSchema = z.object({
   tag_number: z.string().min(1, "Número do chaveiro obrigatório"),
+  photos: z.array(z.string()).optional(),
   notes: z.string().optional(),
 });
 
@@ -56,6 +60,7 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
   const { clavicularies, getHooks, createKeyring, updateKeyring, isCreatingKeyring, isUpdatingKeyring } = useKeys();
   const [availableHooks, setAvailableHooks] = useState<AssetHook[]>([]);
   const [loadingHooks, setLoadingHooks] = useState(false);
+  const [tempItemId] = useState(() => `new-${Date.now()}`);
 
   const createForm = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
@@ -63,6 +68,7 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
       tag_number: "",
       claviculary_id: undefined,
       hook_id: undefined,
+      photos: [],
       notes: "",
     },
   });
@@ -71,6 +77,7 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
     resolver: zodResolver(editSchema),
     defaultValues: {
       tag_number: "",
+      photos: [],
       notes: "",
     },
   });
@@ -80,6 +87,7 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
       if (isEditMode && keyring) {
         editForm.reset({
           tag_number: keyring.tag_number,
+          photos: keyring.photos || [],
           notes: keyring.notes || "",
         });
       } else {
@@ -115,6 +123,7 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
       tag_number: data.tag_number,
       claviculary_id: data.claviculary_id,
       hook_id: data.hook_id,
+      photos: data.photos || [],
       notes: data.notes || undefined,
     });
     onOpenChange(false);
@@ -125,6 +134,7 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
     updateKeyring({
       id: keyring.id,
       tag_number: data.tag_number,
+      photos: data.photos || [],
       notes: data.notes || undefined,
     });
     onOpenChange(false);
@@ -150,6 +160,28 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
                     <FormLabel>Número do Chaveiro *</FormLabel>
                     <FormControl>
                       <Input placeholder="001" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Fotos</span>
+                    </div>
+                    <FormControl>
+                      <AssetPhotoUpload
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        folder="keys"
+                        itemId={keyring?.id || tempItemId}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -254,6 +286,28 @@ export function KeyringDialog({ open, onOpenChange, keyring }: KeyringDialogProp
                   )}
                 />
               )}
+
+              <FormField
+                control={createForm.control}
+                name="photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Fotos</span>
+                    </div>
+                    <FormControl>
+                      <AssetPhotoUpload
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        folder="keys"
+                        itemId={tempItemId}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={createForm.control}
