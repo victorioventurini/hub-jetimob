@@ -12,7 +12,7 @@ export type PartnerServiceStatus = "active" | "inactive";
 export interface PartnerServiceMapping {
   id: string;
   bu_id: string;
-  partner_company_id: string;
+  external_company_id: string;
   category_id: string;
   subcategory_id: string | null;
   status: PartnerServiceStatus;
@@ -25,8 +25,8 @@ export interface PartnerServiceMapping {
 export interface PartnerService {
   id: string;
   bu_id: string;
-  partner_company_id: string;
-  partner_company_name: string;
+  external_company_id: string;
+  external_company_name: string;
   category_id: string;
   category_name: string;
   category_scope: string;
@@ -71,12 +71,12 @@ export function usePartnerServices(partnerCompanyId?: string) {
 
       let query = supabase
         .from("v_partner_services")
-        .select("id, bu_id, partner_company_id, partner_company_name, category_id, category_name, category_scope, subcategory_id, subcategory_name, is_generalist, status, notes, created_at, updated_at")
+        .select("id, bu_id, external_company_id, external_company_name, category_id, category_name, category_scope, subcategory_id, subcategory_name, is_generalist, status, notes, created_at, updated_at")
         .eq("bu_id", buId)
         .eq("status", "active");
 
       if (partnerCompanyId) {
-        query = query.eq("partner_company_id", partnerCompanyId);
+        query = query.eq("external_company_id", partnerCompanyId);
       }
 
       const { data, error } = await query.order("category_name");
@@ -155,7 +155,7 @@ export function usePartnersByCategory(categoryId: string | undefined) {
       // Buscar parceiros distintos que atendem a categoria
       const { data, error } = await supabase
         .from("v_partner_services")
-        .select("partner_company_id, partner_company_name")
+        .select("external_company_id, external_company_name")
         .eq("bu_id", buId)
         .eq("category_id", categoryId)
         .eq("status", "active");
@@ -164,12 +164,12 @@ export function usePartnersByCategory(categoryId: string | undefined) {
 
       // Remover duplicatas (mesmo parceiro pode ter múltiplas subcategorias)
       const uniquePartners = Array.from(
-        new Map(data.map(p => [p.partner_company_id, p])).values()
+        new Map(data.map(p => [p.external_company_id, p])).values()
       );
 
       return uniquePartners.map(p => ({
-        id: p.partner_company_id,
-        name: p.partner_company_name,
+        id: p.external_company_id,
+        name: p.external_company_name,
       }));
     },
     enabled: !!buId && !!categoryId,
@@ -192,9 +192,9 @@ export function usePartnerServiceMappings(partnerCompanyId: string | undefined) 
 
       const { data, error } = await supabase
         .from("partner_service_mappings")
-        .select("id, bu_id, partner_company_id, category_id, subcategory_id, status, notes, created_at, updated_at")
+        .select("id, bu_id, external_company_id, category_id, subcategory_id, status, notes, created_at, updated_at")
         .eq("bu_id", buId)
-        .eq("partner_company_id", partnerCompanyId)
+        .eq("external_company_id", partnerCompanyId)
         .is("deleted_at", null);
 
       if (error) throw error;
@@ -230,7 +230,7 @@ export function useCreatePartnerService() {
         .from("partner_service_mappings")
         .insert({
           bu_id: buId,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.partner_company_id,
           category_id: data.category_id,
           subcategory_id: data.subcategory_id || null,
           notes: data.notes || null,
@@ -341,7 +341,7 @@ export function useSavePartnerServices() {
         .from("partner_service_mappings")
         .update({ deleted_at: new Date().toISOString() })
         .eq("bu_id", buId)
-        .eq("partner_company_id", partner_company_id)
+        .eq("external_company_id", partner_company_id)
         .is("deleted_at", null);
 
       if (deleteError) throw deleteError;
@@ -354,7 +354,7 @@ export function useSavePartnerServices() {
       // Inserir novos mapeamentos
       const mappingsToInsert = services.map((s) => ({
         bu_id: buId,
-        partner_company_id,
+        external_company_id: partner_company_id,
         category_id: s.category_id,
         subcategory_id: s.subcategory_id,
         notes: s.notes || null,

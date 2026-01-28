@@ -8108,11 +8108,11 @@ export type Database = {
             | Database["public"]["Enums"]["ticket_category_scope"]
             | null
           created_at: string | null
+          external_company_id: string | null
+          external_company_name: string | null
           id: string | null
           is_generalist: boolean | null
           notes: string | null
-          partner_company_id: string | null
-          partner_company_name: string | null
           status: Database["public"]["Enums"]["partner_service_status"] | null
           subcategory_id: string | null
           subcategory_name: string | null
@@ -8135,7 +8135,7 @@ export type Database = {
           },
           {
             foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
             referencedRelation: "external_companies"
             referencedColumns: ["id"]

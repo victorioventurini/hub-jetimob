@@ -18,7 +18,7 @@ export function useRoutingRules() {
 
       const { data, error } = await supabase
         .from("ticket_routing_rules")
-        .select("id, bu_id, partner_company_id, subcategory_id, assignee_contact_ids, watcher_contact_ids, notes, created_at, created_by, updated_at, deleted_at")
+        .select("id, bu_id, external_company_id, subcategory_id, assignee_contact_ids, watcher_contact_ids, notes, created_at, created_by, updated_at, deleted_at")
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
