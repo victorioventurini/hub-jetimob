@@ -111,9 +111,8 @@ export default function CreateTicketPage() {
       type: typeFromUrl === 'external' ? 'external' : 'internal',
       title: "",
       initial_message: "",
-      // For external tickets, no default visibility - user must select
-      // For internal tickets, default to bu_all
-      visibility: typeFromUrl === 'external' ? undefined : "bu_all",
+      // No default visibility - user must select
+      visibility: undefined,
     },
   });
 
@@ -743,10 +742,6 @@ export default function CreateTicketPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* bu_all only available for internal tickets */}
-                        {selectedType !== "external" && (
-                          <SelectItem value="bu_all">Toda {currentBu?.name || "a BU"}</SelectItem>
-                        )}
                         <SelectItem value="teams">Times específicos</SelectItem>
                         <SelectItem value="users">Usuários específicos</SelectItem>
                         <SelectItem value="private">Privado</SelectItem>
