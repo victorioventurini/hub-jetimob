@@ -43,10 +43,16 @@ export function useCreateTicket(profileId: string | null) {
   return useMutation({
     mutationFn: async (data: CreateTicketData) => {
       if (!buId) throw new Error("BU não selecionada");
-      if (!profileId) throw new Error("Perfil não carregado");
+      if (!profileId) throw new Error("Perfil não carregado - faça login novamente");
+
+      // Verificação extra: profileId deve ser um UUID válido
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(profileId)) {
+        console.error("[useCreateTicket] Invalid profileId format:", profileId);
+        throw new Error("ID de perfil inválido");
+      }
 
       // Debug guard: confirm we never send legacy column names to PostgREST
-      // (This is the exact error the user is seeing)
       console.debug("[useCreateTicket] input", {
         type: data.type,
         external_company_id: data.external_company_id ?? null,
@@ -79,8 +85,10 @@ export function useCreateTicket(profileId: string | null) {
 
       // If this ever becomes true, we found the culprit.
       console.debug("[useCreateTicket] insertPayload keys", Object.keys(insertPayload));
-      console.debug("[useCreateTicket] legacy column present?", {
-        has_partner_company_id: Object.prototype.hasOwnProperty.call(insertPayload, "partner_company_id"),
+      console.debug("[useCreateTicket] identity verification", {
+        created_by_user_id: insertPayload.created_by_user_id,
+        owner_user_id: insertPayload.owner_user_id,
+        profileIdFromHook: profileId,
       });
 
       // Create ticket with profileId (profiles.id)
@@ -90,7 +98,18 @@ export function useCreateTicket(profileId: string | null) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Detalhar erro de RLS para debugging
+        if (error.message?.includes('row-level security')) {
+          console.error("[useCreateTicket] RLS VIOLATION:", {
+            error,
+            buId,
+            profileId,
+            payload: insertPayload,
+          });
+        }
+        throw error;
+      }
 
       // Add creator as requester participant with profileId
       await supabase.from("ticket_participants").insert({
