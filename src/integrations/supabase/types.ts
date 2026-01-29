@@ -7922,6 +7922,17 @@ export type Database = {
           },
         ]
       }
+      v_identity_health_check: {
+        Row: {
+          bu_id: string | null
+          description: string | null
+          email: string | null
+          issue_type: string | null
+          profile_id: string | null
+          record_id: string | null
+        }
+        Relationships: []
+      }
       v_notification_delivery_health: {
         Row: {
           avg_retries: number | null
@@ -8754,6 +8765,7 @@ export type Database = {
       }
       cleanup_old_perf_snapshots: { Args: never; Returns: number }
       cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
+      cleanup_orphan_memberships: { Args: never; Returns: Json }
       collect_perf_metrics: { Args: never; Returns: Json }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_user_calls_today: {
