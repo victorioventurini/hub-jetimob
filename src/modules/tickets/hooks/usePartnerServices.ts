@@ -92,21 +92,61 @@ export function usePartnerServices(partnerCompanyId?: string) {
  * Busca categorias atendidas por um parceiro (usando função SQL)
  */
 export function usePartnerCategories(partnerCompanyId: string | undefined) {
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerCategories(partnerCompanyId),
+    queryKey: queryKeys.tickets.partnerCategories(buId ?? null, partnerCompanyId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      if (!partnerCompanyId) return [];
+      if (!buId || !partnerCompanyId) return [];
 
+      // Canonical source: v_partner_services (BU-scoped) keyed by external_company_id.
       const { data, error } = await supabase
-        .rpc("get_partner_categories", { p_partner_company_id: partnerCompanyId });
+        .from("v_partner_services")
+        .select("category_id, category_name, subcategory_id, is_generalist")
+        .eq("bu_id", buId)
+        .eq("external_company_id", partnerCompanyId)
+        .eq("status", "active");
 
       if (error) throw error;
-      return data as PartnerCategory[];
+
+      const map = new Map<
+        string,
+        { category_id: string; category_name: string; is_generalist: boolean; subIds: Set<string> }
+      >();
+
+      for (const row of data || []) {
+        const categoryId = (row as any).category_id as string;
+        const categoryName = (row as any).category_name as string;
+        const isGeneralist = Boolean((row as any).is_generalist);
+        const subId = (row as any).subcategory_id as string | null;
+
+        const existing = map.get(categoryId);
+        if (!existing) {
+          map.set(categoryId, {
+            category_id: categoryId,
+            category_name: categoryName,
+            is_generalist: isGeneralist,
+            subIds: new Set(subId ? [subId] : []),
+          });
+        } else {
+          existing.is_generalist = existing.is_generalist || isGeneralist;
+          if (subId) existing.subIds.add(subId);
+        }
+      }
+
+      return Array.from(map.values())
+        .map((v) => ({
+          category_id: v.category_id,
+          category_name: v.category_name,
+          is_generalist: v.is_generalist,
+          subcategory_count: v.subIds.size,
+        }))
+        .sort((a, b) => a.category_name.localeCompare(b.category_name));
     },
-    enabled: !!partnerCompanyId,
+    enabled: !!buId && !!partnerCompanyId,
   });
 }
 
@@ -117,24 +157,44 @@ export function usePartnerSubcategories(
   partnerCompanyId: string | undefined,
   categoryId: string | undefined
 ) {
+  const { currentBu } = useBu();
+  const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerSubcategories(partnerCompanyId, categoryId),
+    queryKey: queryKeys.tickets.partnerSubcategories(buId ?? null, partnerCompanyId, categoryId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      if (!partnerCompanyId || !categoryId) return [];
+      if (!buId || !partnerCompanyId || !categoryId) return [];
 
+      // Canonical source: v_partner_services (BU-scoped)
       const { data, error } = await supabase
-        .rpc("get_partner_subcategories", {
-          p_partner_company_id: partnerCompanyId,
-          p_category_id: categoryId,
-        });
+        .from("v_partner_services")
+        .select("subcategory_id, subcategory_name")
+        .eq("bu_id", buId)
+        .eq("external_company_id", partnerCompanyId)
+        .eq("category_id", categoryId)
+        .eq("status", "active")
+        .not("subcategory_id", "is", null);
 
       if (error) throw error;
-      return data as PartnerSubcategory[];
+
+      const unique = new Map<string, PartnerSubcategory>();
+      for (const row of data || []) {
+        const id = (row as any).subcategory_id as string;
+        if (!unique.has(id)) {
+          unique.set(id, {
+            subcategory_id: id,
+            subcategory_name: (row as any).subcategory_name as string,
+          });
+        }
+      }
+
+      return Array.from(unique.values()).sort((a, b) =>
+        a.subcategory_name.localeCompare(b.subcategory_name)
+      );
     },
-    enabled: !!partnerCompanyId && !!categoryId,
+    enabled: !!buId && !!partnerCompanyId && !!categoryId,
   });
 }
 
