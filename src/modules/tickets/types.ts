@@ -45,8 +45,6 @@ export interface PartnerServiceMapping {
   id: string;
   bu_id: string;
   external_company_id: string;
-  /** @deprecated Use external_company_id - kept for backward compat */
-  partner_company_id?: string;
   category_id: string;
   subcategory_id: string | null;
   status: 'active' | 'inactive';
@@ -61,8 +59,6 @@ export interface PartnerContact {
   id: string;
   bu_id: string;
   external_company_id: string;
-  /** @deprecated Use external_company_id - kept for backward compat */
-  partner_company_id?: string;
   profile_user_id: string | null;
   name: string;
   email: string;
@@ -73,7 +69,6 @@ export interface PartnerContact {
   updated_at: string;
   deleted_at: string | null;
   // Joined
-  partner_company?: { id: string; name: string } | null;
   external_company?: { id: string; name: string } | null;
 }
 
@@ -113,8 +108,6 @@ export interface TicketRoutingRule {
   id: string;
   bu_id: string;
   external_company_id: string | null;
-  /** @deprecated Use external_company_id */
-  partner_company_id?: string | null;
   subcategory_id: string | null;
   assignee_contact_ids: string[];
   watcher_contact_ids: string[];
@@ -124,7 +117,6 @@ export interface TicketRoutingRule {
   updated_at: string;
   deleted_at: string | null;
   // Joined
-  partner_company?: { id: string; name: string } | null;
   external_company?: { id: string; name: string } | null;
   subcategory?: { id: string; name: string; category?: { id: string; name: string } } | null;
   assignee_contacts?: PartnerContact[];
@@ -172,10 +164,7 @@ export interface Ticket {
   visibility_team_ids: string[];
   visibility_squad_ids: string[];
   visibility_user_ids: string[];
-  /** Unified external company model (TCR v2.73+) - use external_company_id in new code */
   external_company_id: string | null;
-  /** @deprecated Use external_company_id - kept for backward compat */
-  partner_company_id?: string | null;
   category_id: string | null;
   subcategory_id: string | null;
   external_assignee_contact_ids: string[];
@@ -188,7 +177,7 @@ export interface Ticket {
   // Joined (using actual database field names from profiles table)
   created_by?: { id: string; display_name: string; photo_url: string | null } | null;
   owner?: { id: string; display_name: string; photo_url: string | null } | null;
-  partner_company?: { id: string; name: string } | null;
+  external_company?: { id: string; name: string } | null;
   category?: { id: string; name: string } | null;
   subcategory?: { id: string; name: string } | null;
   assigned_contact?: { id: string; name: string; email: string } | null;
@@ -360,7 +349,7 @@ export interface TicketFilters {
   status?: TicketStatus | TicketStatus[];
   category_id?: string;
   subcategory_id?: string;
-  partner_company_id?: string;
+  external_company_id?: string;
   owner_user_id?: string;
   assigned_contact_id?: string;
   created_by_user_id?: string;
@@ -386,7 +375,7 @@ export interface CreateTicketData {
   title: string;
   category_id?: string | null;
   subcategory_id?: string | null;
-  partner_company_id?: string | null;
+  external_company_id?: string | null;
   // External contact assignment (contact-first routing v2.4+)
   assigned_contact_id?: string | null;
   assignment_source?: 'contact_capability' | 'routing_fallback' | 'manual' | null;

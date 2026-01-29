@@ -5691,9 +5691,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          external_company_id: string
           id: string
           is_active: boolean
-          partner_company_id: string
           subcategory_id: string | null
           updated_at: string
         }
@@ -5704,9 +5704,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          external_company_id: string
           id?: string
           is_active?: boolean
-          partner_company_id: string
           subcategory_id?: string | null
           updated_at?: string
         }
@@ -5717,9 +5717,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          external_company_id?: string
           id?: string
           is_active?: boolean
-          partner_company_id?: string
           subcategory_id?: string | null
           updated_at?: string
         }
@@ -5747,7 +5747,7 @@ export type Database = {
           },
           {
             foreignKeyName: "partner_contact_capabilities_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
             referencedRelation: "external_companies"
             referencedColumns: ["id"]
@@ -8199,11 +8199,11 @@ export type Database = {
           bu_id: string | null
           category_id: string | null
           category_name: string | null
+          company_name: string | null
           document: string | null
           document_type: string | null
+          external_company_id: string | null
           id: string | null
-          partner_company_id: string | null
-          partner_company_name: string | null
           person_type: string | null
           status: Database["public"]["Enums"]["partner_service_status"] | null
           subcategory_id: string | null
@@ -8226,7 +8226,7 @@ export type Database = {
           },
           {
             foreignKeyName: "partner_service_mappings_partner_company_id_fkey"
-            columns: ["partner_company_id"]
+            columns: ["external_company_id"]
             isOneToOne: false
             referencedRelation: "external_companies"
             referencedColumns: ["id"]
@@ -9390,7 +9390,7 @@ export type Database = {
         Args: {
           p_bu_id: string
           p_category_id: string
-          p_partner_company_id: string
+          p_external_company_id: string
           p_subcategory_id?: string
         }
         Returns: string

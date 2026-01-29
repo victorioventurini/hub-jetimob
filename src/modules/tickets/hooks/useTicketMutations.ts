@@ -49,7 +49,7 @@ export function useCreateTicket(profileId: string | null) {
       // (This is the exact error the user is seeing)
       console.debug("[useCreateTicket] input", {
         type: data.type,
-        partner_company_id: data.partner_company_id ?? null,
+        external_company_id: data.external_company_id ?? null,
         assigned_contact_id: data.assigned_contact_id ?? null,
         category_id: data.category_id ?? null,
         subcategory_id: data.subcategory_id ?? null,
@@ -64,7 +64,7 @@ export function useCreateTicket(profileId: string | null) {
         category_id: data.category_id || null,
         subcategory_id: data.subcategory_id || null,
         // Unified external company model (TCR v2.73+)
-        external_company_id: data.partner_company_id || null,
+        external_company_id: data.external_company_id || null,
         // External contact assignment (contact-first routing v2.4+)
         assigned_contact_id: data.assigned_contact_id || null,
         assignment_source: data.assignment_source || null,
