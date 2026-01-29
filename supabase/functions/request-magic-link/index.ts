@@ -50,7 +50,7 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
         name,
         email,
         bu_id,
-        partner_company:partner_companies!inner(id, name, status),
+        external_company:external_companies!inner(id, name, status),
         partner_contact_bu_associations!left(
           id,
           bu_id,
@@ -65,14 +65,14 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
       .is("deleted_at", null)
       .maybeSingle(),
     
-    // 2. Check partner company domain associations
+    // 2. Check external company domain associations
     supabase
-      .from("partner_company_bu_associations")
+      .from("external_company_bu_associations")
       .select(`
         id,
         bu_id,
         is_active,
-        partner_company:partner_companies!inner(id, name, allowed_domains, status),
+        external_company:external_companies!inner(id, name, allowed_domains, status),
         bu:bu_units!inner(id, name, status)
       `)
       .eq("is_active", true)
@@ -96,7 +96,7 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
   // Process partner contact (Mode B - external users)
   const partnerContact = partnerContactWithAssociationsResult.data;
   if (partnerContact) {
-    const company = partnerContact.partner_company as unknown as { id: string; name: string; status: string } | null;
+    const company = partnerContact.external_company as unknown as { id: string; name: string; status: string } | null;
     
     if (company?.status === 'active') {
       // Check active BU associations from the pre-fetched data
@@ -130,10 +130,10 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     }
   }
 
-  // Check partner company domain associations
+  // Check external company domain associations
   if (partnerBuAssociationsResult.data) {
     for (const assoc of partnerBuAssociationsResult.data) {
-      const company = assoc.partner_company as unknown as { id: string; name: string; allowed_domains: string[]; status: string } | null;
+      const company = assoc.external_company as unknown as { id: string; name: string; allowed_domains: string[]; status: string } | null;
       const bu = assoc.bu as unknown as { id: string; name: string; status: string } | null;
       const allowedDomains = company?.allowed_domains || [];
       

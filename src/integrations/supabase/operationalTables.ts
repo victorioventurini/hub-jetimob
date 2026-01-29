@@ -72,8 +72,10 @@ export const OPERATIONAL_TABLES: string[] = [
   "ticket_categories",
   "ticket_subcategories",
   "ticket_routing_rules",
-  "partner_companies",
+  "external_companies",
+  "external_company_bu_associations",
   "partner_contacts",
+  "partner_contact_bu_associations",
   "partner_contact_skills",
 
   // Notifications & Mentions

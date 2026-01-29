@@ -129,7 +129,7 @@ export function useCreateGlobalPartner() {
     },
     onError: (error: Error) => {
       console.error("[useCreateGlobalPartner] Error:", error);
-      if (error.message.includes("idx_partner_companies_document_unique") || error.message.includes("idx_external_companies_document_unique")) {
+      if (error.message.includes("idx_external_companies_document_unique")) {
         toast.error("Já existe uma empresa cadastrada com este CPF/CNPJ");
       } else {
         toast.error("Erro ao criar empresa parceira: " + error.message);
