@@ -360,17 +360,19 @@ export default function CreateTicketPage() {
   const onSubmit = async (data: FormData) => {
     // Guard: profileId deve estar carregado antes de submeter
     if (!writerProfileId) {
-      console.error("[CreateTicketPage] writerProfileId is null - identity not loaded");
+      console.error("[DEBUG_RLS] writerProfileId is null - identity not loaded");
       toast.error("Erro de identidade: aguarde carregar e tente novamente");
       return;
     }
 
-    console.debug("[CreateTicketPage] onSubmit identity check", {
+    // VISIBLE LOG for RLS debugging - will appear in console
+    console.error("[DEBUG_RLS] CreateTicketPage.onSubmit identity data:", JSON.stringify({
       writerProfileId,
       profileId,
       realProfileId,
       buId: currentBu?.id,
-    });
+      buName: currentBu?.name,
+    }, null, 2));
 
     // Validate visibility is selected (required for external tickets)
     if (!data.visibility) {
