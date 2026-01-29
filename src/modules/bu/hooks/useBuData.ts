@@ -98,15 +98,33 @@ import { supabase as supabaseGlobal } from "@/integrations/supabase/globalClient
 
 export async function checkEmailDomainAllowed(email: string): Promise<{ allowed: boolean; buId: string | null }> {
   // This is called before BU context exists, so use global client
-  const { data, error } = await supabaseGlobal
-    .rpc("get_bu_by_email_domain", { p_email: email });
+  console.debug("[checkEmailDomainAllowed] checking email:", email);
+  
+  try {
+    const { data, error } = await supabaseGlobal
+      .rpc("get_bu_by_email_domain", { p_email: email });
 
-  if (error) {
-    console.error("Error checking email domain:", error);
+    console.debug("[checkEmailDomainAllowed] RPC response:", { data, error, email });
+
+    if (error) {
+      console.error("[checkEmailDomainAllowed] RPC error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        email,
+      });
+      return { allowed: false, buId: null };
+    }
+
+    const result = { allowed: !!data, buId: data };
+    console.debug("[checkEmailDomainAllowed] result:", result);
+    return result;
+  } catch (err) {
+    // Catch network/fetch errors that might not be captured by Supabase error
+    console.error("[checkEmailDomainAllowed] unexpected error:", err);
     return { allowed: false, buId: null };
   }
-
-  return { allowed: !!data, buId: data };
 }
 
 // Create a new BU (admin only)
