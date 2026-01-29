@@ -83,13 +83,13 @@ export function useCreateTicket(profileId: string | null) {
         owner_user_id: profileId,
       } as const;
 
-      // If this ever becomes true, we found the culprit.
-      console.debug("[useCreateTicket] insertPayload keys", Object.keys(insertPayload));
-      console.debug("[useCreateTicket] identity verification", {
+      // VISIBLE LOG for RLS debugging - will appear in console as error so it's easier to see
+      console.error("[DEBUG_RLS] useCreateTicket INSERT payload:", JSON.stringify({
+        bu_id: insertPayload.bu_id,
         created_by_user_id: insertPayload.created_by_user_id,
         owner_user_id: insertPayload.owner_user_id,
         profileIdFromHook: profileId,
-      });
+      }, null, 2));
 
       // Create ticket with profileId (profiles.id)
       const { data: ticket, error } = await supabase
@@ -100,14 +100,15 @@ export function useCreateTicket(profileId: string | null) {
 
       if (error) {
         // Detalhar erro de RLS para debugging
-        if (error.message?.includes('row-level security')) {
-          console.error("[useCreateTicket] RLS VIOLATION:", {
-            error,
-            buId,
-            profileId,
-            payload: insertPayload,
-          });
-        }
+        console.error("[DEBUG_RLS] RLS VIOLATION DETAILS:", JSON.stringify({
+          errorCode: error.code,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint,
+          buId,
+          profileId,
+          payload: insertPayload,
+        }, null, 2));
         throw error;
       }
 
