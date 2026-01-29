@@ -70,7 +70,7 @@ export function EditContactForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      partner_company_id: contact.partner_company_id,
+      partner_company_id: contact.external_company_id,
       name: contact.name,
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
@@ -84,7 +84,7 @@ export function EditContactForm({
   // Reset form when contact changes
   useEffect(() => {
     form.reset({
-      partner_company_id: contact.partner_company_id,
+      partner_company_id: contact.external_company_id,
       name: contact.name,
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
