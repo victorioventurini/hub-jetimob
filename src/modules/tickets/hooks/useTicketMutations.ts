@@ -45,28 +45,48 @@ export function useCreateTicket(profileId: string | null) {
       if (!buId) throw new Error("BU não selecionada");
       if (!profileId) throw new Error("Perfil não carregado");
 
+      // Debug guard: confirm we never send legacy column names to PostgREST
+      // (This is the exact error the user is seeing)
+      console.debug("[useCreateTicket] input", {
+        type: data.type,
+        partner_company_id: data.partner_company_id ?? null,
+        assigned_contact_id: data.assigned_contact_id ?? null,
+        category_id: data.category_id ?? null,
+        subcategory_id: data.subcategory_id ?? null,
+        buId,
+        profileId,
+      });
+
+      const insertPayload = {
+        bu_id: buId,
+        type: data.type,
+        title: data.title,
+        category_id: data.category_id || null,
+        subcategory_id: data.subcategory_id || null,
+        // Unified external company model (TCR v2.73+)
+        external_company_id: data.partner_company_id || null,
+        // External contact assignment (contact-first routing v2.4+)
+        assigned_contact_id: data.assigned_contact_id || null,
+        assignment_source: data.assignment_source || null,
+        visibility: data.visibility,
+        visibility_team_ids: data.visibility_team_ids || [],
+        visibility_squad_ids: data.visibility_squad_ids || [],
+        visibility_user_ids: data.visibility_user_ids || [],
+        expected_due_at: data.expected_due_at || null,
+        created_by_user_id: profileId,
+        owner_user_id: profileId,
+      } as const;
+
+      // If this ever becomes true, we found the culprit.
+      console.debug("[useCreateTicket] insertPayload keys", Object.keys(insertPayload));
+      console.debug("[useCreateTicket] legacy column present?", {
+        has_partner_company_id: Object.prototype.hasOwnProperty.call(insertPayload, "partner_company_id"),
+      });
+
       // Create ticket with profileId (profiles.id)
       const { data: ticket, error } = await supabase
         .from("tickets")
-        .insert({
-          bu_id: buId,
-          type: data.type,
-          title: data.title,
-          category_id: data.category_id || null,
-          subcategory_id: data.subcategory_id || null,
-          // Unified external company model (TCR v2.73+)
-          external_company_id: data.partner_company_id || null,
-          // External contact assignment (contact-first routing v2.4+)
-          assigned_contact_id: data.assigned_contact_id || null,
-          assignment_source: data.assignment_source || null,
-          visibility: data.visibility,
-          visibility_team_ids: data.visibility_team_ids || [],
-          visibility_squad_ids: data.visibility_squad_ids || [],
-          visibility_user_ids: data.visibility_user_ids || [],
-          expected_due_at: data.expected_due_at || null,
-          created_by_user_id: profileId,
-          owner_user_id: profileId,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
