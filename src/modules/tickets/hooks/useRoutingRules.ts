@@ -53,7 +53,8 @@ export function useCreateRoutingRule() {
         .from("ticket_routing_rules")
         .insert({
           bu_id: currentBu.id,
-          partner_company_id: data.partner_company_id,
+          // Unified external company model (TCR v2.73+)
+          external_company_id: data.partner_company_id,
           subcategory_id: data.subcategory_id,
           assignee_contact_ids: data.assignee_contact_ids || [],
           watcher_contact_ids: data.watcher_contact_ids || [],
@@ -94,13 +95,22 @@ export function useUpdateRoutingRule() {
       notes?: string | null;
     }) => {
       // Sanitize UUID fields: convert empty strings to null
+      // Map partner_company_id to external_company_id (unified model TCR v2.73+)
       const sanitizedData = {
-        ...data,
-        ...(data.partner_company_id !== undefined && {
-          partner_company_id: data.partner_company_id || null,
-        }),
         ...(data.subcategory_id !== undefined && {
           subcategory_id: data.subcategory_id || null,
+        }),
+        ...(data.partner_company_id !== undefined && {
+          external_company_id: data.partner_company_id || null,
+        }),
+        ...(data.assignee_contact_ids !== undefined && {
+          assignee_contact_ids: data.assignee_contact_ids,
+        }),
+        ...(data.watcher_contact_ids !== undefined && {
+          watcher_contact_ids: data.watcher_contact_ids,
+        }),
+        ...(data.notes !== undefined && {
+          notes: data.notes,
         }),
         updated_at: new Date().toISOString(),
       };

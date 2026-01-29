@@ -172,7 +172,10 @@ export interface Ticket {
   visibility_team_ids: string[];
   visibility_squad_ids: string[];
   visibility_user_ids: string[];
-  partner_company_id: string | null;
+  /** Unified external company model (TCR v2.73+) - use external_company_id in new code */
+  external_company_id: string | null;
+  /** @deprecated Use external_company_id - kept for backward compat */
+  partner_company_id?: string | null;
   category_id: string | null;
   subcategory_id: string | null;
   external_assignee_contact_ids: string[];

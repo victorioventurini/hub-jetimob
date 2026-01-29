@@ -155,7 +155,7 @@ function usePartnerContactProfile(id: string | undefined) {
             ticket_categories(id, name),
             ticket_subcategories(id, name)
           `)
-          .eq("partner_company_id", companyId)
+          .eq("external_company_id", companyId)
           .is("deleted_at", null);
 
         companyServices = (servicesData || []).map((s: {
