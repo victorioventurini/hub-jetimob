@@ -162,7 +162,7 @@ export function PartnerContactsTab() {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      {companies.find((c) => c.id === contact.partner_company_id)?.name || "-"}
+                      {contact.external_company?.name || companies.find((c) => c.id === contact.external_company_id)?.name || "-"}
                     </TableCell>
                     <TableCell>
                       <PhoneLink phone={contact.phone} />
