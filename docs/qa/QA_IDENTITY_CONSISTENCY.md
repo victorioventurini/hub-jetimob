@@ -1,7 +1,7 @@
 # QA Checklist - Consistência de Identidade
 
-**Data:** 2026-01-08  
-**Status:** ✅ PASS
+**Data:** 2026-01-29  
+**Status:** ✅ PASS (atualizado)
 
 ## Objetivo
 
@@ -105,19 +105,32 @@ npm run audit:identity
 
 | Hook | Uso | Status |
 |------|-----|--------|
-| `useIdentity()` | Retorna `userId` e `profileId` | ✅ OK |
+| `useIdentity()` | Retorna `userId`, `profileId`, `isReady`, `isLoading` | ✅ OK |
 | `useProfileId()` | Retorna apenas `profileId` | ✅ OK |
+| `useRealProfileId()` | Retorna `realProfileId` (ignora impersonação) | ✅ OK |
 
 ### Padrão Correto
 
 ```tsx
-const { profileId } = useIdentity();
+const { profileId, realProfileId, isReady } = useIdentity();
 
-// Para ownership de domínio:
+// GUARD: Só submeter quando identidade estiver pronta
+if (!isReady) return;
+
+// Para ownership de domínio em MUTATIONS:
 await supabase.from("okr_initiatives").insert({
-  owner_user_id: profileId // ✅ Correto
+  owner_user_id: realProfileId // ✅ Usa realProfileId para writes
 });
 ```
+
+### Proteções Implementadas (2026-01-29)
+
+| Componente | Proteção | Status |
+|------------|----------|--------|
+| `CreateTicketPage` | Guard no `onSubmit` se `!writerProfileId` | ✅ OK |
+| `CreateTicketPage` | Botão desabilitado se `!identityReady` | ✅ OK |
+| `useCreateTicket` | Validação UUID format antes de insert | ✅ OK |
+| `useCreateTicket` | Log detalhado em caso de RLS violation | ✅ OK |
 
 ---
 

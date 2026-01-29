@@ -87,7 +87,7 @@ export default function CreateTicketPage() {
   const typeFromUrl = searchParams.get('type') as 'internal' | 'external' | null;
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
-  const { profileId, realProfileId } = useIdentity();
+  const { profileId, realProfileId, isLoading: identityLoading, isReady: identityReady } = useIdentity();
   // MUTATIONS devem SEMPRE usar o usuário real (ver docs/canonical/IDENTITY_CONVENTION.md)
   // Fallback defensivo: em casos raros de bootstrap, usar profileId se realProfileId ainda não estiver disponível.
   const writerProfileId = realProfileId ?? profileId;
@@ -358,6 +358,20 @@ export default function CreateTicketPage() {
   };
 
   const onSubmit = async (data: FormData) => {
+    // Guard: profileId deve estar carregado antes de submeter
+    if (!writerProfileId) {
+      console.error("[CreateTicketPage] writerProfileId is null - identity not loaded");
+      toast.error("Erro de identidade: aguarde carregar e tente novamente");
+      return;
+    }
+
+    console.debug("[CreateTicketPage] onSubmit identity check", {
+      writerProfileId,
+      profileId,
+      realProfileId,
+      buId: currentBu?.id,
+    });
+
     // Validate visibility is selected (required for external tickets)
     if (!data.visibility) {
       toast.error("Selecione a visibilidade do ticket");
@@ -929,9 +943,13 @@ export default function CreateTicketPage() {
             <Button type="button" variant="outline" onClick={goBack}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createTicket.isPending || isUploading}>
+            <Button 
+              type="submit" 
+              disabled={createTicket.isPending || isUploading || !identityReady}
+              title={!identityReady ? "Aguardando carregar identidade..." : undefined}
+            >
               {(createTicket.isPending || isUploading) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Criar Ticket
+              {identityLoading ? "Carregando..." : "Criar Ticket"}
             </Button>
           </div>
         </form>
