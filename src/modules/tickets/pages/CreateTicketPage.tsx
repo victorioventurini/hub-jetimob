@@ -87,8 +87,11 @@ export default function CreateTicketPage() {
   const typeFromUrl = searchParams.get('type') as 'internal' | 'external' | null;
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
-  const { profileId } = useIdentity();
-  const createTicket = useCreateTicket(profileId);
+  const { profileId, realProfileId } = useIdentity();
+  // MUTATIONS devem SEMPRE usar o usuário real (ver docs/canonical/IDENTITY_CONVENTION.md)
+  // Fallback defensivo: em casos raros de bootstrap, usar profileId se realProfileId ainda não estiver disponível.
+  const writerProfileId = realProfileId ?? profileId;
+  const createTicket = useCreateTicket(writerProfileId);
   const supabase = useBuScopedSupabase();
   const { data: allCategories = [] } = useTicketCategories();
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -316,7 +319,7 @@ export default function CreateTicketPage() {
   };
 
   const uploadAttachments = async (ticketId: string, messageId: string): Promise<void> => {
-    if (attachments.length === 0 || !currentBu) return;
+    if (attachments.length === 0 || !currentBu || !writerProfileId) return;
     
     for (const file of attachments) {
       const fileExt = file.name.split('.').pop();
@@ -348,7 +351,8 @@ export default function CreateTicketPage() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        uploaded_by_user_id: profileId,
+        // Para writes, sempre usar o profileId real (mesmo durante impersonação)
+        uploaded_by_user_id: writerProfileId,
       });
     }
   };
