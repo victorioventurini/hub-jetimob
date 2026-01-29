@@ -30,9 +30,12 @@ export const ticketsKeys = {
   partnerContactHover: (contactId: string | null) => ['partner-contact-hover', contactId] as const,
   partnerServices: (buId: string | null, companyId?: string) =>
     ['partner-services', buId, companyId] as const,
-  partnerCategories: (companyId?: string) => ['partner-categories', companyId] as const,
-  partnerSubcategories: (companyId?: string, categoryId?: string) =>
-    ['partner-subcategories', companyId, categoryId] as const,
+  /** Partner services are BU-scoped, so buId must be part of the cache key. */
+  partnerCategories: (buId: string | null, companyId?: string) =>
+    ['partner-categories', buId, companyId] as const,
+  /** Partner services are BU-scoped, so buId must be part of the cache key. */
+  partnerSubcategories: (buId: string | null, companyId?: string, categoryId?: string) =>
+    ['partner-subcategories', buId, companyId, categoryId] as const,
   partnerServiceMappings: (buId: string | null, companyId?: string) =>
     ['partner-service-mappings', buId, companyId] as const,
   partnerServicesPrefix: () => ['partner-services'] as const,
