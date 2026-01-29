@@ -66,7 +66,7 @@ export function useContactsByCapability(
           contact:partner_contacts(id, name, email, phone, status)
         `)
         .eq("bu_id", buId)
-        .eq("partner_company_id", partnerCompanyId)
+        .eq("external_company_id", partnerCompanyId)
         .eq("is_active", true)
         .is("deleted_at", null);
 

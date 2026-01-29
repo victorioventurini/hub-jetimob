@@ -90,10 +90,10 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                         <AlertTriangle className="h-4 w-4 text-status-red shrink-0" />
                       )}
                     </div>
-                    {ticket.partner_company && (
+                    {ticket.external_company && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                         <Building2 className="h-3 w-3" />
-                        <span className="line-clamp-1">{ticket.partner_company.name}</span>
+                        <span className="line-clamp-1">{ticket.external_company.name}</span>
                       </div>
                     )}
                   </Link>
