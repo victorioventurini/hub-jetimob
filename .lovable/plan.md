@@ -1,24 +1,64 @@
-# Wave: Hooks & Barrel Files Consolidation
+# Wave: Hooks & Barrel Files Consolidation (REVISADO)
 
-**Versão:** 1.0
+**Versão:** 1.1
 **Data:** 2026-01-30
 **Status:** Em Planejamento
+**Referência TCR:** v2.74.0 §10.4 (Barrel Files de Hooks)
+
+---
+
+## ✅ PRE-CHECKLIST EXECUTADO
+
+| Documento | Status | Seção Relevante |
+|-----------|--------|-----------------|
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` v2.74.0 | ✅ Analisado COMPLETO | §10.4 Barrel Files de Hooks |
+| `docs/canonical/DEVELOPMENT_STANDARDS.md` v1.17.0 | ✅ Analisado | §K Hooks e Barrel Files |
+| `docs/canonical/QUERY_KEYS_STANDARD.md` | ✅ Analisado | Query Keys Pattern |
+| `docs/guides/HOOKS_CONSOLIDATION_REPORT.md` | ✅ Analisado | Wave 3-7 já executada |
+| Memory `pre-action-audit-policy` | ✅ Cumprido | Análise técnica antes de ação |
+
+---
 
 ## Objetivo
 
-Consolidar a estrutura de hooks/queries em todo o sistema, eliminando duplicações e garantindo que todos os imports sigam o padrão de barrel files conforme documentado em `docs/canonical/DEVELOPMENT_STANDARDS.md` (Seção K).
+Consolidar a estrutura de hooks/queries em todo o sistema, eliminando duplicações e garantindo que todos os imports sigam o padrão de barrel files conforme **TCR §10.4**.
+
+---
+
+## Padrão Oficial (TCR §10.4)
+
+```
+src/modules/[module]/
+├── hooks/
+│   ├── index.ts          # BARREL FILE PRINCIPAL ← Ponto único de import
+│   ├── queries/          # (opcional)
+│   │   ├── index.ts      # Barrel da subpasta
+│   │   └── useXyzQuery.ts
+│   ├── mutations/        # (opcional)
+│   │   ├── index.ts      # Barrel da subpasta
+│   │   └── useXyzMutation.ts
+│   └── useOtherHook.ts
+```
+
+### Regras Obrigatórias (TCR)
+
+1. **Proibido** importar hooks direto do arquivo (ex: `from './hooks/useTeams'`)
+2. **Obrigatório** importar do barrel (ex: `from './hooks'` ou `from '@/modules/teams/hooks'`)
+3. Subpastas (`queries/`, `mutations/`) devem ter seu próprio `index.ts`
+4. O barrel file do módulo re-exporta tudo de subpastas
 
 ---
 
 ## Análise Realizada
 
-### 1. Documentação Consultada
+### 1. Documentação Consultada (VERIFICADO)
 
 | Documento | Versão | Seção Relevante |
 |-----------|--------|-----------------|
-| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | v2.74.0 | §1.6 Hooks e Componentes Canônicos |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | v2.74.0 | §10.4 Barrel Files de Hooks |
 | `docs/canonical/DEVELOPMENT_STANDARDS.md` | v1.17.0 | §K Hooks e Barrel Files |
 | `docs/canonical/QUERY_KEYS_STANDARD.md` | - | Query Keys Pattern |
+| `docs/guides/HOOKS_CONSOLIDATION_REPORT.md` | v1.0.0 | Relatório Wave 3-7 |
 
 ### 2. Estado Atual dos Módulos
 
