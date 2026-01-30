@@ -97,18 +97,23 @@ export function useCreateTicket(profileId: string | null) {
       }, null, 2));
 
       // DEBUG: RLS debug RPC temporarily disabled to isolate insert issue
+      console.error("[DEBUG_RLS] 🔥 ABOUT TO CALL SUPABASE INSERT - THIS SHOULD APPEAR");
 
       // Create ticket with profileId (profiles.id)
       // CRITICAL: Never use select(*) / select() here (project standard). We only need the id.
-      // NOTE: Removed withAbort wrapper - it was causing requests to hang.
-      // The Supabase SDK already handles timeouts internally.
-      console.log("[DEBUG_RLS] 🚀 About to insert ticket...");
+      console.error("[DEBUG_RLS] 🚀 Calling supabase.from('tickets').insert()...");
+      
       const { data: ticket, error } = await supabase
         .from("tickets")
         .insert(insertPayload)
         .select("id, bu_id")
         .single();
-      console.log("[DEBUG_RLS] 📦 Insert result:", { ticket, error: error?.message });
+      
+      console.error("[DEBUG_RLS] 📦 Insert result:", JSON.stringify({ 
+        ticketId: ticket?.id, 
+        error: error?.message,
+        errorCode: error?.code 
+      }));
 
       if (error) {
         // Detalhar erro de RLS para debugging
