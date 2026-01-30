@@ -98,12 +98,12 @@ Lista completa das tabelas no schema `public`:
 | `okr_team_objectives` | ✅ | ✅ | Objetivos de time |
 | `okr_wizard_kr_actions` | ✅ | ✅ | Ações do wizard de KR |
 | `okr_wizard_sessions` | ✅ | ✅ | Sessões do wizard de OKR |
-| `partner_companies` | ✅ | ❌ | Empresas parceiras (global por CPF/CNPJ) |
-| `partner_company_bu_associations` | ✅ | ✅ | Associações empresa ↔ BU |
+| `external_companies` | ✅ | ❌ | Empresas externas (global por CPF/CNPJ) |
+| `external_company_bu_associations` | ✅ | ✅ | Associações empresa ↔ BU |
 | `partner_contact_bu_associations` | ✅ | ✅ | Associações contato ↔ BU (v2.46.0) |
 | `partner_contact_capabilities` | ✅ | ✅ | Capacidades de contatos |
 | `partner_contacts` | ✅ | ❌ | Contatos de parceiros (global por email) |
-| `partner_service_mappings` | ✅ | ✅ | Mapeamento de serviços |
+| `partner_service_mappings` | ✅ | ✅ | Mapeamento de serviços por empresa |
 | `perf_metrics_snapshots` | ❌ | ❌ | Snapshots de métricas de performance (P4) |
 | `permission_audit_log` | ✅ | ✅ | Audit log de permissões |
 | `permission_catalog` | ✅ | ❌ | Catálogo de permissões |
