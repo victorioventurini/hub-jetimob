@@ -36,8 +36,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
-import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
-import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
 import { MentionInput, type ParsedMention } from "@/components/mentions";
 
 const createTicketSchema = z.object({
@@ -86,7 +84,7 @@ export default function CreateTicketPage() {
   // Read type from URL (?type=external or ?type=internal)
   const typeFromUrl = searchParams.get('type') as 'internal' | 'external' | null;
   const { currentBu } = useBu();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { profileId, realProfileId } = useIdentity();
   // CRITICAL (Identity Convention): mutations must use realProfileId (ignores impersonation)
   const createTicket = useCreateTicket(realProfileId);
@@ -96,11 +94,6 @@ export default function CreateTicketPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [initialMessageMentions, setInitialMessageMentions] = useState<ParsedMention[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // State for visibility selections
-  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [userTeamsInitialized, setUserTeamsInitialized] = useState(false);
   
   // State for external contact selection
   const [selectedExternalContactId, setSelectedExternalContactId] = useState<string | undefined>(undefined);
@@ -112,9 +105,8 @@ export default function CreateTicketPage() {
       type: typeFromUrl === 'external' ? 'external' : 'internal',
       title: "",
       initial_message: "",
-      // For external tickets, no default visibility - user must select
-      // For internal tickets, default to bu_all
-      visibility: typeFromUrl === 'external' ? undefined : "bu_all",
+      // All tickets are now private by default
+      visibility: "private",
     },
   });
 
@@ -122,54 +114,7 @@ export default function CreateTicketPage() {
   const selectedPartnerId = form.watch("external_company_id");
   const selectedCategoryId = form.watch("category_id");
   const selectedSubcategoryId = form.watch("subcategory_id");
-  const selectedVisibility = form.watch("visibility");
 
-  // Current user's profile id for locked user selection
-  const currentUserProfileId = profile?.id;
-
-  // Fetch user's team memberships for default team selection
-  useEffect(() => {
-    const fetchUserTeams = async () => {
-      if (!user?.id || userTeamsInitialized) return;
-      
-      try {
-        // Use profiles table team_id as fallback (primary team)
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("team_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        
-        if (profileData?.team_id) {
-          setSelectedTeamIds([profileData.team_id]);
-        }
-      } catch (error) {
-        console.error("Error fetching user teams:", error);
-      }
-      setUserTeamsInitialized(true);
-    };
-    
-    fetchUserTeams();
-  }, [user?.id, userTeamsInitialized]);
-
-  // Initialize current user as selected when visibility changes to "users"
-  useEffect(() => {
-    if (selectedVisibility === "users" && currentUserProfileId) {
-      if (!selectedUserIds.includes(currentUserProfileId)) {
-        setSelectedUserIds([currentUserProfileId]);
-      }
-    }
-  }, [selectedVisibility, currentUserProfileId]);
-
-  // Reset selections when visibility changes
-  useEffect(() => {
-    if (selectedVisibility !== "teams") {
-      // Don't reset if just initialized
-    }
-    if (selectedVisibility !== "users") {
-      // Don't reset if just initialized
-    }
-  }, [selectedVisibility]);
 
   // Hooks para serviços do parceiro - Nova lógica: Categoria → Empresa → Subcategoria
   // Buscar empresas que atendem a categoria selecionada
@@ -373,22 +318,6 @@ export default function CreateTicketPage() {
   };
 
   const onSubmit = async (data: FormData) => {
-    // Validate visibility is selected (required for external tickets)
-    if (!data.visibility) {
-      toast.error("Selecione a visibilidade do ticket");
-      return;
-    }
-    
-    // Validate visibility selections
-    if (data.visibility === "teams" && selectedTeamIds.length === 0) {
-      toast.error("Selecione pelo menos um time para a visibilidade");
-      return;
-    }
-    if (data.visibility === "users" && selectedUserIds.length === 0) {
-      toast.error("Selecione pelo menos um usuário para a visibilidade");
-      return;
-    }
-    
     try {
       setIsUploading(true);
       
@@ -403,9 +332,10 @@ export default function CreateTicketPage() {
         assignment_source: data.type === "external" && selectedExternalContactId 
           ? (externalContactSource === "capability" ? "contact_capability" : "routing_fallback")
           : null,
-        visibility: data.visibility,
-        visibility_team_ids: data.visibility === "teams" ? selectedTeamIds : [],
-        visibility_user_ids: data.visibility === "users" ? selectedUserIds : [],
+        // All tickets are now private
+        visibility: "private",
+        visibility_team_ids: [],
+        visibility_user_ids: [],
         expected_due_at: data.expected_due_at?.toISOString() || null,
         initial_message: data.initial_message ? { type: "text", content: data.initial_message } : undefined,
         initial_message_mentions: initialMessageMentions.map(m => ({
@@ -742,70 +672,12 @@ export default function CreateTicketPage() {
             </CardContent>
           </Card>
 
-          {/* Visibility & Due Date */}
+          {/* Due Date */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Visibilidade e Prazo</CardTitle>
+              <CardTitle className="text-base">Prazo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="visibility"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visibilidade *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a visibilidade..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {/* bu_all only available for internal tickets */}
-                        {selectedType !== "external" && (
-                          <SelectItem value="bu_all">Toda {currentBu?.name || "a BU"}</SelectItem>
-                        )}
-                        <SelectItem value="teams">Times específicos</SelectItem>
-                        <SelectItem value="users">Usuários específicos</SelectItem>
-                        <SelectItem value="private">Privado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Team selection for "teams" visibility */}
-              {selectedVisibility === "teams" && (
-                <div className="space-y-2">
-                  <Label>Times com acesso *</Label>
-                  <MultiTeamSelect
-                    value={selectedTeamIds}
-                    onValueChange={setSelectedTeamIds}
-                    placeholder="Selecione os times..."
-                  />
-                  {selectedTeamIds.length === 0 && (
-                    <p className="text-sm text-destructive">Selecione pelo menos um time</p>
-                  )}
-                </div>
-              )}
-
-              {/* User selection for "users" visibility */}
-              {selectedVisibility === "users" && currentUserProfileId && (
-                <div className="space-y-2">
-                  <Label>Usuários com acesso *</Label>
-                  <BuUserMultiSelect
-                    value={selectedUserIds}
-                    onValueChange={setSelectedUserIds}
-                    placeholder="Selecione os usuários..."
-                    lockedUserIds={[currentUserProfileId]}
-                  />
-                  <FormDescription>
-                    Você está sempre incluído e não pode ser removido
-                  </FormDescription>
-                </div>
-              )}
-
               <FormField
                 control={form.control}
                 name="expected_due_at"
