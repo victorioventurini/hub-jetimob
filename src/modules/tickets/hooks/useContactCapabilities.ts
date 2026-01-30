@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 export interface ContactCapability {
   id: string;
   bu_id: string;
-  partner_company_id: string;
+  external_company_id: string;
   contact_id: string;
   category_id: string;
   subcategory_id: string | null;
@@ -35,21 +35,21 @@ export interface ContactCapability {
 
 export interface CreateCapabilityData {
   contact_id: string;
-  partner_company_id: string;
+  external_company_id: string;
   category_id: string;
   subcategory_id?: string | null;
 }
 
 // Explicit fields - avoid select('*')
 const CAPABILITY_FIELDS = `
-  id, bu_id, partner_company_id, contact_id, category_id, subcategory_id,
+  id, bu_id, external_company_id, contact_id, category_id, subcategory_id,
   is_active, created_at, created_by, updated_at, deleted_at,
   category:ticket_categories(id, name),
   subcategory:ticket_subcategories(id, name)
 `;
 
 const CAPABILITY_WITH_CONTACT_FIELDS = `
-  id, bu_id, partner_company_id, contact_id, category_id, subcategory_id,
+  id, bu_id, external_company_id, contact_id, category_id, subcategory_id,
   is_active, created_at, created_by, updated_at, deleted_at,
   category:ticket_categories(id, name),
   subcategory:ticket_subcategories(id, name),
@@ -105,7 +105,7 @@ export function useCompanyContactCapabilities(companyId?: string) {
         .from("partner_contact_capabilities")
         .select(CAPABILITY_WITH_CONTACT_FIELDS)
         .eq("bu_id", buId)
-        .eq("partner_company_id", companyId)
+        .eq("external_company_id", companyId)
         .is("deleted_at", null)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -136,13 +136,13 @@ export function useCreateContactCapability() {
         .from("partner_contact_capabilities")
         .insert({
           bu_id: buId,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.external_company_id,
           contact_id: data.contact_id,
           category_id: data.category_id,
           subcategory_id: data.subcategory_id || null,
           created_by: profile?.id || null,
         })
-        .select("id, bu_id, partner_company_id, contact_id, category_id, subcategory_id, is_active, created_at")
+        .select("id, bu_id, external_company_id, contact_id, category_id, subcategory_id, is_active, created_at")
         .single();
 
       if (error) throw error;
@@ -261,7 +261,7 @@ export function useSaveContactCapabilities() {
       // 2. Build the new capabilities to insert
       const newCapabilities: Array<{
         bu_id: string;
-        partner_company_id: string;
+        external_company_id: string;
         contact_id: string;
         category_id: string;
         subcategory_id: string | null;
@@ -273,7 +273,7 @@ export function useSaveContactCapabilities() {
           // Generalist: one record with subcategory_id = null
           newCapabilities.push({
             bu_id: buId,
-            partner_company_id: companyId,
+            external_company_id: companyId,
             contact_id: contactId,
             category_id: selection.categoryId,
             subcategory_id: null,
@@ -284,7 +284,7 @@ export function useSaveContactCapabilities() {
           for (const subId of selection.subcategoryIds) {
             newCapabilities.push({
               bu_id: buId,
-              partner_company_id: companyId,
+              external_company_id: companyId,
               contact_id: contactId,
               category_id: selection.categoryId,
               subcategory_id: subId,
