@@ -298,25 +298,33 @@
 
 ## Partners
 
-### partner_companies
+### external_companies (antiga partner_companies)
 `id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at, person_type, document, document_type`
 
-### partner_company_bu_associations
-`id, partner_company_id, bu_id, is_active, notes, created_at, created_by, updated_at, deleted_at, default_contact_ids`
+> ⚠️ Tabela renomeada de `partner_companies` para `external_companies` em v2.76.0
+
+### external_company_bu_associations (antiga partner_company_bu_associations)
+`id, external_company_id, bu_id, is_active, notes, created_at, created_by, updated_at, deleted_at, default_contact_ids, supervisor_profile_ids, supervisor_contact_ids`
+
+> ⚠️ Coluna renomeada de `partner_company_id` para `external_company_id` em v2.76.0
 
 ### partner_contact_bu_associations
 `id, partner_contact_id, bu_id, is_active, notes, created_at, created_by, updated_at, deleted_at`
 
 ### partner_contact_capabilities
-`id, bu_id, partner_company_id, contact_id, category_id, subcategory_id, is_active, created_at, created_by, updated_at, deleted_at`
+`id, bu_id, external_company_id, contact_id, category_id, subcategory_id, is_active, created_at, created_by, updated_at, deleted_at`
 
-### partner_contacts ⚠️
-`id, bu_id, partner_company_id, profile_user_id, name, email, phone, status, created_at, created_by, updated_at, deleted_at, user_id`
+> ⚠️ Coluna renomeada de `partner_company_id` para `external_company_id` em v2.76.0
 
-> ⚠️ **ATENÇÃO**: Não possui coluna `role`!
+### partner_contacts
+`id, bu_id, external_company_id, profile_user_id, name, email, phone, status, created_at, created_by, updated_at, deleted_at, user_id`
+
+> ⚠️ **ATENÇÃO**: Não possui coluna `role`! Coluna renomeada de `partner_company_id` para `external_company_id` em v2.76.0
 
 ### partner_service_mappings
-`id, bu_id, partner_company_id, category_id, subcategory_id, status, notes, created_at, created_by, updated_at, deleted_at`
+`id, bu_id, external_company_id, category_id, subcategory_id, status, notes, created_at, created_by, updated_at, deleted_at`
+
+> ⚠️ Coluna renomeada de `partner_company_id` para `external_company_id` em v2.76.0
 
 ---
 
@@ -408,13 +416,17 @@
 `id, bu_id, ticket_id, participant_type, profile_id, partner_contact_id, role, is_active, created_at`
 
 ### ticket_routing_rules
-`id, bu_id, partner_company_id, subcategory_id, assignee_contact_ids, watcher_contact_ids, notes, created_at, created_by, updated_at, deleted_at`
+`id, bu_id, external_company_id, subcategory_id, assignee_contact_ids, watcher_contact_ids, notes, created_at, created_by, updated_at, deleted_at`
+
+> ⚠️ Coluna renomeada de `partner_company_id` para `external_company_id` em v2.76.0
 
 ### ticket_subcategories
 `id, bu_id, category_id, name, status, created_at, created_by, updated_at, deleted_at`
 
 ### tickets
-`id, bu_id, type, title, status, expected_due_at, created_by_user_id, owner_user_id, visibility, visibility_team_ids, visibility_squad_ids, visibility_user_ids, partner_company_id, category_id, subcategory_id, external_assignee_contact_ids, created_at, updated_at, deleted_at, assigned_contact_id, assignment_source`
+`id, bu_id, type, title, status, expected_due_at, created_by_user_id, owner_user_id, visibility, visibility_team_ids, visibility_squad_ids, visibility_user_ids, external_company_id, category_id, subcategory_id, external_assignee_contact_ids, created_at, updated_at, deleted_at, assigned_contact_id, assignment_source`
+
+> ⚠️ Coluna renomeada de `partner_company_id` para `external_company_id` em v2.76.0
 
 ---
 

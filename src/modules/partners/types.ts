@@ -10,7 +10,7 @@ export type PartnerStatus = 'active' | 'inactive';
 
 export interface PartnerBuAssociation {
   id: string;
-  partner_company_id: string;
+  external_company_id: string;
   bu_id: string;
   is_active: boolean;
   notes: string | null;

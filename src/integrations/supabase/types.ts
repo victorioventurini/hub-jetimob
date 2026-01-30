@@ -9064,7 +9064,7 @@ export type Database = {
         Returns: string[]
       }
       get_partner_categories: {
-        Args: { p_partner_company_id: string }
+        Args: { p_external_company_id: string }
         Returns: {
           category_id: string
           category_name: string
@@ -9077,7 +9077,7 @@ export type Database = {
         Returns: Json
       }
       get_partner_subcategories: {
-        Args: { p_category_id: string; p_partner_company_id: string }
+        Args: { p_category_id: string; p_external_company_id: string }
         Returns: {
           subcategory_id: string
           subcategory_name: string
@@ -9449,8 +9449,8 @@ export type Database = {
       search_mention_candidates: {
         Args: {
           p_bu_id: string
+          p_external_company_id?: string
           p_limit?: number
-          p_partner_company_id?: string
           p_search_term?: string
         }
         Returns: {
@@ -9458,8 +9458,8 @@ export type Database = {
           email: string
           entity_id: string
           entity_type: string
+          external_company_name: string
           id: string
-          partner_company_name: string
           photo_url: string
           team_name: string
         }[]
