@@ -142,17 +142,15 @@ export function useCreateTicket(profileId: string | null) {
 
       // Create ticket with profileId (profiles.id)
       // CRITICAL: Never use select(*) / select() here (project standard). We only need the id.
-      const { data: ticket, error } = await withAbort(
-        "Criação do ticket",
-        20_000,
-        (signal) =>
-          supabase
-            .from("tickets")
-            .insert(insertPayload)
-            .select("id, bu_id")
-            .abortSignal(signal)
-            .single()
-      );
+      // NOTE: Removed withAbort wrapper - it was causing requests to hang.
+      // The Supabase SDK already handles timeouts internally.
+      console.log("[DEBUG_RLS] 🚀 About to insert ticket...");
+      const { data: ticket, error } = await supabase
+        .from("tickets")
+        .insert(insertPayload)
+        .select("id, bu_id")
+        .single();
+      console.log("[DEBUG_RLS] 📦 Insert result:", { ticket, error: error?.message });
 
       if (error) {
         // Detalhar erro de RLS para debugging
