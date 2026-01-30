@@ -118,7 +118,7 @@ export function PartnerContactDialog({
             <TabsContent value="capabilities" className="mt-4">
               <ContactCapabilitiesList
                 contactId={contact.id}
-                companyId={contact.external_company_id}
+                companyId={contact.partner_company_id}
               />
               <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
                 <button

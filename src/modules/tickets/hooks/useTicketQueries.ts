@@ -83,8 +83,8 @@ export function useTickets(filters?: TicketFilters) {
         query = query.eq("subcategory_id", filters.subcategory_id);
       }
 
-      if (filters?.external_company_id) {
-        query = query.eq("external_company_id", filters.external_company_id);
+      if (filters?.partner_company_id) {
+        query = query.eq("partner_company_id", filters.partner_company_id);
       }
 
       if (filters?.owner_user_id) {

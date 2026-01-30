@@ -1,252 +1,193 @@
 
-# Plano de Correção: Requisição de INSERT em Tickets Pendente Indefinidamente
+# Plano: Página de Avaliação de Construção de OKRs Organizacionais
 
-## 1. Diagnóstico Confirmado
+## 1. Pré-requisitos Validados
 
-### 1.1 Evidências Coletadas
-
-| Evidência | Valor | Significado |
-|-----------|-------|-------------|
-| Log `🎫 TICKETS REQUEST INTERCEPTED` | ✅ Aparece | Interceptor é alcançado |
-| Log `🎫 About to call native fetch` | ✅ Aparece | Headers foram preparados |
-| Log `🎫 Fetch response received` | ❌ Não aparece | Fetch nativo não completa |
-| Log `🔐 Auth header decision` para tickets | ❌ Não aparece | **PROBLEMA: Lógica pula log de auth para tickets!** |
-| Aba Network | "Pending" indefinidamente | Servidor não responde |
-| PostgreSQL logs | `NO_BU_CONTEXT: User is not authenticated` | `auth.uid()` = NULL |
-
-### 1.2 Causa Raiz
-
-O código atual no interceptor de fetch (`buScopedClient.ts`) **pula propositalmente** o log de auth para requisições de tickets:
-
-```typescript
-// PROBLEMA: Isso IGNORA os tickets, não vemos se auth está correto!
-if (!isTicketsRequest) {
-  console.error("[BuScopedClient] 🔐 Auth header decision:", ...);
-}
-```
-
-Isso significa que não temos visibilidade sobre se:
-- O token foi encontrado no localStorage
-- O token é válido (não expirado, tem `sub`, role != anon)
-- O header `Authorization` foi efetivamente setado
-
-O PostgreSQL está recebendo a requisição **sem autenticação válida**, causando o trigger `enforce_bu_scope` a lançar a exceção `NO_BU_CONTEXT: User is not authenticated`.
-
-### 1.3 Por que o Fetch Trava?
-
-Quando o trigger PostgreSQL lança uma exceção, PostgREST tenta retornar um erro HTTP. Porém, há evidências de que o erro não está sendo propagado corretamente pelo Supabase SDK, deixando a Promise pendente.
+| Documento | Versão | Status |
+|-----------|--------|--------|
+| DEVELOPMENT_STANDARDS | v1.17.0 | ✅ Validado |
+| DATA_MODEL_REGISTRY | v2.51.0 | ✅ Validado |
+| Query Keys Pattern | Centralizado | ✅ Validado |
 
 ---
 
-## 2. Solução em 3 Fases
+## 2. Estratégia de Implementação
 
-### Fase 1: Diagnóstico Completo (Logs de Auth para Tickets)
+### Reutilização Total de Componentes
 
-**Arquivo:** `src/integrations/supabase/buScopedClient.ts`
+Os componentes existentes são **genéricos** e aceitam interfaces que funcionam para ambos os contextos (time e organizacional):
 
-Adicionar log de auth **TAMBÉM** para requisições de tickets, não apenas para outras requisições:
+| Componente | Props Interface | Reutilização |
+|------------|-----------------|--------------|
+| `ConstructionScoreCard` | `avgScore`, `approvedCount`, `needsImprovementCount`, `pendingCount` | ✅ 100% |
+| `ObjectiveChecklistCard` | `ObjectiveReview`, `criteria`, `onReEvaluate` | ✅ 100% |
+| `REVIEW_CRITERIA` | Critérios de avaliação | ✅ 100% |
+
+**Não será criado nenhum novo componente de UI.**
+
+---
+
+## 3. Arquivos a Criar/Modificar
+
+### 3.1 Query Key (Modificar)
+
+**Arquivo:** `src/lib/queryKeys/okrs.ts`
 
 ```typescript
-// ANTES (bug):
-if (!isTicketsRequest) {
-  console.error("[BuScopedClient] 🔐 Auth header decision:", ...);
-}
-
-// DEPOIS (correção):
-// Log para tickets COM MAIS DETALHES
-if (isTicketsRequest) {
-  console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
-    hasStoredToken: !!storedToken,
-    hasSub,
-    storedRole,
-    expired,
-    shouldUseStored,
-    usedStoredToken,
-    finalAuthHeader: headers.has("Authorization"),
-    apiKeyHeader: headers.has("apikey"),
-    method: init?.method ?? "GET",
-    timestamp: new Date().toISOString(),
-  }));
-} else {
-  console.error("[BuScopedClient] 🔐 Auth header decision:", ...);
-}
+// Adicionar:
+orgConstructionReview: (buId: string | null, year: number | null) => 
+  ['okr-org-construction-review', buId, year] as const,
 ```
 
-### Fase 2: Garantir Headers Críticos
+---
 
-O SDK do Supabase requer o header `apikey` em todas as requisições. Verificar que nosso interceptor não está perdendo este header:
+### 3.2 Hook (Criar)
+
+**Arquivo:** `src/modules/okrs/hooks/useOrgConstructionReview.ts`
+
+**Lógica:**
+1. Buscar `okr_org_objectives` + `okr_org_key_results` por **ano**
+2. Transformar para interface `ObjectiveReview[]` (mesma usada pelos componentes existentes)
+3. Para cada objetivo, invocar edge function com flag `isOrgLevel: true`
+4. Manter state de `aiAssessments`, `aiLoading`, `aiErrors` (mesmo padrão do `useConstructionReview`)
+
+**Diferenças do hook de times:**
+- Filtro por `year` em vez de `cycleId` + `teamId`
+- Campo `teamName` fixo como `'Organizacional'`
+- Sem análise consolidada de sinergias entre times (não aplicável)
+
+---
+
+### 3.3 Edge Function (Modificar)
+
+**Arquivo:** `supabase/functions/okr-construction-review/index.ts`
+
+**Alterações:**
+1. Adicionar campo `isOrgLevel?: boolean` na interface `RequestBody`
+2. Quando `isOrgLevel: true`, ajustar o prompt para contexto organizacional:
 
 ```typescript
-// Log para confirmar headers originais do SDK
-if (isTicketsRequest) {
-  const originalHeaders = new Headers((init?.headers as HeadersInit) ?? undefined);
-  console.error("[BuScopedClient] 🎫 Original SDK headers:", JSON.stringify({
-    hasApiKey: originalHeaders.has("apikey"),
-    hasAuthorization: originalHeaders.has("Authorization"),
-    contentType: originalHeaders.get("Content-Type"),
-    prefer: originalHeaders.get("Prefer"),
-  }));
-}
+// Prompt adaptado para OKRs organizacionais:
+const orgPrompt = `
+Você está avaliando um OBJETIVO ORGANIZACIONAL (nível empresa/C-Level).
+
+CRITÉRIOS ESPECIAIS:
+- **Clareza**: Deve inspirar e ser compreensível por TODA a organização
+- **Ambição**: Deve representar um salto estratégico de 12+ meses
+- **Mensurabilidade**: KRs devem ter métricas de alto nível (market share, receita, NPS)
+- **Responsabilidade**: Cada KR deve ter um sponsor C-Level ou equivalente
+- **Cascading**: Deve ser possível derivar OKRs de times a partir deste
+`;
 ```
 
-### Fase 3: Timeout de Segurança + Tratamento de Erro
+---
 
-Implementar timeout de 30 segundos para evitar que requisições fiquem pendentes indefinidamente:
+### 3.4 Página (Criar)
 
-```typescript
-const controller = new AbortController();
-const timeoutId = setTimeout(() => {
-  console.error("[BuScopedClient] 💀 FETCH TIMEOUT after 30s:", url.substring(0, 100));
-  controller.abort();
-}, 30000);
+**Arquivo:** `src/modules/okrs/pages/OrgConstructionReviewPage.tsx`
 
-try {
-  const response = await fetch(input, { ...init, headers, signal: controller.signal });
-  clearTimeout(timeoutId);
-  
-  // Log adicional para diagnóstico
-  if (isTicketsRequest) {
-    console.error("[BuScopedClient] 🎫 Response received:", {
-      status: response.status,
-      ok: response.ok,
-      statusText: response.statusText,
-    });
-  }
-  
-  return response;
-} catch (fetchError) {
-  clearTimeout(timeoutId);
-  console.error("[BuScopedClient] 💥 FETCH ERROR:", {
-    name: (fetchError as Error)?.name,
-    message: (fetchError as Error)?.message,
-    isAbort: (fetchError as Error)?.name === "AbortError",
+**Estrutura:**
+- Header com `YearSelect` (seletor de ano)
+- Grid 1/3 + 2/3 (mesmo layout de `/construction-review`)
+- Usa `ConstructionScoreCard` existente (sem props de `teamAnalysis`)
+- Usa `ObjectiveChecklistCard` existente
+
+**Controle de Acesso:** `requiresBuAdmin` (apenas admins podem avaliar OKRs org)
+
+```tsx
+export default function OrgConstructionReviewPage() {
+  const [year, setYear] = useUrlState<number>({ 
+    key: 'year', 
+    defaultValue: new Date().getFullYear() 
   });
-  throw fetchError;
+  
+  const { objectives, avgScore, approvedCount, ... } = useOrgConstructionReview(year);
+
+  return (
+    <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
+      {/* Header com YearSelect */}
+      {/* Grid: ConstructionScoreCard + Lista ObjectiveChecklistCard */}
+    </div>
+  );
 }
 ```
 
 ---
 
-## 3. Arquivos a Modificar
+### 3.5 Rota (Modificar)
 
-| Arquivo | Modificação |
-|---------|-------------|
-| `src/integrations/supabase/buScopedClient.ts` | Adicionar log de auth para tickets + timeout + tratamento de erro |
-
----
-
-## 4. Validação
-
-Após implementar as mudanças, teste criação de ticket e verifique nos logs:
-
-1. **`🎫 TICKETS AUTH DEBUG`** deve mostrar:
-   - `hasStoredToken: true`
-   - `usedStoredToken: true`
-   - `finalAuthHeader: true`
-   - `apiKeyHeader: true`
-
-2. **Se algo estiver `false`**, esse é o problema
-
-3. **Se tudo estiver `true` mas ainda travar**, o problema é no PostgreSQL (trigger/RLS)
-
----
-
-## 5. Hipótese Alternativa
-
-Se os logs mostrarem que todos os headers estão corretos, o problema pode ser:
-
-| Hipótese | Diagnóstico | Solução |
-|----------|-------------|---------|
-| Trigger `enforce_bu_scope` causa deadlock | Verificar `pg_stat_activity` | Desabilitar trigger temporariamente |
-| PostgREST não serializa erro | Verificar network tab para response body | Atualizar versão do Supabase |
-| Token válido mas sessão expirada no servidor | Forçar refresh do token antes do insert | Adicionar `await supabase.auth.getSession()` |
-
----
-
-## 6. Detalhes Técnicos da Implementação
-
-### 6.1 Estrutura do Código Atualizado
+**Arquivo:** `src/routes/okrs.routes.tsx`
 
 ```typescript
-function createBuAwareFetch() {
-  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const url = typeof input === "string" ? input : /* ... */;
-    const isTicketsRequest = url.includes("/tickets");
-    
-    // 1. Log inicial para tickets
-    if (isTicketsRequest) {
-      console.error("[BuScopedClient] 🎫 TICKETS REQUEST:", {
-        url: url.substring(0, 150),
-        method: init?.method ?? "GET",
-        hasBody: !!init?.body,
-      });
-    }
-    
-    const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
-    
-    // 2. Inject BU header (existing logic)
-    // ...
-    
-    // 3. Token handling (existing logic)
-    const storedToken = readAccessTokenFromStorage();
-    // ...
-    
-    // 4. LOG DE AUTH PARA TICKETS (NOVO!)
-    if (isTicketsRequest) {
-      console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
-        hasStoredToken: !!storedToken,
-        hasSub,
-        storedRole,
-        expired,
-        usedStoredToken,
-        finalAuthHeader: headers.has("Authorization"),
-        finalBuHeader: headers.has("x-current-bu-id"),
-        method: init?.method ?? "GET",
-      }));
-    }
-    
-    // 5. Fetch com timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.error("[BuScopedClient] 💀 TIMEOUT:", url.substring(0, 100));
-      controller.abort();
-    }, 30000);
-    
-    try {
-      const response = await fetch(input, { ...init, headers, signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (isTicketsRequest) {
-        console.error("[BuScopedClient] 🎫 Response:", response.status);
-      }
-      
-      return response;
-    } catch (e) {
-      clearTimeout(timeoutId);
-      console.error("[BuScopedClient] 💥 Error:", (e as Error)?.message);
-      throw e;
-    }
-  };
-}
+const OrgConstructionReviewPage = lazy(() => 
+  import('@/modules/okrs/pages/OrgConstructionReviewPage')
+);
+
+// Na seção Quality & Analysis
+<Route 
+  path="/okrs/org-construction-review" 
+  element={<OkrRoute requiresBuAdmin><OrgConstructionReviewPage /></OkrRoute>} 
+/>
 ```
 
 ---
 
-## 7. Risco e Rollback
+### 3.6 Export do Hook (Modificar)
 
-| Aspecto | Avaliação |
-|---------|-----------|
-| Breaking Changes | Nenhum - apenas logs adicionais e timeout de segurança |
-| Performance | Negligível (logs + AbortController) |
-| Rollback | Remover logs e timeout se necessário |
+**Arquivo:** `src/modules/okrs/hooks/index.ts`
+
+```typescript
+export { useOrgConstructionReview } from './useOrgConstructionReview';
+```
 
 ---
 
-## 8. Compliance com Padrões do Hub
+## 4. Resumo de Arquivos
 
-| Padrão | Status |
-|--------|--------|
-| PRE-BU vs POST-BU | ✅ Usa `useBuScopedSupabase()` para tickets (POST-BU) |
-| IDENTITY_CONVENTION | ✅ Usa `realProfileId` para `created_by_user_id` |
-| Client Singleton | ✅ Usa singleton com `detectSessionInUrl: false` |
-| Campos Explícitos | ✅ `select("id, bu_id")` no insert |
+| Arquivo | Operação | Propósito |
+|---------|----------|-----------|
+| `src/lib/queryKeys/okrs.ts` | Modificar | Adicionar `orgConstructionReview` key |
+| `supabase/functions/okr-construction-review/index.ts` | Modificar | Suportar `isOrgLevel` flag + prompt adaptado |
+| `src/modules/okrs/hooks/useOrgConstructionReview.ts` | **Criar** | Hook para buscar e avaliar OKRs org |
+| `src/modules/okrs/pages/OrgConstructionReviewPage.tsx` | **Criar** | Página principal |
+| `src/routes/okrs.routes.tsx` | Modificar | Adicionar rota |
+| `src/modules/okrs/hooks/index.ts` | Modificar | Export do novo hook |
+
+---
+
+## 5. Compatibilidade com Padrões do Hub
+
+| Padrão | Status | Implementação |
+|--------|--------|---------------|
+| Query Keys centralizadas | ✅ | `src/lib/queryKeys` |
+| useBuScopedSupabase | ✅ | Usado no hook |
+| Lazy loading | ✅ | `lazy()` para página |
+| URL state | ✅ | `useUrlState` para ano |
+| Controle de acesso | ✅ | `requiresBuAdmin` na rota |
+| Reutilização de componentes | ✅ | 100% reuso |
+| Agente correto | ✅ | `validador-metodologico-okrs` |
+
+---
+
+## 6. Ordem de Execução
+
+1. **Query Key** — Adicionar `orgConstructionReview` em `okrs.ts`
+2. **Edge Function** — Suportar flag `isOrgLevel` e prompt adaptado
+3. **Hook** — Criar `useOrgConstructionReview.ts`
+4. **Página** — Criar `OrgConstructionReviewPage.tsx`
+5. **Rota** — Adicionar em `okrs.routes.tsx`
+6. **Export** — Atualizar `hooks/index.ts`
+
+---
+
+## 7. Validação Pós-Implementação
+
+| Cenário | Esperado |
+|---------|----------|
+| Acessar `/okrs/org-construction-review` como admin | ✅ Visualiza página |
+| Acessar como não-admin | ❌ Redirect (via `requiresBuAdmin`) |
+| Selecionar ano sem OKRs org | Alert "Nenhum objetivo encontrado" |
+| Selecionar ano com OKRs | Cards com avaliação IA |
+| Clicar "Reavaliar" | Edge function re-invocada |
+| Score médio calculado | Baseado nas avaliações individuais |
+| Prompt IA | Focado em contexto estratégico/C-Level |

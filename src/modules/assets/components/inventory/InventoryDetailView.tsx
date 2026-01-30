@@ -19,7 +19,6 @@ import {
   CheckCircle2,
   UserCheck,
   Copy,
-  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +33,6 @@ import { useInventory, useAssetPermissionsV2 } from "../../hooks";
 import { InventoryFormDialog } from "./InventoryFormDialog";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import { KitSection } from "./KitSection";
-import { AssetPhotoGallery } from "../shared/AssetPhotoGallery";
 import { ResourceNotFoundState } from "@/components/ui/resource-not-found-state";
 import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
 import type { AssetInventory, AssetMovement, AssetMovementType } from "../../types";
@@ -503,21 +501,6 @@ export function InventoryDetailView() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Photos Gallery */}
-          {item.photos && item.photos.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Fotos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AssetPhotoGallery photos={item.photos} alt={item.name} />
-              </CardContent>
-            </Card>
-          )}
 
           {/* Description & Notes */}
           {(item.description || item.notes) && (

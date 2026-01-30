@@ -23,7 +23,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
   const buId = currentBu?.id;
   const { search } = options;
 
-  // Buscar itens de brinde (com joins estruturados)
+  // Buscar itens de brinde
   const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useQuery({
     queryKey: queryKeys.assets.gifts.items(buId ?? null, { search }),
     enabled: !!buId && !!supabase,
@@ -32,14 +32,7 @@ export function useGifts(options: UseGiftsOptions = {}) {
       if (!supabase) return [];
       let query = supabase
         .from("asset_gift_items")
-        .select(`
-          id, bu_id, name, category, category_id, supplier_id, home_location_id,
-          acquired_at, acquisition_value, quantity_total, photos, status, notes,
-          created_at, created_by, updated_at,
-          subcategory:asset_categories!category_id(id, name, parent_id),
-          supplier:external_companies!supplier_id(id, name, document),
-          home_location:bu_locations!home_location_id(id, name)
-        `)
+        .select("id, bu_id, name, category, status, notes, created_at, created_by, updated_at")
         .eq("bu_id", buId!)
         .is("deleted_at", null)
         .order("name");
@@ -126,34 +119,16 @@ export function useGifts(options: UseGiftsOptions = {}) {
     return { totalQuantity, availableQuantity };
   };
 
-  // Criar item de brinde (com campos estruturados)
+  // Criar item de brinde
   const createItemMutation = useMutation({
-    mutationFn: async (data: {
-      name: string;
-      category_id?: string;
-      supplier_id?: string | null;
-      home_location_id?: string;
-      acquired_at?: string | null;
-      acquisition_value?: number | null;
-      quantity_total?: number;
-      photos?: string[];
-      notes?: string;
-    }) => {
+    mutationFn: async (data: { name: string; category?: string; notes?: string }) => {
       const client = assertSupabaseClient(supabase, "createGiftItem");
       const { data: item, error } = await client
         .from("asset_gift_items")
         .insert({
           bu_id: buId!,
           created_by: user?.id,
-          name: data.name,
-          category_id: data.category_id || null,
-          supplier_id: data.supplier_id || null,
-          home_location_id: data.home_location_id || null,
-          acquired_at: data.acquired_at || null,
-          acquisition_value: data.acquisition_value || null,
-          quantity_total: data.quantity_total || 0,
-          photos: data.photos || [],
-          notes: data.notes || null,
+          ...data,
         })
         .select()
         .single();
@@ -170,26 +145,13 @@ export function useGifts(options: UseGiftsOptions = {}) {
     },
   });
 
-  // Atualizar item (com campos estruturados)
+  // Atualizar item
   const updateItemMutation = useMutation({
-    mutationFn: async (data: {
-      id: string;
-      name?: string;
-      category_id?: string | null;
-      supplier_id?: string | null;
-      home_location_id?: string | null;
-      acquired_at?: string | null;
-      acquisition_value?: number | null;
-      quantity_total?: number;
-      photos?: string[];
-      status?: 'active' | 'inactive';
-      notes?: string;
-    }) => {
+    mutationFn: async ({ id, name, category, status, notes }: { id: string; name?: string; category?: string; status?: 'active' | 'inactive'; notes?: string }) => {
       const client = assertSupabaseClient(supabase, "updateGiftItem");
-      const { id, ...updateData } = data;
       const { data: item, error } = await client
         .from("asset_gift_items")
-        .update(updateData)
+        .update({ name, category, status, notes })
         .eq("id", id)
         .select()
         .single();

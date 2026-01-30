@@ -43,113 +43,33 @@ export function useCreateTicket(profileId: string | null) {
   return useMutation({
     mutationFn: async (data: CreateTicketData) => {
       if (!buId) throw new Error("BU não selecionada");
-      if (!profileId) throw new Error("Perfil não carregado - faça login novamente");
-
-      // Verificação extra: profileId deve ser um UUID válido
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(profileId)) {
-        console.error("[useCreateTicket] Invalid profileId format:", profileId);
-        throw new Error("ID de perfil inválido");
-      }
-
-      // Debug guard: confirm we never send legacy column names to PostgREST
-      console.debug("[useCreateTicket] input", {
-        type: data.type,
-        external_company_id: data.external_company_id ?? null,
-        assigned_contact_id: data.assigned_contact_id ?? null,
-        category_id: data.category_id ?? null,
-        subcategory_id: data.subcategory_id ?? null,
-        buId,
-        profileId,
-      });
-
-      const insertPayload = {
-        bu_id: buId,
-        type: data.type,
-        title: data.title,
-        category_id: data.category_id || null,
-        subcategory_id: data.subcategory_id || null,
-        // Unified external company model (TCR v2.73+)
-        external_company_id: data.external_company_id || null,
-        // External contact assignment (contact-first routing v2.4+)
-        assigned_contact_id: data.assigned_contact_id || null,
-        assignment_source: data.assignment_source || null,
-        visibility: data.visibility,
-        visibility_team_ids: data.visibility_team_ids || [],
-        visibility_squad_ids: data.visibility_squad_ids || [],
-        visibility_user_ids: data.visibility_user_ids || [],
-        expected_due_at: data.expected_due_at || null,
-        created_by_user_id: profileId,
-        owner_user_id: profileId,
-      } as const;
-
-      // VISIBLE LOG for RLS debugging - CRITICAL: This log helps diagnose 42501 errors
-      // The RLS policy requires: created_by_user_id = my_profile_id()
-      // If profileId is null/undefined here, the INSERT will fail with RLS violation
-      console.error("[DEBUG_RLS] 🚨 useCreateTicket INSERT - CRITICAL VALUES:", JSON.stringify({
-        profileIdFromHook: profileId,
-        profileIdType: typeof profileId,
-        profileIdIsNull: profileId === null,
-        profileIdIsUndefined: profileId === undefined,
-        created_by_user_id: insertPayload.created_by_user_id,
-        bu_id: insertPayload.bu_id,
-        timestamp: new Date().toISOString(),
-      }, null, 2));
-
-      // DEBUG: RLS debug RPC temporarily disabled to isolate insert issue
-      console.error("[DEBUG_RLS] 🔥 ABOUT TO CALL SUPABASE INSERT - THIS SHOULD APPEAR");
+      if (!profileId) throw new Error("Perfil não carregado");
 
       // Create ticket with profileId (profiles.id)
-      // CRITICAL: Never use select(*) / select() here (project standard). We only need the id.
-      console.error("[DEBUG_RLS] 🚀 Calling supabase.from('tickets').insert()...");
-      
-      let ticket: { id: string; bu_id: string } | null = null;
-      let error: { message: string; code?: string; details?: string; hint?: string } | null = null;
-      
-      try {
-        console.error("[DEBUG_RLS] 🎯 Inside try block - about to call supabase SDK");
-        
-        // Test: Check if supabase client is working at all
-        console.error("[DEBUG_RLS] 🔍 Supabase client type:", typeof supabase);
-        console.error("[DEBUG_RLS] 🔍 Supabase.from exists:", typeof supabase?.from);
-        
-        const query = supabase.from("tickets").insert(insertPayload).select("id, bu_id").single();
-        console.error("[DEBUG_RLS] 🔍 Query object created:", typeof query);
-        console.error("[DEBUG_RLS] 🔍 Query.then exists:", typeof (query as any)?.then);
-        
-        console.error("[DEBUG_RLS] ⏳ Awaiting query...");
-        const result = await query;
-        console.error("[DEBUG_RLS] ✅ Query resolved!");
-        
-        ticket = result.data;
-        error = result.error;
-      } catch (caughtError) {
-        console.error("[DEBUG_RLS] 💥 EXCEPTION CAUGHT:", caughtError);
-        console.error("[DEBUG_RLS] 💥 Error type:", typeof caughtError);
-        console.error("[DEBUG_RLS] 💥 Error message:", (caughtError as Error)?.message);
-        console.error("[DEBUG_RLS] 💥 Error stack:", (caughtError as Error)?.stack);
-        throw caughtError;
-      }
-      
-      console.error("[DEBUG_RLS] 📦 Insert result:", JSON.stringify({ 
-        ticketId: ticket?.id, 
-        error: error?.message,
-        errorCode: error?.code 
-      }));
+      const { data: ticket, error } = await supabase
+        .from("tickets")
+        .insert({
+          bu_id: buId,
+          type: data.type,
+          title: data.title,
+          category_id: data.category_id || null,
+          subcategory_id: data.subcategory_id || null,
+          partner_company_id: data.partner_company_id || null,
+          // External contact assignment (contact-first routing v2.4+)
+          assigned_contact_id: data.assigned_contact_id || null,
+          assignment_source: data.assignment_source || null,
+          visibility: data.visibility,
+          visibility_team_ids: data.visibility_team_ids || [],
+          visibility_squad_ids: data.visibility_squad_ids || [],
+          visibility_user_ids: data.visibility_user_ids || [],
+          expected_due_at: data.expected_due_at || null,
+          created_by_user_id: profileId,
+          owner_user_id: profileId,
+        })
+        .select()
+        .single();
 
-      if (error) {
-        // Detalhar erro de RLS para debugging
-        console.error("[DEBUG_RLS] RLS VIOLATION DETAILS:", JSON.stringify({
-          errorCode: error.code,
-          errorMessage: error.message,
-          errorDetails: error.details,
-          errorHint: error.hint,
-          buId,
-          profileId,
-          payload: insertPayload,
-        }, null, 2));
-        throw error;
-      }
+      if (error) throw error;
 
       // Add creator as requester participant with profileId
       await supabase.from("ticket_participants").insert({

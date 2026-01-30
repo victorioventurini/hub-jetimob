@@ -51,10 +51,10 @@ export function useCheckContactByEmail(email: string | null) {
       const { data: contact, error } = await globalSupabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, external_company_id, profile_user_id,
+          id, bu_id, partner_company_id, profile_user_id,
           name, email, phone, status,
           created_at, updated_at,
-          external_company:external_companies(id, name)
+          partner_company:partner_companies(id, name)
         `)
         .eq("email", normalizedEmail)
         .is("deleted_at", null)
@@ -81,18 +81,15 @@ export function useCheckContactByEmail(email: string | null) {
         console.error("[useCheckContactByEmail] Association error:", assocError);
       }
 
-      // Map to PartnerContactWithAssociations (adjust field names for backward compat)
       return {
         ...contact,
-        partner_company_id: contact.external_company_id,
-        partner_company: contact.external_company,
         associations: (associations || []).map(a => ({
           id: a.id,
           bu_id: a.bu_id,
           is_active: a.is_active,
           bu_name: (a.bu_units as { id: string; name: string } | null)?.name,
         })),
-      } as unknown as PartnerContactWithAssociations;
+      } as PartnerContactWithAssociations;
     },
     enabled: !!email && email.includes("@"),
     staleTime: 0, // Always refetch for fresh data
@@ -260,7 +257,7 @@ export function useCreateGlobalContact() {
         .from("partner_contacts")
         .insert({
           bu_id: buId, // Keep for backward compat, will be migrated later
-          external_company_id: data.partner_company_id,
+          partner_company_id: data.partner_company_id,
           name: data.name,
           email: data.email.toLowerCase(),
           phone: data.phone || null,

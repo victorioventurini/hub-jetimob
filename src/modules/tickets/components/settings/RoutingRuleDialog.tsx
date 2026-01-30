@@ -77,10 +77,9 @@ export function RoutingRuleDialog({
   useEffect(() => {
     if (open) {
       if (rule) {
-        // Use external_company_id from query (unified model TCR v2.73+)
-        setSelectedCompanyId(rule.external_company_id ?? undefined);
+        setSelectedCompanyId(rule.partner_company_id);
         form.reset({
-          partner_company_id: rule.external_company_id || "",
+          partner_company_id: rule.partner_company_id,
           subcategory_id: rule.subcategory_id,
           assignee_contact_ids: rule.assignee_contact_ids || [],
           watcher_contact_ids: rule.watcher_contact_ids || [],

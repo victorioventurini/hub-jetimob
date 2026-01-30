@@ -239,9 +239,9 @@ export function EmailVerificationStep({
             <AlertCircle className="h-4 w-4 text-warning" />
             <AlertDescription className="text-warning-muted-foreground">
               <strong>{existingContact.name}</strong> já está cadastrado.
-              {existingContact.external_company && (
+              {existingContact.partner_company && (
                 <span className="block text-sm mt-1">
-                  Empresa: {(existingContact.external_company as { name: string }).name}
+                  Empresa: {(existingContact.partner_company as { name: string }).name}
                 </span>
               )}
               {existingContact.associations && existingContact.associations.length > 0 && (

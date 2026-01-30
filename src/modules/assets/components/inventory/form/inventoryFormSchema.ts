@@ -17,7 +17,6 @@ export const inventoryFormSchema = z.object({
   serial_number: z.string().max(100, "Número de série muito longo").optional(),
   no_serial_number: z.boolean().optional(),
   acquisition_value: z.coerce.number().optional(),
-  photos: z.array(z.string()).optional(),
   notes: z.string().max(2000, "Observações muito longas").optional(),
   assigned_to_user_id: z.string().optional(),
   due_at: z.string().optional(),

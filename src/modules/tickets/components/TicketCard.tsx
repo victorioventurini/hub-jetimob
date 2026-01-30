@@ -39,7 +39,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
   // Get joined data
   const creatorProfile = ticket.created_by;
   const ownerProfile = ticket.owner;
-  const externalCompany = ticket.external_company;
+  const partnerCompany = ticket.partner_company;
   const category = ticket.category;
   const subcategory = ticket.subcategory;
   const assignedContact = ticket.assigned_contact;
@@ -93,12 +93,12 @@ export function TicketCard({ ticket }: TicketCardProps) {
               )}
 
               {/* External ticket info: Company + Contact */}
-              {isExternal && (externalCompany || assignedContact) && (
+              {isExternal && (partnerCompany || assignedContact) && (
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                  {externalCompany && (
+                  {partnerCompany && (
                     <span className="flex items-center gap-1">
                       <Building2 className="h-3 w-3" />
-                      <span className="truncate max-w-[150px]">{externalCompany.name}</span>
+                      <span className="truncate max-w-[150px]">{partnerCompany.name}</span>
                     </span>
                   )}
                   {assignedContact && (

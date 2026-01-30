@@ -48,8 +48,8 @@ export function useExternalUser() {
           id,
           name,
           email,
-          external_company_id,
-          external_companies!inner (
+          partner_company_id,
+          partner_companies!inner (
             id,
             name
           )
@@ -92,7 +92,7 @@ export function useExternalUser() {
         console.error("Error fetching BU associations:", assocError);
         // Fallback: use bu_id from contacts directly (legacy)
         const contacts: ExternalContactRecord[] = contactsData.map((record) => {
-          const company = record.external_companies as unknown as { id: string; name: string };
+          const company = record.partner_companies as unknown as { id: string; name: string };
           return {
             contactId: record.id,
             name: record.name,
@@ -123,7 +123,7 @@ export function useExternalUser() {
         if (!contact) continue;
 
         const bu = assoc.bu_units as unknown as { id: string; name: string; legal_entity: string | null };
-        const company = contact.external_companies as unknown as { id: string; name: string };
+        const company = contact.partner_companies as unknown as { id: string; name: string };
         
         // Unique key to avoid duplicates
         const key = `${contact.id}-${bu.id}`;

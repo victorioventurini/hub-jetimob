@@ -47,7 +47,7 @@ export function PartnerContactHoverCard({
           email,
           phone,
           status,
-          ticket_external_companies(name)
+          ticket_partner_companies(name)
         `)
         .eq("id", contactId)
         .maybeSingle();
@@ -75,7 +75,7 @@ export function PartnerContactHoverCard({
         email: contactData.email,
         phone: contactData.phone,
         status: contactData.status,
-        company_name: contactData.ticket_external_companies?.name || null,
+        company_name: contactData.ticket_partner_companies?.name || null,
         capabilities,
       };
     },

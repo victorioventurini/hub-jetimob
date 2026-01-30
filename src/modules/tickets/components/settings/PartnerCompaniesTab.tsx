@@ -25,7 +25,6 @@ import { usePartnerCompanies, useDeletePartnerCompany, usePartnerServices } from
 import { PartnerCompanyDialog } from "./PartnerCompanyDialog";
 import { PartnerServicesTab } from "./PartnerServicesTab";
 import { FallbackContactsEditor } from "./FallbackContactsEditor";
-import { SupervisorsEditor } from "./SupervisorsEditor";
 import { PartnerCompany } from "../../types";
 import { Separator } from "@/components/ui/separator";
 import { useLocalSearch } from "@/shared/url/useLocalSearch";
@@ -173,10 +172,6 @@ export function PartnerCompaniesTab() {
               <FallbackContactsEditor 
                 companyId={servicesCompany.id} 
               />
-              
-              <Separator />
-              
-              <SupervisorsEditor companyId={servicesCompany.id} />
             </div>
           )}
         </DialogContent>

@@ -110,7 +110,7 @@ export function TicketResponsibleSelect({
           id,
           partner_contact:partner_contacts!inner (
             id, name, email,
-            external_company:external_companies(id, name)
+            partner_company:partner_companies(id, name)
           )
         `)
         .eq("bu_id", buId)
@@ -155,7 +155,7 @@ export function TicketResponsibleSelect({
       id: createResponsibleValue("external", c.id),
       type: "external" as const,
       name: c.name || "Sem nome",
-      subtitle: (c.external_company as any)?.name || c.email || undefined,
+      subtitle: (c.partner_company as any)?.name || c.email || undefined,
       avatarUrl: null,
     }));
 

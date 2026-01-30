@@ -87,11 +87,8 @@ export default function CreateTicketPage() {
   const typeFromUrl = searchParams.get('type') as 'internal' | 'external' | null;
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
-  const { profileId, realProfileId, isLoading: identityLoading, isReady: identityReady } = useIdentity();
-  // MUTATIONS devem SEMPRE usar o usuário real (ver docs/canonical/IDENTITY_CONVENTION.md)
-  // Fallback defensivo: em casos raros de bootstrap, usar profileId se realProfileId ainda não estiver disponível.
-  const writerProfileId = realProfileId ?? profileId;
-  const createTicket = useCreateTicket(writerProfileId);
+  const { profileId } = useIdentity();
+  const createTicket = useCreateTicket(profileId);
   const supabase = useBuScopedSupabase();
   const { data: allCategories = [] } = useTicketCategories();
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -114,8 +111,9 @@ export default function CreateTicketPage() {
       type: typeFromUrl === 'external' ? 'external' : 'internal',
       title: "",
       initial_message: "",
-      // No default visibility - user must select
-      visibility: undefined,
+      // For external tickets, no default visibility - user must select
+      // For internal tickets, default to bu_all
+      visibility: typeFromUrl === 'external' ? undefined : "bu_all",
     },
   });
 
@@ -319,7 +317,7 @@ export default function CreateTicketPage() {
   };
 
   const uploadAttachments = async (ticketId: string, messageId: string): Promise<void> => {
-    if (attachments.length === 0 || !currentBu || !writerProfileId) return;
+    if (attachments.length === 0 || !currentBu) return;
     
     for (const file of attachments) {
       const fileExt = file.name.split('.').pop();
@@ -351,45 +349,13 @@ export default function CreateTicketPage() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        // Para writes, sempre usar o profileId real (mesmo durante impersonação)
-        uploaded_by_user_id: writerProfileId,
+        uploaded_by_user_id: profileId,
       });
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    // CRITICAL DEBUG: Log all identity values to diagnose RLS 42501 errors
-    console.error("[DEBUG_RLS] 🚨 CreateTicketPage.onSubmit - IDENTITY STATE:", JSON.stringify({
-      writerProfileId,
-      profileId,
-      realProfileId,
-      identityReady,
-      identityLoading,
-      writerProfileIdType: typeof writerProfileId,
-      profileIdType: typeof profileId,
-      realProfileIdType: typeof realProfileId,
-      buId: currentBu?.id,
-      buName: currentBu?.name,
-      userAuthId: user?.id,
-      timestamp: new Date().toISOString(),
-    }, null, 2));
-
-    // Guard: profileId deve estar carregado antes de submeter
-    if (!writerProfileId) {
-      console.error("[DEBUG_RLS] ❌ writerProfileId is null/undefined - identity not loaded");
-      toast.error("Erro de identidade: aguarde carregar e tente novamente");
-      return;
-    }
-
-    // Extra validation: writerProfileId must be a valid UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(writerProfileId)) {
-      console.error("[DEBUG_RLS] ❌ writerProfileId is not a valid UUID:", writerProfileId);
-      toast.error("Erro de identidade: formato inválido");
-      return;
-    }
-
-    console.error("[DEBUG_RLS] ✅ Identity validated - proceeding with ticket creation");
+    // Validate visibility is selected (required for external tickets)
     if (!data.visibility) {
       toast.error("Selecione a visibilidade do ticket");
       return;
@@ -413,7 +379,7 @@ export default function CreateTicketPage() {
         title: data.title,
         category_id: data.category_id || null,
         subcategory_id: data.subcategory_id || null,
-        external_company_id: data.type === "external" ? data.partner_company_id || null : null,
+        partner_company_id: data.type === "external" ? data.partner_company_id || null : null,
         // External contact assignment
         assigned_contact_id: data.type === "external" ? selectedExternalContactId || null : null,
         assignment_source: data.type === "external" && selectedExternalContactId 
@@ -777,6 +743,10 @@ export default function CreateTicketPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        {/* bu_all only available for internal tickets */}
+                        {selectedType !== "external" && (
+                          <SelectItem value="bu_all">Toda {currentBu?.name || "a BU"}</SelectItem>
+                        )}
                         <SelectItem value="teams">Times específicos</SelectItem>
                         <SelectItem value="users">Usuários específicos</SelectItem>
                         <SelectItem value="private">Privado</SelectItem>
@@ -960,13 +930,9 @@ export default function CreateTicketPage() {
             <Button type="button" variant="outline" onClick={goBack}>
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createTicket.isPending || isUploading || !identityReady}
-              title={!identityReady ? "Aguardando carregar identidade..." : undefined}
-            >
+            <Button type="submit" disabled={createTicket.isPending || isUploading}>
               {(createTicket.isPending || isUploading) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {identityLoading ? "Carregando..." : "Criar Ticket"}
+              Criar Ticket
             </Button>
           </div>
         </form>

@@ -124,18 +124,11 @@ export function normalizeTicketRelations(ticket: any, messagesMap?: Map<string, 
   const msgInfo = messagesMap?.get(ticket.id);
   const mentions = mentionsMap?.get(ticket.id) || [];
   
-  // Handle external_company alias → partner_company for backward compatibility
-  // Query uses external_company:external_companies(...) but type expects partner_company
-  const externalCompany = Array.isArray(ticket.external_company) 
-    ? ticket.external_company[0] ?? null 
-    : ticket.external_company ?? null;
-  
   return {
     ...ticket,
     created_by: Array.isArray(ticket.created_by) ? ticket.created_by[0] ?? null : ticket.created_by,
     owner: Array.isArray(ticket.owner) ? ticket.owner[0] ?? null : ticket.owner,
-    // Map external_company → partner_company (unified model TCR v2.73+)
-    partner_company: externalCompany,
+    partner_company: Array.isArray(ticket.partner_company) ? ticket.partner_company[0] ?? null : ticket.partner_company,
     category: Array.isArray(ticket.category) ? ticket.category[0] ?? null : ticket.category,
     subcategory: Array.isArray(ticket.subcategory) ? ticket.subcategory[0] ?? null : ticket.subcategory,
     assigned_contact: Array.isArray(ticket.assigned_contact) ? ticket.assigned_contact[0] ?? null : ticket.assigned_contact,

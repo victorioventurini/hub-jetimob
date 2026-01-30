@@ -91,7 +91,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
       id,
       name,
       email,
-      external_company:external_companies(id, name)
+      partner_companies(id, name)
     `)
     .eq("id", contact_id)
     .is("deleted_at", null)
@@ -128,7 +128,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   // deno-lint-ignore no-explicit-any
   const contactData = contact as any;
   const buName = buData?.name || "Hub";
-  const companyName = contactData.external_company?.name || "Empresa Parceira";
+  const companyName = contactData.partner_companies?.name || "Empresa Parceira";
 
   // Fetch inviter profile
   const { data: inviterProfile } = await supabase

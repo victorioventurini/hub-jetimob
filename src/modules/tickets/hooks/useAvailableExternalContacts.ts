@@ -66,7 +66,7 @@ export function useContactsByCapability(
           contact:partner_contacts(id, name, email, phone, status)
         `)
         .eq("bu_id", buId)
-        .eq("external_company_id", partnerCompanyId)
+        .eq("partner_company_id", partnerCompanyId)
         .eq("is_active", true)
         .is("deleted_at", null);
 
@@ -124,11 +124,10 @@ export function useCompanyFallbackContacts(partnerCompanyId: string | undefined)
 
       // 1. Get default_contact_ids from association
       const { data: association, error: assocError } = await supabase
-        .from("external_company_bu_associations")
+        .from("partner_company_bu_associations")
         .select("default_contact_ids")
         .eq("bu_id", buId)
-        .eq("external_company_id", partnerCompanyId)
-        .eq("role", "partner")
+        .eq("partner_company_id", partnerCompanyId)
         .eq("is_active", true)
         .is("deleted_at", null)
         .maybeSingle();
@@ -225,14 +224,13 @@ export function useUpdateFallbackContacts() {
       if (!buId) throw new Error("BU não selecionada");
 
       const { error } = await supabase
-        .from("external_company_bu_associations")
+        .from("partner_company_bu_associations")
         .update({
           default_contact_ids: contactIds,
           updated_at: new Date().toISOString(),
         })
         .eq("bu_id", buId)
-        .eq("external_company_id", partnerCompanyId)
-        .eq("role", "partner");
+        .eq("partner_company_id", partnerCompanyId);
 
       if (error) throw error;
     },

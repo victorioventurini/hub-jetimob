@@ -20,6 +20,7 @@
  *   // All queries will include x-current-bu-id header
  */
 
+import { useMemo } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useBu } from '@/contexts/BuContext';
 import type { Database } from './types';
@@ -42,15 +43,9 @@ export function useBuScopedSupabase(): SupabaseClient<Database> {
     );
   }
 
-  // CRITICAL: Always call getBuScopedClient to ensure the current BU ID is set
-  // The useMemo was causing issues where setCurrentBuId wasn't called on subsequent renders
-  // because the client was already cached. Now we call it every render to ensure the
-  // globalThis.__hubJet_currentBuId is always in sync with the current BU context.
-  // 
-  // This is safe because getBuScopedClient:
-  // 1. Sets the current BU ID (needed for every request)
-  // 2. Returns the cached client singleton (no new client created)
-  const client = getBuScopedClient(currentBuId);
+  const client = useMemo(() => {
+    return getBuScopedClient(currentBuId);
+  }, [currentBuId]);
 
   return client;
 }
@@ -62,8 +57,9 @@ export function useBuScopedSupabase(): SupabaseClient<Database> {
 export function useOptionalBuScopedSupabase(): SupabaseClient<Database> | null {
   const { currentBuId } = useBu();
 
-  // Same fix as useBuScopedSupabase - always call to ensure BU ID is set
-  const client = getOptionalBuScopedClient(currentBuId);
+  const client = useMemo(() => {
+    return getOptionalBuScopedClient(currentBuId);
+  }, [currentBuId]);
 
   return client;
 }

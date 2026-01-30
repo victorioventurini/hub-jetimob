@@ -5,12 +5,6 @@
 **Versão do TCR:** 2.51.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
-> ⚠️ **REGENERAÇÃO PENDENTE** (2026-01-28)
-> Novos campos adicionados: `asset_gift_items.{category_id, supplier_id, home_location_id, acquired_at, acquisition_value, quantity_total, photos}`, `asset_keyrings.photos`
-> Nova função: `has_any_asset_permission()`
-> Novo bucket: `asset-photos`
-> Regenerar com: `npx tsx scripts/generate-data-model-registry.ts`
-
 > ⚠️ **FONTE ÚNICA DE VERDADE**
 > Este arquivo é gerado automaticamente do banco de dados.
 > NÃO edite manualmente. Regenere com:

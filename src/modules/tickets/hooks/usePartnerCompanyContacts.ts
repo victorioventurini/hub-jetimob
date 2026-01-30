@@ -76,7 +76,7 @@ export function usePartnerCompanyContacts(options: UsePartnerCompanyContactsOpti
             email,
             phone,
             user_id,
-            external_company_id,
+            partner_company_id,
             status
           )
         `)
@@ -94,7 +94,7 @@ export function usePartnerCompanyContacts(options: UsePartnerCompanyContactsOpti
         .map((a) => a.partner_contact)
         .filter((c): c is NonNullable<typeof c> => 
           c !== null && 
-          c.external_company_id === partnerCompanyId &&
+          c.partner_company_id === partnerCompanyId &&
           c.status === "active"
         );
 

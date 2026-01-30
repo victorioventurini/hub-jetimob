@@ -66,7 +66,7 @@ export function ContactHoverCard({
           email,
           phone,
           status,
-          external_companies(name)
+          partner_companies(name)
         `)
         .eq("id", contactId)
         .maybeSingle();
@@ -79,7 +79,7 @@ export function ContactHoverCard({
         email: contactData.email,
         phone: contactData.phone,
         status: contactData.status,
-        company_name: contactData.external_companies?.name || null,
+        company_name: contactData.partner_companies?.name || null,
       };
     },
     enabled: !!contactId,

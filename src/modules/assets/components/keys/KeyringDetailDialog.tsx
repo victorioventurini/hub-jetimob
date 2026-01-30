@@ -16,7 +16,6 @@ import { Key, ArrowRightLeft, User, Calendar, History, Edit } from "lucide-react
 import { cn } from "@/lib/utils";
 import { useKeys, useAssetPermissionsV2 } from "../../hooks";
 import { KeyringMovementDialog } from "./KeyringMovementDialog";
-import { KeyringDialog } from "./KeyringDialog";
 import type { AssetKeyring, AssetKeyMovement, KeyMovementType } from "../../types";
 import { KEYRING_STATUS_LABELS, KEY_MOVEMENT_TYPE_LABELS } from "../../types";
 import { useEffect } from "react";
@@ -34,7 +33,6 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
   const [movements, setMovements] = useState<AssetKeyMovement[]>([]);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [movementType, setMovementType] = useState<KeyMovementType | undefined>();
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (open && keyring) {
@@ -76,33 +74,25 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
           </DialogHeader>
 
           {/* Quick Actions */}
-          {canManageKeys && (
+          {canManageKeys && keyring.status !== "retired" && keyring.status !== "lost" && (
             <div className="flex flex-wrap gap-2 pb-4">
-              <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </Button>
-              {keyring.status !== "retired" && keyring.status !== "lost" && (
-                <>
-                  {showCheckout && (
-                    <Button size="sm" onClick={() => handleOpenMovement("checkout")}>
-                      <ArrowRightLeft className="h-4 w-4 mr-2" />
-                      Retirar
-                    </Button>
-                  )}
-                  {showReturn && (
-                    <Button size="sm" onClick={() => handleOpenMovement("return")}>
-                      <ArrowRightLeft className="h-4 w-4 mr-2" />
-                      Devolver
-                    </Button>
-                  )}
-                  {showTransfer && (
-                    <Button size="sm" variant="outline" onClick={() => handleOpenMovement("transfer")}>
-                      <ArrowRightLeft className="h-4 w-4 mr-2" />
-                      Transferir
-                    </Button>
-                  )}
-                </>
+              {showCheckout && (
+                <Button size="sm" onClick={() => handleOpenMovement("checkout")}>
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Retirar
+                </Button>
+              )}
+              {showReturn && (
+                <Button size="sm" onClick={() => handleOpenMovement("return")}>
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Devolver
+                </Button>
+              )}
+              {showTransfer && (
+                <Button size="sm" variant="outline" onClick={() => handleOpenMovement("transfer")}>
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Transferir
+                </Button>
               )}
             </div>
           )}
@@ -252,15 +242,6 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
           onOpenChange={setMovementDialogOpen}
           keyring={keyring}
           initialType={movementType}
-        />
-      )}
-
-      {/* Edit Dialog */}
-      {keyring && (
-        <KeyringDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          keyring={keyring}
         />
       )}
     </>

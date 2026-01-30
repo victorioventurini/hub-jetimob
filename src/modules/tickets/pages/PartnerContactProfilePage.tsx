@@ -101,7 +101,7 @@ function usePartnerContactProfile(id: string | undefined) {
           phone,
           status,
           created_at,
-          external_company:external_companies(id, name, legal_name, status, allowed_domains)
+          partner_companies(id, name, legal_name, status, allowed_domains)
         `)
         .eq("id", id)
         .is("deleted_at", null)
@@ -142,7 +142,7 @@ function usePartnerContactProfile(id: string | undefined) {
 
       // Fetch company service mappings if company exists
       let companyServices: ServiceMapping[] = [];
-      const companyId = contactData.external_company?.id;
+      const companyId = contactData.partner_companies?.id;
       
       if (companyId) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,7 +155,7 @@ function usePartnerContactProfile(id: string | undefined) {
             ticket_categories(id, name),
             ticket_subcategories(id, name)
           `)
-          .eq("external_company_id", companyId)
+          .eq("partner_company_id", companyId)
           .is("deleted_at", null);
 
         companyServices = (servicesData || []).map((s: {
@@ -194,7 +194,7 @@ function usePartnerContactProfile(id: string | undefined) {
         phone: contactData.phone,
         status: contactData.status,
         created_at: contactData.created_at,
-        company: contactData.external_company || null,
+        company: contactData.partner_companies || null,
         capabilities,
         company_services: companyServices,
         ticket_count: count || 0,

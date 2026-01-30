@@ -78,7 +78,7 @@ export function useKeys(options: UseKeysOptions = {}) {
       let query = supabase
         .from("asset_keyrings")
         .select(`
-          id, bu_id, name, tag_number, status, photos, notes, claviculary_id, hook_id, current_user_id,
+          id, bu_id, name, tag_number, status, notes, claviculary_id, hook_id, current_user_id,
           created_at, created_by,
           claviculary:asset_clavicularies!claviculary_id(id, name),
           hook:asset_hooks!hook_id(id, hook_number)
@@ -275,7 +275,7 @@ export function useKeys(options: UseKeysOptions = {}) {
 
   // Criar chaveiro
   const createKeyringMutation = useMutation({
-    mutationFn: async (data: { tag_number: string; claviculary_id: string; hook_id: string; photos?: string[]; notes?: string }) => {
+    mutationFn: async (data: { tag_number: string; claviculary_id: string; hook_id: string; notes?: string }) => {
       const client = assertSupabaseClient(supabase, "createKeyring");
       const { data: keyring, error } = await client
         .from("asset_keyrings")
@@ -283,7 +283,6 @@ export function useKeys(options: UseKeysOptions = {}) {
           bu_id: buId!,
           created_by: user?.id,
           name: data.tag_number, // Use tag_number as name for backwards compatibility
-          photos: data.photos || [],
           ...data,
         })
         .select()
@@ -311,40 +310,6 @@ export function useKeys(options: UseKeysOptions = {}) {
         toast.error("Número de etiqueta já existe");
       } else {
         toast.error("Erro ao criar chaveiro");
-      }
-    },
-  });
-
-  // Atualizar chaveiro
-  const updateKeyringMutation = useMutation({
-    mutationFn: async (data: { id: string; tag_number?: string; name?: string; photos?: string[]; notes?: string; status?: 'available' | 'loaned' | 'lost' | 'retired' }) => {
-      const client = assertSupabaseClient(supabase, "updateKeyring");
-      const { id, ...updateData } = data;
-      
-      // Se tag_number mudar, atualiza name também para consistência
-      if (updateData.tag_number && !updateData.name) {
-        updateData.name = updateData.tag_number;
-      }
-      
-      const { data: keyring, error } = await client
-        .from("asset_keyrings")
-        .update({ ...updateData, updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return keyring;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets.keys.keyrings(buId ?? null, undefined), exact: false, refetchType: 'active' });
-      toast.success("Chaveiro atualizado");
-    },
-    onError: (error: any) => {
-      if (error.code === "23505") {
-        toast.error("Número de etiqueta já existe");
-      } else {
-        toast.error("Erro ao atualizar chaveiro");
       }
     },
   });
@@ -444,14 +409,12 @@ export function useKeys(options: UseKeysOptions = {}) {
     createHook: createHookMutation.mutate,
     createHooks: createHooksMutation.mutate,
     createKeyring: createKeyringMutation.mutate,
-    updateKeyring: updateKeyringMutation.mutate,
     createKey: createKeyMutation.mutate,
     createKeyMovement: createKeyMovementMutation.mutate,
     isCreatingClaviculary: createClavicularyMutation.isPending,
     isUpdatingClaviculary: updateClavicularyMutation.isPending,
     isCreatingHook: createHookMutation.isPending,
     isCreatingKeyring: createKeyringMutation.isPending,
-    isUpdatingKeyring: updateKeyringMutation.isPending,
     isCreatingKey: createKeyMutation.isPending,
     isCreatingKeyMovement: createKeyMovementMutation.isPending,
     refetchClavicularies,

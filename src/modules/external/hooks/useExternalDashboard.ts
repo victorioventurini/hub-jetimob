@@ -30,7 +30,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
           subcategory:ticket_subcategories(name)
         `)
         .eq("type", "external")
-        .eq("external_company_id", externalInfo.companyId)
+        .eq("partner_company_id", externalInfo.companyId)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false })
         .limit(5);
@@ -68,7 +68,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
         .from("tickets")
         .select("*", { count: "exact", head: true })
         .eq("type", "external")
-        .eq("external_company_id", externalInfo.companyId)
+        .eq("partner_company_id", externalInfo.companyId)
         .not("status", "in", '("done","discarded")')
         .is("deleted_at", null);
 
@@ -78,7 +78,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
         .from("tickets")
         .select("*", { count: "exact", head: true })
         .eq("type", "external")
-        .eq("external_company_id", externalInfo.companyId)
+        .eq("partner_company_id", externalInfo.companyId)
         .eq("status", "waiting")
         .is("deleted_at", null);
 

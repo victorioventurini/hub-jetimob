@@ -177,7 +177,7 @@ export function PartnerCompanyDialog({
     try {
       // Search for existing company globally (any BU)
       const { data: existingData, error } = await supabase
-        .from("external_companies")
+        .from("partner_companies")
         .select("id, name, legal_name, document, document_type, person_type, status")
         .eq("document", cleanDoc)
         .is("deleted_at", null)
@@ -186,16 +186,15 @@ export function PartnerCompanyDialog({
       if (error) throw error;
 
       if (existingData) {
-        // Check if already active in current BU as partner
+        // Check if already active in current BU
         let isActiveInCurrentBu = false;
         
         if (currentBu?.id) {
           const { data: association } = await supabase
-            .from("external_company_bu_associations")
+            .from("partner_company_bu_associations")
             .select("id, is_active")
-            .eq("external_company_id", existingData.id)
+            .eq("partner_company_id", existingData.id)
             .eq("bu_id", currentBu.id)
-            .eq("role", "partner")
             .is("deleted_at", null)
             .maybeSingle();
 
