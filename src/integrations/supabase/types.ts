@@ -9154,9 +9154,9 @@ export type Database = {
           created_at: string
           created_by_user_id: string
           expected_due_at: string
+          external_company_id: string
           id: string
           owner_user_id: string
-          partner_company_id: string
           status: string
           subcategory_id: string
           title: string
@@ -9390,16 +9390,16 @@ export type Database = {
       resolve_participant_identity: {
         Args: { p_bu_id?: string; p_participant_id: string }
         Returns: {
-          auth_user_id: string
-          company_id: string
-          company_name: string
           display_name: string
           email: string
+          external_company_id: string
+          external_company_name: string
+          id: string
           job_title: string
-          participant_id: string
+          participant_type: string
           photo_url: string
           team_name: string
-          user_type: string
+          user_id: string
         }[]
       }
       resolve_ticket_assignee: {
