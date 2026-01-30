@@ -42,27 +42,6 @@ export function useCreateTicket(profileId: string | null) {
 
   return useMutation({
     mutationFn: async (data: CreateTicketData) => {
-      const withAbort = async <T,>(
-        label: string,
-        timeoutMs: number,
-        exec: (signal: AbortSignal) => PromiseLike<T>
-      ): Promise<T> => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          return await exec(controller.signal);
-        } catch (e: any) {
-          // Fetch aborts surface as AbortError
-          const name = typeof e?.name === "string" ? e.name : "";
-          if (name === "AbortError") {
-            throw new Error(`${label} demorou demais e foi cancelado. Tente novamente.`);
-          }
-          throw e;
-        } finally {
-          clearTimeout(timeout);
-        }
-      };
-
       if (!buId) throw new Error("BU não selecionada");
       if (!profileId) throw new Error("Perfil não carregado - faça login novamente");
 
@@ -117,28 +96,7 @@ export function useCreateTicket(profileId: string | null) {
         timestamp: new Date().toISOString(),
       }, null, 2));
 
-      // DEBUG (non-blocking-ish): Call RLS debug function BEFORE the insert to understand auth context.
-      // IMPORTANT: This must never block the mutation indefinitely.
-      try {
-        const { data: rlsDebug, error: rlsDebugError } = await withAbort(
-          "Debug de RLS",
-          3_500,
-          (signal) =>
-            supabase
-              .rpc("debug_rls_ticket_insert", {
-                p_created_by_user_id: profileId,
-                p_bu_id: buId,
-              })
-              .abortSignal(signal)
-        );
-
-        console.error("[DEBUG_RLS] 🔍 RLS Debug RPC result:", JSON.stringify({
-          rlsDebug,
-          rlsDebugError: rlsDebugError?.message,
-        }, null, 2));
-      } catch (e) {
-        console.warn("[DEBUG_RLS] ⚠️ RLS Debug RPC skipped:", e);
-      }
+      // DEBUG: RLS debug RPC temporarily disabled to isolate insert issue
 
       // Create ticket with profileId (profiles.id)
       // CRITICAL: Never use select(*) / select() here (project standard). We only need the id.
