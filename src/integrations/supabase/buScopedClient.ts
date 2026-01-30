@@ -97,8 +97,17 @@ function setBuSingleton(client: SupabaseClient<Database> | null): void {
   (globalThis as GlobalThisWithBuSingleton).__hubJet_buScopedClient = client;
 }
 
+const BU_STORAGE_KEY = "hub_current_bu_id";
+
 function getCurrentBuId(): string | null {
-  return (globalThis as GlobalThisWithBuSingleton).__hubJet_currentBuId ?? null;
+  // Priority: globalThis (set by getBuScopedClient) -> localStorage (set by BuContext)
+  // This fallback is CRITICAL: useMemo caching may skip getBuScopedClient calls,
+  // leaving globalThis.__hubJet_currentBuId as null while localStorage has the correct value.
+  return (
+    (globalThis as GlobalThisWithBuSingleton).__hubJet_currentBuId ??
+    localStorage.getItem(BU_STORAGE_KEY) ??
+    null
+  );
 }
 
 function setCurrentBuId(buId: string | null): void {
