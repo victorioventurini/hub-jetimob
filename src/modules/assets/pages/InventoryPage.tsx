@@ -60,13 +60,22 @@ export default function InventoryPage() {
   // Client-side filter for hierarchical category/location (parent includes children)
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      // Category filter - supports parent category matching children
-      if (categoryFilter !== "all" && item.category_id) {
+      // Category filter - supports both parent and child category matching
+      if (categoryFilter !== "all") {
+        if (!item.category_id) return false;
+        
         const selectedCategory = categories.find(c => c.id === categoryFilter);
-        if (selectedCategory && !selectedCategory.parent_id) {
-          // Parent category selected - check if item's category is a child
+        if (!selectedCategory) return false;
+        
+        if (!selectedCategory.parent_id) {
+          // Parent category selected - match if item is in parent OR any child
           const itemCategory = categories.find(c => c.id === item.category_id);
-          if (itemCategory?.parent_id !== categoryFilter && item.category_id !== categoryFilter) {
+          if (item.category_id !== categoryFilter && itemCategory?.parent_id !== categoryFilter) {
+            return false;
+          }
+        } else {
+          // Subcategory selected - exact match required
+          if (item.category_id !== categoryFilter) {
             return false;
           }
         }
@@ -75,14 +84,21 @@ export default function InventoryPage() {
       // Location filter - supports parent location matching children
       if (locationFilter !== "all") {
         const itemLocationId = item.home_location_id || item.current_location_id;
-        if (itemLocationId) {
-          const selectedLocation = locations.find(l => l.id === locationFilter);
-          if (selectedLocation && !selectedLocation.parent_location_id) {
-            // Headquarters selected - check if item's location is a room within it
-            const itemLocation = locations.find(l => l.id === itemLocationId);
-            if (itemLocation?.parent_location_id !== locationFilter && itemLocationId !== locationFilter) {
-              return false;
-            }
+        if (!itemLocationId) return false;
+        
+        const selectedLocation = locations.find(l => l.id === locationFilter);
+        if (!selectedLocation) return false;
+        
+        if (!selectedLocation.parent_location_id) {
+          // Headquarters selected - check if item's location is a room within it
+          const itemLocation = locations.find(l => l.id === itemLocationId);
+          if (itemLocationId !== locationFilter && itemLocation?.parent_location_id !== locationFilter) {
+            return false;
+          }
+        } else {
+          // Room/child location selected - exact match required
+          if (itemLocationId !== locationFilter) {
+            return false;
           }
         }
       }
@@ -121,6 +137,7 @@ export default function InventoryPage() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar por nome ou código..."
+        resultCount={filteredItems.length}
         actions={
           canAddItem && (
             <Button onClick={() => setDialogOpen(true)}>

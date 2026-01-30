@@ -9,6 +9,7 @@
  *   searchValue={search}
  *   onSearchChange={setSearch}
  *   searchPlaceholder="Buscar..."
+ *   resultCount={items.length}
  *   actions={<Button>+ Novo Item</Button>}
  * >
  *   <StatusSelect value={status} onChange={setStatus} />
@@ -38,6 +39,12 @@ interface ListPageFiltersProps {
   className?: string;
   /** Se true, não mostra o campo de busca */
   hideSearch?: boolean;
+  /** Número de resultados para exibir contador (ex: "42 itens encontrados") */
+  resultCount?: number;
+  /** Label customizada para o contador (default: "itens encontrados") */
+  resultCountLabel?: string;
+  /** Label singular para o contador (default: "item encontrado") */
+  resultCountLabelSingular?: string;
 }
 
 export function ListPageFilters({
@@ -50,9 +57,13 @@ export function ListPageFilters({
   actions,
   className,
   hideSearch = false,
+  resultCount,
+  resultCountLabel = "itens encontrados",
+  resultCountLabelSingular = "item encontrado",
 }: ListPageFiltersProps) {
   const hasFilters = !!children;
   const hasActions = !!actions;
+  const hasResultCount = typeof resultCount === "number";
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -79,6 +90,14 @@ export function ListPageFilters({
       {hasFilters && (
         <div className="flex flex-wrap gap-2 items-center">
           {children}
+        </div>
+      )}
+
+      {/* Row 3: Result count (optional) */}
+      {hasResultCount && (
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{resultCount.toLocaleString("pt-BR")}</span>{" "}
+          {resultCount === 1 ? resultCountLabelSingular : resultCountLabel}
         </div>
       )}
     </div>

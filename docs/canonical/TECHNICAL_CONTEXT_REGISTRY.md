@@ -2116,8 +2116,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.54.0 |
-| **Data da última atualização** | 2026-01-22 |
+| **Versão do TCR** | 2.77.0 |
+| **Data da última atualização** | 2026-01-30 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -2131,6 +2131,31 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.77.0 (2026-01-30) — Result Count Pattern + Subcategory Filter Fix
+- **Padrão de Contador de Resultados**:
+  - `ListPageFilters` agora aceita prop `resultCount` para exibir "X itens encontrados"
+  - Props adicionais: `resultCountLabel` (plural), `resultCountLabelSingular` (singular)
+  - Formatação com `toLocaleString("pt-BR")` para números grandes
+  - Implementado como exemplo em `InventoryPage`
+- **Correção de Filtro de Subcategoria**:
+  - Filtro hierárquico de categoria em Assets corrigido
+  - Lógica anterior só funcionava para categorias pai
+  - Nova lógica: categoria pai inclui filhos, subcategoria requer match exato
+  - Mesmo fix aplicado para localização hierárquica
+
+### v2.76.0 (2026-01-30) — External Companies Migration
+- **Migração de Nomenclatura**:
+  - `partner_companies` → `external_companies`
+  - `partner_company_id` → `external_company_id` em todas as tabelas
+  - `partner_company_bu_associations` → `external_company_bu_associations`
+- **RPCs Atualizadas**:
+  - `get_partner_categories(p_external_company_id)`
+  - `get_partner_subcategories(p_external_company_id, p_category_id)`
+  - `search_mention_candidates(p_bu_id, p_external_company_id, ...)`
+- **Joins Atualizados**:
+  - Todas as queries de tickets usam `external_company:external_companies(...)`
+  - Componentes de filtro e hover cards corrigidos
 
 ### v2.73.0 (2026-01-23) — Generic Messaging Reply System v1.0
 - **Sistema de Reply Genérico (estilo WhatsApp)**:
