@@ -79,7 +79,7 @@ export function ExistingContactStep({
               <CardTitle className="text-xl">{contact.name}</CardTitle>
               <CardDescription className="flex items-center gap-2 mt-1">
                 <Building2 className="h-3.5 w-3.5" />
-                {(contact.partner_company as { name: string } | null)?.name || "Empresa não definida"}
+                {(contact.external_company as { name: string } | null)?.name || "Empresa não definida"}
               </CardDescription>
             </div>
             <Badge variant={contact.status === "active" ? "default" : "secondary"}>

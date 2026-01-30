@@ -46,7 +46,7 @@ export function MigrateTicketsDialog({
   
   // Get other contacts from the same company
   const { data: allContacts = [], isLoading: loadingContacts } = usePartnerContacts(
-    open ? contact.partner_company_id : undefined
+    open ? contact.external_company_id : undefined
   );
   
   // Filter out the current contact and inactive contacts

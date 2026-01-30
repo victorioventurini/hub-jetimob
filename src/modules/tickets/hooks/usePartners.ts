@@ -15,15 +15,14 @@ export function usePartnerCompanies() {
 
   return useQuery<PartnerCompany[]>({
     queryKey: queryKeys.tickets.partners(buId ?? null),
-    staleTime: 5 * 60 * 1000, // 5 minutes - partner list changes rarely
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<PartnerCompany[]> => {
       if (!buId) return [];
 
-      // Query parceiros ativos na BU via associação
       const { data, error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .select(`
-          partner_company:partner_companies(
+          external_company:external_companies(
             id, name, legal_name, person_type, document, document_type,
             allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at
           )
@@ -34,13 +33,12 @@ export function usePartnerCompanies() {
 
       if (error) throw error;
       
-      // Flatten e filtrar parceiros válidos
       const partners = (data || [])
-        .map((row) => row.partner_company)
+        .map((row) => (row as { external_company: PartnerCompany | null }).external_company)
         .filter((p): p is NonNullable<typeof p> => p !== null && p.deleted_at === null)
         .sort((a, b) => a.name.localeCompare(b.name));
       
-      return partners as PartnerCompany[];
+      return partners;
     },
     enabled: !!buId,
   });
@@ -51,12 +49,12 @@ export function usePartnerCompany(id: string | null) {
   
   return useQuery({
     queryKey: queryKeys.tickets.partnerCompany(id),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!id) return null;
 
       const { data, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .select("id, bu_id, name, legal_name, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
         .eq("id", id)
         .is("deleted_at", null)
@@ -88,15 +86,12 @@ export function useCreatePartnerCompany() {
     }) => {
       if (!buId) throw new Error("BU não selecionada");
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      // 1. Criar parceiro global (sem bu_id)
       const { data: company, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .insert({
-          bu_id: null, // Parceiro global
+          bu_id: null,
           name: data.name,
           legal_name: data.legal_name || null,
           person_type: data.person_type || 'pj',
@@ -112,18 +107,16 @@ export function useCreatePartnerCompany() {
 
       if (error) throw error;
 
-      // 2. Criar associação com a BU atual
       const { error: assocError } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .insert({
-          partner_company_id: company.id,
+          external_company_id: company.id,
           bu_id: buId,
           is_active: true,
         });
 
       if (assocError) {
         console.error("[useCreatePartnerCompany] Failed to create BU association:", assocError);
-        // Não falha a operação, parceiro foi criado
       }
 
       return company as PartnerCompany;
@@ -141,10 +134,7 @@ export function useUpdatePartnerCompany() {
   const supabase = useBuScopedSupabase();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...data
-    }: {
+    mutationFn: async ({ id, ...data }: {
       id: string;
       name?: string;
       legal_name?: string | null;
@@ -155,7 +145,6 @@ export function useUpdatePartnerCompany() {
       status?: PartnerCompanyStatus;
       notes?: string | null;
     }) => {
-      // Limpar documento se fornecido
       const updateData = {
         ...data,
         document: data.document?.replace(/\D/g, '') || null,
@@ -163,7 +152,7 @@ export function useUpdatePartnerCompany() {
       };
 
       const { data: company, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .update(updateData)
         .eq("id", id)
         .select("id, name, legal_name, person_type, document, document_type, allowed_domains, status, notes, created_at, created_by, updated_at, deleted_at")
@@ -188,7 +177,7 @@ export function useDeletePartnerCompany() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
 
@@ -211,19 +200,18 @@ export function usePartnerContacts(companyId?: string) {
 
   return useQuery({
     queryKey: queryKeys.tickets.partnerContacts(buId ?? null, companyId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!buId) return [];
 
-      // Query via partner_contact_bu_associations (new global model)
       const { data: associations, error: assocError } = await supabase
         .from("partner_contact_bu_associations")
         .select(`
           id,
           is_active,
           partner_contact:partner_contacts!inner (
-            id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-            partner_company:partner_companies(id, name)
+            id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+            external_company:external_companies(id, name)
           )
         `)
         .eq("bu_id", buId)
@@ -232,19 +220,18 @@ export function usePartnerContacts(companyId?: string) {
 
       if (assocError) {
         console.error("[usePartnerContacts] Error querying associations:", assocError);
-        // Fallback to legacy query
         let query = supabase
           .from("partner_contacts")
           .select(`
-            id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-            partner_company:partner_companies(id, name)
+            id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+            external_company:external_companies(id, name)
           `)
           .eq("bu_id", buId)
           .is("deleted_at", null)
           .order("name");
 
         if (companyId) {
-          query = query.eq("partner_company_id", companyId);
+          query = query.eq("external_company_id", companyId);
         }
 
         const { data, error } = await query;
@@ -252,20 +239,17 @@ export function usePartnerContacts(companyId?: string) {
         return data as unknown as PartnerContact[];
       }
 
-      // Flatten associations to contacts
       let contacts = (associations || [])
-        .map((a) => a.partner_contact)
+        .map((a) => (a as { partner_contact: PartnerContact }).partner_contact)
         .filter((c): c is NonNullable<typeof c> => c !== null && c.status === "active");
 
-      // Filter by company if specified
       if (companyId) {
-        contacts = contacts.filter((c) => c.partner_company_id === companyId);
+        contacts = contacts.filter((c) => c.external_company_id === companyId);
       }
 
-      // Sort by name
       contacts.sort((a, b) => a.name.localeCompare(b.name));
 
-      return contacts as unknown as PartnerContact[];
+      return contacts;
     },
     enabled: !!buId,
   });
@@ -276,15 +260,15 @@ export function usePartnerContact(id: string | null) {
   
   return useQuery({
     queryKey: queryKeys.tickets.partnerContact(id),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!id) return null;
 
       const { data, error } = await supabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, partner_company_id, name, email, phone, status, created_at, updated_at,
-          partner_company:partner_companies(id, name)
+          id, bu_id, external_company_id, name, email, phone, status, created_at, updated_at,
+          external_company:external_companies(id, name)
         `)
         .eq("id", id)
         .is("deleted_at", null)
@@ -305,7 +289,7 @@ export function useCreatePartnerContact() {
 
   return useMutation({
     mutationFn: async (data: {
-      partner_company_id: string;
+      external_company_id: string;
       name: string;
       email: string;
       phone?: string | null;
@@ -314,15 +298,13 @@ export function useCreatePartnerContact() {
     }) => {
       if (!buId) throw new Error("BU não selecionada");
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       const { data: contact, error } = await supabase
         .from("partner_contacts")
         .insert({
           bu_id: buId,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.external_company_id,
           name: data.name,
           email: data.email.toLowerCase(),
           phone: data.phone || null,
@@ -334,28 +316,15 @@ export function useCreatePartnerContact() {
 
       if (error) throw error;
 
-      // Send invitation email if requested (default: true)
       const shouldSendInvite = data.sendInvite !== false;
       if (shouldSendInvite && contact) {
         try {
           const { data: session } = await supabase.auth.getSession();
-          const response = await supabase.functions.invoke("send-partner-invite", {
-            body: {
-              contact_id: contact.id,
-              bu_id: buId,
-            },
-            headers: {
-              Authorization: `Bearer ${session.session?.access_token}`,
-            },
+          await supabase.functions.invoke("send-partner-invite", {
+            body: { contact_id: contact.id, bu_id: buId },
+            headers: { Authorization: `Bearer ${session.session?.access_token}` },
           });
-
-          if (response.error) {
-            console.warn("[useCreatePartnerContact] Failed to send invite:", response.error);
-          } else {
-            console.log("[useCreatePartnerContact] Invite sent successfully");
-          }
         } catch (inviteError) {
-          // Don't fail the mutation if invite fails
           console.warn("[useCreatePartnerContact] Invite error:", inviteError);
         }
       }
@@ -378,10 +347,7 @@ export function useUpdatePartnerContact() {
   const supabase = useBuScopedSupabase();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...data
-    }: {
+    mutationFn: async ({ id, ...data }: {
       id: string;
       name?: string;
       email?: string;

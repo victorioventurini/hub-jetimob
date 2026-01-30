@@ -51,10 +51,10 @@ export function useCheckContactByEmail(email: string | null) {
       const { data: contact, error } = await globalSupabase
         .from("partner_contacts")
         .select(`
-          id, bu_id, partner_company_id, profile_user_id,
+          id, bu_id, external_company_id, profile_user_id,
           name, email, phone, status,
           created_at, updated_at,
-          partner_company:partner_companies(id, name)
+          external_company:external_companies(id, name)
         `)
         .eq("email", normalizedEmail)
         .is("deleted_at", null)
@@ -81,12 +81,23 @@ export function useCheckContactByEmail(email: string | null) {
         console.error("[useCheckContactByEmail] Association error:", assocError);
       }
 
+      const contactData = contact as Record<string, unknown>;
       return {
-        ...contact,
-        associations: (associations || []).map(a => ({
-          id: a.id,
-          bu_id: a.bu_id,
-          is_active: a.is_active,
+        id: contactData.id as string,
+        bu_id: contactData.bu_id as string,
+        external_company_id: contactData.external_company_id as string,
+        profile_user_id: contactData.profile_user_id as string | null,
+        name: contactData.name as string,
+        email: contactData.email as string,
+        phone: contactData.phone as string | null,
+        status: contactData.status as PartnerContactStatus,
+        created_at: contactData.created_at as string,
+        updated_at: contactData.updated_at as string,
+        external_company: contactData.external_company as { id: string; name: string } | null,
+        associations: (associations || []).map((a: Record<string, unknown>) => ({
+          id: a.id as string,
+          bu_id: a.bu_id as string,
+          is_active: a.is_active as boolean,
           bu_name: (a.bu_units as { id: string; name: string } | null)?.name,
         })),
       } as PartnerContactWithAssociations;
@@ -241,7 +252,7 @@ export function useCreateGlobalContact() {
 
   return useMutation({
     mutationFn: async (data: {
-      partner_company_id: string;
+      external_company_id: string;
       name: string;
       email: string;
       phone?: string | null;
@@ -252,12 +263,12 @@ export function useCreateGlobalContact() {
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      // 1. Create global contact (no bu_id, will be associated via junction table)
+      // 1. Create global contact
       const { data: contact, error } = await supabase
         .from("partner_contacts")
         .insert({
-          bu_id: buId, // Keep for backward compat, will be migrated later
-          partner_company_id: data.partner_company_id,
+          bu_id: buId, // Keep for backward compat
+          external_company_id: data.external_company_id,
           name: data.name,
           email: data.email.toLowerCase(),
           phone: data.phone || null,

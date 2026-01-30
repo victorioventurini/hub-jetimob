@@ -12,7 +12,7 @@ export type PartnerServiceStatus = "active" | "inactive";
 export interface PartnerServiceMapping {
   id: string;
   bu_id: string;
-  partner_company_id: string;
+  external_company_id: string;
   category_id: string;
   subcategory_id: string | null;
   status: PartnerServiceStatus;
@@ -25,8 +25,8 @@ export interface PartnerServiceMapping {
 export interface PartnerService {
   id: string;
   bu_id: string;
-  partner_company_id: string;
-  partner_company_name: string;
+  external_company_id: string;
+  external_company_name: string;
   category_id: string;
   category_name: string;
   category_scope: string;
@@ -58,31 +58,46 @@ export interface PartnerSubcategory {
 /**
  * Busca todos os serviços de um parceiro (view v_partner_services)
  */
-export function usePartnerServices(partnerCompanyId?: string) {
+export function usePartnerServices(externalCompanyId?: string) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerServices(buId ?? null, partnerCompanyId),
+    queryKey: queryKeys.tickets.partnerServices(buId ?? null, externalCompanyId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId) return [];
 
       let query = supabase
         .from("v_partner_services")
-        .select("id, bu_id, partner_company_id, partner_company_name, category_id, category_name, category_scope, subcategory_id, subcategory_name, is_generalist, status, notes, created_at, updated_at")
+        .select("id, bu_id, external_company_id, external_company_name, category_id, category_name, category_scope, subcategory_id, subcategory_name, is_generalist, status, notes, created_at, updated_at")
         .eq("bu_id", buId)
         .eq("status", "active");
 
-      if (partnerCompanyId) {
-        query = query.eq("partner_company_id", partnerCompanyId);
+      if (externalCompanyId) {
+        query = query.eq("external_company_id", externalCompanyId);
       }
 
       const { data, error } = await query.order("category_name");
 
       if (error) throw error;
-      return data as PartnerService[];
+      return (data || []).map((item: Record<string, unknown>) => ({
+        id: item.id as string,
+        bu_id: item.bu_id as string,
+        external_company_id: item.external_company_id as string,
+        external_company_name: item.external_company_name as string,
+        category_id: item.category_id as string,
+        category_name: item.category_name as string,
+        category_scope: item.category_scope as string,
+        subcategory_id: item.subcategory_id as string | null,
+        subcategory_name: item.subcategory_name as string | null,
+        is_generalist: item.is_generalist as boolean,
+        status: item.status as PartnerServiceStatus,
+        notes: item.notes as string | null,
+        created_at: item.created_at as string,
+        updated_at: item.updated_at as string,
+      })) as PartnerService[];
     },
     enabled: !!buId,
   });
@@ -91,22 +106,22 @@ export function usePartnerServices(partnerCompanyId?: string) {
 /**
  * Busca categorias atendidas por um parceiro (usando função SQL)
  */
-export function usePartnerCategories(partnerCompanyId: string | undefined) {
+export function usePartnerCategories(externalCompanyId: string | undefined) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerCategories(partnerCompanyId),
+    queryKey: queryKeys.tickets.partnerCategories(externalCompanyId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      if (!partnerCompanyId) return [];
+      if (!externalCompanyId) return [];
 
       const { data, error } = await supabase
-        .rpc("get_partner_categories", { p_partner_company_id: partnerCompanyId });
+        .rpc("get_partner_categories", { p_external_company_id: externalCompanyId });
 
       if (error) throw error;
       return data as PartnerCategory[];
     },
-    enabled: !!partnerCompanyId,
+    enabled: !!externalCompanyId,
   });
 }
 
@@ -114,27 +129,27 @@ export function usePartnerCategories(partnerCompanyId: string | undefined) {
  * Busca subcategorias atendidas por um parceiro para uma categoria específica
  */
 export function usePartnerSubcategories(
-  partnerCompanyId: string | undefined,
+  externalCompanyId: string | undefined,
   categoryId: string | undefined
 ) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerSubcategories(partnerCompanyId, categoryId),
+    queryKey: queryKeys.tickets.partnerSubcategories(externalCompanyId, categoryId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      if (!partnerCompanyId || !categoryId) return [];
+      if (!externalCompanyId || !categoryId) return [];
 
       const { data, error } = await supabase
         .rpc("get_partner_subcategories", {
-          p_partner_company_id: partnerCompanyId,
+          p_external_company_id: externalCompanyId,
           p_category_id: categoryId,
         });
 
       if (error) throw error;
       return data as PartnerSubcategory[];
     },
-    enabled: !!partnerCompanyId && !!categoryId,
+    enabled: !!externalCompanyId && !!categoryId,
   });
 }
 
@@ -155,7 +170,7 @@ export function usePartnersByCategory(categoryId: string | undefined) {
       // Buscar parceiros distintos que atendem a categoria
       const { data, error } = await supabase
         .from("v_partner_services")
-        .select("partner_company_id, partner_company_name")
+        .select("external_company_id, external_company_name")
         .eq("bu_id", buId)
         .eq("category_id", categoryId)
         .eq("status", "active");
@@ -164,12 +179,12 @@ export function usePartnersByCategory(categoryId: string | undefined) {
 
       // Remover duplicatas (mesmo parceiro pode ter múltiplas subcategorias)
       const uniquePartners = Array.from(
-        new Map(data.map(p => [p.partner_company_id, p])).values()
+        new Map((data || []).map((p: Record<string, unknown>) => [p.external_company_id, p])).values()
       );
 
-      return uniquePartners.map(p => ({
-        id: p.partner_company_id,
-        name: p.partner_company_name,
+      return uniquePartners.map((p: Record<string, unknown>) => ({
+        id: p.external_company_id as string,
+        name: p.external_company_name as string,
       }));
     },
     enabled: !!buId && !!categoryId,
@@ -179,28 +194,28 @@ export function usePartnersByCategory(categoryId: string | undefined) {
 /**
  * Busca todos os mappings de um parceiro (para configuração)
  */
-export function usePartnerServiceMappings(partnerCompanyId: string | undefined) {
+export function usePartnerServiceMappings(externalCompanyId: string | undefined) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, partnerCompanyId),
+    queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, externalCompanyId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      if (!buId || !partnerCompanyId) return [];
+      if (!buId || !externalCompanyId) return [];
 
       const { data, error } = await supabase
         .from("partner_service_mappings")
-        .select("id, bu_id, partner_company_id, category_id, subcategory_id, status, notes, created_at, updated_at")
+        .select("id, bu_id, external_company_id, category_id, subcategory_id, status, notes, created_at, updated_at")
         .eq("bu_id", buId)
-        .eq("partner_company_id", partnerCompanyId)
+        .eq("external_company_id", externalCompanyId)
         .is("deleted_at", null);
 
       if (error) throw error;
-      return data as PartnerServiceMapping[];
+      return (data || []) as PartnerServiceMapping[];
     },
-    enabled: !!buId && !!partnerCompanyId,
+    enabled: !!buId && !!externalCompanyId,
   });
 }
 
@@ -215,7 +230,7 @@ export function useCreatePartnerService() {
 
   return useMutation({
     mutationFn: async (data: {
-      partner_company_id: string;
+      external_company_id: string;
       category_id: string;
       subcategory_id?: string | null;
       notes?: string | null;
@@ -230,7 +245,7 @@ export function useCreatePartnerService() {
         .from("partner_service_mappings")
         .insert({
           bu_id: buId,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.external_company_id,
           category_id: data.category_id,
           subcategory_id: data.subcategory_id || null,
           notes: data.notes || null,
@@ -248,7 +263,7 @@ export function useCreatePartnerService() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCategoriesPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerSubcategoriesPrefix() });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, variables.partner_company_id),
+        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, variables.external_company_id),
       });
     },
   });
@@ -266,10 +281,10 @@ export function useDeletePartnerService() {
   return useMutation({
     mutationFn: async ({
       id,
-      partner_company_id,
+      external_company_id,
     }: {
       id: string;
-      partner_company_id: string;
+      external_company_id: string;
     }) => {
       const { error } = await supabase
         .from("partner_service_mappings")
@@ -277,11 +292,11 @@ export function useDeletePartnerService() {
         .eq("id", id);
 
       if (error) throw error;
-      return { id, partner_company_id };
+      return { id, external_company_id };
     },
     // Optimistic update: remove from list immediately
-    onMutate: async ({ id, partner_company_id }) => {
-      const queryKey = ["partner-service-mappings", buId, partner_company_id];
+    onMutate: async ({ id, external_company_id }) => {
+      const queryKey = ["partner-service-mappings", buId, external_company_id];
       await queryClient.cancelQueries({ queryKey });
       
       const previousData = queryClient.getQueryData<PartnerService[]>(queryKey);
@@ -302,7 +317,7 @@ export function useDeletePartnerService() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCategoriesPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerSubcategoriesPrefix() });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, data.partner_company_id),
+        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, data.external_company_id),
       });
     },
   });
@@ -320,10 +335,10 @@ export function useSavePartnerServices() {
 
   return useMutation({
     mutationFn: async ({
-      partner_company_id,
+      external_company_id,
       services,
     }: {
-      partner_company_id: string;
+      external_company_id: string;
       services: Array<{
         category_id: string;
         subcategory_id: string | null;
@@ -341,7 +356,7 @@ export function useSavePartnerServices() {
         .from("partner_service_mappings")
         .update({ deleted_at: new Date().toISOString() })
         .eq("bu_id", buId)
-        .eq("partner_company_id", partner_company_id)
+        .eq("external_company_id", external_company_id)
         .is("deleted_at", null);
 
       if (deleteError) throw deleteError;
@@ -354,7 +369,7 @@ export function useSavePartnerServices() {
       // Inserir novos mapeamentos
       const mappingsToInsert = services.map((s) => ({
         bu_id: buId,
-        partner_company_id,
+        external_company_id,
         category_id: s.category_id,
         subcategory_id: s.subcategory_id,
         notes: s.notes || null,
@@ -375,7 +390,7 @@ export function useSavePartnerServices() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerCategoriesPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partnerSubcategoriesPrefix() });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, variables.partner_company_id),
+        queryKey: queryKeys.tickets.partnerServiceMappings(buId ?? null, variables.external_company_id),
       });
     },
   });
@@ -384,8 +399,8 @@ export function useSavePartnerServices() {
 /**
  * Verifica se um parceiro tem serviços configurados
  */
-export function useHasPartnerServices(partnerCompanyId: string | undefined) {
-  const { data: services, isLoading } = usePartnerServices(partnerCompanyId);
+export function useHasPartnerServices(externalCompanyId: string | undefined) {
+  const { data: services, isLoading } = usePartnerServices(externalCompanyId);
   
   return {
     hasServices: (services?.length ?? 0) > 0,

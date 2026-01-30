@@ -33,7 +33,7 @@ import { useCreateGlobalContact } from "@/modules/tickets/hooks";
 import type { PartnerCompany } from "../../../types";
 
 const formSchema = z.object({
-  partner_company_id: z.string().min(1, "Empresa é obrigatória"),
+  external_company_id: z.string().min(1, "Empresa é obrigatória"),
   name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   email: z.string().trim().email("Email inválido"),
   phone: z.string().optional(),
@@ -63,7 +63,7 @@ export function ContactFormStep({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      partner_company_id: defaultCompanyId || "",
+      external_company_id: defaultCompanyId || "",
       name: "",
       email: email,
       phone: "",
@@ -71,7 +71,7 @@ export function ContactFormStep({
     },
   });
 
-  const watchedCompanyId = form.watch("partner_company_id");
+  const watchedCompanyId = form.watch("external_company_id");
   const watchedEmail = form.watch("email");
 
   // Get selected company for domain validation
@@ -129,7 +129,7 @@ export function ContactFormStep({
 
     createContact(
       {
-        partner_company_id: data.partner_company_id,
+        external_company_id: data.external_company_id,
         name: data.name.trim(),
         email: data.email.trim().toLowerCase(),
         phone: phoneDigits,
@@ -145,7 +145,7 @@ export function ContactFormStep({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="partner_company_id"
+          name="external_company_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Empresa *</FormLabel>

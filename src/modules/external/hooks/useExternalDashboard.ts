@@ -15,7 +15,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
     isLoading: isTicketsLoading,
   } = useQuery({
     queryKey: queryKeys.external.tickets(externalInfo?.contactId ?? null),
-    queryFn: async () => {
+    queryFn: async (): Promise<ExternalTicketSummary[]> => {
       if (!externalInfo) return [];
 
       const { data, error } = await supabase
@@ -30,7 +30,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
           subcategory:ticket_subcategories(name)
         `)
         .eq("type", "external")
-        .eq("partner_company_id", externalInfo.companyId)
+        .eq("external_company_id", externalInfo.companyId)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false })
         .limit(5);
@@ -40,15 +40,15 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
         return [];
       }
 
-      return (data || []).map((t: any) => ({
+      return (data || []).map((t) => ({
         id: t.id,
         title: t.title,
         status: t.status,
-        categoryName: t.category?.name || null,
-        subcategoryName: t.subcategory?.name || null,
+        categoryName: (t.category as { name: string } | null)?.name || null,
+        subcategoryName: (t.subcategory as { name: string } | null)?.name || null,
         updatedAt: t.updated_at,
         createdAt: t.created_at,
-      })) as ExternalTicketSummary[];
+      }));
     },
     enabled: !!externalInfo,
     staleTime: 2 * 60 * 1000,
@@ -60,15 +60,15 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
     isLoading: isStatsLoading,
   } = useQuery({
     queryKey: queryKeys.external.stats(externalInfo?.contactId ?? null),
-    queryFn: async () => {
+    queryFn: async (): Promise<ExternalDashboardStats> => {
       if (!externalInfo) return { totalOpen: 0, awaitingResponse: 0 };
 
       // Get total open
       const { count: totalOpen } = await supabase
         .from("tickets")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("type", "external")
-        .eq("partner_company_id", externalInfo.companyId)
+        .eq("external_company_id", externalInfo.companyId)
         .not("status", "in", '("done","discarded")')
         .is("deleted_at", null);
 
@@ -76,16 +76,16 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
       // For simplicity, count tickets in 'waiting' status
       const { count: awaitingResponse } = await supabase
         .from("tickets")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("type", "external")
-        .eq("partner_company_id", externalInfo.companyId)
+        .eq("external_company_id", externalInfo.companyId)
         .eq("status", "waiting")
         .is("deleted_at", null);
 
       return {
         totalOpen: totalOpen || 0,
         awaitingResponse: awaitingResponse || 0,
-      } as ExternalDashboardStats;
+      };
     },
     enabled: !!externalInfo,
     staleTime: 2 * 60 * 1000,
@@ -97,7 +97,7 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
     isLoading: isContextLoading,
   } = useQuery({
     queryKey: queryKeys.external.companyContext(externalInfo?.companyId ?? null),
-    queryFn: async () => {
+    queryFn: async (): Promise<ExternalCompanyContext | null> => {
       if (!externalInfo) return null;
 
       // Get categories available for external tickets
@@ -122,12 +122,12 @@ export function useExternalDashboard(externalInfo: ExternalUserInfo | null) {
       return {
         companyId: externalInfo.companyId,
         companyName: externalInfo.companyName,
-        categories: (categories || []).map((c: any) => ({
+        categories: (categories || []).map((c) => ({
           id: c.id,
           name: c.name,
-          subcategories: c.subcategories || [],
+          subcategories: (c.subcategories as { id: string; name: string }[] | null) || [],
         })),
-      } as ExternalCompanyContext;
+      };
     },
     enabled: !!externalInfo,
     staleTime: 10 * 60 * 1000,

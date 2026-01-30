@@ -137,7 +137,7 @@ export function PartnerServicesTab({ partner }: PartnerServicesTabProps) {
   const handleSave = () => {
     const services = getServicesToSave();
     saveServices(
-      { partner_company_id: partner.id, services },
+      { external_company_id: partner.id, services },
       {
         onSuccess: () => {
           toast.success("Serviços salvos com sucesso");

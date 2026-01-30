@@ -37,7 +37,7 @@ export interface AvailableExternalContactsResult {
  * via partner_contact_capabilities
  */
 export function useContactsByCapability(
-  partnerCompanyId: string | undefined,
+  externalCompanyId: string | undefined,
   subcategoryId: string | undefined,
   categoryId: string | undefined
 ) {
@@ -47,13 +47,13 @@ export function useContactsByCapability(
 
   return useQuery({
     queryKey: [
-      ...queryKeys.tickets.companyContactCapabilities(buId ?? null, partnerCompanyId),
+      ...queryKeys.tickets.companyContactCapabilities(buId ?? null, externalCompanyId),
       "by-subcategory",
       subcategoryId,
       categoryId,
     ],
     queryFn: async () => {
-      if (!buId || !partnerCompanyId) return [];
+      if (!buId || !externalCompanyId) return [];
 
       // Build query for capabilities
       let query = supabase
@@ -66,7 +66,7 @@ export function useContactsByCapability(
           contact:partner_contacts(id, name, email, phone, status)
         `)
         .eq("bu_id", buId)
-        .eq("partner_company_id", partnerCompanyId)
+        .eq("external_company_id", externalCompanyId)
         .eq("is_active", true)
         .is("deleted_at", null);
 
@@ -101,7 +101,7 @@ export function useContactsByCapability(
 
       return Array.from(contactMap.values());
     },
-    enabled: !!buId && !!partnerCompanyId && (!!subcategoryId || !!categoryId),
+    enabled: !!buId && !!externalCompanyId && (!!subcategoryId || !!categoryId),
   });
 }
 
@@ -112,34 +112,36 @@ export function useContactsByCapability(
 /**
  * Busca contatos padrão (fallback) configurados na associação empresa-BU
  */
-export function useCompanyFallbackContacts(partnerCompanyId: string | undefined) {
+export function useCompanyFallbackContacts(externalCompanyId: string | undefined) {
   const { currentBu } = useBu();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["company-fallback-contacts", buId, partnerCompanyId],
+    queryKey: ["company-fallback-contacts", buId, externalCompanyId],
     queryFn: async () => {
-      if (!buId || !partnerCompanyId) return [];
+      if (!buId || !externalCompanyId) return [];
 
       // 1. Get default_contact_ids from association
       const { data: association, error: assocError } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .select("default_contact_ids")
         .eq("bu_id", buId)
-        .eq("partner_company_id", partnerCompanyId)
+        .eq("external_company_id", externalCompanyId)
         .eq("is_active", true)
         .is("deleted_at", null)
         .maybeSingle();
 
       if (assocError) throw assocError;
-      if (!association?.default_contact_ids?.length) return [];
+      
+      const assocData = association as { default_contact_ids: string[] | null } | null;
+      if (!assocData?.default_contact_ids?.length) return [];
 
       // 2. Get contact details
       const { data: contacts, error: contactsError } = await supabase
         .from("partner_contacts")
         .select("id, name, email, phone, status")
-        .in("id", association.default_contact_ids)
+        .in("id", assocData.default_contact_ids)
         .eq("status", "active")
         .is("deleted_at", null);
 
@@ -153,7 +155,7 @@ export function useCompanyFallbackContacts(partnerCompanyId: string | undefined)
         source: "fallback" as const,
       }));
     },
-    enabled: !!buId && !!partnerCompanyId,
+    enabled: !!buId && !!externalCompanyId,
   });
 }
 
@@ -166,12 +168,12 @@ export function useCompanyFallbackContacts(partnerCompanyId: string | undefined)
  * Prioriza contatos com capacidade na subcategoria, usa fallback se não encontrar
  */
 export function useAvailableExternalContacts(
-  partnerCompanyId: string | undefined,
+  externalCompanyId: string | undefined,
   subcategoryId: string | undefined,
   categoryId: string | undefined
 ): AvailableExternalContactsResult {
-  const capabilityQuery = useContactsByCapability(partnerCompanyId, subcategoryId, categoryId);
-  const fallbackQuery = useCompanyFallbackContacts(partnerCompanyId);
+  const capabilityQuery = useContactsByCapability(externalCompanyId, subcategoryId, categoryId);
+  const fallbackQuery = useCompanyFallbackContacts(externalCompanyId);
 
   const isLoading = capabilityQuery.isLoading || fallbackQuery.isLoading;
 
@@ -215,28 +217,28 @@ export function useUpdateFallbackContacts() {
 
   return useMutation({
     mutationFn: async ({
-      partnerCompanyId,
+      externalCompanyId,
       contactIds,
     }: {
-      partnerCompanyId: string;
+      externalCompanyId: string;
       contactIds: string[];
     }) => {
       if (!buId) throw new Error("BU não selecionada");
 
       const { error } = await supabase
-        .from("partner_company_bu_associations")
+        .from("external_company_bu_associations")
         .update({
           default_contact_ids: contactIds,
           updated_at: new Date().toISOString(),
         })
         .eq("bu_id", buId)
-        .eq("partner_company_id", partnerCompanyId);
+        .eq("external_company_id", externalCompanyId);
 
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["company-fallback-contacts", buId, variables.partnerCompanyId],
+        queryKey: ["company-fallback-contacts", buId, variables.externalCompanyId],
         refetchType: 'active',
       });
       toast.success("Contatos padrão atualizados");

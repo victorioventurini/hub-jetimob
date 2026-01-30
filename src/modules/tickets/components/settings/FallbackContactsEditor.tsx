@@ -69,7 +69,7 @@ export function FallbackContactsEditor({
 
   const handleSave = () => {
     updateMutation.mutate({
-      partnerCompanyId: companyId,
+      externalCompanyId: companyId,
       contactIds: selectedIds,
     });
     setHasChanges(false);

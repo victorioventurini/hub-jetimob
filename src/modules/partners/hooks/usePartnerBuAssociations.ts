@@ -91,7 +91,7 @@ export function useActivatePartnerInBu() {
         .from("external_company_bu_associations")
         .upsert(
           {
-            external_company_id: data.partner_company_id,
+            external_company_id: data.external_company_id,
             bu_id: data.bu_id,
             is_active: data.is_active ?? true,
             notes: data.notes || null,
@@ -107,7 +107,7 @@ export function useActivatePartnerInBu() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: partnersKeys.all() });
       queryClient.invalidateQueries({ queryKey: partnersKeys.byBu(variables.bu_id) });
-      queryClient.invalidateQueries({ queryKey: partnersKeys.buAssociations(variables.partner_company_id) });
+      queryClient.invalidateQueries({ queryKey: partnersKeys.buAssociations(variables.external_company_id) });
       // Também invalida query do módulo tickets
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.partners(currentBuId) });
       toast.success("Parceiro ativado nesta unidade de negócio");
@@ -174,7 +174,7 @@ export function useTogglePartnerBuAssociation() {
         deactivateMutation.mutate({ partnerId, buId });
       } else {
         activateMutation.mutate({
-          partner_company_id: partnerId,
+          external_company_id: partnerId,
           bu_id: buId,
           is_active: true,
         });
@@ -201,7 +201,7 @@ export function useActivatePartnerInBuGlobal() {
         .from("external_company_bu_associations")
         .upsert(
           {
-            external_company_id: data.partner_company_id,
+            external_company_id: data.external_company_id,
             bu_id: data.bu_id,
             is_active: data.is_active ?? true,
             notes: data.notes || null,
@@ -217,7 +217,7 @@ export function useActivatePartnerInBuGlobal() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: partnersKeys.all() });
       queryClient.invalidateQueries({ queryKey: partnersKeys.byBu(variables.bu_id) });
-      queryClient.invalidateQueries({ queryKey: partnersKeys.buAssociations(variables.partner_company_id) });
+      queryClient.invalidateQueries({ queryKey: partnersKeys.buAssociations(variables.external_company_id) });
       toast.success("Parceiro ativado na unidade de negócio");
     },
     onError: (error: Error) => {
