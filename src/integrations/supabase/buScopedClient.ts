@@ -199,6 +199,11 @@ function createBuAwareFetch() {
       }));
 
       // Log auth decision details for tickets
+      const authHeaderValue = headers.get("Authorization");
+      const tokenPreview = authHeaderValue ? 
+        `${authHeaderValue.substring(0, 20)}...${authHeaderValue.slice(-10)}` : 
+        "MISSING";
+      
       console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
         hasStoredToken: !!storedToken,
         hasSub,
@@ -207,13 +212,24 @@ function createBuAwareFetch() {
         shouldUseStored,
         usedStoredToken,
         finalAuthHeader: headers.has("Authorization"),
+        authHeaderPreview: tokenPreview,
         finalApiKeyHeader: headers.has("apikey"),
+        apiKeyPreview: headers.get("apikey")?.substring(0, 20) ?? "MISSING",
         finalBuHeader: headers.has("x-current-bu-id"),
         buId: effectiveBuId,
         buIdSource,
         method: init?.method ?? "GET",
         timestamp: new Date().toISOString(),
       }));
+      
+      // Log the full headers being sent (for debugging)
+      const headersObj: Record<string, string> = {};
+      headers.forEach((value, key) => {
+        headersObj[key] = key.toLowerCase() === "authorization" 
+          ? `${value.substring(0, 20)}...` 
+          : value.substring(0, 50);
+      });
+      console.error("[BuScopedClient] 🎫 FULL HEADERS BEING SENT:", JSON.stringify(headersObj));
     } else if (storedToken) {
       // Standard auth log for non-ticket requests
       console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
