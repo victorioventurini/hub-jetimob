@@ -120,6 +120,16 @@ function setCurrentBuId(buId: string | null): void {
 // race conditions with GoTrueClient's internal state (fixes RLS violations)
 function createBuAwareFetch() {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
+    
+    // DEBUG: Log every fetch call to diagnose hanging tickets insert
+    const isTicketsRequest = url.includes("/tickets");
+    if (isTicketsRequest) {
+      console.error("[BuScopedClient] 🎫 TICKETS REQUEST INTERCEPTED:", url.substring(0, 150));
+      console.error("[BuScopedClient] 🎫 Method:", init?.method ?? "GET");
+      console.error("[BuScopedClient] 🎫 Body present:", !!init?.body);
+    }
+    
     const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
     
     // Inject BU header for current request.
@@ -154,7 +164,6 @@ function createBuAwareFetch() {
     // (or future token formats) may not include it. What we need is a non-expired user JWT.
     const storedToken = readAccessTokenFromStorage();
     let usedStoredToken = false;
-     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
 
     if (storedToken) {
       const payload = decodeJwtPayload(storedToken);
@@ -169,31 +178,48 @@ function createBuAwareFetch() {
         usedStoredToken = true;
       }
 
-      // DEBUG LOG - temporarily enabled for RLS debugging in production
-      // TODO: Remove or gate behind DEV once RLS issue is resolved
-      // eslint-disable-next-line no-console
-      console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
-        url: url.substring(0, 100),
-         buId: effectiveBuId,
-         buIdSource,
-        hasStoredToken: true,
-        hasSub,
-        storedRole,
-        expired,
-        usedStoredToken,
-      }));
+      // Only log for non-tickets requests (tickets has its own detailed log above)
+      if (!isTicketsRequest) {
+        console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
+          url: url.substring(0, 100),
+          buId: effectiveBuId,
+          buIdSource,
+          hasStoredToken: true,
+          hasSub,
+          storedRole,
+          expired,
+          usedStoredToken,
+        }));
+      }
     } else {
       // No token in localStorage - this is a critical issue for RLS!
-      // eslint-disable-next-line no-console
       console.error("[BuScopedClient] ⚠️ NO TOKEN IN LOCALSTORAGE - RLS will likely fail:", JSON.stringify({
         url: url.substring(0, 100),
-         buId: effectiveBuId,
-         buIdSource,
+        buId: effectiveBuId,
+        buIdSource,
         hasStoredToken: false,
       }));
     }
 
-    return fetch(input, { ...init, headers });
+    if (isTicketsRequest) {
+      console.error("[BuScopedClient] 🎫 About to call native fetch for tickets...");
+      console.error("[BuScopedClient] 🎫 Headers prepared:", JSON.stringify({
+        hasBuId: headers.has("x-current-bu-id"),
+        hasAuth: headers.has("Authorization"),
+        contentType: headers.get("Content-Type"),
+      }));
+    }
+
+    try {
+      const response = await fetch(input, { ...init, headers });
+      if (isTicketsRequest) {
+        console.error("[BuScopedClient] 🎫 Fetch response received:", response.status);
+      }
+      return response;
+    } catch (fetchError) {
+      console.error("[BuScopedClient] 💥 FETCH FAILED:", fetchError);
+      throw fetchError;
+    }
   };
 }
 
