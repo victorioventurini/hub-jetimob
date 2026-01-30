@@ -4,6 +4,7 @@ import { BuUnit, UserBuMembership } from "@/modules/bu/types";
 import { useUserBus } from "@/modules/bu/hooks";
 import { useExternalUserBus } from "@/modules/external/hooks";
 import { AuthContext, type AuthContextType } from "@/hooks/useAuth";
+import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
 
 interface BuContextType {
   /** Selected BU id (available even if bu_unit data isn't loaded) */
@@ -142,9 +143,11 @@ export function BuProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(BU_STORAGE_KEY, buId);
       localStorage.setItem(BU_SELECTED_KEY, "true");
       
-      // Invalidate all BU-scoped queries when changing BU
+      // Invalidate all BU-scoped queries and client cache when changing BU
       if (isChanging) {
-        console.log("[BuContext] BU changed, clearing query cache");
+        console.log("[BuContext] BU changed, clearing query cache and BU client");
+        // Clear BU-scoped Supabase client cache to force re-creation with new BU ID
+        clearBuClientCache();
         queryClient.clear();
       }
     }

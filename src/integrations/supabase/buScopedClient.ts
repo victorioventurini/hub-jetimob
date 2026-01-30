@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { supabase as globalClient } from "./globalClient";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -114,7 +115,7 @@ function setCurrentBuId(buId: string | null): void {
   (globalThis as GlobalThisWithBuSingleton).__hubJet_currentBuId = buId;
 }
 
-// Custom fetch that injects BU header dynamically per-request
+// Custom fetch that injects BU header and synced auth token per-request
 function createBuAwareFetch() {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
@@ -130,15 +131,37 @@ function createBuAwareFetch() {
       console.warn("[BuScopedClient] No BU ID available for header injection!");
     }
 
-    // Inject JWT if needed (avoid anon requests during cold starts)
-    const storedToken = readAccessTokenFromStorage();
+    // CRITICAL FIX: Use globalClient session as source of truth for auth token
+    // This ensures the BU-scoped client uses the same JWT as the global auth client,
+    // preventing auth.uid() from being NULL in PostgreSQL RLS policies.
     const currentAuth = headers.get("Authorization") || headers.get("authorization");
     const currentToken = currentAuth?.startsWith("Bearer ") ? currentAuth.slice(7) : null;
     const currentRole = currentToken ? getJwtRole(currentToken) : null;
     const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
 
-    if (storedToken && shouldInjectUserJwt) {
-      headers.set("Authorization", `Bearer ${storedToken}`);
+    if (shouldInjectUserJwt) {
+      try {
+        // Prefer globalClient session (synced with login state)
+        const { data: { session } } = await globalClient.auth.getSession();
+        if (session?.access_token) {
+          headers.set("Authorization", `Bearer ${session.access_token}`);
+          console.debug("[BuScopedClient] Using globalClient session token");
+        } else {
+          // Fallback to localStorage (for edge cases during hydration)
+          const storedToken = readAccessTokenFromStorage();
+          if (storedToken) {
+            headers.set("Authorization", `Bearer ${storedToken}`);
+            console.debug("[BuScopedClient] Using localStorage token (fallback)");
+          }
+        }
+      } catch (error) {
+        console.warn("[BuScopedClient] Failed to get session from globalClient:", error);
+        // Last resort fallback
+        const storedToken = readAccessTokenFromStorage();
+        if (storedToken) {
+          headers.set("Authorization", `Bearer ${storedToken}`);
+        }
+      }
     }
 
     return fetch(input, { ...init, headers });

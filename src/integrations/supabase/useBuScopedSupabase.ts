@@ -20,9 +20,10 @@
  *   // All queries will include x-current-bu-id header
  */
 
-import { useMemo } from 'react';
+import { useMemo, useContext } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useBu } from '@/contexts/BuContext';
+import { AuthContext, type AuthContextType } from '@/hooks/useAuth';
 import type { Database } from './types';
 import { getBuScopedClient, getOptionalBuScopedClient } from './buScopedClient';
 
@@ -31,15 +32,29 @@ import { getBuScopedClient, getOptionalBuScopedClient } from './buScopedClient';
  * The header is read by current_bu_id() function in PostgreSQL.
  * 
  * @throws Error if called before BuProvider is initialized (no currentBuId)
+ * @throws Error if called without an active auth session (prevents RLS failures)
  */
 export function useBuScopedSupabase(): SupabaseClient<Database> {
   const { currentBuId } = useBu();
+  // Use optional AuthContext access to check session state
+  const authContext = useContext(AuthContext) as AuthContextType | undefined;
+  const session = authContext?.session ?? null;
+  const authLoading = authContext?.isLoading ?? true;
 
   // Guard: Ensure this hook is only used after BU selection
   if (!currentBuId) {
     throw new Error(
       'useBuScopedSupabase called before BuProvider initialization or BU selection. ' +
         'For pre-BU hooks (useUserBus, useExternalUser), use the global supabase client instead.'
+    );
+  }
+
+  // Guard: Ensure there's an active session (prevents auth.uid() = NULL in PostgreSQL)
+  // Allow during loading to prevent blocking initial render
+  if (!session && !authLoading) {
+    throw new Error(
+      'useBuScopedSupabase called without active auth session. ' +
+        'User must be logged in before performing BU-scoped operations.'
     );
   }
 
