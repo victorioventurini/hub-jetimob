@@ -128,16 +128,37 @@ function createBuAwareFetch() {
       headers.set("x-current-bu-id", buId);
     }
 
-    // ALWAYS inject the latest valid JWT from localStorage
-    // This ensures we don't use a stale token from GoTrueClient's internal state
+    // ALWAYS prefer the latest valid JWT from localStorage.
+    // We intentionally do NOT rely on the `role` claim being present, because some auth flows
+    // (or future token formats) may not include it. What we need is a non-expired user JWT.
     const storedToken = readAccessTokenFromStorage();
+    let usedStoredToken = false;
+
     if (storedToken) {
+      const payload = decodeJwtPayload(storedToken);
+      const hasSub = typeof payload?.sub === "string" && payload.sub.length > 0;
       const storedRole = getJwtRole(storedToken);
-      const isValidToken = storedRole === "authenticated" && !isTokenExpired(storedToken);
-      
-      if (isValidToken) {
+      const expired = isTokenExpired(storedToken);
+      const shouldUseStored = hasSub && !expired && storedRole !== "anon";
+
+      if (shouldUseStored) {
         // Always use localStorage token (source of truth) - override any SDK-provided header
         headers.set("Authorization", `Bearer ${storedToken}`);
+        usedStoredToken = true;
+      }
+
+      if (import.meta.env.DEV || import.meta.env.MODE === "development") {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
+        // eslint-disable-next-line no-console
+        console.debug("[BuScopedClient] Auth header decision", {
+          url,
+          buId,
+          hasStoredToken: true,
+          hasSub,
+          storedRole,
+          expired,
+          usedStoredToken,
+        });
       }
     }
 
