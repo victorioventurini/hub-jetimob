@@ -122,10 +122,31 @@ function createBuAwareFetch() {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
     
-    // Inject BU header for current request (read from globalThis)
-    const buId = getCurrentBuId();
-    if (buId && !headers.has("x-current-bu-id")) {
-      headers.set("x-current-bu-id", buId);
+    // Inject BU header for current request.
+    // Source of truth priority:
+    // 1) globalThis.__hubJet_currentBuId (kept in sync by useBuScopedSupabase)
+    // 2) localStorage persisted BU from BuContext (hub_current_bu_id)
+    //
+    // Why fallback is needed:
+    // In rare flows (HMR reload, hard refresh mid-bootstrap, cache clears), the globalThis BU
+    // can desync momentarily even though the user already has a persisted BU selection.
+    // If we send x-current-bu-id as null, RLS evaluates against the wrong BU context.
+    const BU_CONTEXT_STORAGE_KEY = "hub_current_bu_id";
+    const buIdFromGlobal = getCurrentBuId();
+    const buIdFromStorage = (() => {
+      try {
+        return localStorage.getItem(BU_CONTEXT_STORAGE_KEY);
+      } catch {
+        return null;
+      }
+    })();
+
+    const effectiveBuId = buIdFromGlobal || buIdFromStorage;
+    const buIdSource = buIdFromGlobal ? "globalThis" : buIdFromStorage ? "localStorage" : "none";
+
+    // Always enforce the effective BU header (even if caller set a different value)
+    if (effectiveBuId && headers.get("x-current-bu-id") !== effectiveBuId) {
+      headers.set("x-current-bu-id", effectiveBuId);
     }
 
     // ALWAYS prefer the latest valid JWT from localStorage.
@@ -133,7 +154,7 @@ function createBuAwareFetch() {
     // (or future token formats) may not include it. What we need is a non-expired user JWT.
     const storedToken = readAccessTokenFromStorage();
     let usedStoredToken = false;
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
+     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
 
     if (storedToken) {
       const payload = decodeJwtPayload(storedToken);
@@ -153,7 +174,8 @@ function createBuAwareFetch() {
       // eslint-disable-next-line no-console
       console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
         url: url.substring(0, 100),
-        buId,
+         buId: effectiveBuId,
+         buIdSource,
         hasStoredToken: true,
         hasSub,
         storedRole,
@@ -165,7 +187,8 @@ function createBuAwareFetch() {
       // eslint-disable-next-line no-console
       console.error("[BuScopedClient] ⚠️ NO TOKEN IN LOCALSTORAGE - RLS will likely fail:", JSON.stringify({
         url: url.substring(0, 100),
-        buId,
+         buId: effectiveBuId,
+         buIdSource,
         hasStoredToken: false,
       }));
     }
