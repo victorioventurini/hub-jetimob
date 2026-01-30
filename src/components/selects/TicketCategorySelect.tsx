@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useTicketCategories } from "@/modules/tickets/hooks";
@@ -27,7 +28,7 @@ interface TicketCategorySelectProps {
 
 /**
  * Centralized ticket category select component.
- * Fetches categories from the database and displays them.
+ * Fetches categories from the database and displays them in alphabetical order.
  * 
  * @example
  * // Filter usage
@@ -50,7 +51,11 @@ export function TicketCategorySelect({
 }: TicketCategorySelectProps) {
   const { data: fetchedCategories = [], isLoading } = useTicketCategories(scope);
   
-  const categories = externalCategories ?? fetchedCategories;
+  // Sort categories alphabetically
+  const categories = useMemo(() => {
+    const data = externalCategories ?? fetchedCategories;
+    return [...data].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [externalCategories, fetchedCategories]);
 
   return (
     <Select 

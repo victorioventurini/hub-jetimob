@@ -172,8 +172,14 @@ export default function CreateTicketPage() {
 
   // Hooks para serviços do parceiro - Nova lógica: Categoria → Empresa → Subcategoria
   // Buscar empresas que atendem a categoria selecionada
-  const { data: partnersByCategory = [], isLoading: loadingPartnersByCategory } = usePartnersByCategory(
+  const { data: partnersByCategoryRaw = [], isLoading: loadingPartnersByCategory } = usePartnersByCategory(
     selectedType === "external" ? selectedCategoryId : undefined
+  );
+  
+  // Ordenar empresas parceiras alfabeticamente
+  const partnersByCategory = useMemo(() => 
+    [...partnersByCategoryRaw].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [partnersByCategoryRaw]
   );
   
   const { hasServices: partnerHasServices, isLoading: loadingPartnerServices } = useHasPartnerServices(
@@ -188,12 +194,18 @@ export default function CreateTicketPage() {
   );
 
   // Hook para buscar contatos disponíveis (por capacidade ou fallback)
-  const { contacts: availableContacts, source: contactsSource, isLoading: loadingContacts } = 
+  const { contacts: availableContactsRaw, source: contactsSource, isLoading: loadingContacts } = 
     useAvailableExternalContacts(
       selectedType === "external" ? selectedPartnerId : undefined,
       selectedSubcategoryId,
       selectedCategoryId
     );
+  
+  // Ordenar contatos alfabeticamente
+  const availableContacts = useMemo(() => 
+    [...availableContactsRaw].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [availableContactsRaw]
+  );
 
   // Auto-selecionar contato se só houver um disponível
   useEffect(() => {
@@ -246,42 +258,43 @@ export default function CreateTicketPage() {
   }, [selectedPartnerId, selectedType, form]);
 
   // Filtrar categorias baseado no tipo - Para external, mostrar todas as categorias external/both
+  // Ordenar alfabeticamente por nome
   const filteredCategories = useMemo(() => {
+    let categories = allCategories;
+    
     if (selectedType === "internal") {
-      return allCategories.filter(cat => cat.scope === "internal" || cat.scope === "both");
-    }
-    
-    if (selectedType === "external") {
+      categories = allCategories.filter(cat => cat.scope === "internal" || cat.scope === "both");
+    } else if (selectedType === "external") {
       // Mostrar todas as categorias externas (a empresa será filtrada depois)
-      return allCategories.filter(cat => cat.scope === "external" || cat.scope === "both");
+      categories = allCategories.filter(cat => cat.scope === "external" || cat.scope === "both");
     }
     
-    return allCategories;
+    return [...categories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [selectedType, allCategories]);
 
-  // Determinar subcategorias disponíveis
+  // Determinar subcategorias disponíveis - Ordenar alfabeticamente
   const availableSubcategories = useMemo(() => {
+    let subcategories: { id: string; name: string }[] = [];
+    
     if (selectedType === "internal" && selectedCategoryId) {
       // Use subcategories embedded in the selected category (already filtered by status)
       const category = allCategories.find(c => c.id === selectedCategoryId);
-      return category?.subcategories || [];
-    }
-    
-    if (selectedType === "external" && selectedPartnerId && selectedCategoryId) {
+      subcategories = category?.subcategories || [];
+    } else if (selectedType === "external" && selectedPartnerId && selectedCategoryId) {
       // Se generalista, mostrar todas as subcategorias da categoria
       if (isGeneralistCategory) {
         const category = allCategories.find(c => c.id === selectedCategoryId);
-        return category?.subcategories || [];
+        subcategories = category?.subcategories || [];
+      } else {
+        // Caso contrário, apenas as subcategorias mapeadas
+        subcategories = partnerSubcategories.map(ps => ({
+          id: ps.subcategory_id,
+          name: ps.subcategory_name,
+        }));
       }
-      
-      // Caso contrário, apenas as subcategorias mapeadas
-      return partnerSubcategories.map(ps => ({
-        id: ps.subcategory_id,
-        name: ps.subcategory_name,
-      }));
     }
     
-    return [];
+    return [...subcategories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [selectedType, selectedPartnerId, selectedCategoryId, isGeneralistCategory, partnerSubcategories, allCategories]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
