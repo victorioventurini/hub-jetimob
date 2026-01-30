@@ -198,8 +198,27 @@ function createBuAwareFetch() {
         prefer: originalHeaders.get("Prefer"),
       }));
 
-      // Decode the token to show the payload (helps debug auth.uid() mismatch)
+      // Decode the token FIRST and log it immediately
+      console.error("[BuScopedClient] 🎫 STORED TOKEN CHECK:", JSON.stringify({
+        hasStoredToken: !!storedToken,
+        tokenLength: storedToken?.length ?? 0,
+        tokenPrefix: storedToken?.substring(0, 50) ?? "NULL",
+      }));
+      
       const payload = storedToken ? decodeJwtPayload(storedToken) : null;
+      
+      // Log the JWT payload IMMEDIATELY after decoding
+      console.error("[BuScopedClient] 🎫 JWT PAYLOAD:", payload ? JSON.stringify({
+        sub: payload.sub,
+        aud: payload.aud,
+        role: payload.role,
+        iss: payload.iss,
+        exp: payload.exp,
+        iat: payload.iat,
+        expDate: payload.exp ? new Date((payload.exp as number) * 1000).toISOString() : "N/A",
+        isExpired: payload.exp ? Date.now() >= (payload.exp as number) * 1000 : true,
+      }) : `DECODE FAILED - storedToken=${storedToken ? 'exists' : 'null'}`);
+      
       const authHeaderValue = headers.get("Authorization");
       const tokenPreview = authHeaderValue ? 
         `${authHeaderValue.substring(0, 40)}...${authHeaderValue.slice(-20)}` : 
@@ -222,22 +241,6 @@ function createBuAwareFetch() {
         method: init?.method ?? "GET",
         timestamp: new Date().toISOString(),
       }));
-      
-      // Log the JWT payload to check if sub claim is correct
-      if (payload) {
-        console.error("[BuScopedClient] 🎫 JWT PAYLOAD:", JSON.stringify({
-          sub: payload.sub,
-          aud: payload.aud,
-          role: payload.role,
-          iss: payload.iss,
-          exp: payload.exp,
-          iat: payload.iat,
-          expDate: payload.exp ? new Date((payload.exp as number) * 1000).toISOString() : "N/A",
-          isExpired: payload.exp ? Date.now() >= (payload.exp as number) * 1000 : true,
-        }));
-      } else {
-        console.error("[BuScopedClient] 🎫 JWT PAYLOAD: Could not decode token");
-      }
       
       // Log the full headers being sent (for debugging)
       const headersObj: Record<string, string> = {};
