@@ -1,127 +1,127 @@
 
-# Plano de Correção: Sincronização de Sessão Auth no BU-Scoped Client
+# Plano de Correção: Requisição de INSERT em Tickets Pendente Indefinidamente
 
 ## 1. Diagnóstico Confirmado
 
-### 1.1 Evidências dos Logs do Usuário
-```json
-{
-  "writerProfileId": "f375b494-5edf-463e-97c1-c39206692759",
-  "profileId": "f375b494-5edf-463e-97c1-c39206692759",
-  "realProfileId": "f375b494-5edf-463e-97c1-c39206692759",
-  "buId": "a0000000-0000-0000-0000-000000000001"
+### 1.1 Evidências Coletadas
+
+| Evidência | Valor | Significado |
+|-----------|-------|-------------|
+| Log `🎫 TICKETS REQUEST INTERCEPTED` | ✅ Aparece | Interceptor é alcançado |
+| Log `🎫 About to call native fetch` | ✅ Aparece | Headers foram preparados |
+| Log `🎫 Fetch response received` | ❌ Não aparece | Fetch nativo não completa |
+| Log `🔐 Auth header decision` para tickets | ❌ Não aparece | **PROBLEMA: Lógica pula log de auth para tickets!** |
+| Aba Network | "Pending" indefinidamente | Servidor não responde |
+| PostgreSQL logs | `NO_BU_CONTEXT: User is not authenticated` | `auth.uid()` = NULL |
+
+### 1.2 Causa Raiz
+
+O código atual no interceptor de fetch (`buScopedClient.ts`) **pula propositalmente** o log de auth para requisições de tickets:
+
+```typescript
+// PROBLEMA: Isso IGNORA os tickets, não vemos se auth está correto!
+if (!isTicketsRequest) {
+  console.error("[BuScopedClient] 🔐 Auth header decision:", ...);
 }
 ```
 
-- Frontend está CORRETO: `profileId`, `buId`, e `created_by_user_id` estão todos válidos
-- Usuário tem memberships válidas no banco de dados
-- Funções SQL funcionam corretamente quando testadas diretamente
+Isso significa que não temos visibilidade sobre se:
+- O token foi encontrado no localStorage
+- O token é válido (não expirado, tem `sub`, role != anon)
+- O header `Authorization` foi efetivamente setado
 
-### 1.2 A RLS Policy
-```sql
-tickets_insert_policy:
-  user_has_bu_access(auth.uid(), bu_id) 
-  AND created_by_user_id = my_profile_id()
-```
+O PostgreSQL está recebendo a requisição **sem autenticação válida**, causando o trigger `enforce_bu_scope` a lançar a exceção `NO_BU_CONTEXT: User is not authenticated`.
 
-A policy requer que `auth.uid()` retorne o user_id correto. Se `auth.uid()` for NULL, `my_profile_id()` retorna NULL, e a condição `created_by_user_id = NULL` sempre falha.
+### 1.3 Por que o Fetch Trava?
 
-### 1.3 Causa Raiz
-O `buScopedClient.ts` cria um cliente Supabase separado com seu próprio GoTrueClient. Mesmo usando o mesmo localStorage para persistência, o estado de sessão em memória pode estar dessincronizado:
-
-1. O singleton é criado com `void created.auth.getSession()` (fire-and-forget)
-2. O custom fetch (`createBuAwareFetch`) tenta injetar JWT do localStorage
-3. **BUG**: A lógica só injeta JWT se `currentAuth` for nulo ou `anon`, mas ignora tokens `authenticated` potencialmente inválidos/expirados que o SDK interno pode enviar
+Quando o trigger PostgreSQL lança uma exceção, PostgREST tenta retornar um erro HTTP. Porém, há evidências de que o erro não está sendo propagado corretamente pelo Supabase SDK, deixando a Promise pendente.
 
 ---
 
-## 2. Solução Proposta
+## 2. Solução em 3 Fases
 
-### 2.1 Modificação do Custom Fetch (buScopedClient.ts)
+### Fase 1: Diagnóstico Completo (Logs de Auth para Tickets)
 
-**Problema atual** (linha 124):
-```typescript
-const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
-```
+**Arquivo:** `src/integrations/supabase/buScopedClient.ts`
 
-Isso NÃO cobre o caso onde o SDK envia um token `authenticated` mas que está dessincronizado.
-
-**Solução**: Sempre priorizar o token do localStorage, verificando também expiração:
+Adicionar log de auth **TAMBÉM** para requisições de tickets, não apenas para outras requisições:
 
 ```typescript
-function createBuAwareFetch() {
-  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
-    
-    // Inject BU header for current request (read from globalThis)
-    const buId = getCurrentBuId();
-    if (buId && !headers.has("x-current-bu-id")) {
-      headers.set("x-current-bu-id", buId);
-    }
-
-    // SEMPRE injetar o JWT mais recente do localStorage para requisições de dados
-    // Isso garante que não usamos um token stale do GoTrueClient interno
-    const storedToken = readAccessTokenFromStorage();
-    if (storedToken) {
-      const storedRole = getJwtRole(storedToken);
-      const isValidToken = storedRole === "authenticated" && !isTokenExpired(storedToken);
-      
-      if (isValidToken) {
-        // Sempre usar o token do localStorage (source of truth)
-        headers.set("Authorization", `Bearer ${storedToken}`);
-      }
-    }
-
-    return fetch(input, { ...init, headers });
-  };
+// ANTES (bug):
+if (!isTicketsRequest) {
+  console.error("[BuScopedClient] 🔐 Auth header decision:", ...);
 }
 
-// Nova função helper para verificar expiração
-function isTokenExpired(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.exp !== 'number') return true;
-  // Considerar expirado 30 segundos antes para margem de segurança
-  return Date.now() >= (payload.exp - 30) * 1000;
+// DEPOIS (correção):
+// Log para tickets COM MAIS DETALHES
+if (isTicketsRequest) {
+  console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
+    hasStoredToken: !!storedToken,
+    hasSub,
+    storedRole,
+    expired,
+    shouldUseStored,
+    usedStoredToken,
+    finalAuthHeader: headers.has("Authorization"),
+    apiKeyHeader: headers.has("apikey"),
+    method: init?.method ?? "GET",
+    timestamp: new Date().toISOString(),
+  }));
+} else {
+  console.error("[BuScopedClient] 🔐 Auth header decision:", ...);
 }
 ```
 
-### 2.2 Sincronização de Sessão no Singleton
+### Fase 2: Garantir Headers Críticos
 
-Modificar `getBuScopedClient` para esperar a hidratação (opcional, pode ser implementado depois se necessário):
+O SDK do Supabase requer o header `apikey` em todas as requisições. Verificar que nosso interceptor não está perdendo este header:
 
 ```typescript
-// Opcional: versão async para casos críticos
-export async function getBuScopedClientAsync(buId: string): Promise<SupabaseClient<Database>> {
-  setCurrentBuId(buId);
+// Log para confirmar headers originais do SDK
+if (isTicketsRequest) {
+  const originalHeaders = new Headers((init?.headers as HeadersInit) ?? undefined);
+  console.error("[BuScopedClient] 🎫 Original SDK headers:", JSON.stringify({
+    hasApiKey: originalHeaders.has("apikey"),
+    hasAuthorization: originalHeaders.has("Authorization"),
+    contentType: originalHeaders.get("Content-Type"),
+    prefer: originalHeaders.get("Prefer"),
+  }));
+}
+```
+
+### Fase 3: Timeout de Segurança + Tratamento de Erro
+
+Implementar timeout de 30 segundos para evitar que requisições fiquem pendentes indefinidamente:
+
+```typescript
+const controller = new AbortController();
+const timeoutId = setTimeout(() => {
+  console.error("[BuScopedClient] 💀 FETCH TIMEOUT after 30s:", url.substring(0, 100));
+  controller.abort();
+}, 30000);
+
+try {
+  const response = await fetch(input, { ...init, headers, signal: controller.signal });
+  clearTimeout(timeoutId);
   
-  const existing = getBuSingleton();
-  if (existing) {
-    // Garantir que a sessão está sincronizada
-    await existing.auth.getSession();
-    return existing;
+  // Log adicional para diagnóstico
+  if (isTicketsRequest) {
+    console.error("[BuScopedClient] 🎫 Response received:", {
+      status: response.status,
+      ok: response.ok,
+      statusText: response.statusText,
+    });
   }
-
-  const created = createClient<Database>(...);
   
-  // Esperar hidratação ao invés de fire-and-forget
-  await created.auth.getSession();
-  
-  setBuSingleton(created);
-  return created;
-}
-```
-
-### 2.3 Logs de Diagnóstico Temporários (Já Implementados)
-
-Os logs `[DEBUG_RLS]` já estão no código. Adicionar log do JWT role sendo usado:
-
-```typescript
-// No custom fetch, antes de retornar:
-if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
-  const finalToken = headers.get("Authorization")?.slice(7);
-  if (finalToken) {
-    console.debug("[BuScopedClient] Request with JWT role:", getJwtRole(finalToken));
-  }
+  return response;
+} catch (fetchError) {
+  clearTimeout(timeoutId);
+  console.error("[BuScopedClient] 💥 FETCH ERROR:", {
+    name: (fetchError as Error)?.name,
+    message: (fetchError as Error)?.message,
+    isAbort: (fetchError as Error)?.name === "AbortError",
+  });
+  throw fetchError;
 }
 ```
 
@@ -131,57 +131,122 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
 
 | Arquivo | Modificação |
 |---------|-------------|
-| `src/integrations/supabase/buScopedClient.ts` | Refatorar `createBuAwareFetch()` para sempre usar JWT do localStorage |
+| `src/integrations/supabase/buScopedClient.ts` | Adicionar log de auth para tickets + timeout + tratamento de erro |
 
 ---
 
-## 4. Detalhes Técnicos da Implementação
+## 4. Validação
 
-### 4.1 Arquivo: `src/integrations/supabase/buScopedClient.ts`
+Após implementar as mudanças, teste criação de ticket e verifique nos logs:
 
-**Adicionar função helper para verificar expiração de token:**
+1. **`🎫 TICKETS AUTH DEBUG`** deve mostrar:
+   - `hasStoredToken: true`
+   - `usedStoredToken: true`
+   - `finalAuthHeader: true`
+   - `apiKeyHeader: true`
+
+2. **Se algo estiver `false`**, esse é o problema
+
+3. **Se tudo estiver `true` mas ainda travar**, o problema é no PostgreSQL (trigger/RLS)
+
+---
+
+## 5. Hipótese Alternativa
+
+Se os logs mostrarem que todos os headers estão corretos, o problema pode ser:
+
+| Hipótese | Diagnóstico | Solução |
+|----------|-------------|---------|
+| Trigger `enforce_bu_scope` causa deadlock | Verificar `pg_stat_activity` | Desabilitar trigger temporariamente |
+| PostgREST não serializa erro | Verificar network tab para response body | Atualizar versão do Supabase |
+| Token válido mas sessão expirada no servidor | Forçar refresh do token antes do insert | Adicionar `await supabase.auth.getSession()` |
+
+---
+
+## 6. Detalhes Técnicos da Implementação
+
+### 6.1 Estrutura do Código Atualizado
+
 ```typescript
-function isTokenExpired(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.exp !== 'number') return true;
-  return Date.now() >= (payload.exp - 30) * 1000;
+function createBuAwareFetch() {
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === "string" ? input : /* ... */;
+    const isTicketsRequest = url.includes("/tickets");
+    
+    // 1. Log inicial para tickets
+    if (isTicketsRequest) {
+      console.error("[BuScopedClient] 🎫 TICKETS REQUEST:", {
+        url: url.substring(0, 150),
+        method: init?.method ?? "GET",
+        hasBody: !!init?.body,
+      });
+    }
+    
+    const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
+    
+    // 2. Inject BU header (existing logic)
+    // ...
+    
+    // 3. Token handling (existing logic)
+    const storedToken = readAccessTokenFromStorage();
+    // ...
+    
+    // 4. LOG DE AUTH PARA TICKETS (NOVO!)
+    if (isTicketsRequest) {
+      console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
+        hasStoredToken: !!storedToken,
+        hasSub,
+        storedRole,
+        expired,
+        usedStoredToken,
+        finalAuthHeader: headers.has("Authorization"),
+        finalBuHeader: headers.has("x-current-bu-id"),
+        method: init?.method ?? "GET",
+      }));
+    }
+    
+    // 5. Fetch com timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.error("[BuScopedClient] 💀 TIMEOUT:", url.substring(0, 100));
+      controller.abort();
+    }, 30000);
+    
+    try {
+      const response = await fetch(input, { ...init, headers, signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (isTicketsRequest) {
+        console.error("[BuScopedClient] 🎫 Response:", response.status);
+      }
+      
+      return response;
+    } catch (e) {
+      clearTimeout(timeoutId);
+      console.error("[BuScopedClient] 💥 Error:", (e as Error)?.message);
+      throw e;
+    }
+  };
 }
 ```
 
-**Refatorar `createBuAwareFetch()` (linhas 108-132):**
-
-A nova lógica:
-1. Sempre ler o token do localStorage
-2. Verificar se é `authenticated` e não expirado
-3. Se válido, SEMPRE sobrescrever o header Authorization
-4. Se não houver token válido, deixar o SDK usar o seu (ou nenhum)
-
-Esta abordagem garante que o JWT mais recente do localStorage é sempre usado, eliminando race conditions com o GoTrueClient interno.
-
 ---
 
-## 5. Validação Pós-Implementação
-
-1. Publicar as mudanças
-2. Usuário victorio@jetimob.com testa criação de ticket em hub.jetimob.com
-3. Verificar se logs mostram `JWT role: authenticated`
-4. Confirmar que ticket é criado com sucesso
-
----
-
-## 6. Risco
+## 7. Risco e Rollback
 
 | Aspecto | Avaliação |
 |---------|-----------|
-| Breaking Changes | Nenhum - mudança é transparente |
-| Performance | Negligível - apenas decode de JWT |
-| Segurança | Melhora - garante uso do token mais recente |
-| Rollback | Fácil - reverter para lógica anterior |
+| Breaking Changes | Nenhum - apenas logs adicionais e timeout de segurança |
+| Performance | Negligível (logs + AbortController) |
+| Rollback | Remover logs e timeout se necessário |
 
 ---
 
-## 7. Alinhamento com Documentação
+## 8. Compliance com Padrões do Hub
 
-- **TCR v2.75.0 §1.5**: Mantém padrão singleton do `buScopedClient`
-- **IDENTITY_CONVENTION.md v2.1.1**: Não afeta - correção é na camada de transporte
-- **BU_SCOPED_SUPABASE_RULES.md v4.0.0**: Mantém compatibilidade total
+| Padrão | Status |
+|--------|--------|
+| PRE-BU vs POST-BU | ✅ Usa `useBuScopedSupabase()` para tickets (POST-BU) |
+| IDENTITY_CONVENTION | ✅ Usa `realProfileId` para `created_by_user_id` |
+| Client Singleton | ✅ Usa singleton com `detectSessionInUrl: false` |
+| Campos Explícitos | ✅ `select("id, bu_id")` no insert |
