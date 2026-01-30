@@ -8808,6 +8808,10 @@ export type Database = {
       }
       current_bu_id: { Args: never; Returns: string }
       current_profile_id: { Args: never; Returns: string }
+      debug_rls_ticket_insert: {
+        Args: { p_bu_id: string; p_created_by_user_id: string }
+        Returns: Json
+      }
       emit_notification_event: {
         Args: {
           p_actor_id?: string
