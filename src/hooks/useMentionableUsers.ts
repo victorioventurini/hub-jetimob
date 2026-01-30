@@ -96,7 +96,7 @@ export function useMentionableUsers(
 
       const { data, error } = await supabase.rpc('search_mention_candidates', {
         p_bu_id: buId,
-        p_partner_company_id: partnerCompanyId || null,
+        p_external_company_id: partnerCompanyId || null,
         p_search_term: searchTerm || null,
         p_limit: limit,
       });
@@ -111,7 +111,7 @@ export function useMentionableUsers(
         email: u.email || null,
         photo_url: u.photo_url || null,
         team_name: u.team_name || null,
-        partner_company_name: u.partner_company_name || null,
+        partner_company_name: u.external_company_name || null,
       }));
     },
     // Enable for 'internal+external' context (with or without partner company)

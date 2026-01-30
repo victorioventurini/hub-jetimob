@@ -61,7 +61,7 @@ export default function TicketsListPage() {
     type: typeFilter !== "all" ? typeFilter : undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
     category_id: categoryId !== "all" ? categoryId : undefined,
-    partner_company_id: partnerId !== "all" ? partnerId : undefined,
+    external_company_id: partnerId !== "all" ? partnerId : undefined,
     owner_user_id: parsedResponsible.type === "internal" ? parsedResponsible.id ?? undefined : undefined,
     assigned_contact_id: parsedResponsible.type === "external" ? parsedResponsible.id ?? undefined : undefined,
     search: search || undefined,

@@ -116,7 +116,7 @@ export function usePartnerCategories(externalCompanyId: string | undefined) {
       if (!externalCompanyId) return [];
 
       const { data, error } = await supabase
-        .rpc("get_partner_categories", { p_partner_company_id: externalCompanyId } as any);
+        .rpc("get_partner_categories", { p_external_company_id: externalCompanyId });
 
       if (error) throw error;
       return data as PartnerCategory[];
@@ -142,9 +142,9 @@ export function usePartnerSubcategories(
 
       const { data, error } = await supabase
         .rpc("get_partner_subcategories", {
-          p_partner_company_id: externalCompanyId,
+          p_external_company_id: externalCompanyId,
           p_category_id: categoryId,
-        } as any);
+        });
 
       if (error) throw error;
       return data as PartnerSubcategory[];

@@ -45,7 +45,7 @@ const createTicketSchema = z.object({
   title: z.string().min(3, "Título deve ter pelo menos 3 caracteres"),
   category_id: z.string().optional(),
   subcategory_id: z.string().optional(),
-  partner_company_id: z.string().optional(),
+  external_company_id: z.string().optional(),
   visibility: z.enum(["bu_all", "teams", "users", "private"], {
     required_error: "Selecione uma opção de visibilidade",
   }),
@@ -118,7 +118,7 @@ export default function CreateTicketPage() {
   });
 
   const selectedType = form.watch("type");
-  const selectedPartnerId = form.watch("partner_company_id");
+  const selectedPartnerId = form.watch("external_company_id");
   const selectedCategoryId = form.watch("category_id");
   const selectedSubcategoryId = form.watch("subcategory_id");
   const selectedVisibility = form.watch("visibility");
@@ -212,7 +212,7 @@ export default function CreateTicketPage() {
   // Auto-selecionar empresa se só houver uma opção para a categoria
   useEffect(() => {
     if (selectedType === "external" && partnersByCategory.length === 1 && !selectedPartnerId) {
-      form.setValue("partner_company_id", partnersByCategory[0].id);
+      form.setValue("external_company_id", partnersByCategory[0].id);
     }
   }, [selectedType, partnersByCategory, selectedPartnerId, form]);
 
@@ -226,7 +226,7 @@ export default function CreateTicketPage() {
   // Resetar parceiro e subcategoria quando mudar a categoria (para external)
   useEffect(() => {
     if (selectedType === "external") {
-      form.setValue("partner_company_id", undefined);
+      form.setValue("external_company_id", undefined);
       form.setValue("subcategory_id", undefined);
     }
   }, [selectedCategoryId, selectedType, form]);
@@ -234,7 +234,7 @@ export default function CreateTicketPage() {
   // Resetar categoria, parceiro e subcategoria quando mudar o tipo
   useEffect(() => {
     form.setValue("category_id", undefined);
-    form.setValue("partner_company_id", undefined);
+    form.setValue("external_company_id", undefined);
     form.setValue("subcategory_id", undefined);
   }, [selectedType, form]);
 
@@ -379,7 +379,7 @@ export default function CreateTicketPage() {
         title: data.title,
         category_id: data.category_id || null,
         subcategory_id: data.subcategory_id || null,
-        external_company_id: data.type === "external" ? data.partner_company_id || null : null,
+        external_company_id: data.type === "external" ? data.external_company_id || null : null,
         // External contact assignment
         assigned_contact_id: data.type === "external" ? selectedExternalContactId || null : null,
         assignment_source: data.type === "external" && selectedExternalContactId 
@@ -567,11 +567,11 @@ export default function CreateTicketPage() {
                   ) : (
                     <FormField
                       control={form.control}
-                      name="partner_company_id"
+                      name="external_company_id"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Empresa Parceira *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione a empresa..." />
