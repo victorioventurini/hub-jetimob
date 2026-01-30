@@ -45,10 +45,14 @@ export function useCreateTicket(profileId: string | null) {
       if (!buId) throw new Error("BU não selecionada");
       if (!profileId) throw new Error("Perfil não carregado");
 
-      // Create ticket with profileId (profiles.id)
-      const { data: ticket, error } = await supabase
+      // IMPORTANT (RLS): Avoid insert(...).select() which forces PostgREST `?select=*`.
+      // Returning representations can fail if SELECT policies require participants/messages.
+      const ticketId = crypto.randomUUID();
+
+      const { error: insertError } = await supabase
         .from("tickets")
         .insert({
+          id: ticketId,
           bu_id: buId,
           type: data.type,
           title: data.title,
@@ -65,11 +69,11 @@ export function useCreateTicket(profileId: string | null) {
           expected_due_at: data.expected_due_at || null,
           created_by_user_id: profileId,
           owner_user_id: profileId,
-        })
-        .select()
-        .single();
+        });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+
+      const ticket = { id: ticketId } as { id: string };
 
       // Add creator as requester participant with profileId
       await supabase.from("ticket_participants").insert({
@@ -107,27 +111,31 @@ export function useCreateTicket(profileId: string | null) {
         const messageContent = hasInitialMessage 
           ? data.initial_message 
           : { type: "text", content: "" }; // Empty message for attachment-only case
-          
-        const { data: message, error: messageError } = await supabase
+
+        // Same rationale: avoid `select()` on insert to prevent `?select=*`/returning issues.
+        const messageId = crypto.randomUUID();
+
+        const { error: messageError } = await supabase
           .from("ticket_messages")
           .insert({
+            id: messageId,
             bu_id: buId,
             ticket_id: ticket.id,
             author_type: "internal_user" as const,
             author_user_id: profileId,
             body_richtext: messageContent,
-          } as any)
-          .select("id")
-          .single();
+          } as any);
+
+        if (messageError) throw messageError;
 
         // Insert mentions for initial message (using global mentions table)
-        if (!messageError && message && data.initial_message_mentions && data.initial_message_mentions.length > 0) {
+        if (data.initial_message_mentions && data.initial_message_mentions.length > 0) {
           const mentionInserts = data.initial_message_mentions
             .filter((m) => m.user_id || m.contact_id)
             .map((m) => ({
               bu_id: buId,
               entity_type: "ticket_message" as const,
-              entity_id: message.id,
+              entity_id: messageId,
               mentioned_user_id: m.user_id || null,
               mentioned_contact_id: m.contact_id || null,
               created_by: profileId,

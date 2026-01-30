@@ -131,32 +131,39 @@ function createBuAwareFetch() {
       console.warn("[BuScopedClient] No BU ID available for header injection!");
     }
 
-    // CRITICAL FIX: Use globalClient session as source of truth for auth token
-    // This ensures the BU-scoped client uses the same JWT as the global auth client,
-    // preventing auth.uid() from being NULL in PostgreSQL RLS policies.
+    // CRITICAL FIX: Always prefer globalClient session token as source of truth.
+    // Even if the BU-scoped client is out of sync, this guarantees auth.uid() resolves.
     const currentAuth = headers.get("Authorization") || headers.get("authorization");
     const currentToken = currentAuth?.startsWith("Bearer ") ? currentAuth.slice(7) : null;
     const currentRole = currentToken ? getJwtRole(currentToken) : null;
-    const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
 
-    if (shouldInjectUserJwt) {
-      try {
-        // Prefer globalClient session (synced with login state)
-        const { data: { session } } = await globalClient.auth.getSession();
-        if (session?.access_token) {
+    try {
+      const { data: { session } } = await globalClient.auth.getSession();
+
+      if (session?.access_token) {
+        // Always override with the real session token.
+        // (Prevents stale/anon tokens from being used due to client caching.)
+        if (currentToken !== session.access_token) {
           headers.set("Authorization", `Bearer ${session.access_token}`);
-          console.debug("[BuScopedClient] Using globalClient session token");
-        } else {
-          // Fallback to localStorage (for edge cases during hydration)
+          console.debug("[BuScopedClient] Synced Authorization from globalClient session");
+        }
+      } else {
+        // Fallback: only inject from storage if current request is anon/missing.
+        const shouldFallback = !currentAuth || currentRole === "anon" || currentRole === null;
+        if (shouldFallback) {
           const storedToken = readAccessTokenFromStorage();
           if (storedToken) {
             headers.set("Authorization", `Bearer ${storedToken}`);
             console.debug("[BuScopedClient] Using localStorage token (fallback)");
+          } else {
+            console.warn("[BuScopedClient] No session token available (globalClient + storage)");
           }
         }
-      } catch (error) {
-        console.warn("[BuScopedClient] Failed to get session from globalClient:", error);
-        // Last resort fallback
+      }
+    } catch (error) {
+      console.warn("[BuScopedClient] Failed to sync session from globalClient:", error);
+      const shouldFallback = !currentAuth || currentRole === "anon" || currentRole === null;
+      if (shouldFallback) {
         const storedToken = readAccessTokenFromStorage();
         if (storedToken) {
           headers.set("Authorization", `Bearer ${storedToken}`);
