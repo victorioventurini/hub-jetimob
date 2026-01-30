@@ -70,7 +70,7 @@ export function ContactCapabilityDialog({
     try {
       await createCapability.mutateAsync({
         contact_id: contactId,
-        partner_company_id: companyId,
+        external_company_id: companyId,
         category_id: categoryId,
         subcategory_id: subcategoryId === "__all__" ? null : subcategoryId,
       });

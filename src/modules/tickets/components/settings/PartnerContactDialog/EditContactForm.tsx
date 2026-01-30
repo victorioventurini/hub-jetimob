@@ -30,7 +30,7 @@ import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from "@/lib/phon
 import type { PartnerContact, PartnerCompany } from "../../../types";
 
 const formSchema = z.object({
-  partner_company_id: z.string().min(1, "Empresa é obrigatória"),
+  external_company_id: z.string().min(1, "Empresa é obrigatória"),
   name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   email: z.string().trim().email("Email inválido"),
   phone: z.string().optional(),
@@ -70,7 +70,7 @@ export function EditContactForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      partner_company_id: contact.partner_company_id,
+      external_company_id: contact.external_company_id,
       name: contact.name,
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
@@ -78,13 +78,13 @@ export function EditContactForm({
     },
   });
 
-  const watchedCompanyId = form.watch("partner_company_id");
+  const watchedCompanyId = form.watch("external_company_id");
   const watchedEmail = form.watch("email");
 
   // Reset form when contact changes
   useEffect(() => {
     form.reset({
-      partner_company_id: contact.partner_company_id,
+      external_company_id: contact.external_company_id,
       name: contact.name,
       email: contact.email,
       phone: contact.phone ? formatPhoneDisplay(contact.phone) : "",
@@ -162,7 +162,7 @@ export function EditContactForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="partner_company_id"
+          name="external_company_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Empresa *</FormLabel>

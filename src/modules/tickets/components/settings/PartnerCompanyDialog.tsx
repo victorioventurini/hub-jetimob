@@ -177,7 +177,7 @@ export function PartnerCompanyDialog({
     try {
       // Search for existing company globally (any BU)
       const { data: existingData, error } = await supabase
-        .from("partner_companies")
+        .from("external_companies")
         .select("id, name, legal_name, document, document_type, person_type, status")
         .eq("document", cleanDoc)
         .is("deleted_at", null)
@@ -191,9 +191,9 @@ export function PartnerCompanyDialog({
         
         if (currentBu?.id) {
           const { data: association } = await supabase
-            .from("partner_company_bu_associations")
+            .from("external_company_bu_associations")
             .select("id, is_active")
-            .eq("partner_company_id", existingData.id)
+            .eq("external_company_id", existingData.id)
             .eq("bu_id", currentBu.id)
             .is("deleted_at", null)
             .maybeSingle();
@@ -202,7 +202,13 @@ export function PartnerCompanyDialog({
         }
 
         setExistingCompany({
-          ...existingData,
+          id: existingData.id,
+          name: existingData.name,
+          legal_name: existingData.legal_name,
+          document: existingData.document,
+          document_type: existingData.document_type,
+          person_type: existingData.person_type,
+          status: existingData.status,
           is_active_in_current_bu: isActiveInCurrentBu,
         });
         setStep("existing");
@@ -236,7 +242,7 @@ export function PartnerCompanyDialog({
 
     activateInBu(
       {
-        partner_company_id: existingCompany.id,
+        external_company_id: existingCompany.id,
         bu_id: currentBu.id,
         is_active: true,
       },
@@ -505,7 +511,7 @@ export function PartnerCompanyDialog({
           </>
         )}
 
-        {/* STEP 2b / Edit: Full Form */}
+        {/* STEP 2b: Registration Form */}
         {step === "form" && (
           <>
             <DialogHeader>
@@ -515,81 +521,21 @@ export function PartnerCompanyDialog({
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 )}
-                {company ? "Editar Empresa Parceira" : "Nova Empresa Parceira"}
+                {company ? "Editar Empresa" : "Cadastrar Empresa"}
               </DialogTitle>
-              {!company && (
-                <DialogDescription>
-                  Complete as informações para cadastrar a nova empresa.
-                </DialogDescription>
-              )}
             </DialogHeader>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome *</FormLabel>
+                      <FormLabel>Nome Fantasia *</FormLabel>
                       <FormControl>
                         <Input placeholder="Nome da empresa" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="person_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex gap-4"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="pj" id="pj" />
-                            <Label htmlFor="pj" className="cursor-pointer">Pessoa Jurídica</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="pf" id="pf" />
-                            <Label htmlFor="pf" className="cursor-pointer">Pessoa Física</Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="document"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {form.watch("person_type") === "pf" ? "CPF" : "CNPJ"}
-                      </FormLabel>
-                      <FormControl>
-                        <DocumentInput
-                          value={field.value || ""}
-                          onChange={(value, docType) => {
-                            field.onChange(value);
-                            setDocumentType(docType);
-                          }}
-                          placeholder={form.watch("person_type") === "pf" ? "000.000.000-00" : "00.000.000/0000-00"}
-                          showValidation
-                          disabled={!company} // Disable in create mode since it's pre-filled
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Documento único para identificação do parceiro
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -609,6 +555,56 @@ export function PartnerCompanyDialog({
                   )}
                 />
 
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="person_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo</FormLabel>
+                        <RadioGroup
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          className="flex gap-4 pt-2"
+                          disabled={!!company}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="pj" id="pj" />
+                            <Label htmlFor="pj" className="cursor-pointer">PJ</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="pf" id="pf" />
+                            <Label htmlFor="pf" className="cursor-pointer">PF</Label>
+                          </div>
+                        </RadioGroup>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="document"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{form.watch("person_type") === "pf" ? "CPF" : "CNPJ"}</FormLabel>
+                        <FormControl>
+                          <DocumentInput
+                            value={field.value || ""}
+                            onChange={(value, docType) => {
+                              field.onChange(value);
+                              setDocumentType(docType);
+                            }}
+                            placeholder={form.watch("person_type") === "pf" ? "000.000.000-00" : "00.000.000/0000-00"}
+                            disabled={!!company}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
                   name="allowed_domains"
@@ -622,7 +618,7 @@ export function PartnerCompanyDialog({
                         />
                       </FormControl>
                       <FormDescription>
-                        Separe múltiplos domínios por vírgula. Emails desses domínios poderão fazer login.
+                        Separe múltiplos domínios por vírgula
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -637,7 +633,7 @@ export function PartnerCompanyDialog({
                       <FormLabel>Observações</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Observações internas sobre a parceria..."
+                          placeholder="Observações internas sobre esta empresa"
                           {...field}
                         />
                       </FormControl>
@@ -652,9 +648,9 @@ export function PartnerCompanyDialog({
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between rounded-lg border p-3">
                       <div className="space-y-0.5">
-                        <FormLabel>Ativo</FormLabel>
+                        <FormLabel>Ativa</FormLabel>
                         <FormDescription>
-                          Empresas inativas não podem criar novos tickets
+                          Empresas inativas não podem criar tickets
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -678,7 +674,7 @@ export function PartnerCompanyDialog({
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isPending}>
-                    {company ? "Salvar" : "Criar"}
+                    {isPending ? "Salvando..." : company ? "Salvar" : "Cadastrar"}
                   </Button>
                 </div>
               </form>

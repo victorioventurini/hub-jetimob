@@ -32,7 +32,7 @@ import { useCreateRoutingRule, useUpdateRoutingRule, usePartnerContacts } from "
 import { TicketRoutingRule, PartnerCompany, TicketCategory } from "../../types";
 
 const formSchema = z.object({
-  partner_company_id: z.string().min(1, "Empresa é obrigatória"),
+  external_company_id: z.string().min(1, "Empresa é obrigatória"),
   subcategory_id: z.string().min(1, "Subcategoria é obrigatória"),
   assignee_contact_ids: z.array(z.string()),
   watcher_contact_ids: z.array(z.string()),
@@ -66,7 +66,7 @@ export function RoutingRuleDialog({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      partner_company_id: "",
+      external_company_id: "",
       subcategory_id: "",
       assignee_contact_ids: [],
       watcher_contact_ids: [],
@@ -77,9 +77,9 @@ export function RoutingRuleDialog({
   useEffect(() => {
     if (open) {
       if (rule) {
-        setSelectedCompanyId(rule.partner_company_id);
+        setSelectedCompanyId(rule.external_company_id);
         form.reset({
-          partner_company_id: rule.partner_company_id,
+          external_company_id: rule.external_company_id,
           subcategory_id: rule.subcategory_id,
           assignee_contact_ids: rule.assignee_contact_ids || [],
           watcher_contact_ids: rule.watcher_contact_ids || [],
@@ -88,7 +88,7 @@ export function RoutingRuleDialog({
       } else {
         setSelectedCompanyId(undefined);
         form.reset({
-          partner_company_id: "",
+          external_company_id: "",
           subcategory_id: "",
           assignee_contact_ids: [],
           watcher_contact_ids: [],
@@ -103,7 +103,7 @@ export function RoutingRuleDialog({
       updateRule(
         {
           id: rule.id,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.external_company_id,
           subcategory_id: data.subcategory_id,
           assignee_contact_ids: data.assignee_contact_ids,
           watcher_contact_ids: data.watcher_contact_ids,
@@ -114,7 +114,7 @@ export function RoutingRuleDialog({
     } else {
       createRule(
         {
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.external_company_id,
           subcategory_id: data.subcategory_id,
           assignee_contact_ids: data.assignee_contact_ids,
           watcher_contact_ids: data.watcher_contact_ids,
@@ -148,7 +148,7 @@ export function RoutingRuleDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="partner_company_id"
+              name="external_company_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Empresa Parceira *</FormLabel>

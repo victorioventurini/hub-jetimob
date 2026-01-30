@@ -32,7 +32,7 @@ import type { PartnerCompany } from "../../../types";
 
 const emailSchema = z.object({
   email: z.string().trim().email("Email inválido"),
-  partner_company_id: z.string().min(1, "Selecione uma empresa"),
+  external_company_id: z.string().min(1, "Selecione uma empresa"),
 });
 
 type EmailFormData = z.infer<typeof emailSchema>;
@@ -59,12 +59,12 @@ export function EmailVerificationStep({
     resolver: zodResolver(emailSchema),
     defaultValues: {
       email: "",
-      partner_company_id: defaultCompanyId || "",
+      external_company_id: defaultCompanyId || "",
     },
   });
 
   const watchedEmail = form.watch("email");
-  const watchedCompanyId = form.watch("partner_company_id");
+  const watchedCompanyId = form.watch("external_company_id");
 
   // Check if email exists globally
   const { data: existingContact, isLoading: isChecking } = useCheckContactByEmail(searchEmail);
@@ -156,7 +156,7 @@ export function EmailVerificationStep({
       <form onSubmit={form.handleSubmit(handleSearch)} className="space-y-4">
         <FormField
           control={form.control}
-          name="partner_company_id"
+          name="external_company_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Empresa *</FormLabel>
@@ -239,9 +239,9 @@ export function EmailVerificationStep({
             <AlertCircle className="h-4 w-4 text-warning" />
             <AlertDescription className="text-warning-muted-foreground">
               <strong>{existingContact.name}</strong> já está cadastrado.
-              {existingContact.partner_company && (
+              {existingContact.external_company && (
                 <span className="block text-sm mt-1">
-                  Empresa: {(existingContact.partner_company as { name: string }).name}
+                  Empresa: {(existingContact.external_company as { name: string }).name}
                 </span>
               )}
               {existingContact.associations && existingContact.associations.length > 0 && (
