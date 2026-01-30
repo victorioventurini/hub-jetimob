@@ -31,7 +31,7 @@ export function useTicketCategories(scope?: TicketCategoryScope) {
         .order("name");
 
       if (scope) {
-        query = query.or(`scope.eq.${scope},scope.eq.both`);
+        query = query.in("scope", [scope, "both"]);
       }
 
       const { data, error } = await query;
