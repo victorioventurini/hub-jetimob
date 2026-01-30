@@ -103,11 +103,33 @@ export function useCreateTicket(profileId: string | null) {
       // CRITICAL: Never use select(*) / select() here (project standard). We only need the id.
       console.error("[DEBUG_RLS] 🚀 Calling supabase.from('tickets').insert()...");
       
-      const { data: ticket, error } = await supabase
-        .from("tickets")
-        .insert(insertPayload)
-        .select("id, bu_id")
-        .single();
+      let ticket: { id: string; bu_id: string } | null = null;
+      let error: { message: string; code?: string; details?: string; hint?: string } | null = null;
+      
+      try {
+        console.error("[DEBUG_RLS] 🎯 Inside try block - about to call supabase SDK");
+        
+        // Test: Check if supabase client is working at all
+        console.error("[DEBUG_RLS] 🔍 Supabase client type:", typeof supabase);
+        console.error("[DEBUG_RLS] 🔍 Supabase.from exists:", typeof supabase?.from);
+        
+        const query = supabase.from("tickets").insert(insertPayload).select("id, bu_id").single();
+        console.error("[DEBUG_RLS] 🔍 Query object created:", typeof query);
+        console.error("[DEBUG_RLS] 🔍 Query.then exists:", typeof (query as any)?.then);
+        
+        console.error("[DEBUG_RLS] ⏳ Awaiting query...");
+        const result = await query;
+        console.error("[DEBUG_RLS] ✅ Query resolved!");
+        
+        ticket = result.data;
+        error = result.error;
+      } catch (caughtError) {
+        console.error("[DEBUG_RLS] 💥 EXCEPTION CAUGHT:", caughtError);
+        console.error("[DEBUG_RLS] 💥 Error type:", typeof caughtError);
+        console.error("[DEBUG_RLS] 💥 Error message:", (caughtError as Error)?.message);
+        console.error("[DEBUG_RLS] 💥 Error stack:", (caughtError as Error)?.stack);
+        throw caughtError;
+      }
       
       console.error("[DEBUG_RLS] 📦 Insert result:", JSON.stringify({ 
         ticketId: ticket?.id, 
