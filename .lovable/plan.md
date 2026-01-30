@@ -1,159 +1,229 @@
+# Wave: Hooks & Barrel Files Consolidation
 
-# Plano de Correção: Header x-current-bu-id não reconhecido pelo PostgreSQL
+**Versão:** 1.0
+**Data:** 2026-01-30
+**Status:** Em Planejamento
 
-## Resumo Executivo
+## Objetivo
 
-O header `x-current-bu-id` está sendo corretamente injetado pelo JavaScript (confirmado via log no Console), mas o PostgreSQL está rejeitando a operação porque `auth.uid()` retorna NULL. Isso indica que o **token JWT não está sendo propagado corretamente** para o banco, não um problema com o header customizado.
+Consolidar a estrutura de hooks/queries em todo o sistema, eliminando duplicações e garantindo que todos os imports sigam o padrão de barrel files conforme documentado em `docs/canonical/DEVELOPMENT_STANDARDS.md` (Seção K).
 
 ---
 
-## Diagnóstico Técnico Detalhado
+## Análise Realizada
 
-### Evidências Coletadas
+### 1. Documentação Consultada
 
-| Fonte | Resultado | Significado |
-|-------|-----------|-------------|
-| Console JS | `[BuScopedClient] Injecting x-current-bu-id: a0000000-...` | Interceptor funciona ✅ |
-| `localStorage` | `hub_current_bu_id = "a0000000-..."` | BU armazenada corretamente ✅ |
-| `globalThis.__hubJet_currentBuId` | `null` | Memória volátil não sincronizada ⚠️ |
-| PostgreSQL logs | `NO_BU_CONTEXT: User is not authenticated` | `auth.uid() = NULL` no DB ❌ |
-| RLS Policy | `user_has_bu_access(auth.uid(), bu_id)` | Falha porque auth.uid() é NULL |
+| Documento | Versão | Seção Relevante |
+|-----------|--------|-----------------|
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | v2.74.0 | §1.6 Hooks e Componentes Canônicos |
+| `docs/canonical/DEVELOPMENT_STANDARDS.md` | v1.17.0 | §K Hooks e Barrel Files |
+| `docs/canonical/QUERY_KEYS_STANDARD.md` | - | Query Keys Pattern |
 
-### Fluxo do Problema
+### 2. Estado Atual dos Módulos
 
-```text
-1. Usuário clica "Criar Ticket"
-2. useCreateTicket() chama useBuScopedSupabase()
-3. useMemo() retorna cliente cacheado (possivelmente criado antes do auth hydrate)
-4. Interceptor createBuAwareFetch() é chamado:
-   - getCurrentBuId() → lê de localStorage (funciona) ✅
-   - readAccessTokenFromStorage() → pode retornar token expirado ou inválido ⚠️
-5. Request enviado ao PostgREST
-6. PostgREST NÃO reconhece o JWT → auth.uid() = NULL
-7. current_bu_id() lança "NO_BU_CONTEXT: User is not authenticated"
-8. Trigger enforce_bu_scope falha
-9. RLS policy tickets_insert_policy falha → Erro 42501
+| Módulo | Barrel File | Status | Problemas Identificados |
+|--------|-------------|--------|-------------------------|
+| `okrs` | `hooks/index.ts` + `hooks/queries/index.ts` | ✅ Consolidado | Nenhum |
+| `teams` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `tickets` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `assets` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `permissions` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `bu` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `integrations` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `vic` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `home` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `kpis` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `settings` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `external` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `areas` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `partners` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `users-global` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+| `automations` | `hooks/index.ts` | ✅ Consolidado | Nenhum |
+
+### 3. Problemas Identificados em `src/hooks/`
+
+| Arquivo | Tipo | Problema | Ação Necessária |
+|---------|------|----------|-----------------|
+| `useNotificationCenter.ts` | Alias/Proxy | Re-exporta de `notifications/` | **Remover após migrar imports** |
+| `useNotificationAdmin.ts` | Standalone | Não está no barrel `notifications/` | Mover para pasta `notifications/` |
+| `useNotificationTemplates.ts` | Standalone | Não está no barrel `notifications/` | Mover para pasta `notifications/` |
+| `notifications/index.ts` | Barrel | Existe, mas incompleto | Completar exports |
+| `components/ui/use-toast.ts` | Alias/Proxy | Re-exporta de `hooks/use-toast.ts` | **Manter** (padrão shadcn) |
+
+### 4. Verificação de Imports Diretos
+
+**Busca realizada:** Imports de arquivos individuais (ex: `from "@/modules/okrs/hooks/useTeams"`)
+
+**Resultado:** ✅ **ZERO violações encontradas** em módulos principais.
+
+Todos os 125 arquivos que importam de `@/hooks/` usam o padrão correto.
+
+---
+
+## Plano de Ação
+
+### Fase 1: Consolidar `src/hooks/notifications/`
+
+**Objetivo:** Unificar todos os hooks de notifications em uma única pasta com barrel file completo.
+
+#### 1.1 Mover arquivos para `src/hooks/notifications/`
+
+```
+src/hooks/notifications/
+├── index.ts                    # Barrel completo
+├── types.ts                    # ✅ Já existe
+├── utils.ts                    # ✅ Já existe
+├── useNotificationQueries.ts   # ✅ Já existe
+├── useNotificationMutations.ts # ✅ Já existe
+├── useNotificationAdmin.ts     # ⬅️ MOVER de src/hooks/
+├── useNotificationTemplates.ts # ⬅️ MOVER de src/hooks/
 ```
 
-### Causa Raiz
+#### 1.2 Atualizar `src/hooks/notifications/index.ts`
 
-O interceptor `createBuAwareFetch()` em `buScopedClient.ts` tenta injetar o JWT armazenado em localStorage, MAS:
-
-1. O token pode estar expirado
-2. O Supabase client singleton pode ter sido criado antes do auth token estar disponível
-3. O auth state do singleton NÃO está sincronizado com o globalClient usado para login
-
----
-
-## Solução Proposta
-
-### Fase 1: Sincronizar Auth State entre Clientes (Crítico)
-
-O problema fundamental é que temos dois singletons (`globalClient` e `buScopedClient`) que NÃO compartilham estado de auth. Quando o usuário faz login via `globalClient`, o `buScopedClient` não é atualizado.
-
-**Correção:** Garantir que `buScopedClient` usa a mesma sessão que `globalClient`.
-
-**Arquivo:** `src/integrations/supabase/buScopedClient.ts`
+Consolidar todos os exports:
 
 ```typescript
-// ANTES: Cada singleton tem seu próprio GoTrueClient
-// DEPOIS: buScopedClient sincroniza auth com globalClient
+// Types
+export type { ... } from './types';
 
-import { supabase as globalClient } from './globalClient';
+// Core queries/mutations (já existentes)
+export { useNotificationEvents, ... } from './useNotificationQueries';
+export { useBuNotificationChannelMutations, ... } from './useNotificationMutations';
 
-// Na função createBuAwareFetch(), usar o token do globalClient ao invés de localStorage:
-async function createBuAwareFetch() {
-  return async (input, init) => {
-    const headers = new Headers(init?.headers ?? undefined);
-    
-    // Injetar BU header
-    const buId = getCurrentBuId();
-    if (buId && !headers.has("x-current-bu-id")) {
-      headers.set("x-current-bu-id", buId);
-    }
+// Admin hooks (a adicionar)
+export { 
+  useBuEventSettings,
+  useBuEventSettingMutation,
+  useNotificationOutbox,
+  useRetryOutboxItem,
+  useInAppNotifications,
+  useOutboxStats,
+  useBuProfiles,
+  type OutboxItem,
+  type InAppNotification,
+  type BuEventSetting,
+  type OutboxFilters,
+  type InAppFilters,
+} from './useNotificationAdmin';
 
-    // CORREÇÃO: Usar sessão do globalClient (fonte de verdade)
-    const { data: { session } } = await globalClient.auth.getSession();
-    if (session?.access_token) {
-      headers.set("Authorization", `Bearer ${session.access_token}`);
-    }
+// Template hooks (a adicionar)
+export {
+  useNotificationTemplates,
+  useNotificationTemplateVersions,
+  useNotificationTemplateVariables,
+  useNotificationTemplateAudit,
+  useSaveTemplateVersion,
+  useActivateTemplateVersion,
+  useCreateBuTemplate,
+  extractTemplateVariables,
+  validateTemplateVariables,
+  type NotificationTemplate,
+  type TemplateVersion,
+  type TemplateVariable,
+  type TemplateAuditLog,
+  type TemplateFilters,
+} from './useNotificationTemplates';
 
-    return fetch(input, { ...init, headers });
-  };
-}
+// Utils
+export { groupSettingsByModule, moduleNames } from './utils';
 ```
 
-### Fase 2: Invalidar Cache ao Trocar BU
+#### 1.3 Atualizar imports nos consumidores
 
-Quando o usuário troca de BU, o cliente cacheado pode ter headers desatualizados.
+Arquivos a atualizar (9 arquivos):
 
-**Arquivo:** `src/contexts/BuContext.tsx`
+| Arquivo | Import Atual | Import Novo |
+|---------|--------------|-------------|
+| `src/pages/settings/SettingsNotifications.tsx` | `@/hooks/useNotificationAdmin` | `@/hooks/notifications` |
+| `src/pages/hub/HubNotifications.tsx` | `@/hooks/useNotificationCenter` | `@/hooks/notifications` |
+| `src/pages/me/NotificationsPage.tsx` | `@/hooks/useNotificationCenter` | `@/hooks/notifications` |
+| `src/pages/me/NotificationPreferences.tsx` | `@/hooks/useNotificationCenter` | `@/hooks/notifications` |
+| `src/components/notifications/templates/TemplatesList.tsx` | `@/hooks/useNotificationTemplates` | `@/hooks/notifications` |
+| `src/components/notifications/templates/TemplateEditorSheet.tsx` | `@/hooks/useNotificationTemplates` | `@/hooks/notifications` |
+| `src/components/notifications/templates/TemplateHistorySheet.tsx` | `@/hooks/useNotificationTemplates` | `@/hooks/notifications` |
+| `src/modules/tickets/components/settings/InternalRoutingRuleDialog.tsx` | `@/hooks/useNotificationAdmin` | `@/hooks/notifications` |
 
-Garantir que `clearBuClientCache()` é chamado sempre que a BU muda.
+#### 1.4 Remover arquivos legados
 
-### Fase 3: Validação Defensiva no Hook
+Após atualizar imports:
 
-**Arquivo:** `src/integrations/supabase/useBuScopedSupabase.ts`
+- [ ] Deletar `src/hooks/useNotificationCenter.ts` (era apenas proxy)
+- [ ] Deletar `src/hooks/useNotificationAdmin.ts` (movido)
+- [ ] Deletar `src/hooks/useNotificationTemplates.ts` (movido)
 
-Adicionar guard para verificar se há sessão ativa antes de retornar o cliente:
+---
 
-```typescript
-export function useBuScopedSupabase(): SupabaseClient<Database> {
-  const { currentBuId } = useBu();
-  const { session, isLoading: authLoading } = useAuth();
+### Fase 2: Validação Final
 
-  if (!currentBuId) {
-    throw new Error('useBuScopedSupabase called before BU selection');
-  }
+#### 2.1 Buscar imports órfãos
 
-  // Guard adicional: verificar se há sessão
-  if (!session && !authLoading) {
-    throw new Error('useBuScopedSupabase called without active session');
-  }
+```bash
+# Verificar se ainda existem imports dos arquivos deletados
+grep -r "useNotificationCenter" src/ --include="*.ts" --include="*.tsx"
+grep -r "useNotificationAdmin" src/ --include="*.ts" --include="*.tsx"
+grep -r "useNotificationTemplates" src/ --include="*.ts" --include="*.tsx"
+```
 
-  const client = useMemo(() => {
-    return getBuScopedClient(currentBuId);
-  }, [currentBuId]);
+#### 2.2 Verificar tipos estão exportados
 
-  return client;
-}
+Garantir que todos os types necessários estão no barrel.
+
+#### 2.3 Rodar testes
+
+```bash
+pnpm test
 ```
 
 ---
 
-## Arquivos a Modificar
+## Resumo de Mudanças
 
-| Arquivo | Mudança | Prioridade |
-|---------|---------|------------|
-| `src/integrations/supabase/buScopedClient.ts` | Sincronizar auth com globalClient | P0 (Crítico) |
-| `src/integrations/supabase/useBuScopedSupabase.ts` | Guard para sessão ativa | P1 |
-| `src/contexts/BuContext.tsx` | Chamar clearBuClientCache() ao trocar BU | P1 |
+| Ação | Arquivos |
+|------|----------|
+| **Mover** | 2 arquivos para `notifications/` |
+| **Atualizar barrel** | 1 arquivo (`notifications/index.ts`) |
+| **Atualizar imports** | 8 arquivos |
+| **Deletar** | 3 arquivos proxy/legados |
 
 ---
 
 ## Riscos e Mitigações
 
 | Risco | Probabilidade | Mitigação |
-|-------|---------------|-----------|
-| Chamada async em interceptor fetch | Média | Usar `.then()` ao invés de `await` se necessário |
-| Race condition no carregamento inicial | Baixa | Manter fallback para localStorage |
-| Múltiplas instâncias GoTrueClient | Baixa | Usar apenas getSession(), não criar novo client |
+|-------|--------------|-----------|
+| Quebra de build | Baixa | Atualizar todos imports antes de deletar |
+| Tipos não exportados | Baixa | Verificar exports com busca |
+| Testes falhando | Baixa | Rodar suite completa |
 
 ---
 
-## Checklist Pós-Implementação
+## Conclusão da Análise
 
-- [ ] Testar criação de ticket (fluxo principal)
-- [ ] Verificar Console: deve aparecer `[BuScopedClient] Injecting x-current-bu-id: ...` E sucesso na operação
-- [ ] Verificar Network: request deve ter header `x-current-bu-id` E `Authorization: Bearer ...` válido
-- [ ] Verificar PostgreSQL logs: NÃO deve aparecer `NO_BU_CONTEXT: User is not authenticated`
-- [ ] Testar troca de BU e criar ticket na nova BU
-- [ ] Atualizar TCR se houver mudança de padrão
+### ✅ O que está BEM
+
+1. **Todos os 16 módulos** em `src/modules/` têm barrel files consolidados e funcionando
+2. **Zero violações** de imports diretos nos módulos principais
+3. **Query keys** centralizadas em `src/lib/queryKeys/` com estrutura modular
+4. **Padrão de barrel** está bem documentado em `DEVELOPMENT_STANDARDS.md` §K
+
+### ⚠️ O que precisa de ação
+
+1. **src/hooks/notifications/**: Consolidar 3 arquivos standalone no barrel
+2. **Imports legados**: 8 arquivos ainda importam de proxies/arquivos individuais
+
+### 📊 Score de Conformidade
+
+- **Módulos:** 16/16 (100%) ✅
+- **src/hooks/:** ~90% (3 arquivos para consolidar)
+- **Query Keys:** 100% ✅
 
 ---
 
-## Documentação a Atualizar
+## Aprovação
 
-Após implementação bem-sucedida:
-- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` — Adicionar nota sobre sincronização de auth
-- Memory `architecture/bu-scoped-client-interceptor-standard` — Atualizar com novo padrão
+- [ ] Revisar plano
+- [ ] Aprovar execução
+
+**Próximo passo:** Executar Fase 1 após aprovação.
