@@ -198,10 +198,11 @@ function createBuAwareFetch() {
         prefer: originalHeaders.get("Prefer"),
       }));
 
-      // Log auth decision details for tickets
+      // Decode the token to show the payload (helps debug auth.uid() mismatch)
+      const payload = storedToken ? decodeJwtPayload(storedToken) : null;
       const authHeaderValue = headers.get("Authorization");
       const tokenPreview = authHeaderValue ? 
-        `${authHeaderValue.substring(0, 20)}...${authHeaderValue.slice(-10)}` : 
+        `${authHeaderValue.substring(0, 40)}...${authHeaderValue.slice(-20)}` : 
         "MISSING";
       
       console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
@@ -222,11 +223,27 @@ function createBuAwareFetch() {
         timestamp: new Date().toISOString(),
       }));
       
+      // Log the JWT payload to check if sub claim is correct
+      if (payload) {
+        console.error("[BuScopedClient] 🎫 JWT PAYLOAD:", JSON.stringify({
+          sub: payload.sub,
+          aud: payload.aud,
+          role: payload.role,
+          iss: payload.iss,
+          exp: payload.exp,
+          iat: payload.iat,
+          expDate: payload.exp ? new Date((payload.exp as number) * 1000).toISOString() : "N/A",
+          isExpired: payload.exp ? Date.now() >= (payload.exp as number) * 1000 : true,
+        }));
+      } else {
+        console.error("[BuScopedClient] 🎫 JWT PAYLOAD: Could not decode token");
+      }
+      
       // Log the full headers being sent (for debugging)
       const headersObj: Record<string, string> = {};
       headers.forEach((value, key) => {
         headersObj[key] = key.toLowerCase() === "authorization" 
-          ? `${value.substring(0, 20)}...` 
+          ? `${value.substring(0, 40)}...` 
           : value.substring(0, 50);
       });
       console.error("[BuScopedClient] 🎫 FULL HEADERS BEING SENT:", JSON.stringify(headersObj));
