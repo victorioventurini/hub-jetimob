@@ -54,7 +54,7 @@ export function useCreateTicket(profileId: string | null) {
           title: data.title,
           category_id: data.category_id || null,
           subcategory_id: data.subcategory_id || null,
-          partner_company_id: data.partner_company_id || null,
+          external_company_id: data.external_company_id || null,
           // External contact assignment (contact-first routing v2.4+)
           assigned_contact_id: data.assigned_contact_id || null,
           assignment_source: data.assignment_source || null,
