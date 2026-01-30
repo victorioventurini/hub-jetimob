@@ -73,6 +73,16 @@ function getJwtRole(token: string): string | null {
   return typeof role === "string" ? role : null;
 }
 
+/**
+ * Checks if a JWT token is expired, with a 30-second safety margin.
+ */
+function isTokenExpired(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload || typeof payload.exp !== "number") return true;
+  // Consider expired 30 seconds before actual expiry for safety margin
+  return Date.now() >= (payload.exp - 30) * 1000;
+}
+
 // ============================================================================
 // SINGLETON CLIENT PATTERN (HMR-safe)
 // ============================================================================
@@ -106,6 +116,8 @@ function setCurrentBuId(buId: string | null): void {
 }
 
 // Custom fetch that injects BU header dynamically per-request
+// CRITICAL: Always prioritize localStorage token as source of truth to avoid
+// race conditions with GoTrueClient's internal state (fixes RLS violations)
 function createBuAwareFetch() {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
@@ -116,15 +128,17 @@ function createBuAwareFetch() {
       headers.set("x-current-bu-id", buId);
     }
 
-    // Inject JWT if needed (avoid anon requests during cold starts)
+    // ALWAYS inject the latest valid JWT from localStorage
+    // This ensures we don't use a stale token from GoTrueClient's internal state
     const storedToken = readAccessTokenFromStorage();
-    const currentAuth = headers.get("Authorization") || headers.get("authorization");
-    const currentToken = currentAuth?.startsWith("Bearer ") ? currentAuth.slice(7) : null;
-    const currentRole = currentToken ? getJwtRole(currentToken) : null;
-    const shouldInjectUserJwt = !currentAuth || currentRole === "anon" || currentRole === null;
-
-    if (storedToken && shouldInjectUserJwt) {
-      headers.set("Authorization", `Bearer ${storedToken}`);
+    if (storedToken) {
+      const storedRole = getJwtRole(storedToken);
+      const isValidToken = storedRole === "authenticated" && !isTokenExpired(storedToken);
+      
+      if (isValidToken) {
+        // Always use localStorage token (source of truth) - override any SDK-provided header
+        headers.set("Authorization", `Bearer ${storedToken}`);
+      }
     }
 
     return fetch(input, { ...init, headers });
