@@ -1,182 +1,127 @@
 
-# Plano: Página de Avaliação de Construção de OKRs Organizacionais
+# Plano: Correção Urgente - Migração partner_company_id → external_company_id
 
-## 1. Pré-requisitos Validados
+## 1. Diagnóstico Confirmado
 
-| Documento | Versão | Status |
-|-----------|--------|--------|
-| DEVELOPMENT_STANDARDS | v1.17.0 | ✅ Validado |
-| DATA_MODEL_REGISTRY | v2.51.0 | ✅ Validado |
-| Query Keys Pattern | Centralizado | ✅ Validado |
+**Erro:** `Could not find the 'partner_company_id' column of 'tickets' in the schema cache`
 
----
+**Causa raiz:** A migração para o modelo unificado `external_companies` foi aplicada no banco de dados, mas o código frontend **ainda usa os nomes antigos das colunas**.
 
-## 2. Estratégia de Implementação
+### Schema atual do banco (MIGRADO):
 
-### Reutilização Total de Componentes
+| Tabela | Coluna Atual |
+|--------|--------------|
+| `tickets` | `external_company_id` |
+| `partner_contacts` | `external_company_id` |
+| `partner_service_mappings` | `external_company_id` |
+| `ticket_routing_rules` | `external_company_id` |
+| `partner_contact_capabilities` | `external_company_id` |
+| `v_partner_services` (view) | `external_company_id`, `external_company_name` |
 
-Os componentes existentes são **genéricos** e aceitam interfaces que funcionam para ambos os contextos (time e organizacional):
+### Código frontend (DESATUALIZADO - causando erro):
 
-| Componente | Props Interface | Reutilização |
-|------------|-----------------|--------------|
-| `ConstructionScoreCard` | `avgScore`, `approvedCount`, `needsImprovementCount`, `pendingCount` | ✅ 100% |
-| `ObjectiveChecklistCard` | `ObjectiveReview`, `criteria`, `onReEvaluate` | ✅ 100% |
-| `REVIEW_CRITERIA` | Critérios de avaliação | ✅ 100% |
-
-**Não será criado nenhum novo componente de UI.**
+O código ainda referencia `partner_company_id` em ~25 arquivos.
 
 ---
 
-## 3. Arquivos a Criar/Modificar
+## 2. Pré-requisitos Consultados
 
-### 3.1 Query Key (Modificar)
+| Documento | Status |
+|-----------|--------|
+| Memory: `external-entities-unified-model` | ✅ Confirma migração concluída |
+| Tabelas Supabase | ✅ Schema verificado com queries |
+| DATA_MODEL_REGISTRY v2.51.0 | ✅ Alinhado |
 
-**Arquivo:** `src/lib/queryKeys/okrs.ts`
+---
+
+## 3. Escopo da Correção
+
+### Categoria A: Tipos e Definições (Crítico)
+
+| Arquivo | Alterações |
+|---------|------------|
+| `src/modules/tickets/types.ts` | Renomear `partner_company_id` → `external_company_id` em interfaces (`Ticket`, `TicketFilters`, `CreateTicketData`, `TicketRoutingRule`, `PartnerServiceMapping`, `PartnerContact`) |
+| `src/modules/tickets/hooks/ticketFieldDefinitions.ts` | Atualizar campos de query e joins (`external_company:external_companies`) |
+
+### Categoria B: Hooks de Mutação/Query (Alta Prioridade)
+
+| Arquivo | Alterações |
+|---------|------------|
+| `src/modules/tickets/hooks/useTicketMutations.ts` | Insert usa `external_company_id` |
+| `src/modules/tickets/hooks/useTicketQueries.ts` | Filtro usa `external_company_id` |
+| `src/modules/tickets/hooks/useRoutingRules.ts` | Select/Insert/Update com `external_company_id` |
+| `src/modules/tickets/hooks/usePartnerServices.ts` | Tipos e queries com `external_company_id`, `external_company_name` |
+| `src/modules/tickets/hooks/useContactCapabilities.ts` | Campos e queries |
+| `src/modules/tickets/hooks/usePartners.ts` | Campos de partner_contacts |
+| `src/modules/tickets/hooks/usePartnerCompanyContacts.ts` | Filtro de company |
+| `src/modules/tickets/hooks/ticketQueryUtils.ts` | Normalização de relações |
+
+### Categoria C: Componentes de UI
+
+| Arquivo | Alterações |
+|---------|------------|
+| `src/modules/tickets/pages/TicketsListPage.tsx` | Filtro `partnerId` → usa `external_company_id` |
+| `src/modules/tickets/pages/TicketDetailPage.tsx` | Props e dados |
+| `src/modules/tickets/components/settings/PartnerServicesTab.tsx` | Props |
+| Dialogs de criação/edição | Forms e dados |
+
+---
+
+## 4. Padrão de Renomeação
 
 ```typescript
-// Adicionar:
-orgConstructionReview: (buId: string | null, year: number | null) => 
-  ['okr-org-construction-review', buId, year] as const,
+// ANTES (incorreto - causa erro)
+partner_company_id: data.partner_company_id || null,
+partner_company:partner_companies(id, name),
+
+// DEPOIS (correto)
+external_company_id: data.external_company_id || null,
+external_company:external_companies(id, name),
 ```
 
----
+### Mapeamento completo:
 
-### 3.2 Hook (Criar)
+| Código Antigo | Código Novo |
+|---------------|-------------|
+| `partner_company_id` (campo) | `external_company_id` |
+| `partner_company:partner_companies(...)` (join) | `external_company:external_companies(...)` |
+| `partner_company_name` (view) | `external_company_name` |
 
-**Arquivo:** `src/modules/okrs/hooks/useOrgConstructionReview.ts`
-
-**Lógica:**
-1. Buscar `okr_org_objectives` + `okr_org_key_results` por **ano**
-2. Transformar para interface `ObjectiveReview[]` (mesma usada pelos componentes existentes)
-3. Para cada objetivo, invocar edge function com flag `isOrgLevel: true`
-4. Manter state de `aiAssessments`, `aiLoading`, `aiErrors` (mesmo padrão do `useConstructionReview`)
-
-**Diferenças do hook de times:**
-- Filtro por `year` em vez de `cycleId` + `teamId`
-- Campo `teamName` fixo como `'Organizacional'`
-- Sem análise consolidada de sinergias entre times (não aplicável)
+**Importante:** As tabelas `partner_contacts` e `partner_companies` ainda existem como entidades, mas **a FK em tickets e tabelas relacionadas** agora aponta para `external_companies`.
 
 ---
 
-### 3.3 Edge Function (Modificar)
+## 5. Ordem de Execução
 
-**Arquivo:** `supabase/functions/okr-construction-review/index.ts`
-
-**Alterações:**
-1. Adicionar campo `isOrgLevel?: boolean` na interface `RequestBody`
-2. Quando `isOrgLevel: true`, ajustar o prompt para contexto organizacional:
-
-```typescript
-// Prompt adaptado para OKRs organizacionais:
-const orgPrompt = `
-Você está avaliando um OBJETIVO ORGANIZACIONAL (nível empresa/C-Level).
-
-CRITÉRIOS ESPECIAIS:
-- **Clareza**: Deve inspirar e ser compreensível por TODA a organização
-- **Ambição**: Deve representar um salto estratégico de 12+ meses
-- **Mensurabilidade**: KRs devem ter métricas de alto nível (market share, receita, NPS)
-- **Responsabilidade**: Cada KR deve ter um sponsor C-Level ou equivalente
-- **Cascading**: Deve ser possível derivar OKRs de times a partir deste
-`;
-```
+1. **Tipos** (`types.ts`) — Base para TypeScript
+2. **Field Definitions** (`ticketFieldDefinitions.ts`) — Queries centralizadas
+3. **Mutations** (`useTicketMutations.ts`) — **Resolve o erro de criação**
+4. **Queries** (`useTicketQueries.ts`, `useRoutingRules.ts`, `usePartnerServices.ts`)
+5. **Hooks auxiliares** (`usePartners.ts`, `useContactCapabilities.ts`, `usePartnerCompanyContacts.ts`)
+6. **Utils** (`ticketQueryUtils.ts`)
+7. **Pages** (`TicketsListPage.tsx`, `TicketDetailPage.tsx`)
+8. **Componentes** (dialogs, tabs, forms)
 
 ---
 
-### 3.4 Página (Criar)
+## 6. Arquivos Afetados (25 arquivos)
 
-**Arquivo:** `src/modules/okrs/pages/OrgConstructionReviewPage.tsx`
+Baseado na busca, os principais arquivos com `partner_company_id`:
 
-**Estrutura:**
-- Header com `YearSelect` (seletor de ano)
-- Grid 1/3 + 2/3 (mesmo layout de `/construction-review`)
-- Usa `ConstructionScoreCard` existente (sem props de `teamAnalysis`)
-- Usa `ObjectiveChecklistCard` existente
-
-**Controle de Acesso:** `requiresBuAdmin` (apenas admins podem avaliar OKRs org)
-
-```tsx
-export default function OrgConstructionReviewPage() {
-  const [year, setYear] = useUrlState<number>({ 
-    key: 'year', 
-    defaultValue: new Date().getFullYear() 
-  });
-  
-  const { objectives, avgScore, approvedCount, ... } = useOrgConstructionReview(year);
-
-  return (
-    <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
-      {/* Header com YearSelect */}
-      {/* Grid: ConstructionScoreCard + Lista ObjectiveChecklistCard */}
-    </div>
-  );
-}
-```
-
----
-
-### 3.5 Rota (Modificar)
-
-**Arquivo:** `src/routes/okrs.routes.tsx`
-
-```typescript
-const OrgConstructionReviewPage = lazy(() => 
-  import('@/modules/okrs/pages/OrgConstructionReviewPage')
-);
-
-// Na seção Quality & Analysis
-<Route 
-  path="/okrs/org-construction-review" 
-  element={<OkrRoute requiresBuAdmin><OrgConstructionReviewPage /></OkrRoute>} 
-/>
-```
-
----
-
-### 3.6 Export do Hook (Modificar)
-
-**Arquivo:** `src/modules/okrs/hooks/index.ts`
-
-```typescript
-export { useOrgConstructionReview } from './useOrgConstructionReview';
-```
-
----
-
-## 4. Resumo de Arquivos
-
-| Arquivo | Operação | Propósito |
-|---------|----------|-----------|
-| `src/lib/queryKeys/okrs.ts` | Modificar | Adicionar `orgConstructionReview` key |
-| `supabase/functions/okr-construction-review/index.ts` | Modificar | Suportar `isOrgLevel` flag + prompt adaptado |
-| `src/modules/okrs/hooks/useOrgConstructionReview.ts` | **Criar** | Hook para buscar e avaliar OKRs org |
-| `src/modules/okrs/pages/OrgConstructionReviewPage.tsx` | **Criar** | Página principal |
-| `src/routes/okrs.routes.tsx` | Modificar | Adicionar rota |
-| `src/modules/okrs/hooks/index.ts` | Modificar | Export do novo hook |
-
----
-
-## 5. Compatibilidade com Padrões do Hub
-
-| Padrão | Status | Implementação |
-|--------|--------|---------------|
-| Query Keys centralizadas | ✅ | `src/lib/queryKeys` |
-| useBuScopedSupabase | ✅ | Usado no hook |
-| Lazy loading | ✅ | `lazy()` para página |
-| URL state | ✅ | `useUrlState` para ano |
-| Controle de acesso | ✅ | `requiresBuAdmin` na rota |
-| Reutilização de componentes | ✅ | 100% reuso |
-| Agente correto | ✅ | `validador-metodologico-okrs` |
-
----
-
-## 6. Ordem de Execução
-
-1. **Query Key** — Adicionar `orgConstructionReview` em `okrs.ts`
-2. **Edge Function** — Suportar flag `isOrgLevel` e prompt adaptado
-3. **Hook** — Criar `useOrgConstructionReview.ts`
-4. **Página** — Criar `OrgConstructionReviewPage.tsx`
-5. **Rota** — Adicionar em `okrs.routes.tsx`
-6. **Export** — Atualizar `hooks/index.ts`
+- `src/modules/tickets/types.ts`
+- `src/modules/tickets/hooks/ticketFieldDefinitions.ts`
+- `src/modules/tickets/hooks/useTicketMutations.ts`
+- `src/modules/tickets/hooks/useTicketQueries.ts`
+- `src/modules/tickets/hooks/useRoutingRules.ts`
+- `src/modules/tickets/hooks/usePartnerServices.ts`
+- `src/modules/tickets/hooks/usePartners.ts`
+- `src/modules/tickets/hooks/useContactCapabilities.ts`
+- `src/modules/tickets/hooks/usePartnerCompanyContacts.ts`
+- `src/modules/tickets/hooks/ticketQueryUtils.ts`
+- `src/modules/tickets/pages/TicketsListPage.tsx`
+- `src/modules/tickets/pages/TicketDetailPage.tsx`
+- `src/modules/tickets/components/settings/*.tsx` (vários)
+- `src/modules/tickets/components/filters/*.tsx`
 
 ---
 
@@ -184,10 +129,20 @@ export { useOrgConstructionReview } from './useOrgConstructionReview';
 
 | Cenário | Esperado |
 |---------|----------|
-| Acessar `/okrs/org-construction-review` como admin | ✅ Visualiza página |
-| Acessar como não-admin | ❌ Redirect (via `requiresBuAdmin`) |
-| Selecionar ano sem OKRs org | Alert "Nenhum objetivo encontrado" |
-| Selecionar ano com OKRs | Cards com avaliação IA |
-| Clicar "Reavaliar" | Edge function re-invocada |
-| Score médio calculado | Baseado nas avaliações individuais |
-| Prompt IA | Focado em contexto estratégico/C-Level |
+| Criar ticket externo | ✅ Sem erro de coluna |
+| Listar tickets | ✅ Empresa externa exibida |
+| Filtrar por empresa | ✅ Funciona |
+| Editar routing rules | ✅ Funciona |
+| Partner services tab | ✅ Lista corretamente |
+| Contact capabilities | ✅ Funciona |
+
+---
+
+## 8. Impacto
+
+| Aspecto | Valor |
+|---------|-------|
+| Arquivos modificados | ~25 |
+| Linhas alteradas | ~300-400 |
+| Risco de regressão | Baixo (renomeação consistente) |
+| Urgência | **CRÍTICA** (bloqueando criação de tickets) |
