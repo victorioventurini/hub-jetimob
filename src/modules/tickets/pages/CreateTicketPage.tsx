@@ -358,23 +358,38 @@ export default function CreateTicketPage() {
   };
 
   const onSubmit = async (data: FormData) => {
+    // CRITICAL DEBUG: Log all identity values to diagnose RLS 42501 errors
+    console.error("[DEBUG_RLS] 🚨 CreateTicketPage.onSubmit - IDENTITY STATE:", JSON.stringify({
+      writerProfileId,
+      profileId,
+      realProfileId,
+      identityReady,
+      identityLoading,
+      writerProfileIdType: typeof writerProfileId,
+      profileIdType: typeof profileId,
+      realProfileIdType: typeof realProfileId,
+      buId: currentBu?.id,
+      buName: currentBu?.name,
+      userAuthId: user?.id,
+      timestamp: new Date().toISOString(),
+    }, null, 2));
+
     // Guard: profileId deve estar carregado antes de submeter
     if (!writerProfileId) {
-      console.error("[DEBUG_RLS] writerProfileId is null - identity not loaded");
+      console.error("[DEBUG_RLS] ❌ writerProfileId is null/undefined - identity not loaded");
       toast.error("Erro de identidade: aguarde carregar e tente novamente");
       return;
     }
 
-    // VISIBLE LOG for RLS debugging - will appear in console
-    console.error("[DEBUG_RLS] CreateTicketPage.onSubmit identity data:", JSON.stringify({
-      writerProfileId,
-      profileId,
-      realProfileId,
-      buId: currentBu?.id,
-      buName: currentBu?.name,
-    }, null, 2));
+    // Extra validation: writerProfileId must be a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(writerProfileId)) {
+      console.error("[DEBUG_RLS] ❌ writerProfileId is not a valid UUID:", writerProfileId);
+      toast.error("Erro de identidade: formato inválido");
+      return;
+    }
 
-    // Validate visibility is selected (required for external tickets)
+    console.error("[DEBUG_RLS] ✅ Identity validated - proceeding with ticket creation");
     if (!data.visibility) {
       toast.error("Selecione a visibilidade do ticket");
       return;

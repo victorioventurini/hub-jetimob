@@ -83,12 +83,17 @@ export function useCreateTicket(profileId: string | null) {
         owner_user_id: profileId,
       } as const;
 
-      // VISIBLE LOG for RLS debugging - will appear in console as error so it's easier to see
-      console.error("[DEBUG_RLS] useCreateTicket INSERT payload:", JSON.stringify({
-        bu_id: insertPayload.bu_id,
-        created_by_user_id: insertPayload.created_by_user_id,
-        owner_user_id: insertPayload.owner_user_id,
+      // VISIBLE LOG for RLS debugging - CRITICAL: This log helps diagnose 42501 errors
+      // The RLS policy requires: created_by_user_id = my_profile_id()
+      // If profileId is null/undefined here, the INSERT will fail with RLS violation
+      console.error("[DEBUG_RLS] 🚨 useCreateTicket INSERT - CRITICAL VALUES:", JSON.stringify({
         profileIdFromHook: profileId,
+        profileIdType: typeof profileId,
+        profileIdIsNull: profileId === null,
+        profileIdIsUndefined: profileId === undefined,
+        created_by_user_id: insertPayload.created_by_user_id,
+        bu_id: insertPayload.bu_id,
+        timestamp: new Date().toISOString(),
       }, null, 2));
 
       // Create ticket with profileId (profiles.id)
