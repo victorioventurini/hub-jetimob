@@ -87,8 +87,9 @@ export default function CreateTicketPage() {
   const typeFromUrl = searchParams.get('type') as 'internal' | 'external' | null;
   const { currentBu } = useBu();
   const { user, profile } = useAuth();
-  const { profileId } = useIdentity();
-  const createTicket = useCreateTicket(profileId);
+  const { profileId, realProfileId } = useIdentity();
+  // CRITICAL (Identity Convention): mutations must use realProfileId (ignores impersonation)
+  const createTicket = useCreateTicket(realProfileId);
   const supabase = useBuScopedSupabase();
   const { data: allCategories = [] } = useTicketCategories();
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -331,6 +332,10 @@ export default function CreateTicketPage() {
 
   const uploadAttachments = async (ticketId: string, messageId: string): Promise<void> => {
     if (attachments.length === 0 || !currentBu) return;
+
+    // For writes, always attribute to the real (logged-in) profile.
+    const uploaderProfileId = realProfileId ?? profileId;
+    if (!uploaderProfileId) return;
     
     for (const file of attachments) {
       const fileExt = file.name.split('.').pop();
@@ -362,7 +367,7 @@ export default function CreateTicketPage() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        uploaded_by_user_id: profileId,
+         uploaded_by_user_id: uploaderProfileId,
       });
     }
   };
