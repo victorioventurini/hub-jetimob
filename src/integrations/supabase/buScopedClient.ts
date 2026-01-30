@@ -165,59 +165,123 @@ function createBuAwareFetch() {
     const storedToken = readAccessTokenFromStorage();
     let usedStoredToken = false;
 
+    // Parse token claims for validation
+    let hasSub = false;
+    let storedRole: string | null = null;
+    let expired = true;
+    let shouldUseStored = false;
+
     if (storedToken) {
       const payload = decodeJwtPayload(storedToken);
-      const hasSub = typeof payload?.sub === "string" && payload.sub.length > 0;
-      const storedRole = getJwtRole(storedToken);
-      const expired = isTokenExpired(storedToken);
-      const shouldUseStored = hasSub && !expired && storedRole !== "anon";
+      hasSub = typeof payload?.sub === "string" && payload.sub.length > 0;
+      storedRole = getJwtRole(storedToken);
+      expired = isTokenExpired(storedToken);
+      shouldUseStored = hasSub && !expired && storedRole !== "anon";
 
       if (shouldUseStored) {
         // Always use localStorage token (source of truth) - override any SDK-provided header
         headers.set("Authorization", `Bearer ${storedToken}`);
         usedStoredToken = true;
       }
+    }
 
-      // Only log for non-tickets requests (tickets has its own detailed log above)
-      if (!isTicketsRequest) {
-        console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
-          url: url.substring(0, 100),
-          buId: effectiveBuId,
-          buIdSource,
-          hasStoredToken: true,
-          hasSub,
-          storedRole,
-          expired,
-          usedStoredToken,
-        }));
-      }
-    } else {
-      // No token in localStorage - this is a critical issue for RLS!
+    // =========================================================================
+    // PHASE 1: Detailed Auth Logging for Tickets
+    // =========================================================================
+    if (isTicketsRequest) {
+      // Log original SDK headers BEFORE our modifications
+      const originalHeaders = new Headers((init?.headers as HeadersInit) ?? undefined);
+      console.error("[BuScopedClient] 🎫 Original SDK headers:", JSON.stringify({
+        hasApiKey: originalHeaders.has("apikey"),
+        hasAuthorization: originalHeaders.has("Authorization"),
+        contentType: originalHeaders.get("Content-Type"),
+        prefer: originalHeaders.get("Prefer"),
+      }));
+
+      // Log auth decision details for tickets
+      console.error("[BuScopedClient] 🎫 TICKETS AUTH DEBUG:", JSON.stringify({
+        hasStoredToken: !!storedToken,
+        hasSub,
+        storedRole,
+        expired,
+        shouldUseStored,
+        usedStoredToken,
+        finalAuthHeader: headers.has("Authorization"),
+        finalApiKeyHeader: headers.has("apikey"),
+        finalBuHeader: headers.has("x-current-bu-id"),
+        buId: effectiveBuId,
+        buIdSource,
+        method: init?.method ?? "GET",
+        timestamp: new Date().toISOString(),
+      }));
+    } else if (storedToken) {
+      // Standard auth log for non-ticket requests
+      console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
+        url: url.substring(0, 100),
+        buId: effectiveBuId,
+        buIdSource,
+        hasStoredToken: true,
+        hasSub,
+        storedRole,
+        expired,
+        usedStoredToken,
+      }));
+    }
+
+    // Log warning if no token found
+    if (!storedToken) {
       console.error("[BuScopedClient] ⚠️ NO TOKEN IN LOCALSTORAGE - RLS will likely fail:", JSON.stringify({
         url: url.substring(0, 100),
         buId: effectiveBuId,
         buIdSource,
         hasStoredToken: false,
+        isTicketsRequest,
       }));
     }
 
     if (isTicketsRequest) {
       console.error("[BuScopedClient] 🎫 About to call native fetch for tickets...");
-      console.error("[BuScopedClient] 🎫 Headers prepared:", JSON.stringify({
-        hasBuId: headers.has("x-current-bu-id"),
-        hasAuth: headers.has("Authorization"),
-        contentType: headers.get("Content-Type"),
-      }));
     }
 
+    // =========================================================================
+    // PHASE 3: Timeout Safety + Error Handling
+    // =========================================================================
+    const FETCH_TIMEOUT_MS = 30000; // 30 seconds
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.error("[BuScopedClient] 💀 FETCH TIMEOUT after 30s:", url.substring(0, 100));
+      controller.abort();
+    }, FETCH_TIMEOUT_MS);
+
     try {
-      const response = await fetch(input, { ...init, headers });
+      const response = await fetch(input, { 
+        ...init, 
+        headers, 
+        signal: controller.signal 
+      });
+      clearTimeout(timeoutId);
+
       if (isTicketsRequest) {
-        console.error("[BuScopedClient] 🎫 Fetch response received:", response.status);
+        console.error("[BuScopedClient] 🎫 Response received:", JSON.stringify({
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText,
+        }));
       }
+
       return response;
     } catch (fetchError) {
-      console.error("[BuScopedClient] 💥 FETCH FAILED:", fetchError);
+      clearTimeout(timeoutId);
+      
+      const isAbort = (fetchError as Error)?.name === "AbortError";
+      console.error("[BuScopedClient] 💥 FETCH ERROR:", JSON.stringify({
+        name: (fetchError as Error)?.name,
+        message: (fetchError as Error)?.message,
+        isAbort,
+        isTicketsRequest,
+        url: url.substring(0, 100),
+      }));
+
       throw fetchError;
     }
   };
