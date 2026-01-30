@@ -119,10 +119,15 @@ function createBuAwareFetch() {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const headers = new Headers((init?.headers as HeadersInit) ?? undefined);
     
-    // Inject BU header for current request (read from globalThis)
+    // Inject BU header for current request
+    // CRITICAL: Read from localStorage DIRECTLY as fallback - globalThis may be null due to useMemo caching
     const buId = getCurrentBuId();
+    
     if (buId && !headers.has("x-current-bu-id")) {
       headers.set("x-current-bu-id", buId);
+      console.debug("[BuScopedClient] Injecting x-current-bu-id:", buId);
+    } else if (!buId) {
+      console.warn("[BuScopedClient] No BU ID available for header injection!");
     }
 
     // Inject JWT if needed (avoid anon requests during cold starts)
