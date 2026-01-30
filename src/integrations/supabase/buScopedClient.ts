@@ -159,13 +159,44 @@ function createBuAwareFetch() {
       headers.set("x-current-bu-id", effectiveBuId);
     }
 
-    // ALWAYS prefer the latest valid JWT from localStorage.
-    // We intentionally do NOT rely on the `role` claim being present, because some auth flows
-    // (or future token formats) may not include it. What we need is a non-expired user JWT.
+    // =========================================================================
+    // AUTH HEADER STRATEGY (ES256 signing-keys aware)
+    // =========================================================================
+    // The SDK may have special handling for ES256 tokens that we shouldn't bypass.
+    // New strategy:
+    // 1) If SDK already set a valid Authorization header, TRUST IT
+    // 2) Only override if SDK didn't set one OR set an anon-looking token
+    // =========================================================================
+    
     const storedToken = readAccessTokenFromStorage();
+    const sdkAuthHeader = headers.get("Authorization");
+    
+    // Check what the SDK provided
+    let sdkHasValidAuth = false;
+    if (sdkAuthHeader && sdkAuthHeader.startsWith("Bearer ey")) {
+      const sdkToken = sdkAuthHeader.replace("Bearer ", "");
+      const sdkPayload = decodeJwtPayload(sdkToken);
+      const sdkRole = sdkPayload?.role;
+      const sdkSub = sdkPayload?.sub;
+      const sdkExpired = sdkPayload?.exp ? Date.now() >= (Number(sdkPayload.exp) - 30) * 1000 : true;
+      
+      // SDK is valid if: has sub, not expired, role is authenticated (not anon)
+      sdkHasValidAuth = !!sdkSub && !sdkExpired && sdkRole === "authenticated";
+      
+      if (isTicketsRequest) {
+        console.error("[BuScopedClient] 🎫 SDK AUTH ANALYSIS:", JSON.stringify({
+          sdkHasAuth: true,
+          sdkSub: sdkSub ? String(sdkSub).substring(0, 8) + "..." : null,
+          sdkRole,
+          sdkExpired,
+          sdkHasValidAuth,
+          sdkTokenPrefix: sdkToken.substring(0, 30),
+        }));
+      }
+    }
+    
+    // Parse stored token claims
     let usedStoredToken = false;
-
-    // Parse token claims for validation
     let hasSub = false;
     let storedRole: string | null = null;
     let expired = true;
@@ -177,11 +208,20 @@ function createBuAwareFetch() {
       storedRole = getJwtRole(storedToken);
       expired = isTokenExpired(storedToken);
       shouldUseStored = hasSub && !expired && storedRole !== "anon";
+    }
 
-      if (shouldUseStored) {
-        // Always use localStorage token (source of truth) - override any SDK-provided header
-        headers.set("Authorization", `Bearer ${storedToken}`);
-        usedStoredToken = true;
+    // DECISION: Only override if SDK doesn't have valid auth AND we have a valid stored token
+    if (!sdkHasValidAuth && shouldUseStored && storedToken) {
+      headers.set("Authorization", `Bearer ${storedToken}`);
+      usedStoredToken = true;
+      
+      if (isTicketsRequest) {
+        console.error("[BuScopedClient] 🎫 OVERRIDING AUTH - SDK invalid, using localStorage token");
+      }
+    } else if (sdkHasValidAuth) {
+      // Trust the SDK
+      if (isTicketsRequest) {
+        console.error("[BuScopedClient] 🎫 TRUSTING SDK AUTH - not overriding");
       }
     }
 
