@@ -96,6 +96,17 @@ export function useCreateTicket(profileId: string | null) {
         timestamp: new Date().toISOString(),
       }, null, 2));
 
+      // DEBUG: Call RLS debug function BEFORE the insert to understand auth context
+      const { data: rlsDebug, error: rlsDebugError } = await supabase.rpc('debug_rls_ticket_insert', {
+        p_created_by_user_id: profileId,
+        p_bu_id: buId,
+      });
+      
+      console.error("[DEBUG_RLS] 🔍 RLS Debug RPC result:", JSON.stringify({
+        rlsDebug,
+        rlsDebugError: rlsDebugError?.message,
+      }, null, 2));
+
       // Create ticket with profileId (profiles.id)
       const { data: ticket, error } = await supabase
         .from("tickets")
