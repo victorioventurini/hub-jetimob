@@ -4,8 +4,8 @@ import {
   useUserNotificationPreferenceMutation,
   groupSettingsByModule,
   moduleNames,
-} from '@/hooks/useNotificationCenter';
-import { useNotificationChannels } from '@/hooks/useNotificationCenter';
+  useNotificationChannels,
+} from '@/hooks/notifications';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';

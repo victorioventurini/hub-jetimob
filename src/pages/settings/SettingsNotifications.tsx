@@ -6,15 +6,13 @@ import {
   useBuNotificationChannelMutations,
   useNotificationEvents,
   useSendTestNotification,
-} from '@/hooks/useNotificationCenter';
-import {
   useBuEventSettings,
   useBuEventSettingMutation,
   useNotificationOutbox,
   useInAppNotifications,
   useRetryOutboxItem,
   useBuProfiles,
-} from '@/hooks/useNotificationAdmin';
+} from '@/hooks/notifications';
 import { useBu } from '@/contexts/BuContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState } from '@/shared/url/useUrlState';

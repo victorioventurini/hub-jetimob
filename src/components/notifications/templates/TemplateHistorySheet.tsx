@@ -5,11 +5,11 @@
 
 import { useState } from 'react';
 import { 
-  NotificationTemplate, 
-  TemplateVersion,
+  type NotificationTemplate, 
+  type TemplateVersion,
   useNotificationTemplateVersions,
   useActivateTemplateVersion,
-} from '@/hooks/useNotificationTemplates';
+} from '@/hooks/notifications';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   Sheet,
