@@ -240,8 +240,17 @@ export function usePartnerContacts(companyId?: string) {
       }
 
       let contacts = (associations || [])
-        .map((a) => (a as { partner_contact: PartnerContact }).partner_contact)
-        .filter((c): c is NonNullable<typeof c> => c !== null && c.status === "active");
+        .map((a) => {
+          const assoc = a as { partner_contact: Record<string, unknown> };
+          return assoc.partner_contact;
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null && (c as Record<string, unknown>).status === "active")
+        .map((c) => ({
+          ...c,
+          profile_user_id: (c as Record<string, unknown>).profile_user_id ?? null,
+          created_by: (c as Record<string, unknown>).created_by ?? null,
+          deleted_at: (c as Record<string, unknown>).deleted_at ?? null,
+        })) as PartnerContact[];
 
       if (companyId) {
         contacts = contacts.filter((c) => c.external_company_id === companyId);

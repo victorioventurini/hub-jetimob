@@ -68,7 +68,7 @@ export interface UpdatePartnerCompanyData {
 }
 
 export interface PartnerBuAssociationData {
-  partner_company_id: string;
+  external_company_id: string;
   bu_id: string;
   is_active?: boolean;
   notes?: string;

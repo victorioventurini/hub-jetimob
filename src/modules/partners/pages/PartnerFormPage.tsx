@@ -118,7 +118,7 @@ export default function PartnerFormPage() {
       // Ativar na BU atual automaticamente
       if (result?.id && currentBuId) {
         await activateInBu.mutateAsync({
-          partner_company_id: result.id,
+          external_company_id: result.id,
           bu_id: currentBuId,
           is_active: true,
         });
@@ -133,7 +133,7 @@ export default function PartnerFormPage() {
   const handleActivateExisting = async () => {
     if (existingPartner?.id && currentBuId) {
       await activateInBu.mutateAsync({
-        partner_company_id: existingPartner.id,
+        external_company_id: existingPartner.id,
         bu_id: currentBuId,
         is_active: true,
       });
