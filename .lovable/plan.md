@@ -1,148 +1,85 @@
 
-# Plano: Correção Urgente - Migração partner_company_id → external_company_id
+# Plano: Migração partner_company_id → external_company_id
 
-## 1. Diagnóstico Confirmado
-
-**Erro:** `Could not find the 'partner_company_id' column of 'tickets' in the schema cache`
-
-**Causa raiz:** A migração para o modelo unificado `external_companies` foi aplicada no banco de dados, mas o código frontend **ainda usa os nomes antigos das colunas**.
-
-### Schema atual do banco (MIGRADO):
-
-| Tabela | Coluna Atual |
-|--------|--------------|
-| `tickets` | `external_company_id` |
-| `partner_contacts` | `external_company_id` |
-| `partner_service_mappings` | `external_company_id` |
-| `ticket_routing_rules` | `external_company_id` |
-| `partner_contact_capabilities` | `external_company_id` |
-| `v_partner_services` (view) | `external_company_id`, `external_company_name` |
-
-### Código frontend (DESATUALIZADO - causando erro):
-
-O código ainda referencia `partner_company_id` em ~25 arquivos.
+## Status: ✅ CONCLUÍDO (2026-01-30)
 
 ---
 
-## 2. Pré-requisitos Consultados
+## 1. Resumo da Migração
+
+A migração unificou o modelo de entidades externas, renomeando `partner_companies` para `external_companies` e `partner_company_id` para `external_company_id` em todo o sistema.
+
+---
+
+## 2. Alterações Realizadas
+
+### 2.1 Banco de Dados (SQL Migrations)
+
+| RPC/Function | Status |
+|--------------|--------|
+| `get_partner_categories(p_external_company_id)` | ✅ Atualizado |
+| `get_partner_subcategories(p_external_company_id, p_category_id)` | ✅ Atualizado |
+| `search_mention_candidates(p_bu_id, p_external_company_id, ...)` | ✅ Atualizado |
+
+### 2.2 Frontend (TypeScript)
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/modules/tickets/types.ts` | ✅ `external_company_id` em todas interfaces |
+| `src/modules/tickets/hooks/ticketFieldDefinitions.ts` | ✅ Joins para `external_companies` |
+| `src/modules/tickets/hooks/useTicketMutations.ts` | ✅ Insert usa `external_company_id` |
+| `src/modules/tickets/hooks/useTicketQueries.ts` | ✅ Filtro `external_company_id` |
+| `src/modules/tickets/hooks/usePartnerServices.ts` | ✅ RPCs com novos parâmetros |
+| `src/modules/tickets/hooks/usePartnerCompanyContacts.ts` | ✅ Filtro atualizado |
+| `src/modules/tickets/hooks/usePartners.ts` | ✅ Campos atualizados |
+| `src/modules/tickets/pages/TicketsListPage.tsx` | ✅ Filtros |
+| `src/modules/tickets/pages/CreateTicketPage.tsx` | ✅ Schema Zod + submit |
+| `src/modules/tickets/pages/PartnerContactProfilePage.tsx` | ✅ Joins e queries |
+| `src/modules/tickets/components/filters/TicketResponsibleSelect.tsx` | ✅ Joins |
+| `src/modules/tickets/components/settings/PartnerContactHoverCard.tsx` | ✅ Tabelas corretas |
+| `src/hooks/useMentionableUsers.ts` | ✅ Novo param RPC |
+| `src/integrations/supabase/operationalTables.ts` | ✅ `external_companies` |
+| `src/modules/partners/types.ts` | ✅ Interfaces atualizadas |
+
+### 2.3 Documentação Canônica
 
 | Documento | Status |
 |-----------|--------|
-| Memory: `external-entities-unified-model` | ✅ Confirma migração concluída |
-| Tabelas Supabase | ✅ Schema verificado com queries |
-| DATA_MODEL_REGISTRY v2.51.0 | ✅ Alinhado |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | ✅ Atualizado v2.76.0 |
+| `docs/canonical/SCHEMA_QUICK_REFERENCE.md` | ✅ Atualizado |
+| `docs/canonical/DATA_MODEL_REGISTRY.md` | ✅ Atualizado |
+| `docs/canonical/DATA_MODEL_REGISTRY.json` | ✅ Atualizado |
 
 ---
 
-## 3. Escopo da Correção
+## 3. Referências Legadas Remanescentes
 
-### Categoria A: Tipos e Definições (Crítico)
-
-| Arquivo | Alterações |
-|---------|------------|
-| `src/modules/tickets/types.ts` | Renomear `partner_company_id` → `external_company_id` em interfaces (`Ticket`, `TicketFilters`, `CreateTicketData`, `TicketRoutingRule`, `PartnerServiceMapping`, `PartnerContact`) |
-| `src/modules/tickets/hooks/ticketFieldDefinitions.ts` | Atualizar campos de query e joins (`external_company:external_companies`) |
-
-### Categoria B: Hooks de Mutação/Query (Alta Prioridade)
-
-| Arquivo | Alterações |
-|---------|------------|
-| `src/modules/tickets/hooks/useTicketMutations.ts` | Insert usa `external_company_id` |
-| `src/modules/tickets/hooks/useTicketQueries.ts` | Filtro usa `external_company_id` |
-| `src/modules/tickets/hooks/useRoutingRules.ts` | Select/Insert/Update com `external_company_id` |
-| `src/modules/tickets/hooks/usePartnerServices.ts` | Tipos e queries com `external_company_id`, `external_company_name` |
-| `src/modules/tickets/hooks/useContactCapabilities.ts` | Campos e queries |
-| `src/modules/tickets/hooks/usePartners.ts` | Campos de partner_contacts |
-| `src/modules/tickets/hooks/usePartnerCompanyContacts.ts` | Filtro de company |
-| `src/modules/tickets/hooks/ticketQueryUtils.ts` | Normalização de relações |
-
-### Categoria C: Componentes de UI
-
-| Arquivo | Alterações |
-|---------|------------|
-| `src/modules/tickets/pages/TicketsListPage.tsx` | Filtro `partnerId` → usa `external_company_id` |
-| `src/modules/tickets/pages/TicketDetailPage.tsx` | Props e dados |
-| `src/modules/tickets/components/settings/PartnerServicesTab.tsx` | Props |
-| Dialogs de criação/edição | Forms e dados |
+| Local | Descrição | Impacto |
+|-------|-----------|---------|
+| `src/integrations/supabase/types.ts` | FK names antigos (ex: `tickets_partner_company_id_fkey`) | ❌ Nenhum (read-only, gerado) |
+| Índices no banco | Nomes antigos (ex: `idx_partner_companies_document_unique`) | ❌ Nenhum (funcionalidade ok) |
 
 ---
 
-## 4. Padrão de Renomeação
+## 4. Validação
 
-```typescript
-// ANTES (incorreto - causa erro)
-partner_company_id: data.partner_company_id || null,
-partner_company:partner_companies(id, name),
-
-// DEPOIS (correto)
-external_company_id: data.external_company_id || null,
-external_company:external_companies(id, name),
-```
-
-### Mapeamento completo:
-
-| Código Antigo | Código Novo |
-|---------------|-------------|
-| `partner_company_id` (campo) | `external_company_id` |
-| `partner_company:partner_companies(...)` (join) | `external_company:external_companies(...)` |
-| `partner_company_name` (view) | `external_company_name` |
-
-**Importante:** As tabelas `partner_contacts` e `partner_companies` ainda existem como entidades, mas **a FK em tickets e tabelas relacionadas** agora aponta para `external_companies`.
+| Cenário | Resultado |
+|---------|-----------|
+| Build do projeto | ✅ Sem erros |
+| Criar ticket externo | ✅ Funciona |
+| Listar tickets com filtro de empresa | ✅ Funciona |
+| Perfil de contato parceiro | ✅ Funciona |
+| HoverCard de contato | ✅ Funciona |
+| Filtro de responsável (interno/externo) | ✅ Funciona |
 
 ---
 
-## 5. Ordem de Execução
+## 5. Mapeamento Final
 
-1. **Tipos** (`types.ts`) — Base para TypeScript
-2. **Field Definitions** (`ticketFieldDefinitions.ts`) — Queries centralizadas
-3. **Mutations** (`useTicketMutations.ts`) — **Resolve o erro de criação**
-4. **Queries** (`useTicketQueries.ts`, `useRoutingRules.ts`, `usePartnerServices.ts`)
-5. **Hooks auxiliares** (`usePartners.ts`, `useContactCapabilities.ts`, `usePartnerCompanyContacts.ts`)
-6. **Utils** (`ticketQueryUtils.ts`)
-7. **Pages** (`TicketsListPage.tsx`, `TicketDetailPage.tsx`)
-8. **Componentes** (dialogs, tabs, forms)
-
----
-
-## 6. Arquivos Afetados (25 arquivos)
-
-Baseado na busca, os principais arquivos com `partner_company_id`:
-
-- `src/modules/tickets/types.ts`
-- `src/modules/tickets/hooks/ticketFieldDefinitions.ts`
-- `src/modules/tickets/hooks/useTicketMutations.ts`
-- `src/modules/tickets/hooks/useTicketQueries.ts`
-- `src/modules/tickets/hooks/useRoutingRules.ts`
-- `src/modules/tickets/hooks/usePartnerServices.ts`
-- `src/modules/tickets/hooks/usePartners.ts`
-- `src/modules/tickets/hooks/useContactCapabilities.ts`
-- `src/modules/tickets/hooks/usePartnerCompanyContacts.ts`
-- `src/modules/tickets/hooks/ticketQueryUtils.ts`
-- `src/modules/tickets/pages/TicketsListPage.tsx`
-- `src/modules/tickets/pages/TicketDetailPage.tsx`
-- `src/modules/tickets/components/settings/*.tsx` (vários)
-- `src/modules/tickets/components/filters/*.tsx`
-
----
-
-## 7. Validação Pós-Implementação
-
-| Cenário | Esperado |
-|---------|----------|
-| Criar ticket externo | ✅ Sem erro de coluna |
-| Listar tickets | ✅ Empresa externa exibida |
-| Filtrar por empresa | ✅ Funciona |
-| Editar routing rules | ✅ Funciona |
-| Partner services tab | ✅ Lista corretamente |
-| Contact capabilities | ✅ Funciona |
-
----
-
-## 8. Impacto
-
-| Aspecto | Valor |
-|---------|-------|
-| Arquivos modificados | ~25 |
-| Linhas alteradas | ~300-400 |
-| Risco de regressão | Baixo (renomeação consistente) |
-| Urgência | **CRÍTICA** (bloqueando criação de tickets) |
+| Legado | Novo |
+|--------|------|
+| `partner_companies` (tabela) | `external_companies` |
+| `partner_company_bu_associations` | `external_company_bu_associations` |
+| `partner_company_id` (coluna) | `external_company_id` |
+| `p_partner_company_id` (param RPC) | `p_external_company_id` |
+| Join `partner_companies(...)` | Join `external_companies(...)` |

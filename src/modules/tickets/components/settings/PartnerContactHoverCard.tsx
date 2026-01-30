@@ -37,35 +37,39 @@ export function PartnerContactHoverCard({
     queryFn: async (): Promise<PartnerContactData | null> => {
       if (!contactId) return null;
 
-      // Fetch contact with company - use explicit typing to avoid TS issues
+      // Fetch contact with company
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: contactData, error } = await (supabase as any)
-        .from("ticket_partner_contacts")
+        .from("partner_contacts")
         .select(`
           id,
           name,
           email,
           phone,
           status,
-          ticket_partner_companies(name)
+          external_company:external_companies(name)
         `)
         .eq("id", contactId)
+        .is("deleted_at", null)
         .maybeSingle();
 
       if (error || !contactData) return null;
 
-      // Fetch capabilities
+      // Fetch capabilities (category/subcategory names)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: capabilitiesData } = await (supabase as any)
-        .from("ticket_contact_capability_assignments")
+        .from("partner_contact_capabilities")
         .select(`
-          ticket_contact_capabilities(name)
+          ticket_categories(name),
+          ticket_subcategories(name)
         `)
-        .eq("contact_id", contactId);
+        .eq("contact_id", contactId)
+        .eq("is_active", true)
+        .is("deleted_at", null);
 
       const capabilities = (capabilitiesData || [])
-        .map((c: { ticket_contact_capabilities: { name: string } | null }) => 
-          c.ticket_contact_capabilities?.name
+        .map((c: { ticket_categories: { name: string } | null; ticket_subcategories: { name: string } | null }) => 
+          c.ticket_subcategories?.name || c.ticket_categories?.name
         )
         .filter(Boolean) as string[];
 
@@ -75,7 +79,7 @@ export function PartnerContactHoverCard({
         email: contactData.email,
         phone: contactData.phone,
         status: contactData.status,
-        company_name: contactData.ticket_partner_companies?.name || null,
+        company_name: contactData.external_company?.name || null,
         capabilities,
       };
     },

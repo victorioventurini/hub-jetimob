@@ -85,12 +85,12 @@
 | Tipo de Usuário | Critério | Tabela de Validação |
 |-----------------|----------|---------------------|
 | **Contato Parceiro** | Email cadastrado em `partner_contacts` com status `active` **E** com associação ativa em `partner_contact_bu_associations` | `partner_contacts` + `partner_contact_bu_associations` |
-| **Empresa Parceira** | Domínio do email em `partner_companies.allowed_domains` (via `partner_company_bu_associations`) | `partner_company_bu_associations` → `partner_companies` |
+| **Empresa Parceira** | Domínio do email em `external_companies.allowed_domains` (via `external_company_bu_associations`) | `external_company_bu_associations` → `external_companies` |
 | **Usuário Interno** | Domínio em `bu_units.allowed_email_domains` **E** email em `profiles.work_email` | `bu_units` + `profiles` |
 
 ⚠️ **IMPORTANTE:** Usuários internos sem perfil pré-cadastrado NÃO recebem Magic Link, mesmo com domínio válido.
 
-> **Nota (v2.45.0):** Empresas parceiras agora são globais (únicas por CPF/CNPJ). A validação de domínio para login verifica associações ativas em `partner_company_bu_associations`.
+> **Nota (v2.45.0):** Empresas parceiras agora são globais (únicas por CPF/CNPJ). A validação de domínio para login verifica associações ativas em `external_company_bu_associations`.
 
 > **Nota (v2.46.0):** Contatos de parceiros agora são globais (únicos por email). A validação de login verifica associações ativas em `partner_contact_bu_associations`. Um mesmo contato pode estar ativo em múltiplas BUs.
 
@@ -1193,10 +1193,10 @@ Links personalizados por usuário/módulo com suporte a favoritos.
 
 ---
 
-### 2.8 Módulo Partners (Empresas Parceiras)
+### 2.8 Módulo Partners (Empresas Externas)
 
-#### **partner_companies** — Empresas Parceiras (Global)
-Empresas externas que podem acessar o Hub via contatos.
+#### **external_companies** — Empresas Externas (Global)
+Empresas externas que podem acessar o Hub via contatos. Substitui `partner_companies`.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -1214,25 +1214,25 @@ Empresas externas que podem acessar o Hub via contatos.
 
 **Escopo:** Global (empresa é única por CPF/CNPJ no sistema)
 
-**Mudança v2.45.0:**
-- Campo `bu_id` tornado nullable para suporte multi-BU
-- Índice único em `document` para evitar duplicatas globais
-- Associações por BU via tabela `partner_company_bu_associations`
-- Novos campos: `person_type`, `document`, `document_type`
+**Mudança v2.76.0:**
+- Tabela renomeada de `partner_companies` para `external_companies`
+- Coluna `partner_company_id` renomeada para `external_company_id` em todas as tabelas relacionadas
+- Views e RPCs atualizadas para usar nova nomenclatura
 
 **Função SQL:**
 - `find_partner_by_document(p_document text)` — Busca empresa por CPF/CNPJ normalizado
 
 ---
 
-#### **partner_company_bu_associations** — Associações de Empresas por BU
-Vínculo entre empresas parceiras globais e BUs específicas.
+#### **external_company_bu_associations** — Associações de Empresas por BU
+Vínculo entre empresas externas globais e BUs específicas. Substitui `partner_company_bu_associations`.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | uuid | PK |
-| partner_company_id | uuid | FK para partner_companies |
+| external_company_id | uuid | FK para external_companies |
 | bu_id | uuid | FK para bu_units |
+| role | text | Papel da empresa: `partner`, `supplier`, `customer` |
 | is_active | bool | Se associação está ativa na BU |
 | notes | text | Observações da BU |
 | created_by | uuid | FK para profiles (quem criou) |
@@ -1246,18 +1246,18 @@ Vínculo entre empresas parceiras globais e BUs específicas.
 - Uma empresa pode estar associada a múltiplas BUs
 - Cada BU pode ativar/desativar a empresa independentemente
 - RLS baseada em `is_current_bu(bu_id)` para isolamento
-- Índice único: `(partner_company_id, bu_id)` onde `deleted_at IS NULL`
+- Índice único: `(external_company_id, bu_id)` onde `deleted_at IS NULL`
 
 ---
 
 #### **partner_contacts** — Contatos de Parceiros (Global)
-Pessoas de contato vinculadas a empresas parceiras. **Globais por email** (v2.46.0).
+Pessoas de contato vinculadas a empresas externas. **Globais por email** (v2.46.0).
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | uuid | PK |
 | bu_id | uuid | FK para bu_units (DEPRECATED, usar associações) |
-| partner_company_id | uuid | FK para partner_companies |
+| external_company_id | uuid | FK para external_companies |
 | profile_user_id | uuid | FK para profiles (se usuário existir) |
 | name | text | Nome do contato |
 | email | text | Email do contato **(UNIQUE global)** |
@@ -1267,6 +1267,10 @@ Pessoas de contato vinculadas a empresas parceiras. **Globais por email** (v2.46
 | deleted_at | timestamp | Soft delete |
 
 **Escopo:** Global (único por email)
+
+**Mudança v2.76.0:**
+- Coluna `partner_company_id` renomeada para `external_company_id`
+- FK agora aponta para `external_companies`
 
 **Regras (v2.46.0):**
 - Email é único globalmente: `UNIQUE (lower(email)) WHERE deleted_at IS NULL`
@@ -1304,18 +1308,23 @@ Tabela de vínculo N:N entre contatos de parceiros e Business Units.
 ---
 
 #### **partner_service_mappings** — Mapeamento de Serviços
-Vínculo entre empresas parceiras e categorias de tickets que atendem.
+Vínculo entre empresas externas e categorias de tickets que atendem.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | uuid | PK |
 | bu_id | uuid | FK para bu_units |
-| partner_company_id | uuid | FK para partner_companies |
+| external_company_id | uuid | FK para external_companies |
 | category_id | uuid | FK para ticket_categories |
-| is_active | bool | Se mapeamento está ativo |
+| subcategory_id | uuid | FK para ticket_subcategories (nullable) |
+| is_generalist | bool | Se atende todas as subcategorias da categoria |
+| status | enum | `active`, `inactive` |
 | deleted_at | timestamp | Soft delete |
 
 **Escopo:** Por BU
+
+**Mudança v2.76.0:**
+- Coluna `partner_company_id` renomeada para `external_company_id`
 
 **Regras:**
 - Usado para auto-routing de tickets por categoria
