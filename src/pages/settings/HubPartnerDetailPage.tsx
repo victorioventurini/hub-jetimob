@@ -121,7 +121,7 @@ export default function HubPartnerDetailPage() {
       deactivateMutation.mutate({ partnerId, buId });
     } else {
       activateMutation.mutate({
-        partner_company_id: partnerId,
+        external_company_id: partnerId,
         bu_id: buId,
         is_active: true,
       });

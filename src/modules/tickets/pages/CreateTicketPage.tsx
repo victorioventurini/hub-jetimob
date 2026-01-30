@@ -379,7 +379,7 @@ export default function CreateTicketPage() {
         title: data.title,
         category_id: data.category_id || null,
         subcategory_id: data.subcategory_id || null,
-        partner_company_id: data.type === "external" ? data.partner_company_id || null : null,
+        external_company_id: data.type === "external" ? data.partner_company_id || null : null,
         // External contact assignment
         assigned_contact_id: data.type === "external" ? selectedExternalContactId || null : null,
         assignment_source: data.type === "external" && selectedExternalContactId 

@@ -18,7 +18,7 @@ export function useRoutingRules() {
 
       const { data, error } = await supabase
         .from("ticket_routing_rules")
-        .select("id, bu_id, partner_company_id, subcategory_id, assignee_contact_ids, watcher_contact_ids, notes, created_at, created_by, updated_at, deleted_at")
+        .select("id, bu_id, external_company_id, subcategory_id, assignee_contact_ids, watcher_contact_ids, notes, created_at, created_by, updated_at, deleted_at")
         .eq("bu_id", buId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
@@ -37,7 +37,7 @@ export function useCreateRoutingRule() {
 
   return useMutation({
     mutationFn: async (data: {
-      partner_company_id: string;
+      external_company_id: string;
       subcategory_id: string;
       assignee_contact_ids?: string[];
       watcher_contact_ids?: string[];
@@ -53,7 +53,7 @@ export function useCreateRoutingRule() {
         .from("ticket_routing_rules")
         .insert({
           bu_id: currentBu.id,
-          partner_company_id: data.partner_company_id,
+          external_company_id: data.external_company_id,
           subcategory_id: data.subcategory_id,
           assignee_contact_ids: data.assignee_contact_ids || [],
           watcher_contact_ids: data.watcher_contact_ids || [],
@@ -87,7 +87,7 @@ export function useUpdateRoutingRule() {
       ...data
     }: {
       id: string;
-      partner_company_id?: string;
+      external_company_id?: string;
       subcategory_id?: string;
       assignee_contact_ids?: string[];
       watcher_contact_ids?: string[];
@@ -96,8 +96,8 @@ export function useUpdateRoutingRule() {
       // Sanitize UUID fields: convert empty strings to null
       const sanitizedData = {
         ...data,
-        ...(data.partner_company_id !== undefined && {
-          partner_company_id: data.partner_company_id || null,
+        ...(data.external_company_id !== undefined && {
+          external_company_id: data.external_company_id || null,
         }),
         ...(data.subcategory_id !== undefined && {
           subcategory_id: data.subcategory_id || null,

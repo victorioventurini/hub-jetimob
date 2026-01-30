@@ -374,10 +374,10 @@ export default function TicketDetailPage() {
               <TicketMessageComposer
                 onSend={handleSendMessage}
                 isSubmitting={createMessage.isPending}
-                partnerCompanyId={ticket.type === "external" ? ticket.partner_company_id : null}
+                partnerCompanyId={ticket.type === "external" ? ticket.external_company_id : null}
                 placeholder="Digite sua mensagem... Use @ para mencionar"
                 buName={currentBu?.name}
-                partnerCompanyName={ticket.type === "external" ? (ticket as any).partner_company?.name : undefined}
+                partnerCompanyName={ticket.type === "external" ? ticket.external_company?.name : undefined}
                 replyingTo={replyingTo}
                 onCancelReply={() => setReplyingTo(null)}
               />
@@ -409,7 +409,7 @@ export default function TicketDetailPage() {
           open={transferModalOpen}
           onOpenChange={setTransferModalOpen}
           ticketType={ticket.type}
-          partnerCompanyId={ticket.partner_company_id}
+          partnerCompanyId={ticket.external_company_id}
           currentResponsibleId={
             ticket.type === "external"
               ? ticket.assigned_contact?.id
