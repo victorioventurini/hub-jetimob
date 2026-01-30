@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNotificationTemplates, NotificationTemplate } from '@/hooks/useNotificationTemplates';
+import { useNotificationTemplates, type NotificationTemplate } from '@/hooks/notifications';
 import { useBu } from '@/contexts/BuContext';
 import { useUrlState } from '@/shared/url/useUrlState';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

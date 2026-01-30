@@ -13,7 +13,7 @@ import {
   groupSettingsByModule,
   moduleNames,
   useNotificationChannels,
-} from '@/hooks/useNotificationCenter';
+} from '@/hooks/notifications';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

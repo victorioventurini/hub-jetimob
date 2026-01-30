@@ -6,12 +6,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { 
-  NotificationTemplate, 
+  type NotificationTemplate, 
   useNotificationTemplateVariables,
   useSaveTemplateVersion,
   extractTemplateVariables,
   validateTemplateVariables,
-} from '@/hooks/useNotificationTemplates';
+} from '@/hooks/notifications';
 import {
   Sheet,
   SheetContent,

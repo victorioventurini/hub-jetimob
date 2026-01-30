@@ -47,7 +47,7 @@ import {
 } from "../../hooks";
 import { TicketCategory, TicketInternalRoutingRule, TicketSubcategory } from "../../types";
 import { useTeams, useSquads } from "@/modules/teams/hooks";
-import { useBuProfiles } from "@/hooks/useNotificationAdmin";
+import { useBuProfiles } from "@/hooks/notifications";
 import { useBu } from "@/contexts/BuContext";
 
 // ============================================================
