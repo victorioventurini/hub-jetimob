@@ -133,6 +133,7 @@ function createBuAwareFetch() {
     // (or future token formats) may not include it. What we need is a non-expired user JWT.
     const storedToken = readAccessTokenFromStorage();
     let usedStoredToken = false;
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
 
     if (storedToken) {
       const payload = decodeJwtPayload(storedToken);
@@ -147,19 +148,26 @@ function createBuAwareFetch() {
         usedStoredToken = true;
       }
 
-      if (import.meta.env.DEV || import.meta.env.MODE === "development") {
-        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : "[RequestInfo]";
-        // eslint-disable-next-line no-console
-        console.debug("[BuScopedClient] Auth header decision", {
-          url,
-          buId,
-          hasStoredToken: true,
-          hasSub,
-          storedRole,
-          expired,
-          usedStoredToken,
-        });
-      }
+      // DEBUG LOG - temporarily enabled for RLS debugging in production
+      // TODO: Remove or gate behind DEV once RLS issue is resolved
+      // eslint-disable-next-line no-console
+      console.error("[BuScopedClient] 🔐 Auth header decision:", JSON.stringify({
+        url: url.substring(0, 100),
+        buId,
+        hasStoredToken: true,
+        hasSub,
+        storedRole,
+        expired,
+        usedStoredToken,
+      }));
+    } else {
+      // No token in localStorage - this is a critical issue for RLS!
+      // eslint-disable-next-line no-console
+      console.error("[BuScopedClient] ⚠️ NO TOKEN IN LOCALSTORAGE - RLS will likely fail:", JSON.stringify({
+        url: url.substring(0, 100),
+        buId,
+        hasStoredToken: false,
+      }));
     }
 
     return fetch(input, { ...init, headers });
