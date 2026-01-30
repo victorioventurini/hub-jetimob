@@ -52,15 +52,15 @@ export function useResolveParticipant(
 
       const row = data[0];
       return {
-        userType: row.user_type as ParticipantType,
-        participantId: row.participant_id,
-        authUserId: row.auth_user_id,
+        userType: row.participant_type as ParticipantType,
+        participantId: row.id,
+        authUserId: row.user_id,
         displayName: row.display_name,
         email: row.email,
         photoUrl: row.photo_url,
         buId: buId,
-        companyId: row.company_id,
-        companyName: row.company_name,
+        companyId: row.external_company_id,
+        companyName: row.external_company_name,
         teamName: row.team_name,
         jobTitle: row.job_title,
       };
