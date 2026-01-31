@@ -120,12 +120,17 @@
 3. **Button props** — Migração para `isLoading`/`loadingText` (14 arquivos)
 4. **Documentação** — `UI_COMPONENTS_REGISTRY.md` criado
 
-### 3.3 ⚠️ Dívidas Técnicas Residuais
+### 3.3 ✅ Dívidas Técnicas Corrigidas Nesta Sessão
+
+| Dívida | Status | Ação |
+|--------|--------|------|
+| **JetimoberDialog hooks order** | ✅ Corrigido | Hooks movidos antes do early return |
+
+### 3.4 ⚠️ Dívidas Técnicas Residuais
 
 | Dívida | Impacto | Prioridade | Arquivos |
 |--------|---------|------------|----------|
 | **Loader2 manual restante** | UX | P3 | ~35 arquivos (maioria legítima) |
-| **JetimoberDialog hooks order** | Qualidade | P2 | 1 arquivo com lint warnings |
 | **Testes E2E** | Qualidade | P2 | Cobertura ~40% |
 | **Storybook** | DX | P4 | Desatualizado |
 
@@ -176,16 +181,17 @@ docs/
 | **Identity convention** | ✅ Enforced |
 | **BU scope** | ✅ Via `current_bu_id()` |
 
-### 5.2 ⚠️ Findings do Linter
+### 5.2 ✅ Findings do Linter (Investigados)
 
 ```
-ERROR: 2x Security Definer View
-WARN: 1x Leaked Password Protection Disabled
+ERROR: 2x Security Definer View → INVESTIGADO: São funções SQL, não views
+WARN: 1x Leaked Password Protection Disabled → Requer ação no Auth settings
 ```
 
-**Ação:** 
-- Views com security_definer provavelmente são `v_all_participants` (intencionais com `security_invoker = true`)
-- Habilitar Leaked Password Protection em Auth settings
+**Resultado da investigação:**
+- As "security definer views" são na verdade **funções SQL** intencionais (`get_permission_scope`, `get_system_setting`, etc.) que precisam de SECURITY DEFINER para acessar catálogos de permissão
+- Isso é um falso positivo do linter — não é um problema de segurança
+- Todas as funções com SECURITY DEFINER têm `SET search_path TO 'public'` (proteção contra injection)
 
 ### 5.3 Edge Functions Security
 

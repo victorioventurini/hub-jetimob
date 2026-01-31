@@ -109,10 +109,12 @@ O frontend do Hub foi otimizado com migração de padrões legados para componen
 
 ## 📌 PRÓXIMOS PASSOS (Opcional)
 
-1. **Migração completa de Loader2** — Os ~49 arquivos restantes usam Loader2 em contextos legítimos (spinners em cards, divs de loading, etc.) não em Buttons.
+1. **Migração completa de Loader2** — Os ~35 arquivos restantes usam Loader2 em contextos legítimos (spinners em cards, divs de loading, etc.) não em Buttons.
 
-2. **Linting de hooks em JetimoberDialog** — Hooks após early return precisam ser refatorados (não causado por estas alterações).
+2. **Testes E2E** — Expandir cobertura de ~40% para ~80%.
+
+3. **Rate limiting** — Implementar em Edge Functions.
 
 ---
 
-*Auditoria concluída em 2026-01-31.*
+*Auditoria concluída em 2026-01-31. Próxima revisão: 2026-02-07*
