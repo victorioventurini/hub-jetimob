@@ -205,13 +205,11 @@ export function EmailVerificationStep({
                 <Button
                   type="submit"
                   variant="secondary"
-                  disabled={isChecking || !watchedEmail || !watchedCompanyId}
+                  disabled={!watchedEmail || !watchedCompanyId}
+                  isLoading={isChecking}
+                  size="icon"
                 >
-                  {isChecking ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
+                  {!isChecking && <Search className="h-4 w-4" />}
                 </Button>
               </div>
               <FormDescription>

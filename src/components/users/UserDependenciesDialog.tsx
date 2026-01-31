@@ -323,9 +323,10 @@ export function UserDependenciesDialog({
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={isLoading || (deps.hasMandatoryDependencies && !allMandatoryAssigned) || isTransferring}
+            disabled={isLoading || (deps.hasMandatoryDependencies && !allMandatoryAssigned)}
+            isLoading={isTransferring}
+            loadingText={deps.hasMandatoryDependencies ? "Transferindo..." : "Excluindo..."}
           >
-            {isTransferring && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {deps.hasMandatoryDependencies ? "Transferir e Excluir" : "Excluir"}
           </Button>
         </DialogFooter>

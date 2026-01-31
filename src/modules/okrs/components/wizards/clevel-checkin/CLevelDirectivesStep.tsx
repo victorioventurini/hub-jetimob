@@ -78,13 +78,10 @@ export function CLevelDirectivesStep({
             onClick={onComplete}
             className="flex-1 bg-success text-success-foreground hover:bg-success/90"
             size="lg"
-            disabled={isSubmitting}
+            isLoading={isSubmitting}
+            loadingText="Concluindo..."
           >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-            )}
+            <CheckCircle2 className="h-4 w-4 mr-2" />
             Concluir Check-in
           </Button>
         </div>

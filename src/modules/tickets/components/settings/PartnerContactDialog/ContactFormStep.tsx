@@ -261,15 +261,13 @@ export function ContactFormStep({
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <Button type="submit" disabled={isPending || !!domainError}>
-            {isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Criando...
-              </>
-            ) : (
-              "Criar contato"
-            )}
+          <Button 
+            type="submit" 
+            disabled={!!domainError}
+            isLoading={isPending} 
+            loadingText="Criando..."
+          >
+            Criar contato
           </Button>
         </div>
       </form>
