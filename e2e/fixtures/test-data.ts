@@ -42,11 +42,40 @@ export const TEST_KR = {
 };
 
 export const ROUTES = {
+  // Auth
   auth: '/auth',
   home: '/',
+  
+  // OKRs
   okrs: '/okrs',
   okrsDashboard: '/okrs/dashboard',
   teamCheckin: '/okrs/team-checkin',
   leaderPrep: '/okrs/leader-prep',
   managersCheckin: '/okrs/managers-checkin',
+  constructionReview: '/okrs/construction-review',
+  
+  // Assets
+  assets: '/assets',
+  inventory: '/assets/inventory',
+  keys: '/assets/keys',
+  gifts: '/assets/gifts',
+  
+  // Tickets
+  tickets: '/tickets',
+  
+  // KPIs
+  kpis: '/kpis',
+  
+  // Settings
+  users: '/settings/users',
+  permissions: '/settings/permissions',
+  teams: '/settings/teams',
+  organogram: '/settings/organogram',
+  areas: '/settings/areas',
+  
+  // Integrations
+  integrations: '/settings/integrations',
+  aiAgents: '/settings/integrations/ai-agents',
+  cron: '/settings/integrations/cron',
+  notifications: '/settings/integrations/notifications',
 } as const;
