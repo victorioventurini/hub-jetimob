@@ -9,7 +9,7 @@
  */
 
 import { useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ChevronLeft, ShieldX, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -152,9 +152,11 @@ export default function OkrQualityPage() {
           <p className="text-muted-foreground mb-6 max-w-md">
             Esta página é exclusiva para líderes de time e administradores. Você precisa ser líder de pelo menos um time ou ter permissões administrativas para acessar a análise de qualidade das OKRs.
           </p>
-          <Button onClick={() => navigate('/okrs')}>
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Voltar para OKRs
+          <Button asChild>
+            <Link to="/okrs">
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Voltar para OKRs
+            </Link>
           </Button>
         </div>
       </div>
@@ -177,9 +179,11 @@ export default function OkrQualityPage() {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate('/okrs')}
+            asChild
           >
-            <ChevronLeft className="w-5 h-5" />
+            <Link to="/okrs">
+              <ChevronLeft className="w-5 h-5" />
+            </Link>
           </Button>
           <div>
             <h1 className="text-xl font-semibold flex items-center gap-2">

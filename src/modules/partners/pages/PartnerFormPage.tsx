@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -203,17 +203,19 @@ export default function PartnerFormPage() {
                         <Button
                           type="button"
                           onClick={handleActivateExisting}
-                          disabled={activateInBu.isPending}
+                          isLoading={activateInBu.isPending}
+                          loadingText={`Ativando...`}
                         >
-                          {activateInBu.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                           Ativar na {currentBu?.name || "BU"}
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => navigate(`/partners/${existingPartner.id}`)}
+                          asChild
                         >
-                          Ver detalhes
+                          <Link to={`/partners/${existingPartner.id}`}>
+                            Ver detalhes
+                          </Link>
                         </Button>
                       </div>
                     </AlertDescription>
@@ -332,12 +334,11 @@ export default function PartnerFormPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/partners")}
+                  asChild
                 >
-                  Cancelar
+                  <Link to="/partners">Cancelar</Link>
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <Button type="submit" isLoading={isSubmitting} loadingText="Cadastrando...">
                   Cadastrar Parceiro
                 </Button>
               </div>

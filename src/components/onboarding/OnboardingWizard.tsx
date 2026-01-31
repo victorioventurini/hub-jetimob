@@ -558,10 +558,11 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
             </Button>
             <Button
               onClick={handleNext}
-              disabled={completeMutation.isPending || isUploading}
+              disabled={isUploading}
+              isLoading={completeMutation.isPending}
+              loadingText={currentStep === STEPS.length - 1 ? "Finalizando..." : "Carregando..."}
               className="gap-2"
             >
-              {completeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {currentStep === STEPS.length - 1 ? "Finalizar" : "Próximo"}
               {currentStep < STEPS.length - 1 && <ChevronRight className="w-4 h-4" />}
             </Button>

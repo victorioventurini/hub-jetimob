@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/globalClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { queryKeys } from "@/lib/queryKeys";
-import { Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface OnboardingGuardProps {
   children: React.ReactNode;
@@ -46,14 +46,7 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
 
   // Still loading auth, profile, or external status
   if (authLoading || profileLoading || externalLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState fullPage text="Carregando..." />;
   }
 
   // User not logged in - let the auth flow handle it

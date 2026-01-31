@@ -820,8 +820,7 @@ export default function CreateTicketPage() {
             <Button type="button" variant="outline" onClick={goBack}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createTicket.isPending || isUploading}>
-              {(createTicket.isPending || isUploading) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Button type="submit" isLoading={createTicket.isPending || isUploading} loadingText="Criando...">
               Criar Ticket
             </Button>
           </div>
