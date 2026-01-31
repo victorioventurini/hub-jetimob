@@ -1,9 +1,9 @@
 # Systemic Health Plan — Hub da Jet
 
-**Versão:** 2.0  
+**Versão:** 2.1  
 **Data:** 2026-01-31  
-**Base TCR:** v2.74.0  
-**Status:** ✅ ANÁLISE COMPLETA | Score: 9.2/10
+**Base TCR:** v2.75.0  
+**Status:** ✅ OTIMIZAÇÃO COMPLETA | Score: 9.6/10
 
 **Relatório completo:** `docs/audits/SYSTEMIC_HEALTH_ANALYSIS_2026-01-31.md`
 

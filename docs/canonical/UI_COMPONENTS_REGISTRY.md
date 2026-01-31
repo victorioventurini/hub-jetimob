@@ -1,9 +1,9 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Última atualização:** 2026-01-31  
 **Status:** Normativo  
-**Referência:** TCR v2.74.0 / DEVELOPMENT_STANDARDS v1.17.0
+**Referência:** TCR v2.75.0 / DEVELOPMENT_STANDARDS v1.17.0
 
 ---
 

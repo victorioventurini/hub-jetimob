@@ -149,8 +149,8 @@ export function AddKpiValueDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : "Registrar"}
+              <Button type="submit" isLoading={isSubmitting} loadingText="Salvando...">
+                Registrar
               </Button>
             </DialogFooter>
           </form>
