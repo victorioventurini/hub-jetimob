@@ -209,7 +209,7 @@ export type Database = {
           model_used: string | null
           output_tokens: number | null
           scope: Database["public"]["Enums"]["agent_scope"]
-          status: string
+          status: Database["public"]["Enums"]["ai_agent_log_status"]
           total_tokens: number | null
           user_id: string | null
         }
@@ -227,7 +227,7 @@ export type Database = {
           model_used?: string | null
           output_tokens?: number | null
           scope: Database["public"]["Enums"]["agent_scope"]
-          status: string
+          status: Database["public"]["Enums"]["ai_agent_log_status"]
           total_tokens?: number | null
           user_id?: string | null
         }
@@ -245,7 +245,7 @@ export type Database = {
           model_used?: string | null
           output_tokens?: number | null
           scope?: Database["public"]["Enums"]["agent_scope"]
-          status?: string
+          status?: Database["public"]["Enums"]["ai_agent_log_status"]
           total_tokens?: number | null
           user_id?: string | null
         }
@@ -423,7 +423,7 @@ export type Database = {
           id: string
           leader_user_id: string | null
           name: string
-          status: string
+          status: Database["public"]["Enums"]["team_status"]
           updated_at: string
         }
         Insert: {
@@ -437,7 +437,7 @@ export type Database = {
           id?: string
           leader_user_id?: string | null
           name: string
-          status?: string
+          status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
         }
         Update: {
@@ -451,7 +451,7 @@ export type Database = {
           id?: string
           leader_user_id?: string | null
           name?: string
-          status?: string
+          status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
         }
         Relationships: [
@@ -3141,7 +3141,7 @@ export type Database = {
           id: string
           integration_key: string
           name: string
-          status: string
+          status: Database["public"]["Enums"]["catalog_status"]
           supports_agents: boolean
           supports_bu_override: boolean
           supports_global_config: boolean
@@ -3157,7 +3157,7 @@ export type Database = {
           id?: string
           integration_key: string
           name: string
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           supports_agents?: boolean
           supports_bu_override?: boolean
           supports_global_config?: boolean
@@ -3173,7 +3173,7 @@ export type Database = {
           id?: string
           integration_key?: string
           name?: string
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           supports_agents?: boolean
           supports_bu_override?: boolean
           supports_global_config?: boolean
@@ -3606,7 +3606,7 @@ export type Database = {
           name: string
           requires_configuration: boolean
           slug: string
-          status: string
+          status: Database["public"]["Enums"]["catalog_status"]
           updated_at: string
         }
         Insert: {
@@ -3619,7 +3619,7 @@ export type Database = {
           name: string
           requires_configuration?: boolean
           slug: string
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           updated_at?: string
         }
         Update: {
@@ -3632,7 +3632,7 @@ export type Database = {
           name?: string
           requires_configuration?: boolean
           slug?: string
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           updated_at?: string
         }
         Relationships: []
@@ -4141,6 +4141,7 @@ export type Database = {
           read_at: string | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -4158,6 +4159,7 @@ export type Database = {
           read_at?: string | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -4175,6 +4177,7 @@ export type Database = {
           read_at?: string | null
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -4263,6 +4266,7 @@ export type Database = {
           kr_id: string
           previous_value: number | null
           team_id: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -4277,6 +4281,7 @@ export type Database = {
           kr_id: string
           previous_value?: number | null
           team_id?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -4291,6 +4296,7 @@ export type Database = {
           kr_id?: string
           previous_value?: number | null
           team_id?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -6019,7 +6025,7 @@ export type Database = {
           migrated_at: string | null
           migrated_by: string | null
           notes: string | null
-          status: string
+          status: Database["public"]["Enums"]["permission_migration_status"]
           updated_at: string | null
           user_id: string
           v1_groups_snapshot: Json | null
@@ -6034,7 +6040,7 @@ export type Database = {
           migrated_at?: string | null
           migrated_by?: string | null
           notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["permission_migration_status"]
           updated_at?: string | null
           user_id: string
           v1_groups_snapshot?: Json | null
@@ -6049,7 +6055,7 @@ export type Database = {
           migrated_at?: string | null
           migrated_by?: string | null
           notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["permission_migration_status"]
           updated_at?: string | null
           user_id?: string
           v1_groups_snapshot?: Json | null
@@ -6759,7 +6765,7 @@ export type Database = {
           id: string
           name: string
           scope: Database["public"]["Enums"]["ticket_category_scope"]
-          status: string
+          status: Database["public"]["Enums"]["catalog_status"]
           updated_at: string
         }
         Insert: {
@@ -6771,7 +6777,7 @@ export type Database = {
           id?: string
           name: string
           scope?: Database["public"]["Enums"]["ticket_category_scope"]
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           updated_at?: string
         }
         Update: {
@@ -6783,7 +6789,7 @@ export type Database = {
           id?: string
           name?: string
           scope?: Database["public"]["Enums"]["ticket_category_scope"]
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           updated_at?: string
         }
         Relationships: [
@@ -7170,7 +7176,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           name: string
-          status: string
+          status: Database["public"]["Enums"]["catalog_status"]
           updated_at: string
         }
         Insert: {
@@ -7181,7 +7187,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           name: string
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           updated_at?: string
         }
         Update: {
@@ -7192,7 +7198,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           name?: string
-          status?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
           updated_at?: string
         }
         Relationships: [
@@ -9558,6 +9564,7 @@ export type Database = {
     Enums: {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
+      ai_agent_log_status: "pending" | "success" | "error" | "timeout"
       app_role: "super_admin" | "admin" | "collaborator" | "external"
       asset_group_item_role: "primary" | "accessory"
       asset_group_status: "active" | "inactive"
@@ -9595,7 +9602,7 @@ export type Database = {
         | "other"
         | "room"
       bu_status: "active" | "inactive"
-      catalog_status: "active" | "inactive"
+      catalog_status: "active" | "inactive" | "deprecated"
       cron_status: "started" | "success" | "failed" | "error" | "timeout"
       cycle_type: "year" | "quarter" | "month" | "sprint" | "custom"
       document_processing_status:
@@ -9669,6 +9676,7 @@ export type Database = {
       partner_contact_status: "active" | "inactive"
       partner_service_status: "active" | "inactive"
       permission_effect: "allow" | "deny"
+      permission_migration_status: "not_started" | "migrated" | "verified"
       permission_scope:
         | "self"
         | "self_or_owner"
@@ -9819,6 +9827,7 @@ export const Constants = {
     Enums: {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
+      ai_agent_log_status: ["pending", "success", "error", "timeout"],
       app_role: ["super_admin", "admin", "collaborator", "external"],
       asset_group_item_role: ["primary", "accessory"],
       asset_group_status: ["active", "inactive"],
@@ -9860,7 +9869,7 @@ export const Constants = {
         "room",
       ],
       bu_status: ["active", "inactive"],
-      catalog_status: ["active", "inactive"],
+      catalog_status: ["active", "inactive", "deprecated"],
       cron_status: ["started", "success", "failed", "error", "timeout"],
       cycle_type: ["year", "quarter", "month", "sprint", "custom"],
       document_processing_status: [
@@ -9939,6 +9948,7 @@ export const Constants = {
       partner_contact_status: ["active", "inactive"],
       partner_service_status: ["active", "inactive"],
       permission_effect: ["allow", "deny"],
+      permission_migration_status: ["not_started", "migrated", "verified"],
       permission_scope: [
         "self",
         "self_or_owner",

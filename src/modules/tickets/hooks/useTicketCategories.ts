@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import type { TicketCategory, TicketSubcategory, TicketCategoryScope } from "../types";
+import type { TicketCategory, TicketSubcategory, TicketCategoryScope, CatalogStatus } from "../types";
 
 // ===========================================
 // CATEGORIES
@@ -107,7 +107,7 @@ export function useUpdateTicketCategory() {
       name?: string;
       description?: string | null;
       scope?: TicketCategoryScope;
-      status?: string;
+      status?: CatalogStatus;
     }) => {
       const { data: category, error } = await supabase
         .from("ticket_categories")
@@ -265,7 +265,7 @@ export function useUpdateTicketSubcategory() {
     }: {
       id: string;
       name?: string;
-      status?: string;
+      status?: CatalogStatus;
     }) => {
       const { data: subcategory, error } = await supabase
         .from("ticket_subcategories")
