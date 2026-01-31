@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { useNavigate, Link, useLocation, type Location } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, LogOut, Settings, Lock, Building2 } from "lucide-react";
+import { ArrowRight, LogOut, Settings, Lock, Building2 } from "lucide-react";
 import { BuSymbol } from "@/modules/bu/components/BuSymbol";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/ui/loading-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -116,26 +117,12 @@ export default function SelectBu() {
   // Show loader while checking, or while auto-redirecting for single-BU users
   // The useEffect above handles the actual redirect
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState fullPage text="Carregando..." />;
   }
   
   // Single BU user - show loading while useEffect redirects
   if (userBus.length === 1) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Acessando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState fullPage text="Acessando..." />;
   }
 
   // Sort BUs: user's BUs first, then others

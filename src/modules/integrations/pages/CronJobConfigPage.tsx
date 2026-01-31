@@ -355,9 +355,10 @@ export default function CronJobConfigPage() {
 
           <Button 
             onClick={() => saveSecretMutation.mutate(cronSecret)}
-            disabled={!hasUnsavedChanges || saveSecretMutation.isPending || !cronSecret}
+            disabled={!hasUnsavedChanges || !cronSecret}
+            isLoading={saveSecretMutation.isPending}
+            loadingText="Salvando..."
           >
-            {saveSecretMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Salvar Secret
           </Button>
         </CardContent>

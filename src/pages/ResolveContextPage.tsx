@@ -6,7 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShieldX, ArrowLeft, AlertCircle } from "lucide-react";
+import { ShieldX, ArrowLeft, AlertCircle } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 
 type EntityType = 
   | "asset" 
@@ -299,14 +300,10 @@ export default function ResolveContextPage() {
   // Loading state
   if (status === "loading" || status === "switching") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">
-            {status === "switching" ? "Trocando de Business Unit..." : "Carregando..."}
-          </p>
-        </div>
-      </div>
+      <LoadingState 
+        fullPage 
+        text={status === "switching" ? "Trocando de Business Unit..." : "Carregando..."} 
+      />
     );
   }
 

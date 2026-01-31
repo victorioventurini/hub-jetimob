@@ -205,8 +205,7 @@ export function BuIaSettings() {
             </div>
           </div>
 
-          <Button onClick={handleSaveConfig} disabled={isUpdating}>
-            {isUpdating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          <Button onClick={handleSaveConfig} isLoading={isUpdating} loadingText="Salvando...">
             Salvar configurações
           </Button>
         </CardContent>

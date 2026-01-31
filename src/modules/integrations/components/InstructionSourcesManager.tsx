@@ -449,8 +449,7 @@ export function InstructionSourcesManager({ agentId }: InstructionSourcesManager
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleCreate} disabled={createSource.isPending}>
-                  {createSource.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Button onClick={handleCreate} isLoading={createSource.isPending} loadingText="Criando...">
                   Criar Fonte
                 </Button>
               </DialogFooter>

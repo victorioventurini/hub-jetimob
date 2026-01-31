@@ -10,7 +10,7 @@
  */
 
 import { useMemo, useCallback, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
@@ -326,12 +326,12 @@ export default function OkrCreationPage() {
           </div>
           
           <div className="pt-4">
-            <button
-              onClick={() => navigate('/okrs')}
+            <Link
+              to="/okrs"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Voltar para OKRs
-            </button>
+            </Link>
           </div>
         </div>
       </div>
