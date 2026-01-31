@@ -108,11 +108,8 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
   const canManageUsers = isWildcard || has('users.profile.manage:bu') || has('users.profile.create:bu');
   
-  // Don't render if user doesn't have permission (for create mode or edit mode)
-  if (!isLoadingPermissions && !canManageUsers) {
-    return null;
-  }
-  
+  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURN
+  // React hooks must always be called in the same order
   const [step, setStep] = useState<Step>("email");
   const [emailInput, setEmailInput] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -139,7 +136,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       if (error) throw error;
       return data;
     },
-    enabled: open && !!currentBu?.id,
+    enabled: open && !!currentBu?.id && canManageUsers,
   });
 
   // Reset form quando dialog abre
@@ -448,6 +445,11 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       .slice(0, 2);
 
   const isPending = createMutation.isPending || updateMutation.isPending || addToBuMutation.isPending;
+
+  // Don't render if user doesn't have permission (after all hooks are called)
+  if (!isLoadingPermissions && !canManageUsers) {
+    return null;
+  }
 
   // ===== STEP: EMAIL =====
   const renderEmailStep = () => (
