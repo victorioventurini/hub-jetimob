@@ -17,6 +17,7 @@ export { KpiDetailDialog } from './components/KpiDetailDialog';
 export { CreateKpiDialog } from './components/CreateKpiDialog';
 export { EditKpiDialog } from './components/EditKpiDialog';
 export { AddKpiValueDialog } from './components/AddKpiValueDialog';
+export { KpiActionsMenu } from './components/KpiActionsMenu';
 
 // Pages (lazy loaded)
 // KpiDashboardPage

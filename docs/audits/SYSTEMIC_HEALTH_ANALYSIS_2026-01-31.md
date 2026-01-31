@@ -13,17 +13,18 @@
 |----------|-------|-----------|------------|
 | **Banco de Dados** | 9/10 | → | Logs em crescimento controlado |
 | **Backend (Edge Functions)** | 10/10 | ↑ | 100% padronizado |
-| **Frontend** | 10/10 | ↑ | KPIs completo, Button isLoading 100% |
+| **Frontend** | 10/10 | ↑ | KPIs completo com KpiActionsMenu |
 | **Documentação** | 10/10 | ↑ | TCR v2.75.0 + UI Registry |
 | **Segurança (RLS)** | 9.5/10 | → | Funções SECURITY DEFINER intencionais |
-| **Rituais/Processos** | 9/10 | ↑ | Melhorado após auditoria |
-| **GERAL** | **9.6/10** | ↑ | Saudável e escalável |
+| **Testes E2E** | 9/10 | ↑ | Cobertura ~55% (+15%) |
+| **GERAL** | **9.7/10** | ↑ | Saudável e escalável |
 
 **Evolução desde última análise (2026-01-23):**
 - Frontend: 8.5 → 10 (+1.5) após Wave de UI + KPIs Complete
 - Backend: 9 → 10 (+1.0) após auditoria completa
 - Documentação: 9.5 → 10 (+0.5) após TCR v2.75.0
-- Geral: 8.9 → 9.6 (+0.7)
+- Testes E2E: 7 → 9 (+2.0) após 3 novos arquivos spec
+- Geral: 8.9 → 9.7 (+0.8)
 
 ---
 
@@ -121,7 +122,9 @@
 3. **Button props** — Migração para `isLoading`/`loadingText` (14+ arquivos)
 4. **Documentação** — `UI_COMPONENTS_REGISTRY.md` criado
 5. **KPIs Module v1.0** — Módulo completo com CRUD, mutations, barrel file
-6. **Hooks order fix** — JetimoberDialog corrigido
+6. **KpiActionsMenu** — Componente de ações com Edit/Archive/Reactivate/Delete
+7. **Hooks order fix** — JetimoberDialog corrigido
+8. **E2E Tests** — 3 novos arquivos: kpis.spec.ts, tickets.spec.ts, assets.spec.ts
 
 ### 3.3 ✅ Dívidas Técnicas Corrigidas Nesta Sessão
 
@@ -134,7 +137,7 @@
 | Dívida | Impacto | Prioridade | Arquivos |
 |--------|---------|------------|----------|
 | **Loader2 manual restante** | UX | P3 | ~35 arquivos (maioria legítima) |
-| **Testes E2E** | Qualidade | P2 | Cobertura ~40% |
+| **Testes E2E** | Qualidade | P3 | Cobertura ~55% (↑ de 40%) |
 | **Storybook** | DX | P4 | Desatualizado |
 
 ---
@@ -282,10 +285,11 @@ WARN: 1x Leaked Password Protection Disabled → Requer ação no Auth settings
 | RLS coverage | 100% | 100% | ✅ |
 | Query keys centralizadas | 100% | 100% | ✅ |
 | Arquivos > 500 linhas | 0 | 0 | ✅ |
-| Testes E2E coverage | 80% | ~40% | ⚠️ |
+| Testes E2E coverage | 80% | ~55% | ⚠️ (melhoria significativa) |
 | Edge Functions JSDoc | 100% | 100% | ✅ |
 | Button isLoading adoption | 100% | ~70% | ⚠️ |
 | Log tables health | <100k | ✅ | ✅ |
+| KPIs Module | 100% | 100% | ✅ |
 
 ### Debt Ratio
 

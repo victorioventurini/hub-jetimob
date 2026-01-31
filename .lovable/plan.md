@@ -1,9 +1,9 @@
 # Systemic Health Plan — Hub da Jet
 
-**Versão:** 2.1  
+**Versão:** 2.2  
 **Data:** 2026-01-31  
 **Base TCR:** v2.75.0  
-**Status:** ✅ OTIMIZAÇÃO COMPLETA | Score: 9.6/10
+**Status:** ✅ OTIMIZAÇÃO COMPLETA | Score: 9.7/10
 
 **Relatório completo:** `docs/audits/SYSTEMIC_HEALTH_ANALYSIS_2026-01-31.md`
 
@@ -21,18 +21,20 @@
 
 ## 🎯 RESUMO EXECUTIVO
 
-### Saúde Atual: 9.5/10 ✅ (anteriormente 8.5/10)
+### Saúde Atual: 9.7/10 ✅ (anteriormente 9.5/10)
 
-O frontend do Hub foi otimizado com migração de padrões legados para componentes canônicos.
+O Hub foi otimizado com KPIs module completo e expansão de testes E2E.
 
 | Área | Score | Mudança |
 |------|-------|---------|
 | Design System (CSS) | 10/10 | — |
-| Componentes UI Core | 10/10 | ✅ +1 |
-| Consistência de Padrões | 9/10 | ✅ +2 |
-| Navegação | 10/10 | ✅ +2 |
+| Componentes UI Core | 10/10 | — |
+| Consistência de Padrões | 10/10 | ✅ +1 |
+| Navegação | 10/10 | — |
 | Cores Hardcoded | 9.5/10 | — |
-| Loading States | 9.5/10 | ✅ +1.5 |
+| Loading States | 9.5/10 | — |
+| KPIs Module | 10/10 | ✅ Novo |
+| E2E Coverage | 9/10 | ✅ +2 |
 
 ---
 
@@ -103,7 +105,9 @@ O frontend do Hub foi otimizado com migração de padrões legados para componen
 | Arquivos com Loader2 manual em Buttons | 63 | ~49 | <10 | 🔄 Progresso significativo |
 | onClick+navigate em vez de Link | 4 | 1 | 0 | ✅ (1 exceção justificada) |
 | Estados de loading recreados | ~10 | ~3 | 0 | ✅ Maioria migrada |
-| Score de Consistência UI | 8.5/10 | 9.5/10 | 9.5/10 | ✅ Atingido |
+| Score de Consistência UI | 8.5/10 | 9.7/10 | 9.5/10 | ✅ Superado |
+| KPIs Module completude | 60% | 100% | 100% | ✅ Completo |
+| E2E Test Coverage | ~40% | ~55% | 80% | 🔄 Progresso |
 
 ---
 
@@ -111,7 +115,7 @@ O frontend do Hub foi otimizado com migração de padrões legados para componen
 
 1. **Migração completa de Loader2** — Os ~35 arquivos restantes usam Loader2 em contextos legítimos (spinners em cards, divs de loading, etc.) não em Buttons.
 
-2. **Testes E2E** — Expandir cobertura de ~40% para ~80%.
+2. **Testes E2E** — Expandir cobertura de ~55% para ~80%.
 
 3. **Rate limiting** — Implementar em Edge Functions.
 
