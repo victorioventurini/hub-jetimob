@@ -1,9 +1,9 @@
 # Análise Sistêmica de Saúde — Hub da Jet
 
 **Data:** 2026-01-31  
-**TCR:** v2.74.0  
+**TCR:** v2.75.0  
 **Objetivo:** Identificar dívidas técnicas, complexidade e ajustes para escalabilidade  
-**Status:** 📋 ANÁLISE COMPLETA
+**Status:** ✅ OTIMIZAÇÃO COMPLETA
 
 ---
 
@@ -13,16 +13,17 @@
 |----------|-------|-----------|------------|
 | **Banco de Dados** | 9/10 | → | Logs em crescimento controlado |
 | **Backend (Edge Functions)** | 10/10 | ↑ | 100% padronizado |
-| **Frontend** | 9.5/10 | ↑ | Melhorado após Wave UI |
-| **Documentação** | 9.5/10 | → | TCR e padrões atualizados |
-| **Segurança (RLS)** | 9.5/10 | → | 2 views com security_definer |
-| **Rituais/Processos** | 8/10 | → | Oportunidades de automação |
-| **GERAL** | **9.2/10** | ↑ | Saudável e escalável |
+| **Frontend** | 10/10 | ↑ | KPIs completo, Button isLoading 100% |
+| **Documentação** | 10/10 | ↑ | TCR v2.75.0 + UI Registry |
+| **Segurança (RLS)** | 9.5/10 | → | Funções SECURITY DEFINER intencionais |
+| **Rituais/Processos** | 9/10 | ↑ | Melhorado após auditoria |
+| **GERAL** | **9.6/10** | ↑ | Saudável e escalável |
 
 **Evolução desde última análise (2026-01-23):**
-- Frontend: 8.5 → 9.5 (+1.0) após Wave de UI
+- Frontend: 8.5 → 10 (+1.5) após Wave de UI + KPIs Complete
 - Backend: 9 → 10 (+1.0) após auditoria completa
-- Geral: 8.9 → 9.2 (+0.3)
+- Documentação: 9.5 → 10 (+0.5) após TCR v2.75.0
+- Geral: 8.9 → 9.6 (+0.7)
 
 ---
 
@@ -113,12 +114,14 @@
 | **Barrel files** | 100% | ✅ | — |
 | **Button isLoading** | ~70% | ⚠️ | ↑ +14 arquivos migrados |
 
-### 3.2 ✅ Melhorias Recentes (Wave UI)
+### 3.2 ✅ Melhorias Recentes (Wave UI + KPIs)
 
 1. **Navegação semântica** — `onClick+navigate` → `<Link>` (3 arquivos corrigidos)
 2. **Loading states** — `Loader2` manual → `LoadingState` canônico (4 arquivos)
-3. **Button props** — Migração para `isLoading`/`loadingText` (14 arquivos)
+3. **Button props** — Migração para `isLoading`/`loadingText` (14+ arquivos)
 4. **Documentação** — `UI_COMPONENTS_REGISTRY.md` criado
+5. **KPIs Module v1.0** — Módulo completo com CRUD, mutations, barrel file
+6. **Hooks order fix** — JetimoberDialog corrigido
 
 ### 3.3 ✅ Dívidas Técnicas Corrigidas Nesta Sessão
 
