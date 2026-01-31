@@ -278,7 +278,7 @@ export default function HubNotifications() {
   
   // Mutation for updating channel status
   const updateChannelStatus = useMutation({
-    mutationFn: async ({ slug, status }: { slug: string; status: string }) => {
+    mutationFn: async ({ slug, status }: { slug: string; status: 'active' | 'inactive' | 'deprecated' }) => {
       const { error } = await supabase
         .from('notification_channels')
         .update({ status })

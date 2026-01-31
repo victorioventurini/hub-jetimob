@@ -72,6 +72,9 @@ export interface PartnerContact {
   external_company?: { id: string; name: string } | null;
 }
 
+// Status de catálogo (enum do banco)
+export type CatalogStatus = 'active' | 'inactive' | 'deprecated';
+
 // Categoria de Ticket
 export interface TicketCategory {
   id: string;
@@ -79,7 +82,7 @@ export interface TicketCategory {
   scope: TicketCategoryScope;
   name: string;
   description: string | null;
-  status: string;
+  status: CatalogStatus;
   created_at: string;
   created_by: string | null;
   updated_at: string;
@@ -94,7 +97,7 @@ export interface TicketSubcategory {
   bu_id: string;
   category_id: string;
   name: string;
-  status: string;
+  status: CatalogStatus;
   created_at: string;
   created_by: string | null;
   updated_at: string;
