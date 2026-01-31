@@ -30,12 +30,7 @@
  * - Error: { error: string, correlation_id?: string }
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-cron-secret",
-};
+import { corsHeaders } from "../_shared/middleware.ts";
 
 interface OutboxResult {
   processed: number;
