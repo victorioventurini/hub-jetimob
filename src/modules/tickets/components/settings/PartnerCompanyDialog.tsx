@@ -403,16 +403,11 @@ export function PartnerCompanyDialog({
                 </Button>
                 <Button
                   onClick={handleCheckDocument}
-                  disabled={isCheckingDocument || !documentInput}
+                  disabled={!documentInput}
+                  isLoading={isCheckingDocument}
+                  loadingText="Verificando..."
                 >
-                  {isCheckingDocument ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Verificando...
-                    </>
-                  ) : (
-                    "Verificar"
-                  )}
+                  Verificar
                 </Button>
               </div>
             </div>
@@ -492,18 +487,13 @@ export function PartnerCompanyDialog({
                   Cancelar
                 </Button>
                 {!existingCompany.is_active_in_current_bu && (
-                  <Button onClick={handleActivateInBu} disabled={isActivating}>
-                    {isActivating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Ativando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        Ativar nesta BU
-                      </>
-                    )}
+                  <Button 
+                    onClick={handleActivateInBu} 
+                    isLoading={isActivating}
+                    loadingText="Ativando..."
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Ativar nesta BU
                   </Button>
                 )}
               </div>

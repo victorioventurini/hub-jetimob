@@ -501,17 +501,17 @@ export default function AgentFormPage() {
           <Button
             variant="secondary"
             onClick={() => handleSave(false)}
-            disabled={isSaving}
+            isLoading={isSaving}
+            loadingText="Salvando..."
           >
-            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             <Save className="w-4 h-4 mr-2" />
             Salvar Rascunho
           </Button>
           <Button
             onClick={() => handleSave(true)}
-            disabled={isSaving}
+            isLoading={isSaving}
+            loadingText="Ativando..."
           >
-            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Salvar e Ativar
           </Button>
         </div>

@@ -494,13 +494,10 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         <Button 
           type="button" 
           onClick={handleCheckEmail} 
-          disabled={isCheckingEmail || !emailInput}
+          disabled={!emailInput}
+          isLoading={isCheckingEmail}
         >
-          {isCheckingEmail ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <ArrowRight className="mr-2 h-4 w-4" />
-          )}
+          {!isCheckingEmail && <ArrowRight className="mr-2 h-4 w-4" />}
           Continuar
         </Button>
       </DialogFooter>
@@ -595,12 +592,10 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         <Button 
           type="button" 
           onClick={() => addToBuMutation.mutate()} 
-          disabled={addToBuMutation.isPending}
           className="w-full sm:w-auto"
+          isLoading={addToBuMutation.isPending}
+          loadingText="Adicionando..."
         >
-          {addToBuMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
           Adicionar à BU
         </Button>
       </DialogFooter>
