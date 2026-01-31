@@ -2,15 +2,30 @@
  * Edge Function: okr-construction-review
  * 
  * Avalia automaticamente a qualidade de construção de OKRs
- * Usa o agente "coach-okrs" configurado no Hub via invoke-vic
+ * Usa o agente "validador-metodologico-okrs" configurado no Hub via invoke-vic
+ * 
+ * @see docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md §6 Edge Functions Standards
+ * 
+ * Modos de operação:
+ * - `objective` (default): Avaliação individual de OKR de time
+ * - `org-objective`: Avaliação de OKR organizacional
+ * - `team-analysis`: Análise consolidada de todos OKRs do time
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  corsHeaders,
+  corsResponse,
+  jsonResponse,
+  errorResponse,
+  withMiddleware,
+  logRequestCompletion,
+  type RequestContext,
+} from "../_shared/middleware.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-current-bu-id",
-};
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface KeyResult {
   id: string;
@@ -23,19 +38,16 @@ interface KeyResult {
 }
 
 interface RequestBody {
-  buId?: string; // Fallback when header is not passed
+  buId?: string;
   mode?: 'objective' | 'team-analysis' | 'org-objective';
-  // Flag para contexto organizacional (alternativa ao mode='org-objective')
   isOrgLevel?: boolean;
-  // Modo objective/org-objective
   objectiveId?: string;
   objectiveTitle?: string;
   objectiveDescription?: string;
   teamName?: string;
   orgObjectiveTitle?: string;
   keyResults?: KeyResult[];
-  year?: number; // Para contexto organizacional
-  // Modo team-analysis
+  year?: number;
   teamId?: string;
   cycleId?: string;
   objectives?: Array<{
@@ -108,12 +120,39 @@ interface AiAssessment {
   generatedAt: string;
 }
 
+interface SharedObjectiveSuggestion {
+  objectiveId: string;
+  objectiveTitle: string;
+  suggestedTeamId: string;
+  suggestedTeamName: string;
+  suggestedLeaderFirstName: string;
+  suggestedObjectiveId: string;
+  suggestedObjectiveTitle: string;
+  reason: string;
+}
+
+interface TeamAnalysisResult {
+  consolidatedScore: number;
+  consolidatedSummary: string;
+  orgAlignmentAnalysis: {
+    score: number;
+    coveredOrgObjectives: string[];
+    uncoveredOrgObjectives: string[];
+    feedback: string;
+  };
+  sharedSuggestions: SharedObjectiveSuggestion[];
+  generatedAt: string;
+}
+
+// =============================================================================
+// PARSING HELPERS
+// =============================================================================
+
 /**
  * Parse AI text response into structured assessment
  * Extracts JSON from markdown code blocks if present
  */
 function parseAiResponse(content: string, keyResults: KeyResult[]): AiAssessment {
-  // Try to extract JSON from markdown code blocks
   let jsonStr = content;
   if (content.includes('```json')) {
     jsonStr = content.split('```json')[1].split('```')[0].trim();
@@ -128,7 +167,6 @@ function parseAiResponse(content: string, keyResults: KeyResult[]): AiAssessment
       generatedAt: new Date().toISOString(),
     };
   } catch {
-    // If JSON parsing fails, create structured assessment from text
     console.log("[okr-construction-review] JSON parse failed, creating structured response from text");
     return createTextBasedAssessment(content, keyResults);
   }
@@ -138,25 +176,21 @@ function parseAiResponse(content: string, keyResults: KeyResult[]): AiAssessment
  * Create assessment from text response when JSON is not available
  */
 function createTextBasedAssessment(text: string, keyResults: KeyResult[]): AiAssessment {
-  // Extract score if mentioned (e.g., "Score: 75" or "75/100")
   const scoreMatch = text.match(/(?:score|nota|pontuação)[:\s]*(\d+)/i) || text.match(/(\d+)\s*\/\s*100/);
   const overallScore = scoreMatch ? Math.min(100, Math.max(0, parseInt(scoreMatch[1], 10))) : 65;
 
-  // Extract strengths (look for + or "ponto forte" patterns)
   const strengths: string[] = [];
   const strengthPatterns = text.match(/(?:\+|ponto\s+forte|destaque)[:\s]*([^\n]+)/gi);
   if (strengthPatterns) {
     strengths.push(...strengthPatterns.slice(0, 3).map(s => s.replace(/^(?:\+|ponto\s+forte|destaque)[:\s]*/i, '').trim()));
   }
 
-  // Extract improvements (look for - or "melhoria" patterns)
   const improvements: string[] = [];
   const improvementPatterns = text.match(/(?:\-|melhoria|sugestão|melhorar)[:\s]*([^\n]+)/gi);
   if (improvementPatterns) {
     improvements.push(...improvementPatterns.slice(0, 3).map(s => s.replace(/^(?:\-|melhoria|sugestão|melhorar)[:\s]*/i, '').trim()));
   }
 
-  // Create KR feedback
   const krFeedback: KrFeedback[] = keyResults.map(kr => {
     const isTask = kr.baseline === null && kr.target === null;
     return {
@@ -189,34 +223,6 @@ function createTextBasedAssessment(text: string, keyResults: KeyResult[]): AiAss
   };
 }
 
-// ============================================================
-// TEAM ANALYSIS TYPES
-// ============================================================
-
-interface SharedObjectiveSuggestion {
-  objectiveId: string;
-  objectiveTitle: string;
-  suggestedTeamId: string;
-  suggestedTeamName: string;
-  suggestedLeaderFirstName: string;
-  suggestedObjectiveId: string;
-  suggestedObjectiveTitle: string;
-  reason: string;
-}
-
-interface TeamAnalysisResult {
-  consolidatedScore: number;
-  consolidatedSummary: string;
-  orgAlignmentAnalysis: {
-    score: number;
-    coveredOrgObjectives: string[];
-    uncoveredOrgObjectives: string[];
-    feedback: string;
-  };
-  sharedSuggestions: SharedObjectiveSuggestion[];
-  generatedAt: string;
-}
-
 /**
  * Parse team analysis response into structured format
  */
@@ -235,7 +241,6 @@ function parseTeamAnalysisResponse(content: string): TeamAnalysisResult {
       generatedAt: new Date().toISOString(),
     };
   } catch {
-    // Fallback
     return {
       consolidatedScore: 70,
       consolidatedSummary: content.substring(0, 300),
@@ -251,111 +256,124 @@ function parseTeamAnalysisResponse(content: string): TeamAnalysisResult {
   }
 }
 
-// ============================================================
-// MAIN HANDLER
-// ============================================================
+// =============================================================================
+// VIC INTEGRATION
+// =============================================================================
 
-serve(async (req) => {
-  console.log("[okr-construction-review] Request received:", req.method);
-  
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+/**
+ * Call invoke-vic edge function with standard error handling
+ */
+async function callInvokeVic(
+  supabaseUrl: string,
+  authHeader: string,
+  buId: string,
+  correlationId: string,
+  payload: {
+    agentSlug: string;
+    actionContext: string;
+    context: Record<string, unknown>;
+    userQuestion: string;
+  }
+): Promise<{ content: string | null; error: Response | null }> {
+  const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
+    method: "POST",
+    headers: {
+      "Authorization": authHeader,
+      "Content-Type": "application/json",
+      "x-current-bu-id": buId,
+      "x-correlation-id": correlationId,
+    },
+    body: JSON.stringify({
+      buId,
+      ...payload,
+      stream: false,
+    }),
+  });
+
+  if (!vicResponse.ok) {
+    const errorText = await vicResponse.text();
+    console.error("[okr-construction-review] invoke-vic error:", vicResponse.status, errorText);
+    
+    const errorMap: Record<number, string> = {
+      429: "Limite de requisições excedido. Tente novamente em alguns minutos.",
+      402: "Créditos de IA esgotados.",
+      404: "Agente validador-metodologico-okrs não encontrado. Configure o agente em Integrações.",
+      403: "Agente validador-metodologico-okrs não está ativado para esta BU.",
+    };
+    
+    const errorMessage = errorMap[vicResponse.status];
+    if (errorMessage) {
+      return {
+        content: null,
+        error: new Response(
+          JSON.stringify({ error: errorMessage }),
+          { status: vicResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        ),
+      };
+    }
+    
+    throw new Error(`invoke-vic error: ${vicResponse.status}`);
   }
 
-  try {
-    // Forward auth headers - check multiple variations
-    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
-    const buIdFromHeader = req.headers.get("x-current-bu-id");
-    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+  const vicData = await vicResponse.json();
+  const content = vicData.response || vicData.content || vicData.message;
 
-    // Debug logging
-    console.log("[okr-construction-review] Headers debug:", {
-      hasAuth: !!authHeader,
-      authPrefix: authHeader?.substring(0, 15),
-      buId: buIdFromHeader,
-      correlationId,
+  if (!content) {
+    console.error("[okr-construction-review] Empty response from agent:", JSON.stringify(vicData));
+    throw new Error("Resposta vazia do agente");
+  }
+
+  return { content, error: null };
+}
+
+// =============================================================================
+// MODE HANDLERS
+// =============================================================================
+
+/**
+ * Handle team-analysis mode: consolidated analysis of all team OKRs
+ */
+async function handleTeamAnalysis(
+  body: RequestBody,
+  authHeader: string,
+  buId: string,
+  correlationId: string
+): Promise<Response> {
+  const { teamId, teamName, objectives, orgObjectives, otherTeamsObjectives } = body;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+
+  if (!objectives?.length) {
+    return errorResponse("Objectives required for team-analysis mode", 400, {
+      requestId: correlationId,
+      error: "MISSING_OBJECTIVES",
     });
+  }
 
-    if (!authHeader) {
-      console.error("[okr-construction-review] Missing Authorization header");
-      return new Response(
-        JSON.stringify({ error: "Authorization required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Try to get BU ID from header or from body (fallback)
-    let buId = buIdFromHeader;
-    
-    // If no BU header, try to peek at body for buId (some clients send it there)
-    if (!buId) {
-      try {
-        const bodyText = await req.text();
-        const bodyJson = JSON.parse(bodyText);
-        buId = bodyJson.buId;
-        // Re-create request body for later use
-        (req as any)._parsedBody = bodyJson;
-        console.log("[okr-construction-review] BU ID from body:", buId);
-      } catch {
-        // ignore parse errors
-      }
-    }
-
-    if (!buId) {
-      console.error("[okr-construction-review] Missing BU ID in header and body");
-      return new Response(
-        JSON.stringify({ error: "BU ID required (x-current-bu-id header or buId in body)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Use already parsed body if available, otherwise parse now
-    const body: RequestBody = (req as any)._parsedBody || await req.json();
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    if (!supabaseUrl) {
-      throw new Error("SUPABASE_URL não configurada");
-    }
-
-    // ────────────────────────────────────────────────────────────
-    // MODO: TEAM ANALYSIS (análise consolidada do time)
-    // ────────────────────────────────────────────────────────────
-    if (body.mode === 'team-analysis') {
-      console.log("[okr-construction-review] Mode: team-analysis");
-      const { teamId, teamName, objectives, orgObjectives, otherTeamsObjectives } = body;
-
-      if (!objectives?.length) {
-        return new Response(
-          JSON.stringify({ error: "Objectives required for team-analysis mode" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Build context for consolidated analysis
-      const objectivesList = objectives.map((obj, i) => {
-        const krList = (obj.keyResults || []).map((kr, j) => 
-          `  ${j + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.hasOwner ? 'Definido' : 'NÃO'}`
-        ).join('\n');
-        return `**${i + 1}. ${obj.title}**
+  const objectivesList = objectives.map((obj, i) => {
+    const krList = (obj.keyResults || []).map((kr, j) => 
+      `  ${j + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.hasOwner ? 'Definido' : 'NÃO'}`
+    ).join('\n');
+    return `**${i + 1}. ${obj.title}**
 ${obj.description ? `   Descrição: ${obj.description}` : ''}
    Vinculado a: ${obj.orgObjectiveTitle || 'NÃO VINCULADO'}
    Key Results (${obj.keyResults.length}):
 ${krList}`;
-      }).join('\n\n');
+  }).join('\n\n');
 
-      const orgObjectivesList = (orgObjectives || []).map((org, i) => {
-        const orgKrList = (org.keyResults || []).map((kr, j) => 
-          `  - KR${j + 1}: "${kr.title}" | Baseline: ${kr.baseline ?? 'N/A'} → Target: ${kr.target ?? 'N/A'} ${kr.unit || ''}`
-        ).join('\n');
-        return `${i + 1}. **"${org.title}"**${org.description ? ` - ${org.description}` : ''}
+  const orgObjectivesList = (orgObjectives || []).map((org, i) => {
+    const orgKrList = (org.keyResults || []).map((kr, j) => 
+      `  - KR${j + 1}: "${kr.title}" | Baseline: ${kr.baseline ?? 'N/A'} → Target: ${kr.target ?? 'N/A'} ${kr.unit || ''}`
+    ).join('\n');
+    return `${i + 1}. **"${org.title}"**${org.description ? ` - ${org.description}` : ''}
 ${orgKrList || '  (sem Key Results definidos)'}`;
-      }).join('\n\n') || 'Nenhum OKR organizacional definido';
+  }).join('\n\n') || 'Nenhum OKR organizacional definido';
 
-      const otherTeamsList = (otherTeamsObjectives || []).map(team => 
-        `**${team.teamName}** (Líder: ${team.leaderFirstName}):
+  const otherTeamsList = (otherTeamsObjectives || []).map(team => 
+    `**${team.teamName}** (Líder: ${team.leaderFirstName}):
 ${team.objectives.map((obj, i) => `  ${i + 1}. "${obj.title}"`).join('\n')}`
-      ).join('\n\n') || 'Nenhum outro time com OKRs no ciclo';
+  ).join('\n\n') || 'Nenhum outro time com OKRs no ciclo';
 
-      const userQuestion = `Faça uma ANÁLISE CONSOLIDADA dos OKRs deste time e responda OBRIGATORIAMENTE em JSON:
+  const userQuestion = `Faça uma ANÁLISE CONSOLIDADA dos OKRs deste time e responda OBRIGATORIAMENTE em JSON:
 
 **TIME:** ${teamName || 'Não especificado'}
 
@@ -400,101 +418,74 @@ Responda com JSON válido no formato EXATO abaixo:
   ]
 }`;
 
-      const contextData = {
-        type: "okr_team_analysis",
-        team: { id: teamId, name: teamName },
-        objectives: objectives.map(o => ({
-          id: o.id,
-          title: o.title,
-          orgObjectiveTitle: o.orgObjectiveTitle,
-          krCount: o.keyResults.length,
-        })),
-        orgObjectivesCount: orgObjectives?.length || 0,
-        otherTeamsCount: otherTeamsObjectives?.length || 0,
-      };
+  const contextData = {
+    type: "okr_team_analysis",
+    team: { id: teamId, name: teamName },
+    objectives: objectives.map(o => ({
+      id: o.id,
+      title: o.title,
+      orgObjectiveTitle: o.orgObjectiveTitle,
+      krCount: o.keyResults.length,
+    })),
+    orgObjectivesCount: orgObjectives?.length || 0,
+    otherTeamsCount: otherTeamsObjectives?.length || 0,
+  };
 
-      const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
-        method: "POST",
-        headers: {
-          "Authorization": authHeader,
-          "Content-Type": "application/json",
-          "x-current-bu-id": buId,
-          "x-correlation-id": correlationId,
-        },
-        body: JSON.stringify({
-          buId,
-          agentSlug: "validador-metodologico-okrs",
-          actionContext: "okr_team_analysis",
-          context: contextData,
-          userQuestion,
-          stream: false,
-        }),
-      });
+  const { content, error } = await callInvokeVic(supabaseUrl, authHeader, buId, correlationId, {
+    agentSlug: "validador-metodologico-okrs",
+    actionContext: "okr_team_analysis",
+    context: contextData,
+    userQuestion,
+  });
 
-      if (!vicResponse.ok) {
-        const errorText = await vicResponse.text();
-        console.error("[okr-construction-review] team-analysis error:", vicResponse.status, errorText);
-        throw new Error(`invoke-vic error: ${vicResponse.status}`);
-      }
+  if (error) return error;
 
-      const vicData = await vicResponse.json();
-      // invoke-vic returns { response: content, agentName, ... }
-      const content = vicData.response || vicData.content || vicData.message;
+  const teamAnalysis = parseTeamAnalysisResponse(content!);
+  console.log("[okr-construction-review] Team analysis generated, score:", teamAnalysis.consolidatedScore);
 
-      if (!content) {
-        console.error("[okr-construction-review] team-analysis: empty response from agent", JSON.stringify(vicData));
-        throw new Error("Resposta vazia do agente");
-      }
+  return jsonResponse({ teamAnalysis });
+}
 
-      const teamAnalysis = parseTeamAnalysisResponse(content);
-      console.log("[okr-construction-review] Team analysis generated, score:", teamAnalysis.consolidatedScore);
+/**
+ * Handle org-objective mode: organizational objective assessment
+ */
+async function handleOrgObjective(
+  body: RequestBody,
+  authHeader: string,
+  buId: string,
+  correlationId: string
+): Promise<Response> {
+  const { objectiveId, objectiveTitle, objectiveDescription, keyResults: orgKrs, year } = body;
+  const krs = orgKrs || [];
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 
-      return new Response(
-        JSON.stringify({ teamAnalysis }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  console.log("[okr-construction-review] Processing org objective:", objectiveTitle);
 
-    // ────────────────────────────────────────────────────────────
-    // MODO: ORG-OBJECTIVE (avaliação de objetivo organizacional)
-    // ────────────────────────────────────────────────────────────
-    const isOrgLevel = body.mode === 'org-objective' || body.isOrgLevel === true;
-    
-    if (isOrgLevel) {
-      console.log("[okr-construction-review] Mode: org-objective (organizational level)");
-      const { objectiveId, objectiveTitle, objectiveDescription, keyResults: orgKrs, year } = body;
-      const krs = orgKrs || [];
+  const krList = krs.map((kr, i) =>
+    `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Responsável: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
+  ).join('\n');
 
-      console.log("[okr-construction-review] Processing org objective:", objectiveTitle);
-      console.log("[okr-construction-review] Key Results count:", krs.length);
+  const contextData = {
+    type: "okr_org_construction_review",
+    objective: {
+      id: objectiveId,
+      title: objectiveTitle,
+      description: objectiveDescription,
+    },
+    level: "organizational",
+    year,
+    keyResults: krs.map(kr => ({
+      id: kr.id,
+      title: kr.title,
+      type: kr.type,
+      baseline: kr.baseline,
+      target: kr.target,
+      unit: kr.unit,
+      hasOwner: !!kr.owner_user_id,
+    })),
+  };
 
-      // Build context for organizational objective
-      const krList = krs.map((kr, i) =>
-        `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Responsável: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
-      ).join('\n');
-
-      const contextData = {
-        type: "okr_org_construction_review",
-        objective: {
-          id: objectiveId,
-          title: objectiveTitle,
-          description: objectiveDescription,
-        },
-        level: "organizational",
-        year,
-        keyResults: krs.map(kr => ({
-          id: kr.id,
-          title: kr.title,
-          type: kr.type,
-          baseline: kr.baseline,
-          target: kr.target,
-          unit: kr.unit,
-          hasOwner: !!kr.owner_user_id,
-        })),
-      };
-
-      // Prompt específico para OKRs organizacionais
-      const userQuestion = `Avalie a qualidade de CONSTRUÇÃO deste **OBJETIVO ORGANIZACIONAL** (nível empresa/C-Level) e responda OBRIGATORIAMENTE em JSON:
+  const userQuestion = `Avalie a qualidade de CONSTRUÇÃO deste **OBJETIVO ORGANIZACIONAL** (nível empresa/C-Level) e responda OBRIGATORIAMENTE em JSON:
 
 **OBJETIVO ORGANIZACIONAL:** ${objectiveTitle}
 ${objectiveDescription ? `**DESCRIÇÃO:** ${objectiveDescription}` : ''}
@@ -535,119 +526,61 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
   ]
 }`;
 
-      // Call invoke-vic with validador-metodologico-okrs agent
-      console.log("[okr-construction-review] Calling invoke-vic for org objective...");
+  const { content, error } = await callInvokeVic(supabaseUrl, authHeader, buId, correlationId, {
+    agentSlug: "validador-metodologico-okrs",
+    actionContext: "okr_org_construction_review",
+    context: contextData,
+    userQuestion,
+  });
 
-      const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
-        method: "POST",
-        headers: {
-          "Authorization": authHeader,
-          "Content-Type": "application/json",
-          "x-current-bu-id": buId,
-          "x-correlation-id": correlationId,
-        },
-        body: JSON.stringify({
-          buId,
-          agentSlug: "validador-metodologico-okrs",
-          actionContext: "okr_org_construction_review",
-          context: contextData,
-          userQuestion,
-          stream: false,
-        }),
-      });
+  if (error) return error;
 
-      console.log("[okr-construction-review] invoke-vic response status:", vicResponse.status);
+  const assessment = parseAiResponse(content!, krs);
+  console.log("[okr-construction-review] Org assessment generated, score:", assessment.overallScore);
 
-      if (!vicResponse.ok) {
-        const errorText = await vicResponse.text();
-        console.error("[okr-construction-review] invoke-vic error:", vicResponse.status, errorText);
-        
-        // Forward specific error codes
-        if (vicResponse.status === 429) {
-          return new Response(
-            JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (vicResponse.status === 402) {
-          return new Response(
-            JSON.stringify({ error: "Créditos de IA esgotados." }),
-            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (vicResponse.status === 404) {
-          return new Response(
-            JSON.stringify({ error: "Agente validador-metodologico-okrs não encontrado. Configure o agente em Integrações." }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (vicResponse.status === 403) {
-          return new Response(
-            JSON.stringify({ error: "Agente validador-metodologico-okrs não está ativado para esta BU." }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        
-        throw new Error(`invoke-vic error: ${vicResponse.status}`);
-      }
+  return jsonResponse({ assessment });
+}
 
-      const vicData = await vicResponse.json();
-      const content = vicData.response || vicData.content || vicData.message;
+/**
+ * Handle objective mode (default): team objective assessment
+ */
+async function handleObjective(
+  body: RequestBody,
+  authHeader: string,
+  buId: string,
+  correlationId: string
+): Promise<Response> {
+  const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
+  const krs = keyResults || [];
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 
-      console.log("[okr-construction-review] AI content received, length:", content?.length || 0);
+  console.log("[okr-construction-review] Processing team objective:", objectiveTitle);
 
-      if (!content) {
-        console.error("[okr-construction-review] org-objective: empty response from agent", JSON.stringify(vicData));
-        throw new Error("Resposta vazia do agente");
-      }
+  const krList = krs.map((kr, i) =>
+    `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
+  ).join('\n');
 
-      // Parse the response into structured assessment
-      const assessment = parseAiResponse(content, krs);
+  const contextData = {
+    type: "okr_construction_review",
+    objective: {
+      id: objectiveId,
+      title: objectiveTitle,
+      description: objectiveDescription,
+    },
+    team: teamName,
+    orgObjective: orgObjectiveTitle,
+    keyResults: krs.map(kr => ({
+      id: kr.id,
+      title: kr.title,
+      type: kr.type,
+      baseline: kr.baseline,
+      target: kr.target,
+      unit: kr.unit,
+      hasOwner: !!kr.owner_user_id,
+    })),
+  };
 
-      console.log("[okr-construction-review] Org assessment generated, score:", assessment.overallScore);
-
-      return new Response(
-        JSON.stringify({ assessment }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ────────────────────────────────────────────────────────────
-    // MODO: OBJECTIVE (avaliação individual de time - padrão)
-    // ────────────────────────────────────────────────────────────
-    const { objectiveId, objectiveTitle, objectiveDescription, teamName, orgObjectiveTitle, keyResults } = body;
-    const krs = keyResults || [];
-
-    console.log("[okr-construction-review] Mode: objective (team level - default)");
-    console.log("[okr-construction-review] Processing objective:", objectiveTitle);
-    console.log("[okr-construction-review] Key Results count:", krs.length);
-
-    // Build context for the agent
-    const krList = krs.map((kr, i) =>
-      `${i + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.owner_user_id ? 'Definido' : 'Não definido'}`
-    ).join('\n');
-
-    const contextData = {
-      type: "okr_construction_review",
-      objective: {
-        id: objectiveId,
-        title: objectiveTitle,
-        description: objectiveDescription,
-      },
-      team: teamName,
-      orgObjective: orgObjectiveTitle,
-      keyResults: krs.map(kr => ({
-        id: kr.id,
-        title: kr.title,
-        type: kr.type,
-        baseline: kr.baseline,
-        target: kr.target,
-        unit: kr.unit,
-        hasOwner: !!kr.owner_user_id,
-      })),
-    };
-
-    const userQuestion = `Avalie a qualidade de CONSTRUÇÃO deste OKR e responda OBRIGATORIAMENTE em JSON:
+  const userQuestion = `Avalie a qualidade de CONSTRUÇÃO deste OKR e responda OBRIGATORIAMENTE em JSON:
 
 **OBJETIVO:** ${objectiveTitle}
 ${objectiveDescription ? `**DESCRIÇÃO:** ${objectiveDescription}` : ''}
@@ -678,88 +611,86 @@ Responda com JSON válido no formato EXATO abaixo (sem texto adicional, APENAS J
   ]
 }`;
 
-    // Call invoke-vic with coach-okrs agent
-    console.log("[okr-construction-review] Calling invoke-vic...");
+  const { content, error } = await callInvokeVic(supabaseUrl, authHeader, buId, correlationId, {
+    agentSlug: "validador-metodologico-okrs",
+    actionContext: "okr_construction_review",
+    context: contextData,
+    userQuestion,
+  });
 
-    const vicResponse = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "Content-Type": "application/json",
-        "x-current-bu-id": buId,
-        "x-correlation-id": correlationId,
-      },
-      body: JSON.stringify({
-        buId,
-        agentSlug: "validador-metodologico-okrs",
-        actionContext: "okr_construction_review",
-        context: contextData,
-        userQuestion,
-        stream: false,
-      }),
-    });
+  if (error) return error;
 
-    console.log("[okr-construction-review] invoke-vic response status:", vicResponse.status);
+  const assessment = parseAiResponse(content!, krs);
+  console.log("[okr-construction-review] Assessment generated, score:", assessment.overallScore);
 
-    if (!vicResponse.ok) {
-      const errorText = await vicResponse.text();
-      console.error("[okr-construction-review] invoke-vic error:", vicResponse.status, errorText);
-      
-      // Forward specific error codes
-      if (vicResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (vicResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos de IA esgotados." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (vicResponse.status === 404) {
-        return new Response(
-          JSON.stringify({ error: "Agente validador-metodologico-okrs não encontrado. Configure o agente em Integrações." }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (vicResponse.status === 403) {
-        return new Response(
-          JSON.stringify({ error: "Agente validador-metodologico-okrs não está ativado para esta BU." }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      throw new Error(`invoke-vic error: ${vicResponse.status}`);
+  return jsonResponse({ assessment });
+}
+
+// =============================================================================
+// MAIN HANDLER
+// =============================================================================
+
+serve(async (req) => {
+  // Use centralized middleware for auth and CORS
+  const result = await withMiddleware(req, {
+    requireAuth: true,
+    requireBu: false, // BU can come from header or body
+    logRequest: true,
+  });
+
+  // Handle CORS preflight or auth errors
+  if (!result.success) {
+    return result.error!;
+  }
+
+  const ctx = result.context!;
+  const correlationId = ctx.requestId;
+
+  try {
+    // Parse body
+    const body: RequestBody = await req.json();
+    
+    // Get BU ID from header or body (fallback for compatibility)
+    const buIdFromHeader = req.headers.get("x-current-bu-id");
+    const buId = buIdFromHeader || body.buId;
+
+    if (!buId) {
+      logRequestCompletion(ctx, "error", "Missing BU ID");
+      return errorResponse("BU ID required (x-current-bu-id header or buId in body)", 400, {
+        requestId: correlationId,
+        error: "MISSING_BU_ID",
+      });
     }
 
-    const vicData = await vicResponse.json();
-    // invoke-vic returns { response: content, agentName, ... }
-    const content = vicData.response || vicData.content || vicData.message;
+    const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
 
-    console.log("[okr-construction-review] AI content received, length:", content?.length || 0);
+    console.log(`[${correlationId}] Mode: ${body.mode || 'objective'}, BU: ${buId}`);
 
-    if (!content) {
-      console.error("[okr-construction-review] objective: empty response from agent", JSON.stringify(vicData));
-      throw new Error("Resposta vazia do agente");
+    // Route to appropriate handler based on mode
+    if (body.mode === 'team-analysis') {
+      const response = await handleTeamAnalysis(body, authHeader, buId, correlationId);
+      logRequestCompletion(ctx, "success", "team-analysis");
+      return response;
     }
 
-    // Parse the response into structured assessment
-    const assessment = parseAiResponse(content, krs);
+    const isOrgLevel = body.mode === 'org-objective' || body.isOrgLevel === true;
+    if (isOrgLevel) {
+      const response = await handleOrgObjective(body, authHeader, buId, correlationId);
+      logRequestCompletion(ctx, "success", "org-objective");
+      return response;
+    }
 
-    console.log("[okr-construction-review] Assessment generated, score:", assessment.overallScore);
-
-    return new Response(
-      JSON.stringify({ assessment }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const response = await handleObjective(body, authHeader, buId, correlationId);
+    logRequestCompletion(ctx, "success", "objective");
+    return response;
 
   } catch (error) {
-    console.error("[okr-construction-review] Error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro ao processar avaliação" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    console.error(`[${correlationId}] Error:`, error);
+    logRequestCompletion(ctx, "error", error instanceof Error ? error.message : "Unknown error");
+    return errorResponse(
+      error instanceof Error ? error.message : "Erro ao processar avaliação",
+      500,
+      { requestId: correlationId, error: "INTERNAL_ERROR" }
     );
   }
 });
