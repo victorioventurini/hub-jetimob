@@ -32,14 +32,10 @@ import {
   parseRequestBody,
   formatValidationErrors,
 } from "../_shared/validation.ts";
+import { corsHeaders } from "../_shared/middleware.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 // Get integration API key from hub_integrations_global_config
 async function getIntegrationApiKey(integrationKey: string): Promise<string | null> {

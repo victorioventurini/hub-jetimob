@@ -5,11 +5,7 @@ import {
   TCR_SECTIONS, 
   buildFullTcr 
 } from "../_shared/tcr-content.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
-};
+import { corsHeaders } from "../_shared/middleware.ts";
 
 serve(async (req) => {
   // Handle CORS preflight
