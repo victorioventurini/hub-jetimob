@@ -156,34 +156,10 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  // Fix: remove lock residual do Radix após navegação (Sheet/Dialog/Tooltip)
+  // Fecha menu mobile ao navegar entre páginas
+  // Nota: cleanup de pointer-events centralizado em useRadixFocusRecovery (App.tsx)
   useEffect(() => {
     setMobileMenuOpen(false);
-
-    const cleanup = () => {
-      // Cleanup pointer-events
-      document.body.style.removeProperty('pointer-events');
-      document.documentElement.style.removeProperty('pointer-events');
-      document.body.style.pointerEvents = '';
-      document.documentElement.style.pointerEvents = '';
-      
-      // Limpa pointer-events em wrappers de popper (NÃO remove — evita removeChild race com Popover/DropdownMenu)
-      document.querySelectorAll('[data-radix-popper-content-wrapper]').forEach((el) => {
-        if (el instanceof HTMLElement) {
-          el.style.pointerEvents = '';
-        }
-      });
-      
-      document.querySelectorAll('[role="tooltip"]').forEach((el) => {
-        if (el instanceof HTMLElement) {
-          el.remove();
-        }
-      });
-    };
-
-    cleanup();
-    const timers = [0, 50, 150, 300, 500, 1000].map((delay) => window.setTimeout(cleanup, delay));
-    return () => timers.forEach((t) => window.clearTimeout(t));
   }, [location.pathname]);
   return (
     <div className="min-h-screen bg-background">
