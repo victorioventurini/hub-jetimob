@@ -1,267 +1,188 @@
 
-# Plano: Exportar Organograma em Formato de Texto
+# Plano: Atualização da Documentação Técnica (TCR v2.78.0)
 
 ## 1. Objetivo
-Adicionar funcionalidade para exportar o organograma em formato de texto ASCII indentado, permitindo que o usuário copie e cole para análise por GPT ou outros LLMs.
+
+Atualizar toda a documentação técnica do projeto para refletir as implementações recentes:
+- **Organogram Text Export v1.0** — Exportação do organograma em formato ASCII
+- **Dashboard Ticket Links v1.0** — Links filtrados nos contadores de tickets
+- **PII Security Views Update v1.0** — Views atualizadas para remover campos sensíveis
+- **OKR Wizards Documentation** — Documentação dos 5 wizards existentes
 
 ---
 
-## 2. Análise do Pré-Checklist (TCR + Docs Canônicos)
+## 2. Análise do Pré-Checklist (Documentos Consultados)
 
-### 2.1 Documentos Consultados
-| Documento | Versão | Pontos Relevantes |
-|-----------|--------|-------------------|
-| TECHNICAL_CONTEXT_REGISTRY.md | v2.77.0 | Hooks canônicos, toast via sonner |
-| UI_COMPONENTS_REGISTRY.md | v1.2.0 | Padrão de Button, Tooltip, navegação |
-| DEVELOPMENT_STANDARDS.md | v1.17.0 | URL State, estrutura de módulos |
+| Documento | Versão Atual | Status |
+|-----------|--------------|--------|
+| `TECHNICAL_CONTEXT_REGISTRY.md` | v2.77.0 | Precisa atualização para v2.78.0 |
+| `UI_COMPONENTS_REGISTRY.md` | v1.2.0 (2026-02-02) | ✅ Atualizado |
+| `DOCUMENTATION_INDEX.md` | TCR v2.72.0 | Desatualizado → v2.78.0 |
+| `docs/canonical/README.md` | v2.77.0 | Precisa atualização para v2.78.0 |
 
-### 2.2 Padrões Aplicáveis
-- **Toast**: Usar `sonner` (toast importado de `sonner`)
-- **Tooltips**: Usar componente Radix com `disableHoverableContent`
-- **Ícones**: Usar `lucide-react`
-- **Button**: Usar variant `outline` + size `icon` para ações secundárias
-- **Estrutura de Arquivos**: Módulos em `src/modules/{domain}/utils/` para utilitários
+### 2.1 Verificação de Componentes
 
-### 2.3 Estrutura de Dados (useOrganogramData)
+**Nenhum componente novo foi criado.** Todas as alterações usaram componentes canônicos existentes:
+
+| Alteração | Componentes Utilizados |
+|-----------|----------------------|
+| Botão de export no organograma | `Button`, `Tooltip`, `Copy` (lucide) — existentes |
+| Links nos contadores do dashboard | `Link` (react-router-dom) — existente |
+| Toast de confirmação | `toast` de `sonner` — existente |
+
+**Utilitário criado:** `src/modules/teams/utils/organogramToText.ts` (função pura, não componente)
+
+---
+
+## 3. Arquivos a Modificar
+
+| Arquivo | Ação | Mudança |
+|---------|------|---------|
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | Atualizar | Header v2.78.0, seção 4.8 OKR Wizards, seção Teams export, changelog |
+| `docs/DOCUMENTATION_INDEX.md` | Atualizar | Versões e referências |
+| `docs/canonical/README.md` | Atualizar | Versão TCR |
+
+---
+
+## 4. Detalhes das Atualizações
+
+### 4.1 TECHNICAL_CONTEXT_REGISTRY.md
+
+**A. Header — Linhas 1-6**
+
+Atualizar versão e status:
 ```text
-OrganogramData {
-  ceo: OrganogramNode | null
-  areas: OrganogramNode[]
-}
+**Versão:** 2.78.0  
+**Última atualização:** 2026-02-02 (v2.78.0 - OKR Wizards Docs + Organogram Text Export + PII Security Views)
+**Status:** ... | **Organogram Text Export v1.0** | **Dashboard Ticket Links v1.0** | **PII Security Views Update v1.0** | **System Health Score 9.5/10** ✅
+```
 
-OrganogramNode {
-  id, type, name, email?, photoUrl?, color?, role?, path
-  children: OrganogramNode[]
-  leaderName?, leaderPhotoUrl?
-}
+**B. Expandir Seção 4.8 — OKR Wizards (após linha ~1720)**
 
-type: 'ceo' | 'area' | 'team' | 'subteam' | 'squad' | 'person'
+Renomear de "Wizard Colaborador — Filtro de KRs" para "OKR Wizards — Rituais de Gestão" e expandir:
+
+```markdown
+### 4.8 OKR Wizards — Rituais de Gestão
+
+O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósito e periodicidade específicos.
+
+| Wizard | Rota | Propósito | Frequência | Participante |
+|--------|------|-----------|------------|--------------|
+| **Collaborator Check-in** | `/okrs/collaborator-checkin` | Atualização individual de KRs, iniciativas e reflexão | Semanal (sextas) | Colaborador |
+| **Leader Prep** | `/okrs/leader-prep` | Preparação do líder para rituais do time | Semanal (segundas) | Líder de time |
+| **Team Check-in** | `/okrs/team-checkin` | Ritual síncrono de revisão coletiva | Semanal | Líder + membros |
+| **Managers Check-in** | `/okrs/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
+| **C-Level Check-in** | `/okrs/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
+
+**Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
+
+**Características comuns:**
+- Formato full-page (modal removido em v2.27.0)
+- Salvamento de draft automático
+- Navegação step-based com validação
+- Integração com ciclo trimestral ativo
+
+#### Collaborator Check-in — Filtro de KRs
+
+O wizard de check-in semanal (`/okrs/collaborator-checkin`) busca KRs onde o usuário efetivo:
+
+1. ✅ É **owner** da KR (`owner_user_id = effectiveUserId`)
+2. ✅ É **co-responsável** da KR (`co_responsibles` contém `effectiveUserId`)
+3. ✅ É **owner de pelo menos uma iniciativa** vinculada à KR
+
+**Hook:** `useUserKrsForWizard` (src/modules/okrs/hooks/useUserKrsForWizard.ts)
+```
+
+**C. Adicionar Seção de Teams — Utilitários (após seção de Teams existente)**
+
+```markdown
+#### Utilitários do Módulo Teams
+
+| Utilitário | Arquivo | Descrição |
+|------------|---------|-----------|
+| `organogramToText` | `src/modules/teams/utils/organogramToText.ts` | Converte organograma para ASCII tree |
+
+**Formato de Saída:**
+- Header com nome da BU e timestamp
+- Estrutura hierárquica (CEO → Áreas → Times → Subtimes → Squads → Membros)
+- Respeita filtros ativos (`showMembers`, `showSquads`)
+- Footer com contagem de pessoas
+
+**Uso:** Botão de cópia nos controles do organograma (normal e fullscreen).
+```
+
+**D. Changelog — Adicionar v2.78.0 (antes de v2.77.0)**
+
+```markdown
+### v2.78.0 (2026-02-02)
+- **Organogram Text Export v1.0**:
+  - Novo utilitário `organogramToText.ts` para conversão ASCII
+  - Botão de exportar em `OrganogramControls` (normal + fullscreen)
+  - Formato legível para análise por LLMs (GPT, Claude)
+  - Respeita filtros de visualização (membros, squads)
+  - Copia para clipboard com toast de confirmação
+- **Dashboard Ticket Links v1.0**:
+  - Contadores de tickets na home agora são clicáveis
+  - Links navegam para `/tickets` com filtros pré-aplicados
+  - "Abertos" → `/tickets`
+  - "Vencidos" → `/tickets?overdue=true`
+  - "Vence hoje" → `/tickets?due_today=true`
+- **PII Security Views Update v1.0**:
+  - Views `v_bu_active_profiles` e `v_profiles_directory` atualizadas
+  - Removidos campos sensíveis: `whatsapp_personal`, `instagram_id`, `discord_id`
+  - Views agora usam `security_invoker = on`
+  - Dados PII acessíveis apenas via RPC `get_profile_with_privacy()`
+- **OKR Wizards Documentation**:
+  - Seção 4.8 expandida com documentação dos 5 wizards
+  - Tabela com propósito, frequência e participantes de cada ritual
+```
+
+### 4.2 DOCUMENTATION_INDEX.md
+
+**Atualizar linhas 3-5:**
+```markdown
+**Última atualização:** 2026-02-02  
+**TCR Version:** 2.78.0  
+**System Health:** 9.5/10 ✅
+```
+
+**Atualizar tabela de docs canônicos (linha 32):**
+```markdown
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v2.78.0 |
+```
+
+**Adicionar UI_COMPONENTS_REGISTRY.md à tabela (após linha 40):**
+```markdown
+| `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.2.0 |
+```
+
+**Atualizar rodapé (linha 99):**
+```markdown
+*Atualizado em 2026-02-02 — TCR v2.78.0 — Health Score 9.5/10*
+```
+
+### 4.3 docs/canonical/README.md
+
+**Atualizar linha 16:**
+```markdown
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio | v2.78.0 |
 ```
 
 ---
 
-## 3. Formato de Saída Esperado
+## 5. O Que NÃO Será Alterado
 
-```text
-ORGANOGRAMA - Jetimob
-Gerado em: 02/02/2026, 15:30
-
-CEO: Victorio Lassance
-
-├── ÁREA: Revenue
-│   ├── Líder: João Silva
-│   │
-│   ├── TIME: Comercial
-│   │   ├── Líder: Maria Souza
-│   │   ├── Pedro Santos (pedro@jetimob.com)
-│   │   ├── Ana Costa
-│   │   │
-│   │   └── SUBTIME: Outbound
-│   │       ├── Líder: Carlos Lima
-│   │       └── Julia Martins
-│   │
-│   └── TIME: Sucesso do Cliente
-│       └── Líder: Roberto Alves
-│
-├── ÁREA: Tecnologia
-│   ├── TIME: Engenharia
-│   │   ├── Líder: Felipe Costa
-│   │   ├── Lucas Rodrigues
-│   │   └── Mariana Oliveira
-...
-
-Total: 45 pessoas
-```
+- **UI_COMPONENTS_REGISTRY.md** — Já está atualizado (v1.2.0, 2026-02-02)
+- **Nenhum componente novo** será criado — todas as alterações usam componentes canônicos existentes
+- **Estrutura de pastas** permanece inalterada
 
 ---
 
-## 4. Mudanças Técnicas
+## 6. Validação Pós-Implementação
 
-### 4.1 Criar Utilitário de Conversão
-**Arquivo:** `src/modules/teams/utils/organogramToText.ts`
-
-Função que converte `OrganogramData` para texto ASCII respeitando filtros:
-
-```typescript
-import { OrganogramData, OrganogramNode, OrganogramFilters } from "../types/organogram";
-
-export function organogramToText(
-  data: OrganogramData,
-  filters: OrganogramFilters,
-  buName: string
-): string {
-  // Implementação recursiva com contagem de pessoas
-}
-```
-
-**Lógica:**
-1. Header com nome da BU e data/hora
-2. CEO no topo (se existir)
-3. Áreas como children do CEO (ou raiz se não houver CEO)
-4. Recursão para times, subtimes, squads e membros
-5. Filtros `showMembers` e `showSquads` respeitados
-6. Contador de pessoas no rodapé
-
-### 4.2 Atualizar OrganogramControls
-**Arquivo:** `src/modules/teams/components/organogram/OrganogramControls.tsx`
-
-- Adicionar prop `onExportText?: () => void`
-- Adicionar botão com ícone `Copy` ou `FileText`
-- Tooltip: "Copiar como texto"
-- Disponível em modo normal e compacto (fullscreen)
-
-### 4.3 Implementar Handler na Página
-**Arquivo:** `src/modules/teams/pages/OrganogramPage.tsx`
-
-- Importar `organogramToText` do utilitário
-- Importar `toast` de `sonner`
-- Implementar `handleExportText`:
-  1. Gerar texto via `organogramToText(data, filters, currentBu?.name)`
-  2. Copiar para clipboard via `navigator.clipboard.writeText()`
-  3. Toast de sucesso: "Organograma copiado!"
-
----
-
-## 5. Arquivos a Criar/Modificar
-
-| Arquivo | Ação | Linhas Est. |
-|---------|------|-------------|
-| `src/modules/teams/utils/organogramToText.ts` | **CRIAR** | ~80 |
-| `src/modules/teams/components/organogram/OrganogramControls.tsx` | Adicionar botão + prop | ~15 |
-| `src/modules/teams/pages/OrganogramPage.tsx` | Handler + callback | ~10 |
-
----
-
-## 6. Detalhes de Implementação
-
-### 6.1 Utilitário organogramToText.ts
-
-```typescript
-const LABELS: Record<string, string> = {
-  area: 'ÁREA',
-  team: 'TIME',
-  subteam: 'SUBTIME',
-  squad: 'SQUAD',
-};
-
-function renderNode(
-  node: OrganogramNode,
-  prefix: string,
-  isLast: boolean,
-  lines: string[],
-  filters: OrganogramFilters,
-  stats: { count: number }
-): void {
-  // Filtrar por tipo
-  if (node.type === 'person' && !filters.showMembers) return;
-  if (node.type === 'squad' && !filters.showSquads) return;
-
-  const connector = isLast ? '└── ' : '├── ';
-  const childPrefix = prefix + (isLast ? '    ' : '│   ');
-
-  // Renderizar nó baseado no tipo
-  if (node.type === 'person') {
-    const email = node.email ? ` (${node.email})` : '';
-    lines.push(`${prefix}${connector}${node.name}${email}`);
-    stats.count++;
-  } else {
-    const label = LABELS[node.type] || node.type.toUpperCase();
-    lines.push(`${prefix}${connector}${label}: ${node.name}`);
-    
-    // Líder (se existir)
-    if (node.leaderName) {
-      lines.push(`${childPrefix}├── Líder: ${node.leaderName}`);
-      stats.count++;
-    }
-  }
-
-  // Filtrar children
-  const filteredChildren = node.children.filter(child => {
-    if (child.type === 'person' && !filters.showMembers) return false;
-    if (child.type === 'squad' && !filters.showSquads) return false;
-    return true;
-  });
-
-  // Renderizar children
-  filteredChildren.forEach((child, i) => {
-    renderNode(child, childPrefix, i === filteredChildren.length - 1, lines, filters, stats);
-  });
-}
-```
-
-### 6.2 Botão nos Controles (OrganogramControls.tsx)
-
-**Modo Normal:**
-```tsx
-<Tooltip>
-  <TooltipTrigger asChild>
-    <Button variant="outline" size="icon" onClick={onExportText}>
-      <Copy className="w-4 h-4" />
-    </Button>
-  </TooltipTrigger>
-  <TooltipContent>Copiar como texto</TooltipContent>
-</Tooltip>
-```
-
-**Modo Compacto (fullscreen):**
-```tsx
-<Tooltip>
-  <TooltipTrigger asChild>
-    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onExportText}>
-      <Copy className="w-4 h-4" />
-    </Button>
-  </TooltipTrigger>
-  <TooltipContent>Copiar como texto</TooltipContent>
-</Tooltip>
-```
-
-### 6.3 Handler na OrganogramPage.tsx
-
-```typescript
-import { toast } from "sonner";
-import { organogramToText } from "../utils/organogramToText";
-
-const handleExportText = useCallback(() => {
-  if (!data) return;
-  
-  const text = organogramToText(data, filters, currentBu?.name || 'BU');
-  navigator.clipboard.writeText(text).then(() => {
-    toast.success("Organograma copiado!", {
-      description: "Cole em qualquer lugar para análise."
-    });
-  }).catch(() => {
-    toast.error("Erro ao copiar", {
-      description: "Não foi possível acessar a área de transferência."
-    });
-  });
-}, [data, filters, currentBu?.name]);
-```
-
----
-
-## 7. UX
-
-1. Usuário abre organograma (`/teams/org-chart`)
-2. Ajusta filtros (mostrar/ocultar membros, squads)
-3. Clica no botão "Copiar como texto"
-4. Toast aparece: "Organograma copiado!"
-5. Usuário cola no ChatGPT/Claude para análise
-
----
-
-## 8. Validação Pós-Implementação
-
-1. Abrir organograma normal e fullscreen
-2. Ativar/desativar filtros de membros e squads
-3. Clicar no botão de exportar
-4. Verificar toast de confirmação
-5. Colar em editor de texto e verificar formatação
-6. Verificar contador de pessoas
-7. Verificar que líderes aparecem corretamente
-8. Verificar estrutura hierárquica (indentação)
-
----
-
-## 9. Impacto em Documentação
-
-Nenhuma atualização de documentação canônica necessária - esta é uma feature de UI sem novos padrões arquiteturais.
+1. ✅ Verificar que versão no header é v2.78.0
+2. ✅ Confirmar changelog com as 4 features documentadas
+3. ✅ Validar que seção 4.8 OKR Wizards está completa com tabela
+4. ✅ Confirmar que DOCUMENTATION_INDEX reflete versão v2.78.0
+5. ✅ Verificar que README canonical tem versão v2.78.0
+6. ✅ Confirmar que UI_COMPONENTS_REGISTRY NÃO foi alterado (já atualizado)
