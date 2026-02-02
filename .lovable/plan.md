@@ -1,169 +1,267 @@
 
-# Plano: Correção Definitiva do Menu Não-Clicável Após Troca de Aba
+# Plano: Exportar Organograma em Formato de Texto
 
-## Contexto e Análise
+## 1. Objetivo
+Adicionar funcionalidade para exportar o organograma em formato de texto ASCII indentado, permitindo que o usuário copie e cole para análise por GPT ou outros LLMs.
 
-### Problema Identificado
-O menu da sidebar desktop para de responder a cliques após o usuário trocar de aba no navegador e retornar. O problema só é resolvido com refresh da página.
+---
 
-### Causa Raiz
-O Radix UI (biblioteca de componentes usada pelos Tooltips, Popovers e DropdownMenus) manipula `pointer-events` no body para prevenir interações enquanto um overlay está aberto. Quando o usuário troca de aba:
-1. O browser suspende a execução de JavaScript
-2. Timers e callbacks de animação são pausados
-3. Se um Tooltip estava em processo de fechar (animação), o `pointer-events: none` fica residual
-4. Ao voltar para a aba, o cleanup não é executado corretamente
+## 2. Análise do Pré-Checklist (TCR + Docs Canônicos)
 
-### Abordagens Atuais (Problemáticas)
-1. **App.tsx**: Listener básico de `visibilitychange` - muito simples, não cobre todos os casos
-2. **HubLayout.tsx**: Função agressiva com 6 timers - causa race conditions e pode interferir com overlays legítimos
-3. **Remoção forçada de tooltips órfãos** - remove elementos que o Radix ainda pode estar gerenciando
+### 2.1 Documentos Consultados
+| Documento | Versão | Pontos Relevantes |
+|-----------|--------|-------------------|
+| TECHNICAL_CONTEXT_REGISTRY.md | v2.77.0 | Hooks canônicos, toast via sonner |
+| UI_COMPONENTS_REGISTRY.md | v1.2.0 | Padrão de Button, Tooltip, navegação |
+| DEVELOPMENT_STANDARDS.md | v1.17.0 | URL State, estrutura de módulos |
 
-## Solução Proposta
+### 2.2 Padrões Aplicáveis
+- **Toast**: Usar `sonner` (toast importado de `sonner`)
+- **Tooltips**: Usar componente Radix com `disableHoverableContent`
+- **Ícones**: Usar `lucide-react`
+- **Button**: Usar variant `outline` + size `icon` para ações secundárias
+- **Estrutura de Arquivos**: Módulos em `src/modules/{domain}/utils/` para utilitários
 
-### Abordagem Unificada e Segura
-
-Em vez de múltiplas funções de cleanup espalhadas, criar um **sistema centralizado de recuperação** que:
-1. Detecta quando a aba volta ao foco
-2. Aguarda um tempo mínimo para garantir que animações completaram
-3. Verifica se há bloqueio real (não apenas estilos inline)
-4. Limpa apenas se necessário e de forma segura
-
-### Mudanças Técnicas
-
-#### 1. Criar Hook Centralizado `useRadixFocusRecovery`
-**Novo arquivo:** `src/hooks/useRadixFocusRecovery.ts`
-
-Responsabilidades:
-- Ouvir `visibilitychange` no document
-- Quando a aba ficar visível:
-  - Aguardar 100ms (tempo para animações do Radix completarem)
-  - Verificar computed style do body
-  - Se `pointer-events` estiver "none", forçar para "auto"
-  - Limpar atributos `data-scroll-locked`, `aria-hidden` e `inert` do body
-- Não remover elementos DOM (evitar race conditions)
-- Não interferir com overlays abertos legitimamente
-
-#### 2. Simplificar HubLayout.tsx
-- Remover a função `forceCleanupPointerEvents()` agressiva
-- Remover os múltiplos timers (0, 50, 150, 300, 500, 1000ms)
-- Remover o listener global de `mousemove`/`click`
-- Usar apenas o hook centralizado
-
-#### 3. Simplificar SettingsLayout.tsx
-- Remover a função de cleanup duplicada
-- Usar o hook centralizado
-
-#### 4. Manter App.tsx Limpo
-- Remover o listener `visibilitychange` existente (será centralizado no hook)
-
-#### 5. Configurar Tooltips do Sidebar
-- Manter `disableHoverableContent` (já está correto)
-- Adicionar `delayDuration={0}` para resposta imediata
-- Garantir `pointer-events-none` no TooltipContent
-
-### Diagrama de Arquitetura
-
+### 2.3 Estrutura de Dados (useOrganogramData)
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                         App.tsx                              │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │          useRadixFocusRecovery() (uma vez)              │ │
-│  │   - visibilitychange listener                           │ │
-│  │   - cleanup centralizado e seguro                       │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                              │                               │
-│                              ▼                               │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │                    HubLayout                             │ │
-│  │   - SEM cleanup agressivo                                │ │
-│  │   - SEM listeners de mousemove/click                     │ │
-│  │   - Apenas fecha menu mobile ao navegar                  │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                              │                               │
-│                              ▼                               │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │                  DynamicSidebar                          │ │
-│  │   - Tooltips com configuração otimizada                  │ │
-│  │   - disableHoverableContent=true                         │ │
-│  │   - delayDuration=0                                      │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+OrganogramData {
+  ceo: OrganogramNode | null
+  areas: OrganogramNode[]
+}
+
+OrganogramNode {
+  id, type, name, email?, photoUrl?, color?, role?, path
+  children: OrganogramNode[]
+  leaderName?, leaderPhotoUrl?
+}
+
+type: 'ceo' | 'area' | 'team' | 'subteam' | 'squad' | 'person'
 ```
 
-## Arquivos a Modificar
+---
 
-| Arquivo | Ação |
-|---------|------|
-| `src/hooks/useRadixFocusRecovery.ts` | **CRIAR** - Hook centralizado |
-| `src/App.tsx` | Simplificar, usar hook |
-| `src/components/layout/HubLayout.tsx` | Remover cleanup agressivo |
-| `src/components/settings/SettingsLayout.tsx` | Remover cleanup duplicado |
-| `docs/canonical/UI_COMPONENTS_REGISTRY.md` | Documentar padrão de recovery |
+## 3. Formato de Saída Esperado
 
-## Lógica do Hook `useRadixFocusRecovery`
+```text
+ORGANOGRAMA - Jetimob
+Gerado em: 02/02/2026, 15:30
+
+CEO: Victorio Lassance
+
+├── ÁREA: Revenue
+│   ├── Líder: João Silva
+│   │
+│   ├── TIME: Comercial
+│   │   ├── Líder: Maria Souza
+│   │   ├── Pedro Santos (pedro@jetimob.com)
+│   │   ├── Ana Costa
+│   │   │
+│   │   └── SUBTIME: Outbound
+│   │       ├── Líder: Carlos Lima
+│   │       └── Julia Martins
+│   │
+│   └── TIME: Sucesso do Cliente
+│       └── Líder: Roberto Alves
+│
+├── ÁREA: Tecnologia
+│   ├── TIME: Engenharia
+│   │   ├── Líder: Felipe Costa
+│   │   ├── Lucas Rodrigues
+│   │   └── Mariana Oliveira
+...
+
+Total: 45 pessoas
+```
+
+---
+
+## 4. Mudanças Técnicas
+
+### 4.1 Criar Utilitário de Conversão
+**Arquivo:** `src/modules/teams/utils/organogramToText.ts`
+
+Função que converte `OrganogramData` para texto ASCII respeitando filtros:
 
 ```typescript
-// Pseudocódigo da lógica
-function useRadixFocusRecovery() {
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      
-      // Aguardar animações Radix completarem
-      setTimeout(() => {
-        // Verificar se há bloqueio real
-        const computed = getComputedStyle(document.body);
-        if (computed.pointerEvents === 'none') {
-          // Forçar recuperação apenas se não houver overlay aberto
-          const hasOpenOverlay = document.querySelector(
-            '[data-state="open"][data-radix-dialog-content], ' +
-            '[data-state="open"][data-radix-popover-content]'
-          );
-          
-          if (!hasOpenOverlay) {
-            document.body.style.pointerEvents = 'auto';
-            document.body.removeAttribute('data-scroll-locked');
-            document.body.removeAttribute('aria-hidden');
-            document.body.removeAttribute('inert');
-          }
-        }
-      }, 100);
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+import { OrganogramData, OrganogramNode, OrganogramFilters } from "../types/organogram";
+
+export function organogramToText(
+  data: OrganogramData,
+  filters: OrganogramFilters,
+  buName: string
+): string {
+  // Implementação recursiva com contagem de pessoas
 }
 ```
 
-## Por que Esta Solução é Melhor
+**Lógica:**
+1. Header com nome da BU e data/hora
+2. CEO no topo (se existir)
+3. Áreas como children do CEO (ou raiz se não houver CEO)
+4. Recursão para times, subtimes, squads e membros
+5. Filtros `showMembers` e `showSquads` respeitados
+6. Contador de pessoas no rodapé
 
-1. **Centralizada**: Um único ponto de controle, fácil de debugar e manter
-2. **Não-agressiva**: Só age quando há problema real detectado
-3. **Respeita overlays legítimos**: Verifica se há dialogs/popovers abertos antes de limpar
-4. **Sem race conditions**: Não remove elementos DOM, apenas limpa estilos
-5. **Performance**: Sem listeners de mousemove que rodam constantemente
+### 4.2 Atualizar OrganogramControls
+**Arquivo:** `src/modules/teams/components/organogram/OrganogramControls.tsx`
 
-## Riscos e Mitigações
+- Adicionar prop `onExportText?: () => void`
+- Adicionar botão com ícone `Copy` ou `FileText`
+- Tooltip: "Copiar como texto"
+- Disponível em modo normal e compacto (fullscreen)
 
-| Risco | Mitigação |
-|-------|-----------|
-| Overlay legítimo ser afetado | Verificação de `[data-state="open"]` antes de limpar |
-| Cleanup não executar | Timeout de 100ms garante execução após animações |
-| Múltiplas instâncias do hook | Hook será chamado apenas uma vez no App.tsx |
+### 4.3 Implementar Handler na Página
+**Arquivo:** `src/modules/teams/pages/OrganogramPage.tsx`
 
-## Validação Pós-Implementação
+- Importar `organogramToText` do utilitário
+- Importar `toast` de `sonner`
+- Implementar `handleExportText`:
+  1. Gerar texto via `organogramToText(data, filters, currentBu?.name)`
+  2. Copiar para clipboard via `navigator.clipboard.writeText()`
+  3. Toast de sucesso: "Organograma copiado!"
 
-1. Abrir app no desktop
-2. Navegar para qualquer página com sidebar
-3. Trocar de aba do navegador
-4. Aguardar alguns segundos
-5. Voltar para a aba do Hub
-6. Verificar se cliques na sidebar funcionam imediatamente
-7. Verificar se popover de notificações ainda funciona
-8. Verificar se dropdown do usuário ainda funciona
-9. Verificar se tooltips da sidebar ainda aparecem
+---
 
-## Atualização de Documentação
+## 5. Arquivos a Criar/Modificar
 
-Adicionar ao UI_COMPONENTS_REGISTRY.md uma seção sobre o padrão de focus recovery para componentes Radix, documentando o hook `useRadixFocusRecovery` como solução canônica.
+| Arquivo | Ação | Linhas Est. |
+|---------|------|-------------|
+| `src/modules/teams/utils/organogramToText.ts` | **CRIAR** | ~80 |
+| `src/modules/teams/components/organogram/OrganogramControls.tsx` | Adicionar botão + prop | ~15 |
+| `src/modules/teams/pages/OrganogramPage.tsx` | Handler + callback | ~10 |
+
+---
+
+## 6. Detalhes de Implementação
+
+### 6.1 Utilitário organogramToText.ts
+
+```typescript
+const LABELS: Record<string, string> = {
+  area: 'ÁREA',
+  team: 'TIME',
+  subteam: 'SUBTIME',
+  squad: 'SQUAD',
+};
+
+function renderNode(
+  node: OrganogramNode,
+  prefix: string,
+  isLast: boolean,
+  lines: string[],
+  filters: OrganogramFilters,
+  stats: { count: number }
+): void {
+  // Filtrar por tipo
+  if (node.type === 'person' && !filters.showMembers) return;
+  if (node.type === 'squad' && !filters.showSquads) return;
+
+  const connector = isLast ? '└── ' : '├── ';
+  const childPrefix = prefix + (isLast ? '    ' : '│   ');
+
+  // Renderizar nó baseado no tipo
+  if (node.type === 'person') {
+    const email = node.email ? ` (${node.email})` : '';
+    lines.push(`${prefix}${connector}${node.name}${email}`);
+    stats.count++;
+  } else {
+    const label = LABELS[node.type] || node.type.toUpperCase();
+    lines.push(`${prefix}${connector}${label}: ${node.name}`);
+    
+    // Líder (se existir)
+    if (node.leaderName) {
+      lines.push(`${childPrefix}├── Líder: ${node.leaderName}`);
+      stats.count++;
+    }
+  }
+
+  // Filtrar children
+  const filteredChildren = node.children.filter(child => {
+    if (child.type === 'person' && !filters.showMembers) return false;
+    if (child.type === 'squad' && !filters.showSquads) return false;
+    return true;
+  });
+
+  // Renderizar children
+  filteredChildren.forEach((child, i) => {
+    renderNode(child, childPrefix, i === filteredChildren.length - 1, lines, filters, stats);
+  });
+}
+```
+
+### 6.2 Botão nos Controles (OrganogramControls.tsx)
+
+**Modo Normal:**
+```tsx
+<Tooltip>
+  <TooltipTrigger asChild>
+    <Button variant="outline" size="icon" onClick={onExportText}>
+      <Copy className="w-4 h-4" />
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>Copiar como texto</TooltipContent>
+</Tooltip>
+```
+
+**Modo Compacto (fullscreen):**
+```tsx
+<Tooltip>
+  <TooltipTrigger asChild>
+    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onExportText}>
+      <Copy className="w-4 h-4" />
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>Copiar como texto</TooltipContent>
+</Tooltip>
+```
+
+### 6.3 Handler na OrganogramPage.tsx
+
+```typescript
+import { toast } from "sonner";
+import { organogramToText } from "../utils/organogramToText";
+
+const handleExportText = useCallback(() => {
+  if (!data) return;
+  
+  const text = organogramToText(data, filters, currentBu?.name || 'BU');
+  navigator.clipboard.writeText(text).then(() => {
+    toast.success("Organograma copiado!", {
+      description: "Cole em qualquer lugar para análise."
+    });
+  }).catch(() => {
+    toast.error("Erro ao copiar", {
+      description: "Não foi possível acessar a área de transferência."
+    });
+  });
+}, [data, filters, currentBu?.name]);
+```
+
+---
+
+## 7. UX
+
+1. Usuário abre organograma (`/teams/org-chart`)
+2. Ajusta filtros (mostrar/ocultar membros, squads)
+3. Clica no botão "Copiar como texto"
+4. Toast aparece: "Organograma copiado!"
+5. Usuário cola no ChatGPT/Claude para análise
+
+---
+
+## 8. Validação Pós-Implementação
+
+1. Abrir organograma normal e fullscreen
+2. Ativar/desativar filtros de membros e squads
+3. Clicar no botão de exportar
+4. Verificar toast de confirmação
+5. Colar em editor de texto e verificar formatação
+6. Verificar contador de pessoas
+7. Verificar que líderes aparecem corretamente
+8. Verificar estrutura hierárquica (indentação)
+
+---
+
+## 9. Impacto em Documentação
+
+Nenhuma atualização de documentação canônica necessária - esta é uma feature de UI sem novos padrões arquiteturais.
