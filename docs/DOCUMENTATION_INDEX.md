@@ -1,8 +1,8 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-23  
-**TCR Version:** 2.72.0  
-**System Health:** 10/10 ✅
+**Última atualização:** 2026-02-02  
+**TCR Version:** 2.78.0  
+**System Health:** 9.5/10 ✅
 
 ---
 
@@ -29,7 +29,7 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v2.70.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v2.78.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.17.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | Canônico |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.1 |
@@ -37,6 +37,7 @@ docs/
 | `RBAC_TEMPLATES_V3.md` | Sistema de templates de permissão | v3.0 |
 | `QUERY_KEYS_STANDARD.md` | Padrão de query keys centralizadas | Normativo |
 | `BU_SCOPED_SUPABASE_RULES.md` | Regras PRE-BU/POST-BU | Normativo |
+| `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.2.0 |
 | `SCHEMA_QUICK_REFERENCE.md` | Referência rápida de schema | v1.0.0 |
 
 ---
@@ -96,4 +97,4 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Atualizado em 2026-01-23 — TCR v2.70.0 — Health Score 10/10*
+*Atualizado em 2026-02-02 — TCR v2.78.0 — Health Score 9.5/10*
