@@ -53,6 +53,13 @@ export default function TicketsListPage() {
   const showOverdue = overdueState.value;
   const setShowOverdue = overdueState.set;
 
+  const dueTodayState = useUrlState<boolean>({ 
+    key: "due_today", 
+    defaultValue: false, 
+    parse: parsers.boolean 
+  });
+  const showDueToday = dueTodayState.value;
+
   // Parse responsible filter into owner_user_id or assigned_contact_id
   const parsedResponsible = useMemo(() => parseResponsibleValue(responsibleId), [responsibleId]);
 
@@ -66,7 +73,8 @@ export default function TicketsListPage() {
     assigned_contact_id: parsedResponsible.type === "external" ? parsedResponsible.id ?? undefined : undefined,
     search: search || undefined,
     overdue: showOverdue || undefined,
-  }), [typeFilter, statusFilter, categoryId, partnerId, parsedResponsible, search, showOverdue]);
+    due_today: showDueToday || undefined,
+  }), [typeFilter, statusFilter, categoryId, partnerId, parsedResponsible, search, showOverdue, showDueToday]);
 
   const { 
     data: tickets = [], 
