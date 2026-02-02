@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle2, Pencil, Sparkles, AlertCircle, Lightbulb } from 'lucide-react';
 import { VicTypewriterText } from '@/modules/vic';
+import { RefreshCw } from 'lucide-react';
 import { FEEDBACK_STYLES } from '@/lib/colors';
 import type { ObjectiveValidationFeedback } from '@/modules/okrs/hooks';
 
@@ -28,6 +29,7 @@ export interface ObjectiveInputWithValidationProps {
   onValidate: () => void;
   onEdit: () => void;
   onSelectAlternative: (alt: string) => void;
+  onRequestMoreSuggestions?: () => void;
   minLength?: number;
   placeholder?: string;
 }
@@ -45,6 +47,7 @@ export function ObjectiveInputWithValidation({
   onValidate,
   onEdit,
   onSelectAlternative,
+  onRequestMoreSuggestions,
   minLength = 10,
   placeholder = 'Escreva um objetivo inspirador e claro...',
 }: ObjectiveInputWithValidationProps) {
@@ -152,10 +155,29 @@ export function ObjectiveInputWithValidation({
           {/* Alternatives */}
           {feedback.alternatives && feedback.alternatives.length > 0 && (
             <div className="pt-2 border-t border-border/50 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Lightbulb className="h-3 w-3" />
-                Sugestões alternativas
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Lightbulb className="h-3 w-3" />
+                  Sugestões alternativas
+                </p>
+                {onRequestMoreSuggestions && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onRequestMoreSuggestions}
+                    disabled={isValidating}
+                    className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                  >
+                    {isValidating ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3" />
+                    )}
+                    Sugerir outros
+                  </Button>
+                )}
+              </div>
               <div className="grid gap-2">
                 {feedback.alternatives.map((alt, i) => (
                   <button
@@ -177,6 +199,27 @@ export function ObjectiveInputWithValidation({
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Show "Sugerir objetivos" button even when no alternatives yet */}
+          {(!feedback.alternatives || feedback.alternatives.length === 0) && onRequestMoreSuggestions && (
+            <div className="pt-2 border-t border-border/50">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onRequestMoreSuggestions}
+                disabled={isValidating}
+                className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                {isValidating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Lightbulb className="h-3 w-3" />
+                )}
+                Sugerir objetivos alternativos
+              </Button>
             </div>
           )}
         </div>
