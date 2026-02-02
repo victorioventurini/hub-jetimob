@@ -8,7 +8,7 @@ import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { SharedOkrBadge } from './SharedOkrBadge';
 import { KrActionButtons } from './KrActionButtons';
-import { useTeamKeyResults, useObjectiveContributors } from '../hooks';
+import { useTeamKeyResults, useObjectiveContributors, useCanEditTeamObjective } from '../hooks';
 import { useBu } from '@/contexts/BuContext';
 import { TeamKrFormDialog } from './TeamKrFormDialog';
 import { CheckinDialog } from './CheckinDialog';
@@ -73,6 +73,9 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
   const { data: contributors } = useObjectiveContributors(objective.is_shared ? objective.id : undefined);
   const { openPanel } = useVic();
   const { isEnabled: vicEnabled } = useVicEnabled();
+  
+  // Permission check: Can user edit this objective?
+  const { canEdit: canEditObjective } = useCanEditTeamObjective(objective);
 
   const teamName = teams.find(t => t.id === objective.team_id)?.name || 'Time';
   const isPrimaryTeam = !currentTeamId || currentTeamId === objective.team_id;
@@ -151,54 +154,58 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
               )}
             </div>
             <div className="flex items-center gap-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Editar
-                  </DropdownMenuItem>
-                  {vicEnabled && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          openPanel({
-                            agentSlug: "validador-metodologico-okrs",
-                            actionContext: "okr-review-quality",
-                            context: {
-                              type: "Objetivo de Time",
-                              title: objective.title,
-                              description: objective.description || undefined,
-                              status: objective.status,
-                              additionalData: {
-                                teamName,
-                                isShared: objective.is_shared,
-                                contributingTeams: contributingTeams.map(t => t.name),
-                                krsCount: objectiveKrs.length,
-                                krs: objectiveKrs.map(kr => ({
-                                  title: kr.title,
-                                  baseline: kr.baseline,
-                                  current: kr.current_value,
-                                  target: kr.target,
-                                  status: kr.status,
-                                })),
-                              },
-                            },
-                          });
-                        }}
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Vic: Revisar qualidade
+              {(canEditObjective || vicEnabled) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {canEditObjective && (
+                      <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Editar
                       </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    )}
+                    {vicEnabled && (
+                      <>
+                        {canEditObjective && <DropdownMenuSeparator />}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            openPanel({
+                              agentSlug: "validador-metodologico-okrs",
+                              actionContext: "okr-review-quality",
+                              context: {
+                                type: "Objetivo de Time",
+                                title: objective.title,
+                                description: objective.description || undefined,
+                                status: objective.status,
+                                additionalData: {
+                                  teamName,
+                                  isShared: objective.is_shared,
+                                  contributingTeams: contributingTeams.map(t => t.name),
+                                  krsCount: objectiveKrs.length,
+                                  krs: objectiveKrs.map(kr => ({
+                                    title: kr.title,
+                                    baseline: kr.baseline,
+                                    current: kr.current_value,
+                                    target: kr.target,
+                                    status: kr.status,
+                                  })),
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Vic: Revisar qualidade
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -258,18 +265,20 @@ export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjec
                   {objectiveKrs.length} KR{objectiveKrs.length !== 1 ? 's' : ''}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAddKrDialog(true);
-                }}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Adicionar KR
-              </Button>
+              {canEditObjective && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAddKrDialog(true);
+                  }}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Adicionar KR
+                </Button>
+              )}
             </div>
           </div>
 
