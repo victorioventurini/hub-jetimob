@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight, Target, Plus, MoreHorizontal, Pencil, User }
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
-import { useOrgKeyResults } from '../hooks';
+import { useOrgKeyResults, useCanManageOrgOkr } from '../hooks';
 import { useBu } from '@/contexts/BuContext';
 import { OrgKrFormDialog } from './OrgKrFormDialog';
 import { OrgObjectiveFormDialog } from './OrgObjectiveFormDialog';
@@ -49,6 +49,9 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
     owner_user_id?: string | null;
   } | null>(null);
   const { data: keyResults, isLoading } = useOrgKeyResults(objective.bu_id || currentBu?.id, objective.id);
+  
+  // Permission check: Can user manage org OKRs?
+  const { canManage: canEditOrgOkr } = useCanManageOrgOkr();
 
   const activeKrs = keyResults?.filter(kr => !kr.deleted_at) || [];
   
@@ -100,19 +103,21 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
               )}
             </div>
             <div className="flex items-center gap-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Editar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {canEditOrgOkr && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -172,18 +177,20 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                   {activeKrs.length} KR{activeKrs.length !== 1 ? 's' : ''}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAddKrDialog(true);
-                }}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Adicionar KR
-              </Button>
+              {canEditOrgOkr && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAddKrDialog(true);
+                  }}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Adicionar KR
+                </Button>
+              )}
             </div>
           </div>
 
