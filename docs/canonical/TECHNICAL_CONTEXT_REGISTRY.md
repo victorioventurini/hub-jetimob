@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.77.0  
-**Última atualização:** 2026-02-02 (v2.77.0 - OKR Checkins RLS Ownership Fix)
+**Versão:** 2.78.0  
+**Última atualização:** 2026-02-02 (v2.78.0 - OKR Wizards Docs + Organogram Text Export + PII Security Views)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v2.0** | **Log Cleanup Executed** | **UI Wave v1.0 (Button isLoading + LoadingState)** | **KPIs Module Complete v1.0 (CRUD + Mutations)** | **Radix Focus Recovery v1.0** | **OKR Checkins RLS Ownership Fix v1.0** | **System Health Score 9.5/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v2.0** | **Log Cleanup Executed** | **UI Wave v1.0 (Button isLoading + LoadingState)** | **KPIs Module Complete v1.0 (CRUD + Mutations)** | **Radix Focus Recovery v1.0** | **OKR Checkins RLS Ownership Fix v1.0** | **Organogram Text Export v1.0** | **Dashboard Ticket Links v1.0** | **PII Security Views Update v1.0** | **System Health Score 9.5/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1350,7 +1350,7 @@ Vínculo entre empresas externas e categorias de tickets que atendem.
 | **Home** | - | Dashboard pessoal com OKRs, aniversários, cultura, novos Jetimobers | ✅ Ativo |
 | **OKRs** | `okrs` | Gestão de Objectives e Key Results | ✅ Ativo |
 | **KPIs** | `kpis` | Indicadores de performance | ✅ Ativo |
-| **Times** | `teams` | Estrutura organizacional | ✅ Ativo |
+| **Times** | `teams` | Estrutura organizacional (inclui Organogram Text Export) | ✅ Ativo |
 | **Assets** | `assets` | Patrimônio (Inventário, Chaves, Brindes) | ✅ Ativo |
 | **Integrações** | `integrations` | Gerenciamento de integrações e agentes IA | ✅ Ativo |
 | **Automações** | `automations` | Webhooks de entrada/saída | ✅ Ativo |
@@ -1376,7 +1376,20 @@ Vínculo entre empresas externas e categorias de tickets que atendem.
 - `GiftItemCard.tsx`, `GiftItemDialog.tsx` - Brindes
 - `AddPermissionDialog.tsx` - Configurações de permissão
 
-### 3.3 Configuração de Módulos por BU
+### 3.2.1 Utilitários do Módulo Teams
+
+| Utilitário | Arquivo | Descrição |
+|------------|---------|-----------|
+| `organogramToText` | `src/modules/teams/utils/organogramToText.ts` | Converte organograma para ASCII tree |
+
+**Formato de Saída (Organogram Text Export):**
+- Header com nome da BU e timestamp
+- Estrutura hierárquica (CEO → Áreas → Times → Subtimes → Squads → Membros)
+- Respeita filtros ativos (`showMembers`, `showSquads`)
+- Footer com contagem de pessoas
+
+**Uso:** Botão de cópia nos controles do organograma (`OrganogramControls`), disponível em modo normal e fullscreen.
+
 
 Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 
@@ -1695,7 +1708,27 @@ orgObjectiveWithKrs: `..., key_results:okr_org_key_results(..., owner:profiles!o
 teamObjectiveWithKrs: `..., key_results:okr_team_key_results(..., owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name, photo_url))`
 ```
 
-### 4.8 Wizard Colaborador — Filtro de KRs
+### 4.8 OKR Wizards — Rituais de Gestão
+
+O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósito e periodicidade específicos.
+
+| Wizard | Rota | Propósito | Frequência | Participante |
+|--------|------|-----------|------------|--------------|
+| **Collaborator Check-in** | `/okrs/collaborator-checkin` | Atualização individual de KRs, iniciativas e reflexão | Semanal (sextas) | Colaborador |
+| **Leader Prep** | `/okrs/leader-prep` | Preparação do líder para rituais do time | Semanal (segundas) | Líder de time |
+| **Team Check-in** | `/okrs/team-checkin` | Ritual síncrono de revisão coletiva | Semanal | Líder + membros |
+| **Managers Check-in** | `/okrs/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
+| **C-Level Check-in** | `/okrs/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
+
+**Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
+
+**Características comuns:**
+- Formato full-page (modal removido em v2.27.0)
+- Salvamento de draft automático
+- Navegação step-based com validação
+- Integração com ciclo trimestral ativo
+
+#### Collaborator Check-in — Filtro de KRs
 
 O wizard de check-in semanal (`/okrs/collaborator-checkin`) busca KRs onde o usuário efetivo:
 
@@ -2139,6 +2172,28 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.78.0 (2026-02-02)
+- **Organogram Text Export v1.0**:
+  - Novo utilitário `organogramToText.ts` para conversão ASCII
+  - Botão de exportar em `OrganogramControls` (normal + fullscreen)
+  - Formato legível para análise por LLMs (GPT, Claude)
+  - Respeita filtros de visualização (membros, squads)
+  - Copia para clipboard com toast de confirmação
+- **Dashboard Ticket Links v1.0**:
+  - Contadores de tickets na home agora são clicáveis
+  - Links navegam para `/tickets` com filtros pré-aplicados
+  - "Abertos" → `/tickets`
+  - "Vencidos" → `/tickets?overdue=true`
+  - "Vence hoje" → `/tickets?due_today=true`
+- **PII Security Views Update v1.0**:
+  - Views `v_bu_active_profiles` e `v_profiles_directory` atualizadas
+  - Removidos campos sensíveis: `whatsapp_personal`, `instagram_id`, `discord_id`
+  - Views agora usam `security_invoker = on`
+  - Dados PII acessíveis apenas via RPC `get_profile_with_privacy()`
+- **OKR Wizards Documentation**:
+  - Seção 4.8 expandida com documentação dos 5 wizards
+  - Tabela com propósito, frequência e participantes de cada ritual
 
 ### v2.77.0 (2026-01-30) — Result Count Pattern + Subcategory Filter Fix
 - **Padrão de Contador de Resultados**:
