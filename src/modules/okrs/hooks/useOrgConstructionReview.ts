@@ -86,6 +86,7 @@ export function useOrgConstructionReview(year: number | null): UseOrgConstructio
         .eq('bu_id', currentBuId)
         .eq('year', year)
         .neq('status', 'cancelled')
+        .neq('status', 'discarded')
         .order('created_at', { ascending: true });
 
       if (error) throw error;

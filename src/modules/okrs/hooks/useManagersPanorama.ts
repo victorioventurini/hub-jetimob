@@ -93,6 +93,7 @@ export function useManagersPanorama(cycleId: string | null | undefined) {
         .eq('team_objective.cycle_id', cycleId)
         .is('team_objective.cancelled_at', null)
         .is('team_objective.deleted_at', null)
+        .not('team_objective.status', 'in', '(cancelled,discarded)')
         .is('cancelled_at', null)
         .is('deleted_at', null);
 

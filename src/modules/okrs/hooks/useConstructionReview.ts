@@ -117,6 +117,8 @@ export function useConstructionReview(
         .eq('cycle_id', cycleId)
         .is('cancelled_at', null)
         .is('deleted_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded')
         .order('created_at');
 
       if (error) throw error;

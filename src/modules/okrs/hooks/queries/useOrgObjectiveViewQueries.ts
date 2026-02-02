@@ -43,6 +43,8 @@ export function useOrgObjectiveView(objectiveId: string) {
         .eq('id', objectiveId)
         .is('deleted_at', null)
         .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded')
         .maybeSingle();
 
       if (objError || !objective) {
@@ -89,7 +91,9 @@ export function useOrgObjectiveView(objectiveId: string) {
         .select(AGGREGATE_FIELDS.teamObjectiveWithKrsForView)
         .eq('org_objective_id', objectiveId)
         .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
 
       if (teamObjError) {
         console.error('Error fetching team objectives:', teamObjError);

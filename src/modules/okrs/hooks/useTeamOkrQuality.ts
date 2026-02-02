@@ -100,7 +100,9 @@ export function useTeamOkrQuality(
         .eq('team_id', teamId)
         .eq('cycle_id', cycleId)
         .is('cancelled_at', null)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
 
       if (error) throw error;
 

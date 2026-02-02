@@ -40,7 +40,9 @@ export function useTeamContributedOkrs(teamId?: string) {
         .select(AGGREGATE_FIELDS.teamObjectiveWithKrs)
         .in('id', objectiveIds)
         .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
 
       if (objError) {
         console.error('Error fetching objective details:', objError);

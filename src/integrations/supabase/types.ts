@@ -9432,7 +9432,7 @@ export type Database = {
           p_bu_id: string
           p_team_id?: string
           p_view?: string
-          p_year?: number
+          p_year: number
         }
         Returns: Json
       }
