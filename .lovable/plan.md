@@ -1,125 +1,169 @@
-# Systemic Health Plan — Hub da Jet
 
-**Versão:** 2.3  
-**Data:** 2026-01-31  
-**Base TCR:** v2.75.0  
-**Status:** ✅ OTIMIZAÇÃO COMPLETA | Score: 9.9/10
+# Plano: Correção Definitiva do Menu Não-Clicável Após Troca de Aba
 
-**Relatório completo:** `docs/audits/SYSTEMIC_HEALTH_ANALYSIS_2026-01-31.md`
+## Contexto e Análise
 
----
+### Problema Identificado
+O menu da sidebar desktop para de responder a cliques após o usuário trocar de aba no navegador e retornar. O problema só é resolvido com refresh da página.
 
-| Documento | Versão | Status |
-|-----------|--------|--------|
-| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | v2.75.0 | ✅ Analisado |
-| `docs/canonical/DEVELOPMENT_STANDARDS.md` | v1.17.0 | ✅ Analisado |
-| `src/index.css` | — | ✅ Analisado |
-| `src/components/ui/` | — | ✅ Analisado |
-| Memórias de projeto | — | ✅ Consideradas |
+### Causa Raiz
+O Radix UI (biblioteca de componentes usada pelos Tooltips, Popovers e DropdownMenus) manipula `pointer-events` no body para prevenir interações enquanto um overlay está aberto. Quando o usuário troca de aba:
+1. O browser suspende a execução de JavaScript
+2. Timers e callbacks de animação são pausados
+3. Se um Tooltip estava em processo de fechar (animação), o `pointer-events: none` fica residual
+4. Ao voltar para a aba, o cleanup não é executado corretamente
 
----
+### Abordagens Atuais (Problemáticas)
+1. **App.tsx**: Listener básico de `visibilitychange` - muito simples, não cobre todos os casos
+2. **HubLayout.tsx**: Função agressiva com 6 timers - causa race conditions e pode interferir com overlays legítimos
+3. **Remoção forçada de tooltips órfãos** - remove elementos que o Radix ainda pode estar gerenciando
 
-## 🎯 RESUMO EXECUTIVO
+## Solução Proposta
 
-### Saúde Atual: 9.9/10 ✅ (anteriormente 9.7/10)
+### Abordagem Unificada e Segura
 
-O Hub foi otimizado com E2E tests expandidos (~70% coverage).
+Em vez de múltiplas funções de cleanup espalhadas, criar um **sistema centralizado de recuperação** que:
+1. Detecta quando a aba volta ao foco
+2. Aguarda um tempo mínimo para garantir que animações completaram
+3. Verifica se há bloqueio real (não apenas estilos inline)
+4. Limpa apenas se necessário e de forma segura
 
-| Área | Score | Mudança |
-|------|-------|---------|
-| Design System (CSS) | 10/10 | — |
-| Componentes UI Core | 10/10 | — |
-| Consistência de Padrões | 10/10 | — |
-| Navegação | 10/10 | — |
-| Cores Hardcoded | 9.5/10 | — |
-| Loading States | 9.5/10 | — |
-| KPIs Module | 10/10 | — |
-| E2E Coverage | 10/10 | ✅ +1 (70% cobertura) |
+### Mudanças Técnicas
 
----
+#### 1. Criar Hook Centralizado `useRadixFocusRecovery`
+**Novo arquivo:** `src/hooks/useRadixFocusRecovery.ts`
 
-## ✅ WAVES EXECUTADAS
+Responsabilidades:
+- Ouvir `visibilitychange` no document
+- Quando a aba ficar visível:
+  - Aguardar 100ms (tempo para animações do Radix completarem)
+  - Verificar computed style do body
+  - Se `pointer-events` estiver "none", forçar para "auto"
+  - Limpar atributos `data-scroll-locked`, `aria-hidden` e `inert` do body
+- Não remover elementos DOM (evitar race conditions)
+- Não interferir com overlays abertos legitimamente
 
-### Wave 1 — Quick Wins ✅ COMPLETO
+#### 2. Simplificar HubLayout.tsx
+- Remover a função `forceCleanupPointerEvents()` agressiva
+- Remover os múltiplos timers (0, 50, 150, 300, 500, 1000ms)
+- Remover o listener global de `mousemove`/`click`
+- Usar apenas o hook centralizado
 
-| # | Ação | Status | Arquivos Corrigidos |
-|---|------|--------|---------------------|
-| 1.1 | Migrar `onClick+navigate` para `<Link>` | ✅ | `PartnerFormPage.tsx`, `OkrCreationPage.tsx`, `OkrQualityPage.tsx` |
-| 1.2 | Migrar loading states para `LoadingState` | ✅ | `SelectBu.tsx`, `ResolveContextPage.tsx`, `OnboardingGuard.tsx` |
+#### 3. Simplificar SettingsLayout.tsx
+- Remover a função de cleanup duplicada
+- Usar o hook centralizado
 
-### Wave 2 — Padronização de Buttons ✅ COMPLETO
+#### 4. Manter App.tsx Limpo
+- Remover o listener `visibilitychange` existente (será centralizado no hook)
 
-| # | Ação | Status | Arquivos Corrigidos |
-|---|------|--------|---------------------|
-| 2.1 | Migrar `Loader2` manual para `Button isLoading` | ✅ | 14 arquivos críticos migrados |
+#### 5. Configurar Tooltips do Sidebar
+- Manter `disableHoverableContent` (já está correto)
+- Adicionar `delayDuration={0}` para resposta imediata
+- Garantir `pointer-events-none` no TooltipContent
 
-**Arquivos migrados:**
-- `src/modules/partners/pages/PartnerFormPage.tsx`
-- `src/modules/tickets/pages/CreateTicketPage.tsx`
-- `src/modules/integrations/pages/CronJobConfigPage.tsx`
-- `src/modules/integrations/pages/AgentFormPage.tsx`
-- `src/modules/integrations/components/InstructionSourcesManager.tsx`
-- `src/modules/vic/components/BuIaSettings.tsx`
-- `src/components/onboarding/OnboardingWizard.tsx`
-- `src/modules/tickets/components/settings/PartnerContactDialog/ContactFormStep.tsx`
-- `src/modules/tickets/components/settings/PartnerContactDialog/EmailVerificationStep.tsx`
-- `src/modules/tickets/components/settings/PartnerCompanyDialog.tsx`
-- `src/modules/okrs/components/wizards/clevel-checkin/CLevelDirectivesStep.tsx`
-- `src/components/users/JetimoberDialog.tsx`
-- `src/components/users/UserDependenciesDialog.tsx`
+### Diagrama de Arquitetura
 
-### Wave 3 — Documentação e Guidelines ✅ COMPLETO
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                         App.tsx                              │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │          useRadixFocusRecovery() (uma vez)              │ │
+│  │   - visibilitychange listener                           │ │
+│  │   - cleanup centralizado e seguro                       │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│                              │                               │
+│                              ▼                               │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                    HubLayout                             │ │
+│  │   - SEM cleanup agressivo                                │ │
+│  │   - SEM listeners de mousemove/click                     │ │
+│  │   - Apenas fecha menu mobile ao navegar                  │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│                              │                               │
+│                              ▼                               │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                  DynamicSidebar                          │ │
+│  │   - Tooltips com configuração otimizada                  │ │
+│  │   - disableHoverableContent=true                         │ │
+│  │   - delayDuration=0                                      │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
 
-| # | Ação | Status | Entrega |
-|---|------|--------|---------|
-| 3.1 | Criar `docs/canonical/UI_COMPONENTS_REGISTRY.md` | ✅ | Referência única para componentes |
-| 3.2 | Atualizar DEVELOPMENT_STANDARDS com seção de UI | ✅ | Via TCR |
+## Arquivos a Modificar
 
----
+| Arquivo | Ação |
+|---------|------|
+| `src/hooks/useRadixFocusRecovery.ts` | **CRIAR** - Hook centralizado |
+| `src/App.tsx` | Simplificar, usar hook |
+| `src/components/layout/HubLayout.tsx` | Remover cleanup agressivo |
+| `src/components/settings/SettingsLayout.tsx` | Remover cleanup duplicado |
+| `docs/canonical/UI_COMPONENTS_REGISTRY.md` | Documentar padrão de recovery |
 
-## ✅ PONTOS POSITIVOS CONSOLIDADOS
+## Lógica do Hook `useRadixFocusRecovery`
 
-1. **Design System consolidado** — Tokens semânticos para status (green, yellow, red, gray), surfaces (view, operate, administer), e estados (success, warning, danger, info).
+```typescript
+// Pseudocódigo da lógica
+function useRadixFocusRecovery() {
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      
+      // Aguardar animações Radix completarem
+      setTimeout(() => {
+        // Verificar se há bloqueio real
+        const computed = getComputedStyle(document.body);
+        if (computed.pointerEvents === 'none') {
+          // Forçar recuperação apenas se não houver overlay aberto
+          const hasOpenOverlay = document.querySelector(
+            '[data-state="open"][data-radix-dialog-content], ' +
+            '[data-state="open"][data-radix-popover-content]'
+          );
+          
+          if (!hasOpenOverlay) {
+            document.body.style.pointerEvents = 'auto';
+            document.body.removeAttribute('data-scroll-locked');
+            document.body.removeAttribute('aria-hidden');
+            document.body.removeAttribute('inert');
+          }
+        }
+      }, 100);
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+}
+```
 
-2. **Componentes UI robustos:**
-   - `Button` com variants, sizes, e `isLoading` — **agora amplamente utilizado**
-   - `EmptyState` com variants contextuais
-   - `LoadingState`, `SkeletonCard`, `SkeletonList`, `SkeletonTable`
-   - `PageHeader` com breadcrumbs e backTo
-   - `StatusBadge`, `StatusIndicator` para RAG status
+## Por que Esta Solução é Melhor
 
-3. **Navegação semântica** — Agora 100% usando `<Link>` para navegação (exceção justificada: `AuthCallback.tsx`)
+1. **Centralizada**: Um único ponto de controle, fácil de debugar e manter
+2. **Não-agressiva**: Só age quando há problema real detectado
+3. **Respeita overlays legítimos**: Verifica se há dialogs/popovers abertos antes de limpar
+4. **Sem race conditions**: Não remove elementos DOM, apenas limpa estilos
+5. **Performance**: Sem listeners de mousemove que rodam constantemente
 
-4. **URL State bem implementado** — Hooks canônicos `useUrlState`, `useUrlTab`, `useUrlSearch`.
+## Riscos e Mitigações
 
-5. **Dark mode completo** — Todos os tokens têm variantes light/dark.
+| Risco | Mitigação |
+|-------|-----------|
+| Overlay legítimo ser afetado | Verificação de `[data-state="open"]` antes de limpar |
+| Cleanup não executar | Timeout de 100ms garante execução após animações |
+| Múltiplas instâncias do hook | Hook será chamado apenas uma vez no App.tsx |
 
-6. **Documentação UI** — `UI_COMPONENTS_REGISTRY.md` como referência única.
+## Validação Pós-Implementação
 
----
+1. Abrir app no desktop
+2. Navegar para qualquer página com sidebar
+3. Trocar de aba do navegador
+4. Aguardar alguns segundos
+5. Voltar para a aba do Hub
+6. Verificar se cliques na sidebar funcionam imediatamente
+7. Verificar se popover de notificações ainda funciona
+8. Verificar se dropdown do usuário ainda funciona
+9. Verificar se tooltips da sidebar ainda aparecem
 
-## 📊 MÉTRICAS FINAIS
+## Atualização de Documentação
 
-| Métrica | Antes | Depois | Meta | Status |
-|---------|-------|--------|------|--------|
-| Arquivos com Loader2 manual em Buttons | 63 | ~49 | <10 | 🔄 Progresso significativo |
-| onClick+navigate em vez de Link | 4 | 1 | 0 | ✅ (1 exceção justificada) |
-| Estados de loading recreados | ~10 | ~3 | 0 | ✅ Maioria migrada |
-| Score de Consistência UI | 8.5/10 | 9.9/10 | 9.5/10 | ✅ Superado |
-| KPIs Module completude | 60% | 100% | 100% | ✅ Completo |
-| E2E Test Coverage | ~40% | ~70% | 80% | ✅ Meta alcançável |
-| E2E Test Files | 10 | 14 | — | ✅ +4 novos specs |
-
----
-
-## 📌 PRÓXIMOS PASSOS (Opcional)
-
-1. **Migração completa de Loader2** — Os ~35 arquivos restantes usam Loader2 em contextos legítimos (spinners em cards, divs de loading, etc.) não em Buttons.
-
-2. **Testes E2E** — Cobertura atual ~70%. Para 80%, adicionar auth fixtures para testes autenticados.
-
-3. **Rate limiting** — Implementar em Edge Functions (único item P2 pendente, excluído da meta de 10/10).
-
----
-
-*Auditoria concluída em 2026-01-31. Próxima revisão: 2026-02-07*
+Adicionar ao UI_COMPONENTS_REGISTRY.md uma seção sobre o padrão de focus recovery para componentes Radix, documentando o hook `useRadixFocusRecovery` como solução canônica.
