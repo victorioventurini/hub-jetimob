@@ -23,12 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Target, Link2, Wrench, TrendingUp, TrendingDown, Equal, User, CheckCircle2 } from 'lucide-react';
+import { Target, Link2, Wrench, TrendingUp, TrendingDown, Equal, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
 import type { KrPlan } from './TeamOkrKrTypeStep';
 
@@ -36,6 +37,9 @@ import type { KrPlan } from './TeamOkrKrTypeStep';
 // TYPES
 // ============================================================
 
+/**
+ * @deprecated Use teamId prop instead. Mantido para compatibilidade.
+ */
 export interface TeamMember {
   id: string;
   fullName: string;
@@ -46,7 +50,10 @@ export interface TeamOkrKrDetailStepProps {
   objectiveTitle: string;
   krPlan: KrPlan;
   draftKrs: DraftTeamKr[];
-  teamMembers: TeamMember[];
+  /** @deprecated Use teamId instead */
+  teamMembers?: TeamMember[];
+  /** ID do time para filtrar usuários no BuUserSelect */
+  teamId?: string;
   onDraftKrsChange: (krs: DraftTeamKr[]) => void;
   onContinue: () => void;
   onBack: () => void;
@@ -99,7 +106,7 @@ export function TeamOkrKrDetailStep({
   objectiveTitle,
   krPlan,
   draftKrs,
-  teamMembers,
+  teamId,
   onDraftKrsChange,
   onContinue,
   onBack,
@@ -376,25 +383,14 @@ export function TeamOkrKrDetailStep({
 
           {/* Owner */}
           <div className="space-y-2">
-            <Label htmlFor="kr-owner">Responsável</Label>
-            <Select
-              value={currentKr.owner_user_id || ''}
+            <Label>Responsável</Label>
+            <BuUserSelect
+              value={currentKr.owner_user_id || undefined}
               onValueChange={(value) => updateKrField('owner_user_id', value)}
-            >
-              <SelectTrigger id="kr-owner">
-                <SelectValue placeholder="Selecione o responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                {teamMembers.map(member => (
-                  <SelectItem key={member.id} value={member.id}>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {member.fullName}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              teamId={teamId}
+              placeholder="Selecione o responsável"
+              showBadges={false}
+            />
           </div>
 
           {/* Preview */}
