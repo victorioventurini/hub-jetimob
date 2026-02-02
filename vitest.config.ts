@@ -31,10 +31,7 @@ export default defineConfig({
         lines: 30,
       },
     },
-    reporters: ['default', 'html'],
-    outputFile: {
-      html: './coverage/test-report.html',
-    },
+    reporters: ['default'],
   },
   resolve: {
     alias: {
