@@ -188,19 +188,30 @@ export function TeamOkrKrDetailStep({
   // Validation
   const isKrValid = useMemo(() => {
     if (!currentKr) return false;
+    
+    // For 'maintain' direction, target equals baseline is valid
+    const isTargetValid = currentKr.direction === 'maintain' 
+      ? true 
+      : currentKr.target !== currentKr.baseline;
+    
     return (
       currentKr.title.trim().length >= 5 &&
       currentKr.owner_user_id &&
-      (currentKr.target !== currentKr.baseline)
+      isTargetValid
     );
   }, [currentKr]);
 
   const allKrsValid = useMemo(() => {
-    return draftKrs.every(kr => 
-      kr.title.trim().length >= 5 &&
-      kr.owner_user_id &&
-      kr.target !== kr.baseline
-    );
+    return draftKrs.every(kr => {
+      const isTargetValid = kr.direction === 'maintain' 
+        ? true 
+        : kr.target !== kr.baseline;
+      return (
+        kr.title.trim().length >= 5 &&
+        kr.owner_user_id &&
+        isTargetValid
+      );
+    });
   }, [draftKrs]);
 
   if (!currentSlot || !currentKr || !config) {
@@ -403,7 +414,11 @@ export function TeamOkrKrDetailStep({
                 </div>
                 <p className="text-sm font-medium">{currentKr.title}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {currentKr.direction === 'up' ? 'Aumentar' : 'Diminuir'} de {currentKr.baseline} para {currentKr.target} {currentKr.unit}
+                  {currentKr.direction === 'up' 
+                    ? 'Aumentar' 
+                    : currentKr.direction === 'down' 
+                      ? 'Diminuir' 
+                      : 'Manter'} de {currentKr.baseline} para {currentKr.target} {currentKr.unit}
                 </p>
               </CardContent>
             </Card>
