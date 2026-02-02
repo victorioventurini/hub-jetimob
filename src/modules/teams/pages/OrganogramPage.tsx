@@ -10,12 +10,14 @@ import { useState, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Network, ArrowLeft, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { OrganogramChart, OrganogramControls } from "../components/organogram";
 import { useOrganogramData } from "../hooks";
 import { OrganogramFilters, OrganogramControlsState } from "../types/organogram";
+import { organogramToText } from "../utils/organogramToText";
 import { useBu } from "@/contexts/BuContext";
 import { useUrlState, useUrlSearch } from "@/shared/url";
 
@@ -80,6 +82,21 @@ export default function OrganogramPage() {
     window.close();
   }, []);
 
+  const handleExportText = useCallback(() => {
+    if (!data) return;
+    
+    const text = organogramToText(data, filters, currentBu?.name || 'BU');
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("Organograma copiado!", {
+        description: "Cole em qualquer lugar para análise."
+      });
+    }).catch(() => {
+      toast.error("Erro ao copiar", {
+        description: "Não foi possível acessar a área de transferência."
+      });
+    });
+  }, [data, filters, currentBu?.name]);
+
   if (error) {
     return (
       <div className="container py-8">
@@ -123,6 +140,7 @@ export default function OrganogramPage() {
                 onControlsChange={setControls}
                 onFitToScreen={handleFitToScreen}
                 onOpenFullscreen={handleOpenFullscreen}
+                onExportText={handleExportText}
                 compact
               />
               
@@ -200,6 +218,7 @@ export default function OrganogramPage() {
           onControlsChange={setControls}
           onFitToScreen={handleFitToScreen}
           onOpenFullscreen={handleOpenFullscreen}
+          onExportText={handleExportText}
         />
 
         {/* Chart */}

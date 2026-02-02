@@ -1,7 +1,7 @@
 /**
  * OrganogramControls - Controles de zoom, filtros e orientação
  */
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, ExternalLink, Search, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, ExternalLink, Search, ChevronsDownUp, ChevronsUpDown, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -23,6 +23,7 @@ interface OrganogramControlsProps {
   onControlsChange: (controls: OrganogramControlsState) => void;
   onFitToScreen: () => void;
   onOpenFullscreen: () => void;
+  onExportText?: () => void;
   compact?: boolean;
 }
 
@@ -33,6 +34,7 @@ export function OrganogramControls({
   onControlsChange,
   onFitToScreen,
   onOpenFullscreen,
+  onExportText,
   compact = false,
 }: OrganogramControlsProps) {
   const handleZoomIn = () => {
@@ -176,6 +178,25 @@ export function OrganogramControls({
             </TooltipTrigger>
             <TooltipContent>Resetar zoom</TooltipContent>
           </Tooltip>
+
+          {onExportText && (
+            <>
+              <Separator orientation="vertical" className="h-6" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={onExportText}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Copiar como texto</TooltipContent>
+              </Tooltip>
+            </>
+          )}
         </div>
       </div>
     );
@@ -340,6 +361,21 @@ export function OrganogramControls({
           </TooltipTrigger>
           <TooltipContent>Abrir em nova aba</TooltipContent>
         </Tooltip>
+
+        {onExportText && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onExportText}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Copiar como texto</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );
