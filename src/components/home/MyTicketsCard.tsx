@@ -63,19 +63,16 @@ const statusVariants: Record<string, "default" | "secondary" | "outline" | "dest
 function StatBox({ 
   value, 
   label, 
-  variant = "default" 
+  variant = "default",
+  to,
 }: { 
   value: number; 
   label: string; 
   variant?: "default" | "warning" | "danger";
+  to?: string;
 }) {
-  return (
-    <div className={cn(
-      "flex flex-col items-center justify-center p-3 rounded-lg border",
-      variant === "default" && "bg-muted/50 border-border",
-      variant === "warning" && "bg-status-yellow-muted border-status-yellow/20",
-      variant === "danger" && "bg-status-red-muted border-status-red/20"
-    )}>
+  const content = (
+    <>
       <span className={cn(
         "text-2xl font-bold",
         variant === "default" && "text-foreground",
@@ -85,6 +82,30 @@ function StatBox({
         {value}
       </span>
       <span className="text-xs text-muted-foreground">{label}</span>
+    </>
+  );
+
+  const baseClasses = cn(
+    "flex flex-col items-center justify-center p-3 rounded-lg border transition-colors",
+    variant === "default" && "bg-muted/50 border-border",
+    variant === "warning" && "bg-status-yellow-muted border-status-yellow/20",
+    variant === "danger" && "bg-status-red-muted border-status-red/20"
+  );
+
+  if (to) {
+    return (
+      <Link 
+        to={to} 
+        className={cn(baseClasses, "hover:opacity-80 cursor-pointer")}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={baseClasses}>
+      {content}
     </div>
   );
 }
@@ -218,16 +239,22 @@ function InternalTicketsCard({ isLoading: externalLoading }: { isLoading?: boole
         {/* Stats Grid */}
         {hasStats && (
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <StatBox value={stats.totalOpen} label="Abertos" />
+            <StatBox 
+              value={stats.totalOpen} 
+              label="Abertos" 
+              to="/tickets"
+            />
             <StatBox 
               value={stats.overdueCount} 
               label="Vencidos" 
               variant={stats.overdueCount > 0 ? "danger" : "default"}
+              to="/tickets?overdue=true"
             />
             <StatBox 
               value={stats.dueTodayCount} 
               label="Vence hoje" 
               variant={stats.dueTodayCount > 0 ? "warning" : "default"}
+              to="/tickets?due_today=true"
             />
           </div>
         )}

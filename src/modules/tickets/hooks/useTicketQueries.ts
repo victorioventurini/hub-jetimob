@@ -105,6 +105,16 @@ export function useTickets(filters?: TicketFilters) {
           .not("status", "in", "(done,discarded)");
       }
 
+      if (filters?.due_today) {
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+        query = query
+          .gte("expected_due_at", startOfDay)
+          .lt("expected_due_at", endOfDay)
+          .not("status", "in", "(done,discarded)");
+      }
+
       if (filters?.search) {
         query = query.ilike("title", `%${filters.search}%`);
       }

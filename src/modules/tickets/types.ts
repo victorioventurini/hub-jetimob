@@ -357,6 +357,7 @@ export interface TicketFilters {
   assigned_contact_id?: string;
   created_by_user_id?: string;
   overdue?: boolean;
+  due_today?: boolean;
   search?: string;
   // Pagination
   page?: number;
