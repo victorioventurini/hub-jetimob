@@ -1,6 +1,6 @@
 # 📐 Documentos Canônicos — Hub da Jet
 
-**Última atualização:** 2026-01-22  
+**Última atualização:** 2026-02-02  
 **Categoria:** NORMATIVO
 
 ---
@@ -13,7 +13,7 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio | v2.70.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio | v2.76.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.17.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | Canônico |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.1 |
@@ -21,6 +21,7 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 | `QUERY_KEYS_STANDARD.md` | Padrão de query keys centralizadas | Normativo |
 | `BU_SCOPED_SUPABASE_RULES.md` | Regras PRE-BU/POST-BU | Normativo |
 | `SCHEMA_QUICK_REFERENCE.md` | Referência rápida para validação de schema | v1.0.0 |
+| `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.2.0 |
 
 ## Regras de Manutenção
 
