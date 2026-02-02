@@ -1,7 +1,7 @@
 # UI Components Registry — Hub da Jet
 
 **Versão:** 1.1.0  
-**Última atualização:** 2026-01-31  
+**Última atualização:** 2026-02-02  
 **Status:** Normativo  
 **Referência:** TCR v2.75.0 / DEVELOPMENT_STANDARDS v1.17.0
 
@@ -14,8 +14,9 @@
 - [3. Componentes Core](#3-componentes-core)
 - [4. Componentes de Estado](#4-componentes-de-estado)
 - [5. Componentes de Layout](#5-componentes-de-layout)
-- [6. Padrões Obrigatórios](#6-padrões-obrigatórios)
-- [7. Anti-patterns](#7-anti-patterns)
+- [6. Componentes de Seleção](#6-componentes-de-seleção)
+- [7. Padrões Obrigatórios](#7-padrões-obrigatórios)
+- [8. Anti-patterns](#8-anti-patterns)
 
 ---
 
@@ -253,7 +254,83 @@ Barra de filtros padronizada para listagens:
 
 ---
 
-## 6. Padrões Obrigatórios
+## 6. Componentes de Seleção
+
+### 6.1 BuUserSelect
+
+**Arquivo:** `src/components/selects/BuUserSelect.tsx`
+
+Componente canônico **obrigatório** para seleção de usuários internos da BU. Usa a view `v_bu_active_profiles` via `useBuUsersDirectory`.
+
+**Regra inquebrável:** Mostra TODOS os usuários cadastrados na BU, independentemente de primeiro login, onboarding ou membership.
+
+```tsx
+// ✅ CORRETO: Componente canônico
+<BuUserSelect
+  value={userId}
+  onValueChange={(id) => setUserId(id)}
+  placeholder="Selecione o responsável"
+  teamId={teamId}       // Opcional: filtra por time
+  showBadges={true}     // Mostra badges de status (pendente, sem acesso)
+  allowNone={true}      // Permite opção "Nenhum"
+/>
+
+// ❌ PROIBIDO: Select manual com map de usuários
+<Select value={userId} onValueChange={setUserId}>
+  <SelectTrigger><SelectValue /></SelectTrigger>
+  <SelectContent>
+    {users.map(user => (
+      <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+
+**Props disponíveis:**
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `value` | `string \| undefined` | ID do usuário selecionado |
+| `onValueChange` | `(id: string \| null) => void` | Callback de mudança |
+| `placeholder` | `string` | Placeholder do select |
+| `teamId` | `string` | Filtra usuários por time |
+| `showBadges` | `boolean` | Mostra badges de onboarding/acesso |
+| `excludeUserIds` | `string[]` | IDs a excluir da lista |
+| `allowNone` | `boolean` | Permite opção "Nenhum" |
+| `noneLabel` | `string` | Label para opção nenhum |
+| `disabled` | `boolean` | Desabilita o componente |
+
+### 6.2 BuUserMultiSelect
+
+**Arquivo:** `src/components/selects/BuUserMultiSelect.tsx`
+
+Para seleção múltipla de usuários internos.
+
+```tsx
+<BuUserMultiSelect
+  selectedIds={userIds}
+  onSelectionChange={setUserIds}
+  teamId={teamId}
+/>
+```
+
+### 6.3 TeamSelect
+
+**Arquivo:** `src/components/selects/TeamSelect.tsx`
+
+Para seleção de times/squads da BU.
+
+```tsx
+<TeamSelect
+  value={teamId}
+  onValueChange={setTeamId}
+  placeholder="Selecione o time"
+/>
+```
+
+---
+
+## 7. Padrões Obrigatórios
 
 ### 6.1 Navegação
 
@@ -329,7 +406,7 @@ if (isLoading) {
 
 ---
 
-## 7. Anti-patterns
+## 8. Anti-patterns
 
 | # | Anti-pattern | Alternativa |
 |---|--------------|-------------|
@@ -339,6 +416,8 @@ if (isLoading) {
 | 4 | Cores hardcoded (`text-green-500`) | Tokens semânticos (`text-success`) |
 | 5 | Estado vazio manual | `<EmptyState variant="..." />` |
 | 6 | Skeleton inline | `<SkeletonList />` ou `<SkeletonCard />` |
+| 7 | Select manual para usuários | `<BuUserSelect />` |
+| 8 | Map de usuários em SelectItem | `<BuUserSelect teamId={...} />` |
 
 ---
 
@@ -346,6 +425,7 @@ if (isLoading) {
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.1.0 | 2026-02-02 | Adicionada seção de Componentes de Seleção (BuUserSelect, BuUserMultiSelect, TeamSelect) |
 | 1.0.0 | 2026-01-31 | Criação inicial com padrões de Button, LoadingState, EmptyState |
 
 ---

@@ -19,19 +19,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Lightbulb, Plus, Trash2, Sparkles, User } from 'lucide-react';
+import { Lightbulb, Plus, Trash2, Sparkles } from 'lucide-react';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { WizardOptionalStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
-import type { TeamMember } from './TeamOkrKrDetailStep';
 
 // ============================================================
 // TYPES
@@ -40,7 +33,8 @@ import type { TeamMember } from './TeamOkrKrDetailStep';
 export interface TeamOkrInitiativesStepProps {
   draftKrs: DraftTeamKr[];
   initiatives: DraftTeamInitiative[];
-  teamMembers: TeamMember[];
+  /** ID do time para filtrar usuários no BuUserSelect */
+  teamId?: string;
   onInitiativesChange: (initiatives: DraftTeamInitiative[]) => void;
   onContinue: () => void;
   onBack: () => void;
@@ -63,7 +57,7 @@ function shouldSuggestInitiatives(kr: DraftTeamKr): boolean {
 export function TeamOkrInitiativesStep({
   draftKrs,
   initiatives,
-  teamMembers,
+  teamId,
   onInitiativesChange,
   onContinue,
   onBack,
@@ -244,24 +238,13 @@ export function TeamOkrInitiativesStep({
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-1">
                                     <Label className="text-xs">Responsável</Label>
-                                    <Select
-                                      value={init.owner_user_id || ''}
+                                    <BuUserSelect
+                                      value={init.owner_user_id || undefined}
                                       onValueChange={(value) => handleUpdateInitiative(globalIndex, 'owner_user_id', value)}
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Selecione" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {teamMembers.map(member => (
-                                          <SelectItem key={member.id} value={member.id}>
-                                            <div className="flex items-center gap-2">
-                                              <User className="h-3 w-3" />
-                                              {member.fullName}
-                                            </div>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                      teamId={teamId}
+                                      placeholder="Selecione"
+                                      showBadges={false}
+                                    />
                                   </div>
                                   
                                   <div className="space-y-1">
