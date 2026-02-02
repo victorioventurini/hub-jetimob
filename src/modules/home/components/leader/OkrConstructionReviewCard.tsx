@@ -51,7 +51,9 @@ export function OkrConstructionReviewCard({
         .eq('team_id', teamId)
         .in('cycle_id', activeCycleIds)
         .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
       
       if (error) {
         console.error('Error counting objectives:', error);

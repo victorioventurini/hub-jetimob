@@ -104,6 +104,8 @@ export function useOrgHealthReview(year?: number): OrgHealthReviewData {
         .eq('year', currentYear)
         .is('deleted_at', null)
         .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded')
         .order('created_at');
 
       if (error) throw error;

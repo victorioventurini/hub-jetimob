@@ -252,7 +252,9 @@ export function useOrgOkrAnalysis(
           )
         `)
         .is('cancelled_at', null)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
 
       // Filter by cycle if provided
       if (cycleId) {

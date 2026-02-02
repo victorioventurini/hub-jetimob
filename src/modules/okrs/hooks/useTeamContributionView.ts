@@ -165,7 +165,9 @@ export const useTeamContributionView = (teamId: string | undefined) => {
         .select(ORG_OBJECTIVE_FIELDS)
         .in('id', orgObjectiveIds)
         .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
 
       if (objError) {
         console.error('Error fetching org objectives:', objError);
