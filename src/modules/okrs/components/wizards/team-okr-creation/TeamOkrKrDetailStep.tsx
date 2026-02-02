@@ -302,8 +302,11 @@ export function TeamOkrKrDetailStep({
                 type="number"
                 placeholder="0"
                 disabled={currentKr.noBaseline}
-                value={currentKr.noBaseline ? '' : (currentKr.baseline || '')}
-                onChange={(e) => updateKrField('baseline', parseFloat(e.target.value) || 0)}
+                value={currentKr.noBaseline ? '' : (currentKr.baseline ?? '')}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  updateKrField('baseline', value === '' ? 0 : parseFloat(value) || 0);
+                }}
               />
             </div>
             <div className="space-y-2">
