@@ -8,7 +8,7 @@
  * @see docs/canonical/DEVELOPMENT_STANDARDS.md
  */
 
-import { Suspense, useEffect } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,10 +21,10 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRadixFocusRecovery } from "@/hooks/useRadixFocusRecovery";
 
 // Rotas públicas (sem providers de autenticação)
 import Auth from "./pages/Auth";
-import { lazy } from "react";
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
 
@@ -73,19 +73,14 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Componente raiz da aplicação.
+ * Hook useRadixFocusRecovery é chamado aqui uma única vez para
+ * recuperar pointer-events após troca de aba do navegador.
+ */
 const App = () => {
-  // Cleanup de pointer-events residual ao voltar para a aba
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // Remove qualquer pointer-events residual que possa bloquear cliques
-        document.body.style.pointerEvents = '';
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  // Recuperação centralizada de pointer-events (Radix UI)
+  useRadixFocusRecovery();
 
   return (
     <QueryClientProvider client={queryClient}>

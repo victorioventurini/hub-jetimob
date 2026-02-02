@@ -1,6 +1,6 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.1.0  
+**Versão:** 1.2.0  
 **Última atualização:** 2026-02-02  
 **Status:** Normativo  
 **Referência:** TCR v2.75.0 / DEVELOPMENT_STANDARDS v1.17.0
@@ -17,6 +17,7 @@
 - [6. Componentes de Seleção](#6-componentes-de-seleção)
 - [7. Padrões Obrigatórios](#7-padrões-obrigatórios)
 - [8. Anti-patterns](#8-anti-patterns)
+- [9. Focus Recovery (Radix UI)](#9-focus-recovery-radix-ui)
 
 ---
 
@@ -421,10 +422,73 @@ if (isLoading) {
 
 ---
 
+## 9. Focus Recovery (Radix UI)
+
+### 9.1 Problema
+
+Componentes Radix UI (Tooltip, Popover, Dialog, Sheet) manipulam `pointer-events` no body para prevenir interações durante overlays. Quando o usuário troca de aba do navegador durante uma transição, o cleanup pode falhar, deixando a interface bloqueada.
+
+### 9.2 Solução Canônica
+
+O hook `useRadixFocusRecovery` é a solução centralizada para este problema:
+
+**Arquivo:** `src/hooks/useRadixFocusRecovery.ts`
+
+```tsx
+// Chamado UMA VEZ no App.tsx (nível raiz)
+import { useRadixFocusRecovery } from "@/hooks/useRadixFocusRecovery";
+
+const App = () => {
+  useRadixFocusRecovery();
+  // ...
+};
+```
+
+### 9.3 Comportamento
+
+1. Detecta quando a aba volta ao foco (`visibilitychange`, `focus`)
+2. Aguarda 100ms para animações do Radix completarem
+3. Verifica se há bloqueio real (`pointer-events: none` no body)
+4. Só limpa se **NÃO** houver overlay legítimo aberto
+5. Não remove elementos DOM (evita race conditions)
+
+### 9.4 Anti-patterns
+
+```tsx
+// ❌ PROIBIDO: Cleanup manual em layouts
+useEffect(() => {
+  document.body.style.pointerEvents = '';
+}, [location.pathname]);
+
+// ❌ PROIBIDO: Múltiplos timers de cleanup
+const timers = [0, 50, 150, 300].map(delay => 
+  setTimeout(cleanup, delay)
+);
+
+// ❌ PROIBIDO: Listener de mousemove para cleanup
+document.addEventListener('mousemove', () => {
+  if (bodyBlocked) cleanup();
+});
+
+// ✅ CORRETO: Usar o hook centralizado no App.tsx
+useRadixFocusRecovery();
+```
+
+### 9.5 Regras
+
+| Regra | Descrição |
+|-------|-----------|
+| Uma única instância | Chamar apenas no `App.tsx`, nunca em layouts |
+| Não remover elementos | Limpar apenas estilos, nunca `element.remove()` |
+| Respeitar overlays | Verificar `[data-state="open"]` antes de limpar |
+
+---
+
 ## Changelog
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.2.0 | 2026-02-02 | Adicionada seção 9 - Focus Recovery (Radix UI) |
 | 1.1.0 | 2026-02-02 | Adicionada seção de Componentes de Seleção (BuUserSelect, BuUserMultiSelect, TeamSelect) |
 | 1.0.0 | 2026-01-31 | Criação inicial com padrões de Button, LoadingState, EmptyState |
 
