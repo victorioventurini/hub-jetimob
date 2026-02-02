@@ -7751,7 +7751,6 @@ export type Database = {
           bu_id: string | null
           city: string | null
           created_at: string | null
-          discord_id: string | null
           display_name: string | null
           employment_status:
             | Database["public"]["Enums"]["employment_status"]
@@ -7759,7 +7758,6 @@ export type Database = {
           first_name: string | null
           has_bu_membership: boolean | null
           id: string | null
-          instagram_id: string | null
           job_title_id: string | null
           job_title_name: string | null
           last_name: string | null
@@ -7772,7 +7770,6 @@ export type Database = {
           team_name: string | null
           user_id: string | null
           user_type: string | null
-          whatsapp_personal: string | null
           work_email: string | null
           work_mode: Database["public"]["Enums"]["work_mode"] | null
         }
@@ -8382,7 +8379,6 @@ export type Database = {
         Row: {
           created_at: string | null
           display_name: string | null
-          email: string | null
           employment_status:
             | Database["public"]["Enums"]["employment_status"]
             | null
