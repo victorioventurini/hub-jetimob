@@ -45,7 +45,7 @@ export const OKR_FIELDS = {
     key_results:okr_team_key_results(
       id, bu_id, team_id, team_objective_id, linked_org_kr_id, parent_kr_id,
       title, type, baseline, current_value, target, direction, unit, status,
-      owner_user_id, last_checkin_at, created_at, updated_at, deleted_at, cancelled_at,
+      owner_user_id, co_responsibles, last_checkin_at, created_at, updated_at, deleted_at, cancelled_at,
       owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name, photo_url)
     )
   ` as const,
