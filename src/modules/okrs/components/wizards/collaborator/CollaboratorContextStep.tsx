@@ -1,11 +1,10 @@
 /**
  * CollaboratorContextStep - Etapa 1 do Wizard Colaborador
  * 
- * Mostra o contexto da semana:
- * - OKRs do time
- * - KRs individuais do colaborador
- * - KPIs do colaborador (v2.2)
- * - Indicador visual de progresso
+ * v2.83.0: Separação visual por papel do usuário:
+ * - KPIs para atualizar (contribuidor)
+ * - Indicadores do time (contexto)
+ * - Indicadores estratégicos (org-level)
  */
 
 import { useMemo } from 'react';
@@ -20,15 +19,14 @@ import {
   ArrowRight,
   Calendar,
   TrendingUp,
-  AlertTriangle,
   Clock,
-  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
+import type { KpiForWizardV2 } from '@/modules/kpis/types';
+import { KpiContextSection } from '@/modules/kpis/components/KpiContextSection';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import { WizardTooltipInline, WizardTipCard } from '../shared/WizardTooltips';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
@@ -37,7 +35,12 @@ import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 export interface CollaboratorContextStepProps {
   krs: WizardKr[];
-  kpis?: KpiForWizard[];
+  /** KPIs que o colaborador precisa atualizar (V1 or V2 types accepted) */
+  kpisToUpdate?: (KpiForWizard | KpiForWizardV2)[];
+  /** KPIs do time para contexto (read-only) */
+  kpisTeamContext?: KpiForWizardV2[];
+  /** KPIs estratégicos org-level (read-only) */
+  kpisStrategic?: KpiForWizardV2[];
   isLoading?: boolean;
   cycleName?: string;
   onContinue: () => void;
@@ -73,20 +76,15 @@ const STATUS_CONFIG = {
   not_started: { label: 'Não iniciado', className: RAG_STATUS_COLORS.not_started.badge },
 };
 
-const KPI_RAG_CONFIG = {
-  on_track: { label: 'No caminho', className: RAG_STATUS_COLORS.green.badge },
-  at_risk: { label: 'Em risco', className: RAG_STATUS_COLORS.yellow.badge },
-  off_track: { label: 'Fora da meta', className: RAG_STATUS_COLORS.red.badge },
-  no_data: { label: 'Sem dados', className: 'bg-muted text-muted-foreground' },
-};
-
 // ============================================================
 // COMPONENT
 // ============================================================
 
 export function CollaboratorContextStep({
   krs,
-  kpis = [],
+  kpisToUpdate = [],
+  kpisTeamContext = [],
+  kpisStrategic = [],
   isLoading,
   cycleName,
   onContinue,
@@ -101,16 +99,18 @@ export function CollaboratorContextStep({
       ? Math.round(krs.reduce((sum, kr) => sum + kr.progress, 0) / totalKrs)
       : 0;
     
-    const totalKpis = kpis.length;
-    const pendingKpis = kpis.filter(k => k.needs_update).length;
-    const atRiskKpis = kpis.filter(k => k.latest_rag_status !== 'on_track' && k.latest_rag_status !== 'no_data').length;
+    const totalKpisToUpdate = kpisToUpdate.length;
+    const pendingKpis = kpisToUpdate.filter(k => k.needs_update).length;
+    const atRiskKpis = kpisToUpdate.filter(k => k.latest_rag_status !== 'on_track' && k.latest_rag_status !== 'no_data').length;
     
     return { 
       totalKrs, pendingKrs, atRiskKrs, avgProgress,
-      totalKpis, pendingKpis, atRiskKpis,
-      hasWork: totalKrs > 0 || totalKpis > 0,
+      totalKpisToUpdate, pendingKpis, atRiskKpis,
+      hasWork: totalKrs > 0 || totalKpisToUpdate > 0,
+      hasTeamContext: kpisTeamContext.length > 0,
+      hasStrategic: kpisStrategic.length > 0,
     };
-  }, [krs, kpis]);
+  }, [krs, kpisToUpdate, kpisTeamContext, kpisStrategic]);
 
   if (isLoading) {
     return (
@@ -179,31 +179,8 @@ export function CollaboratorContextStep({
           </div>
         </div>
       )}
-      
-      {/* Stats summary - KPIs */}
-      {stats.totalKpis > 0 && (
-        <div className="px-6 py-3 flex items-center justify-between border-b bg-gradient-to-r from-primary/5 to-transparent">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">KPIs para atualizar</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="secondary">{stats.totalKpis} indicadores</Badge>
-            {stats.pendingKpis > 0 && (
-              <Badge variant="outline" className="text-status-orange border-status-orange/30">
-                {stats.pendingKpis} pendentes
-              </Badge>
-            )}
-            {stats.atRiskKpis > 0 && (
-              <Badge variant="outline" className="text-destructive border-destructive/30">
-                {stats.atRiskKpis} em alerta
-              </Badge>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* KRs by objective */}
+      {/* KRs and KPIs content */}
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
           {/* KRs Section */}
@@ -280,70 +257,50 @@ export function CollaboratorContextStep({
             </>
           )}
           
-          {/* KPIs Section */}
-          {stats.totalKpis > 0 && (
+          {/* === v2.83.0: Separated KPI Sections by Role === */}
+          
+          {/* Section 1: KPIs para atualizar (contributor) */}
+          {stats.totalKpisToUpdate > 0 && (
             <>
               {stats.totalKrs > 0 && <Separator className="my-4" />}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  <h4 className="font-medium text-sm">Indicadores (KPIs)</h4>
-                </div>
-                <div className="ml-6 space-y-2">
-                  {kpis.map(kpi => {
-                    const ragConfig = KPI_RAG_CONFIG[kpi.latest_rag_status];
-                    
-                    return (
-                      <div 
-                        key={kpi.id}
-                        className={cn(
-                          "rounded-lg border p-3 transition-colors",
-                          kpi.latest_rag_status === 'off_track' && "border-destructive/30 bg-destructive/5",
-                          kpi.latest_rag_status === 'at_risk' && "border-status-orange/30 bg-status-orange-muted"
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{kpi.name}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge 
-                                variant="secondary" 
-                                className={cn("text-xs", ragConfig.className)}
-                              >
-                                {ragConfig.label}
-                              </Badge>
-                              {kpi.needs_update && (
-                                <span className="flex items-center gap-1 text-xs text-status-orange">
-                                  <Clock className="h-3 w-3" />
-                                  Precisa atualização
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="text-right flex-shrink-0">
-                            {kpi.latest_value !== null ? (
-                              <>
-                                <p className="text-lg font-bold">{kpi.latest_value} {kpi.unit}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Meta: {kpi.target_value} {kpi.unit}
-                                </p>
-                              </>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">Sem dados</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <KpiContextSection
+                title="KPIs para Atualizar"
+                subtitle="Você é responsável por inserir os dados operacionais destes indicadores"
+                kpis={kpisToUpdate}
+                variant="update"
+                showUpdateBadge
+              />
+            </>
+          )}
+          
+          {/* Section 2: Indicadores do Time (context) */}
+          {stats.hasTeamContext && (
+            <>
+              <Separator className="my-4" />
+              <KpiContextSection
+                title="Indicadores do Time"
+                subtitle="Contexto relevante para entender a performance do time"
+                kpis={kpisTeamContext}
+                variant="context"
+              />
+            </>
+          )}
+          
+          {/* Section 3: Indicadores Estratégicos (org-level) */}
+          {stats.hasStrategic && (
+            <>
+              <Separator className="my-4" />
+              <KpiContextSection
+                title="Indicadores Estratégicos"
+                subtitle="Indicadores organizacionais para alinhamento"
+                kpis={kpisStrategic}
+                variant="strategic"
+              />
             </>
           )}
 
           {/* Empty state */}
-          {!stats.hasWork && (
+          {!stats.hasWork && !stats.hasTeamContext && !stats.hasStrategic && (
             <div className="text-center py-12">
               <TrendingUp className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
               <h4 className="font-medium">Nada para atualizar</h4>

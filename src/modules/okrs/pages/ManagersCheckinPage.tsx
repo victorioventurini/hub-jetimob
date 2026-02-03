@@ -1,5 +1,7 @@
 /**
  * ManagersCheckinPage - Full-page wizard para check-in de gestores
+ * 
+ * v2.83.0: Adicionado step "Indicadores Sistêmicos" para visão cross-team
  */
 
 import { useMemo, useCallback } from 'react';
@@ -12,11 +14,14 @@ import {
   useManagersPanorama, 
   useCrossDependencies 
 } from '@/modules/okrs/hooks';
+import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
+import { useIdentity } from '@/hooks/useIdentity';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
 
 // Step components
 import { ManagersPanoramaStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersPanoramaStep';
+import { ManagersSystemicKpisStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersSystemicKpisStep';
 import { ManagersCrossIssuesStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersCrossIssuesStep';
 import { ManagersAdjustmentsStep } from '@/modules/okrs/components/wizards/managers-checkin/ManagersAdjustmentsStep';
 
@@ -24,24 +29,27 @@ import { ManagersAdjustmentsStep } from '@/modules/okrs/components/wizards/manag
 // TYPES
 // ============================================================
 
-type WizardStep = 'panorama' | 'cross-issues' | 'adjustments';
+type WizardStep = 'panorama' | 'systemic-kpis' | 'cross-issues' | 'adjustments';
 
 interface ManagersDraftData {
   adjustments: string[];
   resolvedDependencies: string[];
+  kpisMarkedForFollowup: string[];
 }
 
 const WIZARD_STEPS = [
   { id: 'panorama' as const, label: 'Panorama', description: 'Visão geral das áreas' },
+  { id: 'systemic-kpis' as const, label: 'Indicadores', description: 'Visão sistêmica' },
   { id: 'cross-issues' as const, label: 'Dependências', description: 'Bloqueios cross-team' },
   { id: 'adjustments' as const, label: 'Ajustes', description: 'Decisões de foco' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['panorama', 'cross-issues', 'adjustments'];
+const STEP_ORDER: WizardStep[] = ['panorama', 'systemic-kpis', 'cross-issues', 'adjustments'];
 
 const DEFAULT_DATA: ManagersDraftData = {
   adjustments: [],
   resolvedDependencies: [],
+  kpisMarkedForFollowup: [],
 };
 
 // ============================================================
@@ -50,6 +58,7 @@ const DEFAULT_DATA: ManagersDraftData = {
 
 export default function ManagersCheckinPage() {
   const navigate = useNavigate();
+  const { profileId } = useIdentity();
   
   usePageTitle('Check-in de Gestores');
   
@@ -63,6 +72,16 @@ export default function ManagersCheckinPage() {
   // Fetch real data
   const { data: panoramaData, isLoading: isLoadingPanorama } = useManagersPanorama(quarterlyCycle?.id);
   const { data: dependencies, isLoading: isLoadingDeps } = useCrossDependencies(quarterlyCycle?.id);
+  
+  // v2.83.0: Fetch systemic KPIs (area/org scope)
+  const { 
+    kpisStrategic,
+    kpisInAlert,
+    isLoading: isLoadingKpis 
+  } = useKpisForWizardV2({
+    userId: profileId || '',
+    scope: 'manager',
+  });
   
   // Draft persistence
   const {
@@ -87,7 +106,7 @@ export default function ManagersCheckinPage() {
   const areas = panoramaData?.areas ?? [];
   const crossDependencies = dependencies ?? [];
   
-  const isLoading = isLoadingCycles || isLoadingPanorama || isLoadingDeps;
+  const isLoading = isLoadingCycles || isLoadingPanorama || isLoadingDeps || isLoadingKpis;
   
   // Navigation
   const completedSteps = useMemo(() => {
@@ -147,6 +166,16 @@ export default function ManagersCheckinPage() {
     navigate('/okrs');
   }, [clearDraft, navigate]);
   
+  // v2.83.0: Handle KPI followup marking
+  const handleMarkKpiForFollowup = useCallback((kpiId: string) => {
+    const current = draft.data.kpisMarkedForFollowup || [];
+    if (current.includes(kpiId)) {
+      updateDraft({ kpisMarkedForFollowup: current.filter(id => id !== kpiId) });
+    } else {
+      updateDraft({ kpisMarkedForFollowup: [...current, kpiId] });
+    }
+  }, [draft.data.kpisMarkedForFollowup, updateDraft]);
+  
   // Render step content
   const renderStepContent = () => {
     switch (draft.currentStep) {
@@ -157,6 +186,18 @@ export default function ManagersCheckinPage() {
             companyProgress={companyProgress}
             isLoading={isLoading}
             onContinue={goNext}
+          />
+        );
+      
+      case 'systemic-kpis':
+        return (
+          <ManagersSystemicKpisStep
+            kpisStrategic={kpisStrategic}
+            kpisInAlert={kpisInAlert}
+            markedForFollowup={draft.data.kpisMarkedForFollowup}
+            onMarkForFollowup={handleMarkKpiForFollowup}
+            onContinue={goNext}
+            onBack={goBack}
           />
         );
         

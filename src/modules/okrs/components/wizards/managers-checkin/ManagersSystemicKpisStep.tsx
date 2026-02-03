@@ -44,8 +44,10 @@ export interface SystemicKpiGroup {
 }
 
 export interface ManagersSystemicKpisStepProps {
-  strategicKpis: KpiForWizardV2[];
+  kpisStrategic: KpiForWizardV2[];
   kpisInAlert: KpiForWizardV2[];
+  markedForFollowup?: string[];
+  onMarkForFollowup?: (kpiId: string) => void;
   isLoading?: boolean;
   onContinue: () => void;
   onBack: () => void;
@@ -155,8 +157,10 @@ function groupKpisByCategory(kpis: KpiForWizardV2[]): SystemicKpiGroup[] {
 // ============================================================
 
 export function ManagersSystemicKpisStep({
-  strategicKpis,
+  kpisStrategic,
   kpisInAlert,
+  markedForFollowup = [],
+  onMarkForFollowup,
   isLoading,
   onContinue,
   onBack,
@@ -164,13 +168,13 @@ export function ManagersSystemicKpisStep({
   // Combine and deduplicate KPIs
   const allKpis = useMemo(() => {
     const kpiMap = new Map<string, KpiForWizardV2>();
-    [...strategicKpis, ...kpisInAlert].forEach(kpi => {
+    [...kpisStrategic, ...kpisInAlert].forEach(kpi => {
       if (!kpiMap.has(kpi.id)) {
         kpiMap.set(kpi.id, kpi);
       }
     });
     return Array.from(kpiMap.values());
-  }, [strategicKpis, kpisInAlert]);
+  }, [kpisStrategic, kpisInAlert]);
 
   const groups = useMemo(() => groupKpisByCategory(allKpis), [allKpis]);
 

@@ -229,7 +229,7 @@ export default function CollaboratorCheckinPage() {
         return (
           <CollaboratorContextStep
             krs={krs}
-            kpis={kpis}
+            kpisToUpdate={kpis}
             cycleName={quarterlyCycle?.name || 'Ciclo atual'}
             onContinue={goNext}
           />

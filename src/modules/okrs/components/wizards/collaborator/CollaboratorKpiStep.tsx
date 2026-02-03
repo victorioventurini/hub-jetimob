@@ -208,6 +208,10 @@ export function CollaboratorKpiStep({
     return watchedValue - kpi.latest_value;
   }, [watchedValue, kpi.latest_value]);
 
+  // v2.83.0: Get owner name for contributor clarity message
+  const ownerName = (kpi as any).owner_name || null;
+  const isContributor = (kpi as any).userRole === 'contributor';
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -240,6 +244,17 @@ export function CollaboratorKpiStep({
             {FREQUENCY_LABELS[kpi.frequency] || kpi.frequency}
           </Badge>
         </div>
+        
+        {/* v2.83.0: Contributor clarity message */}
+        {isContributor && ownerName && (
+          <div className="mt-3 p-3 rounded-lg bg-info-muted border border-info/30">
+            <p className="text-xs text-info-muted-foreground">
+              <strong>Você é contribuidor de dados.</strong> Você está atualizando este indicador 
+              porque contribui com os dados operacionais. O responsável final por este KPI é{' '}
+              <span className="font-medium">{ownerName}</span>.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* KPI Info Card */}

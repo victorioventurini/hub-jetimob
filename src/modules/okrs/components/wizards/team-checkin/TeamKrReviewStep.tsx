@@ -1,9 +1,10 @@
 /**
  * TeamKrReviewStep - Etapa 2 do Wizard Check-in do Time
  * 
- * Revisão dos KRs em grupo:
- * - Foco nos marcados para discussão
- * - Navegação rápida entre KRs
+ * v2.83.0: KPI Gate - KPIs só aparecem quando relevantes:
+ * - Primary KPI de KR em risco
+ * - Guardrails violados
+ * - Marcados pelo líder para discussão
  */
 
 import { useState, useMemo } from 'react';
@@ -16,7 +17,9 @@ import { ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Target } from '
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter } from '../shared';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { KrLinkedKpiCard, type KpiLinkReason } from './KrLinkedKpiCard';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
@@ -27,9 +30,65 @@ export interface TeamKrReviewStepProps {
   krs: WizardKr[];
   markedForDiscussion: string[];
   reviewedKrs: Set<string>;
+  /** v2.83.0: KPIs linked to KRs (primary or guardrail) */
+  linkedKpis?: KpiForWizardV2[];
+  /** v2.83.0: KPI IDs marked for discussion by leader */
+  kpisMarkedForDiscussion?: string[];
   onMarkReviewed: (krId: string) => void;
   onContinue: () => void;
   onBack: () => void;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+/**
+ * v2.83.0: Determine why a KPI should be shown (KPI Gate logic)
+ */
+function determineKpiLinkReason(
+  kpi: KpiForWizardV2,
+  kr: WizardKr,
+  kpisMarkedForDiscussion: string[]
+): KpiLinkReason | null {
+  // Priority 1: Leader marked for discussion
+  if (kpisMarkedForDiscussion.includes(kpi.id)) {
+    return 'leader_marked';
+  }
+  
+  // Priority 2: Primary KPI of KR at risk
+  const isPrimary = kpi.linkedKrIds?.includes(kr.id);
+  const isKrAtRisk = kr.status === 'red' || kr.status === 'yellow';
+  if (isPrimary && isKrAtRisk) {
+    return 'primary_at_risk';
+  }
+  
+  // Priority 3: Guardrail violated
+  if (kpi.isGuardrailAtRisk) {
+    return 'guardrail_violated';
+  }
+  
+  return null;
+}
+
+/**
+ * v2.83.0: Filter KPIs that should be shown for a specific KR
+ */
+function filterKpisForKr(
+  allKpis: KpiForWizardV2[],
+  kr: WizardKr,
+  kpisMarkedForDiscussion: string[]
+): Array<{ kpi: KpiForWizardV2; reason: KpiLinkReason }> {
+  const result: Array<{ kpi: KpiForWizardV2; reason: KpiLinkReason }> = [];
+  
+  for (const kpi of allKpis) {
+    const reason = determineKpiLinkReason(kpi, kr, kpisMarkedForDiscussion);
+    if (reason) {
+      result.push({ kpi, reason });
+    }
+  }
+  
+  return result;
 }
 
 // ============================================================
@@ -40,6 +99,8 @@ export function TeamKrReviewStep({
   krs,
   markedForDiscussion,
   reviewedKrs,
+  linkedKpis = [],
+  kpisMarkedForDiscussion = [],
   onMarkReviewed,
   onContinue,
   onBack,
@@ -63,6 +124,12 @@ export function TeamKrReviewStep({
   const currentKr = sortedKrs[currentIndex];
   const isMarked = currentKr && markedForDiscussion.includes(currentKr.id);
   const isReviewed = currentKr && reviewedKrs.has(currentKr.id);
+
+  // v2.83.0: Get relevant KPIs for current KR (KPI Gate)
+  const relevantKpis = useMemo(() => {
+    if (!currentKr || linkedKpis.length === 0) return [];
+    return filterKpisForKr(linkedKpis, currentKr, kpisMarkedForDiscussion);
+  }, [currentKr, linkedKpis, kpisMarkedForDiscussion]);
 
   const handlePrev = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
@@ -146,7 +213,7 @@ export function TeamKrReviewStep({
 
       {/* KR Card */}
       <ScrollArea className="flex-1">
-        <div className="p-6">
+        <div className="p-6 space-y-4">
           <Card className={cn(
             "transition-colors",
             isMarked && "border-status-yellow/50 dark:border-status-yellow/50",
@@ -228,6 +295,15 @@ export function TeamKrReviewStep({
               </p>
             </CardContent>
           </Card>
+
+          {/* v2.83.0: KPI Gate - Show linked KPIs only when relevant */}
+          {relevantKpis.length > 0 && (
+            <KrLinkedKpiCard
+              kr={currentKr}
+              linkedKpis={relevantKpis.map(r => r.kpi)}
+              showReason={relevantKpis[0].reason}
+            />
+          )}
 
           {/* Mark as reviewed button */}
           {!isReviewed && (
