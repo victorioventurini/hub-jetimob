@@ -10,6 +10,8 @@ export * from './hooks';
 
 // Components
 export { KpiCard } from './components/KpiCard';
+export { KpiAreaSection } from './components/KpiAreaSection'; // v2.82.0: replaces KpiCategorySection
+/** @deprecated v2.82.0 - Use KpiAreaSection instead */
 export { KpiCategorySection } from './components/KpiCategorySection';
 export { KpiDashboardFilters } from './components/KpiDashboardFilters';
 export { KpiStatusSummary } from './components/KpiStatusSummary';

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { KpiCategory, KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, KpiLifecycleStatus, calculateRagStatus } from "../types";
+import { KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, KpiLifecycleStatus, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
@@ -12,8 +12,10 @@ function mapSource(source: string): KpiValueSource {
   return source as KpiValueSource;
 }
 
+// v2.82.0: category deprecated - using areaId for filtering
 interface UseKpiDataOptions {
-  category?: KpiCategory;
+  /** @deprecated v2.82.0 - Use areaId instead */
+  category?: string;
   teamId?: string;
   ownerId?: string;
   areaId?: string;
@@ -26,7 +28,7 @@ interface DbKpiMetric {
   name: string;
   description: string | null;
   /** @deprecated v2.82.0 - Use area_id for ownership */
-  category?: KpiCategory;
+  category?: string;
   bu_id: string | null;
   owner_user_id: string | null;
   team_id: string | null;
@@ -84,11 +86,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
-  const { category, teamId, ownerId, areaId, scope } = options;
+  // v2.82.0: category deprecated - using areaId for filtering
+  const { teamId, ownerId, areaId, scope } = options;
 
   // Fetch all KPIs with their latest values
   const { data: kpis, isLoading, error } = useQuery({
-    queryKey: queryKeys.kpis.list(null, { category, teamId, ownerId, areaId, scope }),
+    queryKey: queryKeys.kpis.list(null, { teamId, ownerId, areaId, scope }),
     enabled: !!supabase,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
@@ -107,12 +110,10 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         `)
         .eq("status", "active")
         .is("deleted_at", null)
-        .order("category")
+        .order("area_id", { nullsFirst: false })
         .order("name");
 
-      if (category) {
-        query = query.eq("category", category);
-      }
+      // v2.82.0: category filter removed - use areaId instead
       if (teamId) {
         query = query.eq("team_id", teamId);
       }
@@ -192,7 +193,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       id: kpi.id,
       name: kpi.name,
       description: kpi.description,
-      category: kpi.category,
+      // v2.82.0: category deprecated - type assertion for compatibility
+      category: kpi.category as any,
       bu_id: kpi.bu_id || '',
       owner_user_id: kpi.owner_user_id,
       team_id: kpi.team_id,
@@ -235,11 +237,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   });
 
   // Create KPI (uses database schema with v2.1 + v2.2 fields)
+  // v2.82.0: category removed from required fields
   const createKpi = useMutation({
     mutationFn: async (data: {
       name: string;
       description: string | null;
-      category: KpiCategory;
       unit: string;
       direction: 'up' | 'down';
       frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';

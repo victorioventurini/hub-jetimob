@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useKpiData } from "../hooks";
-import { CATEGORY_LABELS, CATEGORY_COLORS } from "../types";
+// v2.82.0: Category deprecated - using area for ownership
 import { cn } from "@/lib/utils";
 import { getKpiTrendColor } from "@/lib/colors";
 interface KpiSidePanelProps {
@@ -90,22 +90,22 @@ export function KpiSidePanel({ className }: KpiSidePanelProps) {
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{kpi.name}</span>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[10px] px-1.5 py-0 text-white",
-                          CATEGORY_COLORS[kpi.category]
-                        )}
-                      >
-                        {CATEGORY_LABELS[kpi.category].slice(0, 3)}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{CATEGORY_LABELS[kpi.category]}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  {kpi.area && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0"
+                          style={{ backgroundColor: kpi.area.color || 'hsl(var(--muted))' }}
+                        >
+                          {kpi.area.name.slice(0, 3)}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{kpi.area.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
