@@ -60,7 +60,7 @@ const formSchema = z.object({
   owner_user_id: z.string().optional(),
   target_value: z.coerce.number().optional(),
   // v2.1 fields
-  indicator_type: z.enum(["kpi", "metric", "health_indicator"]),
+  indicator_type: z.enum(["kpi", "metric"]),
   lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
   target_source: z.string().max(500).optional(),
   recovery_protocol: z.string().max(1000).optional(),

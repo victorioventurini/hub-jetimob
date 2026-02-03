@@ -14,7 +14,7 @@ export type KpiRagStatus = 'on_track' | 'at_risk' | 'off_track' | 'no_data';
 export type KpiComparisonRule = 'higher_is_better' | 'lower_is_better' | 'equal_to_target';
 
 // === v2.1 New Types ===
-export type KpiIndicatorType = 'kpi' | 'metric' | 'health_indicator';
+export type KpiIndicatorType = 'kpi' | 'metric';
 export type KpiLifecycleStatus = 'proposed' | 'active' | 'observing' | 'deprecated';
 export type KpiConfidenceLevel = 'high' | 'medium' | 'low';
 
@@ -153,7 +153,6 @@ export const DIRECTION_LABELS: Record<KpiDirection, string> = {
 export const INDICATOR_TYPE_LABELS: Record<KpiIndicatorType, string> = {
   kpi: 'KPI',
   metric: 'Métrica',
-  health_indicator: 'Indicador de Saúde',
 };
 
 export const LIFECYCLE_STATUS_LABELS: Record<KpiLifecycleStatus, string> = {

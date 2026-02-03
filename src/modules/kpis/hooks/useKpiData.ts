@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { KpiCategory, KpiWithValues, KpiValue, KpiValueSource, KpiScope, calculateRagStatus } from "../types";
+import { KpiCategory, KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, KpiLifecycleStatus, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
@@ -209,8 +209,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       updated_at: kpi.updated_at,
       deleted_at: kpi.deleted_at,
       // v2.1 fields
-      indicator_type: (kpi.indicator_type || 'kpi') as 'kpi' | 'metric' | 'health_indicator',
-      lifecycle_status: (kpi.lifecycle_status || 'active') as 'proposed' | 'active' | 'observing' | 'deprecated',
+      indicator_type: (kpi.indicator_type || 'kpi') as KpiIndicatorType,
+      lifecycle_status: (kpi.lifecycle_status || 'active') as KpiLifecycleStatus,
       target_source: kpi.target_source,
       recovery_protocol: kpi.recovery_protocol,
       // v2.2 governance fields
@@ -247,8 +247,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       target_value: number | null;
       status: 'active' | 'inactive';
       // v2.1 fields
-      indicator_type?: 'kpi' | 'metric' | 'health_indicator';
-      lifecycle_status?: 'proposed' | 'active' | 'observing' | 'deprecated';
+      indicator_type?: KpiIndicatorType;
+      lifecycle_status?: KpiLifecycleStatus;
       target_source?: string | null;
       recovery_protocol?: string | null;
       // v2.2 governance fields
