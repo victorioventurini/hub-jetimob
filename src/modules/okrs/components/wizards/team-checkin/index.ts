@@ -15,3 +15,7 @@ export { TeamDecisionsStep } from './TeamDecisionsStep';
 export type { TeamDecisionsStepProps } from './TeamDecisionsStep';
 
 export { TeamCheckinWizardCard } from './TeamCheckinWizardCard';
+
+// v2.83.0: KPI Gate components
+export { KrLinkedKpiCard, determineKpiLinkReason, filterKpisForTeamCheckin } from './KrLinkedKpiCard';
+export type { KrLinkedKpiCardProps, KpiLinkReason } from './KrLinkedKpiCard';

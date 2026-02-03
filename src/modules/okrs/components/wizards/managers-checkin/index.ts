@@ -12,3 +12,7 @@ export { ManagersAdjustmentsStep } from './ManagersAdjustmentsStep';
 export type { ManagersAdjustmentsStepProps } from './ManagersAdjustmentsStep';
 
 export { ManagersCheckinWizardCard } from './ManagersCheckinWizardCard';
+
+// v2.83.0: Systemic KPIs step
+export { ManagersSystemicKpisStep } from './ManagersSystemicKpisStep';
+export type { ManagersSystemicKpisStepProps, SystemicKpiGroup } from './ManagersSystemicKpisStep';
