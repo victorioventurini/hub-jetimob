@@ -27,7 +27,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CONFIDENCE_COLORS } from '@/lib/colors';
-import type { CollaboratorCheckinResult, CollaboratorReflection } from '@/modules/okrs/types/wizard';
+import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -35,6 +35,7 @@ import type { CollaboratorCheckinResult, CollaboratorReflection } from '@/module
 
 export interface CollaboratorSummaryProps {
   results: CollaboratorCheckinResult[];
+  kpiResults?: KpiCheckinResult[];
   reflection?: CollaboratorReflection;
   initiativesMarkedAtRisk?: string[];
   cycleName?: string;
@@ -48,6 +49,7 @@ export interface CollaboratorSummaryProps {
 
 export function CollaboratorSummary({
   results,
+  kpiResults = [],
   reflection,
   initiativesMarkedAtRisk = [],
   cycleName,
@@ -61,6 +63,10 @@ export function CollaboratorSummary({
     const withBlockers = results.filter(r => r.blocker);
     const improved = completed.filter(r => r.newValue > r.previousValue);
     
+    // KPI stats
+    const kpisCompleted = kpiResults.filter(k => !k.skipped);
+    const kpisSkipped = kpiResults.filter(k => k.skipped);
+    
     return {
       total: results.length,
       completed: completed.length,
@@ -68,8 +74,11 @@ export function CollaboratorSummary({
       withBlockers: withBlockers.length,
       improved: improved.length,
       initiativesAtRisk: initiativesMarkedAtRisk.length,
+      kpisTotal: kpiResults.length,
+      kpisCompleted: kpisCompleted.length,
+      kpisSkipped: kpisSkipped.length,
     };
-  }, [results, initiativesMarkedAtRisk]);
+  }, [results, kpiResults, initiativesMarkedAtRisk]);
 
   // Copy summary to clipboard
   const handleCopy = () => {
@@ -222,6 +231,53 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
                 })}
               </div>
             </div>
+          )}
+
+          {/* KPIs Updated */}
+          {stats.kpisCompleted > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  KPIs atualizados
+                </h4>
+                <div className="space-y-2">
+                  {kpiResults.filter(k => !k.skipped).map(kpi => (
+                    <div 
+                      key={kpi.kpiId}
+                      className="rounded-lg border p-3 bg-card"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{kpi.kpiName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Ref: {new Date(kpi.referenceDate).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-sm font-bold">{kpi.newValue}</span>
+                          <Badge 
+                            variant="secondary"
+                            className={cn(
+                              "text-xs",
+                              kpi.confidence && CONFIDENCE_COLORS[kpi.confidence as keyof typeof CONFIDENCE_COLORS]?.badge
+                            )}
+                          >
+                            {kpi.confidence === 'high' ? '🟢' : kpi.confidence === 'medium' ? '🟡' : '🔴'}
+                          </Badge>
+                        </div>
+                      </div>
+                      {kpi.notes && (
+                        <p className="text-xs text-muted-foreground mt-2 bg-muted/50 p-2 rounded">
+                          {kpi.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           {/* Blockers */}

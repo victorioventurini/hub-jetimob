@@ -31,8 +31,7 @@ import { CollaboratorInitiativesStep } from '@/modules/okrs/components/wizards/c
 import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep';
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
 
-import type { CollaboratorCheckinResult, CollaboratorReflection } from '@/modules/okrs/types/wizard';
-import type { KpiCheckinResult } from '@/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep';
+import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -366,6 +365,7 @@ export default function CollaboratorCheckinPage() {
         return (
           <CollaboratorSummary
             results={draft.data.results}
+            kpiResults={draft.data.kpiResults}
             reflection={draft.data.reflection}
             initiativesMarkedAtRisk={draft.data.initiativesMarkedAtRisk}
             onViewOkrs={() => navigate('/okrs')}

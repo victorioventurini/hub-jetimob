@@ -97,6 +97,7 @@ export interface CollaboratorReflection {
 export interface KpiCheckinResult {
   kpiId: string;
   kpiName: string;
+  previousValue: number | null;
   newValue: number;
   referenceDate: string;
   confidence: 'high' | 'medium' | 'low';
