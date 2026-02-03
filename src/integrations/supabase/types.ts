@@ -9684,7 +9684,7 @@ export type Database = {
       kpi_confidence_level: "high" | "medium" | "low"
       kpi_direction: "up" | "down"
       kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
-      kpi_indicator_type: "kpi" | "metric" | "health_indicator"
+      kpi_indicator_type: "kpi" | "metric"
       kpi_lifecycle_status: "proposed" | "active" | "observing" | "deprecated"
       kpi_rag_status: "on_track" | "at_risk" | "off_track" | "no_data"
       kpi_scope: "team" | "area" | "org"
@@ -9965,7 +9965,7 @@ export const Constants = {
       kpi_confidence_level: ["high", "medium", "low"],
       kpi_direction: ["up", "down"],
       kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
-      kpi_indicator_type: ["kpi", "metric", "health_indicator"],
+      kpi_indicator_type: ["kpi", "metric"],
       kpi_lifecycle_status: ["proposed", "active", "observing", "deprecated"],
       kpi_rag_status: ["on_track", "at_risk", "off_track", "no_data"],
       kpi_scope: ["team", "area", "org"],

@@ -721,7 +721,7 @@ Definição de KPIs com lifecycle e classificação.
 | target_value | numeric | Meta |
 | status | enum | `active`, `inactive` |
 | is_global | bool | Se é global (visível para toda BU) |
-| **indicator_type** | enum | `kpi`, `metric`, `health_indicator` — v2.1 |
+| **indicator_type** | enum | `kpi`, `metric` |
 | **lifecycle_status** | enum | `proposed`, `active`, `observing`, `deprecated` — v2.1 |
 | **target_source** | text | Fonte/URL do target/benchmark — v2.1 |
 | **recovery_protocol** | text | Protocolo de recuperação quando fora da meta — v2.1 |
@@ -2222,7 +2222,7 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.79.0 |
+| **Versão do TCR** | 2.81.0 |
 | **Data da última atualização** | 2026-02-03 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
@@ -2237,6 +2237,12 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.81.0 (2026-02-03) — Remoção de health_indicator
+- **Enum `kpi_indicator_type` simplificado** — Removido tipo `health_indicator`
+- Sistema agora opera apenas com: `kpi` (indicador estratégico) e `metric` (medição operacional)
+- Zero registros afetados (nenhum dado usava o tipo removido)
+- Migration recriou o enum PostgreSQL com apenas valores válidos
 
 ### v2.80.0 (2026-02-03) — Assets Reports Deep Links + Overdue Loans Alert
 - **Assets Reports Deep Links v1.0**:
@@ -2261,7 +2267,7 @@ export type { SomeType } from './types';
   - **Novos Enums** (4): `kpi_indicator_type`, `kpi_lifecycle_status`, `kpi_confidence_level`, `kpi_rag_status`
   - **Expansão de Enum**: `kpi_value_source` agora inclui `api`, `webhook`, `spreadsheet`, `database`
   - **Novas Colunas em `kpi_metrics`** (4):
-    - `indicator_type` — Classifica: KPI, Métrica, Indicador de Saúde
+    - `indicator_type` — Classifica: KPI, Métrica
     - `lifecycle_status` — Ciclo de vida: Proposto, Ativo, Em Observação, Depreciado
     - `target_source` — Fonte/URL do target/benchmark
     - `recovery_protocol` — Protocolo de recuperação quando fora da meta

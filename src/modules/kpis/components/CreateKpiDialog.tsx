@@ -61,7 +61,7 @@ const formSchema = z.object({
   owner_user_id: z.string().optional(),
   target_value: z.coerce.number().optional(),
   // v2.1 fields
-  indicator_type: z.enum(["kpi", "metric", "health_indicator"]),
+  indicator_type: z.enum(["kpi", "metric"]),
   lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
   target_source: z.string().max(500).optional(),
   recovery_protocol: z.string().max(1000).optional(),
@@ -255,7 +255,6 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         <div className="space-y-1">
                           <p><strong>KPI:</strong> Indicador-chave de performance vinculado a objetivos estratégicos.</p>
                           <p><strong>Métrica:</strong> Medição operacional usada para monitoramento contínuo.</p>
-                          <p><strong>Indicador de Saúde:</strong> Sinal de alerta que indica riscos ou anomalias.</p>
                         </div>
                       }
                     />
