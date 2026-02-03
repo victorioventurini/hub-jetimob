@@ -1,243 +1,369 @@
 
-# Plano: Evolução do Módulo de Indicadores — Simplificação e Governança
+# Plano: Integração Aprimorada OKRs, KPIs e Wizards
 
 ## Resumo Executivo
 
-Implementar as mudanças conceituais solicitadas para simplificar o modelo de indicadores, alinhar ao padrão OKR+KPI, garantir governança clara e reduzir campos redundantes.
+Aprimorar a integração entre os módulos de OKRs, KPIs e Wizards do Hub, garantindo:
+- Clareza de papéis (responsável vs contribuidor de dados)
+- Foco em decisão (KPIs só aparecem quando relevantes)
+- Governança adequada (accountability clara)
+- Experiência otimizada por persona (cada wizard mostra apenas o necessário)
 
 ---
 
-## Pré-checklist Consultado ✅
+## Pré-checklist Consultado
 
 | Documento | Status | Observações |
 |-----------|--------|-------------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | ✅ v2.81.0 | Enum `kpi_indicator_type` já tem apenas 'kpi', 'metric' |
-| `PERMISSIONS_AND_RBAC_MODEL.md` | ✅ v1.2.0 | Templates `kpi_viewer`, `kpi_editor`, `kpi_admin` existentes |
-| `IDENTITY_CONVENTION.md` | ✅ v2.1.1 | `owner_user_id` usa `profiles.id` |
-| `RBAC_TEMPLATES_V3.md` | ✅ v3.0 | KPI permissions já segmentadas por scope |
-| Banco de dados | ✅ Verificado | 0 KPIs cadastrados, estrutura pronta |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | v2.80.0 | `useKpisForWizard` documentado como hook canônico |
+| `PERMISSIONS_AND_RBAC_MODEL.md` | v1.2.0 | Templates `kpi_viewer`, `kpi_editor`, `kpi_admin` |
+| `DATA_MODEL_REGISTRY.md` | Verificado | `okr_kr_metrics` com roles `primary`, `guardrail` |
 
 ---
 
-## Análise de Estado Atual vs Desejado
+## Arquitetura Atual (Análise)
 
-### 1) Tipos de Indicador ✅ JÁ IMPLEMENTADO
-| Item | Estado Atual | Ação |
-|------|--------------|------|
-| Tipo "Indicador de Saúde" | ❌ Removido | Nenhuma — já feito na v2.81.0 |
-| Enum `kpi_indicator_type` | `'kpi' | 'metric'` | Nenhuma |
+### Modelo de Dados Existente
 
-### 2) Governança de Criação 🔧 PENDENTE
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Quem cria KPI | Qualquer pessoa com `kpis:manage` | Apenas líderes/admins |
-| Quem cria Métrica | Qualquer pessoa com `kpis:manage` | Qualquer colaborador |
-| Promover Métrica→KPI | Não controlado | Apenas líderes/admins |
+```text
+kpi_metrics
+├── owner_user_id → Responsável final (accountability)
+├── team_id → Time ao qual pertence
+├── area_id → Área estratégica
+└── scope → 'team' | 'area' | 'org'
 
-### 3) Responsável (Accountability) ✅ PARCIALMENTE IMPLEMENTADO
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Obrigatório para ativos | ✅ Já validado no form | Manter |
-| Mensagem clara | "Responsável é obrigatório" | Aprimorar texto |
+okr_kr_metrics (vínculo KPI ↔ KR)
+├── kr_id → ID do Key Result
+├── kpi_id → ID do indicador
+└── role → 'primary' | 'guardrail'
+```
 
-### 4) Escopo do Indicador 🔧 NECESSITA AJUSTE UX
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Campos `scope`, `team_id`, `area_id` | ✅ Existem | Manter |
-| Área inferida de Time | ❌ Não implementado | Implementar auto-inferência |
-| Ocultar Área quando scope=team | ❌ Mostra campo | Ocultar e inferir |
+### Lacunas Identificadas
 
-### 5) Remoção do Campo Categoria 🔧 PENDENTE
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Campo `category` | ✅ Enum obrigatório | ❌ Remover |
-| Duplicidade Área vs Categoria | Sim | Área como ownership único |
-
-### 6) Relação Indicadores ↔ KRs ✅ JÁ IMPLEMENTADO
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Tabela `okr_kr_metrics` | ✅ Existe | Manter |
-| Roles `primary`, `guardrail` | ✅ Enum existe | Manter |
-| Limite 1 primary por KR | ✅ Index parcial | Manter |
-
-### 7) Ciclo de Vida ✅ JÁ IMPLEMENTADO
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Enum `kpi_lifecycle_status` | ✅ `proposed`, `active`, `observing`, `deprecated` | Manter |
-| Apenas ativos em rituais | ✅ Implementado | Manter |
-
-### 8) UX do Formulário 🔧 PENDENTE
-| Item | Estado Atual | Desejado |
-|------|--------------|----------|
-| Label "Nome do KPI" | Hardcoded | "Nome do Indicador" |
-| Campos condicionais | Parcial | Aprimorar lógica |
+| Gap | Estado Atual | Desejado |
+|-----|--------------|----------|
+| Contribuidor de dados | Não existe | Nova tabela ou campo |
+| Separação owner vs updater | Ambíguo | Clareza explícita |
+| KPIs por papel no wizard | Todos aparecem | Filtrar por relevância |
+| Guardrails violados | Não destacados | Alertas específicos |
+| Indicadores sistêmicos | Não categorizados | Visão cross-team |
 
 ---
 
 ## Decisões de Design
 
-### Sobre Remoção do Campo Categoria
+### 1. Modelo de Contribuidores de KPI
 
-**Análise de Impacto:**
-- Campo `category` é `NOT NULL` no banco
-- Enum `kpi_category` tem 6 valores: `financeiro`, `growth`, `cs`, `produto`, `operacoes`, `pessoas`
-- 0 registros existentes (sem migração de dados necessária)
-- UI usa para agrupar KPIs no dashboard
+**Opção A:** Nova tabela `kpi_data_contributors`
+```sql
+CREATE TABLE kpi_data_contributors (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  kpi_id uuid REFERENCES kpi_metrics(id),
+  contributor_user_id uuid REFERENCES profiles(id),
+  role text DEFAULT 'data_entry', -- 'data_entry', 'reviewer'
+  created_at timestamptz DEFAULT now()
+);
+```
 
-**Opções:**
-1. **Remover completamente** — Alinhado com pedido (evitar duplicidade com Área)
-2. **Manter como opcional** — Permitir categorização adicional
+**Opção B:** Usar `team_id` + membros do time como contribuidores implícitos
 
-**Recomendação:** Remover completamente conforme solicitado. A Área (estratégica) representa ownership organizacional, tornando a categoria funcional redundante.
+**Recomendação:** **Opção A** — Modelo explícito permite atribuição granular e mensagens claras no wizard.
 
-### Sobre Governança de Criação
+### 2. Classificação de KPIs no Contexto
 
-**Permissões Atuais no Catálogo:**
-- `kpis.metric.create:bu` — Criar métricas
-- `kpis.settings.manage:bu` — Gerenciar configurações
+| Classificação | Critério | Exibição |
+|---------------|----------|----------|
+| **Para atualizar** | `contributor = user` + `needs_update = true` | Editável |
+| **Relevante (time)** | `team_id = user.team` | Somente leitura |
+| **Estratégico** | `scope = 'org'` ou vinculado a OKR org | Badge "Estratégico", read-only |
 
-**Nova Lógica Proposta:**
-- **Métrica:** Qualquer usuário com `kpis.metric.create:bu` pode criar
-- **KPI:** Apenas usuários com `kpis.settings.manage:bu` OU líderes de time podem criar
-- **Promoção Métrica→KPI:** Mesma regra de criação de KPI
+### 3. Gate de Exibição de KPIs
 
-### Sobre Auto-Inferência de Área
+KPIs só aparecem nos wizards quando atendem a critérios específicos:
 
-**Quando scope = team:**
-1. Buscar `team.area_id` via relacionamento
-2. Preencher automaticamente `area_id`
-3. Ocultar campo de seleção de Área
-4. Exibir badge read-only mostrando a Área inferida
+| Wizard | Critério de Exibição |
+|--------|---------------------|
+| Collaborator | `contributor = user` OU `needs_update + team_id match` |
+| Leader Prep | `team_id match` + (`rag != on_track` OU `needs_update` OU `is_guardrail_at_risk`) |
+| Team Check-in | Vinculados a KRs em risco OU guardrails violados |
+| Managers | `scope = 'area'` ou `scope = 'org'` + cross-team patterns |
+| C-Level | `scope = 'org'` + tendências estratégicas |
 
 ---
 
 ## Etapas de Implementação
 
-### FASE 1: Migração do Banco de Dados
+### FASE 1: Modelo de Dados (Contribuidores)
 
-#### 1.1 Tornar `category` opcional e depreciar
+#### 1.1 Nova tabela `kpi_data_contributors`
+
 ```sql
--- Tornar category nullable (soft deprecation)
-ALTER TABLE kpi_metrics ALTER COLUMN category DROP NOT NULL;
+-- Tabela de contribuidores de dados de KPI
+CREATE TABLE public.kpi_data_contributors (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  kpi_id uuid NOT NULL REFERENCES public.kpi_metrics(id) ON DELETE CASCADE,
+  contributor_user_id uuid NOT NULL REFERENCES public.profiles(id),
+  role text NOT NULL DEFAULT 'data_entry' CHECK (role IN ('data_entry', 'reviewer')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES public.profiles(id),
+  bu_id uuid NOT NULL REFERENCES public.bu_units(id),
+  deleted_at timestamptz,
+  UNIQUE (kpi_id, contributor_user_id)
+);
 
--- Adicionar comentário de deprecação
-COMMENT ON COLUMN kpi_metrics.category IS 'DEPRECATED v2.82.0 - Use area_id para ownership. Mantido para compatibilidade.';
+-- RLS
+ALTER TABLE public.kpi_data_contributors ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can view contributors"
+  ON public.kpi_data_contributors FOR SELECT
+  USING (is_profile_bu_member(my_profile_id(), bu_id));
+
+CREATE POLICY "KPI editors can manage contributors"
+  ON public.kpi_data_contributors FOR ALL
+  USING (has_permission(my_profile_id(), bu_id, 'kpis.metric.update:bu'));
+
+-- Index
+CREATE INDEX idx_kpi_contributors_user ON public.kpi_data_contributors(contributor_user_id) 
+  WHERE deleted_at IS NULL;
+CREATE INDEX idx_kpi_contributors_kpi ON public.kpi_data_contributors(kpi_id) 
+  WHERE deleted_at IS NULL;
 ```
 
-**Justificativa:** Não remover a coluna imediatamente para permitir rollback e manter dados históricos futuros.
+---
 
-### FASE 2: Ajustes no Frontend
+### FASE 2: Hook `useKpisForWizard` Evoluído
 
-#### 2.1 Governança de Criação (`CreateKpiDialog.tsx`)
+#### 2.1 Novo arquivo: `src/modules/kpis/hooks/useKpisForWizardV2.ts`
 
-**Mudanças:**
-1. Verificar permissão diferenciada por tipo de indicador
-2. Se `indicator_type = 'kpi'` e usuário não tem `kpis.settings.manage:bu`:
-   - Desabilitar opção "KPI" no select
-   - Ou redirecionar para criar como "Métrica" (status proposto)
+Evolui o hook existente para suportar classificação por papel:
 
-**Código:**
 ```typescript
-// Verificar se pode criar KPI
-const canCreateKpi = hasPermission("kpis.settings.manage:bu") || isTeamLeader;
+interface UseKpisForWizardV2Options {
+  userId: string;
+  teamId?: string;
+  areaId?: string;
+  scope?: 'collaborator' | 'leader' | 'manager' | 'clevel';
+  includeGuardrailsAtRisk?: boolean;
+}
 
-// No select de tipo:
-<SelectItem value="kpi" disabled={!canCreateKpi}>
-  KPI {!canCreateKpi && "(requer permissão de líder)"}
-</SelectItem>
-```
+interface KpiForWizardV2 extends KpiForWizard {
+  userRole: 'owner' | 'contributor' | 'viewer';
+  isStrategic: boolean;
+  isGuardrailAtRisk: boolean;
+  linkedKrIds: string[];
+  displayMode: 'editable' | 'readonly' | 'alert';
+}
 
-#### 2.2 Auto-Inferência de Área
-
-**Mudanças no `CreateKpiDialog.tsx` e `EditKpiDialog.tsx`:**
-
-1. Quando `scope === 'team'` e `team_id` é selecionado:
-   - Buscar área do time via query
-   - Auto-preencher `area_id`
-   - Exibir badge read-only com nome da área
-
-2. Ocultar campo `area_id` quando `scope === 'team'` (já inferido)
-
-3. Mostrar campo `area_id` apenas quando `scope === 'area'` ou `scope === 'org'`
-
-**Novo hook necessário:**
-```typescript
-// useTeamArea.ts
-export function useTeamArea(teamId: string | undefined) {
-  // Buscar team com area_id e area.name
-  // Retornar { areaId, areaName, isLoading }
+interface UseKpisForWizardV2Result {
+  // Separados por papel
+  kpisToUpdate: KpiForWizardV2[];      // Contribuidor precisa atualizar
+  kpisTeamContext: KpiForWizardV2[];   // Contexto do time (read-only)
+  kpisStrategic: KpiForWizardV2[];     // Estratégicos globais (read-only)
+  kpisInAlert: KpiForWizardV2[];       // Em alerta (amarelo/vermelho)
+  guardrailsViolated: KpiForWizardV2[]; // Guardrails vinculados a KRs
+  
+  // Flags de resumo
+  hasUpdatesNeeded: boolean;
+  hasAlertsToShow: boolean;
+  hasGuardrailsViolated: boolean;
+  isLoading: boolean;
 }
 ```
 
-#### 2.3 Remoção do Campo Categoria
+**Query evolui para buscar:**
+1. KPIs onde usuário é `owner_user_id`
+2. KPIs onde usuário é `contributor` (nova tabela)
+3. KPIs do time (para contexto)
+4. KPIs vinculados a KRs via `okr_kr_metrics` (para guardrails)
+
+---
+
+### FASE 3: Collaborator Check-in
+
+#### 3.1 `CollaboratorContextStep.tsx` — Separação Visual
 
 **Mudanças:**
-1. Remover FormField de `category` do `CreateKpiDialog.tsx`
-2. Remover FormField de `category` do `EditKpiDialog.tsx`
-3. Atualizar Zod schema (tornar optional ou remover)
-4. Atualizar mutations para não enviar `category`
+- Criar 3 seções distintas:
+  1. **"KPIs para atualizar"** — Onde `userRole = 'contributor'` + `needs_update`
+  2. **"Indicadores do Time"** — Onde `team_id` match, exibidos read-only
+  3. **"Indicadores Estratégicos"** — Onde `scope = 'org'`, com badge especial
 
-#### 2.4 Ajustes de UX
-
-**Labels e Textos:**
-| Atual | Novo |
-|-------|------|
-| "Nome do KPI" | "Nome do Indicador" |
-| "Novo KPI" (DialogTitle) | "Novo Indicador" |
-| "Criar KPI" (button) | "Criar Indicador" |
-
-**Campos Condicionais:**
-- Time: Visível apenas quando `scope === 'team'`
-- Área: Visível quando `scope === 'area'` OU `scope === 'org'`
-- Quando `scope === 'team'`: Exibir badge com área inferida
-
-### FASE 3: Atualização de Tipos TypeScript
-
-#### 3.1 `src/modules/kpis/types.ts`
-
-**Mudanças:**
-1. Marcar `KpiCategory` como deprecated
-2. Tornar `category` opcional em `KpiMetric`
-3. Atualizar `KpiWithValues`
-
+**Componente novo:** `KpiContextSection`
 ```typescript
-// DEPRECATED: Use area_id for ownership
-/** @deprecated Use area_id for organizational ownership */
-export type KpiCategory = 'financeiro' | 'growth' | 'cs' | 'produto' | 'operacoes' | 'pessoas';
-
-export interface KpiMetric {
-  // ...
-  /** @deprecated Use area_id */
-  category?: KpiCategory;
-  // ...
+interface KpiContextSectionProps {
+  title: string;
+  subtitle?: string;
+  kpis: KpiForWizardV2[];
+  variant: 'update' | 'context' | 'strategic';
+  showUpdateBadge?: boolean;
 }
 ```
 
-### FASE 4: Ajustes no Dashboard
+#### 3.2 `CollaboratorKpiStep.tsx` — Mensagem de Clareza
 
-#### 4.1 `KpiDashboardPage.tsx`
-
-**Mudanças:**
-1. Remover agrupamento por categoria
-2. Agrupar por área (usando `area_id`)
-3. Manter filtros funcionais
-
-### FASE 5: Documentação
-
-#### 5.1 Atualizar TCR para v2.82.0
-
-**Changelog:**
-```markdown
-### v2.82.0 — Evolução do Módulo de Indicadores
-- **Campo `category` deprecado** — Usar `area_id` para ownership organizacional
-- **Governança de criação** — KPIs requerem permissão de líder/admin
-- **Auto-inferência de área** — Quando scope=team, área é inferida do time
-- **UX simplificada** — Labels atualizados para "Indicador"
+Adicionar mensagem explicativa no header:
+```text
+"Você está atualizando este indicador porque contribui com os dados operacionais.
+O responsável final por este KPI é [Nome do Owner]."
 ```
 
-**Tabela de campos atualizada:**
-```markdown
-| **category** | enum | `financeiro`, ... — **DEPRECATED v2.82.0** |
+---
+
+### FASE 4: Leader Prep
+
+#### 4.1 Nova seção: `LeaderKpiAlertStep.tsx`
+
+**Objetivo:** Seção "Indicadores em Atenção" entre Overview e Highlights
+
+**Conteúdo:**
+- KPIs do time/área em alerta (amarelo/vermelho)
+- KPIs desatualizados além do período esperado
+- Guardrails violados vinculados a KRs em risco
+
+**Ações disponíveis:**
+- "Marcar para discussão em grupo"
+- "Agendar follow-up com responsável"
+
+```typescript
+interface KpiAlertItem {
+  kpi: KpiForWizardV2;
+  alertReason: 'off_track' | 'at_risk' | 'outdated' | 'guardrail_violated';
+  linkedKr?: { id: string; title: string; status: string };
+  suggestedAction: 'discuss' | 'followup' | 'monitor';
+}
+```
+
+#### 4.2 Integrar no wizard
+
+Adicionar novo step ao `WIZARD_STEPS` em `LeaderPrepPage.tsx`:
+```typescript
+{ id: 'kpi-alerts', label: 'Indicadores', description: 'KPIs em atenção' }
+```
+
+---
+
+### FASE 5: Team Check-in
+
+#### 5.1 `TeamKrReviewStep.tsx` — KPI Gate
+
+**Lógica:** KPIs NÃO aparecem por padrão. Só aparecem quando:
+1. São `primary` de uma KR em risco (amarelo/vermelho)
+2. São `guardrail` e estão violados
+3. Foram marcados pelo líder na Leader Prep
+
+**Componente novo:** `KrLinkedKpiCard`
+```typescript
+interface KrLinkedKpiCardProps {
+  kr: WizardKr;
+  linkedKpis: KpiForWizardV2[];
+  showReason: 'primary_at_risk' | 'guardrail_violated' | 'leader_marked';
+}
+```
+
+**Exibição condicional:**
+```typescript
+// Só exibir se houver KPIs relevantes
+{linkedKpis.length > 0 && (
+  <KrLinkedKpiCard 
+    kr={currentKr}
+    linkedKpis={linkedKpis}
+    showReason={determineReason(kr, linkedKpis)}
+  />
+)}
+```
+
+---
+
+### FASE 6: Managers Check-in
+
+#### 6.1 Nova seção: `ManagersSystemicKpisStep.tsx`
+
+**Objetivo:** Visão de "Indicadores Sistêmicos" que atravessam times/áreas
+
+**Critérios de exibição:**
+- `scope = 'area'` ou `scope = 'org'`
+- Padrões cross-team (mesmo indicador em múltiplos times)
+- Indicadores de eficiência operacional
+
+**Layout:**
+```text
+┌────────────────────────────────────────────────────┐
+│ Indicadores Sistêmicos                              │
+├────────────────────────────────────────────────────┤
+│                                                      │
+│  📊 Eficiência Operacional                          │
+│  ├─ NPS Geral: 72 → Meta: 80 (⚠️ -10%)             │
+│  ├─ Lead Time Médio: 5.2d → Meta: 4d               │
+│  └─ Taxa de Churn: 2.1% → Meta: 2%                 │
+│                                                      │
+│  🔄 Cross-Team Dependencies                         │
+│  ├─ Revenue + CS: Customer Health Score            │
+│  └─ Produto + Growth: Activation Rate              │
+│                                                      │
+└────────────────────────────────────────────────────┘
+```
+
+#### 6.2 Integrar no wizard
+
+Adicionar step após `panorama`:
+```typescript
+{ id: 'systemic-kpis', label: 'Indicadores', description: 'Visão sistêmica' }
+```
+
+---
+
+### FASE 7: C-Level Check-in
+
+#### 7.1 `CLevelInsightsStep.tsx` — KPIs como Sinais
+
+**Mudanças:**
+- Remover cards hardcoded de exemplo
+- Integrar com dados reais de KPIs organizacionais
+- Exibir KPIs como **sinais de contexto**, não itens operacionais
+
+**Layout atualizado:**
+```text
+┌────────────────────────────────────────────────────┐
+│ Sinais Estratégicos                                 │
+├────────────────────────────────────────────────────┤
+│                                                      │
+│  📈 Tendências Positivas                            │
+│  └─ Receita Recorrente: ↑12% vs trimestre anterior │
+│                                                      │
+│  ⚠️ Pontos de Atenção                               │
+│  ├─ NPS: tendência estável (esperado: melhoria)    │
+│  └─ CAC/LTV: deteriorando 5% no mês                │
+│                                                      │
+│  🎯 Validação de Direção                            │
+│  └─ 3 de 4 OKRs organizacionais no caminho         │
+│                                                      │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+### FASE 8: UI de Gerenciamento de Contribuidores
+
+#### 8.1 `KpiContributorsManager.tsx`
+
+Componente para gerenciar contribuidores de um KPI:
+
+```typescript
+interface KpiContributorsManagerProps {
+  kpiId: string;
+  ownerId: string;
+  onContributorAdd: (userId: string) => void;
+  onContributorRemove: (userId: string) => void;
+}
+```
+
+**Localização:** Dentro do `KpiSidePanel` e `EditKpiDialog`
+
+#### 8.2 Mensagem explicativa
+
+```text
+"O responsável é accountable pelo indicador.
+Contribuidores são pessoas que inserem dados operacionais."
 ```
 
 ---
@@ -247,78 +373,151 @@ export interface KpiMetric {
 ### Banco de Dados (1 migration)
 | Arquivo | Mudança |
 |---------|---------|
-| `supabase/migrations/YYYYMMDD_*.sql` | ALTER category DROP NOT NULL |
+| `supabase/migrations/YYYYMMDD_*.sql` | Criar tabela `kpi_data_contributors` |
 
-### Frontend (6 arquivos)
-| Arquivo | Mudança |
-|---------|---------|
-| `src/modules/kpis/types.ts` | Deprecar category, tornar opcional |
-| `src/modules/kpis/components/CreateKpiDialog.tsx` | Remover category, governança, auto-área |
-| `src/modules/kpis/components/EditKpiDialog.tsx` | Remover category, auto-área |
-| `src/modules/kpis/hooks/useKpiData.ts` | Remover category das mutations |
-| `src/modules/kpis/hooks/useKpiMutations.ts` | Remover category |
-| `src/modules/kpis/pages/KpiDashboardPage.tsx` | Agrupar por área |
-
-### Novo Hook (1 arquivo)
+### Novos Hooks (2 arquivos)
 | Arquivo | Descrição |
 |---------|-----------|
-| `src/modules/kpis/hooks/useTeamArea.ts` | Buscar área de um time |
+| `src/modules/kpis/hooks/useKpisForWizardV2.ts` | Hook evoluído com classificação |
+| `src/modules/kpis/hooks/useKpiContributors.ts` | CRUD de contribuidores |
 
-### Documentação (2 arquivos)
+### Steps Novos (3 componentes)
+| Arquivo | Wizard | Descrição |
+|---------|--------|-----------|
+| `LeaderKpiAlertStep.tsx` | Leader Prep | Indicadores em atenção |
+| `ManagersSystemicKpisStep.tsx` | Managers | Indicadores sistêmicos |
+| `KrLinkedKpiCard.tsx` | Team Check-in | KPIs vinculados a KRs |
+
+### Componentes Atualizados (6 arquivos)
 | Arquivo | Mudança |
 |---------|---------|
-| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | v2.82.0 changelog |
-| `.lovable/plan.md` | Atualizar status |
+| `CollaboratorContextStep.tsx` | 3 seções separadas de KPIs |
+| `CollaboratorKpiStep.tsx` | Mensagem de clareza de papel |
+| `TeamKrReviewStep.tsx` | KPI Gate condicional |
+| `CLevelInsightsStep.tsx` | Dados reais + layout de sinais |
+| `LeaderPrepPage.tsx` | Novo step de KPI alerts |
+| `ManagersCheckinPage.tsx` | Novo step de indicadores sistêmicos |
+
+### UI de Gestão (2 componentes)
+| Arquivo | Descrição |
+|---------|-----------|
+| `KpiContributorsManager.tsx` | Gerenciar contribuidores |
+| `KpiSidePanel.tsx` | Integrar seção de contribuidores |
+
+### Types (1 arquivo)
+| Arquivo | Mudança |
+|---------|---------|
+| `src/modules/kpis/types.ts` | Adicionar `KpiContributor`, `KpiForWizardV2` |
+
+### Documentação (1 arquivo)
+| Arquivo | Mudança |
+|---------|---------|
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | v2.83.0 changelog |
+
+---
+
+## Fluxo de Dados por Wizard
+
+### Collaborator Check-in
+```text
+useKpisForWizardV2({ userId, scope: 'collaborator' })
+    │
+    ├── kpisToUpdate[] ──────► CollaboratorKpiStep (editável)
+    ├── kpisTeamContext[] ───► CollaboratorContextStep (readonly)
+    └── kpisStrategic[] ─────► CollaboratorContextStep (badge "Estratégico")
+```
+
+### Leader Prep
+```text
+useKpisForWizardV2({ teamId, scope: 'leader' })
+    │
+    ├── kpisInAlert[] ────────► LeaderKpiAlertStep (marcar para discussão)
+    ├── guardrailsViolated[] ─► LeaderHighlightsStep (integrar)
+    └── flags ────────────────► Badge de contagem no step
+```
+
+### Team Check-in
+```text
+useKpisForWizardV2({ teamId, scope: 'team', includeGuardrailsAtRisk: true })
+    │
+    └── guardrailsViolated[] ─► TeamKrReviewStep (KrLinkedKpiCard)
+        │
+        └── Exibir APENAS quando:
+            - KR em risco tem KPI primary
+            - Guardrail está violado
+            - Líder marcou na prep
+```
+
+### Managers Check-in
+```text
+useKpisForWizardV2({ areaId, scope: 'manager' })
+    │
+    ├── kpisStrategic[] ───► ManagersSystemicKpisStep
+    └── crossTeamPatterns ─► Agrupamento por área
+```
+
+### C-Level Check-in
+```text
+useKpisForWizardV2({ scope: 'clevel' })
+    │
+    └── kpisStrategic[] ───► CLevelInsightsStep (sinais + tendências)
+```
 
 ---
 
 ## Ordem de Execução
 
-1. **Migration DB** — Tornar category nullable
-2. **Types** — Atualizar tipos (deprecar category)
-3. **Hook useTeamArea** — Criar hook de inferência
-4. **CreateKpiDialog** — Aplicar todas as mudanças UX
-5. **EditKpiDialog** — Espelhar mudanças
-6. **useKpiData/useKpiMutations** — Ajustar mutations
-7. **KpiDashboardPage** — Agrupar por área
-8. **Documentação** — TCR v2.82.0
+1. **Migration DB** — Criar tabela `kpi_data_contributors`
+2. **Types** — Adicionar novos tipos
+3. **Hook useKpiContributors** — CRUD de contribuidores
+4. **Hook useKpisForWizardV2** — Classificação por papel
+5. **CollaboratorContextStep** — 3 seções de KPIs
+6. **CollaboratorKpiStep** — Mensagem de clareza
+7. **LeaderKpiAlertStep** — Nova seção de alertas
+8. **LeaderPrepPage** — Integrar novo step
+9. **KrLinkedKpiCard** — Componente de vínculo
+10. **TeamKrReviewStep** — KPI Gate
+11. **ManagersSystemicKpisStep** — Nova seção sistêmica
+12. **ManagersCheckinPage** — Integrar novo step
+13. **CLevelInsightsStep** — Dados reais
+14. **KpiContributorsManager** — UI de gestão
+15. **Documentação** — TCR v2.83.0
 
 ---
 
 ## Validação Final (Checklist)
 
-- [ ] Campo `category` é nullable no banco
-- [ ] UI não exibe campo Categoria
-- [ ] KPIs só podem ser criados por líderes/admins
-- [ ] Métricas podem ser criadas por qualquer colaborador
-- [ ] Quando scope=team, área é inferida automaticamente
-- [ ] Campo Área oculto quando scope=team
-- [ ] Labels atualizados para "Indicador"
-- [ ] Dashboard agrupa por Área
-- [ ] TCR atualizado para v2.82.0
-- [ ] Enum `kpi_category` mantido para rollback (deprecated)
+- [ ] Tabela `kpi_data_contributors` criada com RLS
+- [ ] Colaboradores veem apenas KPIs que precisam atualizar
+- [ ] Mensagem clara sobre papel (contribuidor vs responsável)
+- [ ] KPIs do time aparecem em modo leitura no contexto
+- [ ] Leader Prep tem seção "Indicadores em Atenção"
+- [ ] Líder pode marcar KPIs para discussão/follow-up
+- [ ] Team Check-in mostra KPIs apenas quando relevantes
+- [ ] Managers veem indicadores sistêmicos cross-team
+- [ ] C-Level vê KPIs como sinais estratégicos
+- [ ] UI permite gerenciar contribuidores de KPI
+- [ ] TCR atualizado para v2.83.0
 
 ---
 
 ## Riscos e Mitigações
 
-| Risco | Mitigação |
-|-------|-----------|
-| Quebra de agrupamento no dashboard | Manter fallback "Sem Área" |
-| Rollback necessário | Category apenas nullable, não removida |
-| Permissões incorretas | Verificar templates `kpi_editor` vs `kpi_admin` |
+| Risco | Probabilidade | Impacto | Mitigação |
+|-------|---------------|---------|-----------|
+| Performance com nova tabela | Baixa | Médio | Indexes otimizados + cache |
+| Confusão owner vs contributor | Média | Alto | Mensagens claras em toda UI |
+| Wizards sem KPIs (vazio) | Média | Baixo | Empty states adequados |
+| Guardrails não vinculados | Baixa | Médio | Validação na criação de KR |
 
 ---
 
-## Resumo das Mudanças por Requisito
+## Resumo das Melhorias por Wizard
 
-| # | Requisito | Status | Ação |
-|---|-----------|--------|------|
-| 1 | Remover "Indicador de Saúde" | ✅ Já feito | Nenhuma |
-| 2 | Governança de criação | 🔧 Pendente | Implementar |
-| 3 | Responsável obrigatório | ✅ Parcial | Aprimorar texto |
-| 4 | Escopo com auto-área | 🔧 Pendente | Implementar |
-| 5 | Remover Categoria | 🔧 Pendente | Deprecar e ocultar |
-| 6 | Relação KPI↔KR | ✅ Já existe | Nenhuma |
-| 7 | Ciclo de vida | ✅ Já existe | Nenhuma |
-| 8 | UX simplificada | 🔧 Pendente | Labels e condicionais |
+| Wizard | Antes | Depois |
+|--------|-------|--------|
+| **Collaborator** | Todos os KPIs do owner | Separação: atualizar / contexto / estratégico |
+| **Leader Prep** | Sem seção de KPIs | Nova seção "Indicadores em Atenção" |
+| **Team Check-in** | Sem KPIs | KPIs condicionais (apenas quando relevantes) |
+| **Managers** | Sem KPIs | Nova seção "Indicadores Sistêmicos" |
+| **C-Level** | Cards mockados | KPIs reais como sinais estratégicos |
