@@ -12,3 +12,10 @@ export { useTeamArea } from "./useTeamArea";
 // Types
 export type { KpiForWizard, UseKpisForWizardOptions, UseKpisForWizardResult } from "./useKpisForWizard";
 export type { UseKpiContributorsOptions, AddContributorParams, RemoveContributorParams } from "./useKpiContributors";
+
+// v2.83.0: Re-export V2 types from types file for convenience
+export type { 
+  KpiForWizardV2, 
+  UseKpisForWizardV2Options, 
+  UseKpisForWizardV2Result 
+} from "../types";
