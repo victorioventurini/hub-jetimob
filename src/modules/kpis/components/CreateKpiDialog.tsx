@@ -204,7 +204,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
-        category: "operacoes", // DEPRECATED: valor default para compatibilidade
+        // category removed v2.82.0
         unit: values.unit,
         direction: values.direction as KpiDirection,
         frequency: values.frequency as DbKpiFrequency,

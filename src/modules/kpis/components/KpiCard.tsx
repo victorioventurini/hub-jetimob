@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { KpiWithValues, CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
+import { KpiWithValues, FREQUENCY_LABELS, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -100,12 +100,15 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <Badge
-                variant="secondary"
-                className={cn("text-xs px-2 py-0.5 text-white shrink-0", CATEGORY_COLORS[kpi.category])}
-              >
-                {CATEGORY_LABELS[kpi.category]}
-              </Badge>
+              {kpi.area && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs px-2 py-0.5 shrink-0"
+                  style={{ backgroundColor: kpi.area.color || 'hsl(var(--muted))' }}
+                >
+                  {kpi.area.name}
+                </Badge>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={cn(
@@ -242,7 +245,7 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
                     variation: kpi.variation,
                     trend: kpi.trend,
                     direction: kpi.direction,
-                    category: kpi.category,
+                    areaName: kpi.area?.name,
                     ragStatus: kpi.rag_status,
                   },
                 },

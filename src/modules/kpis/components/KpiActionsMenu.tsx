@@ -72,11 +72,12 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
   };
 
   // Map KpiWithValues to KpiMetric for EditKpiDialog
+  // v2.82.0: category deprecated - using area_id for ownership
   const kpiForEdit: KpiMetric = {
     id: kpi.id,
     name: kpi.name,
     description: kpi.description,
-    category: kpi.category,
+    // category deprecated v2.82.0
     bu_id: kpi.bu_id,
     owner_user_id: kpi.owner_user_id,
     team_id: kpi.team_id,
@@ -101,6 +102,7 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
     // v2.2 governance fields
     area_id: kpi.area_id ?? null,
     scope: kpi.scope ?? 'team',
+    area: kpi.area,
   };
 
   return (
