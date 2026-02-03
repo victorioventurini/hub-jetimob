@@ -1,11 +1,22 @@
+// ============================================================
+// KPI Module Types - Hub da Jet
+// v2.1: Lifecycle, Confidence, Period, RAG
+// ============================================================
+
+// === Core Types ===
 export type KpiCategory = 'financeiro' | 'growth' | 'cs' | 'produto' | 'operacoes' | 'pessoas';
 export type KpiDirection = 'up' | 'down';
 export type KpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'manual';
 export type KpiStatus = 'active' | 'inactive';
-export type KpiValueSource = 'manual' | 'api' | 'webhook' | 'spreadsheet' | 'database';
+export type KpiValueSource = 'manual' | 'api' | 'webhook' | 'spreadsheet' | 'database' | 'integration' | 'calculation';
 export type KpiVisibility = 'restricted' | 'team' | 'bu';
 export type KpiRagStatus = 'on_track' | 'at_risk' | 'off_track' | 'no_data';
 export type KpiComparisonRule = 'higher_is_better' | 'lower_is_better' | 'equal_to_target';
+
+// === v2.1 New Types ===
+export type KpiIndicatorType = 'kpi' | 'metric' | 'health_indicator';
+export type KpiLifecycleStatus = 'proposed' | 'active' | 'observing' | 'deprecated';
+export type KpiConfidenceLevel = 'high' | 'medium' | 'low';
 
 export interface KpiMetric {
   id: string;
@@ -28,6 +39,12 @@ export interface KpiMetric {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  // v2.1 new fields
+  indicator_type: KpiIndicatorType;
+  lifecycle_status: KpiLifecycleStatus;
+  target_source: string | null;
+  recovery_protocol: string | null;
+  // Relations
   owner?: {
     id: string;
     display_name: string;
@@ -48,6 +65,13 @@ export interface KpiValue {
   notes: string | null;
   created_by: string | null;
   created_at: string;
+  // v2.1 new fields
+  period_start: string | null;
+  period_end: string | null;
+  period_label: string | null;
+  confidence: KpiConfidenceLevel;
+  rag_status: KpiRagStatus | null;
+  // Relations
   created_by_user?: {
     id: string;
     display_name: string;
@@ -114,12 +138,34 @@ export const DIRECTION_LABELS: Record<KpiDirection, string> = {
   down: 'Menor é melhor',
 };
 
+// === v2.1 New Labels ===
+export const INDICATOR_TYPE_LABELS: Record<KpiIndicatorType, string> = {
+  kpi: 'KPI',
+  metric: 'Métrica',
+  health_indicator: 'Indicador de Saúde',
+};
+
+export const LIFECYCLE_STATUS_LABELS: Record<KpiLifecycleStatus, string> = {
+  proposed: 'Proposto',
+  active: 'Ativo',
+  observing: 'Em Observação',
+  deprecated: 'Depreciado',
+};
+
+export const CONFIDENCE_LABELS: Record<KpiConfidenceLevel, string> = {
+  high: 'Alta',
+  medium: 'Média',
+  low: 'Baixa',
+};
+
 export const SOURCE_TYPE_LABELS: Record<KpiValueSource, string> = {
   manual: 'Manual',
   api: 'API',
   webhook: 'Webhook',
   spreadsheet: 'Planilha',
   database: 'Banco de Dados',
+  integration: 'Integração',
+  calculation: 'Cálculo',
 };
 
 export const SOURCE_TYPE_ICONS: Record<KpiValueSource, string> = {
@@ -128,6 +174,8 @@ export const SOURCE_TYPE_ICONS: Record<KpiValueSource, string> = {
   webhook: 'Webhook',
   spreadsheet: 'Sheet',
   database: 'Database',
+  integration: 'Link',
+  calculation: 'Calculator',
 };
 
 export const VISIBILITY_LABELS: Record<KpiVisibility, string> = {

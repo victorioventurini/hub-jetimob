@@ -1,9 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { KpiCategory, KpiWithValues, KpiValue, calculateRagStatus } from "../types";
+import { KpiCategory, KpiWithValues, KpiValue, KpiValueSource, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
+
+// Helper to normalize source types
+function mapSource(source: string): KpiValueSource {
+  if (source === 'integration') return 'api';
+  if (source === 'calculation') return 'database';
+  return source as KpiValueSource;
+}
 
 interface UseKpiDataOptions {
   category?: KpiCategory;
@@ -11,7 +18,7 @@ interface UseKpiDataOptions {
   ownerId?: string;
 }
 
-// Types that match the database schema (without the new fields we added to the local types)
+// Types that match the database schema
 interface DbKpiMetric {
   id: string;
   name: string;
@@ -29,6 +36,11 @@ interface DbKpiMetric {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  // v2.1 fields
+  indicator_type: string;
+  lifecycle_status: string;
+  target_source: string | null;
+  recovery_protocol: string | null;
   owner?: {
     id: string;
     display_name: string;
@@ -45,10 +57,16 @@ interface DbKpiValue {
   kpi_id: string;
   value: number;
   reference_date: string;
-  source: 'manual' | 'integration' | 'calculation';
+  source: 'manual' | 'integration' | 'calculation' | 'api' | 'webhook' | 'spreadsheet' | 'database';
   notes: string | null;
   created_by: string | null;
   created_at: string;
+  // v2.1 fields
+  period_start: string | null;
+  period_end: string | null;
+  period_label: string | null;
+  confidence: 'high' | 'medium' | 'low';
+  rag_status: string | null;
 }
 
 export function useKpiData(options: UseKpiDataOptions = {}) {
@@ -70,6 +88,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
           id, name, description, category, bu_id, owner_user_id, team_id,
           unit, direction, frequency, target_value, status, is_global,
           created_at, updated_at, deleted_at,
+          indicator_type, lifecycle_status, target_source, recovery_protocol,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name)
         `)
@@ -103,7 +122,10 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 
       const { data, error } = await supabase
         .from("kpi_values")
-        .select("id, kpi_id, value, reference_date, source, notes, created_by, created_at")
+        .select(`
+          id, kpi_id, value, reference_date, source, notes, created_by, created_at,
+          period_start, period_end, period_label, confidence, rag_status
+        `)
         .in(
           "kpi_id",
           kpis.map((k) => k.id)
@@ -139,10 +161,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       else if (variation < -0.5) trend = "down";
     }
 
-    // Map DB values to our extended type with defaults
+    // Map DB values to our extended type
     const mappedValues: KpiValue[] = values.map(v => ({
       ...v,
-      source: v.source === 'integration' ? 'api' : v.source === 'calculation' ? 'database' : 'manual',
+      source: mapSource(v.source),
+      confidence: v.confidence || 'medium',
+      rag_status: v.rag_status as KpiValue['rag_status'],
     }));
 
     return {
@@ -166,6 +190,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       created_at: kpi.created_at,
       updated_at: kpi.updated_at,
       deleted_at: kpi.deleted_at,
+      // v2.1 fields
+      indicator_type: (kpi.indicator_type || 'kpi') as 'kpi' | 'metric' | 'health_indicator',
+      lifecycle_status: (kpi.lifecycle_status || 'active') as 'proposed' | 'active' | 'observing' | 'deprecated',
+      target_source: kpi.target_source,
+      recovery_protocol: kpi.recovery_protocol,
       owner: kpi.owner,
       team: kpi.team,
       values: mappedValues,
@@ -176,9 +205,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       rag_status: calculateRagStatus(currentValue, kpi.target_value, kpi.direction),
       // Campos de auditoria
       last_updated_at: lastValue?.created_at ?? null,
-      last_update_source: lastValue 
-        ? (lastValue.source === 'integration' ? 'api' : lastValue.source === 'calculation' ? 'database' : 'manual') 
-        : null,
+      last_update_source: lastValue ? mapSource(lastValue.source) : null,
       last_updated_by: lastValue?.created_by ?? null,
       last_updated_by_user: null,
     };
@@ -316,7 +343,10 @@ export function useKpiDetail(kpiId: string) {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("kpi_values")
-        .select("id, kpi_id, value, reference_date, source, notes, created_by, created_at")
+        .select(`
+          id, kpi_id, value, reference_date, source, notes, created_by, created_at,
+          period_start, period_end, period_label, confidence, rag_status
+        `)
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: false });
 
@@ -329,7 +359,9 @@ export function useKpiDetail(kpiId: string) {
   // Map to extended type
   const mappedValues: KpiValue[] = (values || []).map(v => ({
     ...v,
-    source: v.source === 'integration' ? 'api' : v.source === 'calculation' ? 'database' : 'manual',
+    source: mapSource(v.source),
+    confidence: v.confidence || 'medium',
+    rag_status: v.rag_status as KpiValue['rag_status'],
   }));
 
   return {
