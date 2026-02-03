@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { KpiCategory, KpiWithValues, KpiValue, KpiValueSource, calculateRagStatus } from "../types";
+import { KpiCategory, KpiWithValues, KpiValue, KpiValueSource, KpiScope, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
@@ -16,6 +16,8 @@ interface UseKpiDataOptions {
   category?: KpiCategory;
   teamId?: string;
   ownerId?: string;
+  areaId?: string;
+  scope?: KpiScope;
 }
 
 // Types that match the database schema
@@ -41,6 +43,9 @@ interface DbKpiMetric {
   lifecycle_status: string;
   target_source: string | null;
   recovery_protocol: string | null;
+  // v2.2 governance fields
+  area_id: string | null;
+  scope: KpiScope;
   owner?: {
     id: string;
     display_name: string;
@@ -49,6 +54,11 @@ interface DbKpiMetric {
   team?: {
     id: string;
     name: string;
+  };
+  area?: {
+    id: string;
+    name: string;
+    color: string | null;
   };
 }
 
@@ -73,11 +83,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
-  const { category, teamId, ownerId } = options;
+  const { category, teamId, ownerId, areaId, scope } = options;
 
   // Fetch all KPIs with their latest values
   const { data: kpis, isLoading, error } = useQuery({
-    queryKey: queryKeys.kpis.list(null, { category, teamId, ownerId }),
+    queryKey: queryKeys.kpis.list(null, { category, teamId, ownerId, areaId, scope }),
     enabled: !!supabase,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
@@ -89,8 +99,10 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
           unit, direction, frequency, target_value, status, is_global,
           created_at, updated_at, deleted_at,
           indicator_type, lifecycle_status, target_source, recovery_protocol,
+          area_id, scope,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
-          team:teams!kpi_metrics_team_id_fkey(id, name)
+          team:teams!kpi_metrics_team_id_fkey(id, name),
+          area:areas!kpi_metrics_area_id_fkey(id, name, color)
         `)
         .eq("status", "active")
         .is("deleted_at", null)
@@ -105,6 +117,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       }
       if (ownerId) {
         query = query.eq("owner_user_id", ownerId);
+      }
+      if (areaId) {
+        query = query.eq("area_id", areaId);
+      }
+      if (scope) {
+        query = query.eq("scope", scope);
       }
 
       const { data, error } = await query;
@@ -195,8 +213,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       lifecycle_status: (kpi.lifecycle_status || 'active') as 'proposed' | 'active' | 'observing' | 'deprecated',
       target_source: kpi.target_source,
       recovery_protocol: kpi.recovery_protocol,
+      // v2.2 governance fields
+      area_id: kpi.area_id,
+      scope: kpi.scope || 'team',
       owner: kpi.owner,
       team: kpi.team,
+      area: kpi.area,
       values: mappedValues,
       current_value: currentValue,
       previous_value: previousValue,
@@ -211,7 +233,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
     };
   });
 
-  // Create KPI (uses database schema with v2.1 fields)
+  // Create KPI (uses database schema with v2.1 + v2.2 fields)
   const createKpi = useMutation({
     mutationFn: async (data: {
       name: string;
@@ -229,6 +251,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       lifecycle_status?: 'proposed' | 'active' | 'observing' | 'deprecated';
       target_source?: string | null;
       recovery_protocol?: string | null;
+      // v2.2 governance fields
+      area_id?: string | null;
+      scope?: KpiScope;
     }) => {
       const client = assertSupabaseClient(supabase, "createKpi");
 
@@ -242,6 +267,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         lifecycle_status: data.lifecycle_status || 'active',
         target_source: data.target_source || null,
         recovery_protocol: data.recovery_protocol || null,
+        // v2.2 governance fields
+        area_id: data.area_id || null,
+        scope: data.scope || 'team',
       };
 
       const { data: result, error } = await client
@@ -333,9 +361,14 @@ export function useKpiDetail(kpiId: string) {
       const { data, error } = await supabase
         .from("kpi_metrics")
         .select(`
-          *,
+          id, name, description, category, bu_id, owner_user_id, team_id,
+          unit, direction, frequency, target_value, status, is_global,
+          created_at, updated_at, deleted_at,
+          indicator_type, lifecycle_status, target_source, recovery_protocol,
+          area_id, scope,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
-          team:teams!kpi_metrics_team_id_fkey(id, name)
+          team:teams!kpi_metrics_team_id_fkey(id, name),
+          area:areas!kpi_metrics_area_id_fkey(id, name, color)
         `)
         .eq("id", kpiId)
         .maybeSingle();
@@ -383,6 +416,10 @@ export function useKpiDetail(kpiId: string) {
       source_config: null,
       visibility: 'bu' as const,
       linked_okrs: [],
+      // v2.2 governance defaults
+      area_id: kpi.area_id,
+      scope: kpi.scope || 'team',
+      area: kpi.area,
     } : null,
     values: mappedValues,
     isLoading,

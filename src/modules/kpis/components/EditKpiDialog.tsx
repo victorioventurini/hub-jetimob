@@ -19,6 +19,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -27,18 +28,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TeamSelect, BuUserSelect } from "@/components/selects";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { TeamSelect, BuUserSelect, AreaSelect } from "@/components/selects";
 import { useKpiMutations } from "../hooks/useKpiMutations";
 import {
   KpiCategory,
   KpiDirection,
   KpiFrequency,
+  KpiIndicatorType,
+  KpiLifecycleStatus,
+  KpiScope,
   KpiMetric,
   CATEGORY_LABELS,
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
+  INDICATOR_TYPE_LABELS,
+  LIFECYCLE_STATUS_LABELS,
+  SCOPE_LABELS,
 } from "../types";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ChevronDown } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
@@ -50,6 +59,38 @@ const formSchema = z.object({
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
   target_value: z.coerce.number().optional(),
+  // v2.1 fields
+  indicator_type: z.enum(["kpi", "metric", "health_indicator"]),
+  lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
+  target_source: z.string().max(500).optional(),
+  recovery_protocol: z.string().max(1000).optional(),
+  // v2.2 governance fields
+  area_id: z.string().optional(),
+  scope: z.enum(["team", "area", "org"]),
+}).superRefine((data, ctx) => {
+  if (data.scope === 'team' && !data.team_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Time é obrigatório para escopo 'Time'",
+      path: ["team_id"],
+    });
+  }
+  if (data.lifecycle_status === 'active') {
+    if (!data.owner_user_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Responsável é obrigatório para KPIs ativos",
+        path: ["owner_user_id"],
+      });
+    }
+    if (!data.area_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Área é obrigatória para KPIs ativos",
+        path: ["area_id"],
+      });
+    }
+  }
 });
 
 type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
@@ -63,6 +104,7 @@ interface EditKpiDialogProps {
 
 export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { updateKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   const canManageKpis = hasPermission("kpis:manage");
@@ -76,8 +118,17 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
       unit: "%",
       direction: "up",
       frequency: "monthly",
+      indicator_type: "kpi",
+      lifecycle_status: "active",
+      target_source: "",
+      recovery_protocol: "",
+      area_id: undefined,
+      scope: "team",
     },
   });
+
+  const watchScope = form.watch("scope");
+  const watchLifecycleStatus = form.watch("lifecycle_status");
 
   // Reset form when KPI changes
   useEffect(() => {
@@ -92,7 +143,19 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         team_id: kpi.team_id || undefined,
         owner_user_id: kpi.owner_user_id || undefined,
         target_value: kpi.target_value || undefined,
+        // v2.1 fields
+        indicator_type: kpi.indicator_type || "kpi",
+        lifecycle_status: kpi.lifecycle_status || "active",
+        target_source: kpi.target_source || "",
+        recovery_protocol: kpi.recovery_protocol || "",
+        // v2.2 governance fields
+        area_id: kpi.area_id || undefined,
+        scope: kpi.scope || "team",
       });
+      // Open advanced if there are values
+      if (kpi.target_source || kpi.recovery_protocol) {
+        setShowAdvanced(true);
+      }
     }
   }, [kpi, open, form]);
 
@@ -100,6 +163,13 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   if (!isLoadingPermission && !canManageKpis) {
     return null;
   }
+
+  const handleScopeChange = (newScope: KpiScope) => {
+    form.setValue("scope", newScope);
+    if (newScope !== "team") {
+      form.setValue("team_id", undefined);
+    }
+  };
 
   const onSubmit = async (values: FormValues) => {
     if (!kpi) return;
@@ -114,9 +184,17 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         unit: values.unit,
         direction: values.direction as KpiDirection,
         frequency: values.frequency as DbKpiFrequency,
-        team_id: values.team_id || null,
+        team_id: values.scope === 'team' ? values.team_id || null : null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
+        // v2.1 fields
+        indicator_type: values.indicator_type as KpiIndicatorType,
+        lifecycle_status: values.lifecycle_status as KpiLifecycleStatus,
+        target_source: values.target_source || null,
+        recovery_protocol: values.recovery_protocol || null,
+        // v2.2 governance fields
+        area_id: values.area_id || null,
+        scope: values.scope as KpiScope,
       });
       onOpenChange(false);
     } finally {
@@ -167,6 +245,31 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="indicator_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Indicador</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(INDICATOR_TYPE_LABELS) as KpiIndicatorType[]).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {INDICATOR_TYPE_LABELS[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
@@ -189,7 +292,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                   </FormItem>
                 )}
               />
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="unit"
@@ -208,6 +313,31 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         <SelectItem value="pontos">Pontos</SelectItem>
                         <SelectItem value="dias">Dias</SelectItem>
                         <SelectItem value="número">Número</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lifecycle_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status do Ciclo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(LIFECYCLE_STATUS_LABELS) as KpiLifecycleStatus[]).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {LIFECYCLE_STATUS_LABELS[status]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -290,17 +420,45 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
               )}
             />
 
+            {/* v2.2 Governance: Escopo e Área */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="team_id"
+                name="scope"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time (opcional)</FormLabel>
+                    <FormLabel>Escopo</FormLabel>
+                    <Select onValueChange={handleScopeChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(SCOPE_LABELS) as KpiScope[]).map((sc) => (
+                          <SelectItem key={sc} value={sc}>
+                            {SCOPE_LABELS[sc]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="area_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                    </FormLabel>
                     <FormControl>
-                      <TeamSelect
+                      <AreaSelect
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => field.onChange(val ?? undefined)}
                         placeholder="Selecione..."
                         triggerClassName="w-full"
                       />
@@ -309,13 +467,38 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {watchScope === 'team' && (
+                <FormField
+                  control={form.control}
+                  name="team_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <TeamSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Selecione..."
+                          triggerClassName="w-full"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
                 name="owner_user_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Owner (opcional)</FormLabel>
+                    <FormLabel>
+                      Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                    </FormLabel>
                     <FormControl>
                       <BuUserSelect
                         value={field.value}
@@ -330,6 +513,63 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 )}
               />
             </div>
+
+            {/* Campos avançados v2.1 em Collapsible */}
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-between text-muted-foreground"
+                >
+                  Configurações avançadas
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="target_source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fonte da Meta (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: OKR Q1 2026, Benchmark Setorial, Board Deck..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        URL ou referência de onde o target/benchmark foi definido
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="recovery_protocol"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Protocolo de Recuperação (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Descreva o plano de ação caso o KPI fique amarelo ou vermelho..."
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Ações a serem tomadas quando o indicador ficar fora da meta
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <DialogFooter>
               <Button

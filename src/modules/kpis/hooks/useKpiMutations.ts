@@ -3,7 +3,7 @@ import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScoped
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
-import { KpiCategory } from "../types";
+import { KpiCategory, KpiScope, KpiIndicatorType, KpiLifecycleStatus } from "../types";
 
 interface UpdateKpiData {
   id: string;
@@ -16,6 +16,14 @@ interface UpdateKpiData {
   team_id: string | null;
   owner_user_id: string | null;
   target_value: number | null;
+  // v2.1 fields
+  indicator_type?: KpiIndicatorType;
+  lifecycle_status?: KpiLifecycleStatus;
+  target_source?: string | null;
+  recovery_protocol?: string | null;
+  // v2.2 governance fields
+  area_id?: string | null;
+  scope?: KpiScope;
 }
 
 /**
@@ -39,6 +47,14 @@ export function useKpiMutations() {
         ...updateData,
         team_id: updateData.team_id || null,
         owner_user_id: updateData.owner_user_id || null,
+        area_id: updateData.area_id || null,
+        // v2.1 fields
+        indicator_type: updateData.indicator_type,
+        lifecycle_status: updateData.lifecycle_status,
+        target_source: updateData.target_source || null,
+        recovery_protocol: updateData.recovery_protocol || null,
+        // v2.2 governance
+        scope: updateData.scope,
       };
 
       const { data: result, error } = await client

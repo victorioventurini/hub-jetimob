@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { TeamSelect, BuUserSelect } from "@/components/selects";
+import { TeamSelect, BuUserSelect, AreaSelect } from "@/components/selects";
 import { useKpiData } from "../hooks";
 import {
   KpiCategory,
@@ -37,11 +37,13 @@ import {
   KpiFrequency,
   KpiIndicatorType,
   KpiLifecycleStatus,
+  KpiScope,
   CATEGORY_LABELS,
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
+  SCOPE_LABELS,
 } from "../types";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -62,6 +64,35 @@ const formSchema = z.object({
   lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
   target_source: z.string().max(500).optional(),
   recovery_protocol: z.string().max(1000).optional(),
+  // v2.2 governance fields
+  area_id: z.string().optional(),
+  scope: z.enum(["team", "area", "org"]),
+}).superRefine((data, ctx) => {
+  // Validação: se scope='team', exigir team_id
+  if (data.scope === 'team' && !data.team_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Time é obrigatório para escopo 'Time'",
+      path: ["team_id"],
+    });
+  }
+  // Validação: se lifecycle_status='active', exigir owner e área
+  if (data.lifecycle_status === 'active') {
+    if (!data.owner_user_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Responsável é obrigatório para KPIs ativos",
+        path: ["owner_user_id"],
+      });
+    }
+    if (!data.area_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Área é obrigatória para KPIs ativos",
+        path: ["area_id"],
+      });
+    }
+  }
 });
 
 type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
@@ -99,8 +130,22 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       lifecycle_status: "active",
       target_source: "",
       recovery_protocol: "",
+      // v2.2 governance defaults
+      area_id: undefined,
+      scope: "team",
     },
   });
+
+  const watchScope = form.watch("scope");
+  const watchLifecycleStatus = form.watch("lifecycle_status");
+
+  // Limpar team_id quando mudar escopo para area/org
+  const handleScopeChange = (newScope: KpiScope) => {
+    form.setValue("scope", newScope);
+    if (newScope !== "team") {
+      form.setValue("team_id", undefined);
+    }
+  };
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
@@ -112,7 +157,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         unit: values.unit,
         direction: values.direction as KpiDirection,
         frequency: values.frequency as DbKpiFrequency,
-        team_id: values.team_id || null,
+        team_id: values.scope === 'team' ? values.team_id || null : null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
         status: "active",
@@ -121,6 +166,9 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         lifecycle_status: values.lifecycle_status as KpiLifecycleStatus,
         target_source: values.target_source || null,
         recovery_protocol: values.recovery_protocol || null,
+        // v2.2 governance fields
+        area_id: values.area_id || null,
+        scope: values.scope as KpiScope,
       });
       form.reset();
       setShowAdvanced(false);
@@ -368,17 +416,45 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               )}
             />
 
+            {/* v2.2 Governance: Escopo e Área */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="team_id"
+                name="scope"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time (opcional)</FormLabel>
+                    <FormLabel>Escopo</FormLabel>
+                    <Select onValueChange={handleScopeChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(SCOPE_LABELS) as KpiScope[]).map((sc) => (
+                          <SelectItem key={sc} value={sc}>
+                            {SCOPE_LABELS[sc]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="area_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                    </FormLabel>
                     <FormControl>
-                      <TeamSelect
+                      <AreaSelect
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => field.onChange(val ?? undefined)}
                         placeholder="Selecione..."
                         triggerClassName="w-full"
                       />
@@ -387,13 +463,38 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {watchScope === 'team' && (
+                <FormField
+                  control={form.control}
+                  name="team_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <TeamSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Selecione..."
+                          triggerClassName="w-full"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
                 name="owner_user_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Owner (opcional)</FormLabel>
+                    <FormLabel>
+                      Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                    </FormLabel>
                     <FormControl>
                       <BuUserSelect
                         value={field.value}
