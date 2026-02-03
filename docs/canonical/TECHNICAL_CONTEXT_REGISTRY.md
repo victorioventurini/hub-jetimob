@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.78.0  
-**Última atualização:** 2026-02-02 (v2.78.0 - OKR Wizards Docs + Organogram Text Export + PII Security Views)
+**Versão:** 2.79.0  
+**Última atualização:** 2026-02-03 (v2.79.0 - KPI Evolution v2.1: Lifecycle, Confidence, RAG, Period)
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v2.0** | **Log Cleanup Executed** | **UI Wave v1.0 (Button isLoading + LoadingState)** | **KPIs Module Complete v1.0 (CRUD + Mutations)** | **Radix Focus Recovery v1.0** | **OKR Checkins RLS Ownership Fix v1.0** | **Organogram Text Export v1.0** | **Dashboard Ticket Links v1.0** | **PII Security Views Update v1.0** | **System Health Score 9.5/10** ✅
 
@@ -281,6 +281,7 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 | **Impersonação** | `useImpersonation()` | Estado de simulação visual (super_admin) |
 | **Impersonação opcional** | `useOptionalImpersonation()` | Retorna null se fora do contexto de impersonação |
 | **Focus Recovery (Radix)** | `useRadixFocusRecovery()` | Recupera pointer-events após troca de aba (chamar UMA VEZ no App.tsx) |
+| **KPIs para Wizards** | `useKpisForWizard()` | Hook fail-safe para wizards OKR — retorna KPIs ativos com latest value, RAG status e flag `needs_update` |
 
 #### Componentes Canônicos por Domínio
 
@@ -702,8 +703,8 @@ Ações/projetos vinculados a KRs.
 
 ### 2.3 Módulo KPIs
 
-#### **kpi_metrics** — Métricas/KPIs
-Definição de KPIs.
+#### **kpi_metrics** — Métricas/KPIs (v2.1)
+Definição de KPIs com lifecycle e classificação.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -720,13 +721,22 @@ Definição de KPIs.
 | target_value | numeric | Meta |
 | status | enum | `active`, `inactive` |
 | is_global | bool | Se é global (visível para toda BU) |
+| **indicator_type** | enum | `kpi`, `metric`, `health_indicator` — v2.1 |
+| **lifecycle_status** | enum | `proposed`, `active`, `observing`, `deprecated` — v2.1 |
+| **target_source** | text | Fonte/URL do target/benchmark — v2.1 |
+| **recovery_protocol** | text | Protocolo de recuperação quando fora da meta — v2.1 |
+| deleted_at | timestamptz | Soft delete |
 
 **Escopo:** Por BU
 
+**Funções de Cálculo (v2.1):**
+- `kpi_calculate_rag(value, target, direction)` → Calcula RAG status
+- `kpi_calculate_period(reference_date, frequency)` → Calcula period_start/end/label
+
 ---
 
-#### **kpi_values** — Valores de KPIs
-Histórico de valores dos KPIs.
+#### **kpi_values** — Valores de KPIs (v2.1)
+Histórico de valores com período e confiança.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -737,8 +747,21 @@ Histórico de valores dos KPIs.
 | source | enum | `manual`, `api`, `webhook`, `spreadsheet`, `database` |
 | notes | text | Observações |
 | created_by | uuid | Quem registrou |
+| **period_start** | date | Início do período (ISO week aligned) — v2.1 |
+| **period_end** | date | Fim do período — v2.1 |
+| **period_label** | text | Label do período: `YYYY-MM-DD`, `IYYY-WIW`, `YYYY-MM`, `YYYY-QQ` — v2.1 |
+| **confidence** | enum | `high`, `medium`, `low` — v2.1 |
+| **rag_status** | enum | `on_track`, `at_risk`, `off_track`, `no_data` — v2.1 |
+
+**Trigger (v2.1):** `trg_kpi_value_validation`
+- Calcula `period_start/end/label` automaticamente via `kpi_calculate_period()`
+- Calcula `rag_status` via `kpi_calculate_rag()`
+- **Gate de comentário:** Obrigatório se RAG = `at_risk` ou `off_track`
+- **Default confidence:** `medium` para manual/NULL, `high` para integração
 
 **Escopo:** Por BU (via KPI)
+
+**Índice de Unicidade:** `(kpi_id, period_start, period_end)` WHERE NOT NULL — previne duplicidade de período
 
 ---
 
@@ -2157,8 +2180,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.77.0 |
-| **Data da última atualização** | 2026-01-30 |
+| **Versão do TCR** | 2.79.0 |
+| **Data da última atualização** | 2026-02-03 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -2172,6 +2195,35 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.79.0 (2026-02-03) — KPI Evolution v2.1
+- **KPI Module Evolution v2.1** — Transforma KPIs em instrumentos de gestão auditáveis:
+  - **Novos Enums** (4): `kpi_indicator_type`, `kpi_lifecycle_status`, `kpi_confidence_level`, `kpi_rag_status`
+  - **Expansão de Enum**: `kpi_value_source` agora inclui `api`, `webhook`, `spreadsheet`, `database`
+  - **Novas Colunas em `kpi_metrics`** (4):
+    - `indicator_type` — Classifica: KPI, Métrica, Indicador de Saúde
+    - `lifecycle_status` — Ciclo de vida: Proposto, Ativo, Em Observação, Depreciado
+    - `target_source` — Fonte/URL do target/benchmark
+    - `recovery_protocol` — Protocolo de recuperação quando fora da meta
+  - **Novas Colunas em `kpi_values`** (5):
+    - `period_start`, `period_end`, `period_label` — Período ISO week aligned
+    - `confidence` — Nível de confiança (high/medium/low)
+    - `rag_status` — Status RAG calculado automaticamente
+  - **Funções SQL**:
+    - `kpi_calculate_rag(value, target, direction)` — Cálculo RAG com proteção divisão por zero
+    - `kpi_calculate_period(reference_date, frequency)` — Cálculo de período ISO
+  - **Trigger `trg_kpi_value_validation`**:
+    - Calcula período automaticamente quando NULL
+    - Calcula RAG status em INSERT/UPDATE
+    - Gate: comentário obrigatório para KPIs amarelos/vermelhos
+    - Default confidence baseado em source
+  - **Índices de Performance** (11 novos): Otimiza queries por BU, owner, team, lifecycle, RAG
+  - **Índice de Unicidade por Período**: Previne duplicidade de valores por período
+  - **Frontend**:
+    - `useKpisForWizard.ts` — Hook fail-safe para wizards OKR (retorna latest value, RAG, needs_update)
+    - Types, labels e interfaces atualizados em `types.ts`
+    - Query keys: `kpisKeys.forWizard()`, `kpisKeys.byRagStatus()`
+- **Documentação**: TCR seção 2.3 atualizada com campos v2.1
 
 ### v2.78.0 (2026-02-02)
 - **Organogram Text Export v1.0**:
