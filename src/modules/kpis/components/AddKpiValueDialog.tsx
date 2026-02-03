@@ -22,11 +22,18 @@ import {
 } from "@/components/ui/form";
 import { useKpiData } from "../hooks";
 import { useAuth } from "@/hooks/useAuth";
-import { format } from "date-fns";
+import { format, subDays, startOfDay, isBefore } from "date-fns";
+import { validation } from "@/lib/validationMessages";
 
 const formSchema = z.object({
-  value: z.coerce.number({ required_error: "Valor é obrigatório" }),
-  reference_date: z.string().min(1, "Data de referência é obrigatória"),
+  value: z.coerce.number({ required_error: validation.required("Valor") }),
+  reference_date: z.string()
+    .min(1, validation.required("Data de referência"))
+    .refine((date) => {
+      const selectedDate = startOfDay(new Date(date));
+      const today = startOfDay(new Date());
+      return isBefore(selectedDate, today);
+    }, { message: validation.consolidatedDate("Data de referência") }),
   notes: z.string().max(500).optional(),
 });
 
@@ -51,11 +58,14 @@ export function AddKpiValueDialog({
   const { addKpiValue } = useKpiData();
   const { profile } = useAuth();
 
+  // Data máxima permitida: ontem (dados consolidados)
+  const maxDate = format(subDays(new Date(), 1), "yyyy-MM-dd");
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       value: undefined,
-      reference_date: format(new Date(), "yyyy-MM-dd"),
+      reference_date: maxDate,
       notes: "",
     },
   });
@@ -73,7 +83,7 @@ export function AddKpiValueDialog({
       });
       form.reset({
         value: undefined,
-        reference_date: format(new Date(), "yyyy-MM-dd"),
+        reference_date: maxDate,
         notes: "",
       });
       onOpenChange(false);
@@ -117,8 +127,11 @@ export function AddKpiValueDialog({
                 <FormItem>
                   <FormLabel>Data de Referência</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input type="date" max={maxDate} {...field} />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Informe o último dia do período consolidado (até ontem)
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
