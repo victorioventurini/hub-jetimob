@@ -25,18 +25,22 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
-import type { KpiForWizardV2 } from '@/modules/kpis/types';
+import type { KpiForWizard } from '../hooks';
+import type { KpiForWizardV2 } from '../types';
 
 // ============================================================
 // TYPES
 // ============================================================
+
+/** Accepts both V1 and V2 KPI types for backward compatibility */
+export type KpiContextItem = KpiForWizard | KpiForWizardV2;
 
 export type KpiContextVariant = 'update' | 'context' | 'strategic';
 
 export interface KpiContextSectionProps {
   title: string;
   subtitle?: string;
-  kpis: KpiForWizardV2[];
+  kpis: KpiContextItem[];
   variant: KpiContextVariant;
   showUpdateBadge?: boolean;
   showOwnerInfo?: boolean;
@@ -81,7 +85,7 @@ const RAG_CONFIG = {
   no_data: { label: 'Sem dados', className: 'bg-muted text-muted-foreground' },
 };
 
-function getTrendIcon(kpi: KpiForWizardV2) {
+function getTrendIcon(kpi: KpiContextItem) {
   // Infer trend from latest_value vs target_value
   if (kpi.latest_value === null || kpi.target_value === null) {
     return <Minus className="h-3 w-3 text-muted-foreground" />;
@@ -94,6 +98,16 @@ function getTrendIcon(kpi: KpiForWizardV2) {
     return <TrendingDown className="h-3 w-3 text-destructive" />;
   }
   return <Minus className="h-3 w-3 text-muted-foreground" />;
+}
+
+/** Helper to safely get V2-only properties with defaults */
+function getV2Props(kpi: KpiContextItem) {
+  const isV2 = 'displayMode' in kpi;
+  return {
+    displayMode: isV2 ? (kpi as KpiForWizardV2).displayMode : 'readonly' as const,
+    isGuardrailAtRisk: isV2 ? (kpi as KpiForWizardV2).isGuardrailAtRisk : false,
+    owner: isV2 ? (kpi as KpiForWizardV2).owner : null,
+  };
 }
 
 // ============================================================
@@ -137,8 +151,9 @@ export function KpiContextSection({
       <div className="space-y-2">
         {kpis.map((kpi) => {
           const ragConfig = RAG_CONFIG[kpi.latest_rag_status];
-          const isEditable = kpi.displayMode === 'editable';
-          const isAlert = kpi.displayMode === 'alert';
+          const v2Props = getV2Props(kpi);
+          const isEditable = v2Props.displayMode === 'editable';
+          const isAlert = v2Props.displayMode === 'alert';
 
           return (
             <Card
@@ -178,7 +193,7 @@ export function KpiContextSection({
                         </span>
                       )}
                       
-                      {kpi.isGuardrailAtRisk && (
+                      {v2Props.isGuardrailAtRisk && (
                         <Badge variant="destructive" className="text-[10px] gap-1">
                           <AlertTriangle className="h-2.5 w-2.5" />
                           Guardrail
@@ -187,9 +202,9 @@ export function KpiContextSection({
                     </div>
 
                     {/* Owner info for context/strategic */}
-                    {showOwnerInfo && kpi.owner?.display_name && (
+                    {showOwnerInfo && v2Props.owner?.display_name && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Responsável: {kpi.owner.display_name}
+                        Responsável: {v2Props.owner.display_name}
                       </p>
                     )}
                   </div>
