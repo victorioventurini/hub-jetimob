@@ -48,6 +48,7 @@ import {
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ChevronDown } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
@@ -246,9 +247,20 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="indicator_type"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Indicador</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormItem>
+                  <FormLabel>
+                    Tipo de Indicador
+                    <HelpTooltip 
+                      content={
+                        <div className="space-y-1">
+                          <p><strong>KPI:</strong> Indicador-chave de performance vinculado a objetivos estratégicos.</p>
+                          <p><strong>Métrica:</strong> Medição operacional usada para monitoramento contínuo.</p>
+                          <p><strong>Indicador de Saúde:</strong> Sinal de alerta que indica riscos ou anomalias.</p>
+                        </div>
+                      }
+                    />
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -271,8 +283,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria</FormLabel>
+              <FormItem>
+                    <FormLabel>
+                      Categoria
+                      <HelpTooltip content="Área funcional à qual este indicador pertence (ex: Financeiro, Growth, CS)." />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -298,8 +313,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="unit"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unidade</FormLabel>
+              <FormItem>
+                    <FormLabel>
+                      Unidade
+                      <HelpTooltip content="Formato de exibição do valor (%, R$, pontos, dias ou número absoluto)." />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -323,8 +341,20 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="lifecycle_status"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status do Ciclo</FormLabel>
+              <FormItem>
+                    <FormLabel>
+                      Status do Ciclo
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>Proposto:</strong> Em análise, ainda não aprovado.</p>
+                            <p><strong>Ativo:</strong> Em uso oficial (requer responsável e área).</p>
+                            <p><strong>Em Observação:</strong> Sendo avaliado para possível descontinuação.</p>
+                            <p><strong>Depreciado:</strong> Descontinuado, mantido apenas para histórico.</p>
+                          </div>
+                        }
+                      />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -350,8 +380,18 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="direction"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Direção</FormLabel>
+              <FormItem>
+                    <FormLabel>
+                      Direção
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>Maior é melhor:</strong> Valores acima da meta são positivos (ex: NPS, receita).</p>
+                            <p><strong>Menor é melhor:</strong> Valores abaixo da meta são positivos (ex: churn, CAC).</p>
+                          </div>
+                        }
+                      />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -375,8 +415,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="frequency"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Frequência</FormLabel>
+              <FormItem>
+                    <FormLabel>
+                      Frequência
+                      <HelpTooltip content="Periodicidade esperada de atualização do indicador. Influencia alertas de dados desatualizados." />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -401,8 +444,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               control={form.control}
               name="target_value"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Meta indicativa (opcional)</FormLabel>
+              <FormItem>
+                  <FormLabel>
+                    Meta indicativa (opcional)
+                    <HelpTooltip content="Valor de referência usado para calcular o status RAG (verde/amarelo/vermelho). Pode ser ajustado posteriormente." />
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -422,8 +468,19 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="scope"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Escopo</FormLabel>
+              <FormItem>
+                    <FormLabel>
+                      Escopo
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>Time:</strong> Indicador específico de um time (requer seleção).</p>
+                            <p><strong>Área:</strong> Indicador compartilhado por toda uma área.</p>
+                            <p><strong>Organização:</strong> Indicador global visível para toda a BU.</p>
+                          </div>
+                        }
+                      />
+                    </FormLabel>
                     <Select onValueChange={handleScopeChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -447,9 +504,10 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="area_id"
                 render={({ field }) => (
-                  <FormItem>
+              <FormItem>
                     <FormLabel>
                       Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      <HelpTooltip content="Domínio estratégico responsável por este indicador. Obrigatório para KPIs ativos." />
                     </FormLabel>
                     <FormControl>
                       <AreaSelect
@@ -491,9 +549,10 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="owner_user_id"
                 render={({ field }) => (
-                  <FormItem>
+              <FormItem>
                     <FormLabel>
                       Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      <HelpTooltip content="Pessoa accountable pela saúde deste indicador. Será notificada em caso de desvios." />
                     </FormLabel>
                     <FormControl>
                       <BuUserSelect
@@ -529,7 +588,10 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   name="target_source"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fonte da Meta (opcional)</FormLabel>
+                      <FormLabel>
+                        Fonte da Meta (opcional)
+                        <HelpTooltip content="Registre a origem do target para auditoria (ex: OKR, benchmark de mercado, decisão do board)." />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ex: OKR Q1 2026, Benchmark Setorial, Board Deck..."
@@ -549,7 +611,10 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   name="recovery_protocol"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Protocolo de Recuperação (opcional)</FormLabel>
+                      <FormLabel>
+                        Protocolo de Recuperação (opcional)
+                        <HelpTooltip content="Plano de ação pré-definido a ser executado quando o indicador entrar em status amarelo ou vermelho." />
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Descreva o plano de ação caso o KPI fique amarelo ou vermelho..."
