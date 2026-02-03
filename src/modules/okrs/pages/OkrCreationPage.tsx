@@ -38,6 +38,7 @@ import { TeamOkrObjectiveStep } from '@/modules/okrs/components/wizards/team-okr
 import { TeamOkrSharingStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrSharingStep';
 import { TeamOkrKrTypeStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrTypeStep';
 import { TeamOkrKrDetailStep, type TeamMember } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrDetailStep';
+import { TeamOkrKrMetricsStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrMetricsStep';
 import { TeamOkrDependenciesStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrDependenciesStep';
 import { TeamOkrInitiativesStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrInitiativesStep';
 import { TeamOkrShareStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrShareStep';
@@ -62,6 +63,7 @@ const WIZARD_STEPS: { id: WizardStep; label: string; description?: string }[] = 
   { id: 'sharing', label: 'Compartilhamento', description: 'Objetivo compartilhado?' },
   { id: 'kr-type', label: 'Tipos de KR', description: 'Planejamento' },
   { id: 'kr-detail', label: 'KRs', description: 'Detalhamento' },
+  { id: 'kr-metrics', label: 'Indicadores', description: 'Vincular KPIs (opcional)' },
   { id: 'dependencies', label: 'Dependências', description: 'Riscos e bloqueios' },
   { id: 'initiatives', label: 'Iniciativas', description: 'Ações principais' },
   { id: 'review', label: 'Revisar', description: 'Confirmar e criar' },
@@ -277,6 +279,11 @@ export default function OkrCreationPage() {
           owner_user_id: init.owner_user_id || profileId || '',
           expected_end_date: init.expected_end_date,
         })),
+        krMetricLinks: draft.draftKrMetricLinks.map(link => ({
+          kr_index: link.krIndex,
+          kpi_id: link.kpiId,
+          role: link.role,
+        })),
       });
       
       toast.success('OKRs criados com sucesso!');
@@ -462,6 +469,19 @@ export default function OkrCreationPage() {
             onDraftKrsChange={(value) => updateDraft({ draftKrs: value })}
             onContinue={goNext}
             onBack={goBack}
+          />
+        );
+        
+      case 'kr-metrics':
+        return (
+          <TeamOkrKrMetricsStep
+            draftKrs={draft.draftKrs}
+            draftKrMetricLinks={draft.draftKrMetricLinks}
+            teamId={teamIdParam ?? undefined}
+            onDraftKrMetricLinksChange={(value) => updateDraft({ draftKrMetricLinks: value })}
+            onContinue={goNext}
+            onBack={goBack}
+            onSkip={goNext}
           />
         );
         
