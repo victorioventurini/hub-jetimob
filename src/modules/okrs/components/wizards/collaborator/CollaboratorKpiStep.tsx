@@ -50,21 +50,10 @@ import { RAG_STATUS_COLORS, CONFIDENCE_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
 import type { KpiConfidenceLevel, KpiRagStatus } from '@/modules/kpis/types';
+import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
-// ============================================================
-// TYPES
-// ============================================================
-
-export interface KpiCheckinResult {
-  kpiId: string;
-  kpiName: string;
-  previousValue: number | null;
-  newValue: number;
-  referenceDate: string;
-  confidence: KpiConfidenceLevel;
-  notes?: string;
-  skipped: boolean;
-}
+// Re-export for convenience
+export type { KpiCheckinResult };
 
 export interface CollaboratorKpiStepProps {
   kpi: KpiForWizard;
