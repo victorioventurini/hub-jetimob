@@ -90,9 +90,24 @@ export interface CollaboratorReflection {
   helpNeeded?: string;
 }
 
+/**
+ * Resultado de check-in de KPI no wizard de colaborador
+ * Segue padrão fail-safe: KPIs são instrumentos auditáveis, mas nunca bloqueiam o fluxo
+ */
+export interface KpiCheckinResult {
+  kpiId: string;
+  kpiName: string;
+  newValue: number;
+  referenceDate: string;
+  confidence: 'high' | 'medium' | 'low';
+  notes?: string;
+  skipped: boolean;
+}
+
 export interface CollaboratorWizardState {
   krs: WizardKr[];
   results: CollaboratorCheckinResult[];
+  kpiResults: KpiCheckinResult[];
   reflection: CollaboratorReflection;
   initiativesMarkedAtRisk: string[];
 }
@@ -378,10 +393,11 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
     steps: [
       { id: 'context', label: 'Contexto da Semana', shortLabel: 'Contexto' },
       { id: 'checkin', label: 'Atualização dos KRs', shortLabel: 'Check-in' },
+      { id: 'kpis', label: 'Métricas e KPIs', shortLabel: 'KPIs', optional: true },
       { id: 'initiatives', label: 'Iniciativas', shortLabel: 'Iniciativas', optional: true },
       { id: 'reflection', label: 'Reflexão Final', shortLabel: 'Reflexão' },
     ],
-    aiAgents: ['coach-okrs'],
+    aiAgents: ['coach-okrs', 'analista-kpis'],
   },
   'leader-prep': {
     persona: 'leader-prep',
