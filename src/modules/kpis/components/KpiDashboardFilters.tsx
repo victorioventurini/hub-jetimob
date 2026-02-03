@@ -1,47 +1,40 @@
-import { TeamSelect, CategorySelect, CategoryOption, AreaSelect } from "@/components/selects";
+import { TeamSelect, AreaSelect } from "@/components/selects";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KpiCategory, KpiScope, CATEGORY_LABELS, SCOPE_LABELS } from "../types";
+import { KpiCategory, KpiScope, SCOPE_LABELS } from "../types";
+
+/**
+ * v2.82.0 - Filtros do Dashboard de Indicadores
+ * 
+ * Mudanças:
+ * - Categoria removida (deprecated) - usa Área como ownership
+ * - Adicionado filtro de Escopo
+ * - Filtro de Área agora é primário
+ */
 
 interface KpiDashboardFiltersProps {
+  /** @deprecated v2.82.0 - Use areaId */
   category: KpiCategory | "all";
   teamId: string | "all";
   areaId?: string | "all";
   scope?: KpiScope | "all";
+  /** @deprecated v2.82.0 - Category filter is no longer used */
   onCategoryChange: (category: KpiCategory | "all") => void;
   onTeamChange: (teamId: string | "all") => void;
   onAreaChange?: (areaId: string | "all") => void;
   onScopeChange?: (scope: KpiScope | "all") => void;
 }
 
-const categoryOptions: CategoryOption[] = (Object.keys(CATEGORY_LABELS) as KpiCategory[]).map(
-  (cat) => ({
-    value: cat,
-    label: CATEGORY_LABELS[cat],
-  })
-);
-
 export function KpiDashboardFilters({
-  category,
   teamId,
   areaId = "all",
   scope = "all",
-  onCategoryChange,
   onTeamChange,
   onAreaChange,
   onScopeChange,
 }: KpiDashboardFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3">
-      <CategorySelect
-        value={category}
-        onValueChange={(value) => onCategoryChange(value as KpiCategory | "all")}
-        options={categoryOptions}
-        placeholder="Categoria"
-        includeAll
-        allLabel="Todas categorias"
-        triggerClassName="w-[180px]"
-      />
-
+      {/* Área - primary filter */}
       {onAreaChange && (
         <AreaSelect
           value={areaId === "all" ? undefined : areaId}
@@ -52,6 +45,7 @@ export function KpiDashboardFilters({
         />
       )}
 
+      {/* Escopo */}
       {onScopeChange && (
         <Select
           value={scope}
@@ -71,6 +65,7 @@ export function KpiDashboardFilters({
         </Select>
       )}
 
+      {/* Time */}
       <TeamSelect
         value={teamId === "all" ? undefined : teamId}
         onValueChange={(value) => onTeamChange(value ?? "all")}

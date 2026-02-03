@@ -3,13 +3,14 @@ import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScoped
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
-import { KpiCategory, KpiScope, KpiIndicatorType, KpiLifecycleStatus } from "../types";
+import { KpiScope, KpiIndicatorType, KpiLifecycleStatus } from "../types";
 
 interface UpdateKpiData {
   id: string;
   name: string;
   description: string | null;
-  category: KpiCategory;
+  /** @deprecated v2.82.0 - Use area_id for ownership */
+  category?: string;
   unit: string;
   direction: 'up' | 'down';
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
@@ -40,11 +41,13 @@ export function useKpiMutations() {
     mutationFn: async (data: UpdateKpiData) => {
       const client = assertSupabaseClient(supabase, "updateKpi");
 
-      const { id, ...updateData } = data;
+      const { id, category, ...updateData } = data;
       
       // Sanitize UUID fields: convert empty strings to null
+      // v2.82.0: category is deprecated, only include if provided for backwards compatibility
       const sanitizedData = {
         ...updateData,
+        ...(category && { category: category as 'financeiro' | 'growth' | 'cs' | 'produto' | 'operacoes' | 'pessoas' }),
         team_id: updateData.team_id || null,
         owner_user_id: updateData.owner_user_id || null,
         area_id: updateData.area_id || null,

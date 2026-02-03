@@ -30,16 +30,16 @@ import {
 } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamSelect, BuUserSelect, AreaSelect } from "@/components/selects";
+import { Badge } from "@/components/ui/badge";
 import { useKpiMutations } from "../hooks/useKpiMutations";
+import { useTeamArea } from "../hooks/useTeamArea";
 import {
-  KpiCategory,
   KpiDirection,
   KpiFrequency,
   KpiIndicatorType,
   KpiLifecycleStatus,
   KpiScope,
   KpiMetric,
-  CATEGORY_LABELS,
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
@@ -47,24 +47,35 @@ import {
   SCOPE_LABELS,
 } from "../types";
 import { usePermissions } from "@/hooks/usePermissions";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+
+/**
+ * v2.82.0 - Formulário de edição de Indicadores
+ * 
+ * Governança:
+ * - KPIs: Apenas líderes/admins podem editar tipo
+ * - Métricas: Qualquer colaborador pode editar
+ * 
+ * Auto-inferência:
+ * - Quando scope=team, a área é inferida automaticamente do time
+ */
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
   description: z.string().max(500).optional(),
-  category: z.enum(["financeiro", "growth", "cs", "produto", "operacoes", "pessoas"]),
   unit: z.string().min(1, "Unidade é obrigatória"),
   direction: z.enum(["up", "down"]),
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
   target_value: z.coerce.number().optional(),
-  // v2.1 fields
+  // Governance fields
   indicator_type: z.enum(["kpi", "metric"]),
   lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
   target_source: z.string().max(500).optional(),
   recovery_protocol: z.string().max(1000).optional(),
-  // v2.2 governance fields
+  // Scope and ownership
   area_id: z.string().optional(),
   scope: z.enum(["team", "area", "org"]),
 }).superRefine((data, ctx) => {
@@ -79,14 +90,15 @@ const formSchema = z.object({
     if (!data.owner_user_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Responsável é obrigatório para KPIs ativos",
+        message: "Responsável é obrigatório para indicadores ativos",
         path: ["owner_user_id"],
       });
     }
-    if (!data.area_id) {
+    // Área obrigatória para ativos, mas é auto-inferida quando scope=team
+    if (data.scope !== 'team' && !data.area_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Área é obrigatória para KPIs ativos",
+        message: "Área é obrigatória para indicadores ativos",
         path: ["area_id"],
       });
     }
@@ -108,13 +120,13 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const { updateKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   const canManageKpis = hasPermission("kpis:manage");
+  const canCreateKpi = hasPermission("kpis.settings.manage:bu");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
-      category: "financeiro",
       unit: "%",
       direction: "up",
       frequency: "monthly",
@@ -129,6 +141,12 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
 
   const watchScope = form.watch("scope");
   const watchLifecycleStatus = form.watch("lifecycle_status");
+  const watchTeamId = form.watch("team_id");
+
+  // Auto-inferência de área quando scope=team
+  const { areaId: inferredAreaId, areaName: inferredAreaName, isLoading: isLoadingArea } = useTeamArea(
+    watchScope === 'team' ? watchTeamId : undefined
+  );
 
   // Reset form when KPI changes
   useEffect(() => {
@@ -136,19 +154,18 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
       form.reset({
         name: kpi.name,
         description: kpi.description || "",
-        category: kpi.category,
         unit: kpi.unit,
         direction: kpi.direction,
         frequency: kpi.frequency === 'manual' ? 'monthly' : kpi.frequency as DbKpiFrequency,
         team_id: kpi.team_id || undefined,
         owner_user_id: kpi.owner_user_id || undefined,
         target_value: kpi.target_value || undefined,
-        // v2.1 fields
+        // Governance fields
         indicator_type: kpi.indicator_type || "kpi",
         lifecycle_status: kpi.lifecycle_status || "active",
         target_source: kpi.target_source || "",
         recovery_protocol: kpi.recovery_protocol || "",
-        // v2.2 governance fields
+        // Scope and ownership
         area_id: kpi.area_id || undefined,
         scope: kpi.scope || "team",
       });
@@ -159,6 +176,13 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     }
   }, [kpi, open, form]);
 
+  // Atualizar area_id quando inferido (e não há área já definida)
+  useEffect(() => {
+    if (watchScope === 'team' && inferredAreaId && !form.getValues("area_id")) {
+      form.setValue("area_id", inferredAreaId);
+    }
+  }, [watchScope, inferredAreaId, form]);
+
   // Defense in Depth: block render if no permission
   if (!isLoadingPermission && !canManageKpis) {
     return null;
@@ -168,11 +192,23 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     form.setValue("scope", newScope);
     if (newScope !== "team") {
       form.setValue("team_id", undefined);
+      form.setValue("area_id", undefined);
     }
+  };
+
+  // Governança: quando usuário sem permissão tenta selecionar KPI
+  const handleIndicatorTypeChange = (type: KpiIndicatorType) => {
+    if (type === 'kpi' && !canCreateKpi) {
+      return;
+    }
+    form.setValue("indicator_type", type);
   };
 
   const onSubmit = async (values: FormValues) => {
     if (!kpi) return;
+    
+    // Determinar area_id final (inferido ou selecionado)
+    const finalAreaId = values.scope === 'team' ? inferredAreaId : values.area_id;
     
     setIsSubmitting(true);
     try {
@@ -180,20 +216,20 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         id: kpi.id,
         name: values.name,
         description: values.description || null,
-        category: values.category as KpiCategory,
+        category: kpi.category || "operacoes", // DEPRECATED: manter valor existente
         unit: values.unit,
         direction: values.direction as KpiDirection,
         frequency: values.frequency as DbKpiFrequency,
         team_id: values.scope === 'team' ? values.team_id || null : null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
-        // v2.1 fields
+        // Governance fields
         indicator_type: values.indicator_type as KpiIndicatorType,
         lifecycle_status: values.lifecycle_status as KpiLifecycleStatus,
         target_source: values.target_source || null,
         recovery_protocol: values.recovery_protocol || null,
-        // v2.2 governance fields
-        area_id: values.area_id || null,
+        // Scope and ownership
+        area_id: finalAreaId || null,
         scope: values.scope as KpiScope,
       });
       onOpenChange(false);
@@ -206,7 +242,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar KPI</DialogTitle>
+          <DialogTitle>Editar Indicador</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -216,7 +252,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do KPI</FormLabel>
+                  <FormLabel>Nome do Indicador</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: NPS, CAC, Churn Rate..." {...field} />
                   </FormControl>
@@ -233,7 +269,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                   <FormLabel>Descrição (opcional)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Defina como esse KPI é calculado..."
+                      placeholder="Defina como esse indicador é calculado..."
                       {...field}
                     />
                   </FormControl>
@@ -248,8 +284,27 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 name="indicator_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Indicador</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>
+                      Tipo
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>KPI:</strong> Indicador-chave de performance.</p>
+                            <p><strong>Métrica:</strong> Medição operacional.</p>
+                            {!canCreateKpi && (
+                              <p className="text-muted-foreground text-xs mt-2">
+                                <Info className="h-3 w-3 inline mr-1" />
+                                KPIs só podem ser editados por líderes ou admins.
+                              </p>
+                            )}
+                          </div>
+                        }
+                      />
+                    </FormLabel>
+                    <Select 
+                      onValueChange={handleIndicatorTypeChange} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -257,8 +312,15 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                       </FormControl>
                       <SelectContent>
                         {(Object.keys(INDICATOR_TYPE_LABELS) as KpiIndicatorType[]).map((type) => (
-                          <SelectItem key={type} value={type}>
+                          <SelectItem 
+                            key={type} 
+                            value={type}
+                            disabled={type === 'kpi' && !canCreateKpi}
+                          >
                             {INDICATOR_TYPE_LABELS[type]}
+                            {type === 'kpi' && !canCreateKpi && (
+                              <span className="text-muted-foreground ml-1">(restrito)</span>
+                            )}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -270,10 +332,22 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
 
               <FormField
                 control={form.control}
-                name="category"
+                name="lifecycle_status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
+                    <FormLabel>
+                      Status do Ciclo
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>Proposto:</strong> Em análise.</p>
+                            <p><strong>Ativo:</strong> Em uso oficial.</p>
+                            <p><strong>Em Observação:</strong> Avaliando descontinuação.</p>
+                            <p><strong>Depreciado:</strong> Mantido apenas para histórico.</p>
+                          </div>
+                        }
+                      />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -281,9 +355,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(CATEGORY_LABELS) as KpiCategory[]).map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {CATEGORY_LABELS[cat]}
+                        {(Object.keys(LIFECYCLE_STATUS_LABELS) as KpiLifecycleStatus[]).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {LIFECYCLE_STATUS_LABELS[status]}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -322,10 +396,10 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
 
               <FormField
                 control={form.control}
-                name="lifecycle_status"
+                name="frequency"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status do Ciclo</FormLabel>
+                    <FormLabel>Frequência</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -333,11 +407,14 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(LIFECYCLE_STATUS_LABELS) as KpiLifecycleStatus[]).map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {LIFECYCLE_STATUS_LABELS[status]}
-                          </SelectItem>
-                        ))}
+                        {(Object.keys(FREQUENCY_LABELS) as KpiFrequency[])
+                          .filter(f => f !== 'manual')
+                          .map((freq) => (
+                            <SelectItem key={freq} value={freq}>
+                              {FREQUENCY_LABELS[freq]}
+                            </SelectItem>
+                          ))
+                        }
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -374,60 +451,43 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
 
               <FormField
                 control={form.control}
-                name="frequency"
+                name="target_value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Frequência</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(Object.keys(FREQUENCY_LABELS) as KpiFrequency[])
-                          .filter(f => f !== 'manual')
-                          .map((freq) => (
-                            <SelectItem key={freq} value={freq}>
-                              {FREQUENCY_LABELS[freq]}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Meta indicativa (opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Ex: 70"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="target_value"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Meta indicativa (opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Ex: 70"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* v2.2 Governance: Escopo e Área */}
+            {/* Governance: Escopo e Área */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="scope"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Escopo</FormLabel>
+                    <FormLabel>
+                      Escopo
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>Time:</strong> Indicador específico (área inferida).</p>
+                            <p><strong>Área:</strong> Indicador compartilhado.</p>
+                            <p><strong>Organização:</strong> Indicador global.</p>
+                          </div>
+                        }
+                      />
+                    </FormLabel>
                     <Select onValueChange={handleScopeChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -447,26 +507,46 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="area_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
-                    </FormLabel>
-                    <FormControl>
-                      <AreaSelect
-                        value={field.value}
-                        onValueChange={(val) => field.onChange(val ?? undefined)}
-                        placeholder="Selecione..."
-                        triggerClassName="w-full"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Área: mostrar seletor apenas quando scope !== team */}
+              {watchScope !== 'team' ? (
+                <FormField
+                  control={form.control}
+                  name="area_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      </FormLabel>
+                      <FormControl>
+                        <AreaSelect
+                          value={field.value}
+                          onValueChange={(val) => field.onChange(val ?? undefined)}
+                          placeholder="Selecione..."
+                          triggerClassName="w-full"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormItem>
+                  <FormLabel>Área (inferida)</FormLabel>
+                  <div className="h-10 flex items-center">
+                    {isLoadingArea ? (
+                      <span className="text-sm text-muted-foreground">Carregando...</span>
+                    ) : inferredAreaName ? (
+                      <Badge variant="secondary" className="text-sm">
+                        {inferredAreaName}
+                      </Badge>
+                    ) : watchTeamId ? (
+                      <span className="text-sm text-muted-foreground">Time sem área definida</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Selecione um time</span>
+                    )}
+                  </div>
+                </FormItem>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -514,7 +594,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
               />
             </div>
 
-            {/* Campos avançados v2.1 em Collapsible */}
+            {/* Campos avançados em Collapsible */}
             <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
               <CollapsibleTrigger asChild>
                 <Button
@@ -556,7 +636,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                       <FormLabel>Protocolo de Recuperação (opcional)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Descreva o plano de ação caso o KPI fique amarelo ou vermelho..."
+                          placeholder="Descreva o plano de ação caso o indicador fique amarelo ou vermelho..."
                           rows={3}
                           {...field}
                         />
