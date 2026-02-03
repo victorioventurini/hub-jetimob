@@ -243,3 +243,148 @@ export function calculateRagStatus(
   if (percentage >= 70) return 'at_risk';
   return 'off_track';
 }
+
+// ============================================================
+// v2.83.0: Contributor & Wizard V2 Types
+// ============================================================
+
+/**
+ * Role types for KPI data contributors
+ */
+export type KpiContributorRole = 'data_entry' | 'reviewer';
+
+/**
+ * A user who contributes data to a KPI (separate from owner accountability)
+ */
+export interface KpiContributor {
+  id: string;
+  kpi_id: string;
+  contributor_user_id: string;
+  role: KpiContributorRole;
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  bu_id: string;
+  deleted_at: string | null;
+  // Relations
+  contributor?: {
+    id: string;
+    display_name: string;
+    photo_url: string | null;
+  };
+}
+
+/**
+ * User's role in relation to a KPI
+ */
+export type KpiUserRole = 'owner' | 'contributor' | 'viewer';
+
+/**
+ * Display mode for KPI in wizard context
+ */
+export type KpiDisplayMode = 'editable' | 'readonly' | 'alert';
+
+/**
+ * Reason why a KPI is in alert state
+ */
+export type KpiAlertReason = 'off_track' | 'at_risk' | 'outdated' | 'guardrail_violated';
+
+/**
+ * Scope for wizard KPI fetching
+ */
+export type KpiWizardScope = 'collaborator' | 'leader' | 'manager' | 'clevel';
+
+/**
+ * Extended KPI type for wizard V2 with role-based classification
+ */
+export interface KpiForWizardV2 {
+  id: string;
+  name: string;
+  unit: string;
+  target_value: number | null;
+  direction: KpiDirection;
+  frequency: KpiFrequency;
+  lifecycle_status: KpiLifecycleStatus;
+  recovery_protocol: string | null;
+  team_id: string | null;
+  area_id: string | null;
+  owner_user_id: string | null;
+  scope: KpiScope;
+  // Latest value data
+  latest_value: number | null;
+  latest_reference_date: string | null;
+  latest_rag_status: KpiRagStatus;
+  latest_confidence: KpiConfidenceLevel | null;
+  latest_period_label: string | null;
+  needs_update: boolean;
+  // v2.83.0: Role-based classification
+  userRole: KpiUserRole;
+  isStrategic: boolean;
+  isGuardrailAtRisk: boolean;
+  linkedKrIds: string[];
+  displayMode: KpiDisplayMode;
+  alertReason: KpiAlertReason | null;
+  // Relations
+  owner?: {
+    id: string;
+    display_name: string;
+    photo_url: string | null;
+  };
+  team?: {
+    id: string;
+    name: string;
+  };
+  area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  };
+}
+
+/**
+ * Options for useKpisForWizardV2 hook
+ */
+export interface UseKpisForWizardV2Options {
+  userId: string;
+  teamId?: string;
+  areaId?: string;
+  scope?: KpiWizardScope;
+  includeGuardrailsAtRisk?: boolean;
+}
+
+/**
+ * Result from useKpisForWizardV2 hook with role-based KPI classification
+ */
+export interface UseKpisForWizardV2Result {
+  // Separated by role
+  kpisToUpdate: KpiForWizardV2[];      // Contributor needs to update
+  kpisTeamContext: KpiForWizardV2[];   // Team context (read-only)
+  kpisStrategic: KpiForWizardV2[];     // Strategic globals (read-only)
+  kpisInAlert: KpiForWizardV2[];       // In alert (yellow/red)
+  guardrailsViolated: KpiForWizardV2[]; // Guardrails linked to KRs
+  
+  // Summary flags
+  hasUpdatesNeeded: boolean;
+  hasAlertsToShow: boolean;
+  hasGuardrailsViolated: boolean;
+  isLoading: boolean;
+  hasError: boolean;
+}
+
+export const CONTRIBUTOR_ROLE_LABELS: Record<KpiContributorRole, string> = {
+  data_entry: 'Entrada de Dados',
+  reviewer: 'Revisor',
+};
+
+export const USER_ROLE_LABELS: Record<KpiUserRole, string> = {
+  owner: 'Responsável',
+  contributor: 'Contribuidor',
+  viewer: 'Visualizador',
+};
+
+export const ALERT_REASON_LABELS: Record<KpiAlertReason, string> = {
+  off_track: 'Fora da meta',
+  at_risk: 'Em risco',
+  outdated: 'Desatualizado',
+  guardrail_violated: 'Guardrail violado',
+};

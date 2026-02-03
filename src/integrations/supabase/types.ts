@@ -3267,6 +3267,99 @@ export type Database = {
         }
         Relationships: []
       }
+      kpi_data_contributors: {
+        Row: {
+          bu_id: string
+          contributor_user_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          kpi_id: string
+          notes: string | null
+          role: Database["public"]["Enums"]["kpi_contributor_role"]
+        }
+        Insert: {
+          bu_id: string
+          contributor_user_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kpi_id: string
+          notes?: string | null
+          role?: Database["public"]["Enums"]["kpi_contributor_role"]
+        }
+        Update: {
+          bu_id?: string
+          contributor_user_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kpi_id?: string
+          notes?: string | null
+          role?: Database["public"]["Enums"]["kpi_contributor_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_data_contributors_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_contributor_user_id_fkey"
+            columns: ["contributor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_contributor_user_id_fkey"
+            columns: ["contributor_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_contributor_user_id_fkey"
+            columns: ["contributor_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_data_contributors_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_metrics: {
         Row: {
           area_id: string | null
@@ -9682,6 +9775,7 @@ export type Database = {
         | "operacoes"
         | "pessoas"
       kpi_confidence_level: "high" | "medium" | "low"
+      kpi_contributor_role: "data_entry" | "reviewer"
       kpi_direction: "up" | "down"
       kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
       kpi_indicator_type: "kpi" | "metric"
@@ -9963,6 +10057,7 @@ export const Constants = {
         "pessoas",
       ],
       kpi_confidence_level: ["high", "medium", "low"],
+      kpi_contributor_role: ["data_entry", "reviewer"],
       kpi_direction: ["up", "down"],
       kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
       kpi_indicator_type: ["kpi", "metric"],

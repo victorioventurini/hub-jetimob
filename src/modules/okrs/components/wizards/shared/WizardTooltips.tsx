@@ -207,6 +207,10 @@ export const WIZARD_TOOLTIPS = {
     content: 'Notas pré-reunião ajudam a guiar a discussão.',
     icon: 'lightbulb',
   },
+  'leader-kpi-alerts': {
+    content: 'KPIs em alerta indicam áreas que precisam de atenção ou decisão.',
+    icon: 'help',
+  },
   
   // ============================================================
   // CHECK-IN DE TIME
