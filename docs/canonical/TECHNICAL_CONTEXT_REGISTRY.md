@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.79.0  
-**Última atualização:** 2026-02-03 (v2.79.0 - KPI Evolution v2.1: Lifecycle, Confidence, RAG, Period)
+**Versão:** 2.80.0  
+**Última atualização:** 2026-02-03 (v2.80.0 - Assets Reports Deep Links + Overdue Loans Alert)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v2.0** | **Log Cleanup Executed** | **UI Wave v1.0 (Button isLoading + LoadingState)** | **KPIs Module Complete v1.0 (CRUD + Mutations)** | **Radix Focus Recovery v1.0** | **OKR Checkins RLS Ownership Fix v1.0** | **Organogram Text Export v1.0** | **Dashboard Ticket Links v1.0** | **PII Security Views Update v1.0** | **System Health Score 9.5/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.2 (OKRs + Assets + Tickets)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v2.0** | **Log Cleanup Executed** | **UI Wave v1.0 (Button isLoading + LoadingState)** | **KPIs Module Complete v1.0 (CRUD + Mutations)** | **Radix Focus Recovery v1.0** | **OKR Checkins RLS Ownership Fix v1.0** | **Organogram Text Export v1.0** | **Dashboard Ticket Links v1.0** | **PII Security Views Update v1.0** | **Assets Reports Deep Links v1.0** | **System Health Score 9.5/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1388,8 +1388,41 @@ Vínculo entre empresas externas e categorias de tickets que atendem.
 | **Inventário** | `/assets/inventory` | Bens patrimoniais com etiqueta/QR | `inventory_admin`, `inventory_manager`, `viewer` |
 | **Chaves** | `/assets/keys` | Claviculários, chaveiros, chaves | `keys_admin`, `keys_manager`, `viewer` |
 | **Brindes** | `/assets/gifts` | Itens de consumo por lotes | `gifts_admin`, `gifts_manager`, `viewer` |
-| **Relatórios** | `/assets/reports` | Visão agregada | Respeita permissões por sub-módulo |
+| **Relatórios** | `/assets/reports` | Visão agregada com deep links | Respeita permissões por sub-módulo |
 | **Configurações** | `/assets/settings` | Gerenciamento de permissões | Apenas `assets_admin` |
+
+#### URL State Parameters (Assets)
+
+| Página | Parâmetro | Valores | Descrição |
+|--------|-----------|---------|-----------|
+| `/assets/inventory` | `status` | `all`, `available`, `loaned`, `maintenance`, `written_off` | Filtro por status |
+| `/assets/inventory` | `overdue` | `true` | Mostrar apenas empréstimos com devolução atrasada |
+| `/assets/inventory` | `category` | UUID | Filtro por categoria (hierárquico) |
+| `/assets/inventory` | `holder` | UUID | Filtro por portador atual |
+| `/assets/inventory` | `location` | UUID | Filtro por localização (hierárquico) |
+| `/assets/keys` | `status` | `all`, `available`, `loaned`, `lost` | Filtro por status do chaveiro |
+| `/assets/gifts` | `lowStock` | `true` | Mostrar apenas itens com estoque baixo |
+
+#### Deep Links em Relatórios (v2.80.0)
+
+A página `/assets/reports` exibe cards com métricas clicáveis que direcionam para listagens filtradas:
+
+| Card | Métrica | Link |
+|------|---------|------|
+| Inventário - Disponíveis | Itens available | `/assets/inventory?status=available` |
+| Inventário - Emprestados | Itens loaned | `/assets/inventory?status=loaned` |
+| Inventário - Manutenção | Itens maintenance | `/assets/inventory?status=maintenance` |
+| Chaves - Disponíveis | Chaveiros available | `/assets/keys?status=available` |
+| Chaves - Emprestados | Chaveiros loaned | `/assets/keys?status=loaned` |
+| Chaves - Extraviados | Chaveiros lost | `/assets/keys?status=lost` |
+| Brindes - Estoque baixo | Itens < 10 unidades | `/assets/gifts?lowStock=true` |
+
+#### Card de Devoluções em Atraso (v2.80.0)
+
+Exibido no topo de `/assets/reports` quando há empréstimos com `expected_return_at` no passado:
+- Destaque visual com borda e fundo `destructive`
+- Lista os 5 primeiros itens com link para detalhe
+- Link "Ver todos" → `/assets/inventory?status=loaned&overdue=true`
 
 **Componentes UI implementados:**
 - `AssetsLayout.tsx` - Layout com sub-navegação por tabs
@@ -1872,6 +1905,8 @@ const { profileId, isLoading } = useMyProfileId();
 - Edge Function `get-public-asset` retorna dados sanitizados
 - Visão pública NÃO exibe: nota fiscal, documentos, valor, serial, nome do colaborador
 - Movimentações atualizam status automaticamente
+- Campo `expected_return_at` calculado a partir de `due_at` da última movimentação de checkout ativa
+- Filtro `overdue=true` exibe apenas itens com `expected_return_at < now()`
 
 **Kits:**
 - Checkout de item `primary` pode incluir acessórios `is_required = true`
@@ -1883,12 +1918,19 @@ const { profileId, isLoading } = useMyProfileId();
 - `hook_number` deve bater com `tag_number` do chaveiro ao devolver
 - Override de posição apenas para admins (com justificativa)
 - Histórico completo de retiradas/devoluções
+- Filtro por status via URL state (`?status=available|loaned|lost`)
 
 **Brindes:**
 - Controle por lotes e quantidade
 - Não possui etiqueta/QR
 - OUT não gera devolução
 - Validação de estoque em movimentações
+- Filtro `lowStock=true` exibe itens com `availableQuantity > 0 && availableQuantity < 10`
+
+**Relatórios (v2.80.0):**
+- Métricas clicáveis redirecionam para listagens filtradas via deep links
+- Card de devoluções atrasadas exibe itens com `expected_return_at` no passado
+- Visibilidade dos cards respeita permissões por sub-módulo
 
 ---
 
@@ -2195,6 +2237,24 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v2.80.0 (2026-02-03) — Assets Reports Deep Links + Overdue Loans Alert
+- **Assets Reports Deep Links v1.0**:
+  - Métricas nos cards de `/assets/reports` agora são clicáveis com deep links
+  - Inventário: Total, Disponíveis, Emprestados, Em Manutenção → links para listagem filtrada
+  - Chaves: Total, Disponíveis, Emprestados, Extraviados → links para listagem filtrada
+  - Brindes: Total, Estoque baixo → links para listagem filtrada
+  - Componente reutilizável `ReportStatItem` com suporte a Link e variantes de cor
+- **Overdue Loans Alert Card v1.0**:
+  - Novo card destacado em `/assets/reports` para devoluções em atraso
+  - Exibe até 5 itens críticos com link para detalhe
+  - Link "Ver todos" navega para `/assets/inventory?status=loaned&overdue=true`
+  - Lógica baseada em `isPast(expected_return_at)`
+- **URL State para Assets**:
+  - `InventoryPage`: novo filtro `overdue=true` para empréstimos atrasados
+  - `KeysPage`: novo filtro `status` (available|loaned|lost) via URL state
+  - `GiftsPage`: novo filtro `lowStock=true` para estoque baixo
+- **Documentação**: TCR seção 3.2 e 4.11 atualizadas
 
 ### v2.79.0 (2026-02-03) — KPI Evolution v2.1
 - **KPI Module Evolution v2.1** — Transforma KPIs em instrumentos de gestão auditáveis:
