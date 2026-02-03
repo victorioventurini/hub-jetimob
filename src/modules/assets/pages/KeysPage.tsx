@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Key, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,18 +8,27 @@ import { useKeys, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { KeyringsTable } from "../components/keys/KeyringsTable";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
 import { useUrlState } from "@/shared/url";
+import type { KeyringStatus } from "../types";
 
 export default function KeysPage() {
   // URL State for filtering
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const statusState = useUrlState<string>({ key: "status", defaultValue: "all" });
   const search = searchState.value;
   const setSearch = searchState.set;
+  const statusFilter = statusState.value as "all" | KeyringStatus;
   
   const { keyrings, isLoading: isLoadingKeys } = useKeys({
     search: search || undefined,
   });
   const { canManageKeys, isLoading: isLoadingPermissions } = useAssetPermissionsV2();
   const [keyringDialogOpen, setKeyringDialogOpen] = useState(false);
+
+  // Client-side filter for status (hook doesn't support status filter yet)
+  const filteredKeyrings = useMemo(() => {
+    if (statusFilter === "all") return keyrings;
+    return keyrings.filter(k => k.status === statusFilter);
+  }, [keyrings, statusFilter]);
 
   const isLoading = isLoadingKeys || isLoadingPermissions;
 
@@ -58,18 +67,18 @@ export default function KeysPage() {
       />
 
       {/* Lista de chaveiros */}
-      {keyrings.length === 0 ? (
+      {filteredKeyrings.length === 0 ? (
         <EmptyState
           icon={Key}
-          title="Nenhum chaveiro cadastrado"
-          description={search 
-            ? "Tente ajustar a busca" 
+          title="Nenhum chaveiro encontrado"
+          description={search || statusFilter !== "all"
+            ? "Tente ajustar os filtros" 
             : "Cadastre o primeiro chaveiro"}
-          actionLabel={canManageKeys && !search ? "Novo Chaveiro" : undefined}
-          onAction={canManageKeys && !search ? () => setKeyringDialogOpen(true) : undefined}
+          actionLabel={canManageKeys && !search && statusFilter === "all" ? "Novo Chaveiro" : undefined}
+          onAction={canManageKeys && !search && statusFilter === "all" ? () => setKeyringDialogOpen(true) : undefined}
         />
       ) : (
-        <KeyringsTable keyrings={keyrings} />
+        <KeyringsTable keyrings={filteredKeyrings} />
       )}
 
       {/* Dialog */}
