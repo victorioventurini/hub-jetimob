@@ -52,3 +52,7 @@ export type { Cycle } from "./CycleSelect";
 
 // Areas
 export { AreaSelect } from "./AreaSelect";
+
+// KPIs / Indicators
+export { KpiSelect } from "./KpiSelect";
+export type { KpiSelectProps } from "./KpiSelect";

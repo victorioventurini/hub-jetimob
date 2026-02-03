@@ -134,7 +134,14 @@ export { useInitiativeNameValidation, type InitiativeNameFeedback, type Initiati
 // CONTRIBUTIONS & METRICS
 // =========================
 export { useOkrContributions, useCreateOkrContribution, useDeleteOkrContribution } from './useOkrContributions';
-export { useOkrKrMetrics } from './useOkrKrMetrics';
+export { 
+  useOkrKrMetrics, 
+  usePrimaryKrMetric, 
+  useGuardrailKrMetrics, 
+  useCreateKrMetric, 
+  useUpdateKrMetric, 
+  useDeleteKrMetric 
+} from './useOkrKrMetrics';
 export { 
   useTeamContributionView,
   type TeamOkrContribution,

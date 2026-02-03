@@ -188,10 +188,12 @@ const KPI_SELECT_FIELDS = `id, name, unit, target_value, direction`;
 
 ## Checklist de Validação
 
-- [ ] KpiSelect segue padrão de BuUserSelect
-- [ ] Sem `select('*')` nas queries
-- [ ] staleTime configurado (3-5 min)
-- [ ] Toasts de sucesso/erro em português
-- [ ] Loading states com `isLoading` prop do Button
-- [ ] Cores semânticas (tokens, não hardcoded)
-- [ ] Exportações no barrel index.ts
+- [x] KpiSelect segue padrão de BuUserSelect
+- [x] Sem `select('*')` nas queries
+- [x] staleTime configurado (3-5 min)
+- [x] Toasts de sucesso/erro em português
+- [x] Loading states com `isLoading` prop do Button
+- [x] Cores semânticas (tokens, não hardcoded)
+- [x] Exportações no barrel index.ts
+
+## Status: ✅ CONCLUÍDO (2026-02-03)
