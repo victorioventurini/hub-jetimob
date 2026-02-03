@@ -19,6 +19,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -27,18 +28,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamSelect, BuUserSelect } from "@/components/selects";
 import { useKpiData } from "../hooks";
 import {
   KpiCategory,
   KpiDirection,
   KpiFrequency,
+  KpiIndicatorType,
+  KpiLifecycleStatus,
   CATEGORY_LABELS,
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
+  INDICATOR_TYPE_LABELS,
+  LIFECYCLE_STATUS_LABELS,
 } from "../types";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ChevronDown } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
@@ -50,6 +57,11 @@ const formSchema = z.object({
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
   target_value: z.coerce.number().optional(),
+  // v2.1 fields
+  indicator_type: z.enum(["kpi", "metric", "health_indicator"]),
+  lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
+  target_source: z.string().max(500).optional(),
+  recovery_protocol: z.string().max(1000).optional(),
 });
 
 type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
@@ -63,6 +75,7 @@ interface CreateKpiDialogProps {
 
 export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { createKpi } = useKpiData();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   const canManageKpis = hasPermission("kpis:manage");
@@ -81,6 +94,11 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       unit: "%",
       direction: "up",
       frequency: "monthly",
+      // v2.1 defaults
+      indicator_type: "kpi",
+      lifecycle_status: "active",
+      target_source: "",
+      recovery_protocol: "",
     },
   });
 
@@ -98,8 +116,14 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
         status: "active",
+        // v2.1 fields
+        indicator_type: values.indicator_type as KpiIndicatorType,
+        lifecycle_status: values.lifecycle_status as KpiLifecycleStatus,
+        target_source: values.target_source || null,
+        recovery_protocol: values.recovery_protocol || null,
       });
       form.reset();
+      setShowAdvanced(false);
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);
@@ -136,6 +160,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                             category: form.watch("category"),
                             direction: form.watch("direction"),
                             frequency: form.watch("frequency"),
+                            indicator_type: form.watch("indicator_type"),
                           },
                         }}
                         label="Validar KPI"
@@ -171,6 +196,31 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="indicator_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Indicador</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(INDICATOR_TYPE_LABELS) as KpiIndicatorType[]).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {INDICATOR_TYPE_LABELS[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
@@ -193,7 +243,9 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   </FormItem>
                 )}
               />
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="unit"
@@ -212,6 +264,31 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         <SelectItem value="pontos">Pontos</SelectItem>
                         <SelectItem value="dias">Dias</SelectItem>
                         <SelectItem value="número">Número</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lifecycle_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status do Ciclo</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(LIFECYCLE_STATUS_LABELS) as KpiLifecycleStatus[]).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {LIFECYCLE_STATUS_LABELS[status]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -331,6 +408,63 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 )}
               />
             </div>
+
+            {/* Campos avançados v2.1 em Collapsible */}
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-between text-muted-foreground"
+                >
+                  Configurações avançadas
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="target_source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fonte da Meta (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: OKR Q1 2026, Benchmark Setorial, Board Deck..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        URL ou referência de onde o target/benchmark foi definido
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="recovery_protocol"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Protocolo de Recuperação (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Descreva o plano de ação caso o KPI fique amarelo ou vermelho..."
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Ações a serem tomadas quando o indicador ficar fora da meta
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <DialogFooter>
               <Button

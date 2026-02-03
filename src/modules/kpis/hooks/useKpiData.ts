@@ -211,7 +211,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
     };
   });
 
-  // Create KPI (uses database schema)
+  // Create KPI (uses database schema with v2.1 fields)
   const createKpi = useMutation({
     mutationFn: async (data: {
       name: string;
@@ -224,6 +224,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       owner_user_id: string | null;
       target_value: number | null;
       status: 'active' | 'inactive';
+      // v2.1 fields
+      indicator_type?: 'kpi' | 'metric' | 'health_indicator';
+      lifecycle_status?: 'proposed' | 'active' | 'observing' | 'deprecated';
+      target_source?: string | null;
+      recovery_protocol?: string | null;
     }) => {
       const client = assertSupabaseClient(supabase, "createKpi");
 
@@ -232,6 +237,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         ...data,
         team_id: data.team_id || null,
         owner_user_id: data.owner_user_id || null,
+        // v2.1 fields with defaults
+        indicator_type: data.indicator_type || 'kpi',
+        lifecycle_status: data.lifecycle_status || 'active',
+        target_source: data.target_source || null,
+        recovery_protocol: data.recovery_protocol || null,
       };
 
       const { data: result, error } = await client
