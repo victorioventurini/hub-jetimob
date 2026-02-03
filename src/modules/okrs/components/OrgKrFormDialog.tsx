@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Equal, Ban } from 'lucide-react';
 import { KrUnitSelect } from './KrUnitSelect';
 import { KrProgressPreview } from './KrProgressPreview';
+import { KrMetricsSection } from './KrMetricsSection';
 import { validateOrgKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
@@ -373,6 +374,15 @@ export function OrgKrFormDialog({
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+
+              {/* Seção de Métricas Vinculadas - apenas em edição */}
+              {isEditing && kr && (
+                <KrMetricsSection
+                  krId={kr.id}
+                  krType="org"
+                  disabled={mutation.isPending}
+                />
               )}
 
               {validation.warnings.length > 0 && (

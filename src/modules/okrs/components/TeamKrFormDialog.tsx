@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Equal, Link2, Ban } from 'lucide-react';
 import { KrUnitSelect } from './KrUnitSelect';
 import { KrProgressPreview } from './KrProgressPreview';
+import { KrMetricsSection } from './KrMetricsSection';
 import { validateTeamKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -494,6 +495,16 @@ export function TeamKrFormDialog({
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+
+              {/* Seção de Métricas Vinculadas - apenas em edição */}
+              {isEditing && kr && (
+                <KrMetricsSection
+                  krId={kr.id}
+                  krType="team"
+                  teamId={teamId}
+                  disabled={mutation.isPending}
+                />
               )}
 
               {validation.warnings.length > 0 && (
