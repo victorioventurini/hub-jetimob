@@ -121,6 +121,12 @@ export const validation = {
   /** Data início deve ser antes do fim */
   dateBefore: (endFieldName: string) => 
     `Deve ser anterior a ${endFieldName}`,
+  
+  /** Data deve ser consolidada (dia encerrado, não pode ser hoje) */
+  consolidatedDate: (fieldName?: string) => 
+    fieldName 
+      ? `${fieldName} deve ser um dia já encerrado (não pode ser hoje)`
+      : "Selecione um dia já encerrado (não pode ser hoje)",
 
   // ============================================
   // ARQUIVOS
