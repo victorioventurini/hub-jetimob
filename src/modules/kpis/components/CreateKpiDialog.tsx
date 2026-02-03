@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,15 +30,15 @@ import {
 } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamSelect, BuUserSelect, AreaSelect } from "@/components/selects";
+import { Badge } from "@/components/ui/badge";
 import { useKpiData } from "../hooks";
+import { useTeamArea } from "../hooks/useTeamArea";
 import {
-  KpiCategory,
   KpiDirection,
   KpiFrequency,
   KpiIndicatorType,
   KpiLifecycleStatus,
   KpiScope,
-  CATEGORY_LABELS,
   FREQUENCY_LABELS,
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
@@ -47,25 +47,35 @@ import {
 } from "../types";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+
+/**
+ * v2.82.0 - Formulário de criação de Indicadores
+ * 
+ * Governança:
+ * - KPIs: Apenas líderes/admins podem criar
+ * - Métricas: Qualquer colaborador pode criar
+ * 
+ * Auto-inferência:
+ * - Quando scope=team, a área é inferida automaticamente do time
+ */
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100),
   description: z.string().max(500).optional(),
-  category: z.enum(["financeiro", "growth", "cs", "produto", "operacoes", "pessoas"]),
   unit: z.string().min(1, "Unidade é obrigatória"),
   direction: z.enum(["up", "down"]),
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
   target_value: z.coerce.number().optional(),
-  // v2.1 fields
+  // Governance fields
   indicator_type: z.enum(["kpi", "metric"]),
   lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
   target_source: z.string().max(500).optional(),
   recovery_protocol: z.string().max(1000).optional(),
-  // v2.2 governance fields
+  // Scope and ownership
   area_id: z.string().optional(),
   scope: z.enum(["team", "area", "org"]),
 }).superRefine((data, ctx) => {
@@ -77,19 +87,21 @@ const formSchema = z.object({
       path: ["team_id"],
     });
   }
-  // Validação: se lifecycle_status='active', exigir owner e área
+  // Validação: se lifecycle_status='active', exigir owner
   if (data.lifecycle_status === 'active') {
     if (!data.owner_user_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Responsável é obrigatório para KPIs ativos",
+        message: "Responsável é obrigatório para indicadores ativos",
         path: ["owner_user_id"],
       });
     }
-    if (!data.area_id) {
+    // Área obrigatória para ativos, mas é auto-inferida quando scope=team
+    // Só valida se scope não é team (porque será inferido)
+    if (data.scope !== 'team' && !data.area_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Área é obrigatória para KPIs ativos",
+        message: "Área é obrigatória para indicadores ativos",
         path: ["area_id"],
       });
     }
@@ -110,28 +122,25 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { createKpi } = useKpiData();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
+  
+  // Governança: verificar permissões
   const canManageKpis = hasPermission("kpis:manage");
-
-  // Defense in Depth: block render if no permission
-  if (!isLoadingPermission && !canManageKpis) {
-    return null;
-  }
+  const canCreateKpi = hasPermission("kpis.settings.manage:bu");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
-      category: "financeiro",
       unit: "%",
       direction: "up",
       frequency: "monthly",
-      // v2.1 defaults
-      indicator_type: "kpi",
-      lifecycle_status: "active",
+      // Governance defaults - métricas são mais acessíveis
+      indicator_type: "metric",
+      lifecycle_status: "proposed",
       target_source: "",
       recovery_protocol: "",
-      // v2.2 governance defaults
+      // Scope defaults
       area_id: undefined,
       scope: "team",
     },
@@ -139,22 +148,63 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
 
   const watchScope = form.watch("scope");
   const watchLifecycleStatus = form.watch("lifecycle_status");
+  const watchTeamId = form.watch("team_id");
+  const watchIndicatorType = form.watch("indicator_type");
+
+  // Auto-inferência de área quando scope=team
+  const { areaId: inferredAreaId, areaName: inferredAreaName, isLoading: isLoadingArea } = useTeamArea(
+    watchScope === 'team' ? watchTeamId : undefined
+  );
+
+  // Atualizar area_id quando inferido
+  useEffect(() => {
+    if (watchScope === 'team' && inferredAreaId) {
+      form.setValue("area_id", inferredAreaId);
+    }
+  }, [watchScope, inferredAreaId, form]);
+
+  // Set default indicator type based on permission once loaded
+  useEffect(() => {
+    if (!isLoadingPermission && canCreateKpi) {
+      form.setValue("indicator_type", "kpi");
+    }
+  }, [isLoadingPermission, canCreateKpi, form]);
+
+  // Defense in Depth: block render if no permission
+  if (!isLoadingPermission && !canManageKpis) {
+    return null;
+  }
+
 
   // Limpar team_id quando mudar escopo para area/org
   const handleScopeChange = (newScope: KpiScope) => {
     form.setValue("scope", newScope);
     if (newScope !== "team") {
       form.setValue("team_id", undefined);
+      // Limpar área inferida quando mudar de scope
+      form.setValue("area_id", undefined);
     }
+  };
+
+  // Governança: quando usuário sem permissão tenta selecionar KPI
+  const handleIndicatorTypeChange = (type: KpiIndicatorType) => {
+    if (type === 'kpi' && !canCreateKpi) {
+      // Não permitir, manter como métrica
+      return;
+    }
+    form.setValue("indicator_type", type);
   };
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
+      // Determinar area_id final (inferido ou selecionado)
+      const finalAreaId = values.scope === 'team' ? inferredAreaId : values.area_id;
+
       await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
-        category: values.category as KpiCategory,
+        category: "operacoes", // DEPRECATED: valor default para compatibilidade
         unit: values.unit,
         direction: values.direction as KpiDirection,
         frequency: values.frequency as DbKpiFrequency,
@@ -162,13 +212,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
         status: "active",
-        // v2.1 fields
+        // Governance fields
         indicator_type: values.indicator_type as KpiIndicatorType,
         lifecycle_status: values.lifecycle_status as KpiLifecycleStatus,
         target_source: values.target_source || null,
         recovery_protocol: values.recovery_protocol || null,
-        // v2.2 governance fields
-        area_id: values.area_id || null,
+        // Scope and ownership
+        area_id: finalAreaId || null,
         scope: values.scope as KpiScope,
       });
       form.reset();
@@ -183,7 +233,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo KPI</DialogTitle>
+          <DialogTitle>Novo Indicador</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -194,25 +244,24 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Nome do KPI</FormLabel>
+                    <FormLabel>Nome do Indicador</FormLabel>
                     {field.value && (
                       <VicActionButton
                         agentSlug="analista-kpis"
                         actionContext="kpi-create"
                         context={{
-                          type: "KPI",
+                          type: watchIndicatorType === 'kpi' ? 'KPI' : 'Métrica',
                           title: field.value,
                           description: form.watch("description") || undefined,
                           targetValue: form.watch("target_value") || undefined,
                           unit: form.watch("unit"),
                           additionalData: {
-                            category: form.watch("category"),
                             direction: form.watch("direction"),
                             frequency: form.watch("frequency"),
                             indicator_type: form.watch("indicator_type"),
                           },
                         }}
-                        label="Validar KPI"
+                        label="Validar"
                         compact
                       />
                     )}
@@ -233,7 +282,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   <FormLabel>Descrição (opcional)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Defina como esse KPI é calculado..."
+                      placeholder="Defina como esse indicador é calculado..."
                       {...field}
                     />
                   </FormControl>
@@ -247,19 +296,28 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="indicator_type"
                 render={({ field }) => (
-              <FormItem>
-                  <FormLabel>
-                    Tipo de Indicador
-                    <HelpTooltip 
-                      content={
-                        <div className="space-y-1">
-                          <p><strong>KPI:</strong> Indicador-chave de performance vinculado a objetivos estratégicos.</p>
-                          <p><strong>Métrica:</strong> Medição operacional usada para monitoramento contínuo.</p>
-                        </div>
-                      }
-                    />
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormItem>
+                    <FormLabel>
+                      Tipo
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p><strong>KPI:</strong> Indicador-chave de performance vinculado a objetivos estratégicos.</p>
+                            <p><strong>Métrica:</strong> Medição operacional usada para monitoramento contínuo.</p>
+                            {!canCreateKpi && (
+                              <p className="text-muted-foreground text-xs mt-2">
+                                <Info className="h-3 w-3 inline mr-1" />
+                                KPIs só podem ser criados por líderes ou admins.
+                              </p>
+                            )}
+                          </div>
+                        }
+                      />
+                    </FormLabel>
+                    <Select 
+                      onValueChange={handleIndicatorTypeChange} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -267,68 +325,17 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       </FormControl>
                       <SelectContent>
                         {(Object.keys(INDICATOR_TYPE_LABELS) as KpiIndicatorType[]).map((type) => (
-                          <SelectItem key={type} value={type}>
+                          <SelectItem 
+                            key={type} 
+                            value={type}
+                            disabled={type === 'kpi' && !canCreateKpi}
+                          >
                             {INDICATOR_TYPE_LABELS[type]}
+                            {type === 'kpi' && !canCreateKpi && (
+                              <span className="text-muted-foreground ml-1">(restrito)</span>
+                            )}
                           </SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-              <FormItem>
-                    <FormLabel>
-                      Categoria
-                      <HelpTooltip content="Área funcional à qual este indicador pertence (ex: Financeiro, Growth, CS)." />
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(Object.keys(CATEGORY_LABELS) as KpiCategory[]).map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {CATEGORY_LABELS[cat]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="unit"
-                render={({ field }) => (
-              <FormItem>
-                    <FormLabel>
-                      Unidade
-                      <HelpTooltip content="Formato de exibição do valor (%, R$, pontos, dias ou número absoluto)." />
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="%">%</SelectItem>
-                        <SelectItem value="R$">R$</SelectItem>
-                        <SelectItem value="pontos">Pontos</SelectItem>
-                        <SelectItem value="dias">Dias</SelectItem>
-                        <SelectItem value="número">Número</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -340,21 +347,21 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="lifecycle_status"
                 render={({ field }) => (
-              <FormItem>
+                  <FormItem>
                     <FormLabel>
                       Status do Ciclo
                       <HelpTooltip 
                         content={
                           <div className="space-y-1">
                             <p><strong>Proposto:</strong> Em análise, ainda não aprovado.</p>
-                            <p><strong>Ativo:</strong> Em uso oficial (requer responsável e área).</p>
+                            <p><strong>Ativo:</strong> Em uso oficial (requer responsável).</p>
                             <p><strong>Em Observação:</strong> Sendo avaliado para possível descontinuação.</p>
                             <p><strong>Depreciado:</strong> Descontinuado, mantido apenas para histórico.</p>
                           </div>
                         }
                       />
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -377,9 +384,69 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Unidade
+                      <HelpTooltip content="Formato de exibição do valor (%, R$, pontos, dias ou número absoluto)." />
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="%">%</SelectItem>
+                        <SelectItem value="R$">R$</SelectItem>
+                        <SelectItem value="pontos">Pontos</SelectItem>
+                        <SelectItem value="dias">Dias</SelectItem>
+                        <SelectItem value="número">Número</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="frequency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Frequência
+                      <HelpTooltip content="Periodicidade esperada de atualização do indicador. Influencia alertas de dados desatualizados." />
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(Object.keys(FREQUENCY_LABELS) as KpiFrequency[])
+                          .filter(f => f !== 'manual')
+                          .map((freq) => (
+                            <SelectItem key={freq} value={freq}>
+                              {FREQUENCY_LABELS[freq]}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="direction"
                 render={({ field }) => (
-              <FormItem>
+                  <FormItem>
                     <FormLabel>
                       Direção
                       <HelpTooltip 
@@ -391,7 +458,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         }
                       />
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -412,75 +479,47 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
 
               <FormField
                 control={form.control}
-                name="frequency"
+                name="target_value"
                 render={({ field }) => (
-              <FormItem>
+                  <FormItem>
                     <FormLabel>
-                      Frequência
-                      <HelpTooltip content="Periodicidade esperada de atualização do indicador. Influencia alertas de dados desatualizados." />
+                      Meta indicativa (opcional)
+                      <HelpTooltip content="Valor de referência usado para calcular o status RAG (verde/amarelo/vermelho)." />
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(Object.keys(FREQUENCY_LABELS) as KpiFrequency[]).map((freq) => (
-                          <SelectItem key={freq} value={freq}>
-                            {FREQUENCY_LABELS[freq]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Ex: 70"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="target_value"
-              render={({ field }) => (
-              <FormItem>
-                  <FormLabel>
-                    Meta indicativa (opcional)
-                    <HelpTooltip content="Valor de referência usado para calcular o status RAG (verde/amarelo/vermelho). Pode ser ajustado posteriormente." />
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Ex: 70"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* v2.2 Governance: Escopo e Área */}
+            {/* Governance: Escopo e Área */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="scope"
                 render={({ field }) => (
-              <FormItem>
+                  <FormItem>
                     <FormLabel>
                       Escopo
                       <HelpTooltip 
                         content={
                           <div className="space-y-1">
-                            <p><strong>Time:</strong> Indicador específico de um time (requer seleção).</p>
+                            <p><strong>Time:</strong> Indicador específico de um time (área inferida automaticamente).</p>
                             <p><strong>Área:</strong> Indicador compartilhado por toda uma área.</p>
                             <p><strong>Organização:</strong> Indicador global visível para toda a BU.</p>
                           </div>
                         }
                       />
                     </FormLabel>
-                    <Select onValueChange={handleScopeChange} defaultValue={field.value}>
+                    <Select onValueChange={handleScopeChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -499,27 +538,51 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="area_id"
-                render={({ field }) => (
-              <FormItem>
-                    <FormLabel>
-                      Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
-                      <HelpTooltip content="Domínio estratégico responsável por este indicador. Obrigatório para KPIs ativos." />
-                    </FormLabel>
-                    <FormControl>
-                      <AreaSelect
-                        value={field.value}
-                        onValueChange={(val) => field.onChange(val ?? undefined)}
-                        placeholder="Selecione..."
-                        triggerClassName="w-full"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Área: mostrar seletor apenas quando scope !== team */}
+              {watchScope !== 'team' ? (
+                <FormField
+                  control={form.control}
+                  name="area_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Área {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                        <HelpTooltip content="Domínio estratégico responsável por este indicador." />
+                      </FormLabel>
+                      <FormControl>
+                        <AreaSelect
+                          value={field.value}
+                          onValueChange={(val) => field.onChange(val ?? undefined)}
+                          placeholder="Selecione..."
+                          triggerClassName="w-full"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                /* Quando scope=team, mostrar área inferida como badge read-only */
+                <FormItem>
+                  <FormLabel>
+                    Área (inferida)
+                    <HelpTooltip content="A área é automaticamente inferida do time selecionado." />
+                  </FormLabel>
+                  <div className="h-10 flex items-center">
+                    {isLoadingArea ? (
+                      <span className="text-sm text-muted-foreground">Carregando...</span>
+                    ) : inferredAreaName ? (
+                      <Badge variant="secondary" className="text-sm">
+                        {inferredAreaName}
+                      </Badge>
+                    ) : watchTeamId ? (
+                      <span className="text-sm text-muted-foreground">Time sem área definida</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Selecione um time</span>
+                    )}
+                  </div>
+                </FormItem>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -548,7 +611,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 control={form.control}
                 name="owner_user_id"
                 render={({ field }) => (
-              <FormItem>
+                  <FormItem>
                     <FormLabel>
                       Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
                       <HelpTooltip content="Pessoa accountable pela saúde deste indicador. Será notificada em caso de desvios." />
@@ -568,7 +631,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               />
             </div>
 
-            {/* Campos avançados v2.1 em Collapsible */}
+            {/* Campos avançados em Collapsible */}
             <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
               <CollapsibleTrigger asChild>
                 <Button
@@ -616,7 +679,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       </FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Descreva o plano de ação caso o KPI fique amarelo ou vermelho..."
+                          placeholder="Descreva o plano de ação caso o indicador fique amarelo ou vermelho..."
                           rows={3}
                           {...field}
                         />
@@ -640,7 +703,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 Cancelar
               </Button>
               <Button type="submit" isLoading={isSubmitting} loadingText="Criando...">
-                Criar KPI
+                Criar Indicador
               </Button>
             </DialogFooter>
           </form>

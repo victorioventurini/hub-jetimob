@@ -25,7 +25,8 @@ interface DbKpiMetric {
   id: string;
   name: string;
   description: string | null;
-  category: KpiCategory;
+  /** @deprecated v2.82.0 - Use area_id for ownership */
+  category?: KpiCategory;
   bu_id: string | null;
   owner_user_id: string | null;
   team_id: string | null;

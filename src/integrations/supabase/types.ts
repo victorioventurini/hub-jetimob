@@ -3271,7 +3271,7 @@ export type Database = {
         Row: {
           area_id: string | null
           bu_id: string | null
-          category: Database["public"]["Enums"]["kpi_category"]
+          category: Database["public"]["Enums"]["kpi_category"] | null
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -3295,7 +3295,7 @@ export type Database = {
         Insert: {
           area_id?: string | null
           bu_id?: string | null
-          category: Database["public"]["Enums"]["kpi_category"]
+          category?: Database["public"]["Enums"]["kpi_category"] | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -3319,7 +3319,7 @@ export type Database = {
         Update: {
           area_id?: string | null
           bu_id?: string | null
-          category?: Database["public"]["Enums"]["kpi_category"]
+          category?: Database["public"]["Enums"]["kpi_category"] | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null

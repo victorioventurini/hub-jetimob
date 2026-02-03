@@ -8,34 +8,47 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKpiData } from "@/modules/kpis/hooks";
+import { useAreas } from "@/modules/areas/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
-import { KpiCategorySection } from "../components/KpiCategorySection";
+import { KpiAreaSection } from "../components/KpiAreaSection";
 import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
-import { KpiCategory, KpiWithValues, CATEGORY_LABELS } from "../types";
+import { KpiScope, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
 
+/**
+ * v2.82.0 - Dashboard de Indicadores
+ * 
+ * Mudanças principais:
+ * - Agrupamento por Área (em vez de Categoria)
+ * - Filtros atualizados: Área, Escopo, Time
+ * - Labels atualizados para "Indicador"
+ */
+
 export default function KpiDashboardPage() {
-  usePageTitle("KPIs");
+  usePageTitle("Indicadores");
   const { has: hasPermission } = usePermissions();
   const canManageKpis = hasPermission("kpis:manage");
   const { currentBu } = useBu();
   
-  // URL State
-  const categoryState = useUrlState<KpiCategory | "all">({ 
-    key: 'category', 
+  // URL State for filters
+  const areaState = useUrlState<string>({ key: 'area_id', defaultValue: 'all' });
+  const scopeState = useUrlState<KpiScope | "all">({ 
+    key: 'scope', 
     defaultValue: 'all',
-    parse: (v) => v as KpiCategory | "all",
+    parse: (v) => v as KpiScope | "all",
   });
   const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   
-  const categoryFilter = categoryState.value;
-  const setCategoryFilter = categoryState.set;
+  const areaFilter = areaState.value;
+  const setAreaFilter = areaState.set;
+  const scopeFilter = scopeState.value;
+  const setScopeFilter = scopeState.set;
   const teamFilter = teamState.value;
   const setTeamFilter = teamState.set;
   
@@ -46,9 +59,13 @@ export default function KpiDashboardPage() {
   const [addValueOpen, setAddValueOpen] = useState(false);
   const [addValueKpi, setAddValueKpi] = useState<KpiWithValues | null>(null);
 
+  // Fetch areas for grouping
+  const { data: areas = [] } = useAreas();
+
   // Use real data from hook
   const { kpis: allKpis, isLoading, error } = useKpiData({
-    category: categoryFilter === 'all' ? undefined : categoryFilter,
+    areaId: areaFilter === 'all' ? undefined : areaFilter,
+    scope: scopeFilter === 'all' ? undefined : scopeFilter,
     teamId: teamFilter === 'all' ? undefined : teamFilter,
   });
 
@@ -66,14 +83,32 @@ export default function KpiDashboardPage() {
     setDetailOpen(true);
   };
 
-  // Group KPIs by category
-  const kpisByCategory = (Object.keys(CATEGORY_LABELS) as KpiCategory[]).reduce(
-    (acc, category) => {
-      acc[category] = allKpis.filter((kpi) => kpi.category === category);
-      return acc;
-    },
-    {} as Record<KpiCategory, KpiWithValues[]>
-  );
+  // Group KPIs by area
+  const kpisByArea = new Map<string | null, { areaName: string; areaColor: string | null; kpis: KpiWithValues[] }>();
+  
+  // Initialize with areas that have KPIs
+  allKpis.forEach((kpi) => {
+    const areaId = kpi.area_id;
+    const areaInfo = areas.find(a => a.id === areaId);
+    
+    if (!kpisByArea.has(areaId)) {
+      kpisByArea.set(areaId, {
+        areaName: areaInfo?.name || kpi.area?.name || "Sem Área",
+        areaColor: areaInfo?.color || kpi.area?.color || null,
+        kpis: [],
+      });
+    }
+    
+    kpisByArea.get(areaId)!.kpis.push(kpi);
+  });
+
+  // Sort areas by name
+  const sortedAreas = Array.from(kpisByArea.entries()).sort((a, b) => {
+    // "Sem Área" goes last
+    if (a[0] === null) return 1;
+    if (b[0] === null) return -1;
+    return a[1].areaName.localeCompare(b[1].areaName);
+  });
 
   return (
     <HubLayout>
@@ -81,13 +116,13 @@ export default function KpiDashboardPage() {
         {/* Header */}
         <KpisBreadcrumb />
         <PageHeader
-          title="KPIs"
-          description={`Indicadores de saúde da ${currentBu?.name || 'organização'}`}
+          title="Indicadores"
+          description={`KPIs e Métricas da ${currentBu?.name || 'organização'}`}
           actions={
             canManageKpis && (
               <Button onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Novo KPI
+                Novo Indicador
               </Button>
             )
           }
@@ -102,25 +137,29 @@ export default function KpiDashboardPage() {
           improving={summary.improving}
         />
 
-        {/* Filters */}
+        {/* Filters - v2.82.0: Updated to use Area instead of Category */}
         <KpiDashboardFilters
-          category={categoryFilter}
+          category="all"
           teamId={teamFilter}
-          onCategoryChange={setCategoryFilter}
+          areaId={areaFilter}
+          scope={scopeFilter}
+          onCategoryChange={() => {}} // No-op, category deprecated
           onTeamChange={setTeamFilter}
+          onAreaChange={setAreaFilter}
+          onScopeChange={setScopeFilter}
         />
 
-        {/* KPIs by Category */}
+        {/* KPIs by Area */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <LoadingSpinner size="lg" text="Carregando KPIs..." />
+            <LoadingSpinner size="lg" text="Carregando indicadores..." />
           </div>
         ) : error ? (
           <Card>
             <CardContent className="py-4">
               <EmptyState
                 icon={BarChart3}
-                title="Erro ao carregar KPIs"
+                title="Erro ao carregar indicadores"
                 description="Ocorreu um erro ao carregar os indicadores. Tente novamente."
               />
             </CardContent>
@@ -130,28 +169,28 @@ export default function KpiDashboardPage() {
             <CardContent className="py-4">
               <EmptyState
                 icon={BarChart3}
-                title="Nenhum KPI encontrado"
+                title="Nenhum indicador encontrado"
                 description={
                   canManageKpis
-                    ? `Comece criando seu primeiro KPI para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
-                    : "Nenhum KPI foi cadastrado ainda."
+                    ? `Comece criando seu primeiro indicador para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
+                    : "Nenhum indicador foi cadastrado ainda."
                 }
-                actionLabel={canManageKpis ? "Criar KPI" : undefined}
+                actionLabel={canManageKpis ? "Criar Indicador" : undefined}
                 onAction={canManageKpis ? () => setCreateOpen(true) : undefined}
               />
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-8">
-            {(Object.keys(CATEGORY_LABELS) as KpiCategory[]).map((category) => (
-              kpisByCategory[category].length > 0 && (
-                <KpiCategorySection
-                  key={category}
-                  category={category}
-                  kpis={kpisByCategory[category]}
-                  onKpiClick={handleKpiClick}
-                />
-              )
+            {sortedAreas.map(([areaId, { areaName, areaColor, kpis }]) => (
+              <KpiAreaSection
+                key={areaId || 'no-area'}
+                areaId={areaId}
+                areaName={areaName}
+                areaColor={areaColor}
+                kpis={kpis}
+                onKpiClick={handleKpiClick}
+              />
             ))}
           </div>
         )}

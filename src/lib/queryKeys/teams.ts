@@ -7,6 +7,8 @@ export const teamsKeys = {
   detail: (teamId: string | undefined) => ['team', teamId] as const,
   members: (teamId: string) => ['teams', 'members', teamId] as const,
   availableLeaders: (buId: string | null) => ['available-leaders', buId] as const,
+  // v2.82.0: Team area for auto-inference
+  area: (teamId: string | undefined) => ['teams', 'area', teamId] as const,
 } as const;
 
 export const squadsKeys = {

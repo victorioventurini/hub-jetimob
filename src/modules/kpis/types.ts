@@ -1,10 +1,18 @@
 // ============================================================
 // KPI Module Types - Hub da Jet
 // v2.1: Lifecycle, Confidence, Period, RAG
+// v2.82.0: Category deprecated, governance evolution
 // ============================================================
 
 // === Core Types ===
+
+/**
+ * @deprecated v2.82.0 - Use area_id for organizational ownership instead.
+ * Categoria funcional foi substituída por Área estratégica para evitar duplicidade conceitual.
+ * Mantido para compatibilidade e rollback.
+ */
 export type KpiCategory = 'financeiro' | 'growth' | 'cs' | 'produto' | 'operacoes' | 'pessoas';
+
 export type KpiDirection = 'up' | 'down';
 export type KpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'manual';
 export type KpiStatus = 'active' | 'inactive';
@@ -25,7 +33,8 @@ export interface KpiMetric {
   id: string;
   name: string;
   description: string | null;
-  category: KpiCategory;
+  /** @deprecated v2.82.0 - Use area_id for organizational ownership */
+  category?: KpiCategory;
   bu_id: string;
   owner_user_id: string | null;
   team_id: string | null;
