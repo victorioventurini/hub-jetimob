@@ -52,6 +52,12 @@ export interface CreateTeamOkrBundleInput {
     start_date?: string;
     expected_end_date?: string;
   }>;
+  /** Pre-selected KPI links for KRs */
+  krMetricLinks?: Array<{
+    kr_index: number;
+    kpi_id: string;
+    role: 'primary' | 'guardrail';
+  }>;
 }
 
 export interface CreateTeamOkrBundleResult {
@@ -59,6 +65,7 @@ export interface CreateTeamOkrBundleResult {
   krIds: string[];
   dependencyIds: string[];
   initiativeIds: string[];
+  krMetricLinkIds: string[];
 }
 
 // ============================================================
@@ -101,6 +108,7 @@ export function useCreateTeamOkrBundle() {
       const krIds: string[] = [];
       const dependencyIds: string[] = [];
       const initiativeIds: string[] = [];
+      const krMetricLinkIds: string[] = [];
 
       // 2. Create key results
       for (const kr of input.keyResults) {
@@ -201,11 +209,38 @@ export function useCreateTeamOkrBundle() {
         }
       }
 
+      // 6. Create KR metric links (KPI associations)
+      if (input.krMetricLinks && input.krMetricLinks.length > 0) {
+        for (const link of input.krMetricLinks) {
+          const krId = krIds[link.kr_index];
+          if (!krId) continue;
+
+          const { data: linkData, error: linkError } = await supabase
+            .from('okr_kr_metrics')
+            .insert({
+              kr_id: krId,
+              kr_type: 'team',
+              kpi_id: link.kpi_id,
+              role: link.role,
+            })
+            .select('id')
+            .single();
+
+          if (linkError) {
+            console.error('Error creating KR metric link:', linkError);
+            // Non-blocking: continue with other links
+          } else {
+            krMetricLinkIds.push(linkData.id);
+          }
+        }
+      }
+
       return {
         objectiveId,
         krIds,
         dependencyIds,
         initiativeIds,
+        krMetricLinkIds,
       };
     },
     onSuccess: () => {

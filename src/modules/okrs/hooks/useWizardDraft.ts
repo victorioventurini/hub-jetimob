@@ -23,6 +23,7 @@ import type {
   DraftTeamKr, 
   DraftTeamDependency, 
   DraftTeamInitiative,
+  DraftKrMetricLink,
   ResponsibilityModel,
   OwnerType,
   VicInsightType,
@@ -42,7 +43,8 @@ export type WizardStep =
   | 'objective' 
   | 'sharing'
   | 'kr-type' 
-  | 'kr-detail' 
+  | 'kr-detail'
+  | 'kr-metrics' // NEW - KPI pre-selection
   | 'dependencies' 
   | 'initiatives' 
   | 'review';
@@ -118,6 +120,9 @@ export interface TeamOkrDraft {
   krPlan: KrPlan;
   draftKrs: DraftTeamKr[];
   
+  // Step 6.5 - KR Metrics (KPI pre-selection)
+  draftKrMetricLinks: DraftKrMetricLink[];
+  
   // Step 7 - Dependencies
   dependencies: DraftTeamDependency[];
   detectedDependencies: DetectedDependencyDraft[];
@@ -130,7 +135,7 @@ export interface TeamOkrDraft {
   shareStepContent: ShareStepContent | null;
 }
 
-const DRAFT_VERSION = 4; // Bumped version for AI insight persistence
+const DRAFT_VERSION = 5; // Bumped version for KR metrics pre-selection
 
 const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft => ({
   version: DRAFT_VERSION,
@@ -155,6 +160,7 @@ const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft 
   sharingAiInsight: null,
   krPlan: { foundational: 1, contribution: 0, enabler: 0 },
   draftKrs: [],
+  draftKrMetricLinks: [],
   dependencies: [],
   detectedDependencies: [],
   dependenciesAiInsight: null,

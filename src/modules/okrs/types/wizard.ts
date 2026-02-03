@@ -255,6 +255,21 @@ export interface DraftTeamKr {
   linked_org_kr_id: string | null;
 }
 
+/**
+ * Draft KPI link for wizard pre-selection
+ * Links will be created after KRs are saved
+ */
+export interface DraftKrMetricLink {
+  /** Draft KR index this link belongs to */
+  krIndex: number;
+  /** KPI ID from kpi_metrics table */
+  kpiId: string;
+  /** KPI name for display */
+  kpiName: string;
+  /** Role: primary (progress) or guardrail (monitoring) */
+  role: 'primary' | 'guardrail';
+}
+
 export interface DraftTeamDependency {
   krIndex: number;
   dependsOnTeamId?: string;
@@ -313,6 +328,9 @@ export interface TeamOkrCreationWizardState {
     enabler: number;
   };
   draftKrs: DraftTeamKr[];
+  
+  // Step 6.5 - KR Metrics (NEW)
+  draftKrMetricLinks: DraftKrMetricLink[];
   
   // Step 7 - Dependencies
   dependencies: DraftTeamDependency[];
