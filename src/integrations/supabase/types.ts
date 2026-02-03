@@ -3277,10 +3277,14 @@ export type Database = {
           direction: Database["public"]["Enums"]["kpi_direction"]
           frequency: Database["public"]["Enums"]["kpi_frequency"]
           id: string
+          indicator_type: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global: boolean
+          lifecycle_status: Database["public"]["Enums"]["kpi_lifecycle_status"]
           name: string
           owner_user_id: string | null
+          recovery_protocol: string | null
           status: Database["public"]["Enums"]["kpi_status"]
+          target_source: string | null
           target_value: number | null
           team_id: string | null
           unit: string
@@ -3295,10 +3299,14 @@ export type Database = {
           direction?: Database["public"]["Enums"]["kpi_direction"]
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
           id?: string
+          indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global?: boolean
+          lifecycle_status?: Database["public"]["Enums"]["kpi_lifecycle_status"]
           name: string
           owner_user_id?: string | null
+          recovery_protocol?: string | null
           status?: Database["public"]["Enums"]["kpi_status"]
+          target_source?: string | null
           target_value?: number | null
           team_id?: string | null
           unit?: string
@@ -3313,10 +3321,14 @@ export type Database = {
           direction?: Database["public"]["Enums"]["kpi_direction"]
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
           id?: string
+          indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global?: boolean
+          lifecycle_status?: Database["public"]["Enums"]["kpi_lifecycle_status"]
           name?: string
           owner_user_id?: string | null
+          recovery_protocol?: string | null
           status?: Database["public"]["Enums"]["kpi_status"]
+          target_source?: string | null
           target_value?: number | null
           team_id?: string | null
           unit?: string
@@ -3369,31 +3381,46 @@ export type Database = {
       }
       kpi_values: {
         Row: {
+          confidence: Database["public"]["Enums"]["kpi_confidence_level"]
           created_at: string
           created_by: string | null
           id: string
           kpi_id: string
           notes: string | null
+          period_end: string | null
+          period_label: string | null
+          period_start: string | null
+          rag_status: Database["public"]["Enums"]["kpi_rag_status"] | null
           reference_date: string
           source: Database["public"]["Enums"]["kpi_value_source"]
           value: number
         }
         Insert: {
+          confidence?: Database["public"]["Enums"]["kpi_confidence_level"]
           created_at?: string
           created_by?: string | null
           id?: string
           kpi_id: string
           notes?: string | null
+          period_end?: string | null
+          period_label?: string | null
+          period_start?: string | null
+          rag_status?: Database["public"]["Enums"]["kpi_rag_status"] | null
           reference_date: string
           source?: Database["public"]["Enums"]["kpi_value_source"]
           value: number
         }
         Update: {
+          confidence?: Database["public"]["Enums"]["kpi_confidence_level"]
           created_at?: string
           created_by?: string | null
           id?: string
           kpi_id?: string
           notes?: string | null
+          period_end?: string | null
+          period_label?: string | null
+          period_start?: string | null
+          rag_status?: Database["public"]["Enums"]["kpi_rag_status"] | null
           reference_date?: string
           source?: Database["public"]["Enums"]["kpi_value_source"]
           value?: number
@@ -9292,6 +9319,21 @@ export type Database = {
         Args: { p_bu_id: string; p_job_title_id: string }
         Returns: boolean
       }
+      kpi_calculate_period: {
+        Args: {
+          p_frequency: Database["public"]["Enums"]["kpi_frequency"]
+          p_reference_date: string
+        }
+        Returns: Record<string, unknown>
+      }
+      kpi_calculate_rag: {
+        Args: {
+          p_direction: Database["public"]["Enums"]["kpi_direction"]
+          p_target: number
+          p_value: number
+        }
+        Returns: Database["public"]["Enums"]["kpi_rag_status"]
+      }
       log_audit_event: {
         Args: {
           p_action: string
@@ -9626,10 +9668,21 @@ export type Database = {
         | "produto"
         | "operacoes"
         | "pessoas"
+      kpi_confidence_level: "high" | "medium" | "low"
       kpi_direction: "up" | "down"
       kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
+      kpi_indicator_type: "kpi" | "metric" | "health_indicator"
+      kpi_lifecycle_status: "proposed" | "active" | "observing" | "deprecated"
+      kpi_rag_status: "on_track" | "at_risk" | "off_track" | "no_data"
       kpi_status: "active" | "inactive"
-      kpi_value_source: "manual" | "integration" | "calculation"
+      kpi_value_source:
+        | "manual"
+        | "integration"
+        | "calculation"
+        | "api"
+        | "webhook"
+        | "spreadsheet"
+        | "database"
       migration_status:
         | "pending"
         | "in_progress"
@@ -9895,10 +9948,22 @@ export const Constants = {
         "operacoes",
         "pessoas",
       ],
+      kpi_confidence_level: ["high", "medium", "low"],
       kpi_direction: ["up", "down"],
       kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
+      kpi_indicator_type: ["kpi", "metric", "health_indicator"],
+      kpi_lifecycle_status: ["proposed", "active", "observing", "deprecated"],
+      kpi_rag_status: ["on_track", "at_risk", "off_track", "no_data"],
       kpi_status: ["active", "inactive"],
-      kpi_value_source: ["manual", "integration", "calculation"],
+      kpi_value_source: [
+        "manual",
+        "integration",
+        "calculation",
+        "api",
+        "webhook",
+        "spreadsheet",
+        "database",
+      ],
       migration_status: [
         "pending",
         "in_progress",

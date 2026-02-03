@@ -228,4 +228,9 @@ export const kpisKeys = {
   values: (kpiId: string) => ['kpis', 'values', kpiId] as const,
   sources: (buId: string | null) => ['kpis', 'sources', buId] as const,
   categories: (buId: string | null) => ['kpis', 'categories', buId] as const,
+  // v2.1: Wizard integration
+  forWizard: (options: { ownerId?: string; teamId?: string }) => 
+    ['kpis', 'wizard', options] as const,
+  byRagStatus: (buId: string | null, statuses: string[]) =>
+    ['kpis', 'rag-status', buId, statuses] as const,
 } as const;

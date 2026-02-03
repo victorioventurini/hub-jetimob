@@ -93,6 +93,11 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
     created_at: kpi.created_at,
     updated_at: kpi.updated_at,
     deleted_at: kpi.deleted_at,
+    // v2.1 fields
+    indicator_type: kpi.indicator_type ?? 'kpi',
+    lifecycle_status: kpi.lifecycle_status ?? 'active',
+    target_source: kpi.target_source ?? null,
+    recovery_protocol: kpi.recovery_protocol ?? null,
   };
 
   return (
