@@ -98,6 +98,9 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
     lifecycle_status: kpi.lifecycle_status ?? 'active',
     target_source: kpi.target_source ?? null,
     recovery_protocol: kpi.recovery_protocol ?? null,
+    // v2.2 governance fields
+    area_id: kpi.area_id ?? null,
+    scope: kpi.scope ?? 'team',
   };
 
   return (

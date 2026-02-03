@@ -2,9 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle, Building2, Globe } from "lucide-react";
 import { useKpiDetail } from "@/modules/kpis/hooks";
-import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, KpiValueSource } from "../types";
+import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, SCOPE_LABELS, KpiValueSource, KpiScope } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -204,6 +204,22 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
 
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-4">
+            {/* v2.2: Área dona */}
+            {kpi.area && (
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" style={{ color: kpi.area.color || undefined }} />
+                <span className="text-sm text-muted-foreground">Área:</span>
+                <span className="text-sm font-medium">{kpi.area.name}</span>
+              </div>
+            )}
+
+            {/* v2.2: Escopo */}
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Escopo:</span>
+              <span className="text-sm">{SCOPE_LABELS[(kpi.scope as KpiScope) || 'team']}</span>
+            </div>
+
             {kpi.owner && (
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />

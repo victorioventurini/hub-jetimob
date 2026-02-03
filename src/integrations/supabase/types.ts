@@ -3269,6 +3269,7 @@ export type Database = {
       }
       kpi_metrics: {
         Row: {
+          area_id: string | null
           bu_id: string | null
           category: Database["public"]["Enums"]["kpi_category"]
           created_at: string
@@ -3283,6 +3284,7 @@ export type Database = {
           name: string
           owner_user_id: string | null
           recovery_protocol: string | null
+          scope: Database["public"]["Enums"]["kpi_scope"]
           status: Database["public"]["Enums"]["kpi_status"]
           target_source: string | null
           target_value: number | null
@@ -3291,6 +3293,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           bu_id?: string | null
           category: Database["public"]["Enums"]["kpi_category"]
           created_at?: string
@@ -3305,6 +3308,7 @@ export type Database = {
           name: string
           owner_user_id?: string | null
           recovery_protocol?: string | null
+          scope?: Database["public"]["Enums"]["kpi_scope"]
           status?: Database["public"]["Enums"]["kpi_status"]
           target_source?: string | null
           target_value?: number | null
@@ -3313,6 +3317,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           bu_id?: string | null
           category?: Database["public"]["Enums"]["kpi_category"]
           created_at?: string
@@ -3327,6 +3332,7 @@ export type Database = {
           name?: string
           owner_user_id?: string | null
           recovery_protocol?: string | null
+          scope?: Database["public"]["Enums"]["kpi_scope"]
           status?: Database["public"]["Enums"]["kpi_status"]
           target_source?: string | null
           target_value?: number | null
@@ -3335,6 +3341,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "kpi_metrics_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "kpi_metrics_bu_id_fkey"
             columns: ["bu_id"]
@@ -9674,6 +9687,7 @@ export type Database = {
       kpi_indicator_type: "kpi" | "metric" | "health_indicator"
       kpi_lifecycle_status: "proposed" | "active" | "observing" | "deprecated"
       kpi_rag_status: "on_track" | "at_risk" | "off_track" | "no_data"
+      kpi_scope: "team" | "area" | "org"
       kpi_status: "active" | "inactive"
       kpi_value_source:
         | "manual"
@@ -9954,6 +9968,7 @@ export const Constants = {
       kpi_indicator_type: ["kpi", "metric", "health_indicator"],
       kpi_lifecycle_status: ["proposed", "active", "observing", "deprecated"],
       kpi_rag_status: ["on_track", "at_risk", "off_track", "no_data"],
+      kpi_scope: ["team", "area", "org"],
       kpi_status: ["active", "inactive"],
       kpi_value_source: [
         "manual",

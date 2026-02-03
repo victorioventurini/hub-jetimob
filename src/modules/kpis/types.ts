@@ -18,6 +18,9 @@ export type KpiIndicatorType = 'kpi' | 'metric' | 'health_indicator';
 export type KpiLifecycleStatus = 'proposed' | 'active' | 'observing' | 'deprecated';
 export type KpiConfidenceLevel = 'high' | 'medium' | 'low';
 
+// === v2.2 Governance Types ===
+export type KpiScope = 'team' | 'area' | 'org';
+
 export interface KpiMetric {
   id: string;
   name: string;
@@ -44,6 +47,9 @@ export interface KpiMetric {
   lifecycle_status: KpiLifecycleStatus;
   target_source: string | null;
   recovery_protocol: string | null;
+  // v2.2 governance fields
+  area_id: string | null;
+  scope: KpiScope;
   // Relations
   owner?: {
     id: string;
@@ -53,6 +59,11 @@ export interface KpiMetric {
   team?: {
     id: string;
     name: string;
+  };
+  area?: {
+    id: string;
+    name: string;
+    color: string | null;
   };
 }
 
@@ -150,6 +161,13 @@ export const LIFECYCLE_STATUS_LABELS: Record<KpiLifecycleStatus, string> = {
   active: 'Ativo',
   observing: 'Em Observação',
   deprecated: 'Depreciado',
+};
+
+// === v2.2 Governance Labels ===
+export const SCOPE_LABELS: Record<KpiScope, string> = {
+  team: 'Time',
+  area: 'Área',
+  org: 'Organização (Global)',
 };
 
 export const CONFIDENCE_LABELS: Record<KpiConfidenceLevel, string> = {
