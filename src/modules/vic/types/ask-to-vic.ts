@@ -48,6 +48,7 @@ export type OkrWizardStep =
   | 'share'             // Comunicação final
   // Collaborator check-in
   | 'collaborator-context'
+  | 'kpi-checkin'
   | 'kr-review'
   | 'reflection'
   // Leader prep
@@ -228,6 +229,10 @@ export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
   'kr-review': [
     'Este progresso está dentro do esperado?',
     'O que pode estar travando este KR?',
+  ],
+  'kpi-checkin': [
+    'Como interpretar o valor deste indicador?',
+    'O que pode estar causando desvio da meta?',
   ],
   'reflection': [
     'O que mais impactou meus resultados?',

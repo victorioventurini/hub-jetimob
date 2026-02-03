@@ -9,6 +9,9 @@ export type { CollaboratorContextStepProps } from './CollaboratorContextStep';
 export { CollaboratorCheckinStep } from './CollaboratorCheckinStep';
 export type { CollaboratorCheckinStepProps } from './CollaboratorCheckinStep';
 
+export { CollaboratorKpiStep } from './CollaboratorKpiStep';
+export type { CollaboratorKpiStepProps, KpiCheckinResult } from './CollaboratorKpiStep';
+
 export { CollaboratorInitiativesStep } from './CollaboratorInitiativesStep';
 export type { CollaboratorInitiativesStepProps } from './CollaboratorInitiativesStep';
 

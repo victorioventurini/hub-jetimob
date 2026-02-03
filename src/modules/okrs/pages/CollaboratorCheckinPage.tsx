@@ -2,6 +2,7 @@
  * CollaboratorCheckinPage - Full-page wizard para check-in do colaborador
  * 
  * Admins podem selecionar outro usuário para visualizar/executar o check-in.
+ * v2.2: Suporte a KPIs do colaborador (fail-safe)
  */
 
 import { useMemo, useCallback } from 'react';
@@ -14,6 +15,7 @@ import {
   useActiveCycles,
   useUserKrsForWizard,
 } from '@/modules/okrs/hooks';
+import { useKpisForWizard, useKpiData } from '@/modules/kpis/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
@@ -24,38 +26,45 @@ import { handleError } from '@/lib/errorMessages';
 // Step components
 import { CollaboratorContextStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorContextStep';
 import { CollaboratorCheckinStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep';
+import { CollaboratorKpiStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep';
 import { CollaboratorInitiativesStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep';
 import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep';
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
 
 import type { CollaboratorCheckinResult, CollaboratorReflection } from '@/modules/okrs/types/wizard';
+import type { KpiCheckinResult } from '@/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep';
 
 // ============================================================
 // TYPES
 // ============================================================
 
-type WizardStep = 'context' | 'checkin' | 'initiatives' | 'reflection' | 'summary';
+type WizardStep = 'context' | 'checkin' | 'kpis' | 'initiatives' | 'reflection' | 'summary';
 
 interface CollaboratorDraftData {
   currentKrIndex: number;
+  currentKpiIndex: number;
   results: CollaboratorCheckinResult[];
+  kpiResults: KpiCheckinResult[];
   reflection: CollaboratorReflection;
   initiativesMarkedAtRisk: string[];
 }
 
 const WIZARD_STEPS = [
-  { id: 'context' as const, label: 'Contexto', description: 'Visão geral dos KRs' },
+  { id: 'context' as const, label: 'Contexto', description: 'Visão geral dos KRs e KPIs' },
   { id: 'checkin' as const, label: 'Check-in', description: 'Atualização dos KRs' },
+  { id: 'kpis' as const, label: 'KPIs', description: 'Atualização dos indicadores' },
   { id: 'initiatives' as const, label: 'Iniciativas', description: 'Revisão de atividades' },
   { id: 'reflection' as const, label: 'Reflexão', description: 'Aprendizados' },
   { id: 'summary' as const, label: 'Resumo', description: 'Visão consolidada' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'initiatives', 'reflection', 'summary'];
+const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'initiatives', 'reflection', 'summary'];
 
 const DEFAULT_DATA: CollaboratorDraftData = {
   currentKrIndex: 0,
+  currentKpiIndex: 0,
   results: [],
+  kpiResults: [],
   reflection: {},
   initiativesMarkedAtRisk: [],
 };
@@ -140,6 +149,14 @@ export default function CollaboratorCheckinPage() {
     effectiveUserId
   );
   
+  // Fetch user KPIs (fail-safe)
+  const { kpis: userKpis, isLoading: isLoadingKpis } = useKpisForWizard({
+    ownerId: effectiveUserId || undefined,
+  });
+  
+  // KPI mutation for saving values
+  const { addKpiValue } = useKpiData();
+  
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
@@ -199,19 +216,21 @@ export default function CollaboratorCheckinPage() {
   }, [clearDraft, navigate]);
   
   // Loading - include auth loading to ensure profile is available
-  if (isAuthLoading || isLoadingCycles || isLoadingKrs) {
+  if (isAuthLoading || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
     return <LoadingState text="Carregando..." fullPage />;
   }
   
   // Render step content
   const renderStepContent = () => {
     const krs = userKrs || [];
+    const kpis = userKpis || [];
     
     switch (draft.currentStep) {
       case 'context':
         return (
           <CollaboratorContextStep
             krs={krs}
+            kpis={kpis}
             cycleName={quarterlyCycle?.name || 'Ciclo atual'}
             onContinue={goNext}
           />
@@ -253,6 +272,64 @@ export default function CollaboratorCheckinPage() {
             onBack={() => {
               if (draft.data.currentKrIndex > 0) {
                 updateDraft({ currentKrIndex: draft.data.currentKrIndex - 1 });
+              } else {
+                goBack();
+              }
+            }}
+          />
+        );
+        
+      case 'kpis':
+        const currentKpi = kpis[draft.data.currentKpiIndex];
+        if (!currentKpi || kpis.length === 0) {
+          goNext();
+          return null;
+        }
+        return (
+          <CollaboratorKpiStep
+            kpi={currentKpi}
+            currentIndex={draft.data.currentKpiIndex}
+            totalCount={kpis.length}
+            onComplete={async (result) => {
+              // Save KPI value to database
+              try {
+                await addKpiValue.mutateAsync({
+                  kpi_id: result.kpiId,
+                  value: result.newValue,
+                  reference_date: result.referenceDate,
+                  confidence: result.confidence,
+                  notes: result.notes,
+                  source: 'manual',
+                  created_by: profile?.id,
+                });
+              } catch (error) {
+                console.error('Failed to save KPI value:', error);
+              }
+              
+              const newKpiResults = [...draft.data.kpiResults];
+              newKpiResults[draft.data.currentKpiIndex] = result;
+              const nextIndex = draft.data.currentKpiIndex + 1;
+              if (nextIndex >= kpis.length) {
+                updateDraft({ kpiResults: newKpiResults });
+                goNext();
+              } else {
+                updateDraft({ 
+                  kpiResults: newKpiResults,
+                  currentKpiIndex: nextIndex 
+                });
+              }
+            }}
+            onSkip={() => {
+              const nextIndex = draft.data.currentKpiIndex + 1;
+              if (nextIndex >= kpis.length) {
+                goNext();
+              } else {
+                updateDraft({ currentKpiIndex: nextIndex });
+              }
+            }}
+            onBack={() => {
+              if (draft.data.currentKpiIndex > 0) {
+                updateDraft({ currentKpiIndex: draft.data.currentKpiIndex - 1 });
               } else {
                 goBack();
               }
