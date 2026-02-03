@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Gift, Plus, AlertTriangle, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,8 +14,10 @@ import { useUrlState } from "@/shared/url";
 export default function GiftsPage() {
   // URL State for filtering
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const lowStockState = useUrlState<string>({ key: "lowStock", defaultValue: "" });
   const search = searchState.value;
   const setSearch = searchState.set;
+  const lowStockFilter = lowStockState.value === "true";
   
   const { items, batches, getItemTotals, isLoading: isLoadingGifts } = useGifts({
     search: search || undefined,
@@ -31,6 +33,12 @@ export default function GiftsPage() {
     const { availableQuantity } = getItemTotals(item.id);
     return availableQuantity > 0 && availableQuantity < 10;
   });
+
+  // Filter items if lowStock filter is active
+  const filteredItems = useMemo(() => {
+    if (!lowStockFilter) return items;
+    return items.filter(item => lowStockItems.some(low => low.id === item.id));
+  }, [items, lowStockItems, lowStockFilter]);
 
   if (isLoading) {
     return (
@@ -84,19 +92,19 @@ export default function GiftsPage() {
       />
 
       {/* Tabela de brindes */}
-      {items.length === 0 ? (
+      {filteredItems.length === 0 ? (
         <EmptyState
           icon={Gift}
-          title="Nenhum brinde cadastrado"
-          description={search 
-            ? "Tente ajustar a busca" 
+          title="Nenhum brinde encontrado"
+          description={search || lowStockFilter
+            ? "Tente ajustar os filtros" 
             : "Cadastre o primeiro item de brinde"}
-          actionLabel={canManageGifts && !search ? "Novo Brinde" : undefined}
-          onAction={canManageGifts && !search ? () => setDialogOpen(true) : undefined}
+          actionLabel={canManageGifts && !search && !lowStockFilter ? "Novo Brinde" : undefined}
+          onAction={canManageGifts && !search && !lowStockFilter ? () => setDialogOpen(true) : undefined}
         />
       ) : (
         <GiftsTable 
-          items={items} 
+          items={filteredItems} 
           batches={batches} 
           getItemTotals={getItemTotals}
         />

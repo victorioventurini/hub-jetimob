@@ -9,6 +9,7 @@ import { InventoryTable } from "../components/inventory/InventoryTable";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
 import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
 import { useUrlState } from "@/shared/url";
+import { isPast } from "date-fns";
 import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
@@ -20,6 +21,7 @@ export default function InventoryPage() {
   const categoryState = useUrlState<string>({ key: "category", defaultValue: "all" });
   const holderState = useUrlState<string>({ key: "holder", defaultValue: "all" });
   const locationState = useUrlState<string>({ key: "location", defaultValue: "all" });
+  const overdueState = useUrlState<string>({ key: "overdue", defaultValue: "" });
   
   const statusFilter = statusState.value as "all" | AssetInventoryStatus;
   const setStatusFilter = statusState.set;
@@ -29,6 +31,7 @@ export default function InventoryPage() {
   const setHolderFilter = holderState.set;
   const locationFilter = locationState.value;
   const setLocationFilter = locationState.set;
+  const overdueFilter = overdueState.value === "true";
 
   // Pass filters to hook - no pagination
   const { items, categories, isLoading } = useInventory({
@@ -57,9 +60,15 @@ export default function InventoryPage() {
     [items]
   );
 
-  // Client-side filter for hierarchical category/location (parent includes children)
+  // Client-side filter for hierarchical category/location (parent includes children) and overdue
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      // Overdue filter - only loaned items with expected_return_at in the past
+      if (overdueFilter) {
+        if (item.status !== "loaned" || !item.expected_return_at) return false;
+        if (!isPast(new Date(item.expected_return_at))) return false;
+      }
+
       // Category filter - supports both parent and child category matching
       if (categoryFilter !== "all") {
         if (!item.category_id) return false;
@@ -105,9 +114,9 @@ export default function InventoryPage() {
 
       return true;
     });
-  }, [items, categoryFilter, locationFilter, categories, locations]);
+  }, [items, categoryFilter, locationFilter, categories, locations, overdueFilter]);
 
-  const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" || locationFilter !== "all";
+  const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || holderFilter !== "all" || locationFilter !== "all" || overdueFilter;
 
   if (isLoading) {
     return (
