@@ -1,5 +1,6 @@
 // =============================================
 // MÓDULO KPIs - EXPORTS
+// v2.83.0: Added contributor types and wizard V2
 // =============================================
 
 // Types
@@ -10,7 +11,7 @@ export * from './hooks';
 
 // Components
 export { KpiCard } from './components/KpiCard';
-export { KpiAreaSection } from './components/KpiAreaSection'; // v2.82.0: replaces KpiCategorySection
+export { KpiAreaSection } from './components/KpiAreaSection';
 /** @deprecated v2.82.0 - Use KpiAreaSection instead */
 export { KpiCategorySection } from './components/KpiCategorySection';
 export { KpiDashboardFilters } from './components/KpiDashboardFilters';

@@ -233,4 +233,16 @@ export const kpisKeys = {
     ['kpis', 'wizard', options] as const,
   byRagStatus: (buId: string | null, statuses: string[]) =>
     ['kpis', 'rag-status', buId, statuses] as const,
+  // v2.83.0: Contributors management
+  contributors: (kpiId: string) => 
+    ['kpis', 'contributors', kpiId] as const,
+  userContributions: (userId: string, teamId?: string) =>
+    ['kpis', 'user-contributions', userId, teamId] as const,
+  // v2.83.0: Wizard V2 with role classification
+  forWizardV2: (options: { 
+    userId: string; 
+    teamId?: string; 
+    areaId?: string; 
+    scope?: string 
+  }) => ['kpis', 'wizard-v2', options] as const,
 } as const;

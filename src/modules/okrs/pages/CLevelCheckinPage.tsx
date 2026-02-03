@@ -1,5 +1,6 @@
 /**
  * CLevelCheckinPage - Full-page wizard para check-in estratégico C-Level
+ * v2.83.0: Integração com KPIs estratégicos via useKpisForWizardV2
  */
 
 import { useMemo, useCallback } from 'react';
@@ -9,6 +10,8 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
+import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
+import { useAuth } from '@/hooks/useAuth';
 
 // Step components
 import {
@@ -51,12 +54,33 @@ const DEFAULT_DATA: CLevelDraftData = {
 
 export default function CLevelCheckinPage() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   
   usePageTitle('Check-in Estratégico');
   
   // Fetch real company OKRs data
   const { data: companyData, isLoading: isLoadingOkrs } = useCompanyOkrs();
   const okrs = companyData?.okrs ?? [];
+  
+  // v2.83.0: Fetch strategic KPIs for C-Level view
+  const {
+    kpisStrategic,
+    isLoading: isLoadingKpis,
+  } = useKpisForWizardV2({
+    userId: profile?.id ?? '',
+    scope: 'clevel',
+  });
+  
+  // Calculate OKRs summary for insights step
+  const okrsSummary = useMemo(() => {
+    if (!okrs.length) return undefined;
+    return {
+      total: okrs.length,
+      onTrack: okrs.filter(o => o.trend === 'improving').length,
+      atRisk: okrs.filter(o => o.trend === 'stable').length,
+      offTrack: okrs.filter(o => o.trend === 'declining').length,
+    };
+  }, [okrs]);
   
   // Draft persistence
   const {
@@ -150,6 +174,9 @@ export default function CLevelCheckinPage() {
       case 'insights':
         return (
           <CLevelInsightsStep 
+            kpisStrategic={kpisStrategic}
+            okrsSummary={okrsSummary}
+            isLoading={isLoadingKpis}
             onContinue={goNext} 
             onBack={goBack} 
           />

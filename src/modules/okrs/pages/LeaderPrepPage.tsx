@@ -1,8 +1,9 @@
 /**
  * LeaderPrepPage - Full-page wizard para preparação do líder
+ * v2.83.0: Added KPI alerts step for indicator attention section
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
@@ -14,6 +15,8 @@ import {
   useTeamPendingKrs,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
+import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
+import { useAuth } from '@/hooks/useAuth';
 
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -22,6 +25,7 @@ import { AlertCircle } from 'lucide-react';
 
 // Step components
 import { LeaderOverviewStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderOverviewStep';
+import { LeaderKpiAlertStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderKpiAlertStep';
 import { LeaderHighlightsStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderHighlightsStep';
 import { LeaderPrepStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderPrepStep';
 import { LeaderAlignmentStep, type ParentObjective } from '@/modules/okrs/components/wizards/leader-prep/LeaderAlignmentStep';
@@ -32,27 +36,32 @@ import type { KrAction, VicInsight } from '@/modules/okrs/types/wizard';
 // TYPES
 // ============================================================
 
-type WizardStep = 'overview' | 'highlights' | 'prep' | 'alignment';
+type WizardStep = 'overview' | 'kpi-alerts' | 'highlights' | 'prep' | 'alignment';
 
 interface LeaderPrepDraftData {
   krActions: KrAction[];
   meetingNotes: string;
   dismissedInsights: string[];
+  kpisForDiscussion: string[];
+  kpisForFollowup: string[];
 }
 
 const WIZARD_STEPS = [
   { id: 'overview' as const, label: 'Panorama', description: 'Visão geral do time' },
+  { id: 'kpi-alerts' as const, label: 'Indicadores', description: 'KPIs em atenção' },
   { id: 'highlights' as const, label: 'Destaques', description: 'Insights automáticos' },
   { id: 'prep' as const, label: 'Preparação', description: 'Marcar para discussão' },
   { id: 'alignment' as const, label: 'Alinhamento', description: 'OKRs do nível superior' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['overview', 'highlights', 'prep', 'alignment'];
+const STEP_ORDER: WizardStep[] = ['overview', 'kpi-alerts', 'highlights', 'prep', 'alignment'];
 
 const DEFAULT_DATA: LeaderPrepDraftData = {
   krActions: [],
   meetingNotes: '',
   dismissedInsights: [],
+  kpisForDiscussion: [],
+  kpisForFollowup: [],
 };
 
 // ============================================================
@@ -109,6 +118,36 @@ export default function LeaderPrepPage() {
     quarterlyCycle?.id,
     teamIdParam ? [teamIdParam] : []
   );
+  
+  // v2.83.0: Fetch KPIs for leader view
+  const { profile } = useAuth();
+  const {
+    kpisInAlert,
+    guardrailsViolated,
+    isLoading: isLoadingKpis,
+  } = useKpisForWizardV2({
+    userId: profile?.id ?? '',
+    teamId: teamIdParam ?? undefined,
+    scope: 'leader',
+    includeGuardrailsAtRisk: true,
+  });
+  
+  // KPI marking handlers
+  const handleMarkForDiscussion = useCallback((kpiId: string, marked: boolean) => {
+    const current = draft.data.kpisForDiscussion || [];
+    const updated = marked 
+      ? [...current, kpiId] 
+      : current.filter(id => id !== kpiId);
+    updateDraft({ kpisForDiscussion: updated });
+  }, [draft.data.kpisForDiscussion, updateDraft]);
+  
+  const handleMarkForFollowup = useCallback((kpiId: string, marked: boolean) => {
+    const current = draft.data.kpisForFollowup || [];
+    const updated = marked 
+      ? [...current, kpiId] 
+      : current.filter(id => id !== kpiId);
+    updateDraft({ kpisForFollowup: updated });
+  }, [draft.data.kpisForFollowup, updateDraft]);
   
   // Navigation
   const completedSteps = useMemo(() => {
@@ -209,8 +248,22 @@ export default function LeaderPrepPage() {
             onContinue={goNext}
           />
         );
-        
-      case 'highlights':
+      
+      case 'kpi-alerts':
+        return (
+          <LeaderKpiAlertStep
+            kpisInAlert={kpisInAlert}
+            guardrailsViolated={guardrailsViolated}
+            teamName={selectedTeam.name}
+            isLoading={isLoadingKpis}
+            markedForDiscussion={draft.data.kpisForDiscussion || []}
+            markedForFollowup={draft.data.kpisForFollowup || []}
+            onMarkForDiscussion={handleMarkForDiscussion}
+            onMarkForFollowup={handleMarkForFollowup}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
         // Generate highlights from KRs
         const highlights = krs
           .filter(kr => kr.days_since_checkin >= 14 || kr.is_at_risk)

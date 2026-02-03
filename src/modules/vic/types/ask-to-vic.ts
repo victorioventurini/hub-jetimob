@@ -53,6 +53,7 @@ export type OkrWizardStep =
   | 'reflection'
   // Leader prep
   | 'overview'
+  | 'kpi-alerts'  // v2.83.0: New step for KPI attention
   | 'highlights'
   | 'prep'
   | 'alignment'
@@ -245,6 +246,10 @@ export const STEP_QUESTIONS: Record<OkrWizardStep, string[]> = {
   'overview': [
     'Como está o panorama geral do time?',
     'Quais KRs precisam de mais atenção?',
+  ],
+  'kpi-alerts': [
+    'Quais indicadores precisam de ação imediata?',
+    'Como priorizar KPIs em alerta?',
   ],
   'highlights': [
     'Quais são os pontos críticos a abordar?',
