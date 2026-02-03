@@ -1,193 +1,234 @@
 
-# Plano: Validação de Data Consolidada para KPIs
+# Plano: Remoção Completa do Tipo "Indicador de Saúde" (health_indicator)
 
-## 1. Contexto e Pré-Checklist ✅
+## Resumo Executivo
 
-| Documento | Status | Versão |
-|-----------|--------|--------|
-| TECHNICAL_CONTEXT_REGISTRY.md | ✅ Analisado | v2.79.0 |
-| DEVELOPMENT_STANDARDS.md | ✅ Analisado | v1.17.0 |
-| DATA_MODEL_REGISTRY.md | ✅ Analisado | v2.51.0 |
-| validationMessages.ts | ✅ Analisado | Existe infraestrutura |
-| AddKpiValueDialog.tsx | ✅ Analisado | Ponto de entrada único |
+Remover completamente o tipo `health_indicator` do módulo de KPIs, garantindo que o sistema trabalhe apenas com os tipos **KPI** e **Métrica**.
 
-## 2. Problema Identificado
+---
 
-**Regra de Negócio:** Dados de KPI só podem ser registrados para dias **consolidados** (encerrados).
+## Pré-checklist Consultado ✅
 
-**Exemplo:**
-- Hoje é 13/02
-- O dia 13 ainda não acabou → dados ainda não consolidados
-- Portanto, só pode registrar dados até o dia **12/02**
+| Documento | Status | Observações |
+|-----------|--------|-------------|
+| `TECHNICAL_CONTEXT_REGISTRY.md` | ✅ Consultado | Linha 724: enum com 3 valores |
+| `DATA_MODEL_REGISTRY.md` | ✅ Consultado | Gerado automaticamente (não editar manualmente) |
+| `DEVELOPMENT_STANDARDS.md` | ✅ Consultado | Regras de enum e migrations |
+| Verificação de dados existentes | ✅ Query executada | **0 registros** usam `health_indicator` |
 
-**Estado Atual:**
-- `AddKpiValueDialog.tsx` não valida esta regra
-- Default é o dia atual (incorreto)
-- Usuário pode registrar valores para hoje ou futuro
+---
 
-## 3. Solução Proposta
+## Análise de Impacto
 
-### 3.1 Abordagem: Validação Frontend (Estender, Não Duplicar)
-
-| Camada | Ação | Justificativa |
-|--------|------|---------------|
-| `validationMessages.ts` | Adicionar mensagem `consolidatedDate` | Centralizar mensagens (padrão Hub) |
-| `AddKpiValueDialog.tsx` | Validar data < hoje no schema Zod | Validação no form |
-| `AddKpiValueDialog.tsx` | Default = dia anterior (ontem) | UX correta |
-| `AddKpiValueDialog.tsx` | Input `max` = dia anterior | Impedir seleção no picker |
-
-### 3.2 Arquivos a Modificar
-
-| Arquivo | Ação | Modificação |
-|---------|------|-------------|
-| `src/lib/validationMessages.ts` | **MODIFICAR** | +1 mensagem |
-| `src/modules/kpis/components/AddKpiValueDialog.tsx` | **MODIFICAR** | +validação +max +default |
-
-## 4. Detalhamento Técnico
-
-### 4.1 `validationMessages.ts` — Adicionar Mensagem
-
-```typescript
-// Na seção DATAS (linhas 98-123)
-
-/** Data deve ser consolidada (dia encerrado, não pode ser hoje) */
-consolidatedDate: (fieldName?: string) => 
-  fieldName 
-    ? `${fieldName} deve ser um dia já encerrado (não pode ser hoje)`
-    : "Selecione um dia já encerrado (não pode ser hoje)",
+### Estado Atual do Banco
+```sql
+SELECT count(*) FROM kpi_metrics WHERE indicator_type = 'health_indicator';
+-- Resultado: 0 (nenhum registro)
 ```
 
-### 4.2 `AddKpiValueDialog.tsx` — Atualizar Validação
+### Arquivos Afetados (5 arquivos + 1 migration)
 
-**Imports a adicionar:**
-```typescript
-import { format, subDays, startOfDay, isBefore } from "date-fns";
-import { validation } from "@/lib/validationMessages";
+| Arquivo | Linhas | Tipo de Mudança |
+|---------|--------|-----------------|
+| `src/modules/kpis/types.ts` | 17, 153-157 | Union type + labels |
+| `src/modules/kpis/components/CreateKpiDialog.tsx` | 64, 258 | Zod schema + tooltip |
+| `src/modules/kpis/components/EditKpiDialog.tsx` | 63 | Zod schema |
+| `src/modules/kpis/hooks/useKpiData.ts` | 212, 250 | Type castings |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | 724, 2261 | Documentação |
+
+### Arquivo NÃO Editável
+- `src/integrations/supabase/types.ts` — Gerado automaticamente pelo Supabase. Será atualizado após migration.
+
+---
+
+## Etapas de Implementação
+
+### FASE 1: Migração do Banco de Dados
+
+**Objetivo:** Recriar o enum PostgreSQL sem o valor `health_indicator`.
+
+**Estratégia:** PostgreSQL não permite remover valores de enum, então:
+1. Converter registros existentes (precaução)
+2. Criar novo enum apenas com valores válidos
+3. Migrar coluna para novo enum
+4. Dropar enum antigo e renomear
+
+**SQL da Migration:**
+```sql
+-- 1. Converter registros existentes (se houver) — precaução
+UPDATE kpi_metrics 
+SET indicator_type = 'metric' 
+WHERE indicator_type = 'health_indicator';
+
+-- 2. Criar novo enum sem health_indicator
+CREATE TYPE kpi_indicator_type_new AS ENUM ('kpi', 'metric');
+
+-- 3. Alterar coluna para usar novo enum
+ALTER TABLE kpi_metrics 
+ALTER COLUMN indicator_type TYPE kpi_indicator_type_new 
+USING indicator_type::text::kpi_indicator_type_new;
+
+-- 4. Remover enum antigo e renomear novo
+DROP TYPE kpi_indicator_type;
+ALTER TYPE kpi_indicator_type_new RENAME TO kpi_indicator_type;
 ```
 
-**Schema Zod atualizado:**
+---
+
+### FASE 2: Atualização do TypeScript
+
+#### 2.1 `src/modules/kpis/types.ts` (fonte primária)
+
+**Linha 17 — Union Type:**
 ```typescript
-const formSchema = z.object({
-  value: z.coerce.number({ required_error: validation.required("Valor") }),
-  reference_date: z.string()
-    .min(1, validation.required("Data de referência"))
-    .refine((date) => {
-      const selectedDate = startOfDay(new Date(date));
-      const today = startOfDay(new Date());
-      return isBefore(selectedDate, today);
-    }, { message: validation.consolidatedDate("Data de referência") }),
-  notes: z.string().max(500).optional(),
-});
+// ANTES
+export type KpiIndicatorType = 'kpi' | 'metric' | 'health_indicator';
+
+// DEPOIS
+export type KpiIndicatorType = 'kpi' | 'metric';
 ```
 
-**Default value atualizado:**
+**Linhas 153-157 — Labels:**
 ```typescript
-defaultValues: {
-  value: undefined,
-  reference_date: format(subDays(new Date(), 1), "yyyy-MM-dd"), // Ontem
-  notes: "",
-},
-```
+// ANTES
+export const INDICATOR_TYPE_LABELS: Record<KpiIndicatorType, string> = {
+  kpi: 'KPI',
+  metric: 'Métrica',
+  health_indicator: 'Indicador de Saúde',
+};
 
-**Input com `max` attribute:**
-```typescript
-<Input 
-  type="date" 
-  max={format(subDays(new Date(), 1), "yyyy-MM-dd")} // Ontem
-  {...field} 
-/>
-```
-
-### 4.3 Texto de Ajuda (Helper Text)
-
-Adicionar texto explicativo ao campo de data:
-```tsx
-<FormItem>
-  <FormLabel>Data de Referência</FormLabel>
-  <FormControl>
-    <Input 
-      type="date" 
-      max={format(subDays(new Date(), 1), "yyyy-MM-dd")} 
-      {...field} 
-    />
-  </FormControl>
-  <p className="text-xs text-muted-foreground">
-    Informe o último dia do período consolidado (até ontem)
-  </p>
-  <FormMessage />
-</FormItem>
-```
-
-## 5. Impacto em Outros Componentes
-
-### 5.1 Verificação de Pontos de Entrada
-
-| Componente | Existe? | Precisa Validação? |
-|------------|---------|-------------------|
-| `AddKpiValueDialog.tsx` | ✅ Sim | ✅ **Implementar** |
-| `KpiValueInputCard.tsx` (wizard) | ❌ Não existe | N/A (plano futuro) |
-| `EditKpiValueDialog.tsx` | ❌ Não existe | N/A |
-
-**Conclusão:** Apenas `AddKpiValueDialog.tsx` precisa da validação no momento.
-
-### 5.2 Futuro (Wizard Integration)
-
-Quando o step de KPIs for implementado no wizard de check-in, a mesma lógica deverá ser aplicada. A função de validação pode ser extraída para um util se necessário:
-
-```typescript
-// src/modules/kpis/utils/dateValidation.ts (futuro, se necessário)
-export const isConsolidatedDate = (date: string): boolean => {
-  const selectedDate = startOfDay(new Date(date));
-  const today = startOfDay(new Date());
-  return isBefore(selectedDate, today);
+// DEPOIS
+export const INDICATOR_TYPE_LABELS: Record<KpiIndicatorType, string> = {
+  kpi: 'KPI',
+  metric: 'Métrica',
 };
 ```
 
-## 6. Regras Respeitadas
+---
 
-| Regra | Status |
-|-------|--------|
-| Usar infraestrutura existente (validationMessages) | ✅ |
-| Não duplicar componentes | ✅ |
-| Mensagens em pt-BR | ✅ |
-| date-fns para manipulação de datas | ✅ |
-| Validação no frontend (UX) | ✅ |
+#### 2.2 `src/modules/kpis/components/CreateKpiDialog.tsx`
 
-## 7. Validação Backend (Consideração)
+**Linha 64 — Zod Schema:**
+```typescript
+// ANTES
+indicator_type: z.enum(["kpi", "metric", "health_indicator"]),
 
-**Pergunta:** Devemos adicionar validação no banco de dados também?
-
-**Recomendação:** Sim, um trigger seria ideal para garantir integridade. Porém, para manter o escopo mínimo, a validação frontend é suficiente para esta iteração.
-
-**Trigger futuro (opcional):**
-```sql
-CREATE OR REPLACE FUNCTION kpi_value_date_validate()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.reference_date >= CURRENT_DATE THEN
-    RAISE EXCEPTION 'Data de referência deve ser anterior a hoje (dados consolidados)';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+// DEPOIS
+indicator_type: z.enum(["kpi", "metric"]),
 ```
 
-## 8. Testes de Aceitação
+**Linhas 255-259 — Tooltip (remover linha do health_indicator):**
+```typescript
+// ANTES
+<p><strong>KPI:</strong> Indicador-chave de performance vinculado a objetivos estratégicos.</p>
+<p><strong>Métrica:</strong> Medição operacional usada para monitoramento contínuo.</p>
+<p><strong>Indicador de Saúde:</strong> Sinal de alerta que indica riscos ou anomalias.</p>
 
-| Cenário | Input | Resultado Esperado |
-|---------|-------|-------------------|
-| Hoje é 03/02, seleciona 02/02 | 2026-02-02 | ✅ Aceito |
-| Hoje é 03/02, seleciona 03/02 | 2026-02-03 | ❌ Erro: "Data de referência deve ser um dia já encerrado" |
-| Hoje é 03/02, seleciona 04/02 | 2026-02-04 | ❌ Erro (input bloqueado via `max`) |
-| Abre dialog | - | Default = 02/02 (ontem) |
+// DEPOIS
+<p><strong>KPI:</strong> Indicador-chave de performance vinculado a objetivos estratégicos.</p>
+<p><strong>Métrica:</strong> Medição operacional usada para monitoramento contínuo.</p>
+```
 
-## 9. Estimativa de Implementação
+**Componente reutilizado:** `HelpTooltip` de `@/components/ui/help-tooltip` — não duplicar.
 
-| Item | Complexidade |
+---
+
+#### 2.3 `src/modules/kpis/components/EditKpiDialog.tsx`
+
+**Linha 63 — Zod Schema:**
+```typescript
+// ANTES
+indicator_type: z.enum(["kpi", "metric", "health_indicator"]),
+
+// DEPOIS
+indicator_type: z.enum(["kpi", "metric"]),
+```
+
+---
+
+#### 2.4 `src/modules/kpis/hooks/useKpiData.ts`
+
+**Linha 212 — Type Casting:**
+```typescript
+// ANTES
+indicator_type: (kpi.indicator_type || 'kpi') as 'kpi' | 'metric' | 'health_indicator',
+
+// DEPOIS
+indicator_type: (kpi.indicator_type || 'kpi') as KpiIndicatorType,
+```
+
+**Linha 250 — Interface do createKpi:**
+```typescript
+// ANTES
+indicator_type?: 'kpi' | 'metric' | 'health_indicator';
+
+// DEPOIS
+indicator_type?: KpiIndicatorType;
+```
+
+**Nota:** Usar o type importado `KpiIndicatorType` em vez de inline literal para manter DRY.
+
+---
+
+### FASE 3: Atualização da Documentação
+
+#### 3.1 `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
+
+**Linha 724 — Tabela de campos:**
+```markdown
+| **indicator_type** | enum | `kpi`, `metric` |
+```
+
+**Changelog — Adicionar entrada v2.81.0:**
+```markdown
+### v2.81.0 — Remoção de health_indicator
+- **Enum `kpi_indicator_type` simplificado** — Removido tipo `health_indicator`
+- Sistema agora opera apenas com: `kpi` (indicador estratégico) e `metric` (medição operacional)
+- Zero registros afetados (nenhum dado usava o tipo removido)
+```
+
+#### 3.2 `docs/canonical/DATA_MODEL_REGISTRY.md`
+
+**Ação:** Regenerar automaticamente via script após migration.
+```bash
+npx tsx scripts/generate-data-model-registry.ts
+```
+
+---
+
+## Checklist de Validação
+
+| Item | Verificação |
 |------|-------------|
-| Adicionar mensagem em validationMessages | Baixa (1 linha) |
-| Atualizar schema Zod | Baixa (5 linhas) |
-| Atualizar default | Baixa (1 linha) |
-| Adicionar max no input | Baixa (1 linha) |
-| Adicionar helper text | Baixa (3 linhas) |
-| **Total** | **~15 minutos** |
+| ✅ Enum PostgreSQL contém apenas `('kpi', 'metric')` | Migration executada |
+| ✅ Nenhum registro com `health_indicator` no banco | Query confirmou 0 registros |
+| ✅ `KpiIndicatorType` tem apenas 2 valores | Compilação TypeScript |
+| ✅ UI não oferece opção "Indicador de Saúde" | Select renderiza apenas KPI/Métrica |
+| ✅ Tooltip atualizado | Sem menção a "Indicador de Saúde" |
+| ✅ Documentação alinhada | TCR v2.81.0 atualizado |
+
+---
+
+## Ordem de Execução
+
+1. **Migration do banco** (Fase 1)
+2. **Atualizar `types.ts`** — fonte primária dos tipos
+3. **Atualizar Dialogs** — `CreateKpiDialog` e `EditKpiDialog`
+4. **Atualizar Hook** — `useKpiData.ts`
+5. **Atualizar TCR** — versão 2.81.0
+6. **Regenerar DATA_MODEL_REGISTRY** — automático via script
+
+---
+
+## Risco
+
+**BAIXO** — Nenhum dado existente usa `health_indicator`, e a mudança é retroativamente compatível para registros `kpi` e `metric` já existentes.
+
+---
+
+## Princípios Seguidos
+
+- ✅ **Não duplicar componentes** — Reutiliza `HelpTooltip` existente
+- ✅ **Preferir estender/compor** — Apenas remove valor do enum, não cria novos tipos
+- ✅ **Componentes centralizados** — Usa `KpiIndicatorType` importado em vez de literals inline
+- ✅ **Documentação canônica** — Atualiza TCR como fonte de verdade
