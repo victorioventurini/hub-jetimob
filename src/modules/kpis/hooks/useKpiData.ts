@@ -297,7 +297,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
     },
   });
 
-  // Add KPI value
+  // Add KPI value (supports v2.1 confidence field)
   const addKpiValue = useMutation({
     mutationFn: async (data: {
       kpi_id: string;
@@ -306,6 +306,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       source?: 'manual' | 'integration' | 'calculation';
       notes?: string;
       created_by?: string;
+      confidence?: 'high' | 'medium' | 'low';
     }) => {
       const client = assertSupabaseClient(supabase, "addKpiValue");
       const { data: result, error } = await client
@@ -317,6 +318,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
           source: data.source || "manual",
           notes: data.notes || null,
           created_by: data.created_by || null,
+          confidence: data.confidence || 'medium',
         })
         .select()
         .single();
@@ -326,6 +328,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
       toast({
         title: "Valor registrado",
         description: "O valor do KPI foi registrado com sucesso.",
