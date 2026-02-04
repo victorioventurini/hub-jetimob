@@ -63,10 +63,14 @@ export default function TicketsListPage() {
   // Parse responsible filter into owner_user_id or assigned_contact_id
   const parsedResponsible = useMemo(() => parseResponsibleValue(responsibleId), [responsibleId]);
 
+  // Default statuses: exclude "discarded" when showing "all"
+  const DEFAULT_STATUSES: TicketStatus[] = ['waiting', 'paused', 'in_progress', 'done'];
+
   // Build query filters
   const queryFilters = useMemo(() => ({
     type: typeFilter !== "all" ? typeFilter : undefined,
-    status: statusFilter !== "all" ? statusFilter : undefined,
+    // When "all" is selected, show only non-discarded tickets by default
+    status: statusFilter !== "all" ? statusFilter : DEFAULT_STATUSES,
     category_id: categoryId !== "all" ? categoryId : undefined,
     external_company_id: partnerId !== "all" ? partnerId : undefined,
     owner_user_id: parsedResponsible.type === "internal" ? parsedResponsible.id ?? undefined : undefined,
