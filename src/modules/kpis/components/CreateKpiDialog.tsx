@@ -124,7 +124,9 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   
   // Governança: verificar permissões
-  const canManageKpis = hasPermission("kpis:manage");
+  // Pode criar métricas OU KPIs
+  const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
+  // Pode criar KPIs (estratégicos) - apenas líderes/admins
   const canCreateKpi = hasPermission("kpis.settings.manage:bu");
 
   const form = useForm<FormValues>({
@@ -171,7 +173,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   }, [isLoadingPermission, canCreateKpi, form]);
 
   // Defense in Depth: block render if no permission
-  if (!isLoadingPermission && !canManageKpis) {
+  if (!isLoadingPermission && !canCreateIndicator) {
     return null;
   }
 
@@ -339,6 +341,16 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                    {/* Mensagem educativa para quem não pode criar KPIs */}
+                    {!canCreateKpi && (
+                      <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md mt-2">
+                        <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                        <span>
+                          <strong>KPIs</strong> são indicadores estratégicos e só podem ser criados por <strong>líderes de time</strong> ou <strong>administradores</strong>. 
+                          Você pode criar <strong>Métricas</strong> para acompanhamento operacional.
+                        </span>
+                      </div>
+                    )}
                   </FormItem>
                 )}
               />

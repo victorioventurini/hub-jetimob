@@ -33,7 +33,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 export default function KpiDashboardPage() {
   usePageTitle("Indicadores");
   const { has: hasPermission } = usePermissions();
-  const canManageKpis = hasPermission("kpis:manage");
+  // Pode criar se tiver permissão de criar métricas OU gerenciar KPIs
+  const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
   const { currentBu } = useBu();
   
   // URL State for filters
@@ -119,7 +120,7 @@ export default function KpiDashboardPage() {
           title="Indicadores"
           description={`KPIs e Métricas da ${currentBu?.name || 'organização'}`}
           actions={
-            canManageKpis && (
+            canCreateIndicator && (
               <Button onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Indicador
@@ -171,12 +172,12 @@ export default function KpiDashboardPage() {
                 icon={BarChart3}
                 title="Nenhum indicador encontrado"
                 description={
-                  canManageKpis
+                  canCreateIndicator
                     ? `Comece criando seu primeiro indicador para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
                     : "Nenhum indicador foi cadastrado ainda."
                 }
-                actionLabel={canManageKpis ? "Criar Indicador" : undefined}
-                onAction={canManageKpis ? () => setCreateOpen(true) : undefined}
+                actionLabel={canCreateIndicator ? "Criar Indicador" : undefined}
+                onAction={canCreateIndicator ? () => setCreateOpen(true) : undefined}
               />
             </CardContent>
           </Card>

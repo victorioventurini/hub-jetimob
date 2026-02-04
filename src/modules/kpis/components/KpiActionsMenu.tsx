@@ -36,7 +36,8 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
   
   const { archiveKpi, reactivateKpi, deleteKpi } = useKpiMutations();
   const { has: hasPermission, isLoading } = usePermissions();
-  const canManage = hasPermission("kpis:manage");
+  // Pode gerenciar indicadores (editar/arquivar/excluir)
+  const canManage = hasPermission("kpis.settings.manage:bu");
 
   // Early return if no permission (after hooks)
   if (!isLoading && !canManage) {
