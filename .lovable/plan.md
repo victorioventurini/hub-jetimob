@@ -1,199 +1,222 @@
 
-# Plano: UI de Vinculação KPI ↔ KR no Form de Edição
+# Plano: Correção de Permissões do Módulo KPIs + Mensagem Educativa
 
-## Contexto
+## Contexto do Problema
 
-O formulário de edição de Key Results (`TeamKrFormDialog` e `OrgKrFormDialog`) atualmente não possui interface para associar KPIs. A infraestrutura de backend está **100% pronta**:
+### Diagnóstico
+O usuário **Vitor Severo** (líder do time Marketing) possui o template `kpis_admin_v2` que inclui a permissão `kpis.settings.manage:bu`. Porém, o botão "Novo Indicador" **não aparece** porque o código verifica a key `"kpis:manage"` que **NÃO EXISTE** no catálogo de permissões.
 
-- Tabela: `okr_kr_metrics` (kr_id, kr_type, kpi_id, role: 'primary'|'guardrail')
-- Hooks CRUD: `useOkrKrMetrics`, `useCreateKrMetric`, `useDeleteKrMetric`
-- Tipos: `OkrKrMetric`, `OkrMetricRole`
+### Evidências
 
-**Objetivo:** Criar a UI faltante para vincular KPIs existentes a KRs diretamente no form de edição.
+**Templates de Vitor Severo:**
+- `collaborator_base_v2`
+- `okrs_view_v2`, `okrs_operate_v2`
+- `kpis_view_v2`, `kpis_operate_v2`, **`kpis_admin_v2`** ← inclui `kpis.settings.manage:bu`
+- `tickets_view_v2`, `tickets_operate_v2`
+- `teams_view_v2`, `users_view_v2`, `inventory_view_v2`
+
+**Keys reais no catálogo de KPIs:**
+- `kpis.metric.create:bu` - Criar métricas
+- `kpis.metric.update:self_or_owner` - Editar métricas próprias
+- `kpis.metric.delete:bu` - Excluir métricas
+- `kpis.settings.manage:bu` - Gerenciar configurações de KPIs (ADMIN)
+- `kpis.value.add:bu` - Adicionar valores
+
+**Key verificada no código (INCORRETA):** `"kpis:manage"` ← Não existe!
 
 ---
 
-## Arquitetura da Solução
+## Modelo de Governança Correto
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                TeamKrFormDialog.tsx                     │
-├─────────────────────────────────────────────────────────┤
-│ [Campos existentes: Título, Baseline, Meta, Direção...] │
-├─────────────────────────────────────────────────────────┤
-│  ┌─── Nova Seção: "Métricas Vinculadas" ────────────┐  │
-│  │                                                   │  │
-│  │  KPI Primário: [KpiSelect ▼] ou (nenhum)         │  │
-│  │  ℹ️ O KPI primário alimenta o progresso do KR    │  │
-│  │                                                   │  │
-│  │  Guardrails: [+ Adicionar guardrail]             │  │
-│  │  • KPI "Tempo Médio de Resposta" [✕]             │  │
-│  │  • KPI "Taxa de Erro" [✕]                        │  │
-│  │  ℹ️ Guardrails monitoram limites operacionais    │  │
-│  │                                                   │  │
-│  └───────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────┤
-│                [Cancelar] [Salvar]                      │
-└─────────────────────────────────────────────────────────┘
+| Ação | Quem pode | Permission Key |
+|------|-----------|----------------|
+| **Criar KPI** (estratégico) | Líderes e Admins | `kpis.settings.manage:bu` |
+| **Criar Métrica** (operacional) | Com template `kpis_admin_v2` | `kpis.metric.create:bu` |
+| **Editar indicadores** | Owner/Líder do time | `kpis.metric.update:self_or_owner` |
+| **Gerenciar (arquivar/excluir)** | Líderes e Admins | `kpis.settings.manage:bu` |
+| **Adicionar valores** | Operadores e acima | `kpis.value.add:bu` |
+
+---
+
+## Alterações Necessárias
+
+### 1. KpiDashboardPage.tsx (L36, L122, L174, L178, L179)
+
+**Problema:** Verifica `"kpis:manage"` (inexistente)
+
+**Correção:**
+```typescript
+// ANTES (linha 36)
+const canManageKpis = hasPermission("kpis:manage");
+
+// DEPOIS
+// Pode criar se tiver permissão de criar métricas OU gerenciar KPIs
+const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
 ```
 
+- Substituir todas as referências de `canManageKpis` por `canCreateIndicator`
+
 ---
 
-## Componentes a Criar
+### 2. CreateKpiDialog.tsx (L127, L174, L307-311)
 
-### 1. KpiSelect (Canônico)
-**Arquivo:** `src/components/selects/KpiSelect.tsx`
+**Problema:** 
+- L127: Verifica `"kpis:manage"` (inexistente)
+- L174: Bloqueia renderização se não tem `canManageKpis`
 
-Componente de seleção de KPI seguindo o padrão de `BuUserSelect`:
-- Busca KPIs ativos da BU via `kpi_metrics`
-- Suporta filtro por `team_id` e `area_id` (opcional)
-- Exibe: nome, unidade, e badge de RAG status
-- Props: `value`, `onValueChange`, `excludeIds`, `disabled`
+**Correção:**
+```typescript
+// ANTES (linhas 127-128)
+const canManageKpis = hasPermission("kpis:manage");
+const canCreateKpi = hasPermission("kpis.settings.manage:bu");
 
-```tsx
-// Interface simplificada
-interface KpiSelectProps {
-  value?: string;
-  onValueChange: (id: string | null) => void;
-  placeholder?: string;
-  teamId?: string;       // Filtra por time
-  excludeIds?: string[]; // KPIs já vinculados
-  disabled?: boolean;
-  allowNone?: boolean;
+// DEPOIS
+// Pode criar métricas OU KPIs
+const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
+// Pode criar KPIs (estratégicos) - apenas líderes/admins
+const canCreateKpi = hasPermission("kpis.settings.manage:bu");
+```
+
+**Guarda de renderização (L174):**
+```typescript
+// ANTES
+if (!isLoadingPermission && !canManageKpis) {
+  return null;
+}
+
+// DEPOIS
+if (!isLoadingPermission && !canCreateIndicator) {
+  return null;
 }
 ```
 
-### 2. KrMetricsSection
-**Arquivo:** `src/modules/okrs/components/KrMetricsSection.tsx`
-
-Seção reutilizável para vincular métricas a KRs:
-- Usa hooks existentes: `useOkrKrMetrics`, `useCreateKrMetric`, `useDeleteKrMetric`
-- Exibe KPI primário (máximo 1) e guardrails (múltiplos)
-- Botões para adicionar/remover vínculos
-- Apenas disponível no modo **edição** (kr já existe)
-
+**Mensagem educativa (nova, após L340):**
+Adicionar aviso quando usuário não pode criar KPIs:
 ```tsx
-interface KrMetricsSectionProps {
-  krId: string;
-  krType: 'org' | 'team';
-  teamId?: string;  // Para filtrar KPIs
-  disabled?: boolean;
+{!canCreateKpi && (
+  <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md">
+    <Info className="h-4 w-4 mt-0.5 shrink-0" />
+    <span>
+      <strong>KPIs</strong> são indicadores estratégicos e só podem ser criados por <strong>líderes de time</strong> ou <strong>administradores</strong>. 
+      Você pode criar <strong>Métricas</strong> para acompanhamento operacional.
+    </span>
+  </div>
+)}
+```
+
+---
+
+### 3. EditKpiDialog.tsx (L122, L187)
+
+**Problema:** Verifica `"kpis:manage"` (inexistente)
+
+**Correção:**
+```typescript
+// ANTES (linhas 122-123)
+const canManageKpis = hasPermission("kpis:manage");
+const canCreateKpi = hasPermission("kpis.settings.manage:bu");
+
+// DEPOIS
+// Pode editar indicadores (owner/líder ou admin)
+const canEditIndicator = hasPermission("kpis.metric.update:self_or_owner") || hasPermission("kpis.settings.manage:bu");
+// Pode mudar tipo para KPI (apenas admin)
+const canCreateKpi = hasPermission("kpis.settings.manage:bu");
+```
+
+**Guarda de renderização (L187):**
+```typescript
+// ANTES
+if (!isLoadingPermission && !canManageKpis) {
+  return null;
+}
+
+// DEPOIS
+if (!isLoadingPermission && !canEditIndicator) {
+  return null;
 }
 ```
 
 ---
 
-## Alterações em Arquivos Existentes
+### 4. KpiActionsMenu.tsx (L39, L42)
 
-### 1. TeamKrFormDialog.tsx
-- Importar `KrMetricsSection`
-- Adicionar seção após campos existentes (apenas quando `isEditing`)
-- Separador visual antes da seção
+**Problema:** Verifica `"kpis:manage"` (inexistente)
 
-### 2. OrgKrFormDialog.tsx
-- Mesmo padrão do `TeamKrFormDialog`
-- `krType = 'org'`
+**Correção:**
+```typescript
+// ANTES (linha 39)
+const canManage = hasPermission("kpis:manage");
 
-### 3. src/components/selects/index.ts
-- Exportar `KpiSelect`
-
-### 4. src/modules/okrs/hooks/index.ts
-- Exportar hooks de métricas faltantes: `usePrimaryKrMetric`, `useGuardrailKrMetrics`, `useCreateKrMetric`, `useDeleteKrMetric`
+// DEPOIS
+// Pode gerenciar indicadores (editar/arquivar/excluir)
+const canManage = hasPermission("kpis.settings.manage:bu");
+```
 
 ---
 
-## Regras de Negócio
+## Resumo das Alterações
 
-| Regra | Descrição |
-|-------|-----------|
-| 1 KPI primário máx | Constraint no banco: só 1 primary por KR |
-| Guardrails ilimitados | Múltiplos KPIs como guardrail |
-| Sem duplicatas | Um KPI não pode ser primary E guardrail do mesmo KR |
-| Filtro por contexto | KpiSelect mostra apenas KPIs da BU atual |
-| Apenas em edição | Seção só aparece quando KR já existe (precisa de ID) |
+| Arquivo | Linhas | Alteração |
+|---------|--------|-----------|
+| `KpiDashboardPage.tsx` | 36, 122, 174, 178-179 | `canManageKpis` → `canCreateIndicator` |
+| `CreateKpiDialog.tsx` | 127, 174, ~340 | Nova lógica + mensagem educativa |
+| `EditKpiDialog.tsx` | 122, 187 | `canManageKpis` → `canEditIndicator` |
+| `KpiActionsMenu.tsx` | 39 | `canManage` → key correta |
 
 ---
 
-## Fluxo de Uso
+## Validação Pós-Implementação
 
-1. Usuário abre edição de KR existente
-2. Seção "Métricas Vinculadas" aparece abaixo dos campos principais
-3. Para vincular KPI primário:
-   - Clica no select "KPI Primário"
-   - Seleciona um KPI da lista (filtrada por time se aplicável)
-   - Sistema chama `useCreateKrMetric` com role='primary'
-4. Para adicionar guardrail:
-   - Clica em "+ Adicionar guardrail"
-   - Seleciona KPI
-   - Sistema chama `useCreateKrMetric` com role='guardrail'
-5. Para remover vínculo:
-   - Clica no ✕ ao lado do KPI
-   - Sistema chama `useDeleteKrMetric` (soft delete)
+### Vitor Severo (líder Marketing + `kpis_admin_v2`)
+- ✅ Botão "Novo Indicador" visível
+- ✅ Pode criar KPIs e Métricas
+- ✅ Pode editar, arquivar, excluir indicadores
+
+### Colaborador com `kpis_operate_v2` apenas
+- ❌ Botão "Novo Indicador" NÃO visível (não tem `kpis.metric.create:bu`)
+- ✅ Pode adicionar valores a KPIs existentes
+
+### Colaborador com `kpis_view_v2` apenas  
+- ❌ Botão "Novo Indicador" NÃO visível
+- ✅ Pode visualizar indicadores e valores
 
 ---
 
 ## Seção Técnica
 
-### Query para KpiSelect
-```sql
-SELECT id, name, unit, target_value, direction, lifecycle_status
-FROM kpi_metrics
-WHERE lifecycle_status = 'active'
-  AND deleted_at IS NULL
-ORDER BY name
-LIMIT 100
-```
+### Keys de KPI no Catálogo
 
-### Padrão de Invalidação (já implementado nos hooks)
+| Template | Keys Incluídas |
+|----------|----------------|
+| `kpis_view_v2` | `kpis.view:bu`, `kpis.metric.view:bu`, `kpis.value.read:bu` |
+| `kpis_operate_v2` | + `kpis.value.add:bu`, `kpis.value.create:bu`, `kpis.metric.update:self_or_owner` |
+| `kpis_admin_v2` | + `kpis.metric.create:bu`, `kpis.settings.manage:bu`, `kpis.metric.delete:bu` |
+
+### Lógica Final de Permissões
+
 ```typescript
-// useCreateKrMetric.onSuccess
-queryClient.invalidateQueries({ 
-  queryKey: queryKeys.okrs.krMetrics(kr_id, kr_type) 
-});
+// KpiDashboardPage.tsx - Mostrar botão "Novo Indicador"
+const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
+
+// CreateKpiDialog.tsx - Permitir criar KPIs (tipo estratégico)
+const canCreateKpi = hasPermission("kpis.settings.manage:bu");
+
+// EditKpiDialog.tsx - Permitir editar indicadores
+const canEditIndicator = hasPermission("kpis.metric.update:self_or_owner") || hasPermission("kpis.settings.manage:bu");
+
+// KpiActionsMenu.tsx - Ações de gerenciamento
+const canManage = hasPermission("kpis.settings.manage:bu");
 ```
 
-### Campos Explícitos (padrão do projeto)
-```typescript
-const KPI_SELECT_FIELDS = `id, name, unit, target_value, direction`;
+---
+
+## Documentação a Atualizar
+
+Após implementação, atualizar `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` seção 3.3:
+
+```markdown
+| Módulo | Prefixo | Exemplos |
+|--------|---------|----------|
+| KPIs | `kpis.` | `kpis.metric.create:bu`, `kpis.settings.manage:bu`, `kpis.value.add:bu` |
 ```
 
----
-
-## Arquivos a Criar
-
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| `src/components/selects/KpiSelect.tsx` | Componente | Select canônico de KPI |
-| `src/modules/okrs/components/KrMetricsSection.tsx` | Componente | Seção de métricas no form |
-
-## Arquivos a Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/components/selects/index.ts` | Exportar KpiSelect |
-| `src/modules/okrs/components/TeamKrFormDialog.tsx` | Adicionar KrMetricsSection |
-| `src/modules/okrs/components/OrgKrFormDialog.tsx` | Adicionar KrMetricsSection |
-| `src/modules/okrs/hooks/index.ts` | Exportar hooks de métricas faltantes |
-
----
-
-## Estimativa
-
-- **Componentes novos:** 2
-- **Arquivos modificados:** 4
-- **Complexidade:** Média (infraestrutura pronta, apenas UI)
-- **Risco:** Baixo (hooks e tabela já testados)
-
----
-
-## Checklist de Validação
-
-- [x] KpiSelect segue padrão de BuUserSelect
-- [x] Sem `select('*')` nas queries
-- [x] staleTime configurado (3-5 min)
-- [x] Toasts de sucesso/erro em português
-- [x] Loading states com `isLoading` prop do Button
-- [x] Cores semânticas (tokens, não hardcoded)
-- [x] Exportações no barrel index.ts
-
-## Status: ✅ CONCLUÍDO (2026-02-03)
