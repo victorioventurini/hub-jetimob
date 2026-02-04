@@ -1,354 +1,319 @@
 
+# Plano: Visualização de Evolução de KPIs e Métricas
 
-# Plano: Documentação de Padrões de Insights para Wizards
+## Contexto
 
-## 1. Contexto
+Hoje o Hub exibe evolução de KRs em dois formatos:
+1. **Modal (`KrHistoryDialog`)** - Acessível via clique em qualquer KR, mostrando gráfico de evolução e tabela de histórico com tabs
+2. **Página dedicada (`/okrs/checkins`)** - Feed consolidado de check-ins com modos de visualização (cards, tabela, evolução)
 
-O Hub já possui **6 componentes de insights** espalhados pelo código, mas não há documentação normativa sobre **quando e como usar insights em novos wizards**. Isso cria risco de:
-- Novos wizards serem criados sem insights
-- Padrões inconsistentes entre módulos
-- Perda da inteligência de gestão que o sistema poderia oferecer
+Para KPIs/Métricas, já existe:
+- O `KpiDetailDialog` que mostra um gráfico básico de evolução e tabela de histórico
+- O hook `useKpiHistory` e `useKpiChartData` que processam os dados
 
-## 2. Objetivo
-
-1. **Documentar padrões canônicos** de uso de insights
-2. **Criar checklist obrigatório** para desenvolvimento de novos wizards
-3. **Registrar componentes existentes** para reaproveitamento
+O objetivo é **padronizar e evoluir** a experiência de visualização de KPIs para o mesmo nível das KRs, reaproveitando componentes existentes.
 
 ---
 
-## 3. Alterações Propostas
+## Arquitetura de Componentes
 
-### 3.1 Atualizar `docs/canonical/UI_COMPONENTS_REGISTRY.md`
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    COMPONENTES DE KR (existentes)                │
+├─────────────────────────────────────────────────────────────────┤
+│  KrHistoryDialog       → Modal completo com tabs (gráfico/tabela)│
+│  KrEvolutionChart      → Gráfico de área reutilizável            │
+│  KrCheckinsTable       → Tabela de check-ins com variação        │
+│  CycleCheckinsPage     → Página com feed, filtros e modos        │
+│  CycleCheckinsEvolution→ Grid de mini-gráficos de KRs            │
+└─────────────────────────────────────────────────────────────────┘
 
-Adicionar **nova seção "Componentes de Insights"**:
-
-```markdown
-## 10. Componentes de Insights
-
-### 10.1 Filosofia
-
-Insights são sinais contextuais de gestão que ajudam usuários a:
-- Identificar padrões relevantes
-- Tomar decisões informadas
-- Aprender com o histórico
-
-**Regra:** Todo wizard e dashboard com dados de OKRs/KPIs DEVE incluir insights contextuais.
-
-### 10.2 Componentes Disponíveis
-
-| Componente | Arquivo | Uso |
-|------------|---------|-----|
-| `VicInsightCard` | `src/modules/okrs/components/wizards/shared/VicInsightCard.tsx` | Insight individual de IA |
-| `VicInsightsList` | Mesmo arquivo | Lista de insights colapsável |
-| `KrStateInsightCard` | `src/modules/okrs/components/insights/KrStateInsightCard.tsx` | Insight baseado em estado de KR |
-| `OrgViewInsights` | `src/modules/okrs/components/org-view/OrgViewInsights.tsx` | Insights de objetivo organizacional |
-
-### 10.3 Padrão de Uso em Wizards
-
-Todo wizard de OKRs DEVE:
-1. Calcular estado das KRs usando `calculateKrState()`
-2. Exibir insights contextuais via `KrStateInsightCard` ou `VicInsightCard`
-3. Oferecer reflexões guiadas baseadas no estado
-
-Exemplo:
-\`\`\`tsx
-import { calculateKrState, KrStateInsightCard } from '@/modules/okrs/components/insights';
-
-const krState = calculateKrState({
-  progress: kr.progress,
-  status: kr.status,
-  daysSinceCheckin: kr.days_since_checkin,
-  cycleEnded: false,
-});
-
-<KrStateInsightCard state={krState} kr={kr} />
-\`\`\`
-```
-
-### 3.2 Atualizar `docs/canonical/DEVELOPMENT_STANDARDS.md`
-
-Adicionar **nova seção "O. Wizards e Ritos de Gestão"**:
-
-```markdown
-## O. Wizards e Ritos de Gestão
-
-### O.1 Regra de Ouro para Wizards
-
-> ⚠️ **Todo wizard de check-in ou gestão DEVE incluir insights contextuais.**
-> Wizards sem insights são "termômetros" — não agregam inteligência.
-
-### O.2 Checklist Obrigatório para Novos Wizards
-
-| # | Item | Obrigatório |
-|---|------|-------------|
-| 1 | Calcular e exibir estado das KRs (`calculateKrState`) | ✅ |
-| 2 | Exibir insights contextuais por estado | ✅ |
-| 3 | Oferecer perguntas de reflexão guiadas | ✅ |
-| 4 | Integrar com agentes Vic quando aplicável | Recomendado |
-| 5 | Usar `VicInsightCard` ou `KrStateInsightCard` | ✅ |
-| 6 | Não usar insights para avaliação/punição | ✅ |
-
-### O.3 Estados de KR Reconhecidos
-
-| Estado | Condição | Insight |
-|--------|----------|---------|
-| `not_started` | progress = 0 | "O foco está claro?" |
-| `healthy` | Progresso conforme esperado | "Manter execução" |
-| `stagnant` | 14+ dias sem check-in | "O que está travando?" |
-| `at_risk` | RAG yellow | "Decisão necessária?" |
-| `off_track` | RAG red | "Replanejar?" |
-| `achieved` | progress = 100% | "Algum aprendizado?" |
-| `exceeded` | progress > 100% | "O que aprendemos?" |
-| `not_achieved` | Ciclo encerrado + <100% | "Meta, plano ou execução?" |
-
-### O.4 Anti-patterns em Wizards
-
-| # | Anti-pattern | Alternativa |
-|---|--------------|-------------|
-| 1 | Wizard sem insights | Adicionar `KrStateInsightCard` |
-| 2 | Insight punitivo | Reescrever com tom de aprendizado |
-| 3 | Comparação entre usuários | Focar em padrões, não pessoas |
-| 4 | Insights genéricos | Usar contexto específico da KR |
-```
-
-### 3.3 Criar `docs/guides/WIZARD_DEVELOPMENT_GUIDE.md`
-
-Novo documento normativo para desenvolvimento de wizards:
-
-```markdown
-# Guia de Desenvolvimento de Wizards — Hub da Jet
-
-**Versão:** 1.0.0
-**Status:** Normativo
-**Referência:** TCR v2.84.0 / DEVELOPMENT_STANDARDS v1.18.0
-
----
-
-## 1. Filosofia
-
-Wizards no Hub não são apenas formulários — são **rituais de gestão** que:
-- Guiam reflexão estruturada
-- Geram aprendizado organizacional
-- Alimentam memória estratégica
-
-## 2. Arquitetura Padrão
-
-Todo wizard segue a estrutura:
-
-\`\`\`
-src/modules/<module>/
-├── pages/
-│   └── <Wizard>Page.tsx          # Página full-page
-├── components/
-│   └── wizards/
-│       └── <wizard-name>/
-│           ├── index.ts          # Barrel export
-│           ├── <Step1>Step.tsx   # Passos do wizard
-│           └── <Step2>Step.tsx
-└── hooks/
-    └── use<Wizard>Draft.ts       # Persistência de rascunho
-\`\`\`
-
-## 3. Componentes Obrigatórios
-
-### 3.1 Shell e Navegação
-
-- Usar `FullPageWizardShell` para layout
-- Usar `WizardStepper` para navegação entre passos
-- Usar `WizardStepHeader` para cabeçalhos de passo
-- Usar `WizardStepFooter` para navegação
-
-### 3.2 Insights (OBRIGATÓRIO)
-
-- Usar `useKrStateInsights` para calcular estados
-- Usar `KrStateInsightCard` para exibir insights por estado
-- Usar `VicInsightCard` para insights de IA
-- Usar `VicInsightsList` para múltiplos insights
-
-### 3.3 Reflexão Guiada
-
-- Usar `ReflectionQuestions` para perguntas contextuais
-- Personalizar perguntas baseadas no estado da KR
-- Nunca usar tom punitivo
-
-## 4. Integração com Estados de KR
-
-\`\`\`typescript
-import { calculateKrState, KR_STATE_CONFIG } from '@/modules/okrs/hooks/useKrStateInsights';
-
-// Em cada passo que exibe KRs:
-const krState = calculateKrState({
-  progress: kr.progress,
-  status: kr.status,
-  daysSinceCheckin: kr.days_since_checkin,
-  cycleEnded: false,
-});
-
-// Exibir insight contextual
-const config = KR_STATE_CONFIG[krState];
-<KrStateInsightCard state={krState} guidingQuestion={config.guidingQuestion} />
-\`\`\`
-
-## 5. Checklist de PR para Wizards
-
-- [ ] Wizard usa `FullPageWizardShell`
-- [ ] Cada passo tem `WizardStepHeader`
-- [ ] Insights contextuais estão presentes
-- [ ] Estados de KR são calculados e exibidos
-- [ ] Perguntas de reflexão são contextuais
-- [ ] Nenhum insight é punitivo
-- [ ] Testes automatizados cobrem fluxo principal
-
-## 6. Wizards Existentes (Referência)
-
-| Wizard | Persona | Arquivo | Insights |
-|--------|---------|---------|----------|
-| Collaborator Check-in | Colaborador | `CollaboratorCheckinPage.tsx` | ✅ KR State |
-| Leader Prep | Líder | `LeaderPrepPage.tsx` | ✅ Highlights + Vic |
-| Team Check-in | Time | `TeamCheckinPage.tsx` | ✅ Decision-focused |
-| Managers Check-in | Gestores | `ManagersCheckinPage.tsx` | ✅ Cross-team |
-| C-Level Check-in | Direção | `CLevelCheckinPage.tsx` | ✅ Strategic signals |
-| Team OKR Creation | Líder | `TeamOkrCreationPage.tsx` | ✅ Retrospective |
-
-## 7. Princípios Culturais
-
-**SEMPRE:**
-- Foco em aprendizado
-- Insights acionáveis
-- Contexto específico
-- Tom positivo
-
-**NUNCA:**
-- Comparação entre pessoas
-- Rankings ou scores individuais
-- Tom punitivo
-- Insights genéricos
+┌─────────────────────────────────────────────────────────────────┐
+│               COMPONENTES DE KPI (a criar/evoluir)               │
+├─────────────────────────────────────────────────────────────────┤
+│  KpiHistoryDialog ★    → Modal com tabs (gráfico/tabela)         │
+│  KpiEvolutionChart ★   → Gráfico de área reutilizável            │
+│  KpiValuesTable ★      → Tabela de valores com variação          │
+│  KpiEvolutionPage ★    → Página dedicada com filtros e modos     │
+│  KpiEvolutionFeed ★    → Feed de valores com cards/grid          │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 4. Atualização do TCR
+## Implementação Detalhada
 
-Adicionar referência ao novo guia na seção de documentação do TCR:
+### Fase 1: Componentes Base Reutilizáveis
 
-```markdown
-> ### Desenvolvimento de Wizards
-> - [WIZARD_DEVELOPMENT_GUIDE.md](../guides/WIZARD_DEVELOPMENT_GUIDE.md) — **Guia obrigatório para novos wizards** ⭐
+#### 1.1 `KpiEvolutionChart` (novo)
+**Arquivo:** `src/modules/kpis/components/KpiEvolutionChart.tsx`
+
+Componente de gráfico de evolução de KPI, similar ao `KrEvolutionChart`:
+
+- **Props:**
+  - `values: KpiHistoryValue[]` - Array de valores ordenados por data
+  - `targetValue: number | null` - Meta/Benchmark para linha de referência
+  - `unit: string` - Unidade para formatação
+  - `direction: 'up' | 'down'` - Direção esperada
+  - `compact?: boolean` - Modo compacto para mini-gráficos
+  - `className?: string`
+
+- **Features:**
+  - AreaChart com gradiente (Recharts)
+  - Linha de referência para meta/benchmark
+  - Tooltip com valor, data e origem
+  - Estados vazios para 0 ou 1 valor
+
+#### 1.2 `KpiValuesTable` (novo)
+**Arquivo:** `src/modules/kpis/components/KpiValuesTable.tsx`
+
+Tabela de valores históricos de KPI, similar ao `KrCheckinsTable`:
+
+- **Colunas:**
+  - Data/Hora
+  - Usuário (quem registrou)
+  - Valor Anterior
+  - Valor Atual
+  - Variação (com ícone de tendência)
+  - Origem (badge com ícone)
+  - Notas (tooltip se presente)
+
+- **Features:**
+  - Scroll horizontal para mobile
+  - Skeleton loading
+  - Empty state
+
+---
+
+### Fase 2: Modal de Histórico de KPI
+
+#### 2.1 `KpiHistoryDialog` (novo)
+**Arquivo:** `src/modules/kpis/components/KpiHistoryDialog.tsx`
+
+Modal completo de visualização de evolução, baseado no `KrHistoryDialog`:
+
+**Header:**
+- Nome do indicador
+- Badges: Tipo (KPI/Métrica), Status RAG, Área
+- Valor atual com tendência e variação %
+- Meta/Benchmark com badge
+
+**Barra de Progresso:**
+- Progresso em relação à meta (se houver)
+- Labels: Base → Meta
+
+**Metadados:**
+- Responsável (avatar + nome)
+- Área
+- Direção (↑ Maior é melhor / ↓ Menor é melhor)
+- Frequência
+
+**Tabs:**
+- "Evolução" - `KpiEvolutionChart`
+- "Histórico Completo" - `KpiValuesTable` com badge de contagem
+
+**Link contextual:**
+- "Ver página dedicada" → `/kpis/evolution?kpi_id=xxx`
+
+---
+
+### Fase 3: Página Dedicada de Evolução
+
+#### 3.1 Rota `/kpis/evolution`
+**Arquivo:** `src/modules/kpis/pages/KpiEvolutionPage.tsx`
+
+Página consolidada similar a `CycleCheckinsPage`:
+
+**Header:**
+- Breadcrumb: KPIs > Evolução
+- PageHeader: "Evolução de Indicadores"
+
+**Filtros (via URL state):**
+- Tipo: Todos / KPI / Métrica
+- Área
+- Escopo: Time / Área / Org
+- Time
+- RAG Status
+- Busca por nome
+
+**Summary Cards:**
+- Total de indicadores
+- Em dia (on_track)
+- Em risco (at_risk)
+- Fora da meta (off_track)
+
+**Modos de Visualização:**
+- Cards - Grid de cards com mini-gráfico
+- Tabela - Lista tabulada com valores recentes
+- Gráficos - Grid expandido de gráficos
+
+**Conteúdo:**
+- Se único KPI filtrado → Gráfico expandido
+- Se múltiplos → Grid de mini-cards clicáveis
+
+---
+
+### Fase 4: Hook de Dados
+
+#### 4.1 `useKpiWithHistory` (novo)
+**Arquivo:** `src/modules/kpis/hooks/useKpiWithHistory.ts`
+
+Hook para buscar KPI com histórico completo para gráficos:
+
+```typescript
+interface KpiWithHistoryData {
+  values: KpiHistoryValue[];
+  name: string;
+  unit: string;
+  direction: 'up' | 'down';
+  target_value: number | null;
+  target_source: string | null;
+  currentValue: number | null;
+  previousValue: number | null;
+  trend: 'up' | 'down' | 'stable';
+  variation: number | null;
+  totalValues: number;
+  area?: { id: string; name: string; color: string | null };
+  owner?: { id: string; display_name: string; photo_url: string | null };
+}
 ```
 
----
+#### 4.2 `useKpiEvolutionList` (novo)
+**Arquivo:** `src/modules/kpis/hooks/useKpiEvolutionList.ts`
 
-## 5. Criação do Hook `useKrStateInsights`
+Hook para página de evolução com agregações:
 
-O hook centraliza a lógica de estados (já detalhado no plano anterior):
-
-**Arquivo:** `src/modules/okrs/hooks/useKrStateInsights.ts`
-
-Exportações principais:
-- `KrState` — Tipo union dos 8 estados
-- `KR_STATE_CONFIG` — Configurações visuais e textuais por estado
-- `calculateKrState()` — Função para calcular estado
-- `useKrStateInsights()` — Hook para buscar insights de uma KR
-
----
-
-## 6. Criação do Componente `KrStateInsightCard`
-
-Componente visual para exibir insight baseado em estado:
-
-**Arquivo:** `src/modules/okrs/components/insights/KrStateInsightCard.tsx`
-
-```tsx
-export function KrStateInsightCard({
-  state,
-  kr,
-  showGuidingQuestion = true,
-}: KrStateInsightCardProps) {
-  const config = KR_STATE_CONFIG[state];
-  // Renderiza card com ícone, cor e pergunta guia
+```typescript
+interface UseKpiEvolutionListOptions {
+  indicatorType?: 'kpi' | 'metric';
+  areaId?: string;
+  scope?: 'team' | 'area' | 'org';
+  teamId?: string;
+  ragStatus?: 'on_track' | 'at_risk' | 'off_track';
+  search?: string;
+  page?: number;
+  pageSize?: number;
 }
 ```
 
 ---
 
-## 7. Barrel Export para Insights
+### Fase 5: Integração no KpiDetailDialog
 
-**Arquivo:** `src/modules/okrs/components/insights/index.ts`
+**Arquivo:** `src/modules/kpis/components/KpiDetailDialog.tsx`
+
+Substituir o gráfico e tabela atuais pelos novos componentes:
+
+1. Adicionar tabs "Evolução" / "Histórico Completo"
+2. Usar `KpiEvolutionChart` para a tab de gráfico
+3. Usar `KpiValuesTable` para a tab de tabela
+4. Manter as demais seções (metadados, KRs vinculadas, histórico de meta)
+
+---
+
+### Fase 6: Rotas e Navegação
+
+#### 6.1 Adicionar rota
+**Arquivo:** `src/routes/core.routes.tsx`
 
 ```typescript
-export { KrStateInsightCard } from './KrStateInsightCard';
-export { StateDistributionChart } from './StateDistributionChart';
-export { calculateKrState, KR_STATE_CONFIG } from '@/modules/okrs/hooks/useKrStateInsights';
-export type { KrState, KrStateConfig } from '@/modules/okrs/hooks/useKrStateInsights';
+<Route path="/kpis/evolution" element={<KpiEvolutionPage />} />
+```
+
+#### 6.2 Link no KpiDetailDialog
+Adicionar botão "Ver no contexto" que navega para `/kpis/evolution?q={nome_do_kpi}`
+
+#### 6.3 Breadcrumb
+**Arquivo:** `src/modules/kpis/components/ui/KpiBreadcrumb.tsx` (se não existir)
+
+---
+
+## Query Keys
+
+Adicionar ao `src/lib/queryKeys/okrs.ts`:
+
+```typescript
+// KPI Evolution
+kpiWithHistory: (kpiId: string | null) => ['kpi-with-history', kpiId] as const,
+kpiEvolutionList: (buId: string | null, filters?: Record<string, unknown>) => 
+  ['kpi-evolution-list', buId, filters] as const,
+kpiEvolutionAggregates: (buId: string | null) => 
+  ['kpi-evolution-aggregates', buId] as const,
 ```
 
 ---
 
-## 8. Resumo de Arquivos
+## Estrutura de Arquivos
 
-### Novos Arquivos
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `docs/guides/WIZARD_DEVELOPMENT_GUIDE.md` | Guia normativo para wizards |
-| `src/modules/okrs/hooks/useKrStateInsights.ts` | Hook de estados de KR |
-| `src/modules/okrs/components/insights/index.ts` | Barrel export |
-| `src/modules/okrs/components/insights/KrStateInsightCard.tsx` | Componente visual |
-
-### Arquivos Modificados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `docs/canonical/UI_COMPONENTS_REGISTRY.md` | Adicionar seção 10 - Insights |
-| `docs/canonical/DEVELOPMENT_STANDARDS.md` | Adicionar seção O - Wizards |
-| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | Adicionar referência ao guia |
-
----
-
-## 9. Benefícios
-
-1. **Padronização:** Todo novo wizard seguirá o mesmo padrão de insights
-2. **Descobribilidade:** Desenvolvedores encontrarão os componentes facilmente
-3. **Qualidade:** Checklist de PR garante conformidade
-4. **Memória institucional:** Documentação sobrevive a turnover de equipe
-
----
-
-## 10. Seção Técnica
-
-### Estrutura de Pastas Final
-
-```
-src/modules/okrs/
+```text
+src/modules/kpis/
 ├── components/
-│   ├── insights/                 # NOVO - Componentes de insight
-│   │   ├── index.ts
-│   │   ├── KrStateInsightCard.tsx
-│   │   └── StateDistributionChart.tsx
-│   ├── wizards/
-│   │   └── shared/
-│   │       ├── VicInsightCard.tsx  # Já existe
-│   │       └── ...
-│   └── ...
+│   ├── KpiEvolutionChart.tsx      ★ novo
+│   ├── KpiValuesTable.tsx         ★ novo
+│   ├── KpiHistoryDialog.tsx       ★ novo
+│   ├── KpiEvolutionFeed.tsx       ★ novo (grid de cards)
+│   └── index.ts                   ← adicionar exports
 ├── hooks/
-│   ├── useKrStateInsights.ts     # NOVO - Lógica de estados
-│   └── ...
-└── types/
-    └── wizard.ts                 # Já existe (VicInsight, etc)
+│   ├── useKpiWithHistory.ts       ★ novo
+│   ├── useKpiEvolutionList.ts     ★ novo
+│   └── index.ts                   ← adicionar exports
+└── pages/
+    ├── KpiDashboardPage.tsx       (existente)
+    └── KpiEvolutionPage.tsx       ★ novo
 ```
 
-### Query Keys para Insights
+---
 
-```typescript
-// Em src/lib/queryKeys/okrs.ts
-insights: {
-  byKr: (buId: string | null, krId: string | null) =>
-    ['okrs', 'insights', 'kr', buId, krId] as const,
-  byObjective: (buId: string | null, objectiveId: string | null) =>
-    ['okrs', 'insights', 'objective', buId, objectiveId] as const,
-  stateDistribution: (buId: string | null, teamId: string | null) =>
-    ['okrs', 'insights', 'state-distribution', buId, teamId] as const,
-},
-```
+## Comportamentos Esperados
 
+### Modal (KpiHistoryDialog)
+1. Ao clicar em qualquer KPI/Métrica, abrir modal com evolução
+2. Tabs para alternar entre gráfico e tabela
+3. Metadados completos no header
+4. Link para página dedicada
+
+### Página (/kpis/evolution)
+1. Filtros sincronizados com URL (deep linking)
+2. Modos de visualização: cards, tabela, gráficos
+3. Se único indicador filtrado → gráfico expandido
+4. Cards clicáveis abrem modal de detalhes
+
+### Integração
+1. `KpiDetailDialog` atualizado para usar novos componentes
+2. `KpiCard` pode abrir `KpiHistoryDialog` diretamente
+3. Navegação bidirecional entre modal e página
+
+---
+
+## Reutilização de Padrões
+
+| Padrão KR | Equivalente KPI |
+|-----------|-----------------|
+| `KrEvolutionChart` | `KpiEvolutionChart` |
+| `KrCheckinsTable` | `KpiValuesTable` |
+| `KrHistoryDialog` | `KpiHistoryDialog` |
+| `CycleCheckinsEvolution` | `KpiEvolutionFeed` |
+| `CycleCheckinsPage` | `KpiEvolutionPage` |
+| `useKrWithHistory` | `useKpiWithHistory` |
+| `useCycleCheckins` | `useKpiEvolutionList` |
+
+---
+
+## Prioridade de Implementação
+
+1. **P0 - Base**: `KpiEvolutionChart`, `KpiValuesTable`
+2. **P0 - Modal**: `KpiHistoryDialog` + integração no `KpiCard`
+3. **P1 - Página**: `KpiEvolutionPage` com rota
+4. **P1 - Hook**: `useKpiWithHistory`, `useKpiEvolutionList`
+5. **P2 - Polish**: Integrar no `KpiDetailDialog` existente
+
+---
+
+## Considerações Técnicas
+
+- Todos os novos componentes devem usar padrões canônicos do Hub
+- URL state via `useUrlState` e `useUrlStates`
+- Query keys centralizadas em `src/lib/queryKeys`
+- Cores semânticas (não hardcoded)
+- Navegação via `<Link>` (não `onClick + navigate`)
+- Suporte a dark mode via tokens CSS
