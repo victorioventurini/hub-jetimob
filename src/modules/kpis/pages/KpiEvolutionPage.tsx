@@ -331,7 +331,7 @@ export default function KpiEvolutionPage() {
               <Button variant="outline" asChild>
                 <Link to="/kpis">
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  Ver Dashboard
+                  Dashboard
                 </Link>
               </Button>
             </div>

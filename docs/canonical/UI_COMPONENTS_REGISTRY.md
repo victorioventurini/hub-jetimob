@@ -1,9 +1,9 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.4.0  
+**Versão:** 1.5.0  
 **Última atualização:** 2026-02-04  
 **Status:** Normativo  
-**Referência:** TCR v2.88.0 / DEVELOPMENT_STANDARDS v1.17.0
+**Referência:** TCR v2.89.1 / DEVELOPMENT_STANDARDS v1.17.0
 
 ---
 
@@ -527,6 +527,8 @@ if (isLoading) {
 | 11 | `GlobalBreadcrumb` ou presets (`TicketsBreadcrumb`) | `PageHeader` com prop `breadcrumbs` |
 | 12 | ViewToggle dentro de `ListPageFilters.actions` | Usar `ViewOptionsBar` separado |
 | 13 | Contador de resultados misturado com filtros | Mover para `ViewOptionsBar` |
+| 14 | Botão complementar (Organograma, Links Salvos) fora do PageHeader | Mover para `PageHeader.actions` |
+| 15 | Label "Ver X" para botões de navegação | Label direto: "Organograma", "Dashboard", "Evolução" |
 
 ---
 
@@ -728,6 +730,7 @@ O componente `KpiActionsMenu` (`src/modules/kpis/components/KpiActionsMenu.tsx`)
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.5.0 | 2026-02-04 | Anti-patterns #14 e #15 (botões complementares no PageHeader, labels sem "Ver") |
 | 1.4.0 | 2026-02-04 | Adicionada seção 11 - Menus de Ações em Tabelas |
 | 1.3.0 | 2026-02-04 | Adicionada seção 10 - Componentes de Insights |
 | 1.2.0 | 2026-02-02 | Adicionada seção 9 - Focus Recovery (Radix UI) |
