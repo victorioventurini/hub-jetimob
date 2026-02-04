@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { KpiWithValues, FREQUENCY_LABELS, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
+import { KpiActionsMenu } from "./KpiActionsMenu";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -137,9 +138,13 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
             )}
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
-            <Badge variant="outline" className={cn("text-xs px-2 py-0.5 whitespace-nowrap", ragConfig.bgColor, ragConfig.color)}>
-              {ragConfig.label}
-            </Badge>
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className={cn("text-xs px-2 py-0.5 whitespace-nowrap", ragConfig.bgColor, ragConfig.color)}>
+                {ragConfig.label}
+              </Badge>
+              {/* Actions Menu - appears on hover */}
+              <KpiActionsMenu kpi={kpi} />
+            </div>
             {(isStale || kpi.last_update_failed) && (
               <Tooltip>
                 <TooltipTrigger>

@@ -234,7 +234,7 @@ export const kpisKeys = {
   byRagStatus: (buId: string | null, statuses: string[]) =>
     ['kpis', 'rag-status', buId, statuses] as const,
   // v2.83.0: Contributors management
-  contributors: (kpiId: string) => 
+  contributors: (kpiId: string | null) => 
     ['kpis', 'contributors', kpiId] as const,
   userContributions: (userId: string, teamId?: string) =>
     ['kpis', 'user-contributions', userId, teamId] as const,

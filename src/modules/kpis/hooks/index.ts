@@ -2,6 +2,7 @@
 // v2.82.0: Added useTeamArea for area auto-inference
 // v2.83.0: Added useKpiContributors, useKpisForWizardV2 for wizard integration
 // v2.84.0: Added useKpiLinkedKrs for reverse KR lookup
+// v2.85.0: Added useCanEditKpi for ownership-based edit permissions
 
 export { useKpiData, useKpiDetail } from "./useKpiData";
 export { useKpiMutations } from "./useKpiMutations";
@@ -10,6 +11,7 @@ export { useKpisForWizardV2 } from "./useKpisForWizardV2";
 export { useKpiContributors, useUserContributedKpis } from "./useKpiContributors";
 export { useTeamArea } from "./useTeamArea";
 export { useKpiLinkedKrs } from "./useKpiLinkedKrs";
+export { useCanEditKpi } from "./useCanEditKpi";
 
 // Types
 export type { KpiForWizard, UseKpisForWizardOptions, UseKpisForWizardResult } from "./useKpisForWizard";
