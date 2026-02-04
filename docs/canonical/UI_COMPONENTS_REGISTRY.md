@@ -1,9 +1,9 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.2.0  
-**Última atualização:** 2026-02-02  
+**Versão:** 1.3.0  
+**Última atualização:** 2026-02-04  
 **Status:** Normativo  
-**Referência:** TCR v2.75.0 / DEVELOPMENT_STANDARDS v1.17.0
+**Referência:** TCR v2.84.0 / DEVELOPMENT_STANDARDS v1.17.0
 
 ---
 
@@ -204,10 +204,22 @@ Skeletons para diferentes layouts:
 
 **Arquivo:** `src/components/ui/page-header.tsx`
 
-Header padronizado para páginas:
+Header padronizado para páginas. **Este é o ÚNICO componente que deve renderizar breadcrumbs.**
+
+> ⚠️ **REGRA INQUEBRÁVEL:** Cada página deve ter **EXATAMENTE UM** `PageHeader`. Nunca use `GlobalBreadcrumb`, `TicketsBreadcrumb`, `OkrBreadcrumb` ou outros presets de breadcrumb separadamente — use a prop `breadcrumbs` do `PageHeader`.
 
 ```tsx
-// Com botão de voltar
+// ✅ CORRETO: PageHeader com breadcrumbs integrados
+<PageHeader
+  title="Configurações de Tickets"
+  description="Configure empresas parceiras e categorias"
+  breadcrumbs={[
+    { label: "Tickets", href: "/tickets" },
+    { label: "Configurações" }
+  ]}
+/>
+
+// ✅ CORRETO: Com botão de voltar (alternativa a breadcrumbs)
 <PageHeader
   title="Detalhes do Ticket"
   description="Visualize e gerencie este ticket"
@@ -216,15 +228,27 @@ Header padronizado para páginas:
   actions={<Button>Editar</Button>}
 />
 
-// Com breadcrumbs
-<PageHeader
-  title="Configurações"
-  breadcrumbs={[
-    { label: "Settings", href: "/settings" },
-    { label: "Integrações" }
-  ]}
-/>
+// ❌ PROIBIDO: Breadcrumb separado + PageHeader = duplicação
+<TicketsBreadcrumb ticketId={ticket.id} />
+<PageHeader title="Detalhes" breadcrumbs={[...]} />
+
+// ❌ PROIBIDO: Múltiplos PageHeaders na mesma página
+<PageHeader title="Título 1" />
+<PageHeader title="Título 2" />
 ```
+
+**Props do PageHeader:**
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `title` | `string` | Título da página (obrigatório) |
+| `description` | `ReactNode` | Descrição opcional |
+| `breadcrumbs` | `BreadcrumbItem[]` | Items de navegação (Hub é adicionado automaticamente) |
+| `backTo` | `string` | Link de voltar (alternativa a breadcrumbs) |
+| `backLabel` | `string` | Label do botão voltar |
+| `actions` | `ReactNode` | Botões de ação |
+
+**Hierarquia padrão dos breadcrumbs:** Hub → [Módulo] → [Página] → [Detalhe]
 
 ### 5.2 SectionHeader
 
@@ -419,6 +443,9 @@ if (isLoading) {
 | 6 | Skeleton inline | `<SkeletonList />` ou `<SkeletonCard />` |
 | 7 | Select manual para usuários | `<BuUserSelect />` |
 | 8 | Map de usuários em SelectItem | `<BuUserSelect teamId={...} />` |
+| 9 | Breadcrumb separado + PageHeader | Usar APENAS `PageHeader` com prop `breadcrumbs` |
+| 10 | Múltiplos PageHeaders na mesma página | Exatamente UM `PageHeader` por página |
+| 11 | `GlobalBreadcrumb` ou presets (`TicketsBreadcrumb`) | `PageHeader` com prop `breadcrumbs` |
 
 ---
 
