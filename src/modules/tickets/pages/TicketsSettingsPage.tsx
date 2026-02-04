@@ -7,6 +7,7 @@ import { CategoriesTab } from "../components/settings/CategoriesTab";
 import { RoutingRulesTab } from "../components/settings/RoutingRulesTab";
 import { ContactCapabilitiesTab } from "../components/settings/ContactCapabilitiesTab";
 import { useUrlTab } from "@/shared/url";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function TicketsSettingsPage() {
   usePageTitle("Configurações de Tickets", {
@@ -16,6 +17,15 @@ export default function TicketsSettingsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="Configurações de Tickets"
+        description="Configure empresas parceiras, categorias e regras de roteamento"
+        breadcrumbs={[
+          { label: "Tickets", href: "/tickets" },
+          { label: "Configurações" }
+        ]}
+      />
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="partners" className="gap-2">
