@@ -13,6 +13,7 @@ function mapSource(source: string): KpiValueSource {
 }
 
 // v2.82.0: category deprecated - using areaId for filtering
+// v2.83.0: Added indicatorType filter
 interface UseKpiDataOptions {
   /** @deprecated v2.82.0 - Use areaId instead */
   category?: string;
@@ -20,6 +21,7 @@ interface UseKpiDataOptions {
   ownerId?: string;
   areaId?: string;
   scope?: KpiScope;
+  indicatorType?: KpiIndicatorType;
 }
 
 // Types that match the database schema
@@ -87,11 +89,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
   // v2.82.0: category deprecated - using areaId for filtering
-  const { teamId, ownerId, areaId, scope } = options;
+  // v2.83.0: Added indicatorType filter
+  const { teamId, ownerId, areaId, scope, indicatorType } = options;
 
   // Fetch all KPIs with their latest values
   const { data: kpis, isLoading, error } = useQuery({
-    queryKey: queryKeys.kpis.list(null, { teamId, ownerId, areaId, scope }),
+    queryKey: queryKeys.kpis.list(null, { teamId, ownerId, areaId, scope, indicatorType }),
     enabled: !!supabase,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
@@ -125,6 +128,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       }
       if (scope) {
         query = query.eq("scope", scope);
+      }
+      if (indicatorType) {
+        query = query.eq("indicator_type", indicatorType);
       }
 
       const { data, error } = await query;

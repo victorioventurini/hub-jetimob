@@ -15,18 +15,18 @@ import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
-import { KpiScope, KpiWithValues } from "../types";
+import { KpiScope, KpiIndicatorType, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
 
 /**
- * v2.82.0 - Dashboard de Indicadores
+ * v2.83.0 - Dashboard de Indicadores
  * 
  * Mudanças principais:
  * - Agrupamento por Área (em vez de Categoria)
- * - Filtros atualizados: Área, Escopo, Time
+ * - Filtros atualizados: Tipo, Área, Escopo, Time
  * - Labels atualizados para "Indicador"
  */
 
@@ -38,6 +38,11 @@ export default function KpiDashboardPage() {
   const { currentBu } = useBu();
   
   // URL State for filters
+  const indicatorTypeState = useUrlState<KpiIndicatorType | "all">({ 
+    key: 'type', 
+    defaultValue: 'all',
+    parse: (v) => v as KpiIndicatorType | "all",
+  });
   const areaState = useUrlState<string>({ key: 'area_id', defaultValue: 'all' });
   const scopeState = useUrlState<KpiScope | "all">({ 
     key: 'scope', 
@@ -46,6 +51,8 @@ export default function KpiDashboardPage() {
   });
   const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   
+  const indicatorTypeFilter = indicatorTypeState.value;
+  const setIndicatorTypeFilter = indicatorTypeState.set;
   const areaFilter = areaState.value;
   const setAreaFilter = areaState.set;
   const scopeFilter = scopeState.value;
@@ -68,6 +75,7 @@ export default function KpiDashboardPage() {
     areaId: areaFilter === 'all' ? undefined : areaFilter,
     scope: scopeFilter === 'all' ? undefined : scopeFilter,
     teamId: teamFilter === 'all' ? undefined : teamFilter,
+    indicatorType: indicatorTypeFilter === 'all' ? undefined : indicatorTypeFilter,
   });
 
   // Calculate summary from real data
@@ -138,16 +146,18 @@ export default function KpiDashboardPage() {
           improving={summary.improving}
         />
 
-        {/* Filters - v2.82.0: Updated to use Area instead of Category */}
+        {/* Filters - v2.83.0: Added indicator type filter */}
         <KpiDashboardFilters
           category="all"
           teamId={teamFilter}
           areaId={areaFilter}
           scope={scopeFilter}
+          indicatorType={indicatorTypeFilter}
           onCategoryChange={() => {}} // No-op, category deprecated
           onTeamChange={setTeamFilter}
           onAreaChange={setAreaFilter}
           onScopeChange={setScopeFilter}
+          onIndicatorTypeChange={setIndicatorTypeFilter}
         />
 
         {/* KPIs by Area */}
