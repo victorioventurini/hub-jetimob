@@ -24,7 +24,7 @@ import {
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { KpisBreadcrumb } from "@/components/ui/global-breadcrumb";
+// Breadcrumb handled via PageHeader's breadcrumbs prop
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -307,10 +307,13 @@ export default function KpiEvolutionPage() {
     <HubLayout>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Breadcrumb & Header */}
-        <KpisBreadcrumb />
         <PageHeader
           title="Evolução de Indicadores"
           description="Visualize a evolução temporal de KPIs e Métricas"
+          breadcrumbs={[
+            { label: "Indicadores", href: "/kpis" },
+            { label: "Evolução" },
+          ]}
           actions={
             <Button variant="outline" asChild>
               <Link to="/kpis">
