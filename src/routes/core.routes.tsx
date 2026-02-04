@@ -26,6 +26,7 @@ const NotificationsPage = lazy(() => import('@/pages/me/NotificationsPage'));
 const ResolveContextPage = lazy(() => import('@/pages/ResolveContextPage'));
 const BuManagementPage = lazy(() => import('@/modules/bu/pages/BuManagementPage'));
 const KpiDashboardPage = lazy(() => import('@/modules/kpis/pages/KpiDashboardPage'));
+const KpiEvolutionPage = lazy(() => import('@/modules/kpis/pages/KpiEvolutionPage'));
 const PartnerContactProfilePage = lazy(() => import('@/modules/tickets/pages/PartnerContactProfilePage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -171,6 +172,18 @@ export const coreRoutes = (
           <BuRequiredRoute>
             <ModuleRoute moduleSlug="kpis">
               <KpiDashboardPage />
+            </ModuleRoute>
+          </BuRequiredRoute>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/kpis/evolution"
+      element={
+        <ProtectedRoute>
+          <BuRequiredRoute>
+            <ModuleRoute moduleSlug="kpis">
+              <KpiEvolutionPage />
             </ModuleRoute>
           </BuRequiredRoute>
         </ProtectedRoute>

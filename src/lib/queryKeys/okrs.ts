@@ -247,4 +247,9 @@ export const kpisKeys = {
   }) => ['kpis', 'wizard-v2', options] as const,
   // v2.86.0: Target/Benchmark history
   targetHistory: (kpiId: string | null) => ['kpis', 'target-history', kpiId] as const,
+  // v2.86.0: KPI with full history for charts
+  kpiWithHistory: (kpiId: string | null) => ['kpis', 'with-history', kpiId] as const,
+  // v2.86.0: KPI evolution page list
+  evolutionList: (buId: string | null, filters?: Record<string, unknown>) => 
+    ['kpis', 'evolution-list', buId, filters] as const,
 } as const;
