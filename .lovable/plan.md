@@ -1,131 +1,199 @@
 
-# Plano: Correção do Hook useKpiLinkedKrs
+# Plano: Reorganização do Header de Páginas de KPIs
 
-## Contexto do Problema
+## Objetivo
+Reorganizar o layout do header das páginas `/kpis` e `/kpis/evolution` seguindo o padrão:
+- **Linha 1**: Busca textual + Filtros (todos em uma só linha)
+- **Linha 2**: Contador de resultados (esquerda) + Opções de visualização/ordenação (direita)
 
-O modal de visualização de KPIs/Métricas não exibe as KRs vinculadas (ex: "Orçamento de marketing e vendas" vinculada à KR "🚀 Captar 1.457 leads...").
+---
 
-### Causa Raiz (Confirmada via Análise)
+## Fase 1: Correções Imediatas nas Páginas de KPIs
 
-| Evidência | Conclusão |
-|-----------|-----------|
-| Query de FKs em `okr_kr_metrics` retornou vazio | Tabela não possui foreign key para `okr_team_key_results` |
-| Registro existe no banco (`kr_id=8685...`, `role=guardrail`) | Vínculo está correto no banco |
-| Hook usa nested join `team_kr:okr_team_key_results!kr_id(...)` | PostgREST não resolve join sem FK |
-| Hook filtra `.filter(link => link.team_kr)` | Links com `team_kr: null` são descartados |
+### 1.1 KpiDashboardPage (`/kpis`)
 
-## Documentação Consultada (Pré-checklist)
+**Correções:**
+1. Remover `KpisBreadcrumb` separado (viola anti-pattern #11)
+2. Adicionar `breadcrumbs` via prop do `PageHeader`
+3. Reestruturar para:
+   - **Linha 1**: `UrlSearchInput` + `KpiDashboardFilters` (todos os selects lado a lado)
+   - **Linha 2**: Contador de resultados + `SavedLinksPopover` + `KpiViewToggle`
+4. Mover botão "Evolução" para junto do `PageHeader.actions`
 
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` v2.83.0 — Arquitetura de clientes, hooks canônicos
-- `docs/canonical/DATA_MODEL_REGISTRY.md` — Confirmação do schema de `okr_kr_metrics` (sem FKs para KRs)
-- `docs/canonical/DEVELOPMENT_STANDARDS.md` v1.17.0 — Campos explícitos, BU-scoped client
-- `docs/canonical/UI_COMPONENTS_REGISTRY.md` — Componentes de status/badges
+**Estrutura proposta:**
+```
+PageHeader (com breadcrumbs integrados)
+  └─ actions: [SavedLinks] + [Evolução] + [Novo Indicador]
 
-## Estratégia de Correção
+KpiStatusSummary (cards de resumo)
 
-Reescrever o hook `useKpiLinkedKrs` para buscar dados em **etapas separadas** (sem depender de FK):
+[Row 1 - Filtros]
+  └─ UrlSearchInput + KpiDashboardFilters (Tipo, Status, Área, Escopo, Time)
 
-```text
-┌─────────────────────────┐
-│  1. Buscar links        │  okr_kr_metrics (kpi_id, kr_type, role)
-└───────────┬─────────────┘
-            │
-┌───────────▼─────────────┐
-│  2. Agrupar IDs por tipo│  teamKrIds[], orgKrIds[]
-└───────────┬─────────────┘
-            │
-┌───────────▼─────────────┐     ┌──────────────────────────┐
-│  3. Buscar Team KRs     │     │  4. Buscar Org KRs       │
-│  okr_team_key_results   │     │  okr_org_key_results +   │
-│  .in('id', teamKrIds)   │     │  okr_org_objectives      │
-└───────────┬─────────────┘     └───────────┬──────────────┘
-            │                               │
-            └───────────────┬───────────────┘
-                            │
-┌───────────────────────────▼───────────────────────────┐
-│  5. Montar LinkedKrData[]                             │
-│  - Calcular progress via calculateProgress()         │
-│  - Mapear RAG status via mapRagToCalculated()        │
-│  - Ordenar por role e status de risco                │
-└───────────────────────────────────────────────────────┘
+[Row 2 - Opções de Exibição]
+  └─ Contador de resultados (esquerda) + KpiViewToggle (direita)
+
+Conteúdo (Cards/Tabela)
 ```
 
-## Alterações Técnicas
+### 1.2 KpiEvolutionPage (`/kpis/evolution`)
 
-### Arquivo: `src/modules/kpis/hooks/useKpiLinkedKrs.ts`
+**Correções:**
+1. Reestruturar para seguir o mesmo padrão:
+   - **Linha 1**: Busca + todos os filtros
+   - **Linha 2**: Contador + Toggle de visualização (Cards/Tabela/Gráficos)
 
-**Mudanças:**
+---
 
-1. **Remover** as constantes `KR_LINK_FIELDS_TEAM` e `KR_LINK_FIELDS_ORG` com nested joins quebrados
+## Fase 2: Evolução do Componente ListPageFilters
 
-2. **Definir campos explícitos** para busca separada:
-   ```typescript
-   const LINK_FIELDS = 'id, kr_id, kr_type, kpi_id, role, created_at';
-   
-   const TEAM_KR_FIELDS = `
-     id, title, baseline, current_value, target, direction, status,
-     team_objective_id,
-     objective:okr_team_objectives!team_objective_id(
-       id, title, status,
-       team:teams!team_id(id, name, color)
-     )
-   `;
-   
-   const ORG_KR_FIELDS = 'id, title, baseline, current_value, target, direction, status, org_objective_id';
-   const ORG_OBJECTIVE_FIELDS = 'id, title, status';
-   ```
+### 2.1 Novo componente: `ViewOptionsBar`
 
-3. **Reescrever `queryFn`** com busca em etapas:
-   - Buscar links de `okr_kr_metrics` com campos simples
-   - Separar IDs por `kr_type`
-   - Buscar Team KRs via `.in('id', teamKrIds)` 
-   - Buscar Org KRs via `.in('id', orgKrIds)` + objectives separados
-   - Filtrar KRs deletadas/canceladas
+Criar componente centralizado para a linha de opções de visualização:
 
-4. **Calcular progresso** usando função canônica:
-   ```typescript
-   import { calculateProgress } from '@/modules/okrs/utils/progressCalculation';
-   import { mapRagToCalculated } from '@/modules/okrs/hooks/useOkrStatus';
-   
-   const progress = calculateProgress(
-     Number(kr.baseline) || 0,
-     Number(kr.current_value) || 0,
-     Number(kr.target) || 0,
-     kr.direction || 'up'
-   );
-   
-   // Mapear RAG para status da UI (on_track, at_risk, off_track, etc.)
-   const calculatedStatus = progress >= 100 ? 'completed' : mapRagToCalculated(kr.status);
-   ```
+```tsx
+// src/components/ui/view-options-bar.tsx
+interface ViewOptionsBarProps {
+  resultCount?: number;
+  resultCountLabel?: string;
+  resultCountLabelSingular?: string;
+  children?: ReactNode; // ViewToggle, SortControl, etc
+  className?: string;
+}
 
-5. **Montar `LinkedKrData[]`** com estrutura esperada pelo `LinkedKrsSection`:
-   - `kr.progress` calculado (não é coluna do banco)
-   - `kr.status` convertido para formato da UI
+export function ViewOptionsBar({
+  resultCount,
+  resultCountLabel = "itens encontrados",
+  resultCountLabelSingular = "item encontrado",
+  children,
+  className,
+}: ViewOptionsBarProps) {
+  return (
+    <div className={cn("flex items-center justify-between", className)}>
+      {/* Contador à esquerda */}
+      {typeof resultCount === "number" && (
+        <span className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {resultCount.toLocaleString("pt-BR")}
+          </span>{" "}
+          {resultCount === 1 ? resultCountLabelSingular : resultCountLabel}
+        </span>
+      )}
+      
+      {/* Controles à direita */}
+      {children && (
+        <div className="flex items-center gap-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+```
 
-## Compatibilidade
+### 2.2 Refatorar `ListPageFilters`
 
-| Componente | Impacto | Ação Necessária |
-|------------|---------|-----------------|
-| `LinkedKrsSection` | Nenhum | Já consome `LinkedKrData` corretamente |
-| `KpiDetailDialog` | Nenhum | Usa `useKpiLinkedKrs` sem mudança de interface |
-| `KpiHistoryDialog` | Nenhum | Usa `useKpiLinkedKrs` sem mudança de interface |
+- Remover `resultCount` e props relacionadas do `ListPageFilters`
+- Remover `actions` (que estava sendo usado para ViewToggle)
+- Focar apenas em: busca + filtros inline
 
-## Casos de Teste
+**Nova assinatura:**
+```tsx
+interface ListPageFiltersProps {
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
+  searchDebounceMs?: number;
+  searchClassName?: string;
+  children?: ReactNode; // Filtros (selects, etc)
+  className?: string;
+  hideSearch?: boolean;
+}
+```
 
-| Cenário | Resultado Esperado |
-|---------|-------------------|
-| Métrica com 1 Guardrail (caso reportado) | Exibe KR na seção "Guardrails" |
-| KPI com Primary + múltiplos Guardrails | Primary primeiro, depois Guardrails ordenados por risco |
-| KR cancelada/deletada | Não exibir na lista |
-| KR Org vinculada | Exibir com badge "Organizacional" |
-| Nenhum vínculo | Exibir "Nenhuma KR vinculada a este indicador." |
+---
 
-## Riscos Mitigados
+## Fase 3: Atualização da Documentação
 
-- **Performance:** 2-4 queries paralelas (links + teamKRs + orgKRs + orgObjectives) — volume baixo por KPI
-- **RLS:** Se usuário não tem permissão para ver KR, ela não será retornada (comportamento correto)
-- **Progresso:** Calculado client-side com função canônica (mesma lógica de todo o sistema)
+### 3.1 UI_COMPONENTS_REGISTRY.md
 
-## Arquivos Modificados
+Adicionar nova seção: **"5.4 Layout de Páginas de Listagem"**
 
-1. `src/modules/kpis/hooks/useKpiLinkedKrs.ts` — Reescrita completa da queryFn
+```markdown
+### 5.4 Layout de Páginas de Listagem
+
+Páginas com listagem de dados devem seguir esta estrutura hierárquica:
+
+1. **PageHeader**: Título, descrição, breadcrumbs, ações principais
+2. **Summary Cards** (opcional): Resumo estatístico
+3. **FilterRow** (`ListPageFilters`): Busca + Filtros em uma linha
+4. **ViewOptionsBar**: Contador + Toggle de visualização + Ordenação
+5. **Content**: Cards, Tabela ou outro formato
+
+```tsx
+// ✅ CORRETO: Layout padronizado
+<PageHeader
+  title="Indicadores"
+  breadcrumbs={[{ label: "Indicadores" }]}
+  actions={<Button>Novo</Button>}
+/>
+
+<SummaryCards {...} />
+
+<ListPageFilters
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Buscar..."
+>
+  <TypeSelect value={type} onChange={setType} />
+  <StatusSelect value={status} onChange={setStatus} />
+</ListPageFilters>
+
+<ViewOptionsBar
+  resultCount={items.length}
+  resultCountLabel="indicadores"
+>
+  <KpiViewToggle viewMode={view} onViewModeChange={setView} />
+</ViewOptionsBar>
+
+<Content />
+```
+
+**Anti-patterns:**
+| # | Anti-pattern | Alternativa |
+|---|--------------|-------------|
+| 12 | ViewToggle dentro de ListPageFilters.actions | Usar ViewOptionsBar separado |
+| 13 | Contador misturado com filtros | Mover para ViewOptionsBar |
+```
+
+---
+
+## Fase 4: Aplicar Padrão em Outras Páginas (Pós-Validação)
+
+Após validação das páginas de KPIs, aplicar o mesmo padrão em:
+- `/assets/inventory`
+- `/assets/keys`  
+- `/assets/gifts`
+- Outras páginas de listagem
+
+---
+
+## Resumo de Arquivos a Modificar
+
+| Arquivo | Ação |
+|---------|------|
+| `src/components/ui/view-options-bar.tsx` | **CRIAR** - Novo componente |
+| `src/components/ui/list-page-filters.tsx` | **REFATORAR** - Simplificar props |
+| `src/modules/kpis/pages/KpiDashboardPage.tsx` | **REFATORAR** - Aplicar novo layout |
+| `src/modules/kpis/pages/KpiEvolutionPage.tsx` | **REFATORAR** - Aplicar novo layout |
+| `docs/canonical/UI_COMPONENTS_REGISTRY.md` | **ATUALIZAR** - Documentar padrão |
+
+---
+
+## Benefícios
+
+1. **Consistência visual**: Todas as páginas de listagem seguem o mesmo padrão
+2. **Separação de responsabilidades**: Filtros ≠ Opções de exibição
+3. **Flexibilidade**: Cada linha pode ser customizada independentemente
+4. **Documentação clara**: Anti-patterns explícitos previnem erros futuros
+
