@@ -611,8 +611,15 @@ const phoneToStore = normalizePhone(userInput); // "5551999999999"
 
 ```tsx
 import { SavedLinksPopover, useSavedLinks, useFavoriteLinks } from "@/shared/saved-links";
+import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 
-// No header de uma página de módulo
+// ✅ CORRETO: SavedLinksPopover dentro de ViewOptionsBar (padrão v1.0)
+<ViewOptionsBar resultCount={items.length}>
+  <SavedLinksPopover moduleSlug="okrs" />
+  <ViewToggle ... />
+</ViewOptionsBar>
+
+// ⚠️ LEGADO: No PageHeader.actions (ainda suportado)
 <PageHeader
   title="OKRs"
   actions={
@@ -628,12 +635,25 @@ const { getFavoriteHref } = useFavoriteLinks();
 const href = getFavoriteHref("okrs", "/okrs"); // retorna path favorito ou fallback
 ```
 
+### Module Slugs Registrados
+
+| moduleSlug | Página | Rota |
+|------------|--------|------|
+| `okrs` | OKRs Dashboard | `/okrs` |
+| `kpis` | KPIs Dashboard | `/kpis` |
+| `kpis-evolution` | KPIs Evolução | `/kpis/evolution` |
+| `assets-inventory` | Inventário de Ativos | `/assets/inventory` |
+| `assets-keys` | Chaves | `/assets/keys` |
+| `assets-gifts` | Brindes | `/assets/gifts` |
+| `tickets` | Tickets | `/tickets` |
+
 ### Regras
 
 - **Só 1 favorito por módulo/BU** (enforced por trigger no banco)
 - Link favorito se torna destino padrão no sidebar
 - Usuário pode criar quantos links quiser
 - RLS: usuário só vê seus próprios links
+- **Padrão v1.0:** `SavedLinksPopover` deve ser posicionado na `ViewOptionsBar`
 
 ---
 
