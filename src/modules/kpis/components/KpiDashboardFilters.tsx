@@ -1,13 +1,14 @@
 import { TeamSelect, AreaSelect } from "@/components/selects";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KpiCategory, KpiScope, SCOPE_LABELS } from "../types";
+import { KpiCategory, KpiScope, KpiIndicatorType, SCOPE_LABELS, INDICATOR_TYPE_LABELS } from "../types";
 
 /**
- * v2.82.0 - Filtros do Dashboard de Indicadores
+ * v2.83.0 - Filtros do Dashboard de Indicadores
  * 
  * Mudanças:
  * - Categoria removida (deprecated) - usa Área como ownership
  * - Adicionado filtro de Escopo
+ * - Adicionado filtro de Tipo de Indicador (KPI/Métrica)
  * - Filtro de Área agora é primário
  */
 
@@ -17,24 +18,48 @@ interface KpiDashboardFiltersProps {
   teamId: string | "all";
   areaId?: string | "all";
   scope?: KpiScope | "all";
+  indicatorType?: KpiIndicatorType | "all";
   /** @deprecated v2.82.0 - Category filter is no longer used */
   onCategoryChange: (category: KpiCategory | "all") => void;
   onTeamChange: (teamId: string | "all") => void;
   onAreaChange?: (areaId: string | "all") => void;
   onScopeChange?: (scope: KpiScope | "all") => void;
+  onIndicatorTypeChange?: (type: KpiIndicatorType | "all") => void;
 }
 
 export function KpiDashboardFilters({
   teamId,
   areaId = "all",
   scope = "all",
+  indicatorType = "all",
   onTeamChange,
   onAreaChange,
   onScopeChange,
+  onIndicatorTypeChange,
 }: KpiDashboardFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3">
-      {/* Área - primary filter */}
+      {/* Tipo de Indicador - primary filter */}
+      {onIndicatorTypeChange && (
+        <Select
+          value={indicatorType}
+          onValueChange={(value) => onIndicatorTypeChange(value as KpiIndicatorType | "all")}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos tipos</SelectItem>
+            {(Object.keys(INDICATOR_TYPE_LABELS) as KpiIndicatorType[]).map((type) => (
+              <SelectItem key={type} value={type}>
+                {INDICATOR_TYPE_LABELS[type]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Área */}
       {onAreaChange && (
         <AreaSelect
           value={areaId === "all" ? undefined : areaId}
