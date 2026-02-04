@@ -324,12 +324,17 @@ export default function KpiEvolutionPage() {
             { label: "Evolução" },
           ]}
           actions={
-            <Button variant="outline" asChild>
-              <Link to="/kpis">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Ver Dashboard
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* v2.89.1: SavedLinks no PageHeader.actions (padrão canônico) */}
+              <SavedLinksPopover moduleSlug="kpis-evolution" />
+              
+              <Button variant="outline" asChild>
+                <Link to="/kpis">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Ver Dashboard
+                </Link>
+              </Button>
+            </div>
           }
         />
 
@@ -413,7 +418,6 @@ export default function KpiEvolutionPage() {
           resultCountLabel="indicadores"
           resultCountLabelSingular="indicador"
         >
-          <SavedLinksPopover moduleSlug="kpis-evolution" />
           <Tabs value={viewModeState.value} onValueChange={(v) => viewModeState.set(v as ViewMode)}>
             <TabsList>
               <TabsTrigger value="cards" className="gap-1.5">
