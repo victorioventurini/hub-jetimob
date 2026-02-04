@@ -119,7 +119,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { updateKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
-  const canManageKpis = hasPermission("kpis:manage");
+  // Pode editar indicadores (owner/líder ou admin)
+  const canEditIndicator = hasPermission("kpis.metric.update:self_or_owner") || hasPermission("kpis.settings.manage:bu");
+  // Pode mudar tipo para KPI (apenas admin)
   const canCreateKpi = hasPermission("kpis.settings.manage:bu");
 
   const form = useForm<FormValues>({
@@ -184,7 +186,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   }, [watchScope, inferredAreaId, form]);
 
   // Defense in Depth: block render if no permission
-  if (!isLoadingPermission && !canManageKpis) {
+  if (!isLoadingPermission && !canEditIndicator) {
     return null;
   }
 

@@ -109,12 +109,22 @@ O catálogo completo está em `permission_catalog`. Algumas categorias:
 |--------|---------|----------|
 | Home | `home.` | `home.dashboard.view` |
 | OKRs | `okrs.` | `okrs.objective.create`, `okrs.kr.checkin` |
-| KPIs | `kpis.` | `kpis.metric.create`, `kpis.value.update` |
+| KPIs | `kpis.` | `kpis.metric.create:bu`, `kpis.settings.manage:bu`, `kpis.value.add:bu` |
 | Tickets | `tickets.` | `tickets.view`, `tickets.category.manage` |
 | Assets | `assets.` | `assets.inventory.view`, `assets.keys.checkout` |
 | Teams | `teams.` | `teams.member.view`, `teams.structure.manage` |
 | Users | `users.` | `users.view`, `users.profile.update` |
 | Settings | `settings.` | `settings.bu.manage`, `settings.integrations.view` |
+
+#### Detalhamento de KPIs
+
+| Ação | Permission Key | Template Mínimo |
+|------|---------------|-----------------|
+| Visualizar indicadores | `kpis.view:bu` | `kpis_view_v2` |
+| Criar métricas | `kpis.metric.create:bu` | `kpis_admin_v2` |
+| Criar KPIs (estratégicos) | `kpis.settings.manage:bu` | `kpis_admin_v2` |
+| Atualizar valores | `kpis.value.add:bu` | `kpis_operate_v2` |
+| Gerenciar (arquivar/excluir) | `kpis.settings.manage:bu` | `kpis_admin_v2` |
 
 ---
 
