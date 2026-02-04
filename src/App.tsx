@@ -22,6 +22,7 @@ import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadixFocusRecovery } from "@/hooks/useRadixFocusRecovery";
+import { useRouteTracking } from "@/hooks/useRouteTracking";
 
 // Rotas públicas (sem providers de autenticação)
 import Auth from "./pages/Auth";
@@ -124,6 +125,9 @@ function AppRoutes() {
  * Wrapper que envolve todas as rotas autenticadas com os providers necessários.
  */
 function AuthenticatedRoutesWrapper() {
+  // GA4 route tracking - dispara page_view em cada navegação
+  useRouteTracking();
+  
   return (
     <BuProvider>
       <ImpersonationProvider>

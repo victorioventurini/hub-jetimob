@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
 import { Loader2, AlertCircle } from "lucide-react";
+import { initSessionContext } from "@/lib/analytics";
 
 /**
  * AuthCallback
@@ -59,6 +60,11 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, re
               userId: data.session.user.id,
               email: data.session.user.email,
               expiresAt: data.session.expires_at,
+            });
+            
+            // Initialize GA4 session context with user ID (UUID, não email - seguro para GA4)
+            initSessionContext({
+              userId: data.session.user.id,
             });
             
             // Clear BU client cache to ensure fresh clients with the new JWT
