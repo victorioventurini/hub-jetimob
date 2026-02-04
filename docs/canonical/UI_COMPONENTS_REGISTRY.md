@@ -554,10 +554,73 @@ const krState = calculateKrState({
 
 ---
 
+## 11. Menus de Ações em Tabelas
+
+### 11.1 Padrão Visual
+
+Tabelas devem incluir uma coluna de ações com o ícone de "três pontinhos" (MoreVertical/MoreHorizontal) que abre um DropdownMenu com as opções disponíveis.
+
+### 11.2 Implementação
+
+```tsx
+// ✅ CORRETO: Componente de ações com prop alwaysVisible para tabelas
+<TableCell>
+  <MyActionsMenu item={item} alwaysVisible />
+</TableCell>
+
+// ✅ CORRETO: Estrutura base do menu de ações
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button
+      variant="ghost"
+      size="icon"
+      className={cn(
+        "h-8 w-8 transition-opacity",
+        !alwaysVisible && "opacity-0 group-hover:opacity-100"
+      )}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <MoreVertical className="h-4 w-4" />
+      <span className="sr-only">Ações</span>
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+    <DropdownMenuItem onClick={() => setEditOpen(true)}>
+      <Edit className="mr-2 h-4 w-4" />
+      Editar
+    </DropdownMenuItem>
+    <DropdownMenuSeparator />
+    <DropdownMenuItem className="text-destructive">
+      <Trash2 className="mr-2 h-4 w-4" />
+      Excluir
+    </DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+### 11.3 Regras
+
+| Regra | Descrição |
+|-------|-----------|
+| stopPropagation | Sempre chamar `e.stopPropagation()` no trigger e content para evitar acionar onClick da linha |
+| Largura fixa | Usar `<TableHead className="w-12" />` para coluna de ações |
+| alwaysVisible prop | Adicionar prop para controlar se menu aparece sempre ou só no hover |
+| Ações destrutivas | Usar `text-destructive` e sempre confirmar com AlertDialog |
+
+### 11.4 Exemplo de Referência
+
+O componente `KpiActionsMenu` (`src/modules/kpis/components/KpiActionsMenu.tsx`) é a implementação canônica que inclui:
+- Prop `alwaysVisible` para controle de visibilidade
+- Verificação de permissões (`useCanEditKpi`, `usePermissions`)
+- Dialogs de confirmação para ações destrutivas
+
+---
+
 ## Changelog
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.4.0 | 2026-02-04 | Adicionada seção 11 - Menus de Ações em Tabelas |
 | 1.3.0 | 2026-02-04 | Adicionada seção 10 - Componentes de Insights |
 | 1.2.0 | 2026-02-02 | Adicionada seção 9 - Focus Recovery (Radix UI) |
 | 1.1.0 | 2026-02-02 | Adicionada seção de Componentes de Seleção (BuUserSelect, BuUserMultiSelect, TeamSelect) |

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,9 +61,11 @@ interface KpiForActions {
 interface KpiActionsMenuProps {
   kpi: KpiForActions;
   onActionComplete?: () => void;
+  /** Sempre mostra o botão (para tabelas), ao invés de só no hover */
+  alwaysVisible?: boolean;
 }
 
-export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
+export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }: KpiActionsMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -152,7 +155,10 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className={cn(
+              "h-8 w-8 transition-opacity",
+              !alwaysVisible && "opacity-0 group-hover:opacity-100"
+            )}
             onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
