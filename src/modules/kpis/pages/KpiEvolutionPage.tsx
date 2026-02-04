@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/table";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUrlState } from "@/shared/url";
-import { UrlSearchInput } from "@/shared/filters";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -62,6 +61,7 @@ import {
 } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { useAreas } from "@/modules/areas/hooks";
+import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 
 type ViewMode = 'cards' | 'table' | 'charts';
 
@@ -265,6 +265,12 @@ export default function KpiEvolutionPage() {
     parse: (v) => v as KpiIndicatorType | 'all',
   });
   const areaState = useUrlState<string>({ key: 'area_id', defaultValue: 'all' });
+  const scopeState = useUrlState<KpiScope | 'all'>({ 
+    key: 'scope', 
+    defaultValue: 'all',
+    parse: (v) => v as KpiScope | 'all',
+  });
+  const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   const ragStatusState = useUrlState<KpiRagStatus | 'all'>({ 
     key: 'status', 
     defaultValue: 'all',
@@ -276,10 +282,12 @@ export default function KpiEvolutionPage() {
   // Fetch areas for filter
   const { data: areas = [] } = useAreas();
 
-  // Fetch KPIs
+  // Fetch KPIs with all filters
   const { kpis, aggregates, isLoading, error } = useKpiEvolutionList({
     indicatorType: indicatorTypeState.value === 'all' ? undefined : indicatorTypeState.value,
     areaId: areaState.value === 'all' ? undefined : areaState.value,
+    scope: scopeState.value === 'all' ? undefined : scopeState.value,
+    teamId: teamState.value === 'all' ? undefined : teamState.value,
     ragStatus: ragStatusState.value === 'all' ? undefined : ragStatusState.value,
     search: searchState.value || undefined,
   });
@@ -379,54 +387,45 @@ export default function KpiEvolutionPage() {
 
         {/* Filters */}
         <ListPageFilters
+          searchValue={searchState.value}
+          onSearchChange={searchState.set}
+          searchPlaceholder="Buscar indicador..."
           resultCount={kpis.length}
           resultCountLabel="indicadores"
           resultCountLabelSingular="indicador"
+          actions={
+            <Tabs value={viewModeState.value} onValueChange={(v) => viewModeState.set(v as ViewMode)}>
+              <TabsList>
+                <TabsTrigger value="cards" className="gap-1.5">
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cards</span>
+                </TabsTrigger>
+                <TabsTrigger value="table" className="gap-1.5">
+                  <TableIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Tabela</span>
+                </TabsTrigger>
+                <TabsTrigger value="charts" className="gap-1.5">
+                  <ChartLine className="h-4 w-4" />
+                  <span className="hidden sm:inline">Gráficos</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          }
         >
-          <UrlSearchInput
-            value={searchState.value}
-            onChange={searchState.set}
-            placeholder="Buscar indicador..."
-            className="w-[200px]"
-            debounceMs={300}
+          <KpiDashboardFilters
+            category="all"
+            teamId={teamState.value}
+            areaId={areaState.value}
+            scope={scopeState.value}
+            indicatorType={indicatorTypeState.value}
+            ragStatus={ragStatusState.value}
+            onCategoryChange={() => {}}
+            onTeamChange={teamState.set}
+            onAreaChange={areaState.set}
+            onScopeChange={scopeState.set}
+            onIndicatorTypeChange={indicatorTypeState.set}
+            onRagStatusChange={ragStatusState.set}
           />
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-            value={indicatorTypeState.value}
-            onChange={(e) => indicatorTypeState.set(e.target.value as KpiIndicatorType | 'all')}
-          >
-            <option value="all">Todos os tipos</option>
-            <option value="kpi">KPIs</option>
-            <option value="metric">Métricas</option>
-          </select>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-            value={areaState.value}
-            onChange={(e) => areaState.set(e.target.value)}
-          >
-            <option value="all">Todas as áreas</option>
-            {areas.map(area => (
-              <option key={area.id} value={area.id}>{area.name}</option>
-            ))}
-          </select>
-          
-          {/* View Mode Tabs */}
-          <Tabs value={viewModeState.value} onValueChange={(v) => viewModeState.set(v as ViewMode)} className="ml-auto">
-            <TabsList>
-              <TabsTrigger value="cards" className="gap-1.5">
-                <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">Cards</span>
-              </TabsTrigger>
-              <TabsTrigger value="table" className="gap-1.5">
-                <TableIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Tabela</span>
-              </TabsTrigger>
-              <TabsTrigger value="charts" className="gap-1.5">
-                <ChartLine className="h-4 w-4" />
-                <span className="hidden sm:inline">Gráficos</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
         </ListPageFilters>
 
         {/* Content */}

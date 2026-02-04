@@ -19,7 +19,7 @@ import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
-import { KpiScope, KpiIndicatorType, KpiWithValues } from "../types";
+import { KpiScope, KpiIndicatorType, KpiRagStatus, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
@@ -56,6 +56,11 @@ export default function KpiDashboardPage() {
     parse: (v) => v as KpiScope | "all",
   });
   const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
+  const ragStatusState = useUrlState<KpiRagStatus | "all">({
+    key: 'status',
+    defaultValue: 'all',
+    parse: (v) => v as KpiRagStatus | "all",
+  });
   
   // v2.86.0: View mode state synced to URL
   const viewModeState = useUrlState<KpiViewMode>({
@@ -75,6 +80,8 @@ export default function KpiDashboardPage() {
   const setScopeFilter = scopeState.set;
   const teamFilter = teamState.value;
   const setTeamFilter = teamState.set;
+  const ragStatusFilter = ragStatusState.value;
+  const setRagStatusFilter = ragStatusState.set;
   const viewMode = viewModeState.value;
   const setViewMode = viewModeState.set;
   
@@ -96,23 +103,33 @@ export default function KpiDashboardPage() {
     indicatorType: indicatorTypeFilter === 'all' ? undefined : indicatorTypeFilter,
   });
 
-  // v2.87.0: Client-side text filtering
+  // v2.87.0: Client-side text and status filtering
   const filteredKpis = useMemo(() => {
-    if (!searchValue.trim()) return allKpis;
+    let result = allKpis;
     
-    const query = searchValue.toLowerCase().trim();
-    return allKpis.filter((kpi) => {
-      const searchableFields = [
-        kpi.name,
-        kpi.description,
-        kpi.area?.name,
-        kpi.owner?.display_name,
-        kpi.unit,
-      ].filter(Boolean).join(" ").toLowerCase();
-      
-      return searchableFields.includes(query);
-    });
-  }, [allKpis, searchValue]);
+    // Filter by RAG status
+    if (ragStatusFilter !== 'all') {
+      result = result.filter((kpi) => kpi.rag_status === ragStatusFilter);
+    }
+    
+    // Filter by text search
+    if (searchValue.trim()) {
+      const query = searchValue.toLowerCase().trim();
+      result = result.filter((kpi) => {
+        const searchableFields = [
+          kpi.name,
+          kpi.description,
+          kpi.area?.name,
+          kpi.owner?.display_name,
+          kpi.unit,
+        ].filter(Boolean).join(" ").toLowerCase();
+        
+        return searchableFields.includes(query);
+      });
+    }
+    
+    return result;
+  }, [allKpis, searchValue, ragStatusFilter]);
 
   // Calculate summary from filtered data
   const summary = {
@@ -216,11 +233,13 @@ export default function KpiDashboardPage() {
             areaId={areaFilter}
             scope={scopeFilter}
             indicatorType={indicatorTypeFilter}
+            ragStatus={ragStatusFilter}
             onCategoryChange={() => {}} // No-op, category deprecated
             onTeamChange={setTeamFilter}
             onAreaChange={setAreaFilter}
             onScopeChange={setScopeFilter}
             onIndicatorTypeChange={setIndicatorTypeFilter}
+            onRagStatusChange={setRagStatusFilter}
           />
         </ListPageFilters>
 
