@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Sparkles } from 'lucide-react';
 import type { OkrRagStatus } from '../types';
 import { useIdentity } from '@/hooks/useIdentity';
+import { usePrimaryKpiForKr } from '../hooks/usePrimaryKpiForKr';
 import {
   CheckinContextBlock,
   CheckinProgressBlock,
@@ -46,7 +47,12 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isAutomatic = !!kr.metric_id;
+  
+  // Check for primary KPI via okr_kr_metrics table (new system)
+  const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
+  
+  // Determine if value is automatic (locked) - either via legacy metric_id OR new okr_kr_metrics
+  const isAutomatic = !!kr.metric_id || hasPrimaryKpi;
 
   const { data: userProfile } = useQuery({
     queryKey: queryKeys.okrs.userProfileForCheckin(userId ?? null, buId ?? null),
@@ -105,8 +111,11 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       const confidenceMap: Record<CheckinStatus, 'high' | 'medium' | 'low'> = { green: 'high', yellow: 'medium', red: 'low' };
       const comments = nextStep.trim() ? `${reflection.trim()}\n\n📌 Próximo passo: ${nextStep.trim()}` : reflection.trim();
 
+      // When KR has primary KPI, use KR's current value (which should be synced from KPI)
+      const checkinValue = isAutomatic ? kr.current_value : parseFloat(currentValue);
+
       const { data: checkinData, error } = await supabase.from('okr_checkins').insert({
-        kr_id: kr.id, current_value: isAutomatic ? kr.current_value : parseFloat(currentValue),
+        kr_id: kr.id, current_value: checkinValue,
         previous_value: kr.current_value, confidence: confidenceMap[status], blockers: null, comments,
         user_id: profileId, team_id: userProfile?.team_id || null,
       } as any).select('id').single();
@@ -116,8 +125,9 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
         await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, `/okrs?kr=${kr.id}`);
       }
 
+      // Only update KR value if not automatic
       const { error: updateError } = await supabase.from('okr_team_key_results').update({ 
-        status, current_value: isAutomatic ? kr.current_value : parseFloat(currentValue),
+        status, current_value: checkinValue,
       }).eq('id', kr.id);
       if (updateError) throw updateError;
     },
@@ -164,7 +174,14 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
           <div className="space-y-4 py-4">
             <CheckinContextBlock kr={kr} userTeamName={(userProfile?.team as any)?.name} />
             <Separator />
-            <CheckinProgressBlock kr={kr} currentValue={currentValue} status={status} isAutomatic={isAutomatic} onValueChange={setCurrentValue} />
+            <CheckinProgressBlock 
+              kr={kr} 
+              currentValue={currentValue} 
+              status={status} 
+              isAutomatic={isAutomatic} 
+              onValueChange={setCurrentValue}
+              primaryKpi={primaryKpi}
+            />
             <Separator />
             <CheckinStatusSelector status={status} onStatusChange={setStatus} />
             <Separator />
