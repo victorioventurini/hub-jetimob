@@ -2,15 +2,19 @@
  * CollaboratorCheckinStep - Etapa 2 do Wizard Colaborador
  * 
  * Atualização sequencial de cada KR:
- * - Valor atual
+ * - Valor atual (bloqueado se KR tem KPI primária)
  * - Confiança
  * - Comentário (opcional)
  * - Bloqueadores (opcional)
  * 
- * Com perguntas orientadoras e microcopy dinâmico
+ * Com perguntas orientadoras e microcopy dinâmico.
+ * 
+ * REGRA: Quando KR tem KPI primária vinculada, o valor é read-only
+ * e o colaborador deve atualizar a KPI correspondente.
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +33,8 @@ import {
   ThumbsDown,
   AlertTriangle,
   Loader2,
-  Lightbulb,
+  Lock,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KrContextCard } from '../shared/KrContextCard';
@@ -39,6 +44,8 @@ import { VicInsightCard } from '../shared/VicInsightCard';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useCreateCheckin } from '@/modules/okrs/hooks/useCreateCheckin';
+import { usePrimaryKpiForKr } from '@/modules/okrs/hooks/usePrimaryKpiForKr';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
 
@@ -108,8 +115,12 @@ export function CollaboratorCheckinStep({
   const [blocker, setBlocker] = useState('');
   const [showBlockerField, setShowBlockerField] = useState(false);
 
+  // Check for primary KPI (fonte única de verdade)
+  const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
+  const isValueLocked = hasPrimaryKpi;
+
   // AI state
-  const { getMicrocopy, insights, generateInsights, dismissInsight, isGenerating } = useWizardAI();
+  const { getMicrocopy, insights, generateInsights, dismissInsight } = useWizardAI();
   const microcopy = getMicrocopy(kr);
 
   // Mutation
@@ -293,49 +304,88 @@ export function CollaboratorCheckinStep({
         {/* Microcopy question */}
         <MicrocopyQuestion question={microcopy} variant="highlight" />
 
-        {/* Value input */}
-        <div className="space-y-3">
-          <Label htmlFor="current-value">Valor atual</Label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <Input
-                id="current-value"
-                type="number"
-                value={currentValue}
-                onChange={(e) => setCurrentValue(e.target.value)}
-                className="text-lg font-semibold pr-16"
-                step="any"
-              />
-              {kr.unit && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  {kr.unit}
-                </span>
+        {/* Value input - locked if KR has primary KPI */}
+        {isValueLocked && primaryKpi ? (
+          <div className="rounded-lg border bg-info-muted/50 border-info/30 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-info/10">
+                <Lock className="h-4 w-4 text-info" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-sm">
+                  Esta KR é medida pela KPI "{primaryKpi.kpiName}"
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  O valor é atualizado automaticamente. Para alterar, atualize a KPI.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4 p-3 rounded-md bg-background/50">
+              <div>
+                <p className="text-xs text-muted-foreground">Valor atual</p>
+                <p className="font-semibold">{primaryKpi.currentValue ?? '—'} {primaryKpi.kpiUnit}</p>
+              </div>
+              <Badge className={cn("shrink-0", 
+                primaryKpi.ragStatus === 'green' ? RAG_STATUS_COLORS.green.badge :
+                primaryKpi.ragStatus === 'yellow' ? RAG_STATUS_COLORS.yellow.badge :
+                primaryKpi.ragStatus === 'red' ? RAG_STATUS_COLORS.red.badge : 'bg-muted'
+              )}>
+                {primaryKpi.ragStatus === 'green' ? 'Na meta' :
+                 primaryKpi.ragStatus === 'yellow' ? 'Em atenção' :
+                 primaryKpi.ragStatus === 'red' ? 'Fora da meta' : 'Sem dados'}
+              </Badge>
+            </div>
+            <Button variant="outline" size="sm" asChild className="w-full">
+              <Link to={`/kpis?kpi=${primaryKpi.kpiId}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Atualizar KPI
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <Label htmlFor="current-value">Valor atual</Label>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative">
+                <Input
+                  id="current-value"
+                  type="number"
+                  value={currentValue}
+                  onChange={(e) => setCurrentValue(e.target.value)}
+                  className="text-lg font-semibold pr-16"
+                  step="any"
+                />
+                {kr.unit && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    {kr.unit}
+                  </span>
+                )}
+              </div>
+              
+              {/* Change indicator */}
+              {change !== 0 && (
+                <div className={cn(
+                  "flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium",
+                  change > 0 && kr.direction === 'up' && "bg-success-muted text-success-muted-foreground",
+                  change < 0 && kr.direction === 'down' && "bg-success-muted text-success-muted-foreground",
+                  change > 0 && kr.direction === 'down' && "bg-danger-muted text-danger-muted-foreground",
+                  change < 0 && kr.direction === 'up' && "bg-danger-muted text-danger-muted-foreground",
+                )}>
+                  {change > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <span>{change > 0 ? '+' : ''}{change}</span>
+                  <span className="text-xs">({changePercent}%)</span>
+                </div>
               )}
             </div>
             
-            {/* Change indicator */}
+            {/* New progress preview */}
             {change !== 0 && (
-              <div className={cn(
-                "flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium",
-                change > 0 && kr.direction === 'up' && "bg-success-muted text-success-muted-foreground",
-                change < 0 && kr.direction === 'down' && "bg-success-muted text-success-muted-foreground",
-                change > 0 && kr.direction === 'down' && "bg-danger-muted text-danger-muted-foreground",
-                change < 0 && kr.direction === 'up' && "bg-danger-muted text-danger-muted-foreground",
-              )}>
-                {change > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                <span>{change > 0 ? '+' : ''}{change}</span>
-                <span className="text-xs">({changePercent}%)</span>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Novo progresso: <span className="font-medium">{Math.round(newProgress)}%</span> (atual: {Math.round(kr.progress)}%)
+              </p>
             )}
           </div>
-          
-          {/* New progress preview */}
-          {change !== 0 && (
-            <p className="text-xs text-muted-foreground">
-              Novo progresso: <span className="font-medium">{Math.round(newProgress)}%</span> (atual: {Math.round(kr.progress)}%)
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Confidence selection */}
         <div className="space-y-3">

@@ -142,6 +142,13 @@ export {
   useUpdateKrMetric, 
   useDeleteKrMetric 
 } from './useOkrKrMetrics';
+export {
+  usePrimaryKpiForKr,
+  isKrValueLocked,
+  calculateKrProgressFromKpi,
+  type PrimaryKpiData,
+  type UsePrimaryKpiForKrResult,
+} from './usePrimaryKpiForKr';
 export { 
   useTeamContributionView,
   type TeamOkrContribution,
