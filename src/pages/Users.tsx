@@ -3,9 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
-import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { queryKeys } from "@/lib/queryKeys";
 import { PageHeader } from "@/components/ui/page-header";
+import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
@@ -25,7 +26,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { JetimoberDialog } from "@/components/users/JetimoberDialog";
 import { BulkEditDialog } from "@/components/users/BulkEditDialog";
 import { UsersTable, type ProfileWithTeam } from "@/components/users/UsersTable";
-import { UrlSearchInput } from "@/shared/filters";
 import { useUrlState } from "@/shared/url";
 
 import { useDeleteProfile, useTransferDependencies } from "@/hooks/useProfiles";
@@ -284,11 +284,11 @@ export default function UsersPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <UsersBreadcrumb />
+        {/* Header com breadcrumbs integrados */}
         <PageHeader
           title="Jetimobers"
           description="Diretório de colaboradores da Jetimob"
+          breadcrumbs={[{ label: "Jetimobers" }]}
           actions={
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
@@ -332,16 +332,12 @@ export default function UsersPage() {
           />
         )}
 
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-          <UrlSearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Buscar por nome, e-mail ou cargo..."
-            className="flex-1 max-w-md"
-            debounceMs={300}
-          />
+        {/* Linha 1: Busca + Filtros */}
+        <ListPageFilters
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Buscar por nome, e-mail ou cargo..."
+        >
           <AreaSelect
             value={areaFilter === "all" ? undefined : areaFilter}
             onValueChange={(v) => setAreaFilter(v ?? "all")}
@@ -358,7 +354,14 @@ export default function UsersPage() {
             placeholder="Time"
             triggerClassName="w-[220px]"
           />
-        </div>
+        </ListPageFilters>
+
+        {/* Linha 2: Contador */}
+        <ViewOptionsBar
+          resultCount={totalProfiles}
+          resultCountLabel="jetimobers encontrados"
+          resultCountLabelSingular="jetimober encontrado"
+        />
 
         {/* Bulk action bar */}
         {canManageUsers && selectedIds.size > 0 && (
