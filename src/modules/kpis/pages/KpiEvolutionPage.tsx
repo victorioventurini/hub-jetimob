@@ -7,7 +7,7 @@
  * @see TCR v2.86.0
  */
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
   ChartLine, 
@@ -17,10 +17,9 @@ import {
   TrendingDown, 
   Minus,
   Target,
-  ArrowUp,
-  ArrowDown,
   BarChart3,
 } from "lucide-react";
+import { SavedLinksPopover } from "@/shared/saved-links";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -414,6 +413,7 @@ export default function KpiEvolutionPage() {
           resultCountLabel="indicadores"
           resultCountLabelSingular="indicador"
         >
+          <SavedLinksPopover moduleSlug="kpis-evolution" />
           <Tabs value={viewModeState.value} onValueChange={(v) => viewModeState.set(v as ViewMode)}>
             <TabsList>
               <TabsTrigger value="cards" className="gap-1.5">
