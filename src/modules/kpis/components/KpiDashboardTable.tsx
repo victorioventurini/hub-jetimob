@@ -1,9 +1,9 @@
 /**
  * KpiDashboardTable - Visualização em tabela para o Dashboard de KPIs
- * v2.86.0: Mostra indicadores em formato tabular com colunas padronizadas
+ * v2.87.0: Adiciona coluna de ações com menu de editar/arquivar/excluir
  */
 
-import { TrendingUp, TrendingDown, Minus, Clock, User } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -18,7 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { KpiWithValues, RAG_STATUS_CONFIG, INDICATOR_TYPE_LABELS, FREQUENCY_LABELS } from "../types";
+import { KpiWithValues, RAG_STATUS_CONFIG, INDICATOR_TYPE_LABELS } from "../types";
+import { KpiActionsMenu } from "./KpiActionsMenu";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -65,6 +66,7 @@ function TableSkeleton() {
             <TableHead>Status</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Atualização</TableHead>
+            <TableHead className="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -79,6 +81,7 @@ function TableSkeleton() {
               <TableCell><Skeleton className="h-5 w-20" /></TableCell>
               <TableCell><Skeleton className="h-6 w-6 rounded-full" /></TableCell>
               <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+              <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -106,6 +109,7 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
             <TableHead>Status</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Atualização</TableHead>
+            <TableHead className="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -121,7 +125,7 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
             return (
               <TableRow 
                 key={kpi.id} 
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer hover:bg-muted/50 group"
                 onClick={() => onKpiClick(kpi)}
               >
                 {/* Indicador */}
@@ -229,6 +233,11 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                   ) : (
                     <span className="text-muted-foreground text-xs">—</span>
                   )}
+                </TableCell>
+
+                {/* Ações */}
+                <TableCell>
+                  <KpiActionsMenu kpi={kpi} alwaysVisible />
                 </TableCell>
               </TableRow>
             );
