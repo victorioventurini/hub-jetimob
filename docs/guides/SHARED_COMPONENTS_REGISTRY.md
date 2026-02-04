@@ -1,9 +1,9 @@
 # Shared Components & Utilities Registry
 
-**Versão:** 1.4.0  
-**Última atualização:** 2026-01-15  
+**Versão:** 1.5.0  
+**Última atualização:** 2026-02-04  
 **Status:** Normativo  
-**Referência:** TCR v2.37.0
+**Referência:** TCR v2.89.1
 
 ---
 
@@ -611,21 +611,16 @@ const phoneToStore = normalizePhone(userInput); // "5551999999999"
 
 ```tsx
 import { SavedLinksPopover, useSavedLinks, useFavoriteLinks } from "@/shared/saved-links";
-import { ViewOptionsBar } from "@/components/ui/view-options-bar";
+import { PageHeader } from "@/components/ui/page-header";
 
-// ✅ CORRETO: SavedLinksPopover dentro de ViewOptionsBar (padrão v1.0)
-<ViewOptionsBar resultCount={items.length}>
-  <SavedLinksPopover moduleSlug="okrs" />
-  <ViewToggle ... />
-</ViewOptionsBar>
-
-// ⚠️ LEGADO: No PageHeader.actions (ainda suportado)
+// ✅ PADRÃO CANÔNICO: SavedLinksPopover no PageHeader.actions
 <PageHeader
-  title="OKRs"
+  title="Indicadores"
+  breadcrumbs={[{ label: "Indicadores" }]}
   actions={
-    <div className="flex gap-2">
-      <SavedLinksPopover moduleSlug="okrs" />
-      <Button>Novo</Button>
+    <div className="flex items-center gap-2">
+      <SavedLinksPopover moduleSlug="kpis" />
+      <Button>Ação Principal</Button>
     </div>
   }
 />
@@ -642,6 +637,7 @@ const href = getFavoriteHref("okrs", "/okrs"); // retorna path favorito ou fallb
 | `okrs` | OKRs Dashboard | `/okrs` |
 | `kpis` | KPIs Dashboard | `/kpis` |
 | `kpis-evolution` | KPIs Evolução | `/kpis/evolution` |
+| `assets` | Ativos (index) | `/assets` |
 | `assets-inventory` | Inventário de Ativos | `/assets/inventory` |
 | `assets-keys` | Chaves | `/assets/keys` |
 | `assets-gifts` | Brindes | `/assets/gifts` |
@@ -653,7 +649,7 @@ const href = getFavoriteHref("okrs", "/okrs"); // retorna path favorito ou fallb
 - Link favorito se torna destino padrão no sidebar
 - Usuário pode criar quantos links quiser
 - RLS: usuário só vê seus próprios links
-- **Padrão v1.0:** `SavedLinksPopover` deve ser posicionado na `ViewOptionsBar`
+- **Padrão v1.4:** `SavedLinksPopover` posicionado no `PageHeader.actions` (antes de outras ações)
 
 ---
 
