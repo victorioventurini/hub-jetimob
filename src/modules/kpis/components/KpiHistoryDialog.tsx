@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
   TrendingUp,
   TrendingDown,
@@ -29,8 +30,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useKpiWithHistory, type KpiWithHistoryData } from "../hooks/useKpiWithHistory";
+import { useKpiLinkedKrs } from "../hooks/useKpiLinkedKrs";
 import { KpiEvolutionChart } from "./KpiEvolutionChart";
 import { KpiValuesTable } from "./KpiValuesTable";
+import { LinkedKrsSection } from "./LinkedKrsSection";
 import { 
   RAG_STATUS_CONFIG, 
   INDICATOR_TYPE_LABELS, 
@@ -87,6 +90,7 @@ function formatValue(value: number | null, unit: string): string {
 
 export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogProps) {
   const { data: historyData, isLoading } = useKpiWithHistory(kpi?.id);
+  const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpi?.id ?? null);
 
   if (!kpi) return null;
 
@@ -275,6 +279,14 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                 />
               </TabsContent>
             </Tabs>
+
+            {/* KRs Vinculadas */}
+            <Separator />
+            <LinkedKrsSection
+              primaryKrs={primaryKrs}
+              guardrailKrs={guardrailKrs}
+              isLoading={isLoadingKrs}
+            />
 
             {/* Link to evolution page */}
             {historyData?.values?.length ? (
