@@ -484,10 +484,81 @@ useRadixFocusRecovery();
 
 ---
 
+## 10. Componentes de Insights
+
+### 10.1 Filosofia
+
+Insights são sinais contextuais de gestão que ajudam usuários a:
+- Identificar padrões relevantes
+- Tomar decisões informadas
+- Aprender com o histórico
+
+**Regra:** Todo wizard e dashboard com dados de OKRs/KPIs DEVE incluir insights contextuais.
+
+### 10.2 Componentes Disponíveis
+
+| Componente | Arquivo | Uso |
+|------------|---------|-----|
+| `VicInsightCard` | `src/modules/okrs/components/wizards/shared/VicInsightCard.tsx` | Insight individual de IA |
+| `VicInsightsList` | Mesmo arquivo | Lista de insights colapsável |
+| `KrStateInsightCard` | `src/modules/okrs/components/insights/KrStateInsightCard.tsx` | Insight baseado em estado de KR |
+| `KrStateInline` | Mesmo arquivo | Indicador inline de estado |
+| `KrStateDistribution` | Mesmo arquivo | Distribuição visual de estados |
+
+### 10.3 Estados de KR Reconhecidos
+
+| Estado | Severidade | Insight |
+|--------|------------|---------|
+| `not_started` | info | "O foco está claro?" |
+| `healthy` | info | "Manter execução" |
+| `stagnant` | warning | "O que está travando?" |
+| `at_risk` | warning | "Decisão necessária?" |
+| `off_track` | critical | "Replanejar?" |
+| `achieved` | info | "Algum aprendizado?" |
+| `exceeded` | info | "O que aprendemos?" |
+| `not_achieved` | warning | "Meta, plano ou execução?" |
+
+### 10.4 Padrão de Uso em Wizards
+
+Todo wizard de OKRs DEVE:
+1. Calcular estado das KRs usando `calculateKrState()`
+2. Exibir insights contextuais via `KrStateInsightCard` ou `VicInsightCard`
+3. Oferecer reflexões guiadas baseadas no estado
+
+```tsx
+import { 
+  calculateKrState, 
+  KrStateInsightCard 
+} from '@/modules/okrs/components/insights';
+
+const krState = calculateKrState({
+  progress: kr.progress,
+  status: kr.status,
+  daysSinceCheckin: kr.days_since_checkin,
+  cycleEnded: false,
+});
+
+<KrStateInsightCard state={krState} krTitle={kr.title} />
+```
+
+### 10.5 Anti-patterns
+
+| # | Anti-pattern | Alternativa |
+|---|--------------|-------------|
+| 1 | Wizard sem insights | Adicionar `KrStateInsightCard` |
+| 2 | Insight punitivo | Reescrever com tom de aprendizado |
+| 3 | Comparação entre usuários | Focar em padrões, não pessoas |
+| 4 | Insights genéricos | Usar contexto específico da KR |
+
+> 📋 **Guia Completo:** [WIZARD_DEVELOPMENT_GUIDE.md](../guides/WIZARD_DEVELOPMENT_GUIDE.md)
+
+---
+
 ## Changelog
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.3.0 | 2026-02-04 | Adicionada seção 10 - Componentes de Insights |
 | 1.2.0 | 2026-02-02 | Adicionada seção 9 - Focus Recovery (Radix UI) |
 | 1.1.0 | 2026-02-02 | Adicionada seção de Componentes de Seleção (BuUserSelect, BuUserMultiSelect, TeamSelect) |
 | 1.0.0 | 2026-01-31 | Criação inicial com padrões de Button, LoadingState, EmptyState |

@@ -212,3 +212,21 @@ export {
 export { useOrgHealthReview } from './useOrgHealthReview';
 export { useConstructionReview } from './useConstructionReview';
 export { useOrgConstructionReview } from './useOrgConstructionReview';
+
+// =========================
+// KR STATE INSIGHTS
+// =========================
+export {
+  calculateKrState,
+  getKrStateConfig,
+  groupKrStatesBySeverity,
+  filterKrsRequiringAttention,
+  filterKrsForCelebration,
+  sortByStatePriority,
+  KR_STATE_CONFIG,
+  KR_STATE_PRIORITY_ORDER,
+  type KrState,
+  type KrStateConfig,
+  type KrStateSeverity,
+  type CalculateKrStateParams,
+} from './useKrStateInsights';

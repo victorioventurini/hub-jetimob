@@ -282,3 +282,47 @@ onSuccess: () => {
 - [ ] Todas mutations usam `refetchType: 'active'` em `invalidateQueries`
 - [ ] Queries relacionadas são invalidadas (não apenas a principal)
 - [ ] Toast de feedback é exibido após sucesso/erro
+
+---
+
+## E. Wizards e Ritos de Gestão
+
+### E.1 Regra de Ouro para Wizards
+
+> ⚠️ **Todo wizard de check-in ou gestão DEVE incluir insights contextuais.**
+> Wizards sem insights são "termômetros" — não agregam inteligência.
+
+### E.2 Checklist Obrigatório para Novos Wizards
+
+| # | Item | Obrigatório |
+|---|------|-------------|
+| 1 | Calcular e exibir estado das KRs (`calculateKrState`) | ✅ |
+| 2 | Exibir insights contextuais por estado | ✅ |
+| 3 | Oferecer perguntas de reflexão guiadas | ✅ |
+| 4 | Integrar com agentes Vic quando aplicável | Recomendado |
+| 5 | Usar `VicInsightCard` ou `KrStateInsightCard` | ✅ |
+| 6 | Não usar insights para avaliação/punição | ✅ |
+
+### E.3 Estados de KR Reconhecidos
+
+| Estado | Condição | Insight |
+|--------|----------|---------|
+| `not_started` | progress = 0 | "O foco está claro?" |
+| `healthy` | Progresso conforme esperado | "Manter execução" |
+| `stagnant` | 14+ dias sem check-in | "O que está travando?" |
+| `at_risk` | RAG yellow | "Decisão necessária?" |
+| `off_track` | RAG red | "Replanejar?" |
+| `achieved` | progress = 100% | "Algum aprendizado?" |
+| `exceeded` | progress > 100% | "O que aprendemos?" |
+| `not_achieved` | Ciclo encerrado + <100% | "Meta, plano ou execução?" |
+
+### E.4 Anti-patterns em Wizards
+
+| # | Anti-pattern | Alternativa |
+|---|--------------|-------------|
+| 1 | Wizard sem insights | Adicionar `KrStateInsightCard` |
+| 2 | Insight punitivo | Reescrever com tom de aprendizado |
+| 3 | Comparação entre usuários | Focar em padrões, não pessoas |
+| 4 | Insights genéricos | Usar contexto específico da KR |
+
+> 📋 **Guia Completo:** [WIZARD_DEVELOPMENT_GUIDE.md](docs/guides/WIZARD_DEVELOPMENT_GUIDE.md)
