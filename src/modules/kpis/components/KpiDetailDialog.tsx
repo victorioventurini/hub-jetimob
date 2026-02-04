@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle, Building2, Globe } from "lucide-react";
-import { useKpiDetail } from "@/modules/kpis/hooks";
+import { useKpiDetail, useKpiLinkedKrs } from "@/modules/kpis/hooks";
+import { LinkedKrsSection } from "./LinkedKrsSection";
 import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, SCOPE_LABELS, KpiValueSource, KpiScope } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -50,7 +51,7 @@ const getSourceColor = (type: string) => {
 
 export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogProps) {
   const { kpi, values, isLoading } = useKpiDetail(kpiId || "");
-
+  const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpiId);
   if (!kpiId || isLoading || !kpi) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -259,6 +260,14 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
 
           <Separator />
 
+          {/* Linked KRs Section */}
+          <LinkedKrsSection
+            primaryKrs={primaryKrs}
+            guardrailKrs={guardrailKrs}
+            isLoading={isLoadingKrs}
+          />
+
+          <Separator />
           {/* Chart */}
           {chartData.length > 0 && (
             <div className="space-y-3">
