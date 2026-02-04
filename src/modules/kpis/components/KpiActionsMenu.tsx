@@ -19,12 +19,46 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useKpiMutations } from "../hooks/useKpiMutations";
-import { KpiWithValues, KpiMetric } from "../types";
+import { useCanEditKpi } from "../hooks/useCanEditKpi";
+import { KpiMetric, KpiValueSource, KpiVisibility, KpiIndicatorType, KpiLifecycleStatus, KpiScope, KpiDirection, KpiFrequency } from "../types";
 import { EditKpiDialog } from "./EditKpiDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 
+/**
+ * Tipo base para o menu de ações - aceita qualquer KPI com campos mínimos
+ * Compatível com KpiWithValues, KpiMetric e o retorno de useKpiDetail
+ */
+interface KpiForActions {
+  id: string;
+  name: string;
+  bu_id: string;
+  status: 'active' | 'inactive';
+  owner_user_id?: string | null;
+  team_id?: string | null;
+  area_id?: string | null;
+  // Outros campos opcionais para EditKpiDialog
+  description?: string | null;
+  unit?: string;
+  direction?: KpiDirection | string;
+  frequency?: KpiFrequency | string;
+  target_value?: number | null;
+  source_type?: KpiValueSource | string;
+  source_config?: Record<string, unknown> | null;
+  visibility?: KpiVisibility | string;
+  linked_okrs?: string[];
+  indicator_type?: KpiIndicatorType | string;
+  lifecycle_status?: KpiLifecycleStatus | string;
+  target_source?: string | null;
+  recovery_protocol?: string | null;
+  scope?: KpiScope | string;
+  area?: { id: string; name: string; color: string | null };
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+}
+
 interface KpiActionsMenuProps {
-  kpi: KpiWithValues | KpiMetric;
+  kpi: KpiForActions;
   onActionComplete?: () => void;
 }
 
@@ -35,12 +69,17 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   
   const { archiveKpi, reactivateKpi, deleteKpi } = useKpiMutations();
-  const { has: hasPermission, isLoading } = usePermissions();
-  // Pode gerenciar indicadores (editar/arquivar/excluir)
+  const { has: hasPermission, isLoading: permissionLoading } = usePermissions();
+  const { canEdit, isLoading: canEditLoading } = useCanEditKpi(kpi);
+  
+  // Pode gerenciar (arquivar/excluir) - apenas admins
   const canManage = hasPermission("kpis.settings.manage:bu");
+  
+  const isLoading = permissionLoading || canEditLoading;
 
-  // Early return if no permission (after hooks)
-  if (!isLoading && !canManage) {
+  // Early return if no edit permission (after hooks)
+  // Owners e contribuidores podem editar, mas arquivar/excluir só admin
+  if (!isLoading && !canEdit) {
     return null;
   }
 
@@ -72,37 +111,37 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
     }
   };
 
-  // Map KpiWithValues to KpiMetric for EditKpiDialog
+  // Map KpiForActions to KpiMetric for EditKpiDialog
   // v2.82.0: category deprecated - using area_id for ownership
   const kpiForEdit: KpiMetric = {
     id: kpi.id,
     name: kpi.name,
-    description: kpi.description,
+    description: kpi.description ?? null,
     // category deprecated v2.82.0
     bu_id: kpi.bu_id,
-    owner_user_id: kpi.owner_user_id,
-    team_id: kpi.team_id,
-    unit: kpi.unit,
-    direction: kpi.direction,
-    frequency: kpi.frequency,
-    target_value: kpi.target_value,
+    owner_user_id: kpi.owner_user_id ?? null,
+    team_id: kpi.team_id ?? null,
+    unit: kpi.unit ?? '%',
+    direction: (kpi.direction ?? 'up') as KpiDirection,
+    frequency: (kpi.frequency ?? 'monthly') as KpiFrequency,
+    target_value: kpi.target_value ?? null,
     status: kpi.status,
-    source_type: kpi.source_type,
-    source_config: kpi.source_config,
-    visibility: kpi.visibility,
-    comparison_rule: kpi.direction === 'up' ? 'higher_is_better' : 'lower_is_better',
-    linked_okrs: kpi.linked_okrs,
-    created_at: kpi.created_at,
-    updated_at: kpi.updated_at,
-    deleted_at: kpi.deleted_at,
+    source_type: (kpi.source_type ?? 'manual') as KpiValueSource,
+    source_config: kpi.source_config ?? null,
+    visibility: (kpi.visibility ?? 'bu') as KpiVisibility,
+    comparison_rule: (kpi.direction ?? 'up') === 'up' ? 'higher_is_better' : 'lower_is_better',
+    linked_okrs: kpi.linked_okrs ?? [],
+    created_at: kpi.created_at ?? new Date().toISOString(),
+    updated_at: kpi.updated_at ?? new Date().toISOString(),
+    deleted_at: kpi.deleted_at ?? null,
     // v2.1 fields
-    indicator_type: kpi.indicator_type ?? 'kpi',
-    lifecycle_status: kpi.lifecycle_status ?? 'active',
+    indicator_type: (kpi.indicator_type ?? 'kpi') as KpiIndicatorType,
+    lifecycle_status: (kpi.lifecycle_status ?? 'active') as KpiLifecycleStatus,
     target_source: kpi.target_source ?? null,
     recovery_protocol: kpi.recovery_protocol ?? null,
     // v2.2 governance fields
     area_id: kpi.area_id ?? null,
-    scope: kpi.scope ?? 'team',
+    scope: (kpi.scope ?? 'team') as KpiScope,
     area: kpi.area,
   };
 
@@ -125,27 +164,32 @@ export function KpiActionsMenu({ kpi, onActionComplete }: KpiActionsMenuProps) {
             <Edit className="mr-2 h-4 w-4" />
             Editar
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
-            {isArchived ? (
-              <>
-                <ArchiveRestore className="mr-2 h-4 w-4" />
-                Reativar
-              </>
-            ) : (
-              <>
-                <Archive className="mr-2 h-4 w-4" />
-                Arquivar
-              </>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir
-          </DropdownMenuItem>
+          {/* Arquivar/Excluir apenas para admins */}
+          {canManage && (
+            <>
+              <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
+                {isArchived ? (
+                  <>
+                    <ArchiveRestore className="mr-2 h-4 w-4" />
+                    Reativar
+                  </>
+                ) : (
+                  <>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Arquivar
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle, Building2, Globe } from "lucide-react";
 import { useKpiDetail, useKpiLinkedKrs } from "@/modules/kpis/hooks";
 import { LinkedKrsSection } from "./LinkedKrsSection";
+import { KpiActionsMenu } from "./KpiActionsMenu";
 import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, SCOPE_LABELS, KpiValueSource, KpiScope } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -127,7 +128,7 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1">
               <DialogTitle className="text-xl">{kpi.name}</DialogTitle>
               <div className="flex items-center gap-2">
                 <Badge
@@ -142,6 +143,8 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
                 </Badge>
               </div>
             </div>
+            {/* Actions Menu for owners/admins */}
+            <KpiActionsMenu kpi={kpi} />
           </div>
         </DialogHeader>
 
