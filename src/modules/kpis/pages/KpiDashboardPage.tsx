@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Plus, BarChart3 } from "lucide-react";
+import { Plus, TrendingUp, BarChart3 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -166,6 +167,14 @@ export default function KpiDashboardPage() {
             <div className="flex items-center gap-2">
               {/* v2.86.0: Filtros Salvos */}
               <SavedLinksPopover moduleSlug="kpis" />
+              
+              {/* v2.87.0: Acesso ao Dashboard de Evolução */}
+              <Button variant="outline" asChild>
+                <Link to="/kpis/evolution">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Evolução
+                </Link>
+              </Button>
               
               {canCreateIndicator && (
                 <Button onClick={() => setCreateOpen(true)}>
