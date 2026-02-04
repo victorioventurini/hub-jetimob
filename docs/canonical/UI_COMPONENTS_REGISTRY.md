@@ -1,9 +1,9 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.3.0  
+**Versão:** 1.4.0  
 **Última atualização:** 2026-02-04  
 **Status:** Normativo  
-**Referência:** TCR v2.84.0 / DEVELOPMENT_STANDARDS v1.17.0
+**Referência:** TCR v2.88.0 / DEVELOPMENT_STANDARDS v1.17.0
 
 ---
 
@@ -267,14 +267,93 @@ Header para seções dentro de cards:
 
 **Arquivo:** `src/components/ui/list-page-filters.tsx`
 
-Barra de filtros padronizada para listagens:
+Barra de filtros padronizada para listagens. Foco exclusivo em busca + filtros inline (todos em uma linha).
 
 ```tsx
-<ListPageFilters>
-  <UrlSearchInput placeholder="Buscar..." />
-  <StatusFilter />
-  <TeamSelect />
+<ListPageFilters
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Buscar..."
+>
+  <StatusSelect value={status} onChange={setStatus} />
+  <TeamSelect value={team} onChange={setTeam} />
 </ListPageFilters>
+```
+
+**Props:**
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `searchValue` | `string` | Valor atual da busca |
+| `onSearchChange` | `(value: string) => void` | Callback de mudança |
+| `searchPlaceholder` | `string` | Placeholder do campo |
+| `searchDebounceMs` | `number` | Debounce em ms (default: 300) |
+| `children` | `ReactNode` | Filtros adicionais (selects, etc) |
+| `hideSearch` | `boolean` | Oculta o campo de busca |
+
+### 5.4 ViewOptionsBar
+
+**Arquivo:** `src/components/ui/view-options-bar.tsx`
+
+Linha de opções de visualização. Exibe contador de resultados (esquerda) e controles de exibição (direita).
+
+```tsx
+<ViewOptionsBar
+  resultCount={items.length}
+  resultCountLabel="indicadores encontrados"
+  resultCountLabelSingular="indicador encontrado"
+>
+  <KpiViewToggle viewMode={view} onViewModeChange={setView} />
+  <SortControl ... />
+</ViewOptionsBar>
+```
+
+**Props:**
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `resultCount` | `number` | Número de resultados para exibir contador |
+| `resultCountLabel` | `string` | Label plural (default: "itens encontrados") |
+| `resultCountLabelSingular` | `string` | Label singular (default: "item encontrado") |
+| `children` | `ReactNode` | Controles (ViewToggle, SortControl, etc) |
+
+### 5.5 Layout de Páginas de Listagem
+
+Páginas com listagem de dados devem seguir esta estrutura hierárquica:
+
+1. **PageHeader**: Título, descrição, breadcrumbs, ações principais
+2. **Summary Cards** (opcional): Resumo estatístico
+3. **ListPageFilters**: Busca + Filtros em uma linha
+4. **ViewOptionsBar**: Contador + Toggle de visualização + Ordenação
+5. **Content**: Cards, Tabela ou outro formato
+
+```tsx
+// ✅ CORRETO: Layout padronizado
+<PageHeader
+  title="Indicadores"
+  breadcrumbs={[{ label: "Indicadores" }]}
+  actions={<Button>Novo</Button>}
+/>
+
+<SummaryCards {...} />
+
+<ListPageFilters
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Buscar..."
+>
+  <TypeSelect value={type} onChange={setType} />
+  <StatusSelect value={status} onChange={setStatus} />
+</ListPageFilters>
+
+<ViewOptionsBar
+  resultCount={items.length}
+  resultCountLabel="indicadores"
+>
+  <KpiViewToggle viewMode={view} onViewModeChange={setView} />
+</ViewOptionsBar>
+
+<Content />
 ```
 
 ---
@@ -446,6 +525,8 @@ if (isLoading) {
 | 9 | Breadcrumb separado + PageHeader | Usar APENAS `PageHeader` com prop `breadcrumbs` |
 | 10 | Múltiplos PageHeaders na mesma página | Exatamente UM `PageHeader` por página |
 | 11 | `GlobalBreadcrumb` ou presets (`TicketsBreadcrumb`) | `PageHeader` com prop `breadcrumbs` |
+| 12 | ViewToggle dentro de `ListPageFilters.actions` | Usar `ViewOptionsBar` separado |
+| 13 | Contador de resultados misturado com filtros | Mover para `ViewOptionsBar` |
 
 ---
 

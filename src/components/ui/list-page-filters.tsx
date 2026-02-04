@@ -1,19 +1,24 @@
 /**
  * ListPageFilters - Componente canônico para barra de filtros em páginas de listagem
  * 
- * Padroniza o layout: busca à esquerda, filtros no meio, ações à direita.
+ * Padroniza o layout: busca à esquerda, filtros em linha (children).
  * Usado ABAIXO do PageHeader em páginas de listagem.
+ * 
+ * Para opções de visualização (contador, toggles), use ViewOptionsBar abaixo.
  * 
  * @example
  * <ListPageFilters
  *   searchValue={search}
  *   onSearchChange={setSearch}
  *   searchPlaceholder="Buscar..."
- *   resultCount={items.length}
- *   actions={<Button>+ Novo Item</Button>}
  * >
  *   <StatusSelect value={status} onChange={setStatus} />
+ *   <TeamSelect value={team} onChange={setTeam} />
  * </ListPageFilters>
+ * 
+ * <ViewOptionsBar resultCount={items.length}>
+ *   <KpiViewToggle ... />
+ * </ViewOptionsBar>
  */
 
 import { ReactNode } from "react";
@@ -33,18 +38,10 @@ interface ListPageFiltersProps {
   searchClassName?: string;
   /** Filtros adicionais (selects, toggles, etc) */
   children?: ReactNode;
-  /** Botões de ação (ex: Novo Item) */
-  actions?: ReactNode;
   /** Classes adicionais para o container */
   className?: string;
   /** Se true, não mostra o campo de busca */
   hideSearch?: boolean;
-  /** Número de resultados para exibir contador (ex: "42 itens encontrados") */
-  resultCount?: number;
-  /** Label customizada para o contador (default: "itens encontrados") */
-  resultCountLabel?: string;
-  /** Label singular para o contador (default: "item encontrado") */
-  resultCountLabelSingular?: string;
 }
 
 export function ListPageFilters({
@@ -54,52 +51,32 @@ export function ListPageFilters({
   searchDebounceMs = 300,
   searchClassName,
   children,
-  actions,
   className,
   hideSearch = false,
-  resultCount,
-  resultCountLabel = "itens encontrados",
-  resultCountLabelSingular = "item encontrado",
 }: ListPageFiltersProps) {
   const hasFilters = !!children;
-  const hasActions = !!actions;
-  const hasResultCount = typeof resultCount === "number";
+  const hasSearch = !hideSearch && onSearchChange;
+
+  // Se não há busca nem filtros, não renderiza nada
+  if (!hasSearch && !hasFilters) {
+    return null;
+  }
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Row 1: Search + Actions */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {!hideSearch && onSearchChange && (
-          <UrlSearchInput
-            value={searchValue}
-            onChange={onSearchChange}
-            placeholder={searchPlaceholder}
-            debounceMs={searchDebounceMs}
-            className={cn("flex-1 sm:max-w-sm", searchClassName)}
-          />
-        )}
-        
-        {hasActions && (
-          <div className="flex items-center gap-2 shrink-0 sm:ml-auto">
-            {actions}
-          </div>
-        )}
-      </div>
-
-      {/* Row 2: Filters (optional) */}
-      {hasFilters && (
-        <div className="flex flex-wrap gap-2 items-center">
-          {children}
-        </div>
+    <div className={cn("flex flex-wrap items-center gap-3", className)}>
+      {/* Search Input */}
+      {hasSearch && (
+        <UrlSearchInput
+          value={searchValue}
+          onChange={onSearchChange}
+          placeholder={searchPlaceholder}
+          debounceMs={searchDebounceMs}
+          className={cn("w-full sm:w-auto sm:min-w-[200px] sm:max-w-sm", searchClassName)}
+        />
       )}
-
-      {/* Row 3: Result count (optional) */}
-      {hasResultCount && (
-        <div className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{resultCount.toLocaleString("pt-BR")}</span>{" "}
-          {resultCount === 1 ? resultCountLabelSingular : resultCountLabel}
-        </div>
-      )}
+      
+      {/* Filters (inline with search) */}
+      {hasFilters && children}
     </div>
   );
 }

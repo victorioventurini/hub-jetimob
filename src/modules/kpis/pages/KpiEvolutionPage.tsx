@@ -43,6 +43,7 @@ import {
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUrlState } from "@/shared/url";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -385,32 +386,11 @@ export default function KpiEvolutionPage() {
           </Card>
         </div>
 
-        {/* Filters */}
+        {/* Linha 1: Busca + Filtros */}
         <ListPageFilters
           searchValue={searchState.value}
           onSearchChange={searchState.set}
           searchPlaceholder="Buscar indicador..."
-          resultCount={kpis.length}
-          resultCountLabel="indicadores"
-          resultCountLabelSingular="indicador"
-          actions={
-            <Tabs value={viewModeState.value} onValueChange={(v) => viewModeState.set(v as ViewMode)}>
-              <TabsList>
-                <TabsTrigger value="cards" className="gap-1.5">
-                  <LayoutGrid className="h-4 w-4" />
-                  <span className="hidden sm:inline">Cards</span>
-                </TabsTrigger>
-                <TabsTrigger value="table" className="gap-1.5">
-                  <TableIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Tabela</span>
-                </TabsTrigger>
-                <TabsTrigger value="charts" className="gap-1.5">
-                  <ChartLine className="h-4 w-4" />
-                  <span className="hidden sm:inline">Gráficos</span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          }
         >
           <KpiDashboardFilters
             category="all"
@@ -427,6 +407,30 @@ export default function KpiEvolutionPage() {
             onRagStatusChange={ragStatusState.set}
           />
         </ListPageFilters>
+
+        {/* Linha 2: Contador + Toggle de visualização */}
+        <ViewOptionsBar
+          resultCount={kpis.length}
+          resultCountLabel="indicadores"
+          resultCountLabelSingular="indicador"
+        >
+          <Tabs value={viewModeState.value} onValueChange={(v) => viewModeState.set(v as ViewMode)}>
+            <TabsList>
+              <TabsTrigger value="cards" className="gap-1.5">
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">Cards</span>
+              </TabsTrigger>
+              <TabsTrigger value="table" className="gap-1.5">
+                <TableIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Tabela</span>
+              </TabsTrigger>
+              <TabsTrigger value="charts" className="gap-1.5">
+                <ChartLine className="h-4 w-4" />
+                <span className="hidden sm:inline">Gráficos</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </ViewOptionsBar>
 
         {/* Content */}
         {isLoading ? (
