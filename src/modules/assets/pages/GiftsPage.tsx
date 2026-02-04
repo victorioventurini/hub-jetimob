@@ -70,26 +70,27 @@ export default function GiftsPage() {
         </Alert>
       )}
 
-      {/* Header com busca e ações - usando ListPageFilters canônico */}
-      <ListPageFilters
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome ou categoria..."
-        actions={
-          canManageGifts && (
-            <>
-              <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>
-                <ArrowUp className="h-4 w-4 mr-2" />
-                Registrar Saída
-              </Button>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Brinde
-              </Button>
-            </>
-          )
-        }
-      />
+      {/* Header com busca e ações */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <ListPageFilters
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar por nome ou categoria..."
+          className="flex-1"
+        />
+        {canManageGifts && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>
+              <ArrowUp className="h-4 w-4 mr-2" />
+              Registrar Saída
+            </Button>
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Brinde
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Tabela de brindes */}
       {filteredItems.length === 0 ? (

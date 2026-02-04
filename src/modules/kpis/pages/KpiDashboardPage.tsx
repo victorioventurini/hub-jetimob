@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { KpisBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKpiData } from "@/modules/kpis/hooks";
 import { useAreas } from "@/modules/areas/hooks";
@@ -27,13 +27,14 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { SavedLinksPopover } from "@/shared/saved-links";
 
 /**
- * v2.86.0 - Dashboard de Indicadores
+ * v2.88.0 - Dashboard de Indicadores
  * 
  * Mudanças:
  * - v2.83.0: Agrupamento por Área (em vez de Categoria)
  * - v2.83.0: Filtros atualizados: Tipo, Área, Escopo, Time
  * - v2.86.0: Adicionado toggle de visualização (Cards/Tabela)
  * - v2.86.0: Adicionado recurso de filtros salvos (SavedLinksPopover)
+ * - v2.88.0: Layout padronizado - Linha 1 (Filtros) + Linha 2 (ViewOptionsBar)
  */
 
 export default function KpiDashboardPage() {
@@ -175,11 +176,11 @@ export default function KpiDashboardPage() {
   return (
     <HubLayout>
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <KpisBreadcrumb />
+        {/* Header com breadcrumbs integrados */}
         <PageHeader
           title="Indicadores"
           description={`KPIs e Métricas da ${currentBu?.name || 'organização'}`}
+          breadcrumbs={[{ label: "Indicadores" }]}
           actions={
             <div className="flex items-center gap-2">
               {/* v2.86.0: Filtros Salvos */}
@@ -212,20 +213,11 @@ export default function KpiDashboardPage() {
           improving={summary.improving}
         />
 
-        {/* v2.87.0: Search + Filters Row using ListPageFilters */}
+        {/* v2.88.0: Linha 1 - Busca + Filtros (todos em uma linha) */}
         <ListPageFilters
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           searchPlaceholder="Buscar indicadores..."
-          resultCount={!isLoading ? filteredKpis.length : undefined}
-          resultCountLabel="indicadores encontrados"
-          resultCountLabelSingular="indicador encontrado"
-          actions={
-            <KpiViewToggle 
-              viewMode={viewMode} 
-              onViewModeChange={setViewMode} 
-            />
-          }
         >
           <KpiDashboardFilters
             category="all"
@@ -242,6 +234,18 @@ export default function KpiDashboardPage() {
             onRagStatusChange={setRagStatusFilter}
           />
         </ListPageFilters>
+
+        {/* v2.88.0: Linha 2 - Contador + Opções de visualização */}
+        <ViewOptionsBar
+          resultCount={!isLoading ? filteredKpis.length : undefined}
+          resultCountLabel="indicadores encontrados"
+          resultCountLabelSingular="indicador encontrado"
+        >
+          <KpiViewToggle 
+            viewMode={viewMode} 
+            onViewModeChange={setViewMode} 
+          />
+        </ViewOptionsBar>
 
         {/* KPIs Content */}
         {isLoading ? (

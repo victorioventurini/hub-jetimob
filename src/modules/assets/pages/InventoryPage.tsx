@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { useInventory, useLocations, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { InventoryTable } from "../components/inventory/InventoryTable";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
@@ -142,20 +143,21 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
-      <ListPageFilters
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome ou código..."
-        resultCount={filteredItems.length}
-        actions={
-          canAddItem && (
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Item
-            </Button>
-          )
-        }
-      />
+      {/* Linha 1: Busca + Botão de ação */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <ListPageFilters
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar por nome ou código..."
+          className="flex-1"
+        />
+        {canAddItem && (
+          <Button onClick={() => setDialogOpen(true)} className="shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Item
+          </Button>
+        )}
+      </div>
 
       {/* Filters - always visible */}
       <InventoryFilters
@@ -170,6 +172,13 @@ export default function InventoryPage() {
         categories={categories}
         holders={holders}
         locations={locations}
+      />
+
+      {/* Linha 2: Contador de resultados */}
+      <ViewOptionsBar
+        resultCount={filteredItems.length}
+        resultCountLabel="itens encontrados"
+        resultCountLabelSingular="item encontrado"
       />
 
       {/* Items grid */}

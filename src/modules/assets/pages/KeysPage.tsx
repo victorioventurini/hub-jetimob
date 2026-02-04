@@ -51,20 +51,21 @@ export default function KeysPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header com busca - usando ListPageFilters canônico */}
-      <ListPageFilters
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar chaveiro..."
-        actions={
-          canManageKeys && (
-            <Button onClick={() => setKeyringDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Chaveiro
-            </Button>
-          )
-        }
-      />
+      {/* Header com busca e ação */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <ListPageFilters
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar chaveiro..."
+          className="flex-1"
+        />
+        {canManageKeys && (
+          <Button onClick={() => setKeyringDialogOpen(true)} className="shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Chaveiro
+          </Button>
+        )}
+      </div>
 
       {/* Lista de chaveiros */}
       {filteredKeyrings.length === 0 ? (

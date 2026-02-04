@@ -59,18 +59,18 @@ export function AreasPage() {
             { label: "Configurações", href: "/settings" },
             { label: "Áreas" },
           ]}
-        />
-
-        <ListPageFilters
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Buscar áreas..."
           actions={
             <Button onClick={handleCreate}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Área
             </Button>
           }
+        />
+
+        <ListPageFilters
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar áreas..."
         />
 
         {/* Areas Grid */}
