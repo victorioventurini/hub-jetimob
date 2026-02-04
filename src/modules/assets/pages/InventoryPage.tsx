@@ -143,36 +143,37 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
-      {/* Linha 1: Busca + Botão de ação */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Linha 1: Busca + Filtros + Botão (tudo inline conforme padrão) */}
+      <div className="flex flex-wrap items-center gap-3">
         <ListPageFilters
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Buscar por nome ou código..."
-          className="flex-1"
-        />
+          searchClassName="w-full sm:w-auto sm:min-w-[220px]"
+        >
+          {/* Filtros inline com busca */}
+          <InventoryFilters
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            categoryFilter={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+            holderFilter={holderFilter}
+            onHolderChange={setHolderFilter}
+            locationFilter={locationFilter}
+            onLocationChange={setLocationFilter}
+            categories={categories}
+            holders={holders}
+            locations={locations}
+          />
+        </ListPageFilters>
+        
         {canAddItem && (
-          <Button onClick={() => setDialogOpen(true)} className="shrink-0">
+          <Button onClick={() => setDialogOpen(true)} className="shrink-0 ml-auto">
             <Plus className="h-4 w-4 mr-2" />
             Novo Item
           </Button>
         )}
       </div>
-
-      {/* Filters - always visible */}
-      <InventoryFilters
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        categoryFilter={categoryFilter}
-        onCategoryChange={setCategoryFilter}
-        holderFilter={holderFilter}
-        onHolderChange={setHolderFilter}
-        locationFilter={locationFilter}
-        onLocationChange={setLocationFilter}
-        categories={categories}
-        holders={holders}
-        locations={locations}
-      />
 
       {/* Linha 2: Contador de resultados */}
       <ViewOptionsBar
