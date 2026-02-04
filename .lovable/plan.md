@@ -1,400 +1,276 @@
 
-# Plano: Implementação do Google Analytics 4 (GA4) Multi-Tenant
+# Plano: Google Tag Manager via Painel de Integrações
 
-## Objetivo
+## Contexto
 
-Implementar rastreamento GA4 completo para um sistema SaaS multi-tenant onde a URL não muda ao trocar de empresa (BU). A implementação será baseada em:
-1. **User Properties** para identificar o tenant (BU)
-2. **Virtual Page Views** para rastrear navegação sem mudança de URL
-3. **Data Layer** para integração opcional com GTM
-4. **Logs de desenvolvimento** para validação
+O plano aprovado anteriormente implementou GA4 diretamente no código. Agora o usuário deseja migrar para **Google Tag Manager (GTM)**, onde:
+- O GTM Container ID é configurado via painel de integrações (`/hub/integrations`)
+- O GA4 Measurement ID será gerenciado **dentro do GTM**, não no código
+
+## Arquitetura Atual
+
+A implementação existente de GA4 (v2.90.0) já está parcialmente funcional:
+- `src/lib/analytics/gtag.ts` - Funções de tracking (setTenantId, trackVirtualPageView, etc.)
+- `src/hooks/useRouteTracking.ts` - Tracking automático de rotas
+- `src/contexts/BuContext.tsx` - Já chama `setTenantId()` ao selecionar BU
+- `src/pages/AuthCallback.tsx` - Já chama `initSessionContext()` após login
+
+## Plano de Implementação
+
+### Fase 1: Adicionar GTM ao Catálogo de Integrações
+
+**Migration SQL** para inserir no `hub_integrations_catalog`:
+
+```sql
+INSERT INTO hub_integrations_catalog (
+  integration_key,
+  name,
+  description,
+  icon,
+  color,
+  supports_global_config,
+  supports_bu_override,
+  supports_agents,
+  status,
+  display_order
+) VALUES (
+  'google-tag-manager',
+  'Google Tag Manager',
+  'Gerenciador de tags para analytics, marketing e tracking. Configure GA4, conversões e remarketing.',
+  'tag',
+  '#4285F4',
+  true,
+  false,  -- GTM é global, não faz sentido override por BU
+  false,
+  'active',
+  1
+);
+```
 
 ---
 
-## Fase 1: Configuração Base do GA4
+### Fase 2: Modificar Módulo Analytics para GTM
 
-### 1.1 Criar Secret para Measurement ID
+#### 2.1 Refatorar `src/lib/analytics/gtag.ts`
 
-Adicionar secret `GA4_MEASUREMENT_ID` no projeto (ex: `G-XXXXXXXXXX`).
+Mudar de carregar GA4 diretamente para carregar GTM via `dataLayer.push`:
 
-### 1.2 Criar Script de Inicialização
+**Antes:**
+- Carrega script gtag.js com GA_MEASUREMENT_ID
+- Configura GA4 direto
 
-Criar arquivo `src/lib/analytics/gtag.ts` com as funções core:
+**Depois:**
+- Carrega script do GTM com GTM_CONTAINER_ID
+- dataLayer é inicializado para GTM
+- GA4 é gerenciado dentro do GTM (sem config direto no código)
+
+```text
+FUNÇÕES MANTIDAS (API compatível):
+├── initGTM(containerId?)      # Nova - substitui initGA4
+├── setTenantId(tenantId)      # Inalterada (push para dataLayer)
+├── trackVirtualPageView(...)  # Inalterada (push para dataLayer)
+├── trackEvent(...)            # Inalterada (push para dataLayer)
+├── pushToDataLayer(...)       # Inalterada
+└── initSessionContext(...)    # Inalterada
+```
+
+#### 2.2 Criar Hook para Config GTM
+
+Criar `src/lib/analytics/useGtmConfig.ts`:
 
 ```typescript
-// src/lib/analytics/gtag.ts
-
-declare global {
-  interface Window {
-    gtag: (...args: any[]) => void;
-    dataLayer: any[];
-  }
-}
-
-const GA_MEASUREMENT_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID;
-const isDev = import.meta.env.DEV;
-
 /**
- * Inicializa o Google Analytics 4
- * Chamado uma vez no carregamento da aplicação
+ * Hook para buscar Container ID do GTM da configuração global.
+ * Retorna null se não configurado ou desabilitado.
  */
-export function initGA4(): void {
-  if (!GA_MEASUREMENT_ID) {
-    if (isDev) console.warn('[GA4] Measurement ID não configurado');
-    return;
-  }
-
-  // Criar script do gtag.js
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(script);
-
-  // Inicializar dataLayer e gtag
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag() {
-    window.dataLayer.push(arguments);
-  };
-  window.gtag('js', new Date());
-  
-  // Config inicial com page_view desabilitado (faremos manualmente)
-  window.gtag('config', GA_MEASUREMENT_ID, {
-    send_page_view: false, // Virtual page views manuais
+export function useGtmConfig(): string | null {
+  const { data } = useQuery({
+    queryKey: queryKeys.integrations.globalByKey('google-tag-manager'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('hub_integrations_global_config')
+        .select('is_enabled_global, config_encrypted')
+        .eq('integration_key', 'google-tag-manager')
+        .maybeSingle();
+      
+      if (!data?.is_enabled_global) return null;
+      return (data.config_encrypted as any)?.container_id || null;
+    },
+    staleTime: Infinity, // Container ID não muda frequentemente
   });
-
-  if (isDev) console.log('[GA4] Inicializado com ID:', GA_MEASUREMENT_ID);
+  
+  return data ?? null;
 }
-```
-
-### 1.3 Adicionar Script ao index.html ou main.tsx
-
-Opção preferida: chamar `initGA4()` no `main.tsx` antes do render.
-
----
-
-## Fase 2: User Property para Tenant (BU)
-
-### 2.1 Função para Definir Tenant ID
-
-```typescript
-// src/lib/analytics/gtag.ts (continuação)
-
-/**
- * Define o tenant_id como User Property no GA4
- * Chamado quando o usuário seleciona uma BU
- * 
- * @param tenantId - ID da Business Unit (bu_id)
- */
-export function setTenantId(tenantId: string | null): void {
-  if (!window.gtag) return;
-
-  if (tenantId) {
-    window.gtag('set', 'user_properties', {
-      tenant_id: tenantId,
-    });
-
-    // Push para dataLayer (GTM compatibility)
-    window.dataLayer?.push({
-      event: 'tenant_selected',
-      tenant_id: tenantId,
-    });
-
-    if (isDev) console.log('[GA4] tenant_id definido:', tenantId);
-  } else {
-    // Limpar tenant_id no logout/clear
-    window.gtag('set', 'user_properties', {
-      tenant_id: null,
-    });
-    
-    if (isDev) console.log('[GA4] tenant_id limpo');
-  }
-}
-```
-
-### 2.2 Integrar com BuContext
-
-Modificar `BuContext.tsx` para chamar `setTenantId` quando:
-- Usuário seleciona uma BU
-- Usuário troca de BU
-- Usuário faz logout (limpar)
-
-```typescript
-// Em selectBu()
-import { setTenantId } from '@/lib/analytics/gtag';
-
-const selectBu = useCallback((buId: string) => {
-  // ... código existente ...
-  if (hasAccess) {
-    setCurrentBuId(buId);
-    setTenantId(buId); // <-- Novo
-    // ...
-  }
-}, [userBus, currentBuId, queryClient]);
-
-// Em clearBuSelection()
-const clearBuSelection = () => {
-  setCurrentBuId(null);
-  setTenantId(null); // <-- Novo
-  // ...
-};
 ```
 
 ---
 
-## Fase 3: Virtual Page Views
+### Fase 3: Componente de Inicialização Dinâmica
 
-### 3.1 Função Global de Page View
+#### 3.1 Criar `GtmInitializer` no App.tsx
 
-```typescript
-// src/lib/analytics/gtag.ts (continuação)
-
-/**
- * Dispara um evento de page_view virtual
- * Usar quando a tela muda mas a URL permanece igual
- * 
- * @param screenName - Nome da tela/contexto atual (ex: "dashboard", "okrs/list")
- * @param options - Parâmetros adicionais opcionais
- */
-export function trackVirtualPageView(
-  screenName: string,
-  options?: {
-    page_title?: string;
-    custom_params?: Record<string, string | number>;
-  }
-): void {
-  if (!window.gtag) return;
-
-  const eventParams: Record<string, any> = {
-    page_location: window.location.href,
-    page_title: options?.page_title || screenName,
-    screen_name: screenName,
-    ...options?.custom_params,
-  };
-
-  window.gtag('event', 'page_view', eventParams);
-
-  if (isDev) {
-    console.log('[GA4] Virtual Page View:', screenName, eventParams);
-  }
-}
-
-/**
- * Dispara um evento customizado genérico
- * 
- * @param eventName - Nome do evento (snake_case)
- * @param params - Parâmetros do evento
- */
-export function trackEvent(
-  eventName: string,
-  params?: Record<string, string | number | boolean>
-): void {
-  if (!window.gtag) return;
-
-  window.gtag('event', eventName, params);
-
-  if (isDev) {
-    console.log('[GA4] Event:', eventName, params);
-  }
-}
-```
-
-### 3.2 Hook para Tracking Automático de Rotas
-
-Criar hook `useRouteTracking` que dispara page_view em mudanças de rota:
+Componente que carrega GTM dinamicamente após obter config:
 
 ```typescript
-// src/hooks/useRouteTracking.ts
-
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { trackVirtualPageView } from '@/lib/analytics/gtag';
-import { useBu } from '@/contexts/BuContext';
-
-/**
- * Hook que rastreia mudanças de rota automaticamente
- * Dispara page_view virtual em cada navegação
- */
-export function useRouteTracking() {
-  const location = useLocation();
-  const { currentBuId } = useBu();
-
+function GtmInitializer() {
+  const containerId = useGtmConfig();
+  const initializedRef = useRef(false);
+  
   useEffect(() => {
-    // Extrair nome da tela a partir do pathname
-    const screenName = location.pathname === '/' 
-      ? 'home' 
-      : location.pathname.replace(/^\//, '').replace(/\//g, '_');
-
-    trackVirtualPageView(screenName, {
-      page_title: document.title,
-      custom_params: currentBuId ? { bu_id: currentBuId } : undefined,
-    });
-  }, [location.pathname, currentBuId]);
+    if (containerId && !initializedRef.current) {
+      initGTM(containerId);
+      initializedRef.current = true;
+    }
+  }, [containerId]);
+  
+  return null;
 }
 ```
 
-### 3.3 Integrar Hook no App
-
-Adicionar `useRouteTracking()` no `AuthenticatedRoutesWrapper`:
-
+Integrar em `AuthenticatedRoutesWrapper`:
 ```typescript
 function AuthenticatedRoutesWrapper() {
-  useRouteTracking(); // <-- Novo
+  useRouteTracking();
   
   return (
     <BuProvider>
-      {/* ... */}
+      <GtmInitializer /> {/* Novo */}
+      {/* ... resto */}
     </BuProvider>
   );
 }
 ```
 
+#### 3.2 Remover inicialização estática do `main.tsx`
+
+Remover chamada `initGA4()` que era feita no bootstrap.
+
 ---
 
-## Fase 4: Data Layer para GTM (Opcional)
+### Fase 4: Página de Configuração do GTM
 
-### 4.1 Função de Push para Data Layer
+O `GlobalIntegrationDetailPage.tsx` já suporta configuração de API Key. Precisamos:
+
+1. Detectar quando `integration_key === 'google-tag-manager'`
+2. Trocar label de "API Key" para "Container ID"
+3. Ajustar placeholder e validação (formato `GTM-XXXXXXX`)
+4. Trocar `config.api_key` para `config.container_id`
+
+**Modificações em GlobalIntegrationDetailPage.tsx:**
 
 ```typescript
-// src/lib/analytics/gtag.ts (continuação)
-
-/**
- * Push de dados para window.dataLayer (GTM)
- * Útil para passar contexto adicional ao Tag Manager
- * 
- * @param data - Objeto a ser adicionado ao dataLayer
- */
-export function pushToDataLayer(data: Record<string, any>): void {
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(data);
-
-  if (isDev) {
-    console.log('[GA4] DataLayer push:', data);
-  }
-}
-
-/**
- * Inicializa o dataLayer com contexto de sessão
- * Chamado após login bem-sucedido
- */
-export function initSessionContext(params: {
-  userId?: string;
-  tenantId?: string;
-  userRole?: string;
-}): void {
-  pushToDataLayer({
-    event: 'session_init',
-    user_id: params.userId,
-    tenant_id: params.tenantId,
-    user_role: params.userRole,
-  });
-}
+// Detectar tipo de campo baseado na integração
+const isGtmIntegration = integrationKey === 'google-tag-manager';
+const fieldLabel = isGtmIntegration ? 'Container ID' : 'API Key';
+const fieldPlaceholder = isGtmIntegration ? 'GTM-XXXXXXX' : 'sk-...';
+const fieldKey = isGtmIntegration ? 'container_id' : 'api_key';
 ```
 
 ---
 
-## Fase 5: Pontos de Integração
+### Fase 5: Atualização de Documentação
 
-### 5.1 Mapa de Onde Disparar Eventos
+#### 5.1 TECHNICAL_CONTEXT_REGISTRY.md → v2.91.0
 
-| Local | Evento | Dados |
-|-------|--------|-------|
-| `main.tsx` | `initGA4()` | Inicialização |
-| `AuthCallback.tsx` | `initSessionContext()` | Após login bem-sucedido |
-| `BuContext.tsx` → `selectBu` | `setTenantId(buId)` | Seleção de BU |
-| `BuContext.tsx` → `clearBuSelection` | `setTenantId(null)` | Logout |
-| `AuthenticatedRoutesWrapper` | `useRouteTracking()` | Cada navegação |
-| Componentes específicos | `trackEvent()` | Ações importantes |
+Atualizar seção "Analytics (GA4)" para "Analytics (GTM → GA4)":
 
-### 5.2 Integração no AuthCallback
+```markdown
+### 1.7 Analytics (GTM → GA4 Multi-Tenant)
 
-Após login bem-sucedido, inicializar contexto:
+O Hub utiliza **Google Tag Manager** para gerenciar rastreamento analytics.
 
-```typescript
-// AuthCallback.tsx
-import { initSessionContext } from '@/lib/analytics/gtag';
+| Configuração | Local |
+|--------------|-------|
+| GTM Container ID | `/hub/integrations/google-tag-manager` |
+| GA4 Measurement ID | Configurado dentro do GTM |
 
-// Após session estabelecida:
-initSessionContext({
-  userId: data.session.user.id,
-});
+**Fluxo de Dados:**
+```text
+Hub → dataLayer.push() → GTM → GA4
 ```
 
----
-
-## Fase 6: Estrutura de Arquivos
-
-```
-src/lib/analytics/
-├── gtag.ts          # Funções core do GA4
-├── index.ts         # Barrel export
-└── events.ts        # Constantes de nomes de eventos (opcional)
-
-src/hooks/
-└── useRouteTracking.ts  # Hook de tracking de rotas
-```
-
----
-
-## Fase 7: Documentação
-
-### 7.1 Atualizar TCR
-
-Adicionar seção "Analytics (GA4)" documentando:
-- Configuração do Measurement ID
-- User Properties configuradas
-- Eventos padrão disparados
-- Como adicionar novos eventos
-
-### 7.2 Exemplo de Uso
-
-```typescript
-// Disparar evento customizado em qualquer componente
-import { trackEvent } from '@/lib/analytics/gtag';
-
-// Quando usuário cria um OKR
-trackEvent('okr_created', {
-  okr_type: 'individual',
-  has_krs: true,
-});
-
-// Virtual page view manual (se necessário)
-import { trackVirtualPageView } from '@/lib/analytics/gtag';
-
-trackVirtualPageView('okr_wizard_step_2', {
-  page_title: 'Criando OKR - Passo 2',
-});
+**User Property:** `tenant_id` (bu_id) é enviado como User Property para segmentação por BU.
 ```
 
 ---
 
 ## Resumo de Arquivos
 
-| Arquivo | Ação |
-|---------|------|
-| `src/lib/analytics/gtag.ts` | **CRIAR** - Funções core GA4 |
-| `src/lib/analytics/index.ts` | **CRIAR** - Barrel export |
-| `src/hooks/useRouteTracking.ts` | **CRIAR** - Hook de tracking automático |
-| `src/main.tsx` | **MODIFICAR** - Chamar initGA4() |
-| `src/contexts/BuContext.tsx` | **MODIFICAR** - Chamar setTenantId() |
-| `src/pages/AuthCallback.tsx` | **MODIFICAR** - Chamar initSessionContext() |
-| `src/App.tsx` | **MODIFICAR** - Adicionar useRouteTracking |
-| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | **ATUALIZAR** - Documentar GA4 |
-| `.env` | Adicionar `VITE_GA4_MEASUREMENT_ID` |
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `hub_integrations_catalog` | **MIGRATION** | Inserir registro do GTM |
+| `src/lib/analytics/gtag.ts` | **MODIFICAR** | Refatorar para GTM (initGTM ao invés de initGA4) |
+| `src/lib/analytics/index.ts` | **MODIFICAR** | Exportar `initGTM` ao invés de `initGA4` |
+| `src/lib/analytics/useGtmConfig.ts` | **CRIAR** | Hook para buscar Container ID |
+| `src/main.tsx` | **MODIFICAR** | Remover `initGA4()` |
+| `src/App.tsx` | **MODIFICAR** | Adicionar `GtmInitializer` |
+| `src/modules/integrations/pages/GlobalIntegrationDetailPage.tsx` | **MODIFICAR** | Suportar campo Container ID para GTM |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | **ATUALIZAR** | v2.91.0 - Documentar GTM |
 
 ---
 
-## Notas de Segurança
+## Diagrama de Fluxo
 
-- O `tenant_id` (bu_id) é um UUID interno, não contém PII
-- O `user_id` enviado é o UUID do Supabase Auth, não email
-- Nenhum dado sensível (CPF, email, etc.) é enviado ao GA4
-- Logs de console só aparecem em `import.meta.env.DEV`
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  Painel de Integrações (/hub/integrations/google-tag-manager) │
+│  └── Admin configura Container ID (GTM-XXXXXXX)               │
+│       └── Salvo em hub_integrations_global_config             │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────────┐
+│  App Inicializa                                               │
+│  └── useGtmConfig() busca container_id do banco              │
+│       └── initGTM(containerId) carrega script do GTM         │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────────┐
+│  Eventos são enviados via dataLayer                          │
+│  ├── setTenantId(buId) → { event: 'tenant_selected', ... }   │
+│  ├── trackVirtualPageView() → { event: 'virtual_page_view' } │
+│  └── trackEvent() → { event: 'nome_do_evento', ... }         │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────────┐
+│  GTM captura eventos do dataLayer                            │
+│  └── Repassa para GA4 (configurado dentro do GTM)            │
+│       └── User Property: tenant_id para segmentação por BU   │
+└──────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Próximos Passos (Pós-Implementação)
+## Notas Importantes
 
-1. Configurar User Property `tenant_id` no painel do GA4
-2. Criar segmentos por tenant para análise
-3. Configurar conversões para eventos importantes
-4. Testar com GA4 DebugView
+1. **API Compatível**: As funções `trackEvent()`, `setTenantId()`, etc. continuam funcionando - só mudam internamente para `dataLayer.push`
+
+2. **GA4 gerenciado no GTM**: A chave do GA4 será configurada dentro do painel do Google Tag Manager, não no Hub
+
+3. **Flexibilidade**: O GTM permite adicionar outros scripts (Meta Pixel, LinkedIn, etc.) sem deploy de código
+
+4. **Retrocompatibilidade**: Se não houver GTM configurado, o sistema continua funcionando (sem tracking)
+
+5. **Padrões seguidos**:
+   - ✅ Query keys via `queryKeys.integrations.globalByKey()`
+   - ✅ Global client para dados PRE-BU (catálogo de integrações)
+   - ✅ Componente existente estendido (GlobalIntegrationDetailPage)
+   - ✅ Documentação canônica atualizada
+
+---
+
+## Configuração Pós-Implementação
+
+Após deploy, o admin deve:
+
+1. Acessar `/hub/integrations/google-tag-manager`
+2. Inserir Container ID (ex: `GTM-ABC123`)
+3. Habilitar globalmente
+4. Salvar configuração
+
+No GTM:
+1. Criar tag do GA4 com o Measurement ID
+2. Criar triggers para os eventos customizados
+3. Publicar container
