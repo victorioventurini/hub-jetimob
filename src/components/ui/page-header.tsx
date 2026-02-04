@@ -61,8 +61,9 @@ export function PageHeader({
   breadcrumbs,
 }: PageHeaderProps) {
   // Se breadcrumbs forem fornecidos, monta com Hub como primeiro item
+  // Usa "/" como link para a tela inicial da BU (acessível a todos os usuários)
   const fullBreadcrumbs: BreadcrumbItem[] | undefined = breadcrumbs
-    ? [{ label: "Hub", href: "/hub" }, ...breadcrumbs]
+    ? [{ label: "Hub", href: "/" }, ...breadcrumbs]
     : undefined;
 
   return (
