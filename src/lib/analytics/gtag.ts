@@ -1,94 +1,103 @@
 /**
- * Google Analytics 4 (GA4) - Multi-Tenant Implementation
+ * Google Tag Manager (GTM) - Multi-Tenant Implementation
  * 
- * Este módulo implementa rastreamento GA4 para SaaS multi-tenant onde
+ * Este módulo implementa rastreamento GTM para SaaS multi-tenant onde
  * a URL não muda ao trocar de empresa (BU).
  * 
+ * O GA4 é gerenciado dentro do GTM (configurado no painel GTM, não no código).
+ * 
  * Funcionalidades:
- * - User Properties para identificar tenant (BU)
+ * - Carregamento dinâmico do GTM via Container ID
+ * - User Properties para identificar tenant (BU) via dataLayer
  * - Virtual Page Views para navegação sem mudança de URL
  * - Data Layer para integração com GTM
  * - Logs de desenvolvimento para validação
  * 
  * @see docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md
- * @version 1.0.0
+ * @version 2.0.0 (GTM-based)
  */
 
 declare global {
   interface Window {
-    gtag: (...args: unknown[]) => void;
-    dataLayer: unknown[];
+    dataLayer: Record<string, unknown>[];
   }
 }
 
-const GA_MEASUREMENT_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID;
 const isDev = import.meta.env.DEV;
 
+// Track se GTM já foi inicializado (singleton)
+let gtmInitialized = false;
+
 /**
- * Inicializa o Google Analytics 4
- * Chamado uma vez no carregamento da aplicação (main.tsx)
+ * Inicializa o Google Tag Manager
+ * Chamado dinamicamente após obter Container ID do banco
+ * 
+ * @param containerId - GTM Container ID (ex: GTM-XXXXXXX)
  */
-export function initGA4(): void {
-  if (!GA_MEASUREMENT_ID) {
-    if (isDev) console.warn('[GA4] Measurement ID não configurado');
+export function initGTM(containerId: string): void {
+  if (!containerId) {
+    if (isDev) console.warn('[GTM] Container ID não fornecido');
     return;
   }
 
   // Evitar inicialização duplicada
-  if (window.gtag) {
-    if (isDev) console.log('[GA4] Já inicializado, ignorando');
+  if (gtmInitialized) {
+    if (isDev) console.log('[GTM] Já inicializado, ignorando');
     return;
   }
 
-  // Criar script do gtag.js
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(script);
-
-  // Inicializar dataLayer e gtag
+  // Inicializar dataLayer ANTES do script
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer.push(args);
-  };
-  window.gtag('js', new Date());
-  
-  // Config inicial com page_view desabilitado (faremos manualmente via Virtual Page Views)
-  window.gtag('config', GA_MEASUREMENT_ID, {
-    send_page_view: false,
+  window.dataLayer.push({
+    'gtm.start': new Date().getTime(),
+    event: 'gtm.js',
   });
 
-  if (isDev) console.log('[GA4] Inicializado com ID:', GA_MEASUREMENT_ID);
+  // Carregar script do GTM
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtm.js?id=${containerId}`;
+  document.head.appendChild(script);
+
+  gtmInitialized = true;
+
+  if (isDev) console.log('[GTM] Inicializado com Container ID:', containerId);
 }
 
 /**
- * Define o tenant_id como User Property no GA4
- * Chamado quando o usuário seleciona uma BU
+ * Verifica se o GTM está pronto para receber eventos
+ */
+export function isGtmReady(): boolean {
+  return gtmInitialized && Array.isArray(window.dataLayer);
+}
+
+/**
+ * Define o tenant_id via dataLayer
+ * O GTM captura e repassa para o GA4 como User Property
  * 
  * @param tenantId - ID da Business Unit (bu_id) - UUID interno, não contém PII
  */
 export function setTenantId(tenantId: string | null): void {
-  if (!window.gtag) return;
+  if (!isGtmReady()) {
+    // Armazenar para quando GTM inicializar
+    window.dataLayer = window.dataLayer || [];
+  }
 
   if (tenantId) {
-    window.gtag('set', 'user_properties', {
-      tenant_id: tenantId,
-    });
-
-    // Push para dataLayer (GTM compatibility)
-    window.dataLayer?.push({
+    window.dataLayer.push({
       event: 'tenant_selected',
       tenant_id: tenantId,
     });
 
-    if (isDev) console.log('[GA4] tenant_id definido:', tenantId);
+    if (isDev) console.log('[GTM] tenant_id definido:', tenantId);
   } else {
     // Limpar tenant_id no logout/clear
-    window.gtag('set', 'user_properties', {
+    window.dataLayer.push({
+      event: 'tenant_cleared',
       tenant_id: null,
     });
     
-    if (isDev) console.log('[GA4] tenant_id limpo');
+    if (isDev) console.log('[GTM] tenant_id limpo');
   }
 }
 
@@ -106,19 +115,21 @@ export function trackVirtualPageView(
     custom_params?: Record<string, string | number>;
   }
 ): void {
-  if (!window.gtag) return;
+  window.dataLayer = window.dataLayer || [];
 
-  const eventParams: Record<string, unknown> = {
+  const eventData: Record<string, unknown> = {
+    event: 'virtual_page_view',
     page_location: window.location.href,
+    page_path: window.location.pathname,
     page_title: options?.page_title || screenName,
     screen_name: screenName,
     ...options?.custom_params,
   };
 
-  window.gtag('event', 'page_view', eventParams);
+  window.dataLayer.push(eventData);
 
   if (isDev) {
-    console.log('[GA4] Virtual Page View:', screenName, eventParams);
+    console.log('[GTM] Virtual Page View:', screenName, eventData);
   }
 }
 
@@ -136,12 +147,15 @@ export function trackEvent(
   eventName: string,
   params?: Record<string, string | number | boolean>
 ): void {
-  if (!window.gtag) return;
+  window.dataLayer = window.dataLayer || [];
 
-  window.gtag('event', eventName, params);
+  window.dataLayer.push({
+    event: eventName,
+    ...params,
+  });
 
   if (isDev) {
-    console.log('[GA4] Event:', eventName, params);
+    console.log('[GTM] Event:', eventName, params);
   }
 }
 
@@ -156,7 +170,7 @@ export function pushToDataLayer(data: Record<string, unknown>): void {
   window.dataLayer.push(data);
 
   if (isDev) {
-    console.log('[GA4] DataLayer push:', data);
+    console.log('[GTM] DataLayer push:', data);
   }
 }
 
@@ -179,6 +193,19 @@ export function initSessionContext(params: {
   });
 
   if (isDev) {
-    console.log('[GA4] Session context initialized:', params);
+    console.log('[GTM] Session context initialized:', params);
+  }
+}
+
+// ============================================
+// DEPRECATED - Mantido para retrocompatibilidade
+// ============================================
+
+/**
+ * @deprecated Use initGTM() ao invés. GA4 agora é gerenciado dentro do GTM.
+ */
+export function initGA4(): void {
+  if (isDev) {
+    console.warn('[GTM] initGA4() está deprecated. Use initGTM() - o GA4 é configurado dentro do GTM.');
   }
 }
