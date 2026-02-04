@@ -97,7 +97,6 @@ function KrItem({ kr, role }: { kr: LinkedKrData; role: 'primary' | 'guardrail' 
             <Badge 
               variant="secondary" 
               className="text-[10px] px-1.5 py-0"
-              style={{ backgroundColor: kr.team.color || 'hsl(var(--muted))' }}
             >
               {kr.team.name}
             </Badge>

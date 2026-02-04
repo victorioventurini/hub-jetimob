@@ -4,6 +4,9 @@
  * Hook para buscar KRs vinculadas a uma KPI/Métrica via okr_kr_metrics.
  * Retorna KRs organizacionais e de time com papel (primary/guardrail) e dados de contexto.
  * 
+ * NOTA: A tabela okr_kr_metrics NÃO possui FK para okr_team_key_results/okr_org_key_results,
+ * portanto a busca é feita em etapas separadas (links → KRs → objectives).
+ * 
  * @see DEVELOPMENT_STANDARDS.md - Explicit fields, bu-scoped client
  * @since v2.84.0
  */
@@ -11,27 +14,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { kpisKeys } from '@/lib/queryKeys';
-import type { OkrMetricRole } from '@/modules/okrs/types';
+import { calculateProgress } from '@/modules/okrs/utils/progressCalculation';
+import { mapRagToCalculated, type OkrCalculatedStatus } from '@/modules/okrs/hooks/useOkrStatus';
+import type { OkrMetricRole, OkrDirection, OkrRagStatus } from '@/modules/okrs/types';
 
-// Explicit fields for okr_kr_metrics with nested KR data
-const KR_LINK_FIELDS_TEAM = `
-  id, kr_id, kr_type, kpi_id, role, created_at,
-  team_kr:okr_team_key_results!kr_id(
-    id, title, progress, status,
-    objective:okr_team_objectives!team_objective_id(
-      id, title, status,
-      team:teams!team_id(id, name, color)
-    )
+// Explicit fields for each query step
+const LINK_FIELDS = 'id, kr_id, kr_type, kpi_id, role, created_at' as const;
+
+const TEAM_KR_FIELDS = `
+  id, title, baseline, current_value, target, direction, status,
+  team_objective_id,
+  objective:okr_team_objectives!team_objective_id(
+    id, title, status,
+    team:teams!team_id(id, name)
   )
 ` as const;
 
-const KR_LINK_FIELDS_ORG = `
-  id, kr_id, kr_type, kpi_id, role, created_at,
-  org_kr:okr_org_key_results!kr_id(
-    id, title, progress, status,
-    objective:okr_org_objectives!objective_id(id, title, status)
-  )
-` as const;
+const ORG_KR_FIELDS = 'id, title, baseline, current_value, target, direction, status, org_objective_id' as const;
+const ORG_OBJECTIVE_FIELDS = 'id, title, status' as const;
 
 export interface LinkedKrData {
   id: string;
@@ -42,7 +42,7 @@ export interface LinkedKrData {
     id: string;
     title: string;
     progress: number | null;
-    status: string | null;
+    status: OkrCalculatedStatus | null;
   };
   objective?: {
     id: string;
@@ -52,7 +52,6 @@ export interface LinkedKrData {
   team?: {
     id: string;
     name: string;
-    color: string | null;
   };
 }
 
@@ -64,87 +63,211 @@ export interface UseKpiLinkedKrsResult {
   error: Error | null;
 }
 
+// Type for raw link from okr_kr_metrics
+interface RawLink {
+  id: string;
+  kr_id: string;
+  kr_type: 'org' | 'team';
+  kpi_id: string;
+  role: OkrMetricRole;
+  created_at: string;
+}
+
+// Type for Team KR with nested objective
+interface TeamKrRow {
+  id: string;
+  title: string;
+  baseline: number | null;
+  current_value: number | null;
+  target: number | null;
+  direction: OkrDirection | null;
+  status: OkrRagStatus | null;
+  team_objective_id: string | null;
+  objective: {
+    id: string;
+    title: string;
+    status: string | null;
+    team: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+}
+
+// Type for Org KR
+interface OrgKrRow {
+  id: string;
+  title: string;
+  baseline: number | null;
+  current_value: number | null;
+  target: number | null;
+  direction: OkrDirection | null;
+  status: OkrRagStatus | null;
+  org_objective_id: string | null;
+}
+
+// Type for Org Objective
+interface OrgObjectiveRow {
+  id: string;
+  title: string;
+  status: string | null;
+}
+
 /**
  * Busca todas as KRs vinculadas a uma KPI específica.
  * Ordena: Primárias primeiro, depois Guardrails.
  * Dentro de cada grupo: at-risk/off-track primeiro.
  */
 export function useKpiLinkedKrs(kpiId: string | null): UseKpiLinkedKrsResult {
-  const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const { client: supabase, isReady } = useOptionalBuClient();
 
   const query = useQuery({
     queryKey: [...kpisKeys.detail(kpiId || ''), 'linked-krs'] as const,
-    queryFn: async () => {
+    queryFn: async (): Promise<LinkedKrData[]> => {
       if (!supabase || !kpiId) return [];
 
-      // Query team KRs
-      const { data: teamLinks, error: teamError } = await supabase
+      // Step 1: Fetch links from okr_kr_metrics
+      const { data: links, error: linksError } = await supabase
         .from('okr_kr_metrics')
-        .select(KR_LINK_FIELDS_TEAM)
+        .select(LINK_FIELDS)
         .eq('kpi_id', kpiId)
-        .eq('kr_type', 'team')
         .is('deleted_at', null);
 
-      if (teamError) throw teamError;
+      if (linksError) throw linksError;
+      if (!links || links.length === 0) return [];
 
-      // Query org KRs
-      const { data: orgLinks, error: orgError } = await supabase
-        .from('okr_kr_metrics')
-        .select(KR_LINK_FIELDS_ORG)
-        .eq('kpi_id', kpiId)
-        .eq('kr_type', 'org')
-        .is('deleted_at', null);
+      const rawLinks = links as RawLink[];
 
-      if (orgError) throw orgError;
+      // Step 2: Separate IDs by type
+      const teamKrIds = rawLinks.filter(l => l.kr_type === 'team').map(l => l.kr_id);
+      const orgKrIds = rawLinks.filter(l => l.kr_type === 'org').map(l => l.kr_id);
 
-      // Transform team KRs
-      const teamKrs: LinkedKrData[] = (teamLinks || [])
-        .filter((link: any) => link.team_kr)
-        .map((link: any) => ({
-          id: link.id,
-          kr_id: link.kr_id,
-          kr_type: 'team' as const,
-          role: link.role as OkrMetricRole,
-          kr: {
-            id: link.team_kr.id,
-            title: link.team_kr.title,
-            progress: link.team_kr.progress,
-            status: link.team_kr.status,
-          },
-          objective: link.team_kr.objective ? {
-            id: link.team_kr.objective.id,
-            title: link.team_kr.objective.title,
-            status: link.team_kr.objective.status,
+      // Step 3: Fetch Team KRs (if any)
+      let teamKrsMap = new Map<string, TeamKrRow>();
+      if (teamKrIds.length > 0) {
+        const { data: teamKrs, error: teamError } = await supabase
+          .from('okr_team_key_results')
+          .select(TEAM_KR_FIELDS)
+          .in('id', teamKrIds)
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
+
+        if (teamError) throw teamError;
+        if (teamKrs) {
+          (teamKrs as TeamKrRow[]).forEach(kr => teamKrsMap.set(kr.id, kr));
+        }
+      }
+
+      // Step 4: Fetch Org KRs (if any)
+      let orgKrsMap = new Map<string, OrgKrRow>();
+      let orgObjectivesMap = new Map<string, OrgObjectiveRow>();
+      if (orgKrIds.length > 0) {
+        const { data: orgKrs, error: orgError } = await supabase
+          .from('okr_org_key_results')
+          .select(ORG_KR_FIELDS)
+          .in('id', orgKrIds)
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
+
+        if (orgError) throw orgError;
+        if (orgKrs) {
+          const orgKrsList = orgKrs as OrgKrRow[];
+          orgKrsList.forEach(kr => orgKrsMap.set(kr.id, kr));
+
+          // Fetch Org Objectives for context
+          const orgObjectiveIds = [...new Set(orgKrsList.map(kr => kr.org_objective_id).filter(Boolean))] as string[];
+          if (orgObjectiveIds.length > 0) {
+            const { data: orgObjectives, error: objError } = await supabase
+              .from('okr_org_objectives')
+              .select(ORG_OBJECTIVE_FIELDS)
+              .in('id', orgObjectiveIds);
+
+            if (objError) throw objError;
+            if (orgObjectives) {
+              (orgObjectives as OrgObjectiveRow[]).forEach(obj => orgObjectivesMap.set(obj.id, obj));
+            }
+          }
+        }
+      }
+
+      // Step 5: Build LinkedKrData[] from links + fetched KRs
+      const result: LinkedKrData[] = [];
+
+      for (const link of rawLinks) {
+        if (link.kr_type === 'team') {
+          const kr = teamKrsMap.get(link.kr_id);
+          if (!kr) continue; // KR not found (deleted/cancelled or no access)
+
+          const progress = calculateProgress(
+            Number(kr.baseline) || 0,
+            Number(kr.current_value) || 0,
+            Number(kr.target) || 0,
+            kr.direction || 'up'
+          );
+
+          const calculatedStatus: OkrCalculatedStatus = progress >= 100 
+            ? 'completed' 
+            : mapRagToCalculated(kr.status || 'not_started');
+
+          result.push({
+            id: link.id,
+            kr_id: link.kr_id,
+            kr_type: 'team',
+            role: link.role,
+            kr: {
+              id: kr.id,
+              title: kr.title,
+              progress,
+              status: calculatedStatus,
+            },
+            objective: kr.objective ? {
+              id: kr.objective.id,
+              title: kr.objective.title,
+              status: kr.objective.status,
+            } : undefined,
+          team: kr.objective?.team ? {
+            id: kr.objective.team.id,
+            name: kr.objective.team.name,
           } : undefined,
-          team: link.team_kr.objective?.team ? {
-            id: link.team_kr.objective.team.id,
-            name: link.team_kr.objective.team.name,
-            color: link.team_kr.objective.team.color,
-          } : undefined,
-        }));
+          });
+        } else if (link.kr_type === 'org') {
+          const kr = orgKrsMap.get(link.kr_id);
+          if (!kr) continue; // KR not found
 
-      // Transform org KRs
-      const orgKrs: LinkedKrData[] = (orgLinks || [])
-        .filter((link: any) => link.org_kr)
-        .map((link: any) => ({
-          id: link.id,
-          kr_id: link.kr_id,
-          kr_type: 'org' as const,
-          role: link.role as OkrMetricRole,
-          kr: {
-            id: link.org_kr.id,
-            title: link.org_kr.title,
-            progress: link.org_kr.progress,
-            status: link.org_kr.status,
-          },
-          objective: link.org_kr.objective ? {
-            id: link.org_kr.objective.id,
-            title: link.org_kr.objective.title,
-            status: link.org_kr.objective.status,
-          } : undefined,
-        }));
+          const progress = calculateProgress(
+            Number(kr.baseline) || 0,
+            Number(kr.current_value) || 0,
+            Number(kr.target) || 0,
+            kr.direction || 'up'
+          );
 
-      return [...teamKrs, ...orgKrs];
+          const calculatedStatus: OkrCalculatedStatus = progress >= 100 
+            ? 'completed' 
+            : mapRagToCalculated(kr.status || 'not_started');
+
+          const objective = kr.org_objective_id ? orgObjectivesMap.get(kr.org_objective_id) : undefined;
+
+          result.push({
+            id: link.id,
+            kr_id: link.kr_id,
+            kr_type: 'org',
+            role: link.role,
+            kr: {
+              id: kr.id,
+              title: kr.title,
+              progress,
+              status: calculatedStatus,
+            },
+            objective: objective ? {
+              id: objective.id,
+              title: objective.title,
+              status: objective.status,
+            } : undefined,
+          });
+        }
+      }
+
+      return result;
     },
     enabled: !!kpiId && isReady && !!supabase,
     staleTime: 3 * 60 * 1000, // 3 minutes
@@ -160,14 +283,14 @@ export function useKpiLinkedKrs(kpiId: string | null): UseKpiLinkedKrsResult {
     off_track: 0,
     at_risk: 1,
     on_track: 2,
-    no_data: 3,
+    not_started: 3,
     completed: 4,
-    cancelled: 5,
+    dropped: 5,
   };
 
   const sortByStatus = (a: LinkedKrData, b: LinkedKrData) => {
-    const priorityA = statusPriority[a.kr.status || 'no_data'] ?? 99;
-    const priorityB = statusPriority[b.kr.status || 'no_data'] ?? 99;
+    const priorityA = statusPriority[a.kr.status || 'not_started'] ?? 99;
+    const priorityB = statusPriority[b.kr.status || 'not_started'] ?? 99;
     return priorityA - priorityB;
   };
 
