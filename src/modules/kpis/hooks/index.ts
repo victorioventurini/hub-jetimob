@@ -3,6 +3,7 @@
 // v2.83.0: Added useKpiContributors, useKpisForWizardV2 for wizard integration
 // v2.84.0: Added useKpiLinkedKrs for reverse KR lookup
 // v2.85.0: Added useCanEditKpi for ownership-based edit permissions
+// v2.86.0: Added useKpiTargetHistory for target/benchmark change tracking
 
 export { useKpiData, useKpiDetail } from "./useKpiData";
 export { useKpiMutations } from "./useKpiMutations";
@@ -12,11 +13,13 @@ export { useKpiContributors, useUserContributedKpis } from "./useKpiContributors
 export { useTeamArea } from "./useTeamArea";
 export { useKpiLinkedKrs } from "./useKpiLinkedKrs";
 export { useCanEditKpi } from "./useCanEditKpi";
+export { useKpiTargetHistory } from "./useKpiTargetHistory";
 
 // Types
 export type { KpiForWizard, UseKpisForWizardOptions, UseKpisForWizardResult } from "./useKpisForWizard";
 export type { UseKpiContributorsOptions, AddContributorParams, RemoveContributorParams } from "./useKpiContributors";
 export type { LinkedKrData, UseKpiLinkedKrsResult } from "./useKpiLinkedKrs";
+export type { KpiTargetHistoryEntry, UseKpiTargetHistoryResult } from "./useKpiTargetHistory";
 
 // v2.83.0: Re-export V2 types from types file for convenience
 export type { 

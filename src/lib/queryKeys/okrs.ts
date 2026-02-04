@@ -245,4 +245,6 @@ export const kpisKeys = {
     areaId?: string; 
     scope?: string 
   }) => ['kpis', 'wizard-v2', options] as const,
+  // v2.86.0: Target/Benchmark history
+  targetHistory: (kpiId: string | null) => ['kpis', 'target-history', kpiId] as const,
 } as const;

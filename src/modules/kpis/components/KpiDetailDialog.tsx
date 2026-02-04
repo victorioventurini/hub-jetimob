@@ -5,7 +5,9 @@ import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle, Building2, Globe } from "lucide-react";
 import { useKpiDetail, useKpiLinkedKrs } from "@/modules/kpis/hooks";
 import { LinkedKrsSection } from "./LinkedKrsSection";
+import { KpiTargetHistorySection } from "./KpiTargetHistorySection";
 import { KpiActionsMenu } from "./KpiActionsMenu";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, SCOPE_LABELS, KpiValueSource, KpiScope } from "../types";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -255,11 +257,29 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
             {kpi.target_value !== null && (
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Meta:</span>
-                <span className="text-sm">{formatValue(kpi.target_value)}</span>
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  Meta ou Benchmark:
+                  <HelpTooltip 
+                    content="Valor de referência (meta interna, benchmark de mercado, recorde histórico ou outra referência estratégica)."
+                    size="sm"
+                  />
+                </span>
+                <span className="text-sm font-medium">{formatValue(kpi.target_value)}</span>
+              </div>
+            )}
+
+            {kpi.target_source && (
+              <div className="col-span-2">
+                <span className="text-sm text-muted-foreground">Fonte:</span>
+                <span className="text-sm ml-2">{kpi.target_source}</span>
               </div>
             )}
           </div>
+
+          <Separator />
+
+          {/* v2.86.0: Histórico de alterações de meta */}
+          <KpiTargetHistorySection kpiId={kpiId} unit={kpi.unit} />
 
           <Separator />
 
