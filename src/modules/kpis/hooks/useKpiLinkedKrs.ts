@@ -18,7 +18,7 @@ const KR_LINK_FIELDS_TEAM = `
   id, kr_id, kr_type, kpi_id, role, created_at,
   team_kr:okr_team_key_results!kr_id(
     id, title, progress, status,
-    objective:okr_team_objectives!objective_id(
+    objective:okr_team_objectives!team_objective_id(
       id, title, status,
       team:teams!team_id(id, name, color)
     )
