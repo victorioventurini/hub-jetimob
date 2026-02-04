@@ -8,7 +8,7 @@
  * @see docs/canonical/DEVELOPMENT_STANDARDS.md
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +23,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadixFocusRecovery } from "@/hooks/useRadixFocusRecovery";
 import { useRouteTracking } from "@/hooks/useRouteTracking";
+import { useGtmConfig, initGTM } from "@/lib/analytics";
 
 // Rotas públicas (sem providers de autenticação)
 import Auth from "./pages/Auth";
@@ -122,14 +123,34 @@ function AppRoutes() {
 }
 
 /**
+ * Componente que inicializa o GTM dinamicamente após buscar Container ID.
+ * Renderiza null, apenas executa side effect de inicialização.
+ */
+function GtmInitializer() {
+  const { containerId } = useGtmConfig();
+  const initializedRef = useRef(false);
+  
+  useEffect(() => {
+    if (containerId && !initializedRef.current) {
+      initGTM(containerId);
+      initializedRef.current = true;
+    }
+  }, [containerId]);
+  
+  return null;
+}
+
+/**
  * Wrapper que envolve todas as rotas autenticadas com os providers necessários.
  */
 function AuthenticatedRoutesWrapper() {
-  // GA4 route tracking - dispara page_view em cada navegação
+  // GTM route tracking - dispara page_view em cada navegação
   useRouteTracking();
   
   return (
     <BuProvider>
+      {/* GTM inicializado dinamicamente após buscar config */}
+      <GtmInitializer />
       <ImpersonationProvider>
         <ModuleProvider>
           <VicProvider>

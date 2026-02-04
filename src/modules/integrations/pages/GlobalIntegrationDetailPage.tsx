@@ -60,6 +60,12 @@ export default function GlobalIntegrationDetailPage() {
   const [isEnabled, setIsEnabled] = useState(globalConfig?.is_enabled_global ?? false);
   const [isTesting, setIsTesting] = useState(false);
   
+  // Detectar tipo de integração para customizar UI
+  const isGtmIntegration = integrationKey === 'google-tag-manager';
+  const fieldLabel = isGtmIntegration ? 'Container ID' : 'API Key';
+  const fieldPlaceholder = isGtmIntegration ? 'GTM-XXXXXXX' : 'sk-...';
+  const fieldKey = isGtmIntegration ? 'container_id' : 'api_key';
+  
   // Update state when config loads
   useState(() => {
     if (globalConfig) {
@@ -75,7 +81,8 @@ export default function GlobalIntegrationDetailPage() {
     };
     
     if (apiKey.trim()) {
-      config.api_key = apiKey.trim();
+      // Usar campo dinâmico baseado no tipo de integração
+      config[fieldKey] = apiKey.trim();
     }
     
     upsertConfig.mutate({
@@ -142,7 +149,9 @@ export default function GlobalIntegrationDetailPage() {
     );
   }
   
-  const hasExistingApiKey = !!(globalConfig?.config_encrypted as any)?.api_key;
+  // Verificar se já existe valor configurado (api_key ou container_id)
+  const existingConfig = globalConfig?.config_encrypted as Record<string, unknown> | null;
+  const hasExistingValue = !!(existingConfig?.[fieldKey]);
   
   return (
     <div className="space-y-6">
@@ -205,11 +214,11 @@ export default function GlobalIntegrationDetailPage() {
                 
                 <Separator />
                 
-                {/* API Key */}
+                {/* API Key / Container ID */}
                 <div className="space-y-2">
                   <Label htmlFor="apiKey">
                     <Key className="w-4 h-4 inline mr-1" />
-                    API Key
+                    {fieldLabel}
                   </Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -218,7 +227,7 @@ export default function GlobalIntegrationDetailPage() {
                         type={showApiKey ? 'text' : 'password'}
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
-                        placeholder={hasExistingApiKey ? '••••••••••••••••' : 'sk-...'}
+                        placeholder={hasExistingValue ? '••••••••••••••••' : fieldPlaceholder}
                         disabled={!isAdmin}
                       />
                       <Button
@@ -232,9 +241,12 @@ export default function GlobalIntegrationDetailPage() {
                       </Button>
                     </div>
                   </div>
-                  {hasExistingApiKey && !apiKey && (
+                  {hasExistingValue && !apiKey && (
                     <p className="text-xs text-muted-foreground">
-                      Uma API Key já está configurada. Digite uma nova para substituir.
+                      {isGtmIntegration 
+                        ? 'Um Container ID já está configurado. Digite um novo para substituir.'
+                        : 'Uma API Key já está configurada. Digite uma nova para substituir.'
+                      }
                     </p>
                   )}
                 </div>
