@@ -189,7 +189,17 @@ export default function TeamsPage() {
           title="Estrutura Organizacional"
           description="Times, Sub-times e Squads"
           breadcrumbs={[{ label: "Times" }]}
-          actions={canCreateTeams && <TeamFormDialog />}
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/teams/org-chart?fullscreen=true" target="_blank" rel="noopener noreferrer">
+                  <Network className="h-4 w-4 mr-2" />
+                  Organograma
+                </Link>
+              </Button>
+              {canCreateTeams && <TeamFormDialog />}
+            </div>
+          }
         />
 
         {/* Stats */}
@@ -310,14 +320,8 @@ export default function TeamsPage() {
           areas={areasForFilter}
         />
 
-        <div className="flex items-center justify-between">
-          <Button variant="outline" asChild>
-            <Link to="/teams/org-chart?fullscreen=true" target="_blank" rel="noopener noreferrer">
-              <Network className="w-4 h-4 mr-2" />
-              Ver Organograma
-            </Link>
-          </Button>
-          
+        {/* View Options */}
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             <Switch
               id="show-inactive"
