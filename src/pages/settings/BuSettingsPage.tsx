@@ -47,7 +47,6 @@ export default function BuSettingsPage() {
         <PageHeader
           title="Configurações da BU"
           description={`Gerencie as configurações de ${currentBu?.name || "sua Business Unit"}`}
-          breadcrumbs={[{ label: "Configurações" }]}
         />
 
         <div className="space-y-6">
