@@ -5,6 +5,7 @@ import { useUserBus } from "@/modules/bu/hooks";
 import { useExternalUserBus } from "@/modules/external/hooks";
 import { AuthContext, type AuthContextType } from "@/hooks/useAuth";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
+import { setTenantId } from "@/lib/analytics";
 
 interface BuContextType {
   /** Selected BU id (available even if bu_unit data isn't loaded) */
@@ -143,6 +144,9 @@ export function BuProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(BU_STORAGE_KEY, buId);
       localStorage.setItem(BU_SELECTED_KEY, "true");
       
+      // Set tenant_id for GA4 tracking
+      setTenantId(buId);
+      
       // Invalidate all BU-scoped queries and client cache when changing BU
       if (isChanging) {
         console.log("[BuContext] BU changed, clearing query cache and BU client");
@@ -163,6 +167,8 @@ export function BuProvider({ children }: { children: ReactNode }) {
     setBuSelected(false);
     localStorage.removeItem(BU_STORAGE_KEY);
     localStorage.removeItem(BU_SELECTED_KEY);
+    // Clear tenant_id for GA4 tracking
+    setTenantId(null);
   };
 
   const currentMembership = userBus.find(m => m.bu_id === currentBuId);
