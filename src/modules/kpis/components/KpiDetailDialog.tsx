@@ -8,7 +8,8 @@ import { LinkedKrsSection } from "./LinkedKrsSection";
 import { KpiTargetHistorySection } from "./KpiTargetHistorySection";
 import { KpiActionsMenu } from "./KpiActionsMenu";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, SCOPE_LABELS, KpiValueSource, KpiScope } from "../types";
+import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
+import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -55,6 +56,9 @@ const getSourceColor = (type: string) => {
 export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogProps) {
   const { kpi, values, isLoading } = useKpiDetail(kpiId || "");
   const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpiId);
+  const { currentBu } = useBu();
+  const scopeLabels = getScopeLabels(currentBu?.name);
+  
   if (!kpiId || isLoading || !kpi) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -223,7 +227,7 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Escopo:</span>
-              <span className="text-sm">{SCOPE_LABELS[(kpi.scope as KpiScope) || 'team']}</span>
+              <span className="text-sm">{scopeLabels[(kpi.scope as KpiScope) || 'team']}</span>
             </div>
 
             {kpi.owner && (
