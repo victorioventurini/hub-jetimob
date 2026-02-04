@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, FolderTree, Route, Users, Zap } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { PageHeader } from "@/components/ui/page-header";
 import { PartnerCompaniesTab } from "../components/settings/PartnerCompaniesTab";
 import { PartnerContactsTab } from "../components/settings/PartnerContactsTab";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
@@ -16,6 +17,14 @@ export default function TicketsSettingsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="Configurações de Tickets"
+        description="Configure empresas parceiras, categorias e regras de roteamento de tickets."
+        breadcrumbs={[
+          { label: "Tickets", href: "/tickets" },
+          { label: "Configurações" }
+        ]}
+      />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="partners" className="gap-2">
