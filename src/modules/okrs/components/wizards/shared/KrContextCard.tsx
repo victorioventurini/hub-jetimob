@@ -108,8 +108,11 @@ export function KrContextCard({
               {objectiveTitle}
             </p>
             <div className="flex items-center gap-2 mt-2">
-              <Progress value={progress} className="h-1.5 flex-1" />
-              <span className="text-xs font-medium">{Math.round(progress)}%</span>
+              {/* Barra visual limitada a 100% */}
+              <Progress value={Math.min(100, progress)} className="h-1.5 flex-1" />
+              <span className={cn("text-xs font-medium", progress > 100 && "text-status-green")}>
+                {Math.round(progress)}%
+              </span>
             </div>
           </div>
           <Badge 
@@ -153,9 +156,13 @@ export function KrContextCard({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Progresso</span>
-          <span className="font-medium">{Math.round(progress)}%</span>
+          <span className={cn("font-medium", progress > 100 && "text-status-green")}>
+            {Math.round(progress)}%
+            {progress > 100 && ' 🚀'}
+          </span>
         </div>
-        <Progress value={progress} className="h-2" />
+        {/* Barra visual limitada a 100% */}
+        <Progress value={Math.min(100, progress)} className="h-2" />
         
         {/* Values */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">

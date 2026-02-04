@@ -140,10 +140,11 @@ export function useTeamPreviousCycleAnalysis(
         });
         
         const avgProgress = objKrs.length > 0
+          // Permitir progresso acima de 100% para superação de metas
           ? objKrs.reduce((sum, kr) => {
               const range = kr.target - kr.baseline;
               const progress = range !== 0 ? ((kr.current_value - kr.baseline) / range) * 100 : 0;
-              return sum + Math.min(100, Math.max(0, progress));
+              return sum + Math.max(0, progress);
             }, 0) / objKrs.length
           : 0;
 

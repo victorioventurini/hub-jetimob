@@ -1,5 +1,12 @@
 import { cn } from '@/lib/utils';
 import { OkrRagStatus, calculateProgress, OkrDirection } from '../types';
+import { Rocket } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface OkrProgressBarProps {
   baseline: number;
@@ -25,6 +32,7 @@ export function OkrProgressBar({
   className,
 }: OkrProgressBarProps) {
   const progress = calculateProgress(baseline, current, target, direction);
+  const isOverachieved = progress > 100;
 
   const getStatusColor = () => {
     switch (status) {
@@ -59,9 +67,44 @@ export function OkrProgressBar({
           <span>
             {current.toLocaleString('pt-BR')} {unit}
           </span>
-          <span className="font-medium text-foreground">
-            {progress.toFixed(0)}%
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isOverachieved && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-status-green/15 text-status-green text-[10px] font-medium">
+                      <Rocket className="h-3 w-3" />
+                      Meta superada
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm">
+                      Superar 100% indica que a meta foi ultrapassada. Isso gera aprendizado para calibrar metas futuras.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={cn(
+                    "font-medium",
+                    isOverachieved ? "text-status-green" : "text-foreground"
+                  )}>
+                    {progress.toFixed(0)}%
+                  </span>
+                </TooltipTrigger>
+                {isOverachieved && (
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm">
+                      {progress.toFixed(1)}% da meta ({current.toLocaleString('pt-BR')} / {target.toLocaleString('pt-BR')})
+                    </p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       )}
       <div className={cn('w-full bg-muted rounded-full overflow-hidden', getHeight())}>

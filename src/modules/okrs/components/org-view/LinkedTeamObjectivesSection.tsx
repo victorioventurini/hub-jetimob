@@ -62,9 +62,13 @@ function TeamObjectiveCard({ objective }: { objective: LinkedTeamObjective }) {
                   <div className="flex-1">
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Progresso</span>
-                      <span className="font-medium">{progress}%</span>
+                      <span className={cn("font-medium", progress > 100 && "text-status-green")}>
+                        {progress}%
+                        {progress > 100 && ' 🚀'}
+                      </span>
                     </div>
-                    <Progress value={progress} className="h-2" />
+                    {/* Barra visual limitada a 100% */}
+                    <Progress value={Math.min(100, progress)} className="h-2" />
                   </div>
                   
                   <div className="text-sm text-muted-foreground">

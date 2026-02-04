@@ -183,7 +183,7 @@ export function useOrgHealthReview(year?: number): OrgHealthReviewData {
           teamName: link.team.name,
           teamKrId: link.id,
           teamKrTitle: link.title,
-          teamKrProgress: Math.min(100, Math.max(0, progress)),
+          teamKrProgress: Math.max(0, progress),
           lastCheckinAt: link.last_checkin_at,
         });
       }
@@ -196,7 +196,7 @@ export function useOrgHealthReview(year?: number): OrgHealthReviewData {
         const progress = kr.target && kr.target > 0
           ? Math.round(((kr.current_value || 0) / kr.target) * 100)
           : 0;
-        const clampedProgress = Math.min(100, Math.max(0, progress));
+        const clampedProgress = Math.max(0, progress);
 
         return {
           id: kr.id,

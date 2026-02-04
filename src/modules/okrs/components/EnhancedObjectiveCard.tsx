@@ -424,11 +424,13 @@ function EnhancedKrRow({ kr, index, type, onEdit, onCheckin }: EnhancedKrRowProp
                 <span className="text-muted-foreground">
                   {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
                 </span>
-                <span className={cn('font-medium', getStatusColor())}>
+                <span className={cn('font-medium', getStatusColor(), progress > 100 && 'text-status-green')}>
                   {progress.toFixed(0)}%
+                  {progress > 100 && ' 🚀'}
                 </span>
               </div>
-              <Progress value={progress} className="h-1.5" />
+              {/* Barra visual limitada a 100% */}
+              <Progress value={Math.min(100, progress)} className="h-1.5" />
             </div>
           </div>
         </div>

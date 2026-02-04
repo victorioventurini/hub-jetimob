@@ -163,9 +163,13 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Base: {formatValueWithUnit(kr.baseline, kr.unit)}</span>
-              <span>{Math.round(progress)}% concluído</span>
+              <span className={progress > 100 ? 'text-status-green font-medium' : ''}>
+                {Math.round(progress)}% concluído
+                {progress > 100 && ' 🚀'}
+              </span>
             </div>
-            <Progress value={progress} className="h-2" />
+            {/* Barra visual limitada a 100% */}
+            <Progress value={Math.min(100, progress)} className="h-2" />
           </div>
 
           {/* Metadata row */}
