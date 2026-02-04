@@ -34,12 +34,13 @@ import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Equal, Li
 import { KrUnitSelect } from './KrUnitSelect';
 import { KrProgressPreview } from './KrProgressPreview';
 import { KrMetricsSection } from './KrMetricsSection';
+import { PrimaryKpiLockBanner } from './shared/PrimaryKpiLockBanner';
 import { validateTeamKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useCancelTeamKeyResult, useCanManageTeamOkr } from '../hooks';
+import { useCancelTeamKeyResult, useCanManageTeamOkr, usePrimaryKpiForKr } from '../hooks';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 
@@ -83,6 +84,9 @@ export function TeamKrFormDialog({
   
   // Defense in depth: check if user can manage this team's OKRs
   const { canManage: canManageThisTeam, isLoading: isLoadingPermission } = useCanManageTeamOkr(teamId);
+  
+  // Check if KR has a primary KPI linked (blocks manual value editing)
+  const { hasPrimaryKpi, primaryKpi, isLoading: isLoadingPrimaryKpi } = usePrimaryKpiForKr(kr?.id, 'team');
 
   const [title, setTitle] = useState(kr?.title || '');
   const [description, setDescription] = useState('');
@@ -97,11 +101,6 @@ export function TeamKrFormDialog({
   const [ownerUserId, setOwnerUserId] = useState<string | null>(kr?.owner_user_id || null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [placeholder] = useState(() => getRandomPlaceholder(false));
-  
-  // If user can't manage this team, don't render
-  if (!isLoadingPermission && !canManageThisTeam) {
-    return null;
-  }
 
   // Auto-fill target when direction is "maintain"
   useEffect(() => {
@@ -168,6 +167,11 @@ export function TeamKrFormDialog({
       true
     );
   }, [title, baseline, target, direction]);
+  
+  // If user can't manage this team, don't render (after all hooks)
+  if (!isLoadingPermission && !canManageThisTeam) {
+    return null;
+  }
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -363,31 +367,38 @@ export function TeamKrFormDialog({
 
               {!isEditing && <Separator />}
 
+              {/* Primary KPI Lock Banner - show when KR has linked primary KPI */}
+              {isEditing && hasPrimaryKpi && primaryKpi && (
+                <PrimaryKpiLockBanner primaryKpi={primaryKpi} variant="default" />
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="baseline">
-                      Valor inicial {!noBaseline && <span className="text-destructive">*</span>}
+                      Valor inicial {!noBaseline && !hasPrimaryKpi && <span className="text-destructive">*</span>}
                     </Label>
-                    <div className="flex items-center gap-1.5">
-                      <Checkbox
-                        id="no-baseline"
-                        checked={noBaseline}
-                        onCheckedChange={(checked) => {
-                          setNoBaseline(!!checked);
-                          if (checked) {
-                            setBaseline('0');
-                          }
-                        }}
-                        disabled={mutation.isPending}
-                      />
-                      <label 
-                        htmlFor="no-baseline" 
-                        className="text-xs text-muted-foreground cursor-pointer"
-                      >
-                        Sem baseline
-                      </label>
-                    </div>
+                    {!hasPrimaryKpi && (
+                      <div className="flex items-center gap-1.5">
+                        <Checkbox
+                          id="no-baseline"
+                          checked={noBaseline}
+                          onCheckedChange={(checked) => {
+                            setNoBaseline(!!checked);
+                            if (checked) {
+                              setBaseline('0');
+                            }
+                          }}
+                          disabled={mutation.isPending}
+                        />
+                        <label 
+                          htmlFor="no-baseline" 
+                          className="text-xs text-muted-foreground cursor-pointer"
+                        >
+                          Sem baseline
+                        </label>
+                      </div>
+                    )}
                   </div>
                   <Input
                     id="baseline"
@@ -396,11 +407,17 @@ export function TeamKrFormDialog({
                     value={noBaseline ? '' : baseline}
                     placeholder={noBaseline ? '—' : '0'}
                     onChange={(e) => setBaseline(e.target.value)}
-                    disabled={mutation.isPending || noBaseline}
+                    disabled={mutation.isPending || noBaseline || hasPrimaryKpi}
+                    className={hasPrimaryKpi ? 'bg-muted cursor-not-allowed' : ''}
                   />
+                  {hasPrimaryKpi && (
+                    <p className="text-xs text-muted-foreground">
+                      Valor definido pela KPI primária
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="target">Meta *</Label>
+                  <Label htmlFor="target">Meta {!hasPrimaryKpi && '*'}</Label>
                   <Input
                     id="target"
                     type="number"
@@ -408,11 +425,17 @@ export function TeamKrFormDialog({
                     placeholder="100"
                     value={target}
                     onChange={(e) => setTarget(e.target.value)}
-                    disabled={mutation.isPending || direction === 'maintain'}
+                    disabled={mutation.isPending || direction === 'maintain' || hasPrimaryKpi}
+                    className={hasPrimaryKpi ? 'bg-muted cursor-not-allowed' : ''}
                   />
-                  {direction === 'maintain' && (
+                  {direction === 'maintain' && !hasPrimaryKpi && (
                     <p className="text-xs text-muted-foreground">
                       Meta é igual ao baseline para KRs de manutenção
+                    </p>
+                  )}
+                  {hasPrimaryKpi && (
+                    <p className="text-xs text-muted-foreground">
+                      Meta definida pela KPI primária
                     </p>
                   )}
                 </div>

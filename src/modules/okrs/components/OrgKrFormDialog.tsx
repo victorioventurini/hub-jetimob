@@ -35,11 +35,12 @@ import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Equal, Ba
 import { KrUnitSelect } from './KrUnitSelect';
 import { KrProgressPreview } from './KrProgressPreview';
 import { KrMetricsSection } from './KrMetricsSection';
+import { PrimaryKpiLockBanner } from './shared/PrimaryKpiLockBanner';
 import { validateOrgKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
-import { useCancelOrgKeyResult } from '@/modules/okrs/hooks';
+import { useCancelOrgKeyResult, usePrimaryKpiForKr } from '@/modules/okrs/hooks';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection } from '../types';
 
@@ -72,6 +73,9 @@ export function OrgKrFormDialog({
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
   const cancelMutation = useCancelOrgKeyResult();
+  
+  // Check if KR has a primary KPI linked (blocks manual value editing)
+  const { hasPrimaryKpi, primaryKpi, isLoading: isLoadingPrimaryKpi } = usePrimaryKpiForKr(kr?.id, 'org');
 
   const [title, setTitle] = useState(kr?.title || '');
   const [description, setDescription] = useState('');
@@ -272,31 +276,38 @@ export function OrgKrFormDialog({
                 />
               </div>
 
+              {/* Primary KPI Lock Banner - show when KR has linked primary KPI */}
+              {isEditing && hasPrimaryKpi && primaryKpi && (
+                <PrimaryKpiLockBanner primaryKpi={primaryKpi} variant="default" />
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="baseline">
-                      Valor inicial {!noBaseline && <span className="text-muted-foreground">(opcional)</span>}
+                      Valor inicial {!noBaseline && !hasPrimaryKpi && <span className="text-muted-foreground">(opcional)</span>}
                     </Label>
-                    <div className="flex items-center gap-1.5">
-                      <Checkbox
-                        id="no-baseline"
-                        checked={noBaseline}
-                        onCheckedChange={(checked) => {
-                          setNoBaseline(!!checked);
-                          if (checked) {
-                            setBaseline('0');
-                          }
-                        }}
-                        disabled={mutation.isPending}
-                      />
-                      <label 
-                        htmlFor="no-baseline" 
-                        className="text-xs text-muted-foreground cursor-pointer"
-                      >
-                        Sem baseline
-                      </label>
-                    </div>
+                    {!hasPrimaryKpi && (
+                      <div className="flex items-center gap-1.5">
+                        <Checkbox
+                          id="no-baseline"
+                          checked={noBaseline}
+                          onCheckedChange={(checked) => {
+                            setNoBaseline(!!checked);
+                            if (checked) {
+                              setBaseline('0');
+                            }
+                          }}
+                          disabled={mutation.isPending}
+                        />
+                        <label 
+                          htmlFor="no-baseline" 
+                          className="text-xs text-muted-foreground cursor-pointer"
+                        >
+                          Sem baseline
+                        </label>
+                      </div>
+                    )}
                   </div>
                   <Input
                     id="baseline"
@@ -305,11 +316,17 @@ export function OrgKrFormDialog({
                     value={noBaseline ? '' : baseline}
                     placeholder={noBaseline ? '—' : '0'}
                     onChange={(e) => setBaseline(e.target.value)}
-                    disabled={mutation.isPending || noBaseline}
+                    disabled={mutation.isPending || noBaseline || hasPrimaryKpi}
+                    className={hasPrimaryKpi ? 'bg-muted cursor-not-allowed' : ''}
                   />
+                  {hasPrimaryKpi && (
+                    <p className="text-xs text-muted-foreground">
+                      Valor definido pela KPI primária
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="target">Meta *</Label>
+                  <Label htmlFor="target">Meta {!hasPrimaryKpi && '*'}</Label>
                   <Input
                     id="target"
                     type="number"
@@ -317,11 +334,17 @@ export function OrgKrFormDialog({
                     placeholder="75"
                     value={target}
                     onChange={(e) => setTarget(e.target.value)}
-                    disabled={mutation.isPending || direction === 'maintain'}
+                    disabled={mutation.isPending || direction === 'maintain' || hasPrimaryKpi}
+                    className={hasPrimaryKpi ? 'bg-muted cursor-not-allowed' : ''}
                   />
-                  {direction === 'maintain' && (
+                  {direction === 'maintain' && !hasPrimaryKpi && (
                     <p className="text-xs text-muted-foreground">
                       Meta é igual ao baseline para KRs de manutenção
+                    </p>
+                  )}
+                  {hasPrimaryKpi && (
+                    <p className="text-xs text-muted-foreground">
+                      Meta definida pela KPI primária
                     </p>
                   )}
                 </div>
