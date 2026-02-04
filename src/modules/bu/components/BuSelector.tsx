@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, ChevronDown, Check } from "lucide-react";
+import { Building2, ChevronDown, Check, Cog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,8 @@ import { BuSymbol } from "./BuSymbol";
 
 export function BuSelector() {
   const { currentBu, userBus, hasMultipleBus, switchBu } = useBu();
-  const { isAdmin } = useAuth();
+  const { isAdmin, role } = useAuth();
+  const isSuperAdmin = role === 'super_admin';
   const [open, setOpen] = useState(false);
   
   // Fecha o dropdown ao mudar de rota
@@ -77,7 +78,17 @@ export function BuSelector() {
               <Check className="h-4 w-4 text-primary shrink-0" />
             )}
           </DropdownMenuItem>
-          ))}
+        ))}
+        
+        {/* Configurações do Hub - apenas super_admin */}
+        {isSuperAdmin && (
+          <DropdownMenuItem asChild className="border-t mt-1 pt-1">
+            <Link to="/hub" className="flex items-center gap-2 cursor-pointer">
+              <Cog className="h-4 w-4" />
+              <span>Configurações do Hub</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
