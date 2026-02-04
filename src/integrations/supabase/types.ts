@@ -3485,6 +3485,81 @@ export type Database = {
           },
         ]
       }
+      kpi_target_history: {
+        Row: {
+          bu_id: string | null
+          changed_at: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          kpi_id: string
+          new_target_source: string | null
+          new_target_value: number | null
+          old_target_source: string | null
+          old_target_value: number | null
+        }
+        Insert: {
+          bu_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          kpi_id: string
+          new_target_source?: string | null
+          new_target_value?: number | null
+          old_target_source?: string | null
+          old_target_value?: number | null
+        }
+        Update: {
+          bu_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          kpi_id?: string
+          new_target_source?: string | null
+          new_target_value?: number | null
+          old_target_source?: string | null
+          old_target_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_target_history_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_target_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_target_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_target_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_target_history_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_values: {
         Row: {
           confidence: Database["public"]["Enums"]["kpi_confidence_level"]

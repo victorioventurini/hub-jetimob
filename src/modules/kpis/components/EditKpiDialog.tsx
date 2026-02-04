@@ -103,6 +103,14 @@ const formSchema = z.object({
       });
     }
   }
+  // v2.86.0: Fonte da meta obrigatória quando meta preenchida
+  if (data.target_value !== undefined && data.target_value !== null && !data.target_source?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Fonte da meta é obrigatória quando há meta definida",
+      path: ["target_source"],
+    });
+  }
 });
 
 type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
@@ -456,7 +464,19 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 name="target_value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Meta indicativa (opcional)</FormLabel>
+                    <FormLabel>
+                      Meta ou Benchmark
+                      <HelpTooltip 
+                        content={
+                          <div className="space-y-1">
+                            <p>Valor de referência usado para avaliar o desempenho deste indicador.</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Pode ser uma meta interna, um benchmark de mercado, um recorde histórico da empresa ou outra referência estratégica.
+                            </p>
+                          </div>
+                        }
+                      />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -470,6 +490,36 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 )}
               />
             </div>
+
+            {/* v2.86.0: Fonte da Meta - obrigatória quando target_value preenchido */}
+            <FormField
+              control={form.control}
+              name="target_source"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Fonte da Meta ou Benchmark {form.watch("target_value") ? <span className="text-destructive">*</span> : "(opcional)"}
+                    <HelpTooltip 
+                      content={
+                        <div className="space-y-1">
+                          <p>Explique de onde vem esta referência.</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Exemplos: estudo de mercado, benchmark setorial, OKR do ciclo, decisão estratégica interna, recorde histórico ou link para material de referência.
+                          </p>
+                        </div>
+                      }
+                    />
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ex: OKR Q1 2026, Benchmark Gartner, Decisão Board..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Governance: Escopo e Área */}
             <div className="grid grid-cols-2 gap-4">
@@ -610,25 +660,6 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 pt-2">
-                <FormField
-                  control={form.control}
-                  name="target_source"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fonte da Meta (opcional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ex: OKR Q1 2026, Benchmark Setorial, Board Deck..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        URL ou referência de onde o target/benchmark foi definido
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={form.control}
