@@ -49,16 +49,18 @@ export function calculateProgress(
       return current >= target ? 100 : 0;
     }
     // Fórmula padrão: (resultado - baseline) / (meta - baseline) × 100
+    // Não limitar a 100% para permitir exibição de superação de metas
     const progress = ((current - baseline) / (target - baseline)) * 100;
-    return Math.max(0, Math.min(100, progress));
+    return Math.max(0, progress);
   } else {
     // KR de manutenção para redução
     if (baseline === target) {
       return current <= target ? 100 : 0;
     }
     // Fórmula para redução: (baseline - resultado) / (baseline - meta) × 100
+    // Não limitar a 100% para permitir exibição de superação de metas
     const progress = ((baseline - current) / (baseline - target)) * 100;
-    return Math.max(0, Math.min(100, progress));
+    return Math.max(0, progress);
   }
 }
 

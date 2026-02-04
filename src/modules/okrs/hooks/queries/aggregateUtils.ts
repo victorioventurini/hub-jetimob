@@ -11,11 +11,13 @@ export function calculateProgress(baseline: number, current: number, target: num
   if (direction === 'up') {
     if (target === baseline) return current >= target ? 100 : 0;
     const progress = ((current - baseline) / (target - baseline)) * 100;
-    return Math.max(0, Math.min(100, progress));
+    // Não limitar a 100% para permitir exibição de superação de metas
+    return Math.max(0, progress);
   } else {
     if (baseline === target) return current <= target ? 100 : 0;
     const progress = ((baseline - current) / (baseline - target)) * 100;
-    return Math.max(0, Math.min(100, progress));
+    // Não limitar a 100% para permitir exibição de superação de metas
+    return Math.max(0, progress);
   }
 }
 

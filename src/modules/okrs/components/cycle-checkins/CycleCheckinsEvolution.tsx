@@ -175,9 +175,9 @@ function SingleKrEvolutionView({ krId, krData }: SingleKrEvolutionViewProps) {
   const direction = krWithHistory?.direction ?? 'up';
   const currentValue = krWithHistory?.currentValue ?? krData.latest_value;
   
-  // Calcular progresso
+  // Calcular progresso - permitir acima de 100% para superação de metas
   const progress = target !== baseline 
-    ? Math.min(100, Math.max(0, ((currentValue - baseline) / (target - baseline)) * 100))
+    ? Math.max(0, ((currentValue - baseline) / (target - baseline)) * 100)
     : 0;
   
   return (
@@ -203,9 +203,13 @@ function SingleKrEvolutionView({ krId, krData }: SingleKrEvolutionViewProps) {
               <span className="text-muted-foreground ml-1">/ {target} {unit}</span>
             </span>
           </div>
-          <Progress value={progress} className="h-2" />
+          {/* Barra visual limitada a 100% */}
+          <Progress value={Math.min(100, progress)} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{progress.toFixed(0)}% concluído</span>
+            <span className={progress > 100 ? 'text-status-green font-medium' : ''}>
+              {progress.toFixed(0)}% concluído
+              {progress > 100 && ' 🚀'}
+            </span>
             <span>{krData.checkins.length} check-ins</span>
           </div>
         </div>
@@ -247,9 +251,9 @@ function MiniKrEvolutionCard({ krData, onClick }: MiniKrEvolutionCardProps) {
   const direction = krWithHistory?.direction ?? 'up';
   const currentValue = krWithHistory?.currentValue ?? krData.latest_value;
   
-  // Calcular progresso
+  // Calcular progresso - permitir acima de 100% para superação de metas
   const progress = target !== baseline 
-    ? Math.min(100, Math.max(0, ((currentValue - baseline) / (target - baseline)) * 100))
+    ? Math.max(0, ((currentValue - baseline) / (target - baseline)) * 100)
     : 0;
   
   return (

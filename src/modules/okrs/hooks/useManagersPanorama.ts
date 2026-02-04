@@ -138,13 +138,14 @@ export function useManagersPanorama(cycleId: string | null | undefined) {
         const target = kr.target ?? 100;
         const direction = kr.direction ?? 'up';
 
+        // Permitir progresso acima de 100% para superação de metas
         let progress: number;
         if (direction === 'up') {
           progress = target === baseline ? (current >= target ? 100 : 0) 
-            : Math.max(0, Math.min(100, ((current - baseline) / (target - baseline)) * 100));
+            : Math.max(0, ((current - baseline) / (target - baseline)) * 100);
         } else {
           progress = baseline === target ? (current <= target ? 100 : 0)
-            : Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100));
+            : Math.max(0, ((baseline - current) / (baseline - target)) * 100);
         }
         stats.progressSum += progress;
 

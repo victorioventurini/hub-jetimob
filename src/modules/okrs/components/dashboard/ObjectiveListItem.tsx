@@ -295,8 +295,12 @@ export function ObjectiveListItem({
                   
                   {/* Progress bar */}
                   <div className="mt-2 sm:mt-3 flex items-center gap-2 sm:gap-3">
-                    <Progress value={progress} className="h-1.5 sm:h-2 flex-1" />
-                    <span className="text-xs sm:text-sm font-medium w-10 sm:w-12 text-right">
+                    {/* Barra visual limitada a 100% */}
+                    <Progress value={Math.min(100, progress)} className="h-1.5 sm:h-2 flex-1" />
+                    <span className={cn(
+                      "text-xs sm:text-sm font-medium w-10 sm:w-12 text-right",
+                      progress > 100 && "text-status-green"
+                    )}>
                       {progress.toFixed(0)}%
                     </span>
                   </div>
