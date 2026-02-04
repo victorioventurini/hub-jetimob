@@ -44,8 +44,9 @@ import {
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
-  SCOPE_LABELS,
+  getScopeLabels,
 } from "../types";
+import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ChevronDown, Info } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
@@ -127,6 +128,11 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { updateKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
+  const { currentBu } = useBu();
+  
+  // Dynamic scope labels with BU name
+  const scopeLabels = getScopeLabels(currentBu?.name);
+  
   // Pode editar indicadores (owner/líder ou admin)
   const canEditIndicator = hasPermission("kpis.metric.update:self_or_owner") || hasPermission("kpis.settings.manage:bu");
   // Pode mudar tipo para KPI (apenas admin)
@@ -538,7 +544,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                           <div className="space-y-1">
                             <p><strong>Time:</strong> Indicador específico (área inferida).</p>
                             <p><strong>Área:</strong> Indicador compartilhado.</p>
-                            <p><strong>Organização:</strong> Indicador global.</p>
+                            <p><strong>{currentBu?.name || 'Organização'}:</strong> Indicador global.</p>
                           </div>
                         }
                       />
@@ -550,9 +556,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(SCOPE_LABELS) as KpiScope[]).map((sc) => (
+                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
                           <SelectItem key={sc} value={sc}>
-                            {SCOPE_LABELS[sc]}
+                            {scopeLabels[sc]}
                           </SelectItem>
                         ))}
                       </SelectContent>

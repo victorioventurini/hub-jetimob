@@ -172,11 +172,25 @@ export const LIFECYCLE_STATUS_LABELS: Record<KpiLifecycleStatus, string> = {
 };
 
 // === v2.2 Governance Labels ===
+/** @deprecated Use getScopeLabels(buName) for dynamic BU name */
 export const SCOPE_LABELS: Record<KpiScope, string> = {
   team: 'Time',
   area: 'Área',
   org: 'Organização (Global)',
 };
+
+/**
+ * Returns dynamic scope labels with BU name instead of "Organização"
+ * @param buName - Name of the current Business Unit
+ */
+export function getScopeLabels(buName?: string): Record<KpiScope, string> {
+  const orgLabel = buName ? `${buName} (Global)` : 'Organização (Global)';
+  return {
+    team: 'Time',
+    area: 'Área',
+    org: orgLabel,
+  };
+}
 
 export const CONFIDENCE_LABELS: Record<KpiConfidenceLevel, string> = {
   high: 'Alta',

@@ -1,6 +1,7 @@
 import { TeamSelect, AreaSelect } from "@/components/selects";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KpiCategory, KpiScope, KpiIndicatorType, SCOPE_LABELS, INDICATOR_TYPE_LABELS } from "../types";
+import { KpiCategory, KpiScope, KpiIndicatorType, getScopeLabels, INDICATOR_TYPE_LABELS } from "../types";
+import { useBu } from "@/contexts/BuContext";
 
 /**
  * v2.83.0 - Filtros do Dashboard de Indicadores
@@ -37,6 +38,9 @@ export function KpiDashboardFilters({
   onScopeChange,
   onIndicatorTypeChange,
 }: KpiDashboardFiltersProps) {
+  const { currentBu } = useBu();
+  const scopeLabels = getScopeLabels(currentBu?.name);
+  
   return (
     <div className="flex flex-wrap gap-3">
       {/* Tipo de Indicador - primary filter */}
@@ -81,9 +85,9 @@ export function KpiDashboardFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos escopos</SelectItem>
-            {(Object.keys(SCOPE_LABELS) as KpiScope[]).map((sc) => (
+            {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
               <SelectItem key={sc} value={sc}>
-                {SCOPE_LABELS[sc]}
+                {scopeLabels[sc]}
               </SelectItem>
             ))}
           </SelectContent>

@@ -55,11 +55,12 @@ import { KpiHistoryDialog, type KpiHistoryDialogData } from "../components/KpiHi
 import { 
   RAG_STATUS_CONFIG, 
   INDICATOR_TYPE_LABELS, 
-  SCOPE_LABELS,
+  getScopeLabels,
   type KpiIndicatorType, 
   type KpiScope, 
   type KpiRagStatus,
 } from "../types";
+import { useBu } from "@/contexts/BuContext";
 import { useAreas } from "@/modules/areas/hooks";
 
 type ViewMode = 'cards' | 'table' | 'charts';

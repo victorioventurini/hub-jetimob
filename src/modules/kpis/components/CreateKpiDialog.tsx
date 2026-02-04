@@ -43,8 +43,9 @@ import {
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
-  SCOPE_LABELS,
+  getScopeLabels,
 } from "../types";
+import { useBu } from "@/contexts/BuContext";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ChevronDown, Info } from "lucide-react";
@@ -130,6 +131,10 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { createKpi } = useKpiData();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
+  const { currentBu } = useBu();
+  
+  // Dynamic scope labels with BU name
+  const scopeLabels = getScopeLabels(currentBu?.name);
   
   // Governança: verificar permissões
   // Pode criar métricas OU KPIs
@@ -573,7 +578,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                           <div className="space-y-1">
                             <p><strong>Time:</strong> Indicador específico de um time (área inferida automaticamente).</p>
                             <p><strong>Área:</strong> Indicador compartilhado por toda uma área.</p>
-                            <p><strong>Organização:</strong> Indicador global visível para toda a BU.</p>
+                            <p><strong>{currentBu?.name || 'Organização'}:</strong> Indicador global visível para toda a BU.</p>
                           </div>
                         }
                       />
@@ -585,9 +590,9 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(SCOPE_LABELS) as KpiScope[]).map((sc) => (
+                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
                           <SelectItem key={sc} value={sc}>
-                            {SCOPE_LABELS[sc]}
+                            {scopeLabels[sc]}
                           </SelectItem>
                         ))}
                       </SelectContent>
