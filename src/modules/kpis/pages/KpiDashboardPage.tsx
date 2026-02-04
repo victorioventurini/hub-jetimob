@@ -11,6 +11,8 @@ import { useKpiData } from "@/modules/kpis/hooks";
 import { useAreas } from "@/modules/areas/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 import { KpiAreaSection } from "../components/KpiAreaSection";
+import { KpiDashboardTable } from "../components/KpiDashboardTable";
+import { KpiViewToggle, type KpiViewMode } from "../components/KpiViewToggle";
 import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
@@ -20,14 +22,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { SavedLinksPopover } from "@/shared/saved-links";
 
 /**
- * v2.83.0 - Dashboard de Indicadores
+ * v2.86.0 - Dashboard de Indicadores
  * 
- * Mudanças principais:
- * - Agrupamento por Área (em vez de Categoria)
- * - Filtros atualizados: Tipo, Área, Escopo, Time
- * - Labels atualizados para "Indicador"
+ * Mudanças:
+ * - v2.83.0: Agrupamento por Área (em vez de Categoria)
+ * - v2.83.0: Filtros atualizados: Tipo, Área, Escopo, Time
+ * - v2.86.0: Adicionado toggle de visualização (Cards/Tabela)
+ * - v2.86.0: Adicionado recurso de filtros salvos (SavedLinksPopover)
  */
 
 export default function KpiDashboardPage() {
@@ -51,6 +55,13 @@ export default function KpiDashboardPage() {
   });
   const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
   
+  // v2.86.0: View mode state synced to URL
+  const viewModeState = useUrlState<KpiViewMode>({
+    key: 'view',
+    defaultValue: 'cards',
+    parse: (v) => v as KpiViewMode,
+  });
+  
   const indicatorTypeFilter = indicatorTypeState.value;
   const setIndicatorTypeFilter = indicatorTypeState.set;
   const areaFilter = areaState.value;
@@ -59,6 +70,8 @@ export default function KpiDashboardPage() {
   const setScopeFilter = scopeState.set;
   const teamFilter = teamState.value;
   const setTeamFilter = teamState.set;
+  const viewMode = viewModeState.value;
+  const setViewMode = viewModeState.set;
   
   // Local state for dialogs
   const [selectedKpiId, setSelectedKpiId] = useState<string | null>(null);
@@ -92,7 +105,7 @@ export default function KpiDashboardPage() {
     setDetailOpen(true);
   };
 
-  // Group KPIs by area
+  // Group KPIs by area (only used in cards view)
   const kpisByArea = new Map<string | null, { areaName: string; areaColor: string | null; kpis: KpiWithValues[] }>();
   
   // Initialize with areas that have KPIs
@@ -128,12 +141,17 @@ export default function KpiDashboardPage() {
           title="Indicadores"
           description={`KPIs e Métricas da ${currentBu?.name || 'organização'}`}
           actions={
-            canCreateIndicator && (
-              <Button onClick={() => setCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Indicador
-              </Button>
-            )
+            <div className="flex items-center gap-2">
+              {/* v2.86.0: Filtros Salvos */}
+              <SavedLinksPopover moduleSlug="kpis" />
+              
+              {canCreateIndicator && (
+                <Button onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Indicador
+                </Button>
+              )}
+            </div>
           }
         />
 
@@ -146,21 +164,37 @@ export default function KpiDashboardPage() {
           improving={summary.improving}
         />
 
-        {/* Filters - v2.83.0: Added indicator type filter */}
-        <KpiDashboardFilters
-          category="all"
-          teamId={teamFilter}
-          areaId={areaFilter}
-          scope={scopeFilter}
-          indicatorType={indicatorTypeFilter}
-          onCategoryChange={() => {}} // No-op, category deprecated
-          onTeamChange={setTeamFilter}
-          onAreaChange={setAreaFilter}
-          onScopeChange={setScopeFilter}
-          onIndicatorTypeChange={setIndicatorTypeFilter}
-        />
+        {/* Filters Row - v2.86.0: Added view toggle */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <KpiDashboardFilters
+            category="all"
+            teamId={teamFilter}
+            areaId={areaFilter}
+            scope={scopeFilter}
+            indicatorType={indicatorTypeFilter}
+            onCategoryChange={() => {}} // No-op, category deprecated
+            onTeamChange={setTeamFilter}
+            onAreaChange={setAreaFilter}
+            onScopeChange={setScopeFilter}
+            onIndicatorTypeChange={setIndicatorTypeFilter}
+          />
+          
+          {/* View Mode Toggle */}
+          <KpiViewToggle 
+            viewMode={viewMode} 
+            onViewModeChange={setViewMode} 
+          />
+        </div>
 
-        {/* KPIs by Area */}
+        {/* Result count */}
+        {!isLoading && allKpis.length > 0 && (
+          <div className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{allKpis.length.toLocaleString("pt-BR")}</span>{" "}
+            {allKpis.length === 1 ? "indicador encontrado" : "indicadores encontrados"}
+          </div>
+        )}
+
+        {/* KPIs Content */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner size="lg" text="Carregando indicadores..." />
@@ -191,7 +225,14 @@ export default function KpiDashboardPage() {
               />
             </CardContent>
           </Card>
+        ) : viewMode === 'table' ? (
+          // Table View
+          <KpiDashboardTable 
+            kpis={allKpis} 
+            onKpiClick={handleKpiClick} 
+          />
         ) : (
+          // Cards View (grouped by area)
           <div className="space-y-8">
             {sortedAreas.map(([areaId, { areaName, areaColor, kpis }]) => (
               <KpiAreaSection
