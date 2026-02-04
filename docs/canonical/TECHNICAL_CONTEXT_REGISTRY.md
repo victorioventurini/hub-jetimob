@@ -32,6 +32,9 @@
 > ### Testes Automatizados
 > - [TESTING_GUIDE.md](../guides/TESTING_GUIDE.md) — **Guia completo de testes (Vitest + Playwright)** ⭐
 >
+> ### Desenvolvimento de Wizards
+> - [WIZARD_DEVELOPMENT_GUIDE.md](../guides/WIZARD_DEVELOPMENT_GUIDE.md) — **Guia obrigatório para novos wizards** ⭐
+>
 > ### Operações
 > - [BACKUP_RESTORE_PLAYBOOK.md](../guides/BACKUP_RESTORE_PLAYBOOK.md) — Playbook de backup e restore
 > - [GO_LIVE_CHECKLIST.md](../guides/GO_LIVE_CHECKLIST.md) — Checklist de go-live
