@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, BarChart3 } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { KpisBreadcrumb } from "@/components/ui/global-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKpiData } from "@/modules/kpis/hooks";
 import { useAreas } from "@/modules/areas/hooks";
@@ -19,7 +20,7 @@ import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
 import { KpiScope, KpiIndicatorType, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useUrlState } from "@/shared/url";
+import { useUrlState, useLocalSearch } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { SavedLinksPopover } from "@/shared/saved-links";
@@ -62,6 +63,9 @@ export default function KpiDashboardPage() {
     parse: (v) => v as KpiViewMode,
   });
   
+  // v2.87.0: Text search with URL sync
+  const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
+  
   const indicatorTypeFilter = indicatorTypeState.value;
   const setIndicatorTypeFilter = indicatorTypeState.set;
   const areaFilter = areaState.value;
@@ -91,13 +95,31 @@ export default function KpiDashboardPage() {
     indicatorType: indicatorTypeFilter === 'all' ? undefined : indicatorTypeFilter,
   });
 
-  // Calculate summary from real data
+  // v2.87.0: Client-side text filtering
+  const filteredKpis = useMemo(() => {
+    if (!searchValue.trim()) return allKpis;
+    
+    const query = searchValue.toLowerCase().trim();
+    return allKpis.filter((kpi) => {
+      const searchableFields = [
+        kpi.name,
+        kpi.description,
+        kpi.area?.name,
+        kpi.owner?.display_name,
+        kpi.unit,
+      ].filter(Boolean).join(" ").toLowerCase();
+      
+      return searchableFields.includes(query);
+    });
+  }, [allKpis, searchValue]);
+
+  // Calculate summary from filtered data
   const summary = {
-    total: allKpis.length,
-    onTrack: allKpis.filter(k => k.rag_status === 'on_track').length,
-    atRisk: allKpis.filter(k => k.rag_status === 'at_risk').length,
-    offTrack: allKpis.filter(k => k.rag_status === 'off_track').length,
-    improving: allKpis.filter(k => k.trend === 'up').length,
+    total: filteredKpis.length,
+    onTrack: filteredKpis.filter(k => k.rag_status === 'on_track').length,
+    atRisk: filteredKpis.filter(k => k.rag_status === 'at_risk').length,
+    offTrack: filteredKpis.filter(k => k.rag_status === 'off_track').length,
+    improving: filteredKpis.filter(k => k.trend === 'up').length,
   };
 
   const handleKpiClick = (kpi: KpiWithValues) => {
@@ -108,8 +130,8 @@ export default function KpiDashboardPage() {
   // Group KPIs by area (only used in cards view)
   const kpisByArea = new Map<string | null, { areaName: string; areaColor: string | null; kpis: KpiWithValues[] }>();
   
-  // Initialize with areas that have KPIs
-  allKpis.forEach((kpi) => {
+  // Initialize with areas that have KPIs (use filtered data)
+  filteredKpis.forEach((kpi) => {
     const areaId = kpi.area_id;
     const areaInfo = areas.find(a => a.id === areaId);
     
@@ -164,8 +186,21 @@ export default function KpiDashboardPage() {
           improving={summary.improving}
         />
 
-        {/* Filters Row - v2.86.0: Added view toggle */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        {/* v2.87.0: Search + Filters Row using ListPageFilters */}
+        <ListPageFilters
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          searchPlaceholder="Buscar indicadores..."
+          resultCount={!isLoading ? filteredKpis.length : undefined}
+          resultCountLabel="indicadores encontrados"
+          resultCountLabelSingular="indicador encontrado"
+          actions={
+            <KpiViewToggle 
+              viewMode={viewMode} 
+              onViewModeChange={setViewMode} 
+            />
+          }
+        >
           <KpiDashboardFilters
             category="all"
             teamId={teamFilter}
@@ -178,21 +213,7 @@ export default function KpiDashboardPage() {
             onScopeChange={setScopeFilter}
             onIndicatorTypeChange={setIndicatorTypeFilter}
           />
-          
-          {/* View Mode Toggle */}
-          <KpiViewToggle 
-            viewMode={viewMode} 
-            onViewModeChange={setViewMode} 
-          />
-        </div>
-
-        {/* Result count */}
-        {!isLoading && allKpis.length > 0 && (
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{allKpis.length.toLocaleString("pt-BR")}</span>{" "}
-            {allKpis.length === 1 ? "indicador encontrado" : "indicadores encontrados"}
-          </div>
-        )}
+        </ListPageFilters>
 
         {/* KPIs Content */}
         {isLoading ? (
@@ -209,26 +230,28 @@ export default function KpiDashboardPage() {
               />
             </CardContent>
           </Card>
-        ) : allKpis.length === 0 ? (
+        ) : filteredKpis.length === 0 ? (
           <Card>
             <CardContent className="py-4">
               <EmptyState
                 icon={BarChart3}
-                title="Nenhum indicador encontrado"
+                title={searchValue ? "Nenhum resultado encontrado" : "Nenhum indicador encontrado"}
                 description={
-                  canCreateIndicator
-                    ? `Comece criando seu primeiro indicador para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
-                    : "Nenhum indicador foi cadastrado ainda."
+                  searchValue
+                    ? `Nenhum indicador corresponde à busca "${searchValue}".`
+                    : canCreateIndicator
+                      ? `Comece criando seu primeiro indicador para acompanhar a saúde da ${currentBu?.name || 'organização'}.`
+                      : "Nenhum indicador foi cadastrado ainda."
                 }
-                actionLabel={canCreateIndicator ? "Criar Indicador" : undefined}
-                onAction={canCreateIndicator ? () => setCreateOpen(true) : undefined}
+                actionLabel={!searchValue && canCreateIndicator ? "Criar Indicador" : undefined}
+                onAction={!searchValue && canCreateIndicator ? () => setCreateOpen(true) : undefined}
               />
             </CardContent>
           </Card>
         ) : viewMode === 'table' ? (
           // Table View
           <KpiDashboardTable 
-            kpis={allKpis} 
+            kpis={filteredKpis} 
             onKpiClick={handleKpiClick} 
           />
         ) : (
