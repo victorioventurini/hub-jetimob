@@ -35,6 +35,8 @@ import {
   Users,
   Pencil,
   Trash2,
+  Shield,
+  Crown,
 } from "lucide-react";
 import { UserHoverCard } from "@/components/user/UserHoverCard";
 
@@ -60,13 +62,16 @@ interface UsersTableProps {
   profiles: ProfileWithTeam[];
   isLoading: boolean;
   canManageUsers: boolean;
+  canManagePermissions?: boolean;
   selectedIds: Set<string>;
   onToggleSelection: (id: string) => void;
   onToggleSelectAll: () => void;
   onEdit: (profile: ProfileWithTeam) => void;
   onDelete: (profile: ProfileWithTeam) => void;
+  onManagePermissions?: (profile: ProfileWithTeam) => void;
   searchQuery: string;
   teamFilter: string;
+  permissionsData?: Map<string, { role_in_bu: string | null; has_admin_template: boolean; template_count: number }>;
 }
 
 const workModeLabels: Record<string, string> = {
@@ -100,13 +105,16 @@ export function UsersTable({
   profiles,
   isLoading,
   canManageUsers,
+  canManagePermissions = false,
   selectedIds,
   onToggleSelection,
   onToggleSelectAll,
   onEdit,
   onDelete,
+  onManagePermissions,
   searchQuery,
   teamFilter,
+  permissionsData,
 }: UsersTableProps) {
   const allSelected = profiles.length > 0 && selectedIds.size === profiles.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
@@ -137,6 +145,7 @@ export function UsersTable({
             <TableHead className="font-semibold">Localização</TableHead>
             <TableHead className="font-semibold">Modalidade</TableHead>
             <TableHead className="font-semibold">Status</TableHead>
+            {canManagePermissions && <TableHead className="font-semibold">Permissões</TableHead>}
             {canManageUsers && <TableHead className="w-10"></TableHead>}
           </TableRow>
         </TableHeader>
@@ -149,15 +158,19 @@ export function UsersTable({
                 key={profile.id}
                 profile={profile}
                 canManageUsers={canManageUsers}
+                canManagePermissions={canManagePermissions}
                 isSelected={selectedIds.has(profile.id)}
                 onToggleSelection={() => onToggleSelection(profile.id)}
                 onEdit={() => onEdit(profile)}
                 onDelete={() => onDelete(profile)}
+                onManagePermissions={onManagePermissions ? () => onManagePermissions(profile) : undefined}
+                permissionInfo={permissionsData?.get(profile.id)}
               />
             ))
           ) : (
             <EmptyRow 
               canManageUsers={canManageUsers}
+              canManagePermissions={canManagePermissions}
               hasFilters={!!searchQuery || teamFilter !== "all"}
             />
           )}
@@ -200,19 +213,25 @@ function LoadingRows({ canManageUsers }: { canManageUsers: boolean }) {
 interface UserRowProps {
   profile: ProfileWithTeam;
   canManageUsers: boolean;
+  canManagePermissions?: boolean;
   isSelected: boolean;
   onToggleSelection: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onManagePermissions?: () => void;
+  permissionInfo?: { role_in_bu: string | null; has_admin_template: boolean; template_count: number };
 }
 
 function UserRow({
   profile,
   canManageUsers,
+  canManagePermissions,
   isSelected,
   onToggleSelection,
   onEdit,
   onDelete,
+  onManagePermissions,
+  permissionInfo,
 }: UserRowProps) {
   return (
     <TableRow className={`hover:bg-muted/30 ${isSelected ? "bg-accent/5" : ""}`}>
@@ -297,6 +316,22 @@ function UserRow({
           {statusLabels[profile.employment_status]}
         </Badge>
       </TableCell>
+      {canManagePermissions && (
+        <TableCell>
+          {permissionInfo?.role_in_bu === 'admin' || permissionInfo?.has_admin_template ? (
+            <Badge variant="default" className="gap-1 bg-primary/90">
+              <Crown className="h-3 w-3" />
+              Admin
+            </Badge>
+          ) : permissionInfo?.template_count ? (
+            <span className="text-sm text-muted-foreground">
+              {permissionInfo.template_count} template{permissionInfo.template_count !== 1 ? 's' : ''}
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">Base</span>
+          )}
+        </TableCell>
+      )}
       {canManageUsers && (
         <TableCell>
           <DropdownMenu>
@@ -310,6 +345,12 @@ function UserRow({
                 <Pencil className="h-4 w-4 mr-2" />
                 Editar
               </DropdownMenuItem>
+              {canManagePermissions && onManagePermissions && (
+                <DropdownMenuItem onClick={onManagePermissions}>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Gerenciar Permissões
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={onDelete}
@@ -326,10 +367,11 @@ function UserRow({
   );
 }
 
-function EmptyRow({ canManageUsers, hasFilters }: { canManageUsers: boolean; hasFilters: boolean }) {
+function EmptyRow({ canManageUsers, canManagePermissions, hasFilters }: { canManageUsers: boolean; canManagePermissions?: boolean; hasFilters: boolean }) {
+  const colSpan = 7 + (canManagePermissions ? 1 : 0) + (canManageUsers ? 2 : 0);
   return (
     <TableRow>
-      <TableCell colSpan={canManageUsers ? 9 : 7} className="h-32">
+      <TableCell colSpan={colSpan} className="h-32">
         <div className="flex flex-col items-center justify-center text-center">
           <Users className="h-10 w-10 text-muted-foreground mb-2" />
           <p className="font-medium">Nenhum Jetimober encontrado</p>

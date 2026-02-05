@@ -1,5 +1,5 @@
 // Users page with BU filtering and server-side pagination
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
@@ -33,7 +33,9 @@ import { useUserDependencies } from "@/hooks/useUserDependencies";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { UserDependenciesDialog } from "@/components/users/UserDependenciesDialog";
 
-// Labels and colors moved to UsersTable component
+// Permission management
+import { useBuUsers, type BuUser } from "@/modules/permissions/hooks";
+import { UserPermissionsV2Sheet } from "@/modules/permissions/components/UserPermissionsV2Sheet";
 
 export default function UsersPage() {
   usePageTitle("Jetimobers");
@@ -46,6 +48,10 @@ export default function UsersPage() {
   
   // Admin de BU ou super_admin podem gerenciar usuários via permission key
   const canManageUsers = isWildcard || has("users.profile.manage:bu");
+  const canManagePermissions = isWildcard || has("users.profile.manage:bu");
+  
+  // Fetch BU users for permission data
+  const { users: buUsers } = useBuUsers();
   
   // URL State - object API with pagination
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '' });
@@ -76,6 +82,7 @@ export default function UsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [dependenciesDialogOpen, setDependenciesDialogOpen] = useState(false);
   const [deletingProfile, setDeletingProfile] = useState<ProfileWithTeam | null>(null);
+  const [permissionsUser, setPermissionsUser] = useState<BuUser | null>(null);
 
   const deleteProfile = useDeleteProfile();
   const transferDependencies = useTransferDependencies();
@@ -223,6 +230,22 @@ export default function UsersPage() {
   
   const totalProfiles = areaFilter === 'all' ? (profilesData?.total ?? 0) : profiles.length;
 
+  // Build permissions data map for table
+  const permissionsData = useMemo(() => {
+    const map = new Map<string, { role_in_bu: string | null; has_admin_template: boolean; template_count: number }>();
+    for (const bu of buUsers) {
+      // Count templates (from bu_user_permission_templates_v2)
+      // Note: useBuUsers returns has_admin_template but not template_count
+      // For now, we'll estimate based on has_admin_template flag
+      map.set(bu.profile_id, {
+        role_in_bu: bu.role_in_bu,
+        has_admin_template: bu.has_admin_template,
+        template_count: bu.has_admin_template ? 1 : 0, // Simplified - could be enhanced
+      });
+    }
+    return map;
+  }, [buUsers]);
+
   const getInitials = (name: string) =>
     name
       .split(" ")
@@ -248,6 +271,15 @@ export default function UsersPage() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingProfile(null);
+  };
+
+  // Handler para abrir sheet de permissões
+  const handleManagePermissions = (profile: ProfileWithTeam) => {
+    // Encontrar o BuUser correspondente pelo profile_id
+    const buUser = buUsers.find(u => u.profile_id === profile.id);
+    if (buUser) {
+      setPermissionsUser(buUser);
+    }
   };
 
   // Selection handlers
@@ -396,13 +428,16 @@ export default function UsersPage() {
           profiles={filteredProfiles}
           isLoading={isLoading}
           canManageUsers={canManageUsers}
+          canManagePermissions={canManagePermissions}
           selectedIds={selectedIds}
           onToggleSelection={toggleSelection}
           onToggleSelectAll={toggleSelectAll}
           onEdit={handleEdit}
           onDelete={(profile) => setDeletingProfile(profile)}
+          onManagePermissions={handleManagePermissions}
           searchQuery={searchQuery}
           teamFilter={teamFilter}
+          permissionsData={permissionsData}
         />
 
       </div>
@@ -418,6 +453,13 @@ export default function UsersPage() {
         onOpenChange={setBulkEditOpen}
         selectedIds={Array.from(selectedIds)}
         onComplete={clearSelection}
+      />
+
+      {/* Permissions Sheet - integrado diretamente na página */}
+      <UserPermissionsV2Sheet
+        open={!!permissionsUser}
+        onOpenChange={(open) => { if (!open) setPermissionsUser(null); }}
+        user={permissionsUser}
       />
 
       {/* Dependencies Dialog - shown when user has mandatory dependencies */}
