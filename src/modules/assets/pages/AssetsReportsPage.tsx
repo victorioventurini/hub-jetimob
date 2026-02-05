@@ -3,6 +3,7 @@ import { FileBarChart, Package, Key, Gift, Clock, AlertTriangle, ChevronRight, C
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory, useKeys, useGifts, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { EmptyState } from "@/components/ui/empty-state";
 import { isPast } from "date-fns";
@@ -41,6 +42,10 @@ function ReportStatItem({ label, value, variant = "default", to }: ReportStatIte
 }
 
 export default function AssetsReportsPage() {
+  usePageTitle("Relatórios de Ativos", {
+    customDescription: "Acompanhe métricas de inventário, chaveiros e brindes corporativos."
+  });
+
   const { items: inventoryItems, isLoading: loadingInventory } = useInventory();
   const { keyrings, isLoading: loadingKeys } = useKeys();
   const { items: giftItems, getItemTotals, isLoading: loadingGifts } = useGifts();

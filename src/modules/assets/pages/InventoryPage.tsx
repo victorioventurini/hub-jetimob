@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { ViewOptionsBar } from "@/components/ui/view-options-bar";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory, useLocations, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { InventoryTable } from "../components/inventory/InventoryTable";
 import { InventoryFilters } from "../components/inventory/InventoryFilters";
@@ -14,6 +15,10 @@ import { isPast } from "date-fns";
 import type { AssetInventoryStatus } from "../types";
 
 export default function InventoryPage() {
+  usePageTitle("Inventário", {
+    customDescription: "Gerencie equipamentos, materiais e itens do inventário corporativo."
+  });
+
   // URL State for filtering - NO debounce here, UrlSearchInput handles it
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const search = searchState.value;
