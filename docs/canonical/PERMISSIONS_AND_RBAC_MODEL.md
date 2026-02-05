@@ -1,9 +1,39 @@
 # Permissions & RBAC Model — Hub da Jet
 
-**Versão:** 1.2.0  
-**Data:** 2026-01-12  
-**Status:** Normativo (V2-only mode) | RLS 100% migrado  
-**Referência:** TCR v2.24.0, RBAC_TEMPLATES_V3.md
+**Versão:** 1.3.0  
+**Data:** 2026-02-05  
+**Status:** Normativo (V2-only mode) | RLS 100% migrado | Wave 8 Audit Complete  
+**Referência:** TCR v2.92.0, RBAC_TEMPLATES_V3.md
+
+---
+
+## 0. Personas do Sistema
+
+| Persona | Identificação | Wildcard | Escopo |
+|---------|---------------|----------|--------|
+| **Super Admin** | `user_roles.role = 'super_admin'` | `['*']` todas BUs | Plataforma inteira |
+| **Admin BU** | `bu_user_memberships.role_in_bu = 'admin'` | `['*']` na BU | Business Unit específica |
+| **Líder** | `teams.leader_user_id = profiles.id` | Não | Times que lidera (+ descendentes) |
+| **Colaborador** | Membro da BU sem role específico | Não | Via templates atribuídos |
+| **Externo** | `user_roles.role = 'external'` | Não | Apenas tickets participantes |
+
+### Capacidades por Persona
+
+| Capacidade | Super Admin | Admin BU | Líder | Colaborador | Externo |
+|------------|:-----------:|:--------:|:-----:|:-----------:|:-------:|
+| Gerenciar BUs | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Impersonar usuários | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Acesso `/hub` | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Gerenciar usuários da BU | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Gerenciar OKRs org | ✅ | ✅ | ⚠️¹ | ❌ | ❌ |
+| Gerenciar OKRs do time | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Criar check-ins | ✅ | ✅ | ✅ | ✅² | ❌ |
+| Visualizar módulos | ✅ | ✅ | ✅ | ✅³ | ❌ |
+| Tickets (participante) | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+¹ Requer template `okrs_admin_v2`  
+² Apenas em KRs onde é owner/co-responsible  
+³ Via template `collaborator_base_v2` (11 keys)
 
 ---
 
@@ -164,7 +194,7 @@ O catálogo completo está em `permission_catalog`. Algumas categorias:
 
 | Slug | Keys | Descrição |
 |------|------|-----------|
-| `collaborator_base` | 9 | Base para todo colaborador interno |
+| `collaborator_base_v2` | 11 | Base para todo colaborador interno (Wave 8) |
 | `external_contact_base` | 4 | Base para contatos externos |
 | `bu_admin` | 135 | Admin da BU |
 | `tickets_operator` | 8 | Operador de tickets |

@@ -1,6 +1,6 @@
 # Wave 8: Auditoria e Consolidação do Catálogo de Permissões
 
-## Status: ✅ Fases 1-3 Concluídas
+## Status: ✅ CONCLUÍDA
 
 ### Progresso
 
@@ -9,9 +9,9 @@
 | Fase 1: Keys fantasmas no frontend | ✅ Concluída | `LeaderDashboard.tsx` corrigido |
 | Fase 2: Keys faltantes no catálogo | ✅ Concluída | 4 keys `bu.*` adicionadas |
 | Fase 3: Expandir collaborator_base_v2 | ✅ Concluída | Template expandido de 1→11 keys |
-| Fase 4: Auditoria RLS | 🔜 Pendente | - |
-| Fase 5: Padronização nomenclatura | 🔜 Pendente | - |
-| Fase 6: Documentação | 🔜 Pendente | - |
+| Fase 4: Auditoria RLS | ✅ Concluída | 43 keys faltantes adicionadas |
+| Fase 5: Padronização nomenclatura | ✅ Concluída | 19 keys deprecated + aliases |
+| Fase 6: Documentação | ✅ Concluída | TCR v2.92.0 |
 
 ---
 
