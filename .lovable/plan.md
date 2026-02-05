@@ -1,6 +1,8 @@
 
 # Plano: Unificação da Gestão de Usuários e Permissões
 
+## Status: ✅ IMPLEMENTADO
+
 ## Objetivo
 
 Consolidar a gestão de usuários e permissões em uma única interface (`/users`), eliminando a necessidade de navegar para `/settings/permissions` para configurar acessos.
