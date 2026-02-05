@@ -1,109 +1,217 @@
 
-# Plano: Correção de Permission Keys nas RLS Policies
+# Wave 8: Auditoria e Consolidação do Catálogo de Permissões
 
-## Resumo do Problema
+## Resumo Executivo
 
-A usuária Luiza (e qualquer outro usuário com permissões de gestão de usuários) não consegue cadastrar novos usuários porque existe uma **inconsistência entre as permission keys** usadas nas RLS policies e as cadastradas no catálogo de permissões.
-
-### Diagnóstico
-
-| Camada | Key Usada | Existe no Catálogo? |
-|--------|-----------|---------------------|
-| RLS INSERT | `people.profile.create:bu` | ❌ NÃO |
-| RLS UPDATE | `people.profile.update:bu` | ❌ NÃO |
-| RLS DELETE | `people.profile.delete:bu` | ❌ NÃO |
-| Catálogo | `users.profile.create` | ✅ SIM |
-| Catálogo | `users.profile.manage:bu` | ✅ SIM |
-| Catálogo | `users.profile.delete` | ✅ SIM |
-
-### Templates de Luiza (Confirmados)
-
-Luiza possui:
-- `users_admin_v2` com: `users.profile.create`, `users.profile.manage:bu`, `users.profile.delete`
-
-Porém a RLS não reconhece essas keys porque busca por `people.profile.*`.
+Revisão completa do catálogo de permissões do Hub garantindo consistência entre RLS policies, catálogo e frontend, com cobertura adequada para todas as personas do sistema.
 
 ---
 
-## Solução
+## Diagnóstico: Inconsistências Identificadas
 
-Atualizar as RLS policies da tabela `profiles` para usar as permission keys corretas do catálogo.
+### 1. Permission Keys Fantasmas no Frontend
 
-### Migração SQL
+Keys usadas no código que **NÃO EXISTEM** no `permission_catalog`:
+
+| Arquivo | Key Usada | Key Correta no Catálogo |
+|---------|-----------|-------------------------|
+| `LeaderDashboard.tsx` | `okrs.read` | `okrs.view:bu` |
+| `LeaderDashboard.tsx` | `kpis.read` | `kpis.view:bu` |
+| `LeaderDashboard.tsx` | `tickets.read` | `tickets.ticket.view:bu` |
+| `LeaderDashboard.tsx` | `assets.read` | `assets.view:bu` |
+| `EditBuDialog.tsx` | `bu.settings.manage:bu` | ❌ Não existe |
+| `LocationDialog.tsx` | `bu.location.manage:bu` | ❌ Não existe |
+
+### 2. Inconsistência de Nomenclatura
+
+O catálogo tem padrões mistos:
+
+| Padrão | Exemplo | Quantidade |
+|--------|---------|------------|
+| `module.resource.action:scope` | `okrs.org_objective.create:bu` | Maioria |
+| `module.action:scope` | `okrs.view:bu` | Alguns |
+| `module.resource.action` (sem scope) | `assets.settings.manage` | Poucos |
+
+### 3. Template `collaborator_base_v2` - Cobertura Insuficiente
+
+Conforme documentação, deveria ter 9 keys de visualização básica. Porém o template atual não inclui keys de visualização genéricas como `home.view:bu`, `okrs.view:bu`, `kpis.view:bu`.
+
+### 4. Keys Órfãs ou Duplicadas
+
+| Key | Status |
+|-----|--------|
+| `assets.inventory.read:bu` | Potencialmente duplica `assets.inventory.view:bu` |
+| `kpis.metric.read:bu` | Potencialmente duplica `kpis.view:bu` |
+
+---
+
+## Mapeamento de Personas
+
+### 1. Super Admin (Platform Level)
+
+**Identificação:** `user_roles.role = 'super_admin'`
+
+| Capacidade | Status | Implementação |
+|------------|--------|---------------|
+| Wildcard `['*']` em todas as BUs | ✅ OK | `get_my_permissions()` retorna `['*']` |
+| Acesso a `/hub` (gestão de BUs) | ✅ OK | Verificado via `is_platform_admin()` |
+| Impersonação de usuários | ✅ OK | `ImpersonationContext` |
+| Gerenciar super_admins | ✅ OK | Apenas super_admin |
+
+### 2. Admin de BU
+
+**Identificação:** `bu_user_memberships.role_in_bu = 'admin'`
+
+| Capacidade | Status | Implementação |
+|------------|--------|---------------|
+| Wildcard `['*']` na BU | ✅ OK | `has_permission()` verifica |
+| Gerenciar usuários da BU | ✅ OK | Template `bu_admin_v2` |
+| Configurações da BU | ⚠️ Faltam keys | `bu.settings.manage:bu` não existe |
+
+### 3. Líder de Time
+
+**Identificação:** `teams.leader_user_id = profiles.id`
+
+| Capacidade | Status | Implementação |
+|------------|--------|---------------|
+| Gerenciar OKRs do time | ✅ OK | `okrs.team_objective.create:team` + `user_can_manage_team()` |
+| Gerenciar KPIs do time | ⚠️ Parcial | Depende de template |
+| Ver membros do time | ✅ OK | Via scope `team` |
+
+### 4. Colaborador Interno
+
+**Identificação:** Sem role específico, membro de BU
+
+| Capacidade | Status | Implementação |
+|------------|--------|---------------|
+| Visualizar módulos | ⚠️ Incompleto | `collaborator_base_v2` precisa keys de view |
+| Criar tickets internos | ✅ OK | `tickets.thread.create:bu` |
+| Check-ins próprios | ✅ OK | Via scope `self_or_owner` |
+
+### 5. Usuário Externo (Partner Contact)
+
+**Identificação:** `user_roles.role = 'external'`
+
+| Capacidade | Status | Implementação |
+|------------|--------|---------------|
+| Apenas tickets onde participa | ✅ OK | RLS `can_view_ticket()` |
+| Enviar mensagens | ✅ OK | 4 keys no template |
+| NÃO acessa outros módulos | ✅ OK | Bloqueado |
+
+---
+
+## Plano de Execução (6 Fases)
+
+### Fase 1: Correção Imediata de Keys Fantasmas (30min)
+
+Corrigir as keys usadas no frontend que não existem no catálogo.
+
+**Arquivos a modificar:**
+1. `src/modules/home/components/LeaderDashboard.tsx`
+   - `okrs.read` → `okrs.view:bu`
+   - `kpis.read` → `kpis.view:bu`
+   - `tickets.read` → `tickets.ticket.view:bu`
+   - `assets.read` → `assets.view:bu`
+
+### Fase 2: Adicionar Keys Faltantes ao Catálogo (30min)
+
+Migração SQL para adicionar keys de BU settings:
 
 ```sql
--- Drop policies com keys incorretas
-DROP POLICY IF EXISTS "profiles_insert_v2" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_update_admin_v2" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_delete_v2" ON public.profiles;
-
--- Recriar INSERT com keys corretas
-CREATE POLICY "profiles_insert_v2" ON public.profiles
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    user_id = auth.uid() 
-    OR has_permission(my_profile_id(), bu_id, 'users.profile.create')
-    OR has_permission(my_profile_id(), bu_id, 'users.profile.manage:bu')
-  );
-
--- Recriar UPDATE admin com keys corretas  
-CREATE POLICY "profiles_update_admin_v2" ON public.profiles
-  FOR UPDATE TO authenticated
-  USING (
-    has_permission(my_profile_id(), bu_id, 'users.profile.manage:bu')
-  );
-
--- Recriar DELETE com keys corretas
-CREATE POLICY "profiles_delete_v2" ON public.profiles
-  FOR DELETE TO authenticated
-  USING (
-    has_permission(my_profile_id(), bu_id, 'users.profile.delete')
-    OR has_permission(my_profile_id(), bu_id, 'users.profile.manage:bu')
-  );
+INSERT INTO permission_catalog (key, module, resource, action, scope, description) VALUES
+  ('bu.settings.manage:bu', 'bu', 'settings', 'manage', 'bu', 'Gerenciar configurações da BU'),
+  ('bu.location.manage:bu', 'bu', 'location', 'manage', 'bu', 'Gerenciar localizações da BU'),
+  ('bu.settings.view:bu', 'bu', 'settings', 'view', 'bu', 'Visualizar configurações da BU');
 ```
 
-### Ajuste no Frontend
+### Fase 3: Expandir Template `collaborator_base_v2` (30min)
 
-Atualizar `JetimoberDialog.tsx` para usar a key sem sufixo `:bu` (conforme catálogo):
+Adicionar keys de visualização básica:
 
-**De:**
-```typescript
-const canManageUsers = isWildcard || has('users.profile.manage:bu') || has('users.profile.create:bu');
+```sql
+-- Keys a adicionar ao collaborator_base_v2
+INSERT INTO permission_template_items_v2 (template_id, permission_id)
+SELECT 
+  (SELECT id FROM permission_templates_v2 WHERE slug = 'collaborator_base_v2'),
+  id
+FROM permission_catalog
+WHERE key IN (
+  'home.view:bu',
+  'okrs.view:bu',
+  'kpis.view:bu',
+  'assets.view:bu',
+  'teams.view:bu',
+  'users.list.view:bu'
+);
 ```
 
-**Para:**
-```typescript
-const canManageUsers = isWildcard || has('users.profile.manage:bu') || has('users.profile.create');
+### Fase 4: Auditoria de RLS vs Catálogo (1h)
+
+Verificar todas as RLS policies que usam `has_permission()` e confirmar que as keys existem.
+
+**Script de auditoria:**
+```sql
+-- Listar policies e extrair keys usadas
+SELECT 
+  schemaname, tablename, policyname,
+  regexp_matches(definition, '''([a-z]+\.[a-z_]+\.[a-z_]+:[a-z_]+)''', 'g') as keys_used
+FROM pg_policies
+WHERE definition LIKE '%has_permission%';
 ```
+
+### Fase 5: Padronização de Nomenclatura (1h)
+
+Criar aliases para keys sem scope e deprecar gradualmente:
+
+| Key Atual | Alias/Novo |
+|-----------|------------|
+| `assets.settings.manage` | `assets.settings.manage:bu` |
+
+### Fase 6: Documentação (30min)
+
+Atualizar:
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`
+- `docs/canonical/RBAC_TEMPLATES_V3.md`
+- `docs/qa/QA_PERMISSIONS_TEMPLATES.md`
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` → Bump para v2.92.0
 
 ---
 
-## Arquivos Impactados
+## Arquivos a Criar/Modificar
 
-| Arquivo | Alteração |
-|---------|-----------|
-| Nova migração SQL | Corrigir 3 RLS policies |
-| `src/components/users/JetimoberDialog.tsx` | Ajustar key de `users.profile.create:bu` para `users.profile.create` |
+| Arquivo | Ação |
+|---------|------|
+| `src/modules/home/components/LeaderDashboard.tsx` | Corrigir 4 keys |
+| `src/modules/bu/components/EditBuDialog.tsx` | Verificar fallback |
+| `src/modules/bu/components/LocationDialog.tsx` | Verificar fallback |
+| Migração SQL `wave8_permission_catalog_fixes.sql` | Adicionar keys faltantes |
+| Migração SQL `wave8_expand_collaborator_base.sql` | Expandir template |
+| `docs/audits/WAVE8_PERMISSION_AUDIT_REPORT.md` | Criar relatório |
+| `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` | Atualizar seção de personas |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | Bump version |
 
-## Impacto
+---
 
-- **Afeta todos os usuários** com templates de gestão de usuários
-- **Zero breaking changes** para funcionalidades existentes
-- **Correção imediata** após aplicação da migração
+## Critérios de Sucesso
 
-## Detalhes Técnicos
+| Critério | Métrica |
+|----------|---------|
+| Zero keys fantasmas no frontend | Todas as keys usadas existem no catálogo |
+| `collaborator_base_v2` expandido | ≥ 8 keys de visualização |
+| Personas documentadas | 5/5 no RBAC model |
+| TCR atualizado | v2.92.0 |
 
-### Mapeamento Final de Keys
+---
 
-| Operação | Permission Key Correta |
-|----------|------------------------|
-| Criar usuário | `users.profile.create` ou `users.profile.manage:bu` |
-| Editar próprio perfil | `users.profile.update:self` (já funciona via policy `profiles_update_own_v2`) |
-| Editar qualquer perfil | `users.profile.manage:bu` |
-| Deletar usuário | `users.profile.delete` ou `users.profile.manage:bu` |
+## Estimativa de Tempo
 
-### Validação Pós-Correção
+| Fase | Tempo |
+|------|-------|
+| Fase 1: Keys fantasmas | 30min |
+| Fase 2: Keys faltantes | 30min |
+| Fase 3: Expandir template | 30min |
+| Fase 4: Auditoria RLS | 1h |
+| Fase 5: Padronização | 1h |
+| Fase 6: Documentação | 30min |
+| **Total** | **4-5h** |
 
-1. Luiza conseguirá cadastrar novos usuários
-2. Qualquer usuário com `users_admin_v2` terá acesso completo
-3. RLS continua segura (apenas keys válidas do catálogo)
