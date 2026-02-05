@@ -106,7 +106,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   
   // Defense in depth: check if user can manage users
   const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
-  const canManageUsers = isWildcard || has('users.profile.manage:bu') || has('users.profile.create:bu');
+  const canManageUsers = isWildcard || has('users.profile.manage:bu') || has('users.profile.create');
   
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURN
   // React hooks must always be called in the same order
