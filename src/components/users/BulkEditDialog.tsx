@@ -80,7 +80,7 @@ export function BulkEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(null), refetchType: 'active' });
-      toast.success(`${selectedIds.length} jetimobers atualizados com sucesso!`);
+      toast.success(`${selectedIds.length} Jetimobers atualizados com sucesso!`);
       handleClose();
       onComplete();
     },
@@ -124,7 +124,7 @@ export function BulkEditDialog({
           </DialogTitle>
           <DialogDescription>
             Atualize {selectedIds.length}{" "}
-            {selectedIds.length === 1 ? "jetimober selecionado" : "jetimobers selecionados"}.
+            {selectedIds.length === 1 ? "Jetimober selecionado" : "Jetimobers selecionados"}.
             Apenas os campos alterados serão atualizados.
           </DialogDescription>
         </DialogHeader>
@@ -197,7 +197,7 @@ export function BulkEditDialog({
               disabled={!hasChanges}
             >
               Atualizar {selectedIds.length}{" "}
-              {selectedIds.length === 1 ? "jetimober" : "jetimobers"}
+              {selectedIds.length === 1 ? "Jetimober" : "Jetimobers"}
             </Button>
           </DialogFooter>
         </form>

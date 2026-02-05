@@ -77,11 +77,11 @@ export function InventoryFilters({
       <BuUserSelect
         value={holderFilter === "all" ? undefined : holderFilter}
         onValueChange={(val) => onHolderChange(val ?? "all")}
-        placeholder="Todos os jetimobers"
+        placeholder="Todos os Jetimobers"
         className="w-[180px]"
         showSearch
         allowNone
-        noneLabel="Todos os jetimobers"
+        noneLabel="Todos os Jetimobers"
         excludeExternal
       />
     </>

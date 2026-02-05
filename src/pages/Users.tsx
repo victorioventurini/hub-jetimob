@@ -359,8 +359,8 @@ export default function UsersPage() {
         {/* Linha 2: Contador */}
         <ViewOptionsBar
           resultCount={totalProfiles}
-          resultCountLabel="jetimobers encontrados"
-          resultCountLabelSingular="jetimober encontrado"
+          resultCountLabel="Jetimobers encontrados"
+          resultCountLabelSingular="Jetimober encontrado"
         />
 
         {/* Bulk action bar */}

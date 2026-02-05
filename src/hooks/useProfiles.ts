@@ -49,7 +49,7 @@ export function useDeleteProfile() {
       toast.success("Jetimober excluído com sucesso");
     },
     onError: () => {
-      toast.error("Erro ao excluir jetimober");
+      toast.error("Erro ao excluir Jetimober");
     },
   });
 }
@@ -125,7 +125,7 @@ export function useTransferDependencies() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiatives(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.all(buId) });
-      toast.success("Responsabilidades transferidas e jetimober excluído com sucesso");
+      toast.success("Responsabilidades transferidas e Jetimober excluído com sucesso");
     },
     onError: (error) => {
       console.error("Transfer error:", error);
