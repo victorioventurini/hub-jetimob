@@ -41,11 +41,11 @@ export function LeaderDashboard() {
 
   const { has } = usePermissions();
 
-  // Check module permissions
-  const canViewOkrs = has("okrs.read");
-  const canViewKpis = has("kpis.read");
-  const canViewTickets = has("tickets.read");
-  const canViewAssets = has("assets.read");
+  // Check module permissions (using correct catalog keys)
+  const canViewOkrs = has("okrs.view:bu");
+  const canViewKpis = has("kpis.view:bu");
+  const canViewTickets = has("tickets.ticket.view:bu");
+  const canViewAssets = has("assets.view:bu");
   
   // Check OKR creation permission (team-scoped)
   // Note: useLeaderScope already filters to teams where user is leader
