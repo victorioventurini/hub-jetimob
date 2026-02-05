@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useGifts, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { GiftsTable } from "../components/gifts/GiftsTable";
 import { GiftItemDialog } from "../components/gifts/GiftItemDialog";
@@ -12,6 +13,10 @@ import { GiftMovementDialog } from "../components/gifts/GiftMovementDialog";
 import { useUrlState } from "@/shared/url";
 
 export default function GiftsPage() {
+  usePageTitle("Brindes", {
+    customDescription: "Gerencie brindes corporativos, controle de estoque e movimentações."
+  });
+
   // URL State for filtering
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const lowStockState = useUrlState<string>({ key: "lowStock", defaultValue: "" });

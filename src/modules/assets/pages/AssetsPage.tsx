@@ -8,7 +8,9 @@ import { useBu } from "@/contexts/BuContext";
 import { SavedLinksPopover } from "@/shared/saved-links";
 
 export default function AssetsPage() {
-  usePageTitle("Assets");
+  usePageTitle("Ativos", {
+    customDescription: "Gerencie inventário, chaveiros e brindes corporativos no Hub."
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const { currentBu } = useBu();
@@ -24,8 +26,8 @@ export default function AssetsPage() {
     <HubLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Assets"
-          description={`Gerencie inventário, chaves e brindes da ${currentBu?.name || 'organização'}`}
+          title="Ativos"
+          description={`Gerencie inventário, chaveiros e brindes da ${currentBu?.name || 'organização'}`}
           breadcrumbs={[{ label: "Ativos" }]}
           actions={<SavedLinksPopover moduleSlug="assets" />}
         />

@@ -95,6 +95,13 @@ function getDescriptionForPage(title: string, buName: string, pageType?: PageTyp
     "Integrações": `Gerencie as integrações da ${buName} no Hub.`,
     "Agentes IA": `Configure e gerencie agentes de IA da ${buName} no Hub.`,
     "Módulos": `Visualize os módulos disponíveis para a ${buName} no Hub.`,
+    // Assets
+    "Ativos": `Gerencie inventário, chaveiros e brindes corporativos da ${buName} no Hub.`,
+    "Inventário": `Gerencie equipamentos e itens do inventário da ${buName} no Hub.`,
+    "Chaveiros": `Gerencie chaveiros e controle de acessos físicos da ${buName} no Hub.`,
+    "Brindes": `Gerencie brindes corporativos e controle de estoque da ${buName} no Hub.`,
+    "Relatórios de Ativos": `Acompanhe métricas de inventário, chaveiros e brindes da ${buName} no Hub.`,
+    "Configurações de Ativos": `Configure categorias, inventário e claviculários de ativos da ${buName}.`,
   };
 
   return descriptions[title] || `Gerencie ${title.toLowerCase()} da ${buName} no Hub.`;

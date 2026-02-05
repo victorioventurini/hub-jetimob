@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKeys, useAssetPermissionsV2 } from "@/modules/assets/hooks";
 import { KeyringsTable } from "../components/keys/KeyringsTable";
 import { KeyringDialog } from "../components/keys/KeyringDialog";
@@ -11,6 +12,10 @@ import { useUrlState } from "@/shared/url";
 import type { KeyringStatus } from "../types";
 
 export default function KeysPage() {
+  usePageTitle("Chaveiros", {
+    customDescription: "Gerencie chaveiros, chaves e controle de acessos físicos."
+  });
+
   // URL State for filtering
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const statusState = useUrlState<string>({ key: "status", defaultValue: "all" });
