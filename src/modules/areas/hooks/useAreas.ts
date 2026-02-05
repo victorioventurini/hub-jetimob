@@ -207,6 +207,17 @@ export function useUpdateArea() {
   });
 }
 
+/**
+ * Delete an area with dependency validation.
+ * 
+ * IMPORTANT: This hook performs soft-delete ONLY if there are no mandatory dependencies.
+ * If the area has teams linked to it, deletion is BLOCKED.
+ * 
+ * Use `useAreaDependencies` hook to check dependencies before calling this mutation.
+ * The AreaDependenciesDialog should be shown if hasMandatoryDependencies is true.
+ * 
+ * @throws Error with code "AREA_HAS_DEPENDENCIES" if mandatory dependencies exist
+ */
 export function useDeleteArea() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
@@ -215,7 +226,20 @@ export function useDeleteArea() {
 
   return useMutation({
     mutationFn: async (areaId: string) => {
-      // Soft delete
+      // 1. Check for mandatory dependencies (teams linked to this area)
+      const { count: teamsCount, error: teamsError } = await supabase
+        .from("teams")
+        .select("id", { count: "exact", head: true })
+        .eq("area_id", areaId)
+        .is("deleted_at", null);
+
+      if (teamsError) throw teamsError;
+
+      if ((teamsCount || 0) > 0) {
+        throw new Error("AREA_HAS_DEPENDENCIES");
+      }
+
+      // 2. Soft delete the area
       const { error } = await supabase
         .from("areas")
         .update({
@@ -246,14 +270,19 @@ export function useDeleteArea() {
 
       return { previousActive, previousInactive, activeKey, inactiveKey };
     },
-    onError: (_error, _areaId, context) => {
+    onError: (error, _areaId, context) => {
       if (context?.previousActive) {
         queryClient.setQueryData(context.activeKey, context.previousActive);
       }
       if (context?.previousInactive) {
         queryClient.setQueryData(context.inactiveKey, context.previousInactive);
       }
-      toast.error("Erro ao excluir área");
+      // Custom error handling for dependencies
+      if (error instanceof Error && error.message === "AREA_HAS_DEPENDENCIES") {
+        toast.error("Esta área possui times vinculados que precisam ser movidos antes da exclusão.");
+      } else {
+        toast.error("Erro ao excluir área");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.areas.list(buId, false) });
