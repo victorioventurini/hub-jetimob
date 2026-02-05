@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.17.0  
-**Última atualização:** 2026-01-23  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0**
-**Referência:** TCR v2.69.0
+**Versão:** 1.18.0  
+**Última atualização:** 2026-02-05  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0**
+**Referência:** TCR v2.93.0
 
 ---
 
@@ -26,6 +26,7 @@
 - [L. Layout e Estados de Página](#l-layout-e-estados-de-página)
 - [M. Limites de Código e Sustentabilidade](#m-limites-de-código-e-sustentabilidade)
 - [N. Testes Automatizados](#n-testes-automatizados)
+- [O. Responsabilidades e Migração](#o-responsabilidades-e-migração)
 
 ---
 
@@ -1394,6 +1395,73 @@ test('should complete login flow', async ({ page }) => {
 
 ---
 
+## O. Responsabilidades e Migração
+
+### O.1 Regra de Ouro
+
+```
+⚠️ REGRA OBRIGATÓRIA: Toda funcionalidade com ownership DEVE definir comportamento de migração.
+```
+
+Toda nova funcionalidade que introduzir ownership ou responsabilidade **DEVE** definir explicitamente como se comporta nos cenários de migração, conforme documentado em [RESPONSIBILITY_MIGRATION_POLICY.md](./RESPONSIBILITY_MIGRATION_POLICY.md).
+
+### O.2 Cenários Cobertos
+
+| Cenário | Hook de Validação | Comportamento |
+|---------|-------------------|---------------|
+| Remoção de usuário da BU | `useUserDependencies` | Transferir dependências mandatórias, auto-clear opcionais |
+| Exclusão de time | `useTeamDependencies` | BLOQUEADO se OKRs ativos ou subtimes existem |
+| Exclusão de área | `useAreaDependencies` | BLOQUEADO se times vinculados existem |
+| Mudança de líder | `useUserDependencies` | SET NULL automático (opcional) |
+
+### O.3 Tipos de Dependência
+
+| Tipo | Comportamento | Exemplos |
+|------|---------------|----------|
+| **Mandatória** | BLOQUEIA ação até resolução | KPIs, OKRs, Tickets, Iniciativas |
+| **Opcional** | Auto-cleared (SET NULL) | Liderança de time/área, co-responsabilidades |
+
+### O.4 Checklist para Novas Features
+
+Toda feature com ownership deve responder:
+
+- [ ] Define coluna de ownership (`owner_user_id` ou similar)?
+- [ ] Está registrada em `useUserDependencies`?
+- [ ] É dependência **mandatória** (bloqueia) ou **opcional** (auto-clear)?
+- [ ] Mutation de transferência está em `useTransferDependencies`?
+- [ ] Documentada em `RESPONSIBILITY_MIGRATION_POLICY.md`?
+
+### O.5 Implementação
+
+```typescript
+// ✅ CORRETO: Hook de delete verifica dependências
+export function useDeleteTeam() {
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      // 1. Verificar dependências mandatórias
+      const deps = await checkTeamDependencies(teamId);
+      if (deps.totalMandatory > 0) {
+        throw new Error("TEAM_HAS_DEPENDENCIES");
+      }
+      // 2. Auto-clear opcionais
+      await clearOptionalDependencies(teamId);
+      // 3. Soft delete
+      await softDeleteTeam(teamId);
+    },
+  });
+}
+
+// ✅ CORRETO: Dialog mostra dependências antes de permitir ação
+<TeamDependenciesDialog 
+  teamId={teamId}
+  onResolved={() => deleteTeam.mutate(teamId)}
+/>
+```
+
+> 📚 Ver: [RESPONSIBILITY_MIGRATION_POLICY.md](./RESPONSIBILITY_MIGRATION_POLICY.md)
+
+---
+
 ## Referências
 
 | Documento | Descrição |
@@ -1405,5 +1473,4 @@ test('should complete login flow', async ({ page }) => {
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Guia de testes automatizados |
-| [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | Auditoria sistêmica |
-| [SYSTEM_HEALTH_AUDIT_2026-01-13.md](./SYSTEM_HEALTH_AUDIT_2026-01-13.md) | Auditoria sistêmica |
+| [RESPONSIBILITY_MIGRATION_POLICY.md](./RESPONSIBILITY_MIGRATION_POLICY.md) | Política de migração de responsabilidades |

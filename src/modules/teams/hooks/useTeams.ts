@@ -427,6 +427,17 @@ export function useDeactivateTeam() {
   });
 }
 
+/**
+ * Delete a team with dependency validation.
+ * 
+ * IMPORTANT: This hook performs soft-delete ONLY if there are no mandatory dependencies.
+ * If the team has active OKRs or sub-teams, deletion is BLOCKED.
+ * 
+ * Use `useTeamDependencies` hook to check dependencies before calling this mutation.
+ * The TeamDependenciesDialog should be shown if hasMandatoryDependencies is true.
+ * 
+ * @throws Error with code "TEAM_HAS_DEPENDENCIES" if mandatory dependencies exist
+ */
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
@@ -435,7 +446,45 @@ export function useDeleteTeam() {
 
   return useMutation({
     mutationFn: async (teamId: string) => {
-      // Soft delete - set deleted_at
+      // 1. Check for mandatory dependencies before deletion
+      const [objectivesResult, krsResult, subteamsResult] = await Promise.all([
+        supabase
+          .from("okr_team_objectives")
+          .select("id", { count: "exact", head: true })
+          .eq("team_id", teamId)
+          .is("deleted_at", null)
+          .is("cancelled_at", null),
+        supabase
+          .from("okr_team_key_results")
+          .select("id", { count: "exact", head: true })
+          .eq("team_id", teamId)
+          .is("deleted_at", null)
+          .is("cancelled_at", null),
+        supabase
+          .from("teams")
+          .select("id", { count: "exact", head: true })
+          .eq("parent_team_id", teamId)
+          .is("deleted_at", null),
+      ]);
+
+      const totalMandatory = 
+        (objectivesResult.count || 0) + 
+        (krsResult.count || 0) + 
+        (subteamsResult.count || 0);
+
+      if (totalMandatory > 0) {
+        throw new Error("TEAM_HAS_DEPENDENCIES");
+      }
+
+      // 2. Auto-clear optional dependencies (members)
+      const { error: membersError } = await supabase
+        .from("profiles")
+        .update({ team_id: null, updated_at: new Date().toISOString() })
+        .eq("team_id", teamId);
+
+      if (membersError) throw membersError;
+
+      // 3. Soft delete the team
       const { error } = await supabase
         .from("teams")
         .update({ 
@@ -468,19 +517,25 @@ export function useDeleteTeam() {
       
       return { previousActive, previousInactive, activeKey, inactiveKey };
     },
-    onError: (_error, _teamId, context) => {
+    onError: (error, _teamId, context) => {
       if (context?.previousActive) {
         queryClient.setQueryData(context.activeKey, context.previousActive);
       }
       if (context?.previousInactive) {
         queryClient.setQueryData(context.inactiveKey, context.previousInactive);
       }
-      toast.error("Erro ao excluir time");
+      // Custom error handling for dependencies
+      if (error instanceof Error && error.message === "TEAM_HAS_DEPENDENCIES") {
+        toast.error("Este time possui dependências que precisam ser resolvidas antes da exclusão.");
+      } else {
+        toast.error("Erro ao excluir time");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, false) });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, true) });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(buId) });
       toast.success("Time excluído com sucesso");
     },
   });
