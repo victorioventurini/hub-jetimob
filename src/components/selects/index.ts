@@ -9,6 +9,9 @@
 export { TeamSelect } from "./TeamSelect";
 export { MultiTeamSelect } from "./MultiTeamSelect";
 
+// Job Titles
+export { MultiJobTitleSelect } from "./MultiJobTitleSelect";
+
 // Users
 export { BuUserSelect } from "./BuUserSelect";
 export { BuUserMultiSelect } from "./BuUserMultiSelect";
