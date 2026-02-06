@@ -1,101 +1,157 @@
 
-# Plano: Finalização de Permissões para Recomendações de Equipamentos
+# Plano: Componente Global de Avisos + Alerta de Recomendações
 
 ## Contexto
 
-A feature de Recomendações de Equipamentos está **95% completa** e funcional. Faltam apenas ajustes de permissão granular para seguir o padrão do Hub.
+O sistema já possui estilos de alerta definidos em `src/lib/colors.ts` (`ALERT_BANNER_STYLES`) e um `AlertBanner` no módulo OKRs. Porém, esse componente está aninhado em wizards específicos. Para reutilização global, criaremos um componente simples e canônico em `src/components/ui/`.
 
 ---
 
-## Itens Pendentes
+## Arquivos a Criar/Modificar
 
-### 1. Adicionar Flags de Permissão em `useAssetPermissionsV2`
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/components/ui/info-notice.tsx` | CRIAR | Componente global de avisos informativos |
+| `src/modules/assets/pages/RecommendationsPage.tsx` | MODIFICAR | Adicionar aviso no topo da lista |
 
-**Arquivo:** `src/modules/assets/hooks/useAssetPermissionsV2.ts`
+---
 
-Adicionar flags específicas para recomendações:
+## Implementação
 
-```typescript
-// === Permissões de RECOMENDAÇÕES ===
-const canViewRecommendations = hasFullAccess || hasAny([
-  "assets.recommendations.view:bu",
-  "assets.inventory.view:bu", // Fallback: quem vê inventário, vê recomendações
-]);
+### 1. Novo Componente Global: `InfoNotice`
 
-const canManageRecommendations = hasFullAccess || hasAny([
-  "assets.recommendations.create:bu",
-  "assets.recommendations.update:bu",
-  "assets.inventory.create:bu", // Fallback: inventory admins podem gerenciar
-]);
+**Arquivo:** `src/components/ui/info-notice.tsx`
 
-const canReviewRecommendations = hasFullAccess || has("assets.recommendations.review:bu");
+Um componente leve e reutilizável para exibir avisos contextuais em qualquer página.
 
-// Adicionar ao return:
-canViewRecommendations,
-canManageRecommendations,
-canReviewRecommendations,
+```tsx
+/**
+ * InfoNotice - Componente global para avisos informativos
+ * 
+ * Uso: frases de atenção em páginas, wizards, formulários.
+ * Segue o padrão de cores do Hub (ALERT_BANNER_STYLES).
+ */
+
+import { AlertTriangle, Info, CheckCircle, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ALERT_BANNER_STYLES } from '@/lib/colors';
+
+export type InfoNoticeVariant = 'warning' | 'info' | 'success' | 'error';
+
+export interface InfoNoticeProps {
+  children: React.ReactNode;
+  variant?: InfoNoticeVariant;
+  className?: string;
+}
+
+const VARIANT_CONFIG = {
+  warning: {
+    icon: AlertTriangle,
+    styles: ALERT_BANNER_STYLES.warning,
+  },
+  info: {
+    icon: Info,
+    styles: ALERT_BANNER_STYLES.info,
+  },
+  success: {
+    icon: CheckCircle,
+    styles: ALERT_BANNER_STYLES.success,
+  },
+  error: {
+    icon: AlertCircle,
+    styles: ALERT_BANNER_STYLES.no_update,
+  },
+};
+
+export function InfoNotice({ 
+  children, 
+  variant = 'info',
+  className 
+}: InfoNoticeProps) {
+  const config = VARIANT_CONFIG[variant];
+  const Icon = config.icon;
+
+  return (
+    <div 
+      role="alert"
+      className={cn(
+        "flex items-start gap-3 px-4 py-3 rounded-lg border text-sm",
+        config.styles.bg,
+        className
+      )}
+    >
+      <Icon className={cn("h-4 w-4 flex-shrink-0 mt-0.5", config.styles.icon)} />
+      <span>{children}</span>
+    </div>
+  );
+}
 ```
 
----
-
-### 2. Aplicar Controle de Permissão no Header
-
-**Arquivo:** `src/modules/assets/pages/AssetsPage.tsx`
-
-```typescript
-// Importar hook
-const { canViewRecommendations } = useAssetPermissionsV2();
-
-// No JSX:
-{canViewRecommendations && (
-  <Button variant="outline" size="sm" asChild>
-    <Link to="/assets/recommendations">
-      <Lightbulb className="h-4 w-4 mr-2" />
-      Recomendações
-    </Link>
-  </Button>
-)}
-```
+**Características:**
+- Variantes: `warning` (amarelo), `info` (azul), `success` (verde), `error` (vermelho)
+- Usa estilos canônicos de `ALERT_BANNER_STYLES`
+- Ícones semanticamente corretos (AlertTriangle para warning)
+- Acessível com `role="alert"`
 
 ---
 
-### 3. Atualizar `RecommendationsPage` com Permissões Corretas
+### 2. Adicionar Aviso na Página de Recomendações
 
 **Arquivo:** `src/modules/assets/pages/RecommendationsPage.tsx`
 
-```typescript
-// Trocar:
-const { hasFullAccess, canManageInventory } = useAssetPermissionsV2();
-const canManage = hasFullAccess || canManageInventory;
+Inserir o `InfoNotice` entre o header e os filtros:
 
-// Por:
-const { canManageRecommendations, canReviewRecommendations } = useAssetPermissionsV2();
+```tsx
+import { InfoNotice } from "@/components/ui/info-notice";
 
-// E usar canManageRecommendations para botões de criar/editar
-// E canReviewRecommendations para botão "Marcar como Revisada"
+// No JSX, após PageHeader e antes de RecommendationFilters:
+<InfoNotice variant="warning">
+  Toda compra de múltiplas unidades requer revisão da recomendação, 
+  mesmo quando ela estiver dentro do prazo de atualização.
+</InfoNotice>
+```
+
+**Posição no layout:**
+```
+PageHeader
+InfoNotice (warning)    <-- NOVO
+RecommendationFilters
+RecommendationsTable
 ```
 
 ---
 
-## Arquivos a Modificar
+## Resultado Visual
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/modules/assets/hooks/useAssetPermissionsV2.ts` | + 3 flags de permissão |
-| `src/modules/assets/pages/AssetsPage.tsx` | + controle de visibilidade do botão |
-| `src/modules/assets/pages/RecommendationsPage.tsx` | Usar flags corretas |
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚠️ Toda compra de múltiplas unidades requer revisão da     │
+│    recomendação, mesmo quando ela estiver dentro do prazo  │
+│    de atualização.                                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- Fundo amarelo claro (bg-status-yellow-muted)
+- Borda amarela sutil
+- Ícone de atenção (AlertTriangle) amarelo
+- Dark mode suportado automaticamente
 
 ---
 
 ## Benefícios
 
-1. **Granularidade:** Permissões específicas para recomendações
-2. **Padrão Hub:** Segue o modelo de `canView*` / `canManage*` / `can*Action`
-3. **Fallback inteligente:** Quem gerencia inventário herda acesso a recomendações
-4. **Preparado para expansão:** Permission keys já documentadas para catálogo futuro
+1. **Reutilizável:** Pode ser usado em qualquer página do sistema
+2. **Consistente:** Usa tokens de cor canônicos do Hub
+3. **Semântico:** Variantes claras (warning, info, success, error)
+4. **Acessível:** `role="alert"` para screen readers
+5. **Leve:** Componente funcional simples, sem estado
 
 ---
 
-## Nota Técnica
+## Usos Futuros
 
-As permission keys (`assets.recommendations.view:bu`, etc.) **não precisam existir no catálogo agora** — o fallback para `assets.inventory.*` garante funcionamento. Quando o catálogo for atualizado, as permissões granulares entram automaticamente.
+O componente `InfoNotice` pode ser usado em:
+- Páginas de listagem (avisos de contexto)
+- Formulários (orientações importantes)
+- Wizards (notas de passos)
+- Dashboards (alertas informativos)
