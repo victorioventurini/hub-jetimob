@@ -8,7 +8,7 @@ import {
   type InventoryFormData,
   buildSubcategoryList,
 } from "./inventoryFormSchema";
-import type { AssetInventory } from "../../../types";
+import type { AssetInventory, AssetRecommendation } from "../../../types";
 
 interface UseInventoryFormProps {
   open: boolean;
@@ -28,6 +28,10 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
   const isCloning = !!item && cloneMode;
   const itemId = item?.id ?? null;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  
+  // Recommendation selection state (v2.93.0)
+  const [selectedRecommendation, setSelectedRecommendation] = useState<AssetRecommendation | null>(null);
+  const [showRecommendationStep, setShowRecommendationStep] = useState(false);
 
   // Build subcategory list with parent names
   const subcategories = useMemo(() => buildSubcategoryList(categories), [categories]);
@@ -72,6 +76,7 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
       notes: "",
       assigned_to_user_id: undefined,
       due_at: "",
+      recommendation_id: undefined,
     },
   });
 
@@ -86,10 +91,13 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
   useEffect(() => {
     if (!open) {
       setDuplicateError(null);
+      setSelectedRecommendation(null);
+      setShowRecommendationStep(false);
       return;
     }
 
     if (item && !cloneMode) {
+      // Editing existing item
       form.reset({
         internal_code: item.internal_code,
         name: item.name,
@@ -106,8 +114,11 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
         notes: item.notes || "",
         assigned_to_user_id: undefined,
         due_at: "",
+        recommendation_id: item.recommendation_id || undefined,
       });
+      setShowRecommendationStep(false);
     } else if (item && cloneMode) {
+      // Cloning item
       form.reset({
         internal_code: "",
         name: item.name,
@@ -124,8 +135,11 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
         notes: item.notes || "",
         assigned_to_user_id: undefined,
         due_at: "",
+        recommendation_id: item.recommendation_id || undefined,
       });
+      setShowRecommendationStep(false);
     } else {
+      // New item - show recommendation step
       form.reset({
         internal_code: "",
         name: "",
@@ -142,7 +156,10 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
         notes: "",
         assigned_to_user_id: undefined,
         due_at: "",
+        recommendation_id: undefined,
       });
+      setShowRecommendationStep(true);
+      setSelectedRecommendation(null);
     }
     setDuplicateError(null);
   }, [open, itemId, cloneMode, form, defaultLocation?.id]);
@@ -191,6 +208,8 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
       assigned_to_user_id: !isEditing ? data.assigned_to_user_id || undefined : undefined,
       authorized_by_user_id: !isEditing && data.assigned_to_user_id ? profileId : undefined,
       due_at: !isEditing && data.assigned_to_user_id ? data.due_at || undefined : undefined,
+      // Link to recommendation (v2.93.0)
+      recommendation_id: !isEditing ? data.recommendation_id || undefined : undefined,
     };
 
     try {
@@ -214,6 +233,38 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
     }
   }, [duplicateError, checkDuplicateCode]);
 
+  // Handle recommendation selection (v2.93.0)
+  const handleRecommendationSelect = useCallback((rec: AssetRecommendation) => {
+    setSelectedRecommendation(rec);
+    setShowRecommendationStep(false);
+    
+    // Pre-fill form fields from recommendation (only if empty)
+    if (!form.getValues('name')) {
+      form.setValue('name', rec.name);
+    }
+    if (!form.getValues('category_id') && rec.category_id) {
+      form.setValue('category_id', rec.category_id);
+    }
+    if (!form.getValues('brand')) {
+      form.setValue('brand', rec.brand);
+    }
+    if (!form.getValues('model') && rec.model) {
+      form.setValue('model', rec.model);
+    }
+    // Store recommendation_id
+    form.setValue('recommendation_id', rec.id);
+  }, [form]);
+
+  const handleSkipRecommendation = useCallback(() => {
+    setShowRecommendationStep(false);
+    setSelectedRecommendation(null);
+  }, []);
+
+  const handleClearRecommendation = useCallback(() => {
+    setSelectedRecommendation(null);
+    form.setValue('recommendation_id', undefined);
+  }, [form]);
+
   return {
     form,
     isEditing,
@@ -231,5 +282,11 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
     duplicateError,
     onSubmit,
     handleCodeChange,
+    // Recommendation step (v2.93.0)
+    showRecommendationStep,
+    selectedRecommendation,
+    handleRecommendationSelect,
+    handleSkipRecommendation,
+    handleClearRecommendation,
   };
 }

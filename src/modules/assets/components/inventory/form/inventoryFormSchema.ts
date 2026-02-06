@@ -20,6 +20,8 @@ export const inventoryFormSchema = z.object({
   notes: z.string().max(2000, "Observações muito longas").optional(),
   assigned_to_user_id: z.string().optional(),
   due_at: z.string().optional(),
+  // Recommendation link (v2.93.0)
+  recommendation_id: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (!data.no_serial_number && !data.serial_number?.trim()) {
     ctx.addIssue({

@@ -70,6 +70,8 @@ export interface AssetInventory {
   photos: string[];
   documents: string[];
   notes: string | null;
+  // Recommendation link (v2.93.0)
+  recommendation_id: string | null;
   created_at: string;
   created_by: string | null;
   updated_at: string;
@@ -80,6 +82,7 @@ export interface AssetInventory {
   home_location?: { id: string; name: string } | null;
   current_location?: { id: string; name: string } | null;
   current_user?: { id: string; full_name: string; avatar_url: string | null } | null;
+  recommendation?: { id: string; name: string } | null;
   // Enriched from latest movement
   expected_return_at?: string | null;
 }
