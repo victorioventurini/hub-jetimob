@@ -51,6 +51,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
             <TableHead>Categoria</TableHead>
             <TableHead>Criado por</TableHead>
             <TableHead>Responsável</TableHead>
+            <TableHead>Criado em</TableHead>
             <TableHead>Prazo</TableHead>
             <TableHead className="text-right">Atualizado</TableHead>
           </TableRow>
@@ -157,6 +158,12 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
+                </TableCell>
+                
+                <TableCell>
+                  <span className="text-sm text-muted-foreground">
+                    {format(new Date(ticket.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                  </span>
                 </TableCell>
                 
                 <TableCell>
