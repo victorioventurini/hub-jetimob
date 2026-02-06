@@ -7381,6 +7381,7 @@ export type Database = {
           category_id: string
           created_at: string
           created_by: string | null
+          default_initial_message: string | null
           deleted_at: string | null
           id: string
           name: string
@@ -7392,6 +7393,7 @@ export type Database = {
           category_id: string
           created_at?: string
           created_by?: string | null
+          default_initial_message?: string | null
           deleted_at?: string | null
           id?: string
           name: string
@@ -7403,6 +7405,7 @@ export type Database = {
           category_id?: string
           created_at?: string
           created_by?: string | null
+          default_initial_message?: string | null
           deleted_at?: string | null
           id?: string
           name?: string

@@ -98,6 +98,7 @@ export interface TicketSubcategory {
   category_id: string;
   name: string;
   status: CatalogStatus;
+  default_initial_message: string | null;
   created_at: string;
   created_by: string | null;
   updated_at: string;
