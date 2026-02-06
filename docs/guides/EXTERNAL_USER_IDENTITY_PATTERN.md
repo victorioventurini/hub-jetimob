@@ -115,25 +115,43 @@ function TicketAssignment() {
 - ✅ Menções
 - ✅ Qualquer operação que aceite interno OU externo
 
-## Guards e Bypass
+## Guards e Onboarding
 
 ### OnboardingGuard
 
-Usuários externos **NÃO** passam pelo fluxo de onboarding (não possuem `profiles`).
+Usuários externos **PASSAM** pelo fluxo de onboarding (possuem `profiles` criados pelo trigger `handle_new_user`).
+
+O trigger `handle_new_user` cria um registro em `profiles` para todos os usuários (internos e externos) com:
+- `employment_status = 'external'` para usuários externos
+- `onboarding_completed = false` (padrão)
 
 ```typescript
 // src/components/onboarding/OnboardingGuard.tsx
 export function OnboardingGuard({ children }) {
-  const { isExternal, isLoading: externalLoading } = useExternalUser();
+  // Mesma lógica para internos e externos - ambos têm profiles
+  const { data: profile, isLoading } = useQuery({
+    queryKey: queryKeys.onboarding.check(user?.id),
+    queryFn: async () => {
+      // Query profiles - funciona para ambos os tipos
+      return await supabase.from("profiles").select("onboarding_completed")...
+    },
+  });
   
-  // External users bypass onboarding - they don't have profiles
-  if (isExternal) {
-    return <>{children}</>;
+  if (!profile?.onboarding_completed) {
+    return <Navigate to="/onboarding" replace />;
   }
   
-  // Internal user flow...
+  return <>{children}</>;
 }
 ```
+
+**Campos do onboarding (iguais para todos):**
+- `first_name`, `last_name` (obrigatórios)
+- `photo_url` (opcional)
+- `birth_day`, `birth_month` (obrigatórios)
+- `whatsapp_personal` (obrigatório)
+- `discord_id`, `instagram_id` (opcionais)
+- `city`, `state` (obrigatórios)
 
 ### BuProvider
 
