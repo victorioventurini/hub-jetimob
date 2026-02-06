@@ -5,13 +5,12 @@
  */
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   RecommendationsTable,
   RecommendationFilters,
@@ -56,25 +55,19 @@ export default function RecommendationsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Recomendações de Equipamentos"
-          description={`Guias de compra para ${currentBu?.name || "organização"}`}
+          description={`Guias de compras da ${currentBu?.name || "organização"}`}
           breadcrumbs={[
+            { label: "Ativos", href: "/assets" },
+            { label: "Inventário", href: "/assets/inventory" },
             { label: "Recomendações" },
           ]}
           actions={
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/assets/inventory">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
-                </Link>
+            canManageRecommendations && (
+              <Button onClick={handleCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Recomendação
               </Button>
-              {canManageRecommendations && (
-                <Button size="sm" onClick={handleCreate}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Recomendação
-                </Button>
-              )}
-            </div>
+            )
           }
         />
 
