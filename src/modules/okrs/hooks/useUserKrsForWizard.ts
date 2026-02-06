@@ -38,12 +38,13 @@ export function useUserKrsForWizard(
     queryFn: async (): Promise<WizardKr[]> => {
       if (!cycleId || !effectiveUserId) return [];
 
-      // First, fetch KR IDs where user owns initiatives
+      // First, fetch KR IDs where user owns initiatives (exclude cancelled/deleted)
       const { data: initiativeKrIds } = await supabase
         .from('okr_initiatives')
         .select('kr_id')
         .eq('owner_user_id', effectiveUserId)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
 
       const krIdsFromInitiatives = [...new Set((initiativeKrIds || []).map(i => i.kr_id).filter(Boolean))];
 
