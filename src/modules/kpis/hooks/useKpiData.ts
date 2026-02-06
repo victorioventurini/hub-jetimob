@@ -335,9 +335,20 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
+      // Invalidate KPI-specific queries
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.values(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+      
+      // CRITICAL: Invalidate OKR queries that depend on KPI primary values
+      // This ensures KRs linked to this KPI update their progress/status
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
+      
       toast({
         title: "Valor registrado",
         description: "O valor do KPI foi registrado com sucesso.",
