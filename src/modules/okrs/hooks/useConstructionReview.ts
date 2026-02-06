@@ -110,7 +110,9 @@ export function useConstructionReview(
             baseline,
             target,
             unit,
-            owner_user_id
+            owner_user_id,
+            deleted_at,
+            cancelled_at
           )
         `)
         .eq('team_id', teamId)
@@ -132,7 +134,9 @@ export function useConstructionReview(
         owner_user_id: item.owner_user_id,
         team: item.team as unknown as { id: string; name: string },
         org_objective: item.org_objective as unknown as { id: string; title: string } | null,
-        key_results: (item.key_results || []) as unknown as RawKeyResult[],
+        // Filter out deleted/cancelled KRs
+        key_results: ((item.key_results || []) as any[])
+          .filter((kr: any) => !kr.deleted_at && !kr.cancelled_at) as unknown as RawKeyResult[],
       }));
     },
     enabled: !!buSupabase && !!currentBuId && !!teamId && !!cycleId,

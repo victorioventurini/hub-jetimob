@@ -51,13 +51,15 @@ export function useOrgOkrsForContext(cycleId: string | null | undefined) {
       // Use current year - cycles don't have year column
       const year = new Date().getFullYear();
 
-      // Fetch org objectives for the year
+      // Fetch org objectives for the year (exclude cancelled/discarded)
       const { data: objectives, error: objError } = await supabase
         .from('okr_org_objectives')
         .select('id, title, description, status, year')
         .eq('year', year)
         .is('deleted_at', null)
         .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded')
         .order('created_at', { ascending: false });
 
       if (objError) throw objError;

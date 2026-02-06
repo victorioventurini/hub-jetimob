@@ -1,8 +1,8 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.19.0  
+**Versão:** 1.20.0  
 **Última atualização:** 2026-02-06  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.0**
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** (nested KRs filtering)
 **Referência:** TCR v2.93.0
 
 ---
