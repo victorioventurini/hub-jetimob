@@ -1,9 +1,9 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.5.0  
-**Última atualização:** 2026-02-04  
+**Versão:** 1.6.0  
+**Última atualização:** 2026-02-06  
 **Status:** Normativo  
-**Referência:** TCR v2.89.1 / DEVELOPMENT_STANDARDS v1.17.0
+**Referência:** TCR v2.94.0 / DEVELOPMENT_STANDARDS v1.20.0
 
 ---
 
@@ -529,6 +529,7 @@ if (isLoading) {
 | 13 | Contador de resultados misturado com filtros | Mover para `ViewOptionsBar` |
 | 14 | Botão complementar (Organograma, Links Salvos) fora do PageHeader | Mover para `PageHeader.actions` |
 | 15 | Label "Ver X" para botões de navegação | Label direto: "Organograma", "Dashboard", "Evolução" |
+| 16 | Página de detalhe aninhada em layout com header próprio | Registrar como rota standalone com `HubLayout` próprio |
 
 ---
 

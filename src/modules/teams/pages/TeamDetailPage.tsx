@@ -37,7 +37,8 @@ import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
 import { ErrorState } from "@/components/ui/error-state";
-import { TeamsBreadcrumb } from "@/components/ui/global-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
+// TeamsBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import { useUrlTab } from "@/shared/url";
 import { useSafeBack } from "@/hooks/useSafeBack";
 
@@ -111,8 +112,14 @@ export default function TeamDetailPage() {
   if (!team) {
     return (
       <HubLayout>
-        <div className="p-6">
-          <TeamsBreadcrumb />
+        <div className="p-6 space-y-6">
+          <PageHeader
+            title="Time não encontrado"
+            breadcrumbs={[
+              { label: "Times", href: "/teams" },
+              { label: "Não encontrado" }
+            ]}
+          />
           <ErrorState
             title="Time não encontrado"
             description="O time que você está procurando não existe ou foi removido."
@@ -127,43 +134,32 @@ export default function TeamDetailPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-            >
-              <Link to="/teams">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-foreground">
-                  {team.name}
-                </h1>
-                {team.status === "inactive" && (
-                  <Badge variant="secondary">Inativo</Badge>
-                )}
-              </div>
-              {team.description && (
-                <p className="text-muted-foreground">{team.description}</p>
+        {/* Header com breadcrumbs integrados (padrão canônico) */}
+        <PageHeader
+          title={team.name}
+          description={team.description || undefined}
+          breadcrumbs={[
+            { label: "Times", href: "/teams" },
+            { label: team.name }
+          ]}
+          actions={
+            <div className="flex items-center gap-2">
+              {team.status === "inactive" && (
+                <Badge variant="secondary">Inativo</Badge>
+              )}
+              {canManageThisTeam && (
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setEditOpen(true)}
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar Time
+                </Button>
               )}
             </div>
-          </div>
-          {canManageThisTeam && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => setEditOpen(true)}
-            >
-              <Edit className="h-4 w-4" />
-              Editar Time
-            </Button>
-          )}
-        </div>
+          }
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}

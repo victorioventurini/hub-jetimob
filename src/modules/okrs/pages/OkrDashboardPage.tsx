@@ -38,7 +38,7 @@ import { OrgObjectiveFormDialog } from '../components/OrgObjectiveFormDialog';
 import { OkrEmptyState } from '../components/OkrEmptyState';
 import { OkrAlertsCard } from '../components/OkrAlertsCard';
 import { SharedOkrInsights } from '../components/SharedOkrInsights';
-import { OkrDashboardBreadcrumb } from '../components/ui/OkrBreadcrumb';
+// OkrDashboardBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import { SavedLinksPopover } from '@/shared/saved-links';
 
 interface OkrFiltersState {

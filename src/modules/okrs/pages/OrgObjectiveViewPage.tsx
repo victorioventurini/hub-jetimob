@@ -12,7 +12,8 @@ import { OrgViewInsights } from '../components/org-view/OrgViewInsights';
 import { OrgViewFilters, StatusFilter, TeamFilter } from '../components/org-view/OrgViewFilters';
 import { LinkedTeamObjectivesSection } from '../components/org-view/LinkedTeamObjectivesSection';
 import { useUrlState } from '@/shared/url';
-import { OkrOrgObjectiveDetailBreadcrumb } from '../components/ui/OkrBreadcrumb';
+import { PageHeader } from '@/components/ui/page-header';
+// OkrOrgObjectiveDetailBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 
 export default function OrgObjectiveViewPage() {
   const { objectiveId } = useParams<{ objectiveId: string }>();
@@ -146,10 +147,18 @@ export default function OrgObjectiveViewPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <OkrOrgObjectiveDetailBreadcrumb objectiveTitle={objective.title} />
+        {/* Header com breadcrumbs integrados (padrão canônico) */}
+        <PageHeader
+          title={objective.title}
+          description={`Objetivo Organizacional • Ciclo ${objective.year}`}
+          breadcrumbs={[
+            { label: "OKRs", href: "/okrs" },
+            { label: "Visão Organizacional", href: "/okrs/org-view" },
+            { label: objective.title }
+          ]}
+        />
 
-        {/* Header */}
+        {/* Objective Summary Card */}
         <OrgObjectiveHeader objective={objective} />
 
         {/* Insights */}
