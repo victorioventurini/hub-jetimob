@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
 import { MultiJobTitleSelect } from "@/components/selects/MultiJobTitleSelect";
+import { AssetCategorySelect } from "../selects/AssetCategorySelect";
 import type { RecommendationFilters as Filters } from "../../hooks";
 import { 
   RECOMMENDATION_STATUS_LABELS, 
@@ -35,6 +36,7 @@ export function RecommendationFilters({
 }: RecommendationFiltersProps) {
   const hasFilters = !!(
     filters.search ||
+    filters.categoryId ||
     filters.teamId ||
     filters.jobTitleId ||
     filters.reviewStatus ||
@@ -55,6 +57,17 @@ export function RecommendationFilters({
           value={filters.search || ""}
           onChange={(e) => onFiltersChange({ ...filters, search: e.target.value || undefined })}
           className="pl-9"
+        />
+      </div>
+
+      {/* Category/Subcategory filter - hierarchical */}
+      <div className="w-[200px]">
+        <AssetCategorySelect
+          value={filters.categoryId}
+          onValueChange={(val) => onFiltersChange({ ...filters, categoryId: val })}
+          placeholder="Categoria"
+          noneLabel="Todas categorias"
+          triggerClassName="w-full"
         />
       </div>
 
