@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { getShareableUrl } from '@/lib/shareableLinks';
 import type { LinkedKrData } from '../hooks/useKpiLinkedKrs';
 
 interface LinkedKrsSectionProps {
@@ -37,10 +38,10 @@ function KrItem({ kr, role }: { kr: LinkedKrData; role: 'primary' | 'guardrail' 
   const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG.no_data;
   const StatusIcon = config.icon;
   
-  // Determine the route based on kr_type
+  // Use canonical /go/ pattern for deep-linking with BU resolution
   const krRoute = kr.kr_type === 'org' 
-    ? `/okrs/org-view/${kr.objective?.id}` // Navigate to org objective view
-    : `/okrs?kr=${kr.kr_id}`; // Navigate to team KR
+    ? getShareableUrl('okr_org_kr', kr.kr_id)
+    : getShareableUrl('okr_team_kr', kr.kr_id);
 
   return (
     <Link

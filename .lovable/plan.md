@@ -2,7 +2,7 @@
 
 # Plano: Correção de Links para KRs Vinculadas a KPIs
 
-## Problema
+## Status: ✅ IMPLEMENTADO
 Ao clicar em uma KR vinculada a uma KPI (em `/kpis`), o link gerado (`/okrs?kr=uuid`) não funciona corretamente - redireciona para a lista geral de OKRs sem abrir a KR específica.
 
 ## Causa Raiz
