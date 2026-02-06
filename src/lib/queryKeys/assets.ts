@@ -43,4 +43,16 @@ export const assetsKeys = {
   locationsOptions: (buId: string | null) => ['assets', 'locations-options', buId] as const,
   permissions: (buId: string | null) => ['assets', 'permissions', buId] as const,
   profilesForPermissions: (buId: string | null) => ['profiles-for-assets-permissions', buId] as const,
+  
+  // Recommendations
+  recommendations: {
+    all: (buId: string | null) => ['assets', 'recommendations', buId] as const,
+    list: (buId: string | null, filters?: Record<string, unknown>) => 
+      ['assets', 'recommendations', 'list', buId, filters] as const,
+    detail: (id: string) => ['assets', 'recommendations', 'detail', id] as const,
+    best: (params: Record<string, unknown>) => 
+      ['assets', 'recommendations', 'best', params] as const,
+    lastValue: (id: string | null) => 
+      ['assets', 'recommendations', 'lastValue', id] as const,
+  },
 } as const;

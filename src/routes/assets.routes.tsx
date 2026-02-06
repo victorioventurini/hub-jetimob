@@ -18,6 +18,7 @@ const KeysPage = lazy(() => import('@/modules/assets/pages/KeysPage'));
 const GiftsPage = lazy(() => import('@/modules/assets/pages/GiftsPage'));
 const AssetsReportsPage = lazy(() => import('@/modules/assets/pages/AssetsReportsPage'));
 const AssetsSettingsPage = lazy(() => import('@/modules/assets/pages/AssetsSettingsPage'));
+const RecommendationsPage = lazy(() => import('@/modules/assets/pages/RecommendationsPage'));
 const PublicAssetRedirect = lazy(() => import('@/pages/PublicAssetRedirect'));
 
 /**
@@ -47,6 +48,7 @@ export const assetRoutes = (
       <Route path="gifts" element={<GiftsPage />} />
       <Route path="reports" element={<AssetsReportsPage />} />
       <Route path="settings" element={<AssetsSettingsPage />} />
+      <Route path="recommendations" element={<RecommendationsPage />} />
     </Route>
     
     {/* Asset Inventory Detail - Full page layout */}

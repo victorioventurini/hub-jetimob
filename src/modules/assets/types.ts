@@ -389,3 +389,64 @@ export const GROUP_ITEM_ROLE_LABELS: Record<AssetGroupItemRole, string> = {
   primary: 'Primário',
   accessory: 'Acessório',
 };
+
+// =============================================
+// RECOMENDAÇÕES DE EQUIPAMENTOS
+// =============================================
+
+export type RecommendationStatus = 'active' | 'archived';
+export type RecommendationReviewStatus = 'up_to_date' | 'due_soon' | 'overdue';
+export type RecommendationScopeType = 'global' | 'team' | 'job_title';
+
+export interface AssetRecommendation {
+  id: string;
+  bu_id: string;
+  name: string;
+  category_id: string | null;
+  brand: string;
+  model: string | null;
+  description: string | null;
+  applicable_team_ids: string[];
+  applicable_job_title_ids: string[];
+  review_interval_months: number;
+  last_reviewed_at: string | null;
+  owner_user_id: string;
+  created_by_user_id: string | null;
+  status: RecommendationStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  // Joined
+  category?: { id: string; name: string; parent_name?: string } | null;
+  owner?: { id: string; display_name: string; photo_url: string | null } | null;
+  created_by?: { id: string; display_name: string } | null;
+  // Computed
+  review_status?: RecommendationReviewStatus;
+  scope_type?: RecommendationScopeType;
+  last_purchase_value?: number | null;
+  last_purchase_date?: string | null;
+}
+
+export const RECOMMENDATION_STATUS_LABELS: Record<RecommendationStatus, string> = {
+  active: 'Ativa',
+  archived: 'Arquivada',
+};
+
+export const RECOMMENDATION_REVIEW_STATUS_LABELS: Record<RecommendationReviewStatus, string> = {
+  up_to_date: 'Em dia',
+  due_soon: 'Vence em breve',
+  overdue: 'Vencida',
+};
+
+export const RECOMMENDATION_SCOPE_TYPE_LABELS: Record<RecommendationScopeType, string> = {
+  global: 'Global',
+  team: 'Time',
+  job_title: 'Cargo',
+};
+
+export const REVIEW_INTERVAL_OPTIONS = [
+  { value: 3, label: '3 meses' },
+  { value: 6, label: '6 meses' },
+  { value: 12, label: '12 meses' },
+];
