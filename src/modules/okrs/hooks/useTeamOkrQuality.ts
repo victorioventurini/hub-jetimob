@@ -94,7 +94,9 @@ export function useTeamOkrQuality(
           key_results:okr_team_key_results (
             id,
             status,
-            last_checkin_at
+            last_checkin_at,
+            deleted_at,
+            cancelled_at
           )
         `)
         .eq('team_id', teamId)
@@ -105,9 +107,17 @@ export function useTeamOkrQuality(
         .neq('status', 'discarded');
 
       if (error) throw error;
+      
+      // Filter out deleted/cancelled KRs from the nested results
+      const filteredObjectives = (objectives || []).map(obj => ({
+        ...obj,
+        key_results: (obj.key_results || []).filter(
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+        ),
+      }));
 
       // Calculate health for each objective
-      return (objectives || []).map((obj) => {
+      return filteredObjectives.map((obj) => {
         const krs = obj.key_results || [];
         const team = obj.team as unknown as { id: string; name: string };
         
