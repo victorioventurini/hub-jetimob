@@ -264,6 +264,8 @@ export default function LeaderPrepPage() {
             onBack={goBack}
           />
         );
+      
+      case 'highlights': {
         // Generate highlights from KRs
         const highlights = krs
           .filter(kr => kr.days_since_checkin >= 14 || kr.is_at_risk)
@@ -291,6 +293,7 @@ export default function LeaderPrepPage() {
             }}
           />
         );
+      }
         
       case 'prep':
         return (
