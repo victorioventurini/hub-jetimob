@@ -429,6 +429,9 @@ export interface AssetRecommendation {
   scope_type?: RecommendationScopeType;
   last_purchase_value?: number | null;
   last_purchase_date?: string | null;
+  // Resolved names (from IDs)
+  applicable_team_names?: string[];
+  applicable_job_title_names?: string[];
 }
 
 export const RECOMMENDATION_STATUS_LABELS: Record<RecommendationStatus, string> = {

@@ -475,7 +475,49 @@ useQuery({
 });
 ```
 
-### D.2 Proibir select("*")
+### D.2 Invalidação Automática de Cache (Mutations)
+
+```
+⚠️ REGRA OBRIGATÓRIA: Toda mutation DEVE invalidar queries relacionadas no `onSuccess`.
+```
+
+Ao editar, criar ou excluir dados em modais ou formulários, a lista/página que exibe esses dados DEVE atualizar automaticamente sem necessidade de recarregar a página.
+
+```typescript
+// ✅ CORRETO: Invalidar queries no onSuccess da mutation
+const updateMutation = useMutation({
+  mutationFn: async (input) => {
+    const { error } = await supabase.from('my_table').update(input).eq('id', input.id);
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    // Invalidar todas as queries que exibem esses dados
+    queryClient.invalidateQueries({ queryKey: queryKeys.myModule.list(buId) });
+    toast.success('Item atualizado com sucesso');
+  },
+  onError: (error) => {
+    toast.error('Erro ao atualizar');
+  },
+});
+```
+
+**Regras:**
+- ✅ Usar `queryKeys` centralizadas para invalidação (nunca strings hardcoded)
+- ✅ Invalidar usando prefixo para afetar variações (ex: `queryKeys.myModule.all()`)
+- ✅ Fechar modal no `onSuccess` APÓS invalidação
+- ❌ NUNCA exigir que usuário recarregue página para ver alterações
+
+**Exemplo Completo em Dialog de Edição:**
+
+```typescript
+// No Dialog de edição
+const handleSubmit = async (data: FormData) => {
+  await updateMutationAsync(data);
+  onOpenChange(false); // Fechar modal após sucesso
+};
+```
+
+### D.3 Proibir select("*")
 
 ```typescript
 // ❌ ERRADO: Overfetch
