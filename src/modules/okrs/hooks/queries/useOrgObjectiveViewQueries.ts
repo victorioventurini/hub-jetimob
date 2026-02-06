@@ -67,16 +67,29 @@ export function useOrgObjectiveView(objectiveId: string) {
       }
 
       // Fetch team KRs linked to org KRs via linked_org_kr_id
+      // Must exclude KRs from cancelled/deleted objectives
       const orgKrIds = orgKrs?.map(kr => kr.id) || [];
       
       let teamKrsData: any[] = [];
       if (orgKrIds.length > 0) {
         const { data: teamKrs, error: teamKrsError } = await supabase
           .from('okr_team_key_results')
-          .select(AGGREGATE_FIELDS.teamKrWithRelations)
+          .select(`
+            id, title, team_id, team_objective_id, linked_org_kr_id, type,
+            baseline, current_value, target, direction, unit, status,
+            last_checkin_at, owner_user_id,
+            teams:team_id (name),
+            team_objective:team_objective_id!inner (
+              id, title, status, cancelled_at, deleted_at
+            ),
+            owner:owner_user_id (display_name)
+          `)
           .in('linked_org_kr_id', orgKrIds)
           .is('deleted_at', null)
-          .is('cancelled_at', null);
+          .is('cancelled_at', null)
+          .is('team_objective.cancelled_at', null)
+          .is('team_objective.deleted_at', null)
+          .not('team_objective.status', 'in', '(cancelled,discarded)');
 
         if (teamKrsError) {
           console.error('Error fetching team KRs:', teamKrsError);
@@ -236,12 +249,25 @@ export function useAllOrgObjectivesView(year?: number) {
       
       let teamKrsData: any[] = [];
       if (orgKrIds.length > 0) {
+        // Must exclude KRs from cancelled/deleted objectives
         const { data: teamKrs, error: teamKrsError } = await supabase
           .from('okr_team_key_results')
-          .select(AGGREGATE_FIELDS.teamKrWithRelations)
+          .select(`
+            id, title, team_id, team_objective_id, linked_org_kr_id, type,
+            baseline, current_value, target, direction, unit, status,
+            last_checkin_at, owner_user_id,
+            teams:team_id (name),
+            team_objective:team_objective_id!inner (
+              id, title, status, cancelled_at, deleted_at
+            ),
+            owner:owner_user_id (display_name)
+          `)
           .in('linked_org_kr_id', orgKrIds)
           .is('deleted_at', null)
-          .is('cancelled_at', null);
+          .is('cancelled_at', null)
+          .is('team_objective.cancelled_at', null)
+          .is('team_objective.deleted_at', null)
+          .not('team_objective.status', 'in', '(cancelled,discarded)');
 
         if (!teamKrsError) {
           teamKrsData = teamKrs || [];

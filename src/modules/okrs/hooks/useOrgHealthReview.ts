@@ -139,12 +139,19 @@ export function useOrgHealthReview(year?: number): OrgHealthReviewData {
           last_checkin_at,
           linked_org_kr_id,
           objective:okr_team_objectives!inner (
+            id,
+            status,
+            cancelled_at,
+            deleted_at,
             team:teams (id, name)
           )
         `)
         .in('linked_org_kr_id', orgKrIds)
         .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('cancelled_at', null)
+        .is('objective.cancelled_at', null)
+        .is('objective.deleted_at', null)
+        .not('objective.status', 'in', '(cancelled,discarded)');
 
       if (error) throw error;
       

@@ -566,7 +566,31 @@ $$ LANGUAGE sql STABLE;
 | `okr_team_key_results` | `.is('deleted_at', null).is('cancelled_at', null)` |
 | `okr_initiatives` | `.is('deleted_at', null).is('cancelled_at', null)` |
 
-**Exemplo Correto:**
+**CRÍTICO — Queries de KRs Vinculadas (linked_org_kr_id):**
+
+Ao buscar Team KRs vinculadas a Org KRs, você DEVE também filtrar pelo status do **objetivo pai**:
+
+```typescript
+// ✅ CORRETO: Filtrar KRs E objetivo pai
+const { data: teamKrs } = await supabase
+  .from('okr_team_key_results')
+  .select(`
+    id, title, linked_org_kr_id,
+    team_objective:team_objective_id!inner (
+      id, status, cancelled_at, deleted_at
+    )
+  `)
+  .in('linked_org_kr_id', orgKrIds)
+  .is('deleted_at', null)
+  .is('cancelled_at', null)
+  .is('team_objective.cancelled_at', null)
+  .is('team_objective.deleted_at', null)
+  .not('team_objective.status', 'in', '(cancelled,discarded)');
+```
+
+> ⚠️ O uso de `!inner` garante que apenas KRs com objetivo ativo sejam retornadas.
+
+**Exemplo Correto — Query Simples:**
 
 ```typescript
 // ✅ CORRETO: Query com todos os filtros de soft-delete
@@ -604,6 +628,15 @@ const { data } = await supabase
   .from('okr_initiatives')
   .select('id, name, status')
   .eq('bu_id', buId);
+
+// ❌ ERRADO: KRs sem filtro do objetivo pai — mostrará KRs de objetivos cancelados!
+const { data: teamKrs } = await supabase
+  .from('okr_team_key_results')
+  .select('id, title, linked_org_kr_id')
+  .in('linked_org_kr_id', orgKrIds)
+  .is('deleted_at', null)
+  .is('cancelled_at', null);
+  // Falta: filtro pelo status do team_objective!
 ```
 
 > ⚠️ **IMPORTANTE:** Esta regra aplica-se a TODAS as queries de leitura, incluindo queries aninhadas e de contexto.
