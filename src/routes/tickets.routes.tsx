@@ -41,9 +41,11 @@ export const ticketRoutes = (
     >
       <Route index element={<TicketsListPage />} />
       <Route path="new" element={<CreateTicketPage />} />
-      <Route path="settings" element={<TicketsSettingsPage />} />
     </Route>
-    
+
+    {/* Tickets Settings - Standalone (possui PageHeader próprio) */}
+    <Route path="/tickets/settings" element={<TicketRoute><TicketsSettingsPage /></TicketRoute>} />
+
     {/* Ticket Detail - Standalone page without tabs */}
     <Route path="/tickets/:id" element={<TicketRoute><TicketDetailPage /></TicketRoute>} />
   </>
