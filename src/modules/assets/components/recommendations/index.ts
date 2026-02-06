@@ -4,6 +4,7 @@
 
 export { RecommendationReviewBadge } from "./RecommendationReviewBadge";
 export { RecommendationScopeBadge } from "./RecommendationScopeBadge";
+export { ScopeNamesCell } from "./ScopeNamesCell";
 export { RecommendationCard } from "./RecommendationCard";
 export { RecommendationFilters } from "./RecommendationFilters";
 export { RecommendationsTable } from "./RecommendationsTable";

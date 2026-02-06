@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RecommendationReviewBadge } from "./RecommendationReviewBadge";
 import { RecommendationScopeBadge } from "./RecommendationScopeBadge";
+import { ScopeNamesCell } from "./ScopeNamesCell";
 import { useLastPurchaseValue } from "../../hooks";
 import type { AssetRecommendation } from "../../types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -91,6 +92,12 @@ function RecommendationRow({
         {recommendation.scope_type && (
           <RecommendationScopeBadge scopeType={recommendation.scope_type} />
         )}
+      </TableCell>
+      <TableCell>
+        <ScopeNamesCell 
+          teamNames={recommendation.applicable_team_names} 
+          jobTitleNames={recommendation.applicable_job_title_names} 
+        />
       </TableCell>
       <TableCell>
         {recommendation.review_status && (
@@ -192,9 +199,10 @@ export function RecommendationsTable({
             <TableHead>Nome / Marca</TableHead>
             <TableHead>Categoria</TableHead>
             <TableHead>Escopo</TableHead>
+            <TableHead>Times / Cargos</TableHead>
             <TableHead>Status Revisão</TableHead>
             <TableHead>Próx. Revisão</TableHead>
-            <TableHead>Valor Ref.</TableHead>
+            <TableHead>R$ (últ. compra)</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead className="w-[50px]" />
           </TableRow>

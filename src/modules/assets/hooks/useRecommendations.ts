@@ -69,6 +69,18 @@ export function useRecommendations(filters?: RecommendationFilters) {
     queryFn: async () => {
       if (!buId) return [];
 
+      // First, fetch teams and job titles maps for name resolution
+      const [teamsResult, jobTitlesResult] = await Promise.all([
+        supabase.from('teams').select('id, name').eq('bu_id', buId).is('deleted_at', null),
+        supabase.from('job_titles').select('id, name').is('deleted_at', null).contains('bu_ids', [buId]),
+      ]);
+      
+      const teamsMap = new Map<string, string>();
+      (teamsResult.data || []).forEach(t => teamsMap.set(t.id, t.name));
+      
+      const jobTitlesMap = new Map<string, string>();
+      (jobTitlesResult.data || []).forEach(jt => jobTitlesMap.set(jt.id, jt.name));
+
       let query = supabase
         .from('asset_recommendations')
         .select(`
@@ -116,7 +128,7 @@ export function useRecommendations(filters?: RecommendationFilters) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Enrich with computed fields
+      // Enrich with computed fields and resolved names
       return (data || []).map((rec) => {
         const enriched = enrichRecommendation(rec as unknown as AssetRecommendation);
         
@@ -128,6 +140,16 @@ export function useRecommendations(filters?: RecommendationFilters) {
             parent_name: rec.category.parent.name,
           };
         }
+        
+        // Resolve team names from IDs
+        enriched.applicable_team_names = (rec.applicable_team_ids || [])
+          .map((id: string) => teamsMap.get(id))
+          .filter((name): name is string => !!name);
+        
+        // Resolve job title names from IDs
+        enriched.applicable_job_title_names = (rec.applicable_job_title_ids || [])
+          .map((id: string) => jobTitlesMap.get(id))
+          .filter((name): name is string => !!name);
         
         return enriched;
       });
