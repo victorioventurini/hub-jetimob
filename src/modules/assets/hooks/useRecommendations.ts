@@ -51,17 +51,18 @@ export interface UpdateRecommendationInput extends Partial<CreateRecommendationI
 
 export function useRecommendations(filters?: RecommendationFilters) {
   const supabase = useBuScopedSupabase();
-  const { currentBu } = useBu();
+  const { currentBuId } = useBu();
   const { profileId } = useIdentity();
   const queryClient = useQueryClient();
-  const buId = currentBu?.id;
+  const buId = currentBuId;
 
   // ============================================
   // QUERY: List recommendations
   // ============================================
   const {
     data: recommendations = [],
-    isLoading,
+    isLoading: isQueryLoading,
+    isPending,
     error,
     refetch,
   } = useQuery({
@@ -277,6 +278,10 @@ export function useRecommendations(filters?: RecommendationFilters) {
       toast.error('Erro ao excluir recomendação');
     },
   });
+
+  // isLoading only when buId exists and query is actually loading
+  // isPending is true when query is disabled (no buId yet)
+  const isLoading = !!buId && (isQueryLoading || isPending);
 
   return {
     // Data
