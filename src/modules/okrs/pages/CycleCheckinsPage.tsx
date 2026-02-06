@@ -31,7 +31,7 @@ import { CycleCheckinsSummary } from '../components/cycle-checkins/CycleCheckins
 import { CycleCheckinsFilters as FiltersBar } from '../components/cycle-checkins/CycleCheckinsFilters';
 
 import { cn } from '@/lib/utils';
-import { OkrCycleCheckinsBreadcrumb } from '../components/ui/OkrBreadcrumb';
+// OkrBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 
 type CheckinsTab = 'feed' | 'pending' | 'summary';
 
@@ -138,12 +138,14 @@ export default function CycleCheckinsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <OkrCycleCheckinsBreadcrumb />
-        
+        {/* Header com breadcrumbs integrados (padrão canônico) */}
         <PageHeader
           title="Check-ins do Ciclo"
           description="Visão consolidada de todos os check-ins do ciclo"
+          breadcrumbs={[
+            { label: 'OKRs', href: '/okrs' },
+            { label: 'Check-ins do Ciclo' },
+          ]}
         />
         
         {/* Cycle Selector */}

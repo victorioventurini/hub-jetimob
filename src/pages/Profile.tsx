@@ -27,7 +27,7 @@ import { supabase } from '@/integrations/supabase/globalClient';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
-import { GlobalBreadcrumb } from '@/components/ui/global-breadcrumb';
+// GlobalBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
 import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from '@/lib/phone';
 import { queryKeys } from '@/lib/queryKeys';
@@ -446,10 +446,10 @@ export default function Profile() {
   return (
     <HubLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <GlobalBreadcrumb items={[{ label: 'Meu Perfil' }]} />
         <PageHeader
           title="Meu Perfil"
           description="Gerencie suas informações pessoais"
+          breadcrumbs={[{ label: 'Meu Perfil' }]}
         />
 
         {/* Header Card */}

@@ -1,11 +1,10 @@
 /**
  * @file OkrBreadcrumb.test.tsx
- * @description Tests for OkrBreadcrumb components
+ * @description Tests for OkrBreadcrumb legacy components
  * 
- * Coverage:
- * - Base OkrBreadcrumb
- * - Preset breadcrumbs for different views
- * - Items handling
+ * NOTA: Estes componentes são DEPRECATED conforme UI_COMPONENTS_REGISTRY.md.
+ * O padrão canônico é usar PageHeader.breadcrumbs diretamente.
+ * Os testes mantêm compatibilidade com uso legado.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -24,9 +23,11 @@ const renderWithRouter = (component: React.ReactNode) => {
 
 describe('OkrBreadcrumb', () => {
   describe('base component', () => {
-    it('should render OKRs root link', () => {
+    it('should render Hub and OKRs in breadcrumb', () => {
       renderWithRouter(<OkrBreadcrumb items={[]} />);
       
+      // Hub é adicionado automaticamente pelo GlobalBreadcrumb
+      expect(screen.getByText('Hub')).toBeInTheDocument();
       expect(screen.getByText('OKRs')).toBeInTheDocument();
     });
 
@@ -37,6 +38,7 @@ describe('OkrBreadcrumb', () => {
         />
       );
       
+      expect(screen.getByText('Hub')).toBeInTheDocument();
       expect(screen.getByText('OKRs')).toBeInTheDocument();
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
@@ -51,6 +53,7 @@ describe('OkrBreadcrumb', () => {
         />
       );
       
+      expect(screen.getByText('Hub')).toBeInTheDocument();
       expect(screen.getByText('OKRs')).toBeInTheDocument();
       expect(screen.getByText('Times')).toBeInTheDocument();
       expect(screen.getByText('Engineering')).toBeInTheDocument();
@@ -67,15 +70,27 @@ describe('OkrBreadcrumb', () => {
   });
 
   describe('item links', () => {
-    it('should render items with href as links', () => {
+    it('should render intermediate items with href as links', () => {
       renderWithRouter(
         <OkrBreadcrumb 
-          items={[{ label: 'Dashboard', href: '/okrs/dashboard' }]} 
+          items={[
+            { label: 'Dashboard', href: '/okrs/dashboard' },
+            { label: 'Current Page' },
+          ]} 
         />
       );
       
-      const link = screen.getByText('Dashboard').closest('a');
-      expect(link).toHaveAttribute('href', '/okrs/dashboard');
+      // OKRs should be a link since items come after it
+      const okrsLink = screen.getByText('OKRs').closest('a');
+      expect(okrsLink).toHaveAttribute('href', '/okrs');
+      
+      // Dashboard should be a link since it has href and is not last
+      const dashboardLink = screen.getByText('Dashboard').closest('a');
+      expect(dashboardLink).toHaveAttribute('href', '/okrs/dashboard');
+      
+      // Current Page (último) não deve ser link
+      const currentPage = screen.getByText('Current Page');
+      expect(currentPage.closest('a')).toBeNull();
     });
 
     it('should render items without href as text', () => {
@@ -92,11 +107,13 @@ describe('OkrBreadcrumb', () => {
 });
 
 describe('OkrDashboardBreadcrumb', () => {
-  it('should render dashboard breadcrumb', () => {
+  it('should render only Hub and OKRs (empty items)', () => {
     renderWithRouter(<OkrDashboardBreadcrumb />);
     
+    // OkrDashboardBreadcrumb passa items=[] para OkrBreadcrumb
+    // Resultado: Hub > OKRs (OKRs como último item, sem link)
+    expect(screen.getByText('Hub')).toBeInTheDocument();
     expect(screen.getByText('OKRs')).toBeInTheDocument();
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 });
 
@@ -104,7 +121,9 @@ describe('OkrOrgViewListBreadcrumb', () => {
   it('should render org view list breadcrumb', () => {
     renderWithRouter(<OkrOrgViewListBreadcrumb />);
     
+    expect(screen.getByText('Hub')).toBeInTheDocument();
     expect(screen.getByText('OKRs')).toBeInTheDocument();
+    expect(screen.getByText('Visão Organizacional')).toBeInTheDocument();
   });
 });
 
@@ -112,6 +131,7 @@ describe('OkrTeamViewBreadcrumb', () => {
   it('should render team view breadcrumb', () => {
     renderWithRouter(<OkrTeamViewBreadcrumb teamName="Engineering" />);
     
+    expect(screen.getByText('Hub')).toBeInTheDocument();
     expect(screen.getByText('OKRs')).toBeInTheDocument();
     expect(screen.getByText('Engineering')).toBeInTheDocument();
   });

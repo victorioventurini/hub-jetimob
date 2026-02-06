@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CyclesTab } from "../components/settings/CyclesTab";
 import { LimitsTab } from "../components/settings/LimitsTab";
 import { RulesInfoTab } from "../components/settings/RulesInfoTab";
-import { OkrSettingsBreadcrumb } from "../components/ui/OkrBreadcrumb";
+// OkrBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 
 export default function OkrsSettingsPage() {
   usePageTitle("Configurações de OKRs", {
@@ -16,14 +16,14 @@ export default function OkrsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <OkrSettingsBreadcrumb />
-      
+      {/* Header com breadcrumbs integrados (padrão canônico) */}
       <PageHeader
         title="Configurações de OKRs"
         description="Configure ciclos, limites e regras de vínculo da metodologia OKR"
-        backTo="/okrs"
-        backLabel="Voltar para OKRs"
+        breadcrumbs={[
+          { label: 'OKRs', href: '/okrs' },
+          { label: 'Configurações' },
+        ]}
       />
 
       {/* Info Banner */}
