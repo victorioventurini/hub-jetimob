@@ -8,6 +8,7 @@ import { useState } from "react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { InfoNotice } from "@/components/ui/info-notice";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
 import { Plus } from "lucide-react";
@@ -70,6 +71,11 @@ export default function RecommendationsPage() {
             )
           }
         />
+
+        <InfoNotice variant="warning">
+          Toda compra de múltiplas unidades requer revisão da recomendação, 
+          mesmo quando ela estiver dentro do prazo de atualização.
+        </InfoNotice>
 
         <RecommendationFilters filters={filters} onFiltersChange={setFilters} />
 
