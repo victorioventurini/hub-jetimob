@@ -58,8 +58,6 @@ export default function RecommendationsPage() {
           title="Recomendações de Equipamentos"
           description={`Guias de compra para ${currentBu?.name || "organização"}`}
           breadcrumbs={[
-            { label: "Ativos", href: "/assets" },
-            { label: "Inventário", href: "/assets/inventory" },
             { label: "Recomendações" },
           ]}
           actions={

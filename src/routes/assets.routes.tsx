@@ -44,12 +44,14 @@ export const assetRoutes = (
       element={<AssetRoute><AssetsPage /></AssetRoute>}
     >
       <Route path="inventory" element={<InventoryPage />} />
-      <Route path="inventory/recommendations" element={<RecommendationsPage />} />
       <Route path="keys" element={<KeysPage />} />
       <Route path="gifts" element={<GiftsPage />} />
       <Route path="reports" element={<AssetsReportsPage />} />
       <Route path="settings" element={<AssetsSettingsPage />} />
     </Route>
+    
+    {/* Recommendations - Standalone page with own HubLayout */}
+    <Route path="/assets/inventory/recommendations" element={<AssetRoute><RecommendationsPage /></AssetRoute>} />
     
     {/* Asset Inventory Detail - Full page layout */}
     <Route path="/assets/inventory/:id" element={<AssetRoute><InventoryDetailPage /></AssetRoute>} />
