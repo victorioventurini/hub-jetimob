@@ -13,10 +13,12 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { parseMentionsForDisplay } from "@/components/mentions";
-import type { TicketMessage } from "../types";
+import { AttachmentLink } from "./AttachmentLink";
+import type { TicketMessage, TicketAttachment } from "../types";
 
 interface PinnedMessagesSectionProps {
   messages: TicketMessage[];
+  attachmentsByMessage: Map<string, TicketAttachment[]>;
   canPin: boolean;
   onUnpin: (messageId: string) => void;
   isUnpinning?: boolean;
@@ -24,6 +26,7 @@ interface PinnedMessagesSectionProps {
 
 export function PinnedMessagesSection({
   messages,
+  attachmentsByMessage,
   canPin,
   onUnpin,
   isUnpinning = false,
@@ -48,6 +51,7 @@ export function PinnedMessagesSection({
           <PinnedMessageCard
             key={message.id}
             message={message}
+            attachments={attachmentsByMessage.get(message.id) || []}
             canUnpin={canPin}
             onUnpin={() => onUnpin(message.id)}
             isUnpinning={isUnpinning}
@@ -60,6 +64,7 @@ export function PinnedMessagesSection({
 
 interface PinnedMessageCardProps {
   message: TicketMessage;
+  attachments: TicketAttachment[];
   canUnpin: boolean;
   onUnpin: () => void;
   isUnpinning?: boolean;
@@ -67,6 +72,7 @@ interface PinnedMessageCardProps {
 
 function PinnedMessageCard({
   message,
+  attachments,
   canUnpin,
   onUnpin,
   isUnpinning = false,
@@ -112,7 +118,23 @@ function PinnedMessageCard({
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true, locale: ptBR })}
           </span>
         </div>
-        <p className="text-sm text-foreground/90 line-clamp-2">{parsedContent}</p>
+        {content && (
+          <p className="text-sm text-foreground/90 line-clamp-2">{parsedContent}</p>
+        )}
+        
+        {/* Attachments */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {attachments.map((attachment) => (
+              <AttachmentLink
+                key={attachment.id}
+                attachment={attachment}
+                isOwnMessage={false}
+              />
+            ))}
+          </div>
+        )}
+        
         {message.pinned_by && (
           <p className="text-xs text-muted-foreground mt-1">
             Fixada por {message.pinned_by.display_name}
