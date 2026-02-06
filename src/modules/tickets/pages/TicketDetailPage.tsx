@@ -325,6 +325,7 @@ export default function TicketDetailPage() {
                   {/* Pinned messages section */}
                   <PinnedMessagesSection
                     messages={messages}
+                    attachmentsByMessage={attachmentsByMessage}
                     canPin={canPin}
                     onUnpin={(messageId) => pinMessage.mutate({ messageId, ticketId: ticket.id, pin: false })}
                     isUnpinning={pinMessage.isPending}
