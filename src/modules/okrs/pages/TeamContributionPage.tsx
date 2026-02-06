@@ -14,7 +14,8 @@ import { TeamContributionFilters } from "../components/team-contribution/TeamCon
 import { EmptyState } from "@/components/ui/empty-state";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useUrlState } from "@/shared/url";
-import { OkrTeamContributionBreadcrumb } from "../components/ui/OkrBreadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
+// OkrTeamContributionBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 
 export default function TeamContributionPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -62,10 +63,18 @@ export default function TeamContributionPage() {
   return (
     <HubLayout>
       <div className="p-6 space-y-6">
-        {/* Breadcrumb */}
-        <OkrTeamContributionBreadcrumb teamName={data.team.name} />
+        {/* Header com breadcrumbs integrados (padrão canônico) */}
+        <PageHeader
+          title={`Contribuição: ${data.team.name}`}
+          description={currentBu?.name || 'Visão de contribuição aos objetivos organizacionais'}
+          breadcrumbs={[
+            { label: "OKRs", href: "/okrs" },
+            { label: "Visão Organizacional", href: "/okrs/org-view" },
+            { label: data.team.name }
+          ]}
+        />
 
-        {/* Header */}
+        {/* Team Summary Card */}
         <TeamContributionHeader data={data} buName={currentBu?.name} />
 
       {/* Main Content */}

@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { UsersBreadcrumb } from "@/components/ui/global-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
+// UsersBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import {
   User,
   Building2,
@@ -132,10 +133,22 @@ export default function UserProfile() {
   return (
     <HubLayout>
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Breadcrumb */}
-        <UsersBreadcrumb userName={profile.display_name} />
+        {/* Header com breadcrumbs integrados (padrão canônico) */}
+        <PageHeader
+          title={profile.display_name}
+          description={profile.job_title || "Sem cargo"}
+          breadcrumbs={[
+            { label: "Jetimobers", href: "/users" },
+            { label: profile.display_name }
+          ]}
+          actions={
+            <Badge variant="outline" className={statusColors[profile.employment_status]}>
+              {statusLabels[profile.employment_status]}
+            </Badge>
+          }
+        />
         
-        {/* Header */}
+        {/* Profile Card */}
         <div className="flex flex-col sm:flex-row gap-6">
             <OptimizedAvatar 
               src={profile.photo_url} 
@@ -147,15 +160,6 @@ export default function UserProfile() {
             />
 
             <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">{profile.display_name}</h1>
-                <Badge variant="outline" className={statusColors[profile.employment_status]}>
-                  {statusLabels[profile.employment_status]}
-                </Badge>
-              </div>
-
-              <p className="text-lg text-muted-foreground mb-3">{profile.job_title || "Sem cargo"}</p>
-
               <div className="flex flex-wrap gap-2">
                 {profile.team && (
                   <Badge variant="secondary" className="gap-1">

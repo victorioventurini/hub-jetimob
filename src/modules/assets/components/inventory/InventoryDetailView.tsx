@@ -34,7 +34,7 @@ import { InventoryFormDialog } from "./InventoryFormDialog";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import { KitSection } from "./KitSection";
 import { ResourceNotFoundState } from "@/components/ui/resource-not-found-state";
-import { AssetsBreadcrumb } from "@/components/ui/global-breadcrumb";
+// AssetsBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import type { AssetInventory, AssetMovement, AssetMovementType } from "../../types";
 import { INVENTORY_STATUS_LABELS, MOVEMENT_TYPE_LABELS } from "../../types";
 
@@ -296,17 +296,15 @@ export function InventoryDetailView() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <AssetsBreadcrumb 
-        section="inventory"
-        assetCode={item.internal_code}
-        assetName={item.name}
-      />
-
-      {/* Header - usando PageHeader canônico */}
+      {/* Header - usando PageHeader canônico com breadcrumbs integrados */}
       <PageHeader
         title={item.name}
         description={`${item.internal_code}${item.category ? ` • ${item.category.name}` : ''}`}
+        breadcrumbs={[
+          { label: "Ativos", href: "/assets" },
+          { label: "Inventário", href: "/assets/inventory" },
+          { label: item.internal_code }
+        ]}
         actions={
           <div className="flex items-center gap-2">
             <Button
