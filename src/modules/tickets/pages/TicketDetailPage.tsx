@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageHeader } from "@/components/ui/page-header";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
@@ -13,7 +14,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useBu } from "@/contexts/BuContext";
-import { TicketsBreadcrumb } from "@/components/ui/global-breadcrumb";
+// TicketsBreadcrumb removido - integrado no TicketDetailHeader (padrão canônico)
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
 import { TicketDetailHeader } from "../components/TicketDetailHeader";
@@ -253,7 +254,13 @@ export default function TicketDetailPage() {
     return (
       <HubLayout>
         <div className="space-y-6">
-          <TicketsBreadcrumb />
+          <PageHeader
+            title="Erro ao carregar ticket"
+            breadcrumbs={[
+              { label: "Tickets", href: "/tickets" },
+              { label: "Erro" },
+            ]}
+          />
           <VicErrorState
             title="Ops, esse ticket escapou! 🎫"
             description="Não consegui acessar esse ticket. Pode ser que você não tenha permissão ou ele não existe mais."
@@ -268,7 +275,13 @@ export default function TicketDetailPage() {
     return (
       <HubLayout>
         <div className="space-y-6">
-          <TicketsBreadcrumb />
+          <PageHeader
+            title="Ticket não encontrado"
+            breadcrumbs={[
+              { label: "Tickets", href: "/tickets" },
+              { label: "Não encontrado" },
+            ]}
+          />
           <VicErrorState
             title="Esse ticket sumiu! 👀"
             description="O ticket que você está procurando não existe ou foi removido."
@@ -283,16 +296,14 @@ export default function TicketDetailPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <TicketsBreadcrumb ticketId={ticket.id} ticketTitle={ticket.title} />
-
-        {/* Header - usando componente especializado */}
+        {/* Header - usando componente especializado com breadcrumbs integrados */}
         <TicketDetailHeader
           title={ticket.title}
           type={ticket.type}
           status={ticket.status}
           createdAt={ticket.created_at}
           expectedDueAt={ticket.expected_due_at}
+          ticketId={ticket.id}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

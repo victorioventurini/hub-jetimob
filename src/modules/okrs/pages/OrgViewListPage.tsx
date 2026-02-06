@@ -11,7 +11,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAllOrgObjectivesView } from '../hooks';
 import { YearSelect } from '@/components/selects';
 import { useUrlState, parsers } from '@/shared/url';
-import { OkrOrgViewListBreadcrumb } from '../components/ui/OkrBreadcrumb';
+// OkrBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 const statusConfig = {
@@ -60,15 +60,14 @@ export default function OrgViewListPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <OkrOrgViewListBreadcrumb />
-        
-        {/* Header */}
+        {/* Header com breadcrumbs integrados (padrão canônico) */}
         <PageHeader
           title="Visão Organizacional"
           description="Acompanhe como os OKRs dos times contribuem para os objetivos estratégicos"
-          backTo="/okrs"
-          backLabel="Voltar para OKRs"
+          breadcrumbs={[
+            { label: 'OKRs', href: '/okrs' },
+            { label: 'Visão Organizacional' },
+          ]}
           actions={
             <YearSelect
               value={selectedYear}
