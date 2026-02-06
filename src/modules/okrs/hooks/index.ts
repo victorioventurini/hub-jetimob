@@ -169,6 +169,7 @@ export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
 export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';
 export { useManagersPanorama, useCrossDependencies } from './useManagersPanorama';
+export { useTeamKeyResult, type TeamKeyResultData } from './useTeamKeyResult';
 
 // =========================
 // ORG VIEW - DEPRECATED: use useOrgObjectiveView from './queries' instead

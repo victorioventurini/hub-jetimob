@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useMemo, useEffect, useRef } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,9 +16,38 @@ import { OkrOrgObjectiveDetailBreadcrumb } from '../components/ui/OkrBreadcrumb'
 
 export default function OrgObjectiveViewPage() {
   const { objectiveId } = useParams<{ objectiveId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: objective, isLoading, error } = useOrgObjectiveView(objectiveId || '');
   
+  // Deep-linking: Read ?kr= from URL for highlight/scroll
+  const highlightedKrId = searchParams.get('kr');
+  const krRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
   usePageTitle(objective?.title || 'Visão Organizacional');
+  
+  // Effect to scroll to highlighted KR when page loads
+  useEffect(() => {
+    if (highlightedKrId && objective && !isLoading) {
+      // Wait for DOM to be ready
+      const timer = setTimeout(() => {
+        const krElement = krRefs.current[highlightedKrId];
+        if (krElement) {
+          krElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight animation
+          krElement.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+          // Remove highlight after animation
+          setTimeout(() => {
+            krElement.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+            // Clear kr param from URL
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('kr');
+            setSearchParams(newParams, { replace: true });
+          }, 3000);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedKrId, objective, isLoading, searchParams, setSearchParams]);
 
   // URL State for filters (P2 fix - migrate from useState)
   const statusFilterState = useUrlState<StatusFilter>({
@@ -153,7 +182,13 @@ export default function OrgObjectiveViewPage() {
             </div>
           ) : (
             filteredOrgKrs.map(orgKr => (
-              <OrgKrExpandableCard key={orgKr.id} orgKr={orgKr} />
+              <div 
+                key={orgKr.id} 
+                ref={(el) => { krRefs.current[orgKr.id] = el; }}
+                className="transition-all duration-300"
+              >
+                <OrgKrExpandableCard orgKr={orgKr} />
+              </div>
             ))
           )}
         </div>

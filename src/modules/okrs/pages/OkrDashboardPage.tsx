@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
@@ -24,8 +24,9 @@ import {
   useLatestCheckinDate,
   useUserProfile,
 } from '../hooks/queries';
-import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr } from '../hooks';
+import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr, useTeamKeyResult } from '../hooks';
 import { calculateProgress } from '../types';
+import { KrHistoryDialog } from '../components/KrHistoryDialog';
 
 import { OkrViewSelector, OkrView } from '../components/dashboard/OkrViewSelector';
 import { OkrDashboardFilters } from '../components/dashboard/OkrDashboardFilters';
@@ -84,6 +85,31 @@ export default function OkrDashboardPage() {
   const normalizedTeamId = filters.teamId && filters.teamId !== 'all' ? filters.teamId : undefined;
 
   const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(false);
+
+  // Deep-linking: Read ?kr= from URL to open KR detail dialog automatically
+  const [searchParams, setSearchParams] = useSearchParams();
+  const krIdFromUrl = searchParams.get('kr');
+  const [deepLinkKrId, setDeepLinkKrId] = useState<string | null>(null);
+  
+  // Fetch KR data when deep-link ID is present
+  const { data: deepLinkedKr, isLoading: deepLinkLoading } = useTeamKeyResult(krIdFromUrl || deepLinkKrId);
+  
+  // Effect to set deep link state when KR is loaded
+  useEffect(() => {
+    if (krIdFromUrl && deepLinkedKr) {
+      setDeepLinkKrId(krIdFromUrl);
+    }
+  }, [krIdFromUrl, deepLinkedKr]);
+  
+  // Handle closing the deep-linked KR dialog
+  const handleCloseDeepLinkDialog = (open: boolean) => {
+    if (!open) {
+      setDeepLinkKrId(null);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('kr');
+      setSearchParams(newParams, { replace: true });
+    }
+  };
 
   // Queries
   const { data: teams, isLoading: teamsLoading } = useTeams();
@@ -468,6 +494,27 @@ export default function OkrDashboardPage() {
         open={showCreateOrgDialog}
         onOpenChange={setShowCreateOrgDialog}
         year={filters.year}
+      />
+      
+      {/* Deep-linked KR History Dialog */}
+      <KrHistoryDialog
+        open={!!deepLinkKrId && !!deepLinkedKr}
+        onOpenChange={handleCloseDeepLinkDialog}
+        kr={deepLinkedKr ? {
+          id: deepLinkedKr.id,
+          title: deepLinkedKr.title,
+          baseline: Number(deepLinkedKr.baseline) || 0,
+          current_value: Number(deepLinkedKr.current_value) || 0,
+          target: Number(deepLinkedKr.target) || 0,
+          unit: deepLinkedKr.unit || '%',
+          direction: deepLinkedKr.direction || 'up',
+          status: deepLinkedKr.status || 'not_started',
+          type: deepLinkedKr.type || 'contribution',
+          owner_name: deepLinkedKr.owner?.display_name,
+          owner_photo: deepLinkedKr.owner?.photo_url,
+          team_name: deepLinkedKr.team?.name,
+          objective_title: deepLinkedKr.objective?.title,
+        } : null}
       />
     </HubLayout>
   );

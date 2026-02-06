@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Link2, ArrowUpRight, Target, Zap } from 'lucide-react';
+import { getShareableUrl, type ShareableEntity } from '@/lib/shareableLinks';
 
 interface OkrContributionLinkProps {
   type: 'contributes_to' | 'enables' | 'linked_to';
@@ -103,14 +104,18 @@ export function OkrContributionLink({
 }
 
 function getTargetUrl(targetType: string, targetId: string): string {
-  switch (targetType) {
-    case 'org_objective':
-      return `/okrs/org-view/${targetId}`;
-    case 'team_objective':
-      return `/okrs/teams/${targetId}`;
-    default:
-      return `/okrs`;
+  const entityMap: Record<string, ShareableEntity> = {
+    'org_objective': 'okr_org_objective',
+    'team_objective': 'okr_team_objective',
+    'org_kr': 'okr_org_kr',
+    'team_kr': 'okr_team_kr',
+  };
+  
+  const entity = entityMap[targetType];
+  if (entity) {
+    return getShareableUrl(entity, targetId);
   }
+  return '/okrs';
 }
 
 interface OkrKrTypeBadgeProps {

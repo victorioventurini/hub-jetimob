@@ -134,6 +134,10 @@ export const okrsKeys = {
   // Team objective detail
   teamObjectiveDetail: (objectiveId: string) =>
     ['okr-team-objective', objectiveId] as const,
+    
+  // Team KR detail (for deep-linking)
+  teamKeyResultDetail: (krId: string | null) =>
+    ['okr-team-kr-detail', krId] as const,
   
   // Org KRs for linking
   orgKeyResultsForLinking: (orgObjectiveId: string | null) =>

@@ -4,6 +4,7 @@ import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { DIALOG_SIZES } from '@/lib/dialog-sizes';
+import { getShareableUrl } from '@/lib/shareableLinks';
 import {
   Dialog,
   DialogContent,
@@ -122,7 +123,7 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       if (error) throw error;
 
       if (reflectionMentions.length > 0 && checkinData) {
-        await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, `/okrs?kr=${kr.id}`);
+        await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, getShareableUrl('okr_team_kr', kr.id));
       }
 
       // Only update KR value if not automatic

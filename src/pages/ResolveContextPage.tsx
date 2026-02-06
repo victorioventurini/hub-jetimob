@@ -25,8 +25,10 @@ type EntityType =
   | "health_alert";
 
 interface EntityConfig {
-  targetPath: (id: string) => string;
+  targetPath: (id: string, additionalData?: Record<string, string>) => string;
   label: string;
+  /** If true, resolve additional data before generating targetPath */
+  resolveAdditionalData?: (id: string) => Promise<Record<string, string> | null>;
 }
 
 const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
@@ -55,11 +57,21 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
     label: "objetivo de time",
   },
   okr_org_kr: {
-    targetPath: (id) => `/okrs/org/kr/${id}`,
+    targetPath: (id, data) => data?.objective_id 
+      ? `/okrs/org-view/${data.objective_id}?kr=${id}` 
+      : `/okrs/org-view?kr=${id}`,
     label: "KR organizacional",
+    resolveAdditionalData: async (id) => {
+      const { data } = await supabase
+        .from("okr_org_key_results")
+        .select("org_objective_id")
+        .eq("id", id)
+        .maybeSingle();
+      return data?.org_objective_id ? { objective_id: data.org_objective_id } : null;
+    },
   },
   okr_team_kr: {
-    targetPath: (id) => `/okrs/team/kr/${id}`,
+    targetPath: (id) => `/okrs?kr=${id}`,
     label: "KR de time",
   },
   keyring: {
@@ -267,13 +279,20 @@ export default function ResolveContextPage() {
           return;
         }
 
+        // Resolve additional data if needed (e.g., objective_id for org KRs)
+        let additionalData: Record<string, string> | null = null;
+        if (config.resolveAdditionalData) {
+          additionalData = await config.resolveAdditionalData(id);
+        }
+
         // Store target info for after BU switch
+        const finalPath = config.targetPath(id, additionalData ?? undefined);
         setTargetBuId(buId);
-        setTargetPath(config.targetPath(id));
+        setTargetPath(finalPath);
 
         // If already on correct BU, navigate immediately
         if (currentBuId === buId) {
-          navigate(config.targetPath(id), { replace: true });
+          navigate(finalPath, { replace: true });
           return;
         }
 
