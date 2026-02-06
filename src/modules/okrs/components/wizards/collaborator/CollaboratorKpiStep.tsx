@@ -130,7 +130,7 @@ export function CollaboratorKpiStep({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      value: undefined,
+      value: '' as unknown as number, // Start empty to avoid controlled/uncontrolled warning
       reference_date: maxDate,
       confidence: 'medium',
       notes: '',

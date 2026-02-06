@@ -3,11 +3,13 @@
  * 
  * Admins podem selecionar outro usuário para visualizar/executar o check-in.
  * v2.2: Suporte a KPIs do colaborador (fail-safe)
+ * v2.87: Migrado para useKpisForWizardV2 (inclui contribuidores de dados)
  */
 
 import { useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
 import { 
@@ -15,13 +17,15 @@ import {
   useActiveCycles,
   useUserKrsForWizard,
 } from '@/modules/okrs/hooks';
-import { useKpisForWizard, useKpiData } from '@/modules/kpis/hooks';
+import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { queryKeys } from '@/lib/queryKeys';
 
 // Step components
 import { CollaboratorContextStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorContextStep';
@@ -32,6 +36,7 @@ import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/co
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
 
 import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
+import type { KpiForWizardV2 } from '@/modules/kpis/types';
 
 // ============================================================
 // TYPES
@@ -148,14 +153,54 @@ export default function CollaboratorCheckinPage() {
     effectiveUserId
   );
   
-  // Fetch user KPIs (fail-safe)
-  const { kpis: userKpis, isLoading: isLoadingKpis } = useKpisForWizard({
-    ownerId: effectiveUserId || undefined,
+  // Fetch user KPIs (fail-safe) - v2.87: usando V2 para incluir contribuidores
+  const { 
+    kpisToUpdate: userKpis, 
+    isLoading: isLoadingKpis 
+  } = useKpisForWizardV2({
+    userId: effectiveUserId || undefined,
+    scope: 'collaborator',
   });
   
-  // KPI mutation for saving values
-  const { addKpiValue } = useKpiData();
+  // v2.87: Mutation silenciosa para KPI (fail-safe, sem toast de erro)
+  const supabase = useBuScopedSupabase();
+  const queryClient = useQueryClient();
   
+  const addKpiValueSilent = useMutation({
+    mutationFn: async (data: {
+      kpi_id: string;
+      value: number;
+      reference_date: string;
+      source?: 'manual' | 'integration' | 'calculation';
+      notes?: string;
+      created_by?: string;
+      confidence?: 'high' | 'medium' | 'low';
+    }) => {
+      const { data: result, error } = await supabase
+        .from("kpi_values")
+        .insert({
+          kpi_id: data.kpi_id,
+          value: data.value,
+          reference_date: data.reference_date,
+          source: data.source || "manual",
+          notes: data.notes || null,
+          created_by: data.created_by || null,
+          confidence: data.confidence || 'medium',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: (_result, variables) => {
+      // Invalidate silently
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+    },
+    // NO onError toast - completely silent
+  });
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
@@ -279,20 +324,30 @@ export default function CollaboratorCheckinPage() {
         );
         
       case 'kpis':
-        const currentKpi = kpis[draft.data.currentKpiIndex];
+        // v2.87: KPIs agora são do tipo KpiForWizardV2
+        const currentKpi = kpis[draft.data.currentKpiIndex] as KpiForWizardV2 | undefined;
         if (!currentKpi || kpis.length === 0) {
           goNext();
           return null;
         }
+        
+        // Adapter para manter compatibilidade com CollaboratorKpiStep
+        const kpiForStep = {
+          ...currentKpi,
+          // v2.87: Adiciona owner_name para mensagem de contribuidor
+          owner_name: currentKpi.owner?.display_name || null,
+        };
+        
         return (
           <CollaboratorKpiStep
-            kpi={currentKpi}
+            kpi={kpiForStep}
             currentIndex={draft.data.currentKpiIndex}
             totalCount={kpis.length}
             onComplete={async (result) => {
-              // Save KPI value to database
+              // FAIL-SAFE: Salvar KPI sem bloquear wizard
+              // Erros são logados mas não impedem avanço
               try {
-                await addKpiValue.mutateAsync({
+                await addKpiValueSilent.mutateAsync({
                   kpi_id: result.kpiId,
                   value: result.newValue,
                   reference_date: result.referenceDate,
@@ -302,7 +357,8 @@ export default function CollaboratorCheckinPage() {
                   created_by: profile?.id,
                 });
               } catch (error) {
-                console.error('Failed to save KPI value:', error);
+                // Erro logado, mas wizard continua (fail-safe)
+                console.warn('[CollaboratorCheckin] KPI save failed (continuing):', error);
               }
               
               const newKpiResults = [...draft.data.kpiResults];
