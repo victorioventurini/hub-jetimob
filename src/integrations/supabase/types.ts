@@ -1084,6 +1084,7 @@ export type Database = {
           photos: Json | null
           quantity_available: number
           quantity_total: number
+          recommendation_id: string | null
           serial_number: string | null
           status: Database["public"]["Enums"]["asset_inventory_status"]
           updated_at: string
@@ -1114,6 +1115,7 @@ export type Database = {
           photos?: Json | null
           quantity_available?: number
           quantity_total?: number
+          recommendation_id?: string | null
           serial_number?: string | null
           status?: Database["public"]["Enums"]["asset_inventory_status"]
           updated_at?: string
@@ -1144,6 +1146,7 @@ export type Database = {
           photos?: Json | null
           quantity_available?: number
           quantity_total?: number
+          recommendation_id?: string | null
           serial_number?: string | null
           status?: Database["public"]["Enums"]["asset_inventory_status"]
           updated_at?: string
@@ -1197,6 +1200,13 @@ export type Database = {
             columns: ["home_location_id"]
             isOneToOne: false
             referencedRelation: "bu_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_inventory_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "asset_recommendations"
             referencedColumns: ["id"]
           },
         ]
@@ -1690,6 +1700,126 @@ export type Database = {
           {
             foreignKeyName: "fk_asset_permissions_created_by"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_recommendations: {
+        Row: {
+          applicable_job_title_ids: string[]
+          applicable_team_ids: string[]
+          brand: string
+          bu_id: string
+          category_id: string | null
+          created_at: string
+          created_by_user_id: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          last_reviewed_at: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          owner_user_id: string
+          review_interval_months: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicable_job_title_ids?: string[]
+          applicable_team_ids?: string[]
+          brand: string
+          bu_id: string
+          category_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          last_reviewed_at?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          owner_user_id: string
+          review_interval_months?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicable_job_title_ids?: string[]
+          applicable_team_ids?: string[]
+          brand?: string
+          bu_id?: string
+          category_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          last_reviewed_at?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          owner_user_id?: string
+          review_interval_months?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_recommendations_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_recommendations_owner_user_id_fkey"
+            columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]

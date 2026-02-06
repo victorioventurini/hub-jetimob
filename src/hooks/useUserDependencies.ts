@@ -18,6 +18,7 @@ export interface UserDependencies {
     teamKrs: DependencyItem[];
     orgObjectives: DependencyItem[];
     orgKrs: DependencyItem[];
+    assetRecommendations: DependencyItem[];
   };
   /** Optional dependencies that will be auto-cleared (SET NULL) */
   optional: {
@@ -185,6 +186,25 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
     },
   });
 
+  // Fetch Asset Recommendations where user is owner
+  const { data: assetRecommendations = [], isLoading: assetRecommendationsLoading } = useQuery({
+    queryKey: ["assets", "recommendations", buId, "owner", profileId],
+    staleTime: 2 * 60 * 1000,
+    enabled: !!buId && !!profileId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("asset_recommendations")
+        .select("id, name")
+        .eq("bu_id", buId!)
+        .eq("owner_user_id", profileId!)
+        .is("deleted_at", null)
+        .eq("status", "active");
+
+      if (error) throw error;
+      return (data || []).map((r) => ({ id: r.id, name: r.name }));
+    },
+  });
+
   // ============================================================
   // OPTIONAL DEPENDENCIES - Will be SET NULL automatically
   // ============================================================
@@ -294,6 +314,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
     teamKrsLoading ||
     orgObjectivesLoading ||
     orgKrsLoading ||
+    assetRecommendationsLoading ||
     teamsLoading ||
     areaLeadershipsLoading ||
     areaCoLeadershipsLoading ||
@@ -307,7 +328,8 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
     teamObjectives.length +
     teamKrs.length +
     orgObjectives.length +
-    orgKrs.length;
+    orgKrs.length +
+    assetRecommendations.length;
 
   const totalOptional = 
     teams.length + 
@@ -325,6 +347,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
       teamKrs,
       orgObjectives,
       orgKrs,
+      assetRecommendations,
     },
     optional: {
       teams,

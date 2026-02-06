@@ -17,6 +17,14 @@ export { useAssetProfiles } from "./useProfiles";
 export { useAssetPermissionsV2 } from "./useAssetPermissionsV2";
 export { useAssetGroups } from "./useAssetGroups";
 export { useBrands } from "./useBrands";
+export { 
+  useRecommendations, 
+  useLastPurchaseValue, 
+  useRecommendationDetail,
+  type RecommendationFilters,
+  type CreateRecommendationInput,
+  type UpdateRecommendationInput,
+} from "./useRecommendations";
 
 export { useAuthorizers } from "./useAuthorizers";
 export { useBuAdmins } from "./useBuAdmins";
