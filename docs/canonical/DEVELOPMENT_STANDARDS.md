@@ -1,8 +1,8 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.18.0  
-**Última atualização:** 2026-02-05  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0**
+**Versão:** 1.19.0  
+**Última atualização:** 2026-02-06  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.0**
 **Referência:** TCR v2.93.0
 
 ---
@@ -550,7 +550,66 @@ $$ LANGUAGE sql STABLE;
 
 > 📚 Ver: [DATA_MODEL_REGISTRY.md](./DATA_MODEL_REGISTRY.md)
 
+### D.7 Soft-Delete: Filtros Obrigatórios de `deleted_at` e `cancelled_at`
+
+```
+⚠️ REGRA INQUEBRÁVEL: Toda query em tabelas com soft-delete DEVE incluir filtros de exclusão.
+```
+
+**Tabelas de OKRs (OBRIGATÓRIO em todas as queries):**
+
+| Tabela | Filtros Obrigatórios |
+|--------|---------------------|
+| `okr_org_objectives` | `.is('deleted_at', null).is('cancelled_at', null).neq('status', 'cancelled').neq('status', 'discarded')` |
+| `okr_org_key_results` | `.is('deleted_at', null).is('cancelled_at', null)` |
+| `okr_team_objectives` | `.is('deleted_at', null).is('cancelled_at', null).neq('status', 'cancelled').neq('status', 'discarded')` |
+| `okr_team_key_results` | `.is('deleted_at', null).is('cancelled_at', null)` |
+| `okr_initiatives` | `.is('deleted_at', null).is('cancelled_at', null)` |
+
+**Exemplo Correto:**
+
+```typescript
+// ✅ CORRETO: Query com todos os filtros de soft-delete
+const { data } = await supabase
+  .from('okr_team_objectives')
+  .select('id, title, status')
+  .eq('bu_id', buId)
+  .is('deleted_at', null)
+  .is('cancelled_at', null)
+  .neq('status', 'cancelled')
+  .neq('status', 'discarded');
+
+// ✅ CORRETO: Query aninhada com filtro na relação
+const { data } = await supabase
+  .from('okr_team_objectives')
+  .select(`
+    id, title,
+    key_results:okr_team_key_results(id, title, deleted_at, cancelled_at)
+  `)
+  .is('deleted_at', null)
+  .is('cancelled_at', null);
+
+// E DEPOIS filtrar KRs no cliente:
+const filtered = data.map(obj => ({
+  ...obj,
+  key_results: obj.key_results.filter(kr => !kr.deleted_at && !kr.cancelled_at)
+}));
+```
+
+**❌ PROIBIDO:**
+
+```typescript
+// ❌ ERRADO: Sem filtros de soft-delete — exibirá itens cancelados/removidos!
+const { data } = await supabase
+  .from('okr_initiatives')
+  .select('id, name, status')
+  .eq('bu_id', buId);
+```
+
+> ⚠️ **IMPORTANTE:** Esta regra aplica-se a TODAS as queries de leitura, incluindo queries aninhadas e de contexto.
+
 ---
+
 
 ## E. URL State
 
