@@ -1,9 +1,9 @@
 # Permissions & RBAC Model — Hub da Jet
 
-**Versão:** 1.3.0  
-**Data:** 2026-02-05  
-**Status:** Normativo (V2-only mode) | RLS 100% migrado | Wave 8 Audit Complete  
-**Referência:** TCR v2.92.0, RBAC_TEMPLATES_V3.md
+**Versão:** 1.4.0  
+**Data:** 2026-02-06  
+**Status:** Normativo (V2-only mode) | RLS 100% migrado | Wave 8 Audit Complete | **users_admin_v2 membership fix**  
+**Referência:** TCR v2.94.0, RBAC_TEMPLATES_V3.md
 
 ---
 
@@ -197,6 +197,9 @@ O catálogo completo está em `permission_catalog`. Algumas categorias:
 | `collaborator_base_v2` | 11 | Base para todo colaborador interno (Wave 8) |
 | `external_contact_base` | 4 | Base para contatos externos |
 | `bu_admin` | 135 | Admin da BU |
+| `users_admin_v2` | 9 | Admin de usuários (inclui `people.membership.manage:bu`) |
+| `users_operate_v2` | 3 | Operador de usuários |
+| `users_view_v2` | 2 | Visualizador de usuários |
 | `tickets_operator` | 8 | Operador de tickets |
 | `tickets_admin` | 23 | Admin de tickets |
 | `okrs_viewer` | 6 | Visualizador de OKRs |
