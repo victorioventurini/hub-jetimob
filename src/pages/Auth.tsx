@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { ArrowRight, Loader2, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { checkEmailDomainAllowed } from "@/modules/bu/hooks";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 
 const STORAGE_KEY = "hub_last_email";
@@ -56,7 +55,6 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   const savedEmail = getSavedEmail();
   const [email, setEmail] = useState(savedEmail || "");
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingDomain, setIsCheckingDomain] = useState(false);
   const [authState, setAuthState] = useState<AuthState>(savedEmail ? "returning" : "first-access");
   const [domainError, setDomainError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -132,22 +130,20 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       return;
     }
 
-    // Check if email domain is allowed
-    setIsCheckingDomain(true);
-    const { allowed } = await checkEmailDomainAllowed(email);
-    setIsCheckingDomain(false);
-    if (!allowed) {
-      setDomainError("Esse e-mail não tem acesso ao Hub.");
-      return;
-    }
-    
+    // Domain validation is done by the edge function to avoid duplicate queries
+    // The edge function returns a proper error if the domain is not allowed
     setIsLoading(true);
     const redirectUrl = getRedirectUrl();
     const { error } = await signInWithMagicLink(email, redirectUrl);
     setIsLoading(false);
     
     if (error) {
-      toast.error("Algo deu errado. Tenta de novo?");
+      // Check if it's a domain/authorization error from edge function
+      if (error.message?.includes("não está autorizado") || error.message?.includes("não tem acesso")) {
+        setDomainError("Esse e-mail não tem acesso ao Hub.");
+      } else {
+        toast.error("Algo deu errado. Tenta de novo?");
+      }
       return;
     }
 
@@ -344,7 +340,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
                   }`}
                   required
                   autoFocus
-                  disabled={isLoading || isCheckingDomain}
+                  disabled={isLoading}
                 />
                 {domainError && (
                   <div className="flex items-center gap-2 text-destructive text-sm">
@@ -358,14 +354,9 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
             <Button
               type="submit"
               className="w-full h-12 gap-2 text-base"
-              disabled={isLoading || isCheckingDomain}
+              disabled={isLoading}
             >
-              {isCheckingDomain ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Verificando...
-                </>
-              ) : isLoading ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Enviando...
