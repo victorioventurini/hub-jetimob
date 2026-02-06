@@ -92,6 +92,20 @@ export function useAssetPermissionsV2() {
   const canCreateGiftMovement = hasFullAccess || has("assets.gifts.movement.create:bu");
   const canAdjustGifts = hasFullAccess || has("assets.gifts.adjustment.create:bu");
 
+  // === Permissões de RECOMENDAÇÕES ===
+  const canViewRecommendations = hasFullAccess || hasAny([
+    "assets.recommendations.view:bu",
+    "assets.inventory.view:bu", // Fallback: quem vê inventário, vê recomendações
+  ]);
+
+  const canManageRecommendations = hasFullAccess || hasAny([
+    "assets.recommendations.create:bu",
+    "assets.recommendations.update:bu",
+    "assets.inventory.create:bu", // Fallback: inventory admins podem gerenciar
+  ]);
+
+  const canReviewRecommendations = hasFullAccess || has("assets.recommendations.review:bu");
+
   // === Permissões de ADMIN ===
   const isAssetsAdmin = hasFullAccess || has("assets.settings.manage");
   const canManageSettings = hasFullAccess || has("assets.settings.manage");
@@ -149,6 +163,11 @@ export function useAssetPermissionsV2() {
     canCreateGiftMovement,
     canAdjustGifts,
     
+    // Recommendations permissions
+    canViewRecommendations,
+    canManageRecommendations,
+    canReviewRecommendations,
+    
     // Admin permissions
     isAssetsAdmin,
     canManageSettings,
@@ -185,6 +204,9 @@ export function useAssetPermissionsV2() {
     canCreateKeyMovement,
     canCreateGiftMovement,
     canAdjustGifts,
+    canViewRecommendations,
+    canManageRecommendations,
+    canReviewRecommendations,
     isAssetsAdmin,
     canManageSettings,
     canManageCategories,

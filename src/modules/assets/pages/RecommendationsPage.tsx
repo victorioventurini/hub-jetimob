@@ -23,8 +23,7 @@ import type { AssetRecommendation } from "../types";
 export default function RecommendationsPage() {
   usePageTitle("Recomendações de Equipamentos");
   const { currentBu } = useBu();
-  const { hasFullAccess, canManageInventory } = useAssetPermissionsV2();
-  const canManage = hasFullAccess || canManageInventory;
+  const { canManageRecommendations, canReviewRecommendations } = useAssetPermissionsV2();
 
   const [filters, setFilters] = useState<Filters>({});
   const [formOpen, setFormOpen] = useState(false);
@@ -70,7 +69,7 @@ export default function RecommendationsPage() {
                   Voltar
                 </Link>
               </Button>
-              {canManage && (
+              {canManageRecommendations && (
                 <Button size="sm" onClick={handleCreate}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nova Recomendação
@@ -85,11 +84,11 @@ export default function RecommendationsPage() {
         <RecommendationsTable
           recommendations={recommendations}
           isLoading={isLoading}
-          onEdit={handleEdit}
-          onDelete={(rec) => deleteRecommendation(rec.id)}
-          onMarkReviewed={(rec) => markAsReviewed(rec.id)}
+          onEdit={canManageRecommendations ? handleEdit : undefined}
+          onDelete={canManageRecommendations ? (rec) => deleteRecommendation(rec.id) : undefined}
+          onMarkReviewed={canReviewRecommendations ? (rec) => markAsReviewed(rec.id) : undefined}
           onView={handleEdit}
-          canManage={canManage}
+          canManage={canManageRecommendations}
         />
 
         <RecommendationFormDialog
