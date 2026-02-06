@@ -1,157 +1,149 @@
 
-# Plano: Componente Global de Avisos + Alerta de Recomendações
 
-## Contexto
+# Plano: Onboarding Unificado para Todos os Usuários
 
-O sistema já possui estilos de alerta definidos em `src/lib/colors.ts` (`ALERT_BANNER_STYLES`) e um `AlertBanner` no módulo OKRs. Porém, esse componente está aninhado em wizards específicos. Para reutilização global, criaremos um componente simples e canônico em `src/components/ui/`.
+## Resumo
 
----
+Simplificar o onboarding removendo a diferenciação entre internos e externos. Todos os usuários passarão pelo **mesmo fluxo** com os **mesmos campos**.
 
-## Arquivos a Criar/Modificar
+## Descoberta Técnica
 
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `src/components/ui/info-notice.tsx` | CRIAR | Componente global de avisos informativos |
-| `src/modules/assets/pages/RecommendationsPage.tsx` | MODIFICAR | Adicionar aviso no topo da lista |
+O trigger `handle_new_user` (migração `20260130210014`) **já cria `profiles` para usuários externos** quando fazem login:
 
----
+```sql
+-- Linha 204 da migração
+(CASE WHEN v_is_external THEN 'external' ELSE 'active' END)::employment_status
+-- onboarding_completed = false (linha 206)
+```
 
-## Implementação
+Isso significa que **não precisamos de nenhuma migração de banco**. A infraestrutura existente já suporta externos.
 
-### 1. Novo Componente Global: `InfoNotice`
+## Problema Atual
 
-**Arquivo:** `src/components/ui/info-notice.tsx`
+O `OnboardingGuard` contém um bypass incorreto baseado em documentação desatualizada:
 
-Um componente leve e reutilizável para exibir avisos contextuais em qualquer página.
+```typescript
+// src/components/onboarding/OnboardingGuard.tsx (linhas 57-61)
+// COMENTÁRIO DESATUALIZADO: "External users do NOT have profiles"
+if (isExternal) {
+  return <>{children}</>;  // ← Pula onboarding indevidamente!
+}
+```
 
-```tsx
+## Solução
+
+Remover o bypass no `OnboardingGuard`. Externos passarão pela mesma lógica de internos.
+
+## Mudanças Necessárias
+
+| Arquivo | Mudança |
+|---------|---------|
+| `OnboardingGuard.tsx` | Remover bypass para externos |
+| `EXTERNAL_USER_IDENTITY_PATTERN.md` | Atualizar documentação |
+
+**Total: 2 arquivos modificados, ~10 linhas alteradas**
+
+## Detalhes Técnicos
+
+### 1. OnboardingGuard.tsx
+
+Remover o bloco de bypass para externos (linhas 57-61):
+
+```typescript
+// REMOVER este bloco:
+if (isExternal) {
+  return <>{children}</>;
+}
+```
+
+E atualizar o comentário do componente:
+
+```typescript
 /**
- * InfoNotice - Componente global para avisos informativos
+ * OnboardingGuard
  * 
- * Uso: frases de atenção em páginas, wizards, formulários.
- * Segue o padrão de cores do Hub (ALERT_BANNER_STYLES).
+ * Guards routes that require onboarding completion.
+ * 
+ * Both internal and external users have profiles created by handle_new_user trigger.
+ * All users must complete onboarding before accessing protected routes.
  */
-
-import { AlertTriangle, Info, CheckCircle, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ALERT_BANNER_STYLES } from '@/lib/colors';
-
-export type InfoNoticeVariant = 'warning' | 'info' | 'success' | 'error';
-
-export interface InfoNoticeProps {
-  children: React.ReactNode;
-  variant?: InfoNoticeVariant;
-  className?: string;
-}
-
-const VARIANT_CONFIG = {
-  warning: {
-    icon: AlertTriangle,
-    styles: ALERT_BANNER_STYLES.warning,
-  },
-  info: {
-    icon: Info,
-    styles: ALERT_BANNER_STYLES.info,
-  },
-  success: {
-    icon: CheckCircle,
-    styles: ALERT_BANNER_STYLES.success,
-  },
-  error: {
-    icon: AlertCircle,
-    styles: ALERT_BANNER_STYLES.no_update,
-  },
-};
-
-export function InfoNotice({ 
-  children, 
-  variant = 'info',
-  className 
-}: InfoNoticeProps) {
-  const config = VARIANT_CONFIG[variant];
-  const Icon = config.icon;
-
-  return (
-    <div 
-      role="alert"
-      className={cn(
-        "flex items-start gap-3 px-4 py-3 rounded-lg border text-sm",
-        config.styles.bg,
-        className
-      )}
-    >
-      <Icon className={cn("h-4 w-4 flex-shrink-0 mt-0.5", config.styles.icon)} />
-      <span>{children}</span>
-    </div>
-  );
-}
 ```
 
-**Características:**
-- Variantes: `warning` (amarelo), `info` (azul), `success` (verde), `error` (vermelho)
-- Usa estilos canônicos de `ALERT_BANNER_STYLES`
-- Ícones semanticamente corretos (AlertTriangle para warning)
-- Acessível com `role="alert"`
+### 2. EXTERNAL_USER_IDENTITY_PATTERN.md
 
----
+Atualizar seção "OnboardingGuard" para refletir que externos **PASSAM** pelo onboarding:
 
-### 2. Adicionar Aviso na Página de Recomendações
+```markdown
+### OnboardingGuard
 
-**Arquivo:** `src/modules/assets/pages/RecommendationsPage.tsx`
+Usuários externos **PASSAM** pelo fluxo de onboarding (possuem `profiles` criados pelo trigger).
 
-Inserir o `InfoNotice` entre o header e os filtros:
-
-```tsx
-import { InfoNotice } from "@/components/ui/info-notice";
-
-// No JSX, após PageHeader e antes de RecommendationFilters:
-<InfoNotice variant="warning">
-  Toda compra de múltiplas unidades requer revisão da recomendação, 
-  mesmo quando ela estiver dentro do prazo de atualização.
-</InfoNotice>
+// Externos usam a mesma lógica de onboarding que internos
+// Todos os campos são iguais: nome, foto, aniversário, localização, WhatsApp, Discord, Instagram
 ```
 
-**Posição no layout:**
+## Fluxo Resultante (Unificado)
+
+```text
+Usuário acessa /auth
+        │
+        ▼
+   Magic Link enviado
+        │
+        ▼
+   /auth/callback
+        │
+        ▼
+   handle_new_user trigger
+   ├── Cria profile (employment_status = internal/external)
+   ├── onboarding_completed = false
+   └── Cria bu_user_membership
+        │
+        ▼
+   OnboardingGuard
+   └── profile.onboarding_completed = false?
+       ├── SIM → Redirect /onboarding
+       └── NÃO → Continua para dashboard
+        │
+        ▼
+   /onboarding (3 steps - IGUAIS para todos)
+   ├── Step 1: Dados Pessoais (nome, foto, aniversário)
+   ├── Step 2: Contato & Redes (WhatsApp, Discord, Instagram)
+   └── Step 3: Localização (cidade, estado)
+        │
+        ▼
+   onboarding_completed = true
+        │
+        ▼
+   /select-bu (ou dashboard se única BU)
 ```
-PageHeader
-InfoNotice (warning)    <-- NOVO
-RecommendationFilters
-RecommendationsTable
-```
 
----
+## Campos do Onboarding (Iguais para Todos)
 
-## Resultado Visual
+| Campo | Interno | Externo | Obrigatório |
+|-------|:-------:|:-------:|:-----------:|
+| `first_name` | ✅ | ✅ | Sim |
+| `last_name` | ✅ | ✅ | Sim |
+| `photo_url` | ✅ | ✅ | Não |
+| `birth_day/month` | ✅ | ✅ | Sim |
+| `whatsapp_personal` | ✅ | ✅ | Sim |
+| `discord_id` | ✅ | ✅ | Não |
+| `instagram_id` | ✅ | ✅ | Não |
+| `city/state` | ✅ | ✅ | Sim |
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ ⚠️ Toda compra de múltiplas unidades requer revisão da     │
-│    recomendação, mesmo quando ela estiver dentro do prazo  │
-│    de atualização.                                          │
-└─────────────────────────────────────────────────────────────┘
-```
+## Vantagens
 
-- Fundo amarelo claro (bg-status-yellow-muted)
-- Borda amarela sutil
-- Ícone de atenção (AlertTriangle) amarelo
-- Dark mode suportado automaticamente
+1. **Zero migrações de banco** — usa estrutura existente
+2. **Mínimas mudanças de código** — apenas 2 arquivos
+3. **Consistência total** — UX idêntica para todos os tipos de usuário
+4. **Simplicidade** — menos código, menos branches, menos bugs
+5. **Manutenibilidade** — um único fluxo para manter
 
----
+## Testes Necessários
 
-## Benefícios
+1. Usuário externo novo → Deve ir para /onboarding
+2. Usuário externo completa onboarding → Vai para /select-bu ou dashboard
+3. Todos os campos aparecem → Discord/Instagram visíveis para externos
+4. Usuário interno → Comportamento inalterado
+5. Upload de foto → Funciona para externos
 
-1. **Reutilizável:** Pode ser usado em qualquer página do sistema
-2. **Consistente:** Usa tokens de cor canônicos do Hub
-3. **Semântico:** Variantes claras (warning, info, success, error)
-4. **Acessível:** `role="alert"` para screen readers
-5. **Leve:** Componente funcional simples, sem estado
-
----
-
-## Usos Futuros
-
-O componente `InfoNotice` pode ser usado em:
-- Páginas de listagem (avisos de contexto)
-- Formulários (orientações importantes)
-- Wizards (notas de passos)
-- Dashboards (alertas informativos)
