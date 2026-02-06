@@ -1,162 +1,291 @@
 
-# Plano: Mensagem Inicial Padrão por Subcategoria de Ticket
 
-## Objetivo
-Adicionar um campo "Mensagem inicial padrão" às subcategorias de tickets. Quando um ticket for criado com uma subcategoria selecionada, o campo de mensagem inicial será automaticamente preenchido com o texto configurado, orientando os usuários sobre quais informações básicas são necessárias.
+# Plano: Correção de Links para KRs Vinculadas a KPIs
+
+## Problema
+Ao clicar em uma KR vinculada a uma KPI (em `/kpis`), o link gerado (`/okrs?kr=uuid`) não funciona corretamente - redireciona para a lista geral de OKRs sem abrir a KR específica.
+
+## Causa Raiz
+Múltiplos pontos do código geram links incorretos ou apontam para rotas inexistentes:
+
+| Arquivo | Problema Identificado |
+|---------|----------------------|
+| `LinkedKrsSection.tsx` | Gera `/okrs?kr={id}` (não tratado) ou `/okrs/org-view/{obj_id}` (objetivo, não KR) |
+| `ResolveContextPage.tsx` | Define rotas `/okrs/org/kr/{id}` e `/okrs/team/kr/{id}` que não existem |
+| `OkrContributionLink.tsx` | `getTargetUrl()` não trata `org_kr`/`team_kr`, retorna `/okrs` |
+| `CheckinDialog.tsx` | Usa `/okrs?kr=${kr.id}` para mentions |
+| `OkrDashboardPage.tsx` | Não lê o parâmetro `?kr=` da URL |
 
 ---
 
-## Alterações Planejadas
+## Solução
 
-### 1. Banco de Dados - Nova Coluna
+Usar o padrão canônico `/go/{entity}/{id}` conforme documentado em `shareableLinks.ts`, e implementar deep-linking nas páginas de destino.
 
-**Tabela**: `ticket_subcategories`
-
-**Nova coluna**:
-- **Nome**: `default_initial_message`
-- **Tipo**: `text`
-- **Nullable**: `true`
-- **Default**: `null`
+### Fluxo Corrigido
 
 ```text
-+----------------------------------+
-|     ticket_subcategories         |
-+----------------------------------+
-| id                               |
-| bu_id                            |
-| category_id                      |
-| name                             |
-| status                           |
-| default_initial_message (NOVO)   | <-- texto opcional
-| created_at                       |
-| created_by                       |
-| updated_at                       |
-| deleted_at                       |
-+----------------------------------+
+Usuário em /kpis
+      │
+      ▼ clica na KR vinculada
+      │
+      ▼ Link: /go/okr_team_kr/{kr_id}
+      │
+      ▼ ResolveContextPage
+      │   ├── Resolve BU da KR
+      │   ├── Troca BU se necessário
+      │   └── Redireciona para /okrs?kr={kr_id}
+      │
+      ▼ OkrDashboardPage
+      │   ├── Lê ?kr= da URL
+      │   ├── Busca dados da KR
+      │   └── Abre KrHistoryDialog automaticamente
+      │
+      ▼ Usuário vê detalhes da KR específica ✓
 ```
 
 ---
 
-### 2. Tipos TypeScript
+## Arquivos a Modificar
 
-**Arquivo**: `src/modules/tickets/types.ts`
+### 1. `src/modules/kpis/components/LinkedKrsSection.tsx`
 
-Atualizar a interface `TicketSubcategory`:
+Usar `getShareableUrl()` para links de KR:
+
 ```typescript
-export interface TicketSubcategory {
-  id: string;
-  bu_id: string;
-  category_id: string;
-  name: string;
-  status: CatalogStatus;
-  default_initial_message: string | null; // NOVO
-  created_at: string;
-  created_by: string | null;
-  updated_at: string;
-  deleted_at: string | null;
-  category?: { id: string; name: string } | null;
+// Adicionar import
+import { getShareableUrl } from '@/lib/shareableLinks';
+
+// Linha 40-43: ANTES
+const krRoute = kr.kr_type === 'org' 
+  ? `/okrs/org-view/${kr.objective?.id}`
+  : `/okrs?kr=${kr.kr_id}`;
+
+// DEPOIS
+const krRoute = kr.kr_type === 'org'
+  ? getShareableUrl('okr_org_kr', kr.kr_id)
+  : getShareableUrl('okr_team_kr', kr.kr_id);
+```
+
+---
+
+### 2. `src/pages/ResolveContextPage.tsx`
+
+Corrigir `targetPath` para rotas que existem:
+
+```typescript
+// Linhas 57-64: ANTES
+okr_org_kr: {
+  targetPath: (id) => `/okrs/org/kr/${id}`,  // Rota inexistente!
+  label: "KR organizacional",
+},
+okr_team_kr: {
+  targetPath: (id) => `/okrs/team/kr/${id}`, // Rota inexistente!
+  label: "KR de time",
+},
+
+// DEPOIS
+okr_org_kr: {
+  targetPath: (id) => `/okrs/org-view?kr=${id}`,
+  label: "KR organizacional",
+},
+okr_team_kr: {
+  targetPath: (id) => `/okrs?kr=${id}`,
+  label: "KR de time",
+},
+```
+
+---
+
+### 3. `src/modules/okrs/pages/OkrDashboardPage.tsx`
+
+Implementar deep-linking para abrir `KrHistoryDialog` automaticamente:
+
+```typescript
+// Adicionar imports
+import { useSearchParams } from 'react-router-dom';
+import { KrHistoryDialog } from '../components/KrHistoryDialog';
+import { useTeamKeyResult } from '../hooks'; // hook para buscar KR individual
+
+// Dentro do componente, adicionar:
+const [searchParams, setSearchParams] = useSearchParams();
+const krIdFromUrl = searchParams.get('kr');
+
+// Estado para controlar o dialog
+const [deepLinkKrId, setDeepLinkKrId] = useState<string | null>(null);
+
+// Buscar KR se houver ID na URL
+const { data: deepLinkedKr } = useTeamKeyResult(krIdFromUrl || deepLinkKrId);
+
+// Efeito para abrir dialog quando KR for carregada
+useEffect(() => {
+  if (krIdFromUrl && deepLinkedKr) {
+    setDeepLinkKrId(krIdFromUrl);
+  }
+}, [krIdFromUrl, deepLinkedKr]);
+
+// Limpar parâmetro da URL ao fechar dialog
+const handleCloseDeepLinkDialog = (open: boolean) => {
+  if (!open) {
+    setDeepLinkKrId(null);
+    searchParams.delete('kr');
+    setSearchParams(searchParams, { replace: true });
+  }
+};
+
+// Renderizar dialog
+<KrHistoryDialog
+  open={!!deepLinkKrId && !!deepLinkedKr}
+  onOpenChange={handleCloseDeepLinkDialog}
+  kr={deepLinkedKr ? {
+    id: deepLinkedKr.id,
+    title: deepLinkedKr.title,
+    baseline: deepLinkedKr.baseline,
+    current_value: deepLinkedKr.current_value,
+    target: deepLinkedKr.target,
+    unit: deepLinkedKr.unit,
+    direction: deepLinkedKr.direction,
+    status: deepLinkedKr.status,
+    type: deepLinkedKr.type,
+    owner_name: deepLinkedKr.owner?.display_name,
+    owner_photo: deepLinkedKr.owner?.photo_url,
+    team_name: deepLinkedKr.team?.name,
+    objective_title: deepLinkedKr.objective?.title,
+  } : null}
+/>
+```
+
+---
+
+### 4. `src/modules/okrs/pages/OrgObjectiveViewPage.tsx`
+
+Implementar deep-linking similar para KRs organizacionais:
+
+```typescript
+// Ler parâmetro ?kr= e fazer scroll/highlight para KR específica
+const krIdFromUrl = searchParams.get('kr');
+
+// Encontrar a KR org correspondente e expandir o card
+useEffect(() => {
+  if (krIdFromUrl && objective) {
+    const targetKr = objective.orgKrs.find(kr => kr.id === krIdFromUrl);
+    if (targetKr) {
+      // Scroll para o card e abrir dialog de histórico
+    }
+  }
+}, [krIdFromUrl, objective]);
+```
+
+---
+
+### 5. `src/modules/okrs/components/ui/OkrContributionLink.tsx`
+
+Tratar tipos `org_kr` e `team_kr` em `getTargetUrl()`:
+
+```typescript
+// Adicionar import
+import { getShareableUrl, ShareableEntity } from '@/lib/shareableLinks';
+
+// Linhas 105-114: ANTES
+function getTargetUrl(targetType: string, targetId: string): string {
+  switch (targetType) {
+    case 'org_objective':
+      return `/okrs/org-view/${targetId}`;
+    case 'team_objective':
+      return `/okrs/teams/${targetId}`;
+    default:
+      return `/okrs`;
+  }
+}
+
+// DEPOIS
+function getTargetUrl(targetType: string, targetId: string): string {
+  const entityMap: Record<string, ShareableEntity> = {
+    'org_objective': 'okr_org_objective',
+    'team_objective': 'okr_team_objective',
+    'org_kr': 'okr_org_kr',
+    'team_kr': 'okr_team_kr',
+  };
+  
+  const entity = entityMap[targetType];
+  if (entity) {
+    return getShareableUrl(entity, targetId);
+  }
+  return '/okrs';
 }
 ```
 
 ---
 
-### 3. Dialog de Subcategoria (Criação/Edição)
+### 6. `src/modules/okrs/components/CheckinDialog.tsx`
 
-**Arquivo**: `src/modules/tickets/components/settings/SubcategoryDialog.tsx`
+Usar padrão `/go/` para mentions:
 
-**Alterações**:
-- Adicionar campo `Textarea` para "Mensagem inicial padrão"
-- Atualizar schema Zod para incluir o novo campo
-- Passar o valor para as mutations de create/update
+```typescript
+// Adicionar import
+import { getShareableUrl } from '@/lib/shareableLinks';
 
-**Layout do formulário**:
-```text
-+---------------------------------------+
-|  Nova Subcategoria                    |
-+---------------------------------------+
-|  Nome *                               |
-|  [________________________]           |
-|                                       |
-|  Mensagem inicial padrão              |
-|  [                                ]   |
-|  [                                ]   |
-|  [________________________________]   |
-|  (hint: texto exibido ao criar ticket)|
-|                                       |
-|       [Cancelar]  [Criar]             |
-+---------------------------------------+
+// Linha 125: ANTES
+await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, `/okrs?kr=${kr.id}`);
+
+// DEPOIS
+await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, getShareableUrl('okr_team_kr', kr.id));
 ```
 
 ---
 
-### 4. Hooks de Subcategoria
+### 7. Hook: `src/modules/okrs/hooks/useTeamKeyResult.ts` (NOVO)
 
-**Arquivo**: `src/modules/tickets/hooks/useTicketCategories.ts`
+Criar hook para buscar uma KR individual pelo ID:
 
-**Alterações**:
-- `useCreateTicketSubcategory`: aceitar `default_initial_message` no payload
-- `useUpdateTicketSubcategory`: aceitar `default_initial_message` no payload
-- `useTicketCategories`: incluir `default_initial_message` na query de subcategorias aninhadas
-
----
-
-### 5. Formulário de Criação de Ticket
-
-**Arquivo**: `src/modules/tickets/pages/CreateTicketPage.tsx`
-
-**Lógica de preenchimento automático**:
-1. Quando `subcategory_id` mudar, buscar a subcategoria selecionada
-2. Se a subcategoria tiver `default_initial_message` e o campo de mensagem estiver vazio, preencher automaticamente
-3. O usuário pode editar livremente o texto após o preenchimento
-
-**Comportamento**:
-- Preenchimento ocorre APENAS se o campo de mensagem inicial estiver vazio
-- Se o usuário já digitou algo, não sobrescreve
-- Ao trocar de subcategoria, se o campo estiver vazio, preenche com a nova mensagem
-
----
-
-## Detalhes Técnicos
-
-### Query Key Pattern
-Seguindo `src/lib/queryKeys/tickets.ts`:
-- Subcategorias são buscadas via `useTicketCategories()` (recomendado)
-- O campo `default_initial_message` será incluído na query existente
-
-### Migration SQL
-```sql
-ALTER TABLE public.ticket_subcategories
-ADD COLUMN default_initial_message text DEFAULT NULL;
-
-COMMENT ON COLUMN public.ticket_subcategories.default_initial_message IS
-'Texto padrão exibido no campo de mensagem inicial ao criar um ticket com esta subcategoria';
+```typescript
+export function useTeamKeyResult(krId: string | null) {
+  const { client: supabase, buId, isReady } = useOptionalBuClient();
+  
+  return useQuery({
+    queryKey: queryKeys.okrs.teamKeyResult(krId),
+    queryFn: async () => {
+      if (!supabase || !krId) return null;
+      
+      const { data, error } = await supabase
+        .from('okr_team_key_results')
+        .select(`
+          id, title, baseline, current_value, target, unit, direction, status, type,
+          owner:profiles!owner_id(id, display_name, photo_url),
+          team:teams!team_id(id, name),
+          objective:okr_team_objectives!team_objective_id(id, title)
+        `)
+        .eq('id', krId)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: isReady && !!krId && !!supabase,
+  });
+}
 ```
 
-### Arquivos Afetados
+---
 
-| Arquivo | Tipo de Alteração |
-|---------|-------------------|
-| `ticket_subcategories` (DB) | Nova coluna |
-| `src/modules/tickets/types.ts` | Adicionar campo na interface |
-| `src/modules/tickets/hooks/useTicketCategories.ts` | Atualizar queries e mutations |
-| `src/modules/tickets/components/settings/SubcategoryDialog.tsx` | Adicionar campo no formulário |
-| `src/modules/tickets/pages/CreateTicketPage.tsx` | Auto-preencher mensagem inicial |
+## Resumo de Alterações
+
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `LinkedKrsSection.tsx` | Correção | Usar `getShareableUrl()` |
+| `ResolveContextPage.tsx` | Correção | Rotas válidas para KRs |
+| `OkrDashboardPage.tsx` | Feature | Ler `?kr=` e abrir dialog |
+| `OrgObjectiveViewPage.tsx` | Feature | Ler `?kr=` e highlight |
+| `OkrContributionLink.tsx` | Correção | Tratar `org_kr`/`team_kr` |
+| `CheckinDialog.tsx` | Correção | Usar `getShareableUrl()` |
+| `useTeamKeyResult.ts` | Novo | Hook para buscar KR individual |
 
 ---
 
-## Comportamento de UX
+## Benefícios
 
-1. **Administrador configura**: Nas configurações de tickets > Categorias, ao criar/editar subcategoria, preenche a "Mensagem inicial padrão" com instruções (ex: "Por favor, informe:\n- Nome do cliente\n- Número do contrato\n- Descrição do problema")
+1. **Consistência**: Todos os links de KR usam o padrão `/go/` documentado
+2. **Multi-BU**: Troca automática de BU via ResolveContextPage funciona
+3. **Deep-linking**: URLs compartilháveis abrem diretamente a KR
+4. **Padrão centralizado**: Futuras entidades seguem o mesmo modelo
 
-2. **Usuário cria ticket**: Ao selecionar a subcategoria, o campo de mensagem inicial é automaticamente preenchido com o texto configurado, servindo como template/guia
-
-3. **Edição livre**: O usuário pode editar, complementar ou apagar o texto conforme necessário
-
----
-
-## Validações e Edge Cases
-
-- Se `default_initial_message` for `null` ou string vazia, não preenche nada
-- Se o usuário já tiver digitado na mensagem, não sobrescreve
-- Troca de subcategoria com campo vazio: preenche com nova mensagem
-- Troca de subcategoria com campo preenchido: mantém conteúdo do usuário
