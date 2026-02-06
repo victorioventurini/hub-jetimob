@@ -15,6 +15,11 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // Note: Resend API key is now fetched from hub_integrations_global_config
 
+// In-memory cache for API keys during edge function lifetime
+// This prevents multiple DB queries within the same request
+const apiKeyCache: Map<string, { key: string | null; timestamp: number }> = new Map();
+const CACHE_TTL_MS = 60000; // 1 minute cache
+
 export interface EmailOptions {
   to: string;
   subject: string;
@@ -48,8 +53,14 @@ function shouldPreferResend(to: string): boolean {
   return ["jetimob.com"].includes(domain);
 }
 
-// Get integration API key from hub_integrations_global_config
+// Get integration API key from hub_integrations_global_config with in-memory caching
 async function getIntegrationApiKey(integrationKey: string): Promise<string | null> {
+  // Check cache first
+  const cached = apiKeyCache.get(integrationKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.key;
+  }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   
   const { data, error } = await supabase
@@ -60,16 +71,23 @@ async function getIntegrationApiKey(integrationKey: string): Promise<string | nu
 
   if (error) {
     console.error(`[EmailSender] Error fetching ${integrationKey} config:`, error);
+    apiKeyCache.set(integrationKey, { key: null, timestamp: Date.now() });
     return null;
   }
 
   if (!data || !data.is_enabled_global) {
     console.warn(`[EmailSender] ${integrationKey} integration is not enabled`);
+    apiKeyCache.set(integrationKey, { key: null, timestamp: Date.now() });
     return null;
   }
 
   const config = data.config_encrypted as { api_key?: string } | null;
-  return config?.api_key || null;
+  const apiKey = config?.api_key || null;
+  
+  // Cache the result
+  apiKeyCache.set(integrationKey, { key: apiKey, timestamp: Date.now() });
+  
+  return apiKey;
 }
 
 // Send email via SendGrid
