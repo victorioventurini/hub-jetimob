@@ -23,7 +23,7 @@ export function useTicketCategories(scope?: TicketCategoryScope) {
         .from("ticket_categories")
         .select(`
           id, bu_id, name, description, scope, status, created_at, updated_at,
-          subcategories:ticket_subcategories(id, name, status)
+          subcategories:ticket_subcategories(id, name, status, default_initial_message)
         `)
         .eq("bu_id", buId)
         .is("deleted_at", null)
@@ -216,7 +216,7 @@ export function useCreateTicketSubcategory() {
   const supabase = useBuScopedSupabase();
 
   return useMutation({
-    mutationFn: async (data: { category_id: string; name: string }) => {
+    mutationFn: async (data: { category_id: string; name: string; default_initial_message?: string | null }) => {
       if (!buId) throw new Error("BU não selecionada");
 
       const {
@@ -229,6 +229,7 @@ export function useCreateTicketSubcategory() {
           bu_id: buId,
           category_id: data.category_id,
           name: data.name,
+          default_initial_message: data.default_initial_message || null,
           created_by: user?.id,
         })
         .select()
@@ -266,6 +267,7 @@ export function useUpdateTicketSubcategory() {
       id: string;
       name?: string;
       status?: CatalogStatus;
+      default_initial_message?: string | null;
     }) => {
       const { data: subcategory, error } = await supabase
         .from("ticket_subcategories")

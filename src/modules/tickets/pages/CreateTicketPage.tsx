@@ -219,8 +219,9 @@ export default function CreateTicketPage() {
   }, [selectedType, allCategories]);
 
   // Determinar subcategorias disponíveis - Ordenar alfabeticamente
+  // Inclui default_initial_message para auto-preencher mensagem inicial
   const availableSubcategories = useMemo(() => {
-    let subcategories: { id: string; name: string }[] = [];
+    let subcategories: { id: string; name: string; default_initial_message?: string | null }[] = [];
     
     if (selectedType === "internal" && selectedCategoryId) {
       // Use subcategories embedded in the selected category (already filtered by status)
@@ -233,15 +234,36 @@ export default function CreateTicketPage() {
         subcategories = category?.subcategories || [];
       } else {
         // Caso contrário, apenas as subcategorias mapeadas
-        subcategories = partnerSubcategories.map(ps => ({
-          id: ps.subcategory_id,
-          name: ps.subcategory_name,
-        }));
+        // Para subcategorias mapeadas, precisamos buscar o default_initial_message da categoria original
+        subcategories = partnerSubcategories.map(ps => {
+          const category = allCategories.find(c => c.id === selectedCategoryId);
+          const originalSubcat = category?.subcategories?.find(s => s.id === ps.subcategory_id);
+          return {
+            id: ps.subcategory_id,
+            name: ps.subcategory_name,
+            default_initial_message: originalSubcat?.default_initial_message,
+          };
+        });
       }
     }
     
     return [...subcategories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [selectedType, selectedPartnerId, selectedCategoryId, isGeneralistCategory, partnerSubcategories, allCategories]);
+
+  // Auto-preencher mensagem inicial quando subcategoria mudar
+  useEffect(() => {
+    if (!selectedSubcategoryId) return;
+    
+    // Buscar a subcategoria selecionada
+    const selectedSubcategory = availableSubcategories.find(s => s.id === selectedSubcategoryId);
+    if (!selectedSubcategory?.default_initial_message) return;
+    
+    // Preencher apenas se o campo estiver vazio
+    const currentMessage = form.getValues("initial_message");
+    if (!currentMessage || currentMessage.trim() === "") {
+      form.setValue("initial_message", selectedSubcategory.default_initial_message);
+    }
+  }, [selectedSubcategoryId, availableSubcategories, form]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

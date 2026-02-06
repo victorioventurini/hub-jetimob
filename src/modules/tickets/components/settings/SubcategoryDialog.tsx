@@ -11,18 +11,21 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useCreateTicketSubcategory, useUpdateTicketSubcategory } from "../../hooks";
 import { TicketSubcategory } from "../../types";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
+  default_initial_message: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -48,6 +51,7 @@ export function SubcategoryDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      default_initial_message: "",
     },
   });
 
@@ -56,10 +60,12 @@ export function SubcategoryDialog({
       if (subcategory) {
         form.reset({
           name: subcategory.name,
+          default_initial_message: subcategory.default_initial_message || "",
         });
       } else {
         form.reset({
           name: "",
+          default_initial_message: "",
         });
       }
     }
@@ -68,12 +74,20 @@ export function SubcategoryDialog({
   const onSubmit = (data: FormData) => {
     if (subcategory) {
       updateSubcategory(
-        { id: subcategory.id, name: data.name },
+        { 
+          id: subcategory.id, 
+          name: data.name,
+          default_initial_message: data.default_initial_message || null,
+        },
         { onSuccess: () => onOpenChange(false) }
       );
     } else if (categoryId) {
       createSubcategory(
-        { category_id: categoryId, name: data.name },
+        { 
+          category_id: categoryId, 
+          name: data.name,
+          default_initial_message: data.default_initial_message || null,
+        },
         { onSuccess: () => onOpenChange(false) }
       );
     }
@@ -81,7 +95,7 @@ export function SubcategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
             {subcategory ? "Editar Subcategoria" : "Nova Subcategoria"}
@@ -99,6 +113,27 @@ export function SubcategoryDialog({
                   <FormControl>
                     <Input placeholder="Nome da subcategoria" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="default_initial_message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mensagem inicial padrão</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Ex: Por favor, informe:&#10;- Nome do cliente&#10;- Número do contrato&#10;- Descrição do problema"
+                      className="min-h-[120px] resize-y"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Este texto será exibido automaticamente no campo de mensagem inicial ao criar um ticket com esta subcategoria.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
