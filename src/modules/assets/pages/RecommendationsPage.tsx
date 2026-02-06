@@ -59,6 +59,7 @@ export default function RecommendationsPage() {
           description={`Guias de compra para ${currentBu?.name || "organização"}`}
           breadcrumbs={[
             { label: "Ativos", href: "/assets" },
+            { label: "Inventário", href: "/assets/inventory" },
             { label: "Recomendações" },
           ]}
           actions={

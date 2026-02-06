@@ -1,14 +1,11 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AssetsLayout } from "../components/AssetsLayout";
 import { useBu } from "@/contexts/BuContext";
 import { SavedLinksPopover } from "@/shared/saved-links";
-import { Lightbulb } from "lucide-react";
-import { useAssetPermissionsV2 } from "../hooks";
 
 export default function AssetsPage() {
   usePageTitle("Ativos", {
@@ -17,7 +14,6 @@ export default function AssetsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentBu } = useBu();
-  const { canViewRecommendations } = useAssetPermissionsV2();
 
   // Redireciona para inventário se estiver na rota base /assets
   useEffect(() => {
@@ -34,17 +30,7 @@ export default function AssetsPage() {
           description={`Gerencie inventário, chaveiros e brindes da ${currentBu?.name || 'organização'}`}
           breadcrumbs={[{ label: "Ativos" }]}
           actions={
-            <div className="flex items-center gap-2">
-              {canViewRecommendations && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/assets/recommendations">
-                    <Lightbulb className="h-4 w-4 mr-2" />
-                    Recomendações
-                  </Link>
-                </Button>
-              )}
-              <SavedLinksPopover moduleSlug="assets" />
-            </div>
+            <SavedLinksPopover moduleSlug="assets" />
           }
         />
         <AssetsLayout />
