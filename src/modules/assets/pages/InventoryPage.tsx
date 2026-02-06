@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Package, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Package, Plus, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -50,7 +51,7 @@ export default function InventoryPage() {
   const { locations } = useLocations();
   
   // Use V2 permission system - respects impersonation
-  const { canManageInventory } = useAssetPermissionsV2();
+  const { canManageInventory, canViewRecommendations } = useAssetPermissionsV2();
   const canAddItem = canManageInventory;
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -172,12 +173,22 @@ export default function InventoryPage() {
           />
         </ListPageFilters>
         
-        {canAddItem && (
-          <Button onClick={() => setDialogOpen(true)} className="shrink-0 ml-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Item
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {canViewRecommendations && (
+            <Button variant="outline" asChild>
+              <Link to="/assets/inventory/recommendations">
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Recomendações
+              </Link>
+            </Button>
+          )}
+          {canAddItem && (
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Item
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Linha 2: Contador de resultados */}
