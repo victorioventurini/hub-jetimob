@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Search, Loader2, Users } from "lucide-react";
+import { Eye, Search, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Badge } from "@/components/ui/badge";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useBu } from "@/contexts/BuContext";
 import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
@@ -99,7 +100,7 @@ export function UserImpersonationDialog() {
           <ScrollArea className="h-[320px] rounded-lg border bg-muted/30">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <LoadingSpinner size="md" />
               </div>
             ) : !currentBuId ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">

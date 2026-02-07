@@ -10,7 +10,7 @@
  */
 
 import { Suspense } from 'react';
-import { Building2, FileCheck, Loader2 } from 'lucide-react';
+import { Building2, FileCheck } from 'lucide-react';
 import { useBu } from '@/contexts/BuContext';
 import { useUrlState } from '@/shared/url/useUrlState';
 import { useOrgConstructionReview } from '../hooks/useOrgConstructionReview';
@@ -19,6 +19,7 @@ import { REVIEW_CRITERIA } from '../types/construction-review';
 import { YearSelect } from '@/components/selects/YearSelect';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingState } from '@/components/ui/loading-state';
 
 function LoadingSkeleton() {
   return (
@@ -113,11 +114,7 @@ function OrgConstructionReviewContent() {
       </div>
 
       {/* Loading state */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
+      {isLoading && <LoadingState text="Carregando objetivos..." />}
 
       {/* Empty state */}
       {!isLoading && objectives.length === 0 && (

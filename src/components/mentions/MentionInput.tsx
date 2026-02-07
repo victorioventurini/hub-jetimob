@@ -9,7 +9,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo, KeyboardEvent } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AtSign, Building2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-state';
+import { AtSign, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMentionableUsers } from '@/hooks/useMentionableUsers';
 import type { 
@@ -493,7 +494,7 @@ export function MentionInput({
         >
           {isLoadingCandidates ? (
             <div className="px-3 py-4 text-center">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+              <LoadingSpinner size="sm" className="mx-auto" />
             </div>
           ) : candidates.length > 0 ? (
             <div className="max-h-64 overflow-y-auto py-1">

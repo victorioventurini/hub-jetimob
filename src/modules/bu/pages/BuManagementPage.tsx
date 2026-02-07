@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/loading-state";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAllBus } from "@/modules/bu/hooks";
 import { CreateBuDialog } from "../components/CreateBuDialog";
 import { EditBuDialog } from "../components/EditBuDialog";
 import { BuDetailDialog } from "../components/BuDetailDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
 import { BuUnit } from "../types";
 import { formatCNPJ } from "../utils/cnpjMask";
 
@@ -67,11 +67,7 @@ export default function BuManagementPage() {
         />
 
         {/* Loading */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        )}
+        {isLoading && <LoadingState text="Carregando business units..." />}
 
         {/* BU Grid */}
         {!isLoading && (

@@ -272,22 +272,17 @@ export default function GlobalIntegrationDetailPage() {
                     <Button
                       variant="outline"
                       onClick={handleTest}
-                      disabled={isTesting}
+                      isLoading={isTesting}
+                      loadingText="Testando..."
                     >
-                      {isTesting ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Play className="w-4 h-4 mr-2" />
-                      )}
+                      <Play className="w-4 h-4 mr-2" />
                       Testar Conexão
                     </Button>
                     <Button
                       onClick={handleSave}
-                      disabled={upsertConfig.isPending}
+                      isLoading={upsertConfig.isPending}
+                      loadingText="Salvando..."
                     >
-                      {upsertConfig.isPending && (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      )}
                       Salvar Configuração
                     </Button>
                   </div>
