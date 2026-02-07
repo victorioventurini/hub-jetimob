@@ -208,8 +208,12 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
 
   const handleScopeChange = (newScope: KpiScope) => {
     form.setValue("scope", newScope);
+    // Limpa team_id quando escopo não é 'team'
     if (newScope !== "team") {
       form.setValue("team_id", undefined);
+    }
+    // Limpa area_id quando mudando PARA 'team' (será inferido) ou 'org' (global)
+    if (newScope === "team" || newScope === "org") {
       form.setValue("area_id", undefined);
     }
   };
