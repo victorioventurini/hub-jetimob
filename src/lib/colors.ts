@@ -183,6 +183,15 @@ export const TICKET_TYPE_STYLES = {
 export type TicketTypeKey = keyof typeof TICKET_TYPE_STYLES;
 
 // ============================================
+// Ticket Stagnant Style (visual-only status)
+// ============================================
+
+export const TICKET_STAGNANT_STYLE = {
+  badge: "bg-status-yellow-muted/60 text-status-yellow-muted-foreground border-status-yellow/30",
+  dot: "bg-status-yellow",
+} as const;
+
+// ============================================
 // Asset Status Colors
 // ============================================
 

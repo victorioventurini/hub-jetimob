@@ -304,6 +304,8 @@ export default function TicketDetailPage() {
           createdAt={ticket.created_at}
           expectedDueAt={ticket.expected_due_at}
           ticketId={ticket.id}
+          lastMessageAt={ticket.last_message_at}
+          updatedAt={ticket.updated_at}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

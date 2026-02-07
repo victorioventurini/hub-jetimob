@@ -14,6 +14,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { TICKET_STATUS_STYLES } from "@/lib/colors";
+import { StagnantBadge } from "./StagnantBadge";
 import type { TicketStatus } from "../types";
 
 const statusLabels: Record<TicketStatus, string> = {
@@ -31,6 +32,10 @@ interface TicketDetailHeaderProps {
   createdAt: string;
   expectedDueAt?: string | null;
   ticketId?: string;
+  /** Date of last message (for stagnation check) */
+  lastMessageAt?: string | null;
+  /** Date of last update (fallback for stagnation check) */
+  updatedAt?: string;
 }
 
 export function TicketDetailHeader({
@@ -40,6 +45,8 @@ export function TicketDetailHeader({
   createdAt,
   expectedDueAt,
   ticketId,
+  lastMessageAt,
+  updatedAt,
 }: TicketDetailHeaderProps) {
   const statusStyles = TICKET_STATUS_STYLES[status];
   const isExternal = type === "external";
@@ -65,9 +72,16 @@ export function TicketDetailHeader({
     </div>
   );
 
+  // Build ticket-like object for StagnantBadge
+  const ticketForStagnant = updatedAt ? {
+    status,
+    last_message_at: lastMessageAt,
+    updated_at: updatedAt,
+  } : null;
+
   // Actions com badges de tipo e status
   const actions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <span className={cn(
         "px-2 py-0.5 rounded text-xs font-medium",
         isExternal 
@@ -80,6 +94,7 @@ export function TicketDetailHeader({
         <span className={cn("h-1.5 w-1.5 rounded-full", statusStyles.dot)} />
         {statusLabels[status]}
       </Badge>
+      {ticketForStagnant && <StagnantBadge ticket={ticketForStagnant} />}
     </div>
   );
 
