@@ -121,7 +121,7 @@ export function useTeamDependencies(teamId: string | null): TeamDependencies {
 
   // Fetch squads
   const { data: squads = [], isLoading: squadsLoading } = useQuery({
-    queryKey: ["squads", "team-deps", teamId],
+    queryKey: queryKeys.squads.byTeam(teamId ?? ''),
     staleTime: 2 * 60 * 1000,
     enabled: !!buId && !!teamId,
     queryFn: async (): Promise<DependencyItem[]> => {

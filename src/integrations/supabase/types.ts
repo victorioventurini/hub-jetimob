@@ -9084,7 +9084,6 @@ export type Database = {
         Args: { p_ctx?: Json; p_scope: string; p_user_id: string }
         Returns: boolean
       }
-      cleanup_old_agent_logs: { Args: never; Returns: number }
       cleanup_old_audit_logs: {
         Args: { p_retention_days?: number }
         Returns: {
@@ -9092,7 +9091,6 @@ export type Database = {
           table_name: string
         }[]
       }
-      cleanup_old_cron_logs: { Args: never; Returns: undefined }
       cleanup_old_logs: {
         Args: {
           p_agent_logs_days?: number
@@ -9106,8 +9104,6 @@ export type Database = {
           table_name: string
         }[]
       }
-      cleanup_old_perf_snapshots: { Args: never; Returns: number }
-      cleanup_old_wizard_sessions: { Args: never; Returns: undefined }
       cleanup_orphan_memberships: { Args: never; Returns: Json }
       collect_perf_metrics: { Args: never; Returns: Json }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }

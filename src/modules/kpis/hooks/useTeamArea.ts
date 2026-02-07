@@ -25,7 +25,7 @@ export function useTeamArea(teamId: string | undefined): TeamAreaResult {
   const supabase = useOptionalBuScopedSupabase();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['teams', 'area', teamId],
+    queryKey: queryKeys.teams.area(teamId),
     queryFn: async () => {
       if (!supabase || !teamId) return null;
 

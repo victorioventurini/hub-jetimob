@@ -162,7 +162,7 @@ export function usePartnersByCategory(categoryId: string | undefined) {
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["partners-by-category", buId, categoryId],
+    queryKey: queryKeys.tickets.partnerServices(buId ?? null, categoryId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!buId || !categoryId) return [];
