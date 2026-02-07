@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Users, Plus, Pencil, Trash2 } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -26,6 +26,7 @@ import {
 import { usePartnerCompanies, usePartnerContacts } from "../../hooks";
 import { PartnerContactDialog } from "./PartnerContactDialog";
 import { PartnerContactHoverCard } from "./PartnerContactHoverCard";
+import { PartnerContactImportDialog } from "./PartnerContactImportDialog";
 import { MigrateTicketsDialog } from "./MigrateTicketsDialog";
 import { PartnerContact } from "../../types";
 import { useLocalSearch } from "@/shared/url/useLocalSearch";
@@ -38,8 +39,12 @@ export function PartnerContactsTab() {
   
   const { value: search, setValue: setSearch } = useLocalSearch("contactSearch", 300);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<PartnerContact | null>(null);
   const [contactToRemove, setContactToRemove] = useState<PartnerContact | null>(null);
+
+  // Get selected company for import dialog
+  const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
 
   // Filter contacts by search term
   const filteredContacts = useMemo(() => {
@@ -106,6 +111,15 @@ export function PartnerContactsTab() {
                 ))}
               </SelectContent>
             </Select>
+            <Button 
+              variant="outline" 
+              onClick={() => setImportDialogOpen(true)} 
+              disabled={!selectedCompanyId}
+              title={!selectedCompanyId ? "Selecione uma empresa para importar" : undefined}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Importar
+            </Button>
             <Button onClick={handleCreate} disabled={companies.length === 0}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Contato
@@ -211,6 +225,15 @@ export function PartnerContactsTab() {
           open={!!contactToRemove}
           onOpenChange={(open) => !open && setContactToRemove(null)}
           contact={contactToRemove}
+        />
+      )}
+
+      {selectedCompany && (
+        <PartnerContactImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          companyId={selectedCompany.id}
+          companyName={selectedCompany.name}
         />
       )}
     </>
