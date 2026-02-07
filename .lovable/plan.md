@@ -50,12 +50,19 @@ O importador será específico para uma empresa parceira selecionada, pois:
 | `email` | email | ✅ |
 | `phone` | phone | ❌ |
 | `status` | status (active/inactive) | ❌ (default: active) |
+| `categories` | partner_contact_capabilities | ❌ |
+
+**Formato da coluna `categories`:**
+- Lista de categorias separadas por ponto-e-vírgula (`;`)
+- Cada item pode ser: `"NomeCategoria"` (generalista) ou `"NomeCategoria > NomeSubcategoria"` (específico)
+- Exemplo: `"Suporte > Financeiro; Suporte > Técnico; Comercial"`
 
 ### 3. Validações
 - Email único dentro da mesma empresa
 - Email com formato válido
 - Nome não vazio
 - Phone normalizado (apenas dígitos)
+- Categorias/subcategorias devem existir na BU atual (warnings se não encontradas)
 
 ### 4. Fluxo de Convite
 - Opção de enviar convite automático para cada contato importado
@@ -87,10 +94,16 @@ Localização: `public/templates/partner-contacts-import-template.csv`
 
 Conteúdo:
 ```csv
-name,email,phone,status
-"João Silva","joao.silva@empresa.com.br","+55 11 99999-9999","active"
-"Maria Santos","maria@empresa.com.br","","active"
+name,email,phone,status,categories
+"João Silva","joao.silva@empresa.com.br","+55 11 99999-9999","active","Suporte > Financeiro; Suporte > Técnico"
+"Maria Santos","maria@empresa.com.br","","active","Comercial"
+"Carlos Pereira","carlos@empresa.com.br","+55 21 88888-8888","active","Suporte"
 ```
+
+**Formato da coluna `categories`:**
+- `"Suporte > Financeiro; Suporte > Técnico"` = 2 subcategorias específicas
+- `"Comercial"` = categoria generalista (atende todas subcategorias)
+- `"Suporte"` = generalista na categoria Suporte
 
 ### 3. Atualização: `PartnerContactsTab.tsx`
 - Adicionar botão "Importar" ao lado do "Novo Contato"
@@ -131,6 +144,8 @@ Identificamos padrões comuns entre os importadores:
 ### Warnings (importado com aviso)
 - Status inválido (usa default 'active')
 - Telefone com formato estranho
+- Categoria não encontrada (ignora capacidade, mas importa contato)
+- Subcategoria não encontrada (ignora capacidade específica)
 
 ---
 
@@ -150,6 +165,8 @@ Identificamos padrões comuns entre os importadores:
 
 ## QueryKeys Impactadas
 - `queryKeys.tickets.partnerContacts(buId, companyId)` - invalidar após importação
+- `queryKeys.tickets.contactCapabilitiesPrefix()` - invalidar após criação de capacidades
+- `queryKeys.tickets.companyContactCapabilitiesPrefix()` - invalidar após criação de capacidades
 
 ---
 
