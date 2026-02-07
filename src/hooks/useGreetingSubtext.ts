@@ -22,6 +22,7 @@ import { useVicAgent } from "@/modules/vic/hooks";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/globalClient";
+import { queryKeys } from "@/lib/queryKeys";
 
 const CACHE_KEY = "greeting_subtext_ai";
 
@@ -197,7 +198,7 @@ export function useGreetingSubtext({
 
   // Fetch impersonated user's profile for birthday/anniversary checks
   const { data: impersonatedProfile } = useQuery({
-    queryKey: ['greeting', 'impersonated-profile', impersonatedUserId],
+    queryKey: [...queryKeys.profiles.detail(impersonatedUserId ?? ''), 'greeting'],
     queryFn: async () => {
       if (!impersonatedUserId) return null;
       

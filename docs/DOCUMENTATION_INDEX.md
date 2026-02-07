@@ -1,8 +1,8 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-02-02  
-**TCR Version:** 2.78.0  
-**System Health:** 9.5/10 ✅
+**Última atualização:** 2026-02-07  
+**TCR Version:** 2.99.0  
+**System Health:** 10/10 ✅
 
 ---
 
@@ -46,15 +46,18 @@ docs/
 
 | Documento | Descrição | Data |
 |-----------|-----------|------|
-| `HEALTH_REPORT_2026-01-22.md` | Relatório de saúde atual (10/10) | 2026-01-23 |
-| `SYSTEMIC_ANALYSIS_2026-01-22.md` | Análise sistêmica completa (10/10) | 2026-01-23 |
+| `COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md` | **Auditoria de higienização completa** | 2026-02-07 |
+| `SYSTEMIC_HEALTH_AUDIT_2026-02-07.md` | **Auditoria sistêmica de saúde** | 2026-02-07 |
+| `BACKEND_ROBUSTNESS_AUDIT_2026-02-07.md` | **Auditoria de robustez backend** | 2026-02-07 |
+| `HEALTH_REPORT_2026-01-22.md` | Relatório de saúde (10/10) | 2026-01-23 |
+| `SYSTEMIC_ANALYSIS_2026-01-22.md` | Análise sistêmica completa | 2026-01-23 |
 | `COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md` | Auditoria técnica abrangente | 2026-01-23 |
 | `RLS_SECURITY_AUDIT_2026-01-21.md` | Auditoria de segurança RLS | 2026-01-21 |
 | `BACKEND_AUDIT_2026-01-22.md` | Auditoria de Edge Functions | 2026-01-23 |
 | `DATABASE_OPTIMIZATION_AUDIT_2026-01-22.md` | Otimização de banco | 2026-01-23 |
 | `FRONTEND_UX_AUDIT_2026-01-22.md` | Auditoria de UX | 2026-01-22 |
-| `SQL_FUNCTIONS_AUDIT_2026-01-22.md` | **Auditoria de 175 funções SQL** | 2026-01-22 |
-| `EDGE_FUNCTIONS_JSDOC_AUDIT_2026-01-22.md` | **Auditoria JSDoc de 18 Edge Functions** | 2026-01-23 |
+| `SQL_FUNCTIONS_AUDIT_2026-01-22.md` | Auditoria de 175 funções SQL | 2026-01-22 |
+| `EDGE_FUNCTIONS_JSDOC_AUDIT_2026-01-22.md` | Auditoria JSDoc de 18 Edge Functions | 2026-01-23 |
 
 ---
 
@@ -97,4 +100,4 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Atualizado em 2026-02-02 — TCR v2.78.0 — Health Score 9.5/10*
+*Atualizado em 2026-02-07 — TCR v2.99.0 — Health Score 10/10*
