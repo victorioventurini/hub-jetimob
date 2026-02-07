@@ -300,11 +300,11 @@ export function AreaFormDialog({ open, setOpen, area }: AreaFormDialogProps) {
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              asChild
             >
-              {deleteArea.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Excluir
+              <Button isLoading={deleteArea.isPending} loadingText="Excluindo...">
+                Excluir
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

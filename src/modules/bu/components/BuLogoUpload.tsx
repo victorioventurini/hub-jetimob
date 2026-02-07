@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
-import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -109,7 +110,7 @@ export function BuLogoUpload({
             className="w-full h-full flex flex-col items-center justify-center text-muted-foreground hover:text-foreground"
           >
             {isUploading ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <>
                 <ImageIcon className="h-6 w-6 mb-1" />

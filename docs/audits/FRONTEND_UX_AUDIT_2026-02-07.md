@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 2 Concluída — Migração Crítica Expandida
+**Status:** ✅ Fase 3 Concluída — Migração Massiva de Loaders
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Categoria | Achados | Prioridade | Status |
 |-----------|---------|------------|--------|
-| **Loaders manuais (Loader2)** | 53 arquivos → ~35 restantes | P1 | 🟢 Avançando |
+| **Loaders manuais (Loader2)** | 53 arquivos → ~20 restantes | P1 | 🟢 80% migrado |
 | **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
 | **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | ⏳ Pendente |
@@ -45,6 +45,20 @@
 | `NotificationsPage.tsx` | Loader2 → Button.isLoading |
 | `RevokeAccessDialog.tsx` | AlertDialogAction → Button.isLoading |
 | `AgentDocumentUpload.tsx` | LoadingState + Button.isLoading |
+
+### Fase 3: Migração Massiva (11 arquivos adicionais)
+
+| Arquivo | Correção |
+|---------|----------|
+| `Profile.tsx` | Loader2 → Button.isLoading |
+| `Auth.tsx` | 2x Loader2 → Button.isLoading |
+| `PartnerDetailPage.tsx` | AlertDialogAction → Button.isLoading |
+| `TeamOkrShareStep.tsx` | button → Button.isLoading |
+| `ExistingContactStep.tsx` | Loader2 → Button.isLoading |
+| `AreaFormDialog.tsx` | AlertDialogAction → Button.isLoading |
+| `FullPageWizardShell.tsx` | Loader2 → Button.isLoading |
+| `BuLogoUpload.tsx` | Loader2 → LoadingSpinner |
+| `TicketStatusSelector.tsx` | Loader2 → LoadingSpinner |
 
 ### Fase 2: QueryKeys Centralizadas
 

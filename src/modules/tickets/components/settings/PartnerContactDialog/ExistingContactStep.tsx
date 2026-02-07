@@ -138,18 +138,14 @@ export function ExistingContactStep({
         </Button>
 
         {!isAlreadyActive && (
-          <Button onClick={handleActivate} disabled={isActivating}>
-            {isActivating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Ativando...
-              </>
-            ) : (
-              <>
-                <User className="h-4 w-4 mr-2" />
-                Ativar nesta BU
-              </>
-            )}
+          <Button 
+            onClick={handleActivate} 
+            disabled={isActivating}
+            isLoading={isActivating}
+            loadingText="Ativando..."
+          >
+            <User className="h-4 w-4 mr-2" />
+            Ativar nesta BU
           </Button>
         )}
 
