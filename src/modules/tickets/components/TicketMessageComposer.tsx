@@ -303,12 +303,9 @@ export function TicketMessageComposer({
           onClick={handleSend}
           disabled={!canSend}
           className="shrink-0"
+          isLoading={isSubmitting}
         >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          <Send className="h-4 w-4" />
         </Button>
       </div>
 
