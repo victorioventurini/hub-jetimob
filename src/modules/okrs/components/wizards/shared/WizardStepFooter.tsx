@@ -124,15 +124,12 @@ export function WizardStepFooter({
             <Button
               onClick={onPrimary}
               disabled={primaryDisabled || primaryLoading}
+              isLoading={primaryLoading}
               className={cn(
                 primaryVariant === 'success' && 'bg-success text-success-foreground hover:bg-success/90'
               )}
             >
-              {primaryLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <PrimaryIcon className="h-4 w-4 mr-2" />
-              )}
+              {!primaryLoading && <PrimaryIcon className="h-4 w-4 mr-2" />}
               {primaryLabel}
             </Button>
           )

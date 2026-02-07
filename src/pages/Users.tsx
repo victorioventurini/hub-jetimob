@@ -205,7 +205,7 @@ export default function UsersPage() {
 
   // Filter by area on frontend (RPC doesn't support area_id yet)
   const { data: teamsData } = useQuery({
-    queryKey: ['teams-for-area-filter', currentBu?.id],
+    queryKey: queryKeys.teams.byArea(currentBu?.id ?? null, areaFilter !== 'all' ? areaFilter : null),
     queryFn: async () => {
       if (!currentBu?.id) return [];
       const { data } = await supabase

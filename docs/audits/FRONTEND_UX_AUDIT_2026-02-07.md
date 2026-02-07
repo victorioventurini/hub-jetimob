@@ -4,20 +4,52 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** 📋 Auditoria Completa — Plano de Ação Criado
+**Status:** ✅ Fase 1 Concluída — Migração Crítica Realizada
 
 ---
 
 ## 📊 Resumo Executivo
 
-| Categoria | Achados | Prioridade | Impacto UX |
-|-----------|---------|------------|------------|
-| **Loaders manuais (Loader2)** | 53 arquivos | P1 | Alto — inconsistência visual |
-| **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | Médio — código legado |
-| **QueryKeys hardcoded** | 7 arquivos | P2 | Médio — manutenibilidade |
-| **Cores hardcoded** | 2 arquivos | P3 | Baixo — exceções mínimas |
-| **EmptyStates locais duplicados** | 3 arquivos | P3 | Baixo — redundância |
+| Categoria | Achados | Prioridade | Status |
+|-----------|---------|------------|--------|
+| **Loaders manuais (Loader2)** | 53 arquivos → 45 restantes | P1 | 🟡 Em progresso |
+| **QueryKeys hardcoded** | 7 arquivos → 5 restantes | P2 | 🟡 Em progresso |
+| **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
+| **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | ⏳ Pendente |
+| **Cores hardcoded** | 2 arquivos | P3 | ⏳ Pendente |
 | **Navigate em onClick** | 1 arquivo | ✅ | OK — exceção válida (auth) |
+
+---
+
+## ✅ Correções Realizadas (2026-02-07)
+
+### Fase 1: Loader2 → Button.isLoading (8 arquivos)
+
+| Arquivo | Status |
+|---------|--------|
+| `PartnerDetailPage.tsx` | ✅ Corrigido |
+| `RevokeAccessDialog.tsx` | ✅ Corrigido |
+| `CollaboratorReflectionStep.tsx` | ✅ Corrigido |
+| `CollaboratorCheckinStep.tsx` | ✅ Corrigido |
+| `WizardStepFooter.tsx` | ✅ Corrigido |
+| `AgentDocumentUpload.tsx` | ✅ Corrigido |
+| `HubPartnerDetailPage.tsx` | ✅ Corrigido + QueryKey corrigida |
+
+### Fase 2: QueryKeys Centralizadas
+
+| Arquivo | Correção |
+|---------|----------|
+| `Users.tsx` | `['teams-for-area-filter', ...]` → `queryKeys.teams.byArea(...)` |
+| `HubPartnerDetailPage.tsx` | `["all-bus"]` → `buKeys.allBus()` |
+| **Nova key adicionada** | `teamsKeys.byArea(buId, areaId)` |
+
+### Fase 3: EmptyStates Canônicos
+
+| Arquivo | Antes | Depois |
+|---------|-------|--------|
+| `KrCheckinsTable.tsx` | `function EmptyState()` local | `<EmptyState icon={Calendar} ... />` |
+| `KpiValuesTable.tsx` | `function EmptyState()` local | `<EmptyState icon={Calendar} ... />` |
+| `CycleCheckinsTable.tsx` | `function EmptyState()` local | `<EmptyState icon={History} ... />` |
 
 ---
 
@@ -202,15 +234,16 @@ grep -rn "function EmptyState" src --include="*.tsx"
 
 ---
 
-## 📈 Métricas de Qualidade
+## 📈 Métricas de Qualidade (Atualizado)
 
-| Indicador | Atual | Meta | Status |
-|-----------|-------|------|--------|
-| Arquivos com Loader2 manual | 53 | 0 | 🔴 |
-| Breadcrumbs via PageHeader | ~80% | 100% | 🟡 |
-| QueryKeys centralizadas | ~90% | 100% | 🟡 |
-| Cores hardcoded | 2 | 0 | 🟢 |
-| Componentes canônicos em uso | ✅ | ✅ | 🟢 |
+| Indicador | Antes | Depois | Meta | Status |
+|-----------|-------|--------|------|--------|
+| Arquivos com Loader2 manual | 53 | ~45 | 0 | 🟡 |
+| QueryKeys centralizadas | ~90% | ~95% | 100% | 🟡 |
+| EmptyStates canônicos | 0% | 100% | 100% | 🟢 |
+| Breadcrumbs via PageHeader | ~80% | ~80% | 100% | 🟡 |
+| Cores hardcoded | 2 | 2 | 0 | 🟢 |
+| Componentes canônicos em uso | ✅ | ✅ | ✅ | 🟢 |
 
 ---
 

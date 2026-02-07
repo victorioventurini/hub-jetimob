@@ -36,7 +36,7 @@ import { ptBR } from 'date-fns/locale';
 import { type CheckinFeedItem } from "../../hooks";
 import { cn } from '@/lib/utils';
 import { CONFIDENCE_COLORS, RAG_STATUS_COLORS } from '@/lib/colors';
-import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface CycleCheckinsTableProps {
   checkins: CheckinFeedItem[];
@@ -77,17 +77,14 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function CycleCheckinsEmptyState() {
   return (
-    <Card>
-      <CardContent className="py-12 text-center">
-        <History className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium mb-2">Nenhum check-in encontrado</h3>
-        <p className="text-muted-foreground text-sm">
-          Não há check-ins que correspondam aos filtros selecionados.
-        </p>
-      </CardContent>
-    </Card>
+    <EmptyState
+      icon={History}
+      title="Nenhum check-in encontrado"
+      description="Não há check-ins que correspondam aos filtros selecionados."
+      compact
+    />
   );
 }
 
@@ -97,7 +94,7 @@ export function CycleCheckinsTable({
   onKrClick 
 }: CycleCheckinsTableProps) {
   if (isLoading) return <LoadingSkeleton />;
-  if (checkins.length === 0) return <EmptyState />;
+  if (checkins.length === 0) return <CycleCheckinsEmptyState />;
 
   return (
     <TooltipProvider>

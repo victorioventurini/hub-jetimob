@@ -42,6 +42,7 @@ import {
   Webhook,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { KpiValue, KpiDirection, KpiValueSource } from "../types";
 
 export interface KpiValuesTableProps {
@@ -132,14 +133,14 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function KpiValuesEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Calendar className="h-12 w-12 text-muted-foreground/40 mb-4" />
-      <p className="text-sm text-muted-foreground">
-        Nenhum valor registrado ainda.
-      </p>
-    </div>
+    <EmptyState
+      icon={Calendar}
+      title="Nenhum valor registrado"
+      description="Nenhum valor registrado ainda."
+      compact
+    />
   );
 }
 
@@ -154,7 +155,7 @@ export function KpiValuesTable({
   }
 
   if (!values?.length) {
-    return <EmptyState />;
+    return <KpiValuesEmptyState />;
   }
 
   // Sort descending (most recent first)
