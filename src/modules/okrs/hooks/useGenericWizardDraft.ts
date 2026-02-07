@@ -53,6 +53,7 @@ export interface UseGenericWizardDraftReturn<TStep extends string, TData> {
   isResumingDraft: boolean;
   hasSavedDraft: boolean;
   lastSavedAt: string | null;
+  sessionId: string | null;
 }
 
 const DRAFT_VERSION = 1;
@@ -377,5 +378,6 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     isResumingDraft,
     hasSavedDraft: hasSavedDraft || !!existingSessionQuery.data,
     lastSavedAt,
+    sessionId,
   };
 }
