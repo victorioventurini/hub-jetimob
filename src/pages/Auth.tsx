@@ -247,12 +247,9 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
                 className="w-full gap-2"
                 onClick={handleResend}
                 disabled={resendCooldown > 0 || isLoading}
+                isLoading={isLoading}
               >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
+                <RefreshCw className="h-4 w-4" />
                 {resendCooldown > 0
                   ? `Reenviar em ${resendCooldown}s`
                   : "Reenviar link"}
@@ -355,18 +352,11 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
               type="submit"
               className="w-full h-12 gap-2 text-base"
               disabled={isLoading}
+              isLoading={isLoading}
+              loadingText="Enviando..."
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  Receber link
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
+              Receber link
+              <ArrowRight className="h-4 w-4" />
             </Button>
 
             {isReturning && (

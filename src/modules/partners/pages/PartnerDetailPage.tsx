@@ -166,15 +166,11 @@ export default function PartnerDetailPage() {
                       onClick={handleDelete}
                       disabled={deletePartner.isPending}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      asChild
                     >
-                      {deletePartner.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Excluindo...
-                        </>
-                      ) : (
-                        "Excluir"
-                      )}
+                      <Button isLoading={deletePartner.isPending} loadingText="Excluindo...">
+                        Excluir
+                      </Button>
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

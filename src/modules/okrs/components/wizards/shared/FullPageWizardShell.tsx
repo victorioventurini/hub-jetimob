@@ -231,14 +231,11 @@ export function FullPageWizardShell({
                 variant="outline"
                 size="sm"
                 onClick={handleSaveDraft}
-                disabled={isSaving || isSavingDraft || !isDirty}
+                disabled={!isDirty}
+                isLoading={isSaving || isSavingDraft}
                 className="gap-2"
               >
-                {(isSaving || isSavingDraft) ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
+                <Save className="h-4 w-4" />
                 <span className="hidden sm:inline">Salvar rascunho</span>
               </Button>
             </div>

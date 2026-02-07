@@ -728,13 +728,11 @@ export default function Profile() {
             )}
             <Button
               type="submit"
-              disabled={updateMutation.isPending || !hasUnsavedChanges}
+              disabled={!hasUnsavedChanges}
+              isLoading={updateMutation.isPending}
+              loadingText="Salvando..."
             >
-              {updateMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
+              <Save className="w-4 h-4 mr-2" />
               Salvar alterações
             </Button>
           </div>

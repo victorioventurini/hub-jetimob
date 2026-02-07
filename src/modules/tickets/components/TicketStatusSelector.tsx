@@ -6,7 +6,8 @@
 
 import { cn } from "@/lib/utils";
 import { TICKET_STATUS_STYLES } from "@/lib/colors";
-import { Loader2, ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,7 +63,7 @@ export function TicketStatusSelector({
               {currentStatus?.label}
             </span>
             {isUpdating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <LoadingSpinner size="sm" className="h-3.5 w-3.5" />
             ) : (
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             )}

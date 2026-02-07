@@ -335,23 +335,16 @@ export function TeamOkrShareStep({
         onPrimary={onSubmit}
         primaryDisabled={isGenerating || isSubmitting}
         rightContent={
-          <button
+          <Button
             onClick={onSubmit}
             disabled={isGenerating || isSubmitting}
-            className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-success text-success-foreground h-10 px-4 py-2 hover:bg-success/90 disabled:opacity-50 disabled:pointer-events-none"
+            isLoading={isSubmitting}
+            loadingText="Criando OKRs..."
+            className="bg-success text-success-foreground hover:bg-success/90"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Criando OKRs...
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4" />
-                Compartilhar e iniciar o ciclo
-              </>
-            )}
-          </button>
+            <Send className="h-4 w-4" />
+            Compartilhar e iniciar o ciclo
+          </Button>
         }
       />
     </div>
