@@ -1,8 +1,8 @@
 # Data Model Registry — Hub da Jet
 
-**Gerado em:** 2026-01-21T23:30:00.000Z  
-**Versão do Generator:** 1.2.1  
-**Versão do TCR:** 2.51.0  
+**Gerado em:** 2026-02-07T00:00:00.000Z  
+**Versão do Generator:** 1.2.2  
+**Versão do TCR:** 3.0.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
 > ⚠️ **FONTE ÚNICA DE VERDADE**

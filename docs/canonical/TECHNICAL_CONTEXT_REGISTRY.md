@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 2.99.0  
-**Última atualização:** 2026-02-07 (v2.99.0 - Comprehensive Hygiene Audit v1.0 - Removed 4 deprecated SQL functions, added 3 performance indexes, fixed 4 hardcoded queryKeys, database hygiene complete)
+**Versão:** 3.0.0  
+**Última atualização:** 2026-02-07 (v3.0.0 - PII Security Hardening v1.0 - Field-level privacy functions for external_companies documents, Security Scan 0 errors, Systemic Health Audit + Hygiene Audit complete)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0 implementado** | **Performance Metrics Dashboard (P4) implementado** | **Saved Links System v1.4 (PageHeader.actions canonical)** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0 implementado** | **Global Partner Contacts v1.0 implementado** | **RLS Security Audit v1.0 (6 fixes)** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3 (external access)** | **Identity Hardening v2.1 (profile_id naming + CI gate)** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Impersonation Ticket List External Support v1.0** | **Comprehensive Technical Audit v1.0 (2026-01-22)** | **7 Partial Indexes Soft-Delete** | **pg_cron Cleanup Semanal** | **user_team_memberships Schema Fix** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler Standardization** | **Wave 3-7 Hooks Barrel Consolidation COMPLETO** | **Wave 4.1 Documentation Hierarchy v1.0** | **Wave 4.2 SQL Functions Audit (175 funções)** | **Wave 4.3 Edge Functions JSDoc Audit (18 funções)** | **Ticket Watcher Messaging Fix v1.0** | **Ticket Message Pinning RLS v3** | **Tickets UI Badge Standardization v1.0** | **Assets Inventory Return Date Column v1.0** | **Database Hygiene Wave 10/10 v1.0** | **useDebounce Alias Removed** | **4 Performance Indexes Added** | **OTP Code Removal v1.0 (Magic Link canonical)** | **URL State em OrganogramPage v1.0** | **Mutations com Campos Explícitos v1.0** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0 (HMR-safe)** | **rpc_home_dashboard_data Enum Fix v1.0** | **Documentation Path Consolidation v1.0 (docs/canonical/)** | **Generic Messaging Reply System v1.0** | **Routes Modularization v1.0 (App.tsx 1125→180 linhas)** | **Systemic Health Analysis v2.0** | **Log Cleanup Executed** | **UI Wave v1.0 (Button isLoading + LoadingState)** | **KPIs Module Complete v1.0 (CRUD + Mutations)** | **Radix Focus Recovery v1.0** | **OKR Checkins RLS Ownership Fix v1.0** | **Organogram Text Export v1.0** | **Dashboard Ticket Links v1.0** | **PII Security Views Update v1.0** | **Assets Reports Deep Links v1.0** | **OKR/KPI Wizard Integration v1.0** | **Listing Page Layout Standardization v1.0** | **Complementary Buttons Standard v1.0** | **GTM Multi-Tenant v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Asset Recommendations v1.0** | **Frontend UX Audit Complete v1.0** | **Backend Robustness Audit Complete v2.0** | **Comprehensive Hygiene Audit v1.0** | **System Health Score 10/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -25,7 +25,8 @@
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
 >
 > ### Relatórios de Saúde e Compliance
-> - [SYSTEMIC_HEALTH_ANALYSIS_2026-01-23.md](../audits/SYSTEMIC_HEALTH_ANALYSIS_2026-01-23.md) — **Análise sistêmica de saúde** ⭐
+> - [SYSTEMIC_HEALTH_AUDIT_2026-02-07.md](../audits/SYSTEMIC_HEALTH_AUDIT_2026-02-07.md) — **Auditoria sistêmica de saúde** ⭐
+> - [COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md](../audits/COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md) — **Auditoria de higienização** ⭐
 > - [HEALTH_REPORT_2026-01-22.md](../audits/HEALTH_REPORT_2026-01-22.md) — Relatório de saúde técnica
 > - [COMPLIANCE_BASELINE.md](../audits/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
 >
@@ -2252,6 +2253,52 @@ export type { SomeType } from './types';
 ---
 
 ## Changelog
+
+### v3.0.0 (2026-02-07) — PII Security Hardening v1.0
+- **Security Scan Resolved — 0 Errors**:
+  - Resolvidos todos os issues de nível `error` no security scan
+  - Implementadas funções de privacidade field-level para dados sensíveis
+- **External Companies Privacy Functions**:
+  - `get_partner_company_with_privacy(p_company_id)` — Retorna dados da empresa parceira com mascaramento de CPF/CNPJ
+  - `list_partner_companies_with_privacy(p_bu_id)` — Lista empresas parceiras com privacidade
+  - Campos `document` e `document_type` visíveis apenas para usuários com permissão `partners.company.manage:bu`
+  - Usuários sem permissão recebem `NULL` nesses campos sensíveis
+- **Profiles Privacy Validation**:
+  - Confirmado que `profiles_select_bu_v2` RLS já protege acesso a profiles
+  - `get_profile_with_privacy()` RPC já aplica mascaramento de WhatsApp/Instagram/Discord
+  - Birthday (dia/mês) permanece visível por requisito de negócio (celebrações internas)
+- **Audits Atualizados**:
+  - `SYSTEMIC_HEALTH_AUDIT_2026-02-07.md` — Auditoria sistêmica completa
+  - `COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md` — Higienização de código/banco
+  - `BACKEND_ROBUSTNESS_AUDIT_2026-02-07.md` — Robustez de Edge Functions
+- **System Health Score: 10/10** ✅
+
+### v2.99.0 (2026-02-07) — Comprehensive Hygiene Audit v1.0
+- **Database Hygiene**:
+  - Removidas 4 funções SQL deprecated: `cleanup_old_agent_logs`, `cleanup_old_cron_logs`, `cleanup_old_perf_snapshots`, `cleanup_old_wizard_sessions`
+  - Função canônica consolidada: `cleanup_old_logs()`
+- **Performance Indexes Created**:
+  - `idx_okr_audit_log_created_at` — Temporal queries em okr_audit_log
+  - `idx_asset_inventory_active` — Partial index soft-delete
+  - `idx_notifications_created_at` — Ordenação em notifications
+- **QueryKeys Standardization**:
+  - 4 arquivos migrados para queryKeys centralizadas:
+    - `useTeamDependencies.ts` → `queryKeys.squads.byTeam()`
+    - `useGreetingSubtext.ts` → `queryKeys.profiles.detail()`
+    - `usePartnerServices.ts` → `queryKeys.tickets.partnerServices()`
+    - `useTeamArea.ts` → `queryKeys.teams.area()`
+- **100% Query Keys Compliance** ✅
+
+### v2.98.0 (2026-02-07) — Systemic Health Audit v1.0
+- **auth-email-hook Bug Fix**:
+  - Corrigido crash em payload inválido (~50 erros/min)
+  - Guard adicionado para validar `user.email` e `email_data.token_hash`
+- **Views Security Verified**:
+  - Todas as 27 views usam DEFAULT (INVOKER implícito)
+  - Linter warning de SECURITY DEFINER é falso positivo
+- **Database Cleanup Active**:
+  - pg_cron configurado para cleanup semanal
+  - Tabelas de logs com retenção automática
 
 ### v2.91.0 (2026-02-04) — Google Tag Manager Integration
 - **Google Tag Manager via Painel de Integrações**:
