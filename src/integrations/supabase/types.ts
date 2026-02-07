@@ -9411,6 +9411,24 @@ export type Database = {
           subcategory_count: number
         }[]
       }
+      get_partner_company_with_privacy: {
+        Args: { p_company_id: string }
+        Returns: {
+          allowed_domains: string[]
+          bu_id: string
+          created_at: string
+          created_by: string
+          document: string
+          document_type: string
+          id: string
+          legal_name: string
+          name: string
+          notes: string
+          person_type: string
+          status: string
+          updated_at: string
+        }[]
+      }
       get_partner_contact_ticket_stats: {
         Args: { p_contact_id: string }
         Returns: Json
@@ -9643,6 +9661,24 @@ export type Database = {
           p_value: number
         }
         Returns: Database["public"]["Enums"]["kpi_rag_status"]
+      }
+      list_partner_companies_with_privacy: {
+        Args: { p_bu_id: string }
+        Returns: {
+          allowed_domains: string[]
+          bu_id: string
+          created_at: string
+          created_by: string
+          document: string
+          document_type: string
+          id: string
+          legal_name: string
+          name: string
+          notes: string
+          person_type: string
+          status: string
+          updated_at: string
+        }[]
       }
       log_audit_event: {
         Args: {
