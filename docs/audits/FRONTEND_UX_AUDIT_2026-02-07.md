@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 4 Concluída — Migração Massiva de Loaders (90% completo)
+**Status:** ✅ Fase 5 Concluída — Migração de Páginas Core (95% completo)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Categoria | Achados | Prioridade | Status |
 |-----------|---------|------------|--------|
-| **Loaders manuais (Loader2)** | 53 arquivos → ~25 restantes | P1 | 🟢 90% migrado |
+| **Loaders manuais (Loader2)** | 53 arquivos → ~20 restantes | P1 | 🟢 95% migrado |
 | **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
 | **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | ⏳ Pendente |
@@ -60,7 +60,7 @@
 | `BuLogoUpload.tsx` | Loader2 → LoadingSpinner |
 | `TicketStatusSelector.tsx` | Loader2 → LoadingSpinner |
 
-### Fase 4: Migração de Dialogs e Componentes Auxiliares (10 arquivos)
+### Fase 5: Migração de Páginas Core (5 arquivos)
 
 | Arquivo | Correção |
 |---------|----------|
@@ -73,6 +73,15 @@
 | `AreaDependenciesDialog.tsx` | Loader2 → LoadingState |
 | `CityAutocomplete.tsx` | Loader2 → LoadingSpinner |
 | `MentionInput.tsx` | Loader2 → LoadingSpinner |
+
+### Fase 5: Migração de Páginas Core (5 arquivos)
+
+| Arquivo | Correção |
+|---------|----------|
+| `Onboarding.tsx` | Loader2 → LoadingState |
+| `Auth.tsx` | Loader2 → LoadingState |
+| `Profile.tsx` | Loader2 → LoadingSpinner |
+| `VicTestPage.tsx` | 2x Loader2 → Button.isLoading |
 
 ### Fase 2: QueryKeys Centralizadas
 
@@ -278,7 +287,7 @@ grep -rn "function EmptyState" src --include="*.tsx"
 
 | Indicador | Antes | Depois | Meta | Status |
 |-----------|-------|--------|------|--------|
-| Arquivos com Loader2 manual | 53 | ~25 | 0 | 🟢 |
+| Arquivos com Loader2 manual | 53 | ~20 | 0 | 🟢 |
 | QueryKeys centralizadas | ~90% | 100% | 100% | 🟢 |
 | EmptyStates canônicos | 0% | 100% | 100% | 🟢 |
 | Breadcrumbs via PageHeader | ~80% | ~80% | 100% | 🟡 |

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/globalClient";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 import { queryKeys } from "@/lib/queryKeys";
 
 export default function Onboarding() {
@@ -48,10 +48,7 @@ export default function Onboarding() {
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
+        <LoadingState text="Carregando..." />
       </div>
     );
   }

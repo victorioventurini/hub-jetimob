@@ -4,7 +4,8 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Loader2, AlertCircle, RefreshCw, Mail } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ArrowRight, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
@@ -184,10 +185,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   if (authLoading && !authTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-          <p className="text-sm text-muted-foreground">Verificando sessão...</p>
-        </div>
+        <LoadingState text="Verificando sessão..." />
       </div>
     );
   }

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, XCircle, Send, RefreshCw, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Send, RefreshCw, Clock } from "lucide-react";
 import { useVicAgent, useVicEnabled } from "@/modules/vic/hooks";
 import { VIC_AGENTS, type VicAgentSlug } from "@/modules/vic/types";
 import { useBu } from "@/contexts/BuContext";
@@ -218,28 +218,24 @@ export default function VicTestPage() {
             <div className="flex gap-2">
               <Button 
                 onClick={handleTestSingle} 
-                disabled={!currentBuId || vicAgent.isLoading || isTestingAll}
+                disabled={!currentBuId || isTestingAll}
+                isLoading={vicAgent.isLoading}
+                loadingText="Testando..."
                 className="gap-2"
               >
-                {vicAgent.isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
+                <Send className="h-4 w-4" />
                 Testar Agente Selecionado
               </Button>
 
               <Button 
                 variant="outline"
                 onClick={handleTestAll} 
-                disabled={!currentBuId || vicAgent.isLoading || isTestingAll}
+                disabled={!currentBuId || vicAgent.isLoading}
+                isLoading={isTestingAll}
+                loadingText="Testando..."
                 className="gap-2"
               >
-                {isTestingAll ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
+                <RefreshCw className="h-4 w-4" />
                 Testar Todos ({Object.keys(VIC_AGENTS).length})
               </Button>
               {testResults.length > 0 && (
