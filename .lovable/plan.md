@@ -1,123 +1,159 @@
-
-# Plano: Atualização de Escopo das KPIs
+# Plano: Importador de Contatos Externos
 
 ## Objetivo
-Atualizar os registros de KPIs no banco de dados para refletir corretamente seus escopos (Global vs Área) e vincular às áreas e times responsáveis.
+Implementar um importador de contatos externos (partner_contacts) a partir de arquivo CSV, reaproveitando a estrutura do `InventoryImportDialog`.
 
 ---
 
-## Mapeamento Identificado
+## Análise de Contexto
 
-### IDs das Áreas
-| Área | ID |
-|------|-----|
-| Operações | `29241e61-3638-4f05-b3bf-3392ac86a35a` |
-| Produto e Tecnologia | `f3ff0626-4edf-468f-b4b1-ee4315286d88` |
+### Estrutura Existente (Referência)
+- `src/modules/assets/components/settings/InventoryImportDialog.tsx` - Importador de inventário com:
+  - Upload de CSV
+  - Parsing com tratamento de campos entre aspas
+  - Validação Zod
+  - Resolução de entidades relacionadas (categorias, localizações, usuários)
+  - Progresso visual
+  - Resumo de resultados (criados, ignorados, warnings)
+  - Download de template
 
-### IDs dos Times
-| Time | ID |
-|------|-----|
-| Customer Success | `b5f9336b-dbda-47c5-b033-2500f4661a71` |
-| Gente & Cultura | `d69c7489-c499-469c-b7c3-baf6d737fc06` |
-| Produto | `1fa654dd-c0bb-468c-aaf4-955eda4a1f1f` |
+### Tabela Alvo: `partner_contacts`
+| Coluna | Tipo | Obrigatório | Descrição |
+|--------|------|-------------|-----------|
+| `id` | uuid | auto | PK |
+| `bu_id` | uuid | sim* | BU do contato |
+| `external_company_id` | uuid | **sim** | FK → external_companies |
+| `name` | text | **sim** | Nome do contato |
+| `email` | text | **sim** | Email único |
+| `phone` | text | não | Telefone |
+| `status` | enum | default 'active' | active/inactive |
+| `created_by` | uuid | não | Quem criou |
 
----
-
-## KPIs que Já Estão Corretas (Globais)
-Estas não precisam de alteração:
-- ✅ MRR Total
-- ✅ Crescimento de MRR (%)
-- ✅ Incremento Acumulado MRR
-- ✅ EBITDA (%)
-- ✅ LTV/CAC
-- ✅ IMPC - Índice de Maturidade de Processos Críticos
-
----
-
-## KPIs que Precisam de Atualização
-
-| KPI | Novo Escopo | Área Responsável | Time Dono |
-|-----|-------------|------------------|-----------|
-| Gross Revenue Churn | `area` | Operações | Customer Success |
-| NRR (Net Revenue Retention) | `area` | Operações | Customer Success |
-| NPS | `area` | Operações | Customer Success |
-| eNPS | `area` | Operações | Gente & Cultura |
-| MRR de Novas Funcionalidades | `area` | Produto e Tecnologia | Produto |
+### Entidades Relacionadas
+- **external_companies**: Precisa resolver nome da empresa → ID
+- **Duplicidade**: Email deve ser único por empresa
 
 ---
 
-## Comandos SQL a Executar
+## Decisões de Design
 
-Utilizarei a ferramenta de inserção/atualização para aplicar as mudanças:
+### 1. Escopo do Importador
+O importador será específico para uma empresa parceira selecionada, pois:
+- Simplifica a UI (empresa já pré-selecionada)
+- Evita erros de mapeamento de empresa
+- Segue o padrão de "adicionar contatos a uma empresa"
 
-```sql
--- 1. Gross Revenue Churn → Área: Operações, Time: Customer Success
-UPDATE kpi_metrics SET 
-  scope = 'area',
-  area_id = '29241e61-3638-4f05-b3bf-3392ac86a35a',
-  team_id = 'b5f9336b-dbda-47c5-b033-2500f4661a71',
-  updated_at = NOW()
-WHERE id = '607726c4-4023-4463-b555-7d29c30a3bfd';
+### 2. Colunas do CSV
+| Coluna CSV | Mapeamento | Obrigatório |
+|------------|------------|-------------|
+| `name` | name | ✅ |
+| `email` | email | ✅ |
+| `phone` | phone | ❌ |
+| `status` | status (active/inactive) | ❌ (default: active) |
 
--- 2. NRR (Net Revenue Retention) → Área: Operações, Time: Customer Success
-UPDATE kpi_metrics SET 
-  scope = 'area',
-  area_id = '29241e61-3638-4f05-b3bf-3392ac86a35a',
-  team_id = 'b5f9336b-dbda-47c5-b033-2500f4661a71',
-  updated_at = NOW()
-WHERE id = '9ee372fd-7994-41cd-9fb5-bcf0028d3fcd';
+### 3. Validações
+- Email único dentro da mesma empresa
+- Email com formato válido
+- Nome não vazio
+- Phone normalizado (apenas dígitos)
 
--- 3. NPS → Área: Operações, Time: Customer Success (já tem area_id, falta team)
-UPDATE kpi_metrics SET 
-  scope = 'area',
-  team_id = 'b5f9336b-dbda-47c5-b033-2500f4661a71',
-  updated_at = NOW()
-WHERE id = '27e5f5bc-5e54-467e-b51a-53a7ffac9bdd';
+### 4. Fluxo de Convite
+- Opção de enviar convite automático para cada contato importado
+- Default: **não enviar** (evitar spam em importações grandes)
 
--- 4. eNPS → Área: Operações, Time: Gente & Cultura
-UPDATE kpi_metrics SET 
-  scope = 'area',
-  area_id = '29241e61-3638-4f05-b3bf-3392ac86a35a',
-  team_id = 'd69c7489-c499-469c-b7c3-baf6d737fc06',
-  updated_at = NOW()
-WHERE id = '862624ae-9118-4459-94b3-c10dbc686e82';
+---
 
--- 5. MRR de Novas Funcionalidades → Área: Produto e Tecnologia, Time: Produto
-UPDATE kpi_metrics SET 
-  scope = 'area',
-  area_id = 'f3ff0626-4edf-468f-b4b1-ee4315286d88',
-  team_id = '1fa654dd-c0bb-468c-aaf4-955eda4a1f1f',
-  updated_at = NOW()
-WHERE id = 'dfbbaae0-7afa-4609-8e5f-3795288c1281';
+## Componentes a Criar
+
+### 1. `PartnerContactImportDialog.tsx`
+Localização: `src/modules/tickets/components/settings/PartnerContactImportDialog.tsx`
+
+Reutiliza de `InventoryImportDialog`:
+- ✅ Estrutura do Dialog
+- ✅ FileInputRef + drag-and-drop
+- ✅ parseCSV (com tratamento de aspas)
+- ✅ Progress bar
+- ✅ Result summary (criados, ignorados, warnings)
+- ✅ Download template button
+
+Customizações específicas:
+- Schema Zod para contatos
+- Props: `companyId`, `companyName`
+- Validação de email duplicado
+- Checkbox para enviar convites
+
+### 2. Template CSV
+Localização: `public/templates/partner-contacts-import-template.csv`
+
+Conteúdo:
+```csv
+name,email,phone,status
+"João Silva","joao.silva@empresa.com.br","+55 11 99999-9999","active"
+"Maria Santos","maria@empresa.com.br","","active"
 ```
 
----
-
-## Resumo da Execução
-
-| # | Ação |
-|---|------|
-| 1 | Executar 5 comandos UPDATE via ferramenta de inserção |
-| 2 | Verificar resultado final com SELECT |
-| 3 | Confirmar que os selects de escopo no UI funcionam corretamente |
+### 3. Atualização: `PartnerContactsTab.tsx`
+- Adicionar botão "Importar" ao lado do "Novo Contato"
+- Estado para controlar abertura do dialog
 
 ---
 
-## Seção Técnica
+## Componente Centralizado (Opcional Futuro)
 
-### Tabela Afetada
-- `kpi_metrics` (tabela operacional com RLS)
+Identificamos padrões comuns entre os importadores:
+- CSV parsing
+- File upload UI
+- Progress tracking
+- Result display
 
-### Colunas Atualizadas
-- `scope`: tipo `KpiScope` ('org' | 'area' | 'team')
-- `area_id`: UUID referenciando `areas.id`
-- `team_id`: UUID referenciando `teams.id`
-- `updated_at`: timestamp de auditoria
+**Decisão**: Para este sprint, criar o componente específico. Refatorar para componente genérico em sprint futuro quando tivermos 3+ importadores.
 
-### Validação Pós-Execução
-```sql
-SELECT name, scope, area_id, team_id 
-FROM kpi_metrics 
-WHERE deleted_at IS NULL 
-ORDER BY scope, name;
-```
+---
+
+## Tarefas de Implementação
+
+| # | Tarefa | Arquivo |
+|---|--------|---------|
+| 1 | Criar template CSV | `public/templates/partner-contacts-import-template.csv` |
+| 2 | Criar PartnerContactImportDialog | `src/modules/tickets/components/settings/PartnerContactImportDialog.tsx` |
+| 3 | Adicionar botão de importação na tab | `src/modules/tickets/components/settings/PartnerContactsTab.tsx` |
+
+---
+
+## Validações e Regras de Negócio
+
+### Linhas Ignoradas (não importadas)
+- Nome vazio
+- Email vazio
+- Email inválido (regex)
+- Email já existe para a empresa selecionada
+
+### Warnings (importado com aviso)
+- Status inválido (usa default 'active')
+- Telefone com formato estranho
+
+---
+
+## Fluxo de Usuário
+
+1. Usuário acessa `/tickets/settings?tab=contacts`
+2. Seleciona uma empresa no filtro
+3. Clica em "Importar Contatos"
+4. Baixa template (opcional)
+5. Seleciona arquivo CSV
+6. Opcionalmente marca "Enviar convite para novos contatos"
+7. Clica "Importar"
+8. Vê progresso e resultado final
+9. Lista de contatos é atualizada automaticamente
+
+---
+
+## QueryKeys Impactadas
+- `queryKeys.tickets.partnerContacts(buId, companyId)` - invalidar após importação
+
+---
+
+## Considerações de Segurança
+- Importação usa `useBuScopedSupabase` (respeita RLS)
+- `created_by` populado com usuário autenticado
+- Emails são convertidos para lowercase
