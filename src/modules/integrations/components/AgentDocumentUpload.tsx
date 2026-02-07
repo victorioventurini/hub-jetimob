@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { FileText, Upload, Trash2, Loader2, CheckCircle2, AlertCircle, Clock, Eye } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -170,7 +171,7 @@ export function AgentDocumentUpload({ agentId }: AgentDocumentUploadProps) {
       <CardContent className="space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <LoadingState text="Carregando documentos..." />
           </div>
         ) : documents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -311,9 +312,11 @@ export function AgentDocumentUpload({ agentId }: AgentDocumentUploadProps) {
                 onClick={handleDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={deleteMutation.isPending}
+                asChild
               >
-                {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {deleteMutation.isPending ? 'Removendo...' : 'Remover'}
+                <Button isLoading={deleteMutation.isPending} loadingText="Removendo...">
+                  Remover
+                </Button>
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

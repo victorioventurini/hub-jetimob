@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useRevokeBuAccess } from "../hooks";
 import { useBu } from "@/contexts/BuContext";
 
@@ -119,9 +120,11 @@ export function RevokeAccessDialog({
             onClick={handleRevoke}
             disabled={revokeAccess.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            asChild
           >
-            {revokeAccess.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {revokeAccess.isPending ? "Revogando..." : "Revogar Acesso"}
+            <Button isLoading={revokeAccess.isPending} loadingText="Revogando...">
+              Revogar Acesso
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

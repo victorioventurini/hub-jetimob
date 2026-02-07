@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target, Loader2 } from 'lucide-react';
+import { Plus, Building2, Users, AlertTriangle, TrendingUp, Target } from 'lucide-react';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/ui/error-state';
+import { LoadingState } from '@/components/ui/loading-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OkrObjectiveCard } from '../components/OkrObjectiveCard';
@@ -129,7 +131,7 @@ export default function OkrsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.totalOrgObjectives}
+                {isLoading ? <Skeleton className="h-7 w-8" /> : stats.totalOrgObjectives}
               </div>
             </CardContent>
           </Card>
@@ -142,7 +144,7 @@ export default function OkrsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.totalTeamObjectives}
+                {isLoading ? <Skeleton className="h-7 w-8" /> : stats.totalTeamObjectives}
               </div>
             </CardContent>
           </Card>
@@ -155,7 +157,7 @@ export default function OkrsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-success">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.greenKrs}
+                {isLoading ? <Skeleton className="h-7 w-8" /> : stats.greenKrs}
               </div>
             </CardContent>
           </Card>
@@ -168,7 +170,7 @@ export default function OkrsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.atRiskKrs}
+                {isLoading ? <Skeleton className="h-7 w-8" /> : stats.atRiskKrs}
               </div>
             </CardContent>
           </Card>
@@ -191,7 +193,7 @@ export default function OkrsPage() {
           <TabsContent value="org" className="space-y-4">
             {isLoadingOrg ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <LoadingState text="Carregando objetivos organizacionais..." />
               </div>
             ) : orgObjectives.length === 0 ? (
               <Card>
@@ -241,7 +243,7 @@ export default function OkrsPage() {
 
             {isLoadingTeam ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <LoadingState text="Carregando objetivos de times..." />
               </div>
             ) : teamObjectives.length === 0 ? (
               <Card>
