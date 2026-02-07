@@ -1,149 +1,257 @@
 
 
-# Plano: Onboarding Unificado para Todos os Usuários
+# Plano: Status Visual "Estagnado" para Tickets
 
-## Resumo
+## Resumo Executivo
 
-Simplificar o onboarding removendo a diferenciação entre internos e externos. Todos os usuários passarão pelo **mesmo fluxo** com os **mesmos campos**.
+Implementar um indicador visual **"Estagnado"** na camada frontend para tickets sem interacao por mais de 7 dias (a partir do 8o dia), **sem qualquer alteracao no banco de dados ou backend**. O indicador complementa o status operacional existente.
 
-## Descoberta Técnica
+---
 
-O trigger `handle_new_user` (migração `20260130210014`) **já cria `profiles` para usuários externos** quando fazem login:
+## Validacoes do Pre-Checklist
 
-```sql
--- Linha 204 da migração
-(CASE WHEN v_is_external THEN 'external' ELSE 'active' END)::employment_status
--- onboarding_completed = false (linha 206)
-```
+| Doc Canonico | Status | Observacao |
+|--------------|--------|------------|
+| TCR v3.0.0 | Consultado | Arquitetura de modules/tickets confirmada |
+| DATA_MODEL_REGISTRY | Consultado | `tickets.updated_at` existe; `last_message_at` computado via `ticketQueryUtils.ts` |
+| IDENTITY_CONVENTION | N/A | Feature visual, nao envolve perfis |
+| PERMISSIONS_AND_RBAC | N/A | Feature visual, sem restricoes de acesso |
+| Implementacao similar | Verificado | Token `ALERT_BANNER_STYLES.stagnant` ja existe em `colors.ts` |
 
-Isso significa que **não precisamos de nenhuma migração de banco**. A infraestrutura existente já suporta externos.
+---
 
-## Problema Atual
+## Arquitetura Tecnica
 
-O `OnboardingGuard` contém um bypass incorreto baseado em documentação desatualizada:
+### 1. Funcao Utilitaria Central
 
-```typescript
-// src/components/onboarding/OnboardingGuard.tsx (linhas 57-61)
-// COMENTÁRIO DESATUALIZADO: "External users do NOT have profiles"
-if (isExternal) {
-  return <>{children}</>;  // ← Pula onboarding indevidamente!
-}
-```
-
-## Solução
-
-Remover o bypass no `OnboardingGuard`. Externos passarão pela mesma lógica de internos.
-
-## Mudanças Necessárias
-
-| Arquivo | Mudança |
-|---------|---------|
-| `OnboardingGuard.tsx` | Remover bypass para externos |
-| `EXTERNAL_USER_IDENTITY_PATTERN.md` | Atualizar documentação |
-
-**Total: 2 arquivos modificados, ~10 linhas alteradas**
-
-## Detalhes Técnicos
-
-### 1. OnboardingGuard.tsx
-
-Remover o bloco de bypass para externos (linhas 57-61):
+**Novo arquivo:** `src/modules/tickets/lib/ticketStagnation.ts`
 
 ```typescript
-// REMOVER este bloco:
-if (isExternal) {
-  return <>{children}</>;
-}
-```
+import { differenceInDays } from "date-fns";
+import type { Ticket } from "../types";
 
-E atualizar o comentário do componente:
+/** Threshold em dias para considerar um ticket estagnado */
+export const STAGNATION_THRESHOLD_DAYS = 8;
 
-```typescript
 /**
- * OnboardingGuard
+ * Verifica se um ticket esta estagnado (sem interacao ha 8+ dias)
  * 
- * Guards routes that require onboarding completion.
- * 
- * Both internal and external users have profiles created by handle_new_user trigger.
- * All users must complete onboarding before accessing protected routes.
+ * Regras:
+ * - Tickets finalizados (done/discarded) NAO podem estar estagnados
+ * - Usa `last_message_at` como referencia primaria (interacao real)
+ * - Fallback para `updated_at` se nao houver mensagens
  */
+export function isTicketStagnant(ticket: Ticket): boolean {
+  // Tickets finalizados nao podem ser estagnados
+  if (ticket.status === "done" || ticket.status === "discarded") {
+    return false;
+  }
+  
+  const lastInteraction = ticket.last_message_at || ticket.updated_at;
+  const daysSinceInteraction = differenceInDays(new Date(), new Date(lastInteraction));
+  
+  return daysSinceInteraction >= STAGNATION_THRESHOLD_DAYS;
+}
+
+/**
+ * Retorna o numero de dias desde a ultima interacao
+ */
+export function getDaysSinceLastInteraction(ticket: Ticket): number {
+  const lastInteraction = ticket.last_message_at || ticket.updated_at;
+  return differenceInDays(new Date(), new Date(lastInteraction));
+}
 ```
 
-### 2. EXTERNAL_USER_IDENTITY_PATTERN.md
+### 2. Token de Cor (Novo)
 
-Atualizar seção "OnboardingGuard" para refletir que externos **PASSAM** pelo onboarding:
+**Editar:** `src/lib/colors.ts`
 
-```markdown
-### OnboardingGuard
+Adicionar token especifico para badge de estagnacao de tickets (nao usar `ALERT_BANNER_STYLES` diretamente pois e para banners):
 
-Usuários externos **PASSAM** pelo fluxo de onboarding (possuem `profiles` criados pelo trigger).
-
-// Externos usam a mesma lógica de onboarding que internos
-// Todos os campos são iguais: nome, foto, aniversário, localização, WhatsApp, Discord, Instagram
+```typescript
+// Adicionar apos TICKET_TYPE_STYLES (linha ~183)
+export const TICKET_STAGNANT_STYLE = {
+  badge: "bg-status-yellow-muted/60 text-status-yellow-muted-foreground border-status-yellow/30",
+  dot: "bg-status-yellow",
+} as const;
 ```
 
-## Fluxo Resultante (Unificado)
+### 3. Componente StagnantBadge
 
-```text
-Usuário acessa /auth
-        │
-        ▼
-   Magic Link enviado
-        │
-        ▼
-   /auth/callback
-        │
-        ▼
-   handle_new_user trigger
-   ├── Cria profile (employment_status = internal/external)
-   ├── onboarding_completed = false
-   └── Cria bu_user_membership
-        │
-        ▼
-   OnboardingGuard
-   └── profile.onboarding_completed = false?
-       ├── SIM → Redirect /onboarding
-       └── NÃO → Continua para dashboard
-        │
-        ▼
-   /onboarding (3 steps - IGUAIS para todos)
-   ├── Step 1: Dados Pessoais (nome, foto, aniversário)
-   ├── Step 2: Contato & Redes (WhatsApp, Discord, Instagram)
-   └── Step 3: Localização (cidade, estado)
-        │
-        ▼
-   onboarding_completed = true
-        │
-        ▼
-   /select-bu (ou dashboard se única BU)
+**Novo arquivo:** `src/modules/tickets/components/StagnantBadge.tsx`
+
+Badge reutilizavel com tooltip explicativo usando componentes existentes:
+
+```typescript
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { PauseCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { TICKET_STAGNANT_STYLE } from "@/lib/colors";
+import { isTicketStagnant, getDaysSinceLastInteraction } from "../lib/ticketStagnation";
+import type { Ticket } from "../types";
+
+interface StagnantBadgeProps {
+  ticket: Ticket;
+  className?: string;
+}
+
+export function StagnantBadge({ ticket, className }: StagnantBadgeProps) {
+  if (!isTicketStagnant(ticket)) return null;
+  
+  const days = getDaysSinceLastInteraction(ticket);
+  
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge className={cn("gap-1 text-xs", TICKET_STAGNANT_STYLE.badge, className)}>
+          <PauseCircle className="h-3 w-3" />
+          Estagnado
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Este ticket esta sem interacoes ha {days} dias.</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 ```
 
-## Campos do Onboarding (Iguais para Todos)
+---
 
-| Campo | Interno | Externo | Obrigatório |
-|-------|:-------:|:-------:|:-----------:|
-| `first_name` | ✅ | ✅ | Sim |
-| `last_name` | ✅ | ✅ | Sim |
-| `photo_url` | ✅ | ✅ | Não |
-| `birth_day/month` | ✅ | ✅ | Sim |
-| `whatsapp_personal` | ✅ | ✅ | Sim |
-| `discord_id` | ✅ | ✅ | Não |
-| `instagram_id` | ✅ | ✅ | Não |
-| `city/state` | ✅ | ✅ | Sim |
+## Pontos de Integracao
 
-## Vantagens
+### 4.1 TicketsTable (Lista Principal)
 
-1. **Zero migrações de banco** — usa estrutura existente
-2. **Mínimas mudanças de código** — apenas 2 arquivos
-3. **Consistência total** — UX idêntica para todos os tipos de usuário
-4. **Simplicidade** — menos código, menos branches, menos bugs
-5. **Manutenibilidade** — um único fluxo para manter
+**Editar:** `src/modules/tickets/components/TicketsTable.tsx`
 
-## Testes Necessários
+Na coluna de Status, adicionar `StagnantBadge` ao lado do badge de status existente:
 
-1. Usuário externo novo → Deve ir para /onboarding
-2. Usuário externo completa onboarding → Vai para /select-bu ou dashboard
-3. Todos os campos aparecem → Discord/Instagram visíveis para externos
-4. Usuário interno → Comportamento inalterado
-5. Upload de foto → Funciona para externos
+```diff
+<TableCell>
+  <Badge className={cn("gap-1.5", TICKET_STATUS_STYLES[ticket.status].badge)}>
+    <span className={cn("h-1.5 w-1.5 rounded-full", TICKET_STATUS_STYLES[ticket.status].dot)} />
+    {statusLabels[ticket.status]}
+  </Badge>
++ <StagnantBadge ticket={ticket} />
+</TableCell>
+```
+
+Imports adicionais:
+- `import { StagnantBadge } from "./StagnantBadge";`
+
+### 4.2 TicketCard (Vista Cards)
+
+**Editar:** `src/modules/tickets/components/TicketCard.tsx`
+
+No header do card, junto com tipo e status:
+
+```diff
+<div className="flex items-center gap-2 mb-2">
+  <span className={cn("px-2 py-0.5 rounded text-xs font-medium", type.className)}>
+    {type.label}
+  </span>
+  <Badge variant={status.variant} className="text-xs">
+    {status.label}
+  </Badge>
++ <StagnantBadge ticket={ticket} />
+  {isOverdue && (...)}
+</div>
+```
+
+Imports adicionais:
+- `import { StagnantBadge } from "./StagnantBadge";`
+
+### 4.3 TicketDetailHeader (Pagina de Detalhe)
+
+**Editar:** `src/modules/tickets/components/TicketDetailHeader.tsx`
+
+Problema: O componente atual recebe props individuais, nao o objeto `ticket` completo. Para usar `StagnantBadge`, precisamos passar `lastMessageAt` e `updatedAt`.
+
+Opcao escolhida: Passar props adicionais para evitar breaking change:
+
+```diff
+interface TicketDetailHeaderProps {
+  title: string;
+  type: "internal" | "external";
+  status: TicketStatus;
+  createdAt: string;
+  expectedDueAt?: string | null;
+  ticketId?: string;
++ lastMessageAt?: string | null;
++ updatedAt: string;
+}
+```
+
+Criar objeto ticket parcial para `StagnantBadge`:
+
+```typescript
+// Dentro do componente
+const ticketForStagnant = {
+  status,
+  last_message_at: lastMessageAt,
+  updated_at: updatedAt,
+} as Ticket;
+```
+
+Adicionar na area de actions:
+
+```diff
+const actions = (
+  <div className="flex items-center gap-2">
+    <span className={...}>{isExternal ? "Externo" : "Interno"}</span>
+    <Badge className={cn("gap-1.5", statusStyles.badge)}>
+      <span className={...} />
+      {statusLabels[status]}
+    </Badge>
++   <StagnantBadge ticket={ticketForStagnant} />
+  </div>
+);
+```
+
+Nota: O chamador (`TicketDetailPage`) precisara passar `lastMessageAt` e `updatedAt`.
+
+---
+
+## Resumo de Arquivos
+
+| Arquivo | Acao | Descricao |
+|---------|------|-----------|
+| `src/modules/tickets/lib/ticketStagnation.ts` | **Criar** | Funcoes `isTicketStagnant()` e `getDaysSinceLastInteraction()` |
+| `src/lib/colors.ts` | **Editar** | Adicionar `TICKET_STAGNANT_STYLE` |
+| `src/modules/tickets/components/StagnantBadge.tsx` | **Criar** | Componente de badge com tooltip |
+| `src/modules/tickets/components/TicketsTable.tsx` | **Editar** | Integrar StagnantBadge |
+| `src/modules/tickets/components/TicketCard.tsx` | **Editar** | Integrar StagnantBadge |
+| `src/modules/tickets/components/TicketDetailHeader.tsx` | **Editar** | Adicionar props + StagnantBadge |
+| Pagina de detalhe (chamador) | **Editar** | Passar novas props ao TicketDetailHeader |
+
+---
+
+## Conformidade com Padroes do Hub
+
+| Padrao | Status |
+|--------|--------|
+| Tokens semanticos de cores | Usa `status-yellow-*` via `TICKET_STAGNANT_STYLE` |
+| Nao duplicar componentes | `StagnantBadge` e reutilizavel em todos os pontos |
+| Logica centralizada | `ticketStagnation.ts` (lib dedicada) |
+| Zero alteracao backend | Nenhuma migration, RPC ou coluna nova |
+| URL state | N/A (apenas visual) |
+| Select explicito | N/A (usa dados ja carregados) |
+
+---
+
+## Comportamento Esperado
+
+1. **Badge aparece** quando `daysSinceLastInteraction >= 8` e status nao e `done`/`discarded`
+2. **Badge desaparece** automaticamente quando nova mensagem e criada (atualiza `last_message_at`)
+3. **Tooltip** exibe: "Este ticket esta sem interacoes ha X dias."
+4. **Nao afeta** SLA, metricas, automacoes ou acoes do usuario
+
+---
+
+## Dependencias
+
+- `date-fns`: Ja instalado (`differenceInDays`)
+- `@radix-ui/react-tooltip`: Ja instalado
+- Componentes shadcn: `Badge`, `Tooltip`, `TooltipContent`, `TooltipTrigger`
 
