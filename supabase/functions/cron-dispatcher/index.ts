@@ -31,6 +31,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/middleware.ts";
+import { createServiceClient } from "../_shared/client.ts";
 
 interface OutboxResult {
   processed: number;
@@ -244,12 +245,8 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
   const correlationId = crypto.randomUUID();
 
-  // Create supabase client first (needed to get secret from DB)
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    { auth: { persistSession: false } }
-  );
+  // Create supabase client using centralized factory
+  const supabase = createServiceClient();
 
   // Validate cron secret from database config
   const cronSecret = req.headers.get("x-cron-secret");
