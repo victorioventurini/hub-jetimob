@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { X, Lightbulb } from "lucide-react";
 import { InventoryFormFields, useInventoryForm } from "./form";
 import { RecommendationSelectStep } from "../recommendations";
-import type { AssetInventory } from "../../types";
+import type { AssetInventory, AssetRecommendation } from "../../types";
 
 interface InventoryFormDialogProps {
   open: boolean;
@@ -18,9 +18,11 @@ interface InventoryFormDialogProps {
   item?: AssetInventory | null;
   /** When true, clones the item instead of editing (leaves code blank) */
   cloneMode?: boolean;
+  /** Pre-selected recommendation (from RecommendationsPage "Criar Item") */
+  preSelectedRecommendation?: AssetRecommendation | null;
 }
 
-export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false }: InventoryFormDialogProps) {
+export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = false, preSelectedRecommendation }: InventoryFormDialogProps) {
   const {
     form,
     isEditing,
@@ -44,7 +46,7 @@ export function InventoryFormDialog({ open, onOpenChange, item, cloneMode = fals
     handleRecommendationSelect,
     handleSkipRecommendation,
     handleClearRecommendation,
-  } = useInventoryForm({ open, item, cloneMode, onOpenChange });
+  } = useInventoryForm({ open, item, cloneMode, onOpenChange, preSelectedRecommendation });
 
   // Defense in depth: don't render edit/create dialog if user can't manage inventory
   if (!canManageInventory) {

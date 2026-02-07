@@ -2,6 +2,7 @@
  * RecommendationsPage
  * 
  * List and manage equipment recommendations.
+ * Allows creating inventory items directly from a recommendation.
  */
 
 import { useState } from "react";
@@ -17,17 +18,22 @@ import {
   RecommendationFilters,
   RecommendationFormDialog,
 } from "../components/recommendations";
+import { InventoryFormDialog } from "../components/inventory/InventoryFormDialog";
 import { useRecommendations, useAssetPermissionsV2, type RecommendationFilters as Filters } from "../hooks";
 import type { AssetRecommendation } from "../types";
 
 export default function RecommendationsPage() {
   usePageTitle("Recomendações de Equipamentos");
   const { currentBu } = useBu();
-  const { canManageRecommendations, canReviewRecommendations } = useAssetPermissionsV2();
+  const { canManageRecommendations, canReviewRecommendations, canManageInventory } = useAssetPermissionsV2();
 
   const [filters, setFilters] = useState<Filters>({});
   const [formOpen, setFormOpen] = useState(false);
   const [editingRec, setEditingRec] = useState<AssetRecommendation | null>(null);
+
+  // State for creating inventory item from recommendation
+  const [inventoryFormOpen, setInventoryFormOpen] = useState(false);
+  const [inventoryFromRec, setInventoryFromRec] = useState<AssetRecommendation | null>(null);
 
   const {
     recommendations,
@@ -49,6 +55,11 @@ export default function RecommendationsPage() {
   const handleCloseForm = (open: boolean) => {
     setFormOpen(open);
     if (!open) setEditingRec(null);
+  };
+
+  const handleCreateInventoryItem = (rec: AssetRecommendation) => {
+    setInventoryFromRec(rec);
+    setInventoryFormOpen(true);
   };
 
   return (
@@ -87,12 +98,23 @@ export default function RecommendationsPage() {
           onMarkReviewed={canReviewRecommendations ? (rec) => markAsReviewed(rec.id) : undefined}
           onView={handleEdit}
           canManage={canManageRecommendations}
+          onCreateItem={canManageInventory ? handleCreateInventoryItem : undefined}
         />
 
         <RecommendationFormDialog
           open={formOpen}
           onOpenChange={handleCloseForm}
           recommendation={editingRec}
+        />
+
+        {/* Inventory creation from recommendation */}
+        <InventoryFormDialog
+          open={inventoryFormOpen}
+          onOpenChange={(open) => {
+            setInventoryFormOpen(open);
+            if (!open) setInventoryFromRec(null);
+          }}
+          preSelectedRecommendation={inventoryFromRec}
         />
       </div>
     </HubLayout>
