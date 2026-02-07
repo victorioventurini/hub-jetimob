@@ -8,9 +8,230 @@
  * 2. Se baseline = meta (KR de manutenção): binário 0% ou 100%
  * 3. Direção 'down' inverte a lógica para KRs de redução
  * 4. NUNCA calcular como resultado/meta quando houver baseline
+ * 
+ * REGRA CANÔNICA DE RITMO (v2.87.0):
+ * - Progresso deve ser avaliado em relação ao tempo transcorrido do ciclo
+ * - KPIs NÃO possuem ciclo próprio; herdam o ciclo da KR vinculada
+ * - Metas de longo prazo devem ser interpretadas proporcionalmente
+ * - Classificação: "acima/dentro/abaixo do ritmo esperado"
+ * 
+ * @see docs/guides/PROGRESS_INTERPRETATION_CANON.md
  */
 
 import type { OkrDirection } from '../types';
+
+// ============================================================
+// TYPES
+// ============================================================
+
+export type PaceStatus = 
+  | 'above_pace'      // Acima do ritmo esperado
+  | 'on_pace'         // Dentro do ritmo esperado
+  | 'below_pace'      // Abaixo do ritmo esperado
+  | 'not_started'     // Não iniciado
+  | 'completed';      // Meta atingida/superada
+
+export interface PaceAnalysis {
+  status: PaceStatus;
+  label: string;
+  expectedProgress: number;
+  actualProgress: number;
+  gap: number;
+  cycleElapsed: number;
+  interpretation: string;
+}
+
+export interface CycleContext {
+  startDate: Date;
+  endDate: Date;
+  type: 'month' | 'quarter' | 'semester' | 'year';
+  name?: string;
+}
+
+// ============================================================
+// PACE CALCULATION (CANONICAL)
+// ============================================================
+
+/**
+ * Calcula o progresso esperado baseado no tempo transcorrido do ciclo.
+ * 
+ * @example
+ * // Ciclo trimestral, 45 dias transcorridos de 90 → 50% esperado
+ * calculateExpectedProgress({ startDate: jan1, endDate: mar31 }, feb15)
+ */
+export function calculateExpectedProgress(
+  cycle: CycleContext,
+  referenceDate: Date = new Date()
+): number {
+  const start = cycle.startDate.getTime();
+  const end = cycle.endDate.getTime();
+  const now = referenceDate.getTime();
+  
+  // Antes do início do ciclo
+  if (now < start) return 0;
+  
+  // Após o fim do ciclo
+  if (now > end) return 100;
+  
+  const totalDuration = end - start;
+  const elapsed = now - start;
+  
+  return Math.round((elapsed / totalDuration) * 100);
+}
+
+/**
+ * Calcula a porcentagem do ciclo já transcorrida.
+ */
+export function calculateCycleElapsed(
+  cycle: CycleContext,
+  referenceDate: Date = new Date()
+): number {
+  return calculateExpectedProgress(cycle, referenceDate);
+}
+
+/**
+ * REGRA CANÔNICA: Analisa o ritmo de progresso considerando o ciclo.
+ * 
+ * Esta é a função central para interpretação estratégica de progresso.
+ * Todas as análises do Hub (e-mails, wizards, dashboards, agentes IA)
+ * DEVEM usar esta função para consistência.
+ * 
+ * @example
+ * const analysis = analyzePace({
+ *   actualProgress: 25,
+ *   cycle: { startDate, endDate, type: 'quarter' },
+ * });
+ * // Se o ciclo está 50% transcorrido e progresso é 25%:
+ * // → status: 'below_pace'
+ * // → interpretation: 'Abaixo do ritmo esperado para este ponto do ciclo trimestral'
+ */
+export function analyzePace(params: {
+  actualProgress: number;
+  cycle: CycleContext;
+  referenceDate?: Date;
+  tolerancePercent?: number; // Margem de tolerância (default: 10%)
+}): PaceAnalysis {
+  const { 
+    actualProgress, 
+    cycle, 
+    referenceDate = new Date(),
+    tolerancePercent = 10 
+  } = params;
+  
+  const expectedProgress = calculateExpectedProgress(cycle, referenceDate);
+  const cycleElapsed = calculateCycleElapsed(cycle, referenceDate);
+  const gap = actualProgress - expectedProgress;
+  
+  // Labels por tipo de ciclo
+  const cycleLabels: Record<CycleContext['type'], string> = {
+    month: 'mensal',
+    quarter: 'trimestral',
+    semester: 'semestral',
+    year: 'anual',
+  };
+  const cycleLabel = cycleLabels[cycle.type];
+  
+  // Meta já atingida
+  if (actualProgress >= 100) {
+    return {
+      status: 'completed',
+      label: 'Meta atingida',
+      expectedProgress,
+      actualProgress,
+      gap,
+      cycleElapsed,
+      interpretation: `Meta do ciclo ${cycleLabel} já foi atingida.`,
+    };
+  }
+  
+  // Não iniciado
+  if (actualProgress === 0 && cycleElapsed > 10) {
+    return {
+      status: 'not_started',
+      label: 'Não iniciado',
+      expectedProgress,
+      actualProgress,
+      gap,
+      cycleElapsed,
+      interpretation: `KR ainda não iniciou, com ${cycleElapsed}% do ciclo ${cycleLabel} transcorrido.`,
+    };
+  }
+  
+  // Início do ciclo (primeiros 15%) - não fazer julgamentos precipitados
+  if (cycleElapsed <= 15) {
+    return {
+      status: 'on_pace',
+      label: 'Início do ciclo',
+      expectedProgress,
+      actualProgress,
+      gap,
+      cycleElapsed,
+      interpretation: `Ciclo ${cycleLabel} ainda no início. Progresso atual: ${actualProgress}%.`,
+    };
+  }
+  
+  // Análise de ritmo com tolerância
+  if (gap >= tolerancePercent) {
+    return {
+      status: 'above_pace',
+      label: 'Acima do ritmo',
+      expectedProgress,
+      actualProgress,
+      gap,
+      cycleElapsed,
+      interpretation: `Acima do ritmo esperado para este ponto do ciclo ${cycleLabel} (+${gap.toFixed(0)}%).`,
+    };
+  }
+  
+  if (gap <= -tolerancePercent) {
+    return {
+      status: 'below_pace',
+      label: 'Abaixo do ritmo',
+      expectedProgress,
+      actualProgress,
+      gap,
+      cycleElapsed,
+      interpretation: `Abaixo do ritmo esperado para este ponto do ciclo ${cycleLabel} (${gap.toFixed(0)}%).`,
+    };
+  }
+  
+  return {
+    status: 'on_pace',
+    label: 'Dentro do ritmo',
+    expectedProgress,
+    actualProgress,
+    gap,
+    cycleElapsed,
+    interpretation: `Dentro do ritmo esperado para o ciclo ${cycleLabel}.`,
+  };
+}
+
+/**
+ * Gera interpretação textual para uso em e-mails e relatórios.
+ * Segue a regra canônica: linguagem de ritmo, não de atraso.
+ */
+export function getPaceInterpretationText(analysis: PaceAnalysis): string {
+  const { status, actualProgress, expectedProgress, cycleElapsed } = analysis;
+  
+  switch (status) {
+    case 'completed':
+      return `✓ Meta atingida (${actualProgress}%)`;
+    case 'above_pace':
+      return `↑ ${actualProgress}% — acima do ritmo esperado (${expectedProgress}% era o esperado)`;
+    case 'on_pace':
+      return `→ ${actualProgress}% — dentro do ritmo esperado`;
+    case 'below_pace':
+      return `↓ ${actualProgress}% — abaixo do ritmo (esperado: ${expectedProgress}% neste ponto)`;
+    case 'not_started':
+      return `○ Não iniciado (${cycleElapsed}% do ciclo transcorrido)`;
+    default:
+      return `${actualProgress}%`;
+  }
+}
+
+// ============================================================
+// PROGRESS CALCULATION (ORIGINAL)
+// ============================================================
 
 /**
  * Calcula o progresso de uma KR considerando baseline, resultado atual e meta.

@@ -25,6 +25,56 @@ Regras gerais:
 
 `;
 
+// ============================================================
+// CANONICAL PROGRESS INTERPRETATION RULES (v2.87.0)
+// ============================================================
+// These rules MUST be followed by ALL agents when analyzing
+// OKRs, KRs, and KPIs across emails, wizards, and dashboards.
+// ============================================================
+
+export const CANONICAL_PROGRESS_INTERPRETATION_RULES = `
+=== REGRAS CANÔNICAS DE INTERPRETAÇÃO DE PROGRESSO ===
+
+REGRA 1: KPIs NÃO possuem ciclo próprio
+- KPIs são sinais contínuos e atemporais
+- NUNCA interprete um KPI isoladamente como "atrasado" ou "adiantado"
+- O contexto temporal SEMPRE vem da KR vinculada
+
+REGRA 2: O ciclo vem da KR
+- Quando um KPI estiver vinculado a uma ou mais KRs:
+  - A KR empresta o contexto temporal (mensal, trimestral, anual)
+  - A KR define como o KPI deve ser interpretado naquele momento
+- Prioridade de ciclo: anual > trimestral > mensal
+
+REGRA 3: Avaliação por RITMO, não por valor final
+- Para KRs com ciclo definido:
+  - Calcule quanto do ciclo já transcorreu
+  - Compare o progresso atual com o progresso esperado até este ponto
+- Classificações PERMITIDAS:
+  - "Acima do ritmo esperado"
+  - "Dentro do ritmo esperado"
+  - "Abaixo do ritmo esperado"
+- É PROIBIDO classificar como "atrasado" apenas por estar distante da meta final
+
+REGRA 4: Metas de longo prazo (ex: anuais)
+- Interpretar como progresso proporcional ao tempo
+- Considerar tendência (aceleração, estabilidade, desaceleração)
+- NUNCA gerar alertas negativos apenas nos primeiros meses do ciclo
+- Exemplo: meta anual de 1.200 com 200 em março → "dentro do ritmo" (não "atrasado")
+
+REGRA 5: Linguagem estratégica (obrigatória)
+- Use: ritmo, sinal, tendência, proporcional
+- EVITE: atrasado, falha, fracasso, insuficiente
+- Foco em: aprendizado, decisão, foco
+- O e-mail/análise informa; o Hub é onde se age
+
+EXEMPLO DE INTERPRETAÇÃO CORRETA:
+- Errado: "KR com apenas 25% de 100M está atrasada"
+- Certo: "Com 25% do ciclo anual transcorrido, progresso de 25% está dentro do ritmo esperado"
+
+`;
+
+
 // Legacy slug to name mapping (for backward compatibility)
 const AGENT_SLUGS: Record<string, string> = {
   cultura: "Guardião da Cultura",
@@ -307,8 +357,12 @@ export async function buildSystemPrompt(
       .join("\n\n");
   }
 
-  // Assemble final prompt
+  // Assemble final prompt with canonical rules
   let systemPrompt = VIC_PERSONA_INTRO + effectiveSystemPrompt;
+
+  // Inject canonical progress interpretation rules for all agents
+  // This ensures consistent analysis across emails, wizards, and dashboards
+  systemPrompt += CANONICAL_PROGRESS_INTERPRETATION_RULES;
 
   if (knowledgeBase) {
     systemPrompt += `\n\n=== BASE DE CONHECIMENTO (Documentos) ===\n${knowledgeBase}`;
