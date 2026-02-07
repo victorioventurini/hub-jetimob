@@ -97,12 +97,13 @@ const formSchema = z.object({
         path: ["owner_user_id"],
       });
     }
-    // Área obrigatória para ativos, mas é auto-inferida quando scope=team
-    // Só valida se scope não é team (porque será inferido)
-    if (data.scope !== 'team' && !data.area_id) {
+    // Área obrigatória apenas para scope=area (e ativos)
+    // scope=team: área é auto-inferida do time
+    // scope=org: indicador global, não pertence a uma área específica
+    if (data.scope === 'area' && !data.area_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Área é obrigatória para indicadores ativos",
+        message: "Área é obrigatória para indicadores de escopo 'Área'",
         path: ["area_id"],
       });
     }
@@ -602,8 +603,10 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 )}
               />
 
-              {/* Área: mostrar seletor apenas quando scope !== team */}
-              {watchScope !== 'team' ? (
+              {/* Área: mostrar seletor apenas quando scope === 'area' */}
+              {/* scope=team: área é inferida do time */}
+              {/* scope=org: indicador global, não pertence a área específica */}
+              {watchScope === 'area' ? (
                 <FormField
                   control={form.control}
                   name="area_id"
@@ -625,7 +628,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                     </FormItem>
                   )}
                 />
-              ) : (
+              ) : watchScope === 'team' ? (
                 /* Quando scope=team, mostrar área inferida como badge read-only */
                 <FormItem>
                   <FormLabel>
@@ -646,7 +649,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                     )}
                   </div>
                 </FormItem>
-              )}
+              ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
