@@ -24,17 +24,17 @@ const statusConfig: Record<RecommendationReviewStatus, {
   up_to_date: {
     variant: "default",
     icon: CheckCircle2,
-    className: "bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/20",
+    className: "bg-success-muted text-success-muted-foreground border-success/30 hover:bg-success-muted/80",
   },
   due_soon: {
     variant: "outline",
     icon: Clock,
-    className: "bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20",
+    className: "bg-warning-muted text-warning-muted-foreground border-warning/30 hover:bg-warning-muted/80",
   },
   overdue: {
     variant: "destructive",
     icon: AlertCircle,
-    className: "bg-red-500/10 text-red-600 border-red-200 hover:bg-red-500/20",
+    className: "bg-danger-muted text-danger-muted-foreground border-danger/30 hover:bg-danger-muted/80",
   },
 };
 

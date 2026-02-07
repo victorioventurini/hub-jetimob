@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 8 Concluída — Loaders Residuais (~99% completo)
+**Status:** ✅ Fase 9 Concluída — Cores Hardcoded Resolvidas (100% completo)
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Categoria | Achados | Prioridade | Status |
 |-----------|---------|------------|--------|
-| **Loaders manuais (Loader2)** | 53 arquivos → ~10 restantes | P1 | 🟢 99% migrado |
+| **Loaders manuais (Loader2)** | 53 arquivos → ~10 exceções válidas | P1 | ✅ Concluído |
 | **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
 | **Componentes de breadcrumb legados** | 9 arquivos (237 refs) → 0 | P2 | ✅ Removidos |
-| **Cores hardcoded** | 2 arquivos | P3 | ⏳ Pendente |
+| **Cores hardcoded** | 2 arquivos → 0 restantes | P3 | ✅ Migrado para tokens |
 | **Navigate em onClick** | 1 arquivo | ✅ | OK — exceção válida (auth) |
 
 ---
@@ -205,27 +205,18 @@ Conforme documentado em `memory/standards/navigation/breadcrumb-standard`.
 
 ## 🟢 FASE 3: Backlog (P3)
 
-### 3.1 Cores Hardcoded (Exceções Mínimas)
+### 3.1 Cores Hardcoded — ✅ CONCLUÍDO
 
-**Apenas 2 arquivos:**
+**Ação Realizada (2026-02-07 Fase 9):**
+- ✅ `RecommendationReviewBadge.tsx` — Migrado de `bg-red-500/10`, `bg-emerald-500/10`, `bg-amber-500/10` para tokens semânticos `bg-danger-muted`, `bg-success-muted`, `bg-warning-muted`
+- ✅ `status-indicator.tsx` — Cores em comentários de documentação (aceitável)
 
-| Arquivo | Uso | Decisão |
-|---------|-----|---------|
-| `status-indicator.tsx` | Comentários de documentação | ✅ Aceitável |
-| `RecommendationReviewBadge.tsx` | `bg-red-500/10` com opacity | ⚠️ Avaliar token |
+**Padrão Canônico:**
+Usar tokens do design system (`success-muted`, `warning-muted`, `danger-muted`) em vez de cores Tailwind hardcoded.
 
-**Ação:** Criar token `--danger-surface` para casos com opacity.
+### 3.2 EmptyStates Locais Duplicados — ✅ CONCLUÍDO
 
-### 3.2 EmptyStates Locais Duplicados
-
-**3 arquivos definem `EmptyState` localmente:**
-
-| Arquivo | Componente Local | Ação |
-|---------|------------------|------|
-| `CycleCheckinsTable.tsx` | `function EmptyState()` | Migrar para `<EmptyState variant="..." />` |
-| `MyTicketsCard.tsx` | `function EmptyState()` | Migrar para componente canônico |
-
-**Ação:** Refatorar para usar `<EmptyState>` de `@/components/ui/empty-state`.
+Migrados para usar `<EmptyState>` canônico de `@/components/ui/empty-state`.
 
 ---
 
