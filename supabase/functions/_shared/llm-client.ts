@@ -305,16 +305,41 @@ export function llmStream(
 
 /**
  * Map LLM error status to user-friendly response
+ * 
+ * Covers all common HTTP error codes from AI providers:
+ * - 400: Bad request (malformed input)
+ * - 401: Authentication failed (invalid API key)
+ * - 402: Payment required (credits depleted)
+ * - 403: Forbidden (model access denied)
+ * - 404: Model not found
+ * - 429: Rate limit exceeded
+ * - 500: Internal server error
+ * - 502: Bad gateway
+ * - 503: Service unavailable
  */
 export function mapLLMError(
   status: number,
   requestId: string
 ): { message: string; code: string; httpStatus: number } {
   switch (status) {
-    case 429:
-      return { message: "Rate limit exceeded", code: "RATE_LIMIT", httpStatus: 429 };
+    case 400:
+      return { message: "Invalid AI request", code: "AI_BAD_REQUEST", httpStatus: 400 };
+    case 401:
+      return { message: "AI authentication failed", code: "AI_AUTH_ERROR", httpStatus: 500 };
     case 402:
       return { message: "AI credits depleted", code: "NO_CREDITS", httpStatus: 402 };
+    case 403:
+      return { message: "AI model access denied", code: "AI_FORBIDDEN", httpStatus: 403 };
+    case 404:
+      return { message: "AI model not found", code: "AI_MODEL_NOT_FOUND", httpStatus: 404 };
+    case 429:
+      return { message: "Rate limit exceeded", code: "RATE_LIMIT", httpStatus: 429 };
+    case 500:
+      return { message: "AI internal error", code: "AI_INTERNAL_ERROR", httpStatus: 502 };
+    case 502:
+      return { message: "AI gateway error", code: "AI_GATEWAY_ERROR", httpStatus: 502 };
+    case 503:
+      return { message: "AI service unavailable", code: "AI_UNAVAILABLE", httpStatus: 503 };
     default:
       return { message: "AI API error", code: "AI_API_ERROR", httpStatus: 502 };
   }
