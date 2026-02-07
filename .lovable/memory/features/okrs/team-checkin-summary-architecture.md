@@ -1,0 +1,3 @@
+# Memory: features/okrs/team-checkin-summary-architecture
+
+O "E-mail de Resumo do Check-in do Time" é um rito oficial de fechamento automatizado. Arquitetura: 1) Disparo best-effort no frontend ('TeamCheckinPage.tsx') aciona a Edge Function 'team-checkin-summary'; 2) A função orquestra 5 agentes de IA existentes ('analista-kpis', 'facilitador-decisoes', 'cultura', 'coach-produtividade', 'revisor-comunicacao') em paralelo via 'invoke-vic'; 3) Idempotência garantida pela coluna 'summary_sent_at' na tabela 'okr_wizard_sessions'; 4) Entrega via evento de notificação 'team.checkin.summary' no pipeline canônico. O conteúdo foca em gestão por exceção (sinais relevantes, riscos e focos) para leitura rápida.
