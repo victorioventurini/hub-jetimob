@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 1 Concluída — Migração Crítica Realizada
+**Status:** ✅ Fase 2 Concluída — Migração Crítica Expandida
 
 ---
 
@@ -12,8 +12,8 @@
 
 | Categoria | Achados | Prioridade | Status |
 |-----------|---------|------------|--------|
-| **Loaders manuais (Loader2)** | 53 arquivos → 45 restantes | P1 | 🟡 Em progresso |
-| **QueryKeys hardcoded** | 7 arquivos → 5 restantes | P2 | 🟡 Em progresso |
+| **Loaders manuais (Loader2)** | 53 arquivos → ~35 restantes | P1 | 🟢 Avançando |
+| **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
 | **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | ⏳ Pendente |
 | **Cores hardcoded** | 2 arquivos | P3 | ⏳ Pendente |
@@ -35,6 +35,17 @@
 | `AgentDocumentUpload.tsx` | ✅ Corrigido |
 | `HubPartnerDetailPage.tsx` | ✅ Corrigido + QueryKey corrigida |
 
+### Fase 2: Migração Expandida (7 arquivos adicionais)
+
+| Arquivo | Correção |
+|---------|----------|
+| `OkrsPage.tsx` | Loader2 inline → LoadingState + Skeleton |
+| `HubPartnerDetailPage.tsx` | AlertDialogAction → Button.isLoading |
+| `SavedLinksPopover.tsx` | Loader2 → LoadingSpinner |
+| `NotificationsPage.tsx` | Loader2 → Button.isLoading |
+| `RevokeAccessDialog.tsx` | AlertDialogAction → Button.isLoading |
+| `AgentDocumentUpload.tsx` | LoadingState + Button.isLoading |
+
 ### Fase 2: QueryKeys Centralizadas
 
 | Arquivo | Correção |
@@ -42,8 +53,9 @@
 | `Users.tsx` | `['teams-for-area-filter', ...]` → `queryKeys.teams.byArea(...)` |
 | `HubPartnerDetailPage.tsx` | `["all-bus"]` → `buKeys.allBus()` |
 | **Nova key adicionada** | `teamsKeys.byArea(buId, areaId)` |
+| **Verificação:** | ✅ 0 violações restantes |
 
-### Fase 3: EmptyStates Canônicos
+### Fase 1 (anterior): EmptyStates Canônicos
 
 | Arquivo | Antes | Depois |
 |---------|-------|--------|
@@ -238,8 +250,8 @@ grep -rn "function EmptyState" src --include="*.tsx"
 
 | Indicador | Antes | Depois | Meta | Status |
 |-----------|-------|--------|------|--------|
-| Arquivos com Loader2 manual | 53 | ~45 | 0 | 🟡 |
-| QueryKeys centralizadas | ~90% | ~95% | 100% | 🟡 |
+| Arquivos com Loader2 manual | 53 | ~35 | 0 | 🟡 |
+| QueryKeys centralizadas | ~90% | 100% | 100% | 🟢 |
 | EmptyStates canônicos | 0% | 100% | 100% | 🟢 |
 | Breadcrumbs via PageHeader | ~80% | ~80% | 100% | 🟡 |
 | Cores hardcoded | 2 | 2 | 0 | 🟢 |

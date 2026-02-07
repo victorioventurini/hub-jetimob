@@ -379,15 +379,10 @@ function NotificationList() {
             variant="outline"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
+            isLoading={isFetchingNextPage}
+            loadingText="Carregando..."
           >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Carregando...
-              </>
-            ) : (
-              'Carregar mais'
-            )}
+            Carregar mais
           </Button>
         </div>
       )}

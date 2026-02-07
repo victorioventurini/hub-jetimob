@@ -12,7 +12,6 @@ import {
   Users, 
   Check, 
   X, 
-  Loader2, 
   Edit, 
   Trash2,
   ArrowLeft,
@@ -218,9 +217,11 @@ export default function HubPartnerDetailPage() {
                       onClick={handleDelete}
                       disabled={deletePartner.isPending}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      asChild
                     >
-                      {deletePartner.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      {deletePartner.isPending ? "Excluindo..." : "Excluir Permanentemente"}
+                      <Button isLoading={deletePartner.isPending} loadingText="Excluindo...">
+                        Excluir Permanentemente
+                      </Button>
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
