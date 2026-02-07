@@ -6,7 +6,7 @@
  * - Reduces database queries for frequently-used agents
  */
 
-import { loadInstructionSources, assembleInstructionContent } from "../invoke-vic/instruction-sources.ts";
+import { loadInstructionSources, assembleInstructionContent } from "./instruction-sources.ts";
 
 // Vic persona intro - inherited by all agents
 export const VIC_PERSONA_INTRO = `Você é o Vic, a personificação da forma de pensar da Jetimob.
@@ -273,23 +273,28 @@ export async function buildSystemPrompt(
   buId: string,
   requestId: string
 ): Promise<string> {
-  // Load instruction sources
-  console.log(`[${requestId}] Loading instruction sources for agent ${agent.id}`);
-  const instructionSources = await loadInstructionSources(serviceClient, agent.id);
-  let instructionContent = "";
+  console.log(`[${requestId}] Loading instruction sources and documents for agent ${agent.id}`);
 
+  // OPTIMIZATION: Run instruction sources and documents queries in parallel
+  // This reduces latency by ~50% compared to sequential fetching
+  const [instructionSources, documentsResult] = await Promise.all([
+    loadInstructionSources(serviceClient, agent.id),
+    serviceClient
+      .from("ai_agent_documents")
+      .select("name, extracted_content")
+      .eq("agent_id", agent.id)
+      .eq("status", "completed"),
+  ]);
+
+  // Process instruction sources
+  let instructionContent = "";
   if (instructionSources.length > 0) {
     console.log(`[${requestId}] Found ${instructionSources.length} instruction sources`);
     instructionContent = await assembleInstructionContent(serviceClient, instructionSources, buId);
   }
 
-  // Load knowledge base documents
-  const { data: documents, error: documentsError } = await serviceClient
-    .from("ai_agent_documents")
-    .select("name, extracted_content")
-    .eq("agent_id", agent.id)
-    .eq("status", "completed");
-
+  // Process documents
+  const { data: documents, error: documentsError } = documentsResult;
   if (documentsError) {
     console.error(`[${requestId}] Error fetching agent documents:`, documentsError.message);
   }

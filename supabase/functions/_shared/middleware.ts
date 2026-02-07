@@ -46,34 +46,22 @@ export interface MiddlewareResult {
   error?: Response;
 }
 
-interface ErrorDetails {
+// ============================================================================
+// Response Helpers - Re-exported from response.ts for backward compatibility
+// ============================================================================
+// NOTE: These are re-exported from response.ts to avoid code duplication.
+// For new code, prefer importing directly from response.ts.
+export {
+  successResponse as jsonResponse,
+  errorResponse,
+  corsResponse,
+} from "./response.ts";
+
+// Internal error details interface (used only within middleware)
+interface MiddlewareErrorDetails {
   requestId: string;
   error: string;
   code?: string;
-}
-
-// ============================================================================
-// Response Helpers
-// ============================================================================
-export function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-export function errorResponse(message: string, status: number, details?: ErrorDetails): Response {
-  return new Response(
-    JSON.stringify({ error: message, ...details }),
-    {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    }
-  );
-}
-
-export function corsResponse(): Response {
-  return new Response(null, { headers: corsHeaders });
 }
 
 // ============================================================================

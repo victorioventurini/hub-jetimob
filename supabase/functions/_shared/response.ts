@@ -135,32 +135,71 @@ export function noContentResponse(): Response {
 // =============================================================================
 
 /**
+ * Legacy error details format (from middleware.ts)
+ * Used for backward compatibility with existing code.
+ */
+interface LegacyErrorDetails {
+  requestId?: string;
+  error?: string;
+  code?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Create an error response
+ * 
+ * Supports two calling conventions for backward compatibility:
+ * 1. New style: errorResponse(message, status, code, details, requestId)
+ * 2. Legacy style: errorResponse(message, status, { requestId, error, ... })
  */
 export function errorResponse(
   message: string,
   status = 400,
-  code?: string,
+  codeOrDetails?: string | LegacyErrorDetails,
   details?: Record<string, unknown>,
   requestId?: string
 ): Response {
-  const body: ApiErrorResponse = {
-    success: false,
-    error: {
-      message,
-    },
-  };
+  // Detect legacy calling convention: third param is object with requestId/error
+  const isLegacyFormat = typeof codeOrDetails === "object" && codeOrDetails !== null;
   
-  if (code) {
-    body.error.code = code;
-  }
+  let body: ApiErrorResponse;
   
-  if (details) {
-    body.error.details = details;
-  }
-  
-  if (requestId) {
-    body.requestId = requestId;
+  if (isLegacyFormat) {
+    // Legacy format: { requestId, error, code, ... }
+    const legacyDetails = codeOrDetails as LegacyErrorDetails;
+    body = {
+      success: false,
+      error: {
+        message,
+        code: legacyDetails.error || legacyDetails.code,
+      },
+      requestId: legacyDetails.requestId,
+    };
+    // Include any extra fields in error.details
+    const { requestId: _r, error: _e, code: _c, ...rest } = legacyDetails;
+    if (Object.keys(rest).length > 0) {
+      body.error.details = rest;
+    }
+  } else {
+    // New format: code string, details object, requestId string
+    body = {
+      success: false,
+      error: {
+        message,
+      },
+    };
+    
+    if (codeOrDetails) {
+      body.error.code = codeOrDetails as string;
+    }
+    
+    if (details) {
+      body.error.details = details;
+    }
+    
+    if (requestId) {
+      body.requestId = requestId;
+    }
   }
   
   return new Response(JSON.stringify(body), {

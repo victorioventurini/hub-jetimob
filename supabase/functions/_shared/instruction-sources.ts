@@ -1,5 +1,5 @@
 /**
- * Instruction Sources Manager (invoke-vic specific)
+ * Instruction Sources Manager
  * 
  * Handles fetching and assembling instructions from multiple sources:
  * - api: External HTTP APIs
@@ -7,11 +7,11 @@
  * - hub_context: Internal HUB data (OKRs, KPIs, Teams)
  * - template: Static text templates
  * 
- * Moved from _shared/ as this is specific to the invoke-vic function.
+ * Part of _shared/ module for reuse across Edge Functions.
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getHubContextData, type HubContextConfig } from "../_shared/hub-tools.ts";
+import { getHubContextData, type HubContextConfig } from "./hub-tools.ts";
 
 // =============================================================================
 // TYPES
