@@ -48,3 +48,6 @@ verify_jwt = false
 
 [functions.okr-org-health-review]
 verify_jwt = false
+
+[functions.health-check]
+verify_jwt = false

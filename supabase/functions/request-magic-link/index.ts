@@ -15,9 +15,7 @@ import {
   validateRequiredFields,
 } from "../_shared/error-handler.ts";
 import { corsHeaders } from "../_shared/middleware.ts";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+import { createServiceClient, getSupabaseUrl, getSupabaseServiceKey } from "../_shared/client.ts";
 
 interface MagicLinkRequest {
   email: string;
@@ -27,7 +25,7 @@ interface MagicLinkRequest {
 // Check if email domain is allowed in any active BU
 // OPTIMIZED v2: ALL queries in parallel, no sequential follow-ups
 async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = createServiceClient();
   
   const emailLower = email.toLowerCase();
   const domain = email.split("@")[1]?.toLowerCase();
@@ -185,8 +183,8 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     });
   }
 
-  // Create Supabase admin client
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  // Create Supabase admin client using centralized factory
+  const supabaseAdmin = createClient(getSupabaseUrl(), getSupabaseServiceKey(), {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
