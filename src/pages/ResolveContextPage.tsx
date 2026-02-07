@@ -22,7 +22,8 @@ type EntityType =
   | "gift"
   | "kpi"
   | "checkin"
-  | "health_alert";
+  | "health_alert"
+  | "asset_recommendation";
 
 interface EntityConfig {
   targetPath: (id: string, additionalData?: Record<string, string>) => string;
@@ -94,6 +95,10 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
   health_alert: {
     targetPath: () => `/hub/notifications?tab=diagnostics`,
     label: "alerta de saúde",
+  },
+  asset_recommendation: {
+    targetPath: (id) => `/assets/inventory/recommendations?id=${id}`,
+    label: "recomendação de equipamento",
   },
 };
 
@@ -209,6 +214,14 @@ async function resolveBuId(entity: EntityType, id: string): Promise<string | nul
     case "health_alert": {
       const { data } = await supabase
         .from("notification_health_alerts")
+        .select("bu_id")
+        .eq("id", id)
+        .maybeSingle();
+      return data?.bu_id ?? null;
+    }
+    case "asset_recommendation": {
+      const { data } = await supabase
+        .from("asset_recommendations")
         .select("bu_id")
         .eq("id", id)
         .maybeSingle();
