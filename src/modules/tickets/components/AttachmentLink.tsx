@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { FileIcon, Download, Loader2 } from "lucide-react";
+import { FileIcon, Download } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { cn } from "@/lib/utils";
 import { getSignedAttachmentUrl, isStoragePath } from "@/modules/tickets/hooks";
 import type { TicketAttachment } from "../types";
@@ -65,7 +66,7 @@ export function AttachmentLink({ attachment, isOwnMessage = false }: AttachmentL
             : "bg-muted"
         )}
       >
-        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        <LoadingSpinner size="sm" />
         <span className="text-sm text-muted-foreground">Carregando...</span>
       </div>
     );

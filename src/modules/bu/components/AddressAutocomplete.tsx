@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { MapPin, Loader2, Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { cn } from "@/lib/utils";
 
@@ -224,7 +225,7 @@ export function AddressAutocomplete({
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <LoadingSpinner size="sm" />
           ) : (
             <MapPin className="h-4 w-4 text-muted-foreground" />
           )}

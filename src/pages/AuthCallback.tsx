@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
 import { initSessionContext } from "@/lib/analytics";
 
 /**
@@ -186,12 +187,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, re
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">
-          {isProcessing ? "Verificando seu acesso..." : "Finalizando login..."}
-        </p>
-      </div>
+      <LoadingState text={isProcessing ? "Verificando seu acesso..." : "Finalizando login..."} />
     </div>
   );
 });

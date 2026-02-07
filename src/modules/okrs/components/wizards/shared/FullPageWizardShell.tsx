@@ -19,7 +19,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DiscardChangesDialog } from '@/components/ui/discard-changes-dialog';
-import { ArrowLeft, X, Save, Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-state';
+import { ArrowLeft, X, Save } from 'lucide-react';
 import { WizardStepper, WizardStepperCompact, type WizardStepDefinition } from './WizardStepper';
 
 // ============================================================
@@ -285,7 +286,7 @@ export function FullPageWizardShell({
                   className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2 text-xs"
                 >
                   {isDiscarding ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    <LoadingSpinner size="sm" className="mr-1" />
                   ) : null}
                   Descartar e começar novo
                 </Button>
