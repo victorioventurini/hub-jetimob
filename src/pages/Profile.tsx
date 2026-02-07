@@ -27,8 +27,9 @@ import { supabase } from '@/integrations/supabase/globalClient';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
+import { LoadingSpinner } from '@/components/ui/loading-state';
 // GlobalBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
-import { User, Phone, MapPin, Building2, Calendar, Loader2, Save, Camera, Upload, X } from 'lucide-react';
+import { User, Phone, MapPin, Building2, Calendar, Save, Camera, Upload, X } from 'lucide-react';
 import { formatPhoneInput, formatPhoneDisplay, normalizePhone } from '@/lib/phone';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -465,7 +466,7 @@ export default function Profile() {
                 </Avatar>
                 {isUploadingPhoto ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <LoadingSpinner size="md" />
                   </div>
                 ) : (
                   <Button
