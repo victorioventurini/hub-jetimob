@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 6 Concluída — Migração de Componentes Restantes (~97% completo)
+**Status:** ✅ Fase 7 Concluída — Breadcrumbs Legacy Removidos (98% completo)
 
 ---
 
@@ -15,7 +15,7 @@
 | **Loaders manuais (Loader2)** | 53 arquivos → ~15 restantes | P1 | 🟢 97% migrado |
 | **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
-| **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | ⏳ Pendente |
+| **Componentes de breadcrumb legados** | 9 arquivos (237 refs) → 0 | P2 | ✅ Removidos |
 | **Cores hardcoded** | 2 arquivos | P3 | ⏳ Pendente |
 | **Navigate em onClick** | 1 arquivo | ✅ | OK — exceção válida (auth) |
 
@@ -161,42 +161,30 @@
 
 ## 🟡 FASE 2: Importante (P2)
 
-### 2.1 Componentes de Breadcrumb Legados
+### 2.1 Componentes de Breadcrumb Legados — ✅ CONCLUÍDO
 
-**Problema:** Existem 9 arquivos com referências a componentes de breadcrumb legados:
-- `GlobalBreadcrumb` (237 referências)
-- `OkrBreadcrumb` e variantes
-- `TicketsBreadcrumb`, `AssetsBreadcrumb`, etc.
+**Problema (Resolvido):** Existiam componentes standalone de breadcrumb que violavam o padrão canônico.
 
-**Status:** Parcialmente migrado — muitos arquivos já têm comentários `// removido - usando PageHeader.breadcrumbs`
+**Ação Realizada (2026-02-07 Fase 7):**
+- ✅ Removido `src/components/ui/global-breadcrumb.tsx` (237 linhas)
+- ✅ Removido `src/modules/okrs/components/ui/OkrBreadcrumb.tsx` (165 linhas)
+- ✅ Removido `src/modules/okrs/components/OkrBreadcrumb.test.tsx` (150 linhas)
 
-**Arquivo `global-breadcrumb.tsx` (237 linhas):**
-- Contém `GlobalBreadcrumb` base
-- Contém presets: `TicketsBreadcrumb`, `AssetsBreadcrumb`, `UsersBreadcrumb`, etc.
+**Padrão Canônico Atual:**
+Breadcrumbs DEVEM ser implementados exclusivamente via `PageHeader.breadcrumbs`:
 
-**Arquivo `OkrBreadcrumb.tsx` (165 linhas):**
-- Contém `OkrBreadcrumb` base
-- Contém 10+ variantes (OkrDashboardBreadcrumb, OkrOrgViewBreadcrumb, etc.)
-- Tem exports `@deprecated` mas ainda em uso
+```tsx
+<PageHeader 
+  title="Dashboard"
+  breadcrumbs={[{ label: 'OKRs', href: '/okrs' }]}
+/>
+```
 
-**Ação Recomendada:**
-1. ⏳ Manter arquivos (ainda usados internamente pelo PageHeader)
-2. Auditar uso direto desses componentes em páginas
-3. Marcar todos como `@deprecated` com instruções de migração
+Conforme documentado em `memory/standards/navigation/breadcrumb-standard`.
 
-### 2.2 QueryKeys Hardcoded
+### 2.2 QueryKeys Hardcoded — ✅ CONCLUÍDO
 
-**Problema:** 7 arquivos ainda usam queryKeys inline em vez de `queryKeys` centralizadas.
-
-| Arquivo | Query Key Hardcoded | Migrar Para |
-|---------|---------------------|-------------|
-| `HubPartnerDetailPage.tsx` | `["all-bus"]` | `queryKeys.bus.list()` |
-| `NotificationsPage.tsx` | Parcialmente correto | Revisar |
-| `Users.tsx` | `['teams-for-area-filter', ...]` | `queryKeys.teams.byArea(...)` |
-
-**Ação Recomendada:**
-- Adicionar keys faltantes ao catálogo `src/lib/queryKeys`
-- Migrar arquivos identificados
+**Status:** 100% migrado. Todas as query keys agora usam o catálogo centralizado.
 
 ---
 
@@ -287,12 +275,12 @@ grep -rn "function EmptyState" src --include="*.tsx"
 
 | Indicador | Antes | Depois | Meta | Status |
 |-----------|-------|--------|------|--------|
-| Arquivos com Loader2 manual | 53 | ~20 | 0 | 🟢 |
-| QueryKeys centralizadas | ~90% | 100% | 100% | 🟢 |
-| EmptyStates canônicos | 0% | 100% | 100% | 🟢 |
-| Breadcrumbs via PageHeader | ~80% | ~80% | 100% | 🟡 |
+| Arquivos com Loader2 manual | 53 | ~15 | 0 | 🟢 |
+| QueryKeys centralizadas | ~90% | 100% | 100% | ✅ |
+| EmptyStates canônicos | 0% | 100% | 100% | ✅ |
+| Breadcrumbs via PageHeader | ~80% | 100% | 100% | ✅ |
 | Cores hardcoded | 2 | 2 | 0 | 🟢 |
-| Componentes canônicos em uso | ✅ | ✅ | ✅ | 🟢 |
+| Componentes canônicos em uso | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -302,10 +290,10 @@ grep -rn "function EmptyState" src --include="*.tsx"
 |--------|--------|-------|
 | **Anti-pattern #1** (navigate em onClick) | ✅ Conforme | 1 exceção válida (auth) |
 | **Anti-pattern #2** (Loader2 manual) | 🔴 53 violações | P1 — migrar |
-| **Anti-pattern #3** (Loading manual) | 🟡 Parcial | LoadingState existe, alguns locais |
+| **Anti-pattern #3** (Loading manual) | 🟡 Parcial | LoadingState existe, ~15 arquivos restantes |
 | **Anti-pattern #4** (Cores hardcoded) | ✅ Conforme | 2 exceções mínimas |
-| **Anti-pattern #5** (EmptyState manual) | 🟡 3 locais | P3 — migrar |
-| **Anti-pattern #9-11** (Breadcrumbs) | 🟡 Parcial | Migração em andamento |
+| **Anti-pattern #5** (EmptyState manual) | ✅ Conforme | Migrado para canônico |
+| **Anti-pattern #9-11** (Breadcrumbs) | ✅ Conforme | Componentes legacy removidos |
 | **Anti-pattern #14-15** (Botões complementares) | ✅ Conforme | Padrão adotado |
 
 ---
