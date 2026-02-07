@@ -35,21 +35,42 @@ interface TeamCheckinSummaryRequest {
   bu_id: string;
 }
 
+interface CycleInfo {
+  id: string;
+  name: string;
+  type: 'month' | 'quarter' | 'semester' | 'year';
+  startDate: Date;
+  endDate: Date;
+}
+
+interface PaceAnalysis {
+  status: 'above_pace' | 'on_pace' | 'below_pace' | 'not_started' | 'completed';
+  label: string;
+  expectedProgress: number;
+  cycleElapsed: number;
+  interpretation: string;
+}
+
 interface AgentContext {
   teamName: string;
   cycleName: string;
+  cycleType: string;
+  cycleElapsedPercent: number;
   buName: string;
   objectives: ObjectiveSummary[];
   krsHighlight: KrHighlight[];
   kpisRelevant: KpiSummary[];
   decisions: DecisionSummary[];
   pendingUpdates: PendingUpdate[];
+  paceGuidance: string;
 }
 
 interface ObjectiveSummary {
   title: string;
   status: string;
   progress: number;
+  paceStatus: string;
+  paceInterpretation: string;
 }
 
 interface KrHighlight {
@@ -59,6 +80,8 @@ interface KrHighlight {
   currentValue: number | null;
   targetValue: number | null;
   progress: number;
+  paceStatus: string;
+  paceInterpretation: string;
 }
 
 interface KpiSummary {
@@ -67,6 +90,7 @@ interface KpiSummary {
   targetValue: number | null;
   status: string;
   isPrimary: boolean;
+  linkedKrCycle?: string;
 }
 
 interface DecisionSummary {
@@ -93,7 +117,7 @@ interface AgentSections {
 }
 
 // ============================================================================
-// Helper Functions
+// Helper Functions - Canonical Progress Interpretation
 // ============================================================================
 
 function formatDate(date: Date): string {
@@ -106,12 +130,151 @@ function formatDate(date: Date): string {
   });
 }
 
+/**
+ * Calculate expected progress based on cycle elapsed time.
+ * CANONICAL: This is the source of truth for pace analysis.
+ */
+function calculateExpectedProgress(
+  cycleStart: Date,
+  cycleEnd: Date,
+  referenceDate: Date = new Date()
+): number {
+  const start = cycleStart.getTime();
+  const end = cycleEnd.getTime();
+  const now = referenceDate.getTime();
+  
+  if (now < start) return 0;
+  if (now > end) return 100;
+  
+  const totalDuration = end - start;
+  const elapsed = now - start;
+  
+  return Math.round((elapsed / totalDuration) * 100);
+}
+
+/**
+ * CANONICAL: Analyze progress pace relative to cycle.
+ * Uses rhythm-based language, NOT failure-based language.
+ */
+function analyzePace(
+  actualProgress: number,
+  cycleStart: Date,
+  cycleEnd: Date,
+  cycleType: string,
+  tolerancePercent: number = 10
+): PaceAnalysis {
+  const expectedProgress = calculateExpectedProgress(cycleStart, cycleEnd);
+  const cycleElapsed = expectedProgress;
+  const gap = actualProgress - expectedProgress;
+  
+  const cycleLabels: Record<string, string> = {
+    month: 'mensal',
+    quarter: 'trimestral',
+    semester: 'semestral',
+    year: 'anual',
+  };
+  const cycleLabel = cycleLabels[cycleType] || cycleType;
+  
+  // Meta já atingida
+  if (actualProgress >= 100) {
+    return {
+      status: 'completed',
+      label: 'Meta atingida',
+      expectedProgress,
+      cycleElapsed,
+      interpretation: `Meta do ciclo ${cycleLabel} já foi atingida.`,
+    };
+  }
+  
+  // Não iniciado
+  if (actualProgress === 0 && cycleElapsed > 10) {
+    return {
+      status: 'not_started',
+      label: 'Não iniciado',
+      expectedProgress,
+      cycleElapsed,
+      interpretation: `KR ainda não iniciou, com ${cycleElapsed}% do ciclo ${cycleLabel} transcorrido.`,
+    };
+  }
+  
+  // Início do ciclo (primeiros 15%) - não fazer julgamentos precipitados
+  if (cycleElapsed <= 15) {
+    return {
+      status: 'on_pace',
+      label: 'Início do ciclo',
+      expectedProgress,
+      cycleElapsed,
+      interpretation: `Ciclo ${cycleLabel} ainda no início. Progresso atual: ${actualProgress}%.`,
+    };
+  }
+  
+  // Análise de ritmo com tolerância
+  if (gap >= tolerancePercent) {
+    return {
+      status: 'above_pace',
+      label: 'Acima do ritmo',
+      expectedProgress,
+      cycleElapsed,
+      interpretation: `Acima do ritmo esperado para este ponto do ciclo ${cycleLabel} (+${gap.toFixed(0)}%).`,
+    };
+  }
+  
+  if (gap <= -tolerancePercent) {
+    return {
+      status: 'below_pace',
+      label: 'Abaixo do ritmo',
+      expectedProgress,
+      cycleElapsed,
+      interpretation: `Abaixo do ritmo esperado para este ponto do ciclo ${cycleLabel} (${gap.toFixed(0)}%).`,
+    };
+  }
+  
+  return {
+    status: 'on_pace',
+    label: 'Dentro do ritmo',
+    expectedProgress,
+    cycleElapsed,
+    interpretation: `Dentro do ritmo esperado para o ciclo ${cycleLabel}.`,
+  };
+}
+
+/**
+ * Get KR status with pace-based interpretation.
+ * DEPRECATED: Use analyzePace() for new code.
+ */
 function getKrStatus(progress: number, updatedRecently: boolean): string {
   if (!updatedRecently) return 'desatualizado';
   if (progress >= 100) return 'atingido';
   if (progress >= 70) return 'no ritmo';
   if (progress >= 40) return 'atenção';
   return 'fora da trilha';
+}
+
+/**
+ * Generate canonical pace guidance for AI agents.
+ */
+function generatePaceGuidance(cycleType: string, cycleElapsed: number): string {
+  const cycleLabels: Record<string, string> = {
+    month: 'mensal',
+    quarter: 'trimestral',
+    semester: 'semestral',
+    year: 'anual',
+  };
+  const cycleLabel = cycleLabels[cycleType] || cycleType;
+  
+  return `
+CONTEXTO TEMPORAL OBRIGATÓRIO:
+- Ciclo: ${cycleLabel}
+- Tempo transcorrido: ${cycleElapsed}%
+- Progresso esperado neste ponto: ~${cycleElapsed}%
+
+REGRAS DE INTERPRETAÇÃO:
+1. Avalie progresso em relação ao RITMO, não ao valor final
+2. Use: "dentro do ritmo", "acima do ritmo", "abaixo do ritmo"
+3. NUNCA use: "atrasado", "falhou", "insuficiente"
+4. Para metas de longo prazo, considere a proporcionalidade
+5. Início de ciclo (<15%): não fazer julgamentos negativos
+`;
 }
 
 function extractOrFallback(
@@ -171,12 +334,14 @@ async function loadTeamData(
   buId: string
 ): Promise<{
   team: { id: string; name: string };
-  cycle: { id: string; name: string };
+  cycle: CycleInfo;
   buName: string;
   members: string[]; // auth.users.id
   objectives: ObjectiveSummary[];
   krsHighlight: KrHighlight[];
   kpisRelevant: KpiSummary[];
+  cycleElapsedPercent: number;
+  paceGuidance: string;
 }> {
   // Load all data in parallel
   const [
@@ -193,10 +358,10 @@ async function loadTeamData(
       .eq('id', teamId)
       .single(),
     
-    // Cycle info
+    // Cycle info with dates for pace calculation
     serviceClient
       .from('okr_cycles')
-      .select('id, name')
+      .select('id, name, type, start_date, end_date')
       .eq('id', cycleId)
       .single(),
     
@@ -232,8 +397,22 @@ async function loadTeamData(
     .is('deleted_at', null);
 
   const team = teamResult.data || { id: teamId, name: 'Time' };
-  const cycle = cycleResult.data || { id: cycleId, name: 'Ciclo' };
+  const cycleData = cycleResult.data;
+  
+  // Build cycle info with proper dates
+  const cycle: CycleInfo = {
+    id: cycleData?.id || cycleId,
+    name: cycleData?.name || 'Ciclo',
+    type: cycleData?.type || 'quarter',
+    startDate: cycleData?.start_date ? new Date(cycleData.start_date) : new Date(),
+    endDate: cycleData?.end_date ? new Date(cycleData.end_date) : new Date(),
+  };
+  
   const buName = buResult.data?.name || 'Empresa';
+  
+  // Calculate cycle elapsed for canonical pace interpretation
+  const cycleElapsedPercent = calculateExpectedProgress(cycle.startDate, cycle.endDate);
+  const paceGuidance = generatePaceGuidance(cycle.type, cycleElapsedPercent);
   
   // Get auth user IDs - fallback to manual query if RPC doesn't exist
   let memberAuthIds: string[] = [];
