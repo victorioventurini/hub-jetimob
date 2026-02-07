@@ -14,8 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 import { 
-  Loader2, 
   Shield, 
   Key, 
   Search, 
@@ -385,7 +385,7 @@ export function UserPermissionsV2Sheet({
             <ScrollArea className="flex-1 -mx-4 px-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <LoadingSpinner size="sm" />
                 </div>
               ) : isAdmin && !currentUserIsAdmin ? (
                 <div className="text-center py-8">
@@ -505,7 +505,7 @@ export function UserPermissionsV2Sheet({
             <ScrollArea className="flex-1 -mx-4 px-4 pb-4">
               {effectiveLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <LoadingSpinner size="sm" />
                 </div>
               ) : isAdmin ? (
                 <div className="text-center py-8">

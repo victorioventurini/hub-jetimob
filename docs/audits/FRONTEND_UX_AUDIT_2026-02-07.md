@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 5 Concluída — Migração de Páginas Core (95% completo)
+**Status:** ✅ Fase 6 Concluída — Migração de Componentes Restantes (~97% completo)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Categoria | Achados | Prioridade | Status |
 |-----------|---------|------------|--------|
-| **Loaders manuais (Loader2)** | 53 arquivos → ~20 restantes | P1 | 🟢 95% migrado |
+| **Loaders manuais (Loader2)** | 53 arquivos → ~15 restantes | P1 | 🟢 97% migrado |
 | **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
 | **Componentes de breadcrumb legados** | 9 arquivos (237 refs) | P2 | ⏳ Pendente |
