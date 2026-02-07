@@ -1,253 +1,97 @@
 
-# Plano: Observabilidade Global de E-mails
+
+# Plano: Correção do Trigger de Histórico de KPI
 
 ## Resumo Executivo
 
-Adicionar observabilidade global aos envios de e-mail do Hub, enviando uma cópia BCC silenciosa para `hub@jetimob.com` em **todos** os e-mails enviados pelo sistema, sem impactar o fluxo principal ou expor ao usuário final.
+Corrigir erro "column 'auth_uid' does not exist" que ocorre ao editar KPIs. O problema está no trigger `fn_kpi_target_history_trigger` que referencia uma coluna inexistente na tabela `profiles`.
 
 ---
 
-## Validações do Pré-Checklist
+## Diagnóstico
 
-| Doc Canônico | Status | Observação |
-|--------------|--------|------------|
-| TCR v3.0.0 | Consultado | Arquitetura de e-mail via SendGrid/Resend confirmada |
-| notification-templates-v2 | Consultado | Template system não afetado (BCC é na camada de envio) |
-| emit_notification_event | Consultado | Não afetado (BCC é downstream) |
-| DEVELOPMENT_STANDARDS | Consultado | Implementação centralizada aderente |
+### Causa Raiz
 
----
+O trigger `fn_kpi_target_history_trigger` (criado na migração v2.86.0) contém um erro na query de resolução do perfil do usuário:
 
-## Arquitetura de E-mails do Hub
+```sql
+-- ERRADO (código atual)
+SELECT id INTO v_profile_id
+FROM public.profiles
+WHERE auth_uid = auth.uid()  -- ❌ Coluna não existe!
+LIMIT 1;
+```
 
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Pontos de Envio de E-mail                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │         _shared/email-sender.ts (sendEmail)                 │   │
-│  │                                                             │   │
-│  │  Consumidores:                                              │   │
-│  │    - auth-email-hook (Magic Link via Supabase Auth)        │   │
-│  │    - request-magic-link (Magic Link manual)                │   │
-│  │    - send-partner-invite (Convites de parceiros)           │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │    _shared/notification-providers/email.ts (sendEmail)      │   │
-│  │                                                             │   │
-│  │  Consumidores:                                              │   │
-│  │    - process-notification-outbox (todas as notificações)   │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│              Providers: SendGrid (primary) + Resend (fallback)      │
-│                                                                     │
-│  SendGrid: bcc: [{ email: "hub@jetimob.com" }]                     │
-│  Resend:   bcc: ["hub@jetimob.com"]                                │
-└─────────────────────────────────────────────────────────────────────┘
+A tabela `profiles` possui a coluna `user_id`, não `auth_uid`.
+
+### Solução Canônica
+
+Conforme IDENTITY_CONVENTION, a função `my_profile_id()` já existe e é a forma correta de obter o profile_id do usuário logado:
+
+```sql
+-- Função canônica existente
+SELECT id FROM profiles WHERE user_id = auth.uid() AND deleted_at IS NULL LIMIT 1
 ```
 
 ---
 
 ## Solução Proposta
 
-### Princípio
+Criar uma migration para corrigir a função do trigger, substituindo a query incorreta pelo uso da função canônica `my_profile_id()`.
 
-Modificar **apenas as funções de envio internas** (`sendViaSendGrid` e `sendViaResend`) para incluir o BCC automaticamente. Isso garante:
-- Implementação centralizada (um único ponto de mudança por arquivo)
-- Zero flags ou configurações por template
-- Cobertura de 100% dos e-mails presentes e futuros
-- Fallback silencioso (se BCC falhar, não afeta o envio principal)
+### Código Corrigido
 
-### Constante Global
-
-```typescript
-// Endereço de observabilidade global (BCC silencioso)
-const GLOBAL_BCC_EMAIL = "hub@jetimob.com";
+```sql
+CREATE OR REPLACE FUNCTION public.fn_kpi_target_history_trigger()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_profile_id UUID;
+BEGIN
+  -- Só registra se target_value ou target_source mudou
+  IF (
+    OLD.target_value IS DISTINCT FROM NEW.target_value OR
+    OLD.target_source IS DISTINCT FROM NEW.target_source
+  ) THEN
+    -- Obter profile_id usando função canônica
+    v_profile_id := my_profile_id();
+    
+    INSERT INTO public.kpi_target_history (
+      kpi_id,
+      bu_id,
+      old_target_value,
+      new_target_value,
+      old_target_source,
+      new_target_source,
+      changed_by,
+      changed_at
+    ) VALUES (
+      NEW.id,
+      NEW.bu_id,
+      OLD.target_value,
+      NEW.target_value,
+      OLD.target_source,
+      NEW.target_source,
+      v_profile_id,
+      now()
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
 ```
 
 ---
 
-## Implementação Técnica
+## Resumo de Alterações
 
-### 1. `_shared/email-sender.ts`
-
-**Modificar `sendViaSendGrid`:**
-
-```typescript
-async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<void> {
-  const { to, subject, html, from } = options;
-  
-  console.log(`[EmailSender] Attempting to send email to ${to} via SendGrid`);
-  
-  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      personalizations: [
-        {
-          to: [{ email: to }],
-          subject,
-          bcc: [{ email: GLOBAL_BCC_EMAIL }], // ← BCC silencioso
-        },
-      ],
-      from: from || {
-        email: "no-reply@hub.jetimob.com",
-        name: "Hub",
-      },
-      content: [
-        {
-          type: "text/html",
-          value: html,
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
-  }
-  
-  console.log(`[EmailSender] Email sent successfully via SendGrid to: ${to}`);
-}
-```
-
-**Modificar `sendViaResend`:**
-
-```typescript
-async function sendViaResend(options: EmailOptions, apiKey: string): Promise<void> {
-  const { to, subject, html, from } = options;
-  
-  console.log(`[EmailSender] Attempting to send email to ${to} via Resend (fallback)`);
-  
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: from ? `${from.name} <${from.email}>` : "Hub <onboarding@resend.dev>",
-      to: [to],
-      subject,
-      html,
-      bcc: [GLOBAL_BCC_EMAIL], // ← BCC silencioso
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Resend API error: ${response.status} - ${errorText}`);
-  }
-  
-  console.log(`[EmailSender] Email sent successfully via Resend (fallback) to: ${to}`);
-}
-```
-
----
-
-### 2. `_shared/notification-providers/email.ts`
-
-**Modificar `sendViaSendGrid`:**
-
-```typescript
-const GLOBAL_BCC_EMAIL = "hub@jetimob.com";
-
-async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<void> {
-  console.log(`[Email] Sending to ${options.to} via SendGrid`);
-
-  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      personalizations: [{ 
-        to: [{ email: options.to }], 
-        subject: options.subject,
-        bcc: [{ email: GLOBAL_BCC_EMAIL }], // ← BCC silencioso
-      }],
-      from: options.from || { email: "no-reply@hub.jetimob.com", name: "Hub" },
-      content: [{ type: "text/html", value: options.html }],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`SendGrid error: ${response.status} - ${errorText}`);
-  }
-}
-```
-
-**Modificar `sendViaResend`:**
-
-```typescript
-async function sendViaResend(options: EmailOptions, apiKey: string): Promise<void> {
-  console.log(`[Email] Sending to ${options.to} via Resend`);
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: options.from ? `${options.from.name} <${options.from.email}>` : "Hub <onboarding@resend.dev>",
-      to: [options.to],
-      subject: options.subject,
-      html: options.html,
-      bcc: [GLOBAL_BCC_EMAIL], // ← BCC silencioso
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Resend error: ${response.status} - ${errorText}`);
-  }
-}
-```
-
----
-
-## Resumo de Arquivos
-
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `supabase/functions/_shared/email-sender.ts` | **Editar** | Adicionar `GLOBAL_BCC_EMAIL` e incluir BCC em `sendViaSendGrid` e `sendViaResend` |
-| `supabase/functions/_shared/notification-providers/email.ts` | **Editar** | Adicionar `GLOBAL_BCC_EMAIL` e incluir BCC em `sendViaSendGrid` e `sendViaResend` |
-
----
-
-## Comportamento Esperado
-
-| Cenário | Resultado |
-|---------|-----------|
-| Magic Link (auth-email-hook) | Usuário recebe + hub@jetimob.com recebe BCC |
-| Magic Link (request-magic-link) | Usuário recebe + hub@jetimob.com recebe BCC |
-| Convite de Parceiro | Parceiro recebe + hub@jetimob.com recebe BCC |
-| Notificações (outbox) | Destinatário recebe + hub@jetimob.com recebe BCC |
-| E-mails futuros | Automaticamente incluídos (centralizado) |
-
----
-
-## Garantias de Segurança
-
-| Regra | Implementação |
-|-------|---------------|
-| BCC invisível ao usuário | Ambas APIs (SendGrid/Resend) tratam BCC como hidden |
-| Não interfere em métricas | BCC não afeta open/click tracking do destinatário principal |
-| Falha silenciosa | Se BCC falhar, o provider retorna erro geral mas o e-mail principal foi enviado |
-| Não duplica lógica | Implementação única por arquivo, sem flags por evento |
+| Tipo | Descrição |
+|------|-----------|
+| Migration SQL | `CREATE OR REPLACE FUNCTION fn_kpi_target_history_trigger()` usando `my_profile_id()` |
 
 ---
 
@@ -255,27 +99,28 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
 
 | Padrão | Status |
 |--------|--------|
-| Implementação centralizada | Modificação em apenas 2 arquivos compartilhados |
-| Sem flags por template | Constante única `GLOBAL_BCC_EMAIL` |
-| Aderência a notification-templates-v2 | Não afeta templates (BCC é na camada de envio) |
-| Sem duplicação de lógica | Cada arquivo tem sua própria função (auth vs notifications) |
+| IDENTITY_CONVENTION | ✅ Usa função canônica `my_profile_id()` |
+| TCR v3.0.0 | ✅ Função SECURITY DEFINER para bypass RLS no trigger |
+| Sem duplicação de lógica | ✅ Reutiliza função existente ao invés de query ad-hoc |
 
 ---
 
-## Considerações Importantes
+## Impacto
 
-1. **SendGrid e Resend tratam BCC de forma idêntica** — o destinatário principal não vê o endereço BCC
+### Positivo
+- Edição de KPIs volta a funcionar
+- Histórico de metas continua sendo registrado automaticamente
+- Código alinhado com convenções do Hub
 
-2. **Volume de e-mails** — hub@jetimob.com receberá TODOS os e-mails do Hub. Considerar:
-   - Configurar regras de filtragem/labels no provedor de e-mail
-   - Monitorar volume para não exceder limites de caixa
-
-3. **Logs** — Os logs existentes já mostram `to=` do destinatário. O BCC é silencioso nos logs também (não expõe)
+### Risco
+- Nenhum — é apenas correção de referência de coluna
 
 ---
 
-## Testes Recomendados
+## Testes
 
-1. **Magic Link**: Solicitar acesso e verificar se hub@jetimob.com recebeu cópia
-2. **Convite de Parceiro**: Criar contato parceiro e verificar BCC
-3. **Notificação**: Disparar evento com canal e-mail e verificar BCC
+Após aplicar a correção:
+1. Editar um KPI existente alterando "Meta ou Benchmark"
+2. Verificar que o KPI foi salvo sem erro
+3. Verificar que o histórico foi registrado em `kpi_target_history`
+
