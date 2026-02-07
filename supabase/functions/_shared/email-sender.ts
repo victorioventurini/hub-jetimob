@@ -6,12 +6,19 @@
  * 
  * All emails in the Hub should use this utility to ensure
  * consistent delivery with automatic fallback.
+ * 
+ * ## Global Observability
+ * All emails include a silent BCC to GLOBAL_BCC_EMAIL for monitoring.
+ * This is transparent to end users and does not affect delivery metrics.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// Global observability: silent BCC for all emails
+const GLOBAL_BCC_EMAIL = "hub@jetimob.com";
 
 // Note: Resend API key is now fetched from hub_integrations_global_config
 
@@ -107,6 +114,7 @@ async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<v
         {
           to: [{ email: to }],
           subject,
+          bcc: [{ email: GLOBAL_BCC_EMAIL }], // Silent BCC for observability
         },
       ],
       from: from || {
@@ -147,6 +155,7 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
       to: [to],
       subject,
       html,
+      bcc: [GLOBAL_BCC_EMAIL], // Silent BCC for observability
     }),
   });
 
