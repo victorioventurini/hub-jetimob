@@ -1,0 +1,4 @@
+name,email,phone,status,categories
+"João Silva","joao.silva@empresa.com.br","+55 11 99999-9999","active","Suporte > Financeiro; Suporte > Técnico"
+"Maria Santos","maria@empresa.com.br","","active","Comercial"
+"Carlos Pereira","carlos@empresa.com.br","+55 21 88888-8888","active","Suporte"
