@@ -164,10 +164,11 @@ export function groupRecommendationsByScope(
       byJobTitle.push(rec);
     } else if (score === 10) {
       byTeam.push(rec);
-    } else if (score === 1) {
+    } else {
+      // score === 1 (global) or score === 0 (scoped but no user context to match)
+      // Always show in global bucket so recommendations are never hidden
       global.push(rec);
     }
-    // score === 0 means not applicable, skip
   }
   
   return { byJobTitle, byTeam, global };
