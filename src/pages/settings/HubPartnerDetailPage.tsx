@@ -55,6 +55,7 @@ import {
 } from "@/modules/partners/hooks";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { useQuery } from "@tanstack/react-query";
+import { buKeys } from "@/lib/queryKeys";
 
 function formatDocument(doc: string | null, type: string | null): string {
   if (!doc) return "Não informado";
@@ -87,7 +88,7 @@ function DetailSkeleton() {
 // Hook para buscar todas as BUs (Platform Admin)
 function useAllBus() {
   return useQuery({
-    queryKey: ["all-bus"],
+    queryKey: buKeys.allBus(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bu_units")
@@ -215,13 +216,11 @@ export default function HubPartnerDetailPage() {
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
+                      disabled={deletePartner.isPending}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {deletePartner.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Excluir Permanentemente"
-                      )}
+                      {deletePartner.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      {deletePartner.isPending ? "Excluindo..." : "Excluir Permanentemente"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

@@ -120,14 +120,8 @@ export function RevokeAccessDialog({
             disabled={revokeAccess.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {revokeAccess.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Revogando...
-              </>
-            ) : (
-              "Revogar Acesso"
-            )}
+            {revokeAccess.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {revokeAccess.isPending ? "Revogando..." : "Revogar Acesso"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

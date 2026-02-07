@@ -9,6 +9,8 @@ export const teamsKeys = {
   availableLeaders: (buId: string | null) => ['available-leaders', buId] as const,
   // v2.82.0: Team area for auto-inference
   area: (teamId: string | undefined) => ['teams', 'area', teamId] as const,
+  // v2.94.0: Teams by area filter
+  byArea: (buId: string | null, areaId: string | null) => ['teams', 'by-area', buId, areaId] as const,
 } as const;
 
 export const squadsKeys = {

@@ -312,14 +312,8 @@ export function AgentDocumentUpload({ agentId }: AgentDocumentUploadProps) {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Removendo...
-                  </>
-                ) : (
-                  'Remover'
-                )}
+                {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {deleteMutation.isPending ? 'Removendo...' : 'Remover'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

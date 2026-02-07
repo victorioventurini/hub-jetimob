@@ -27,6 +27,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatValueWithUnit } from "../constants/krUnits";
 import type { KrCheckinHistory } from "../hooks";
 import type { OkrDirection } from "../types";
@@ -89,14 +90,14 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function KrCheckinsEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Calendar className="h-12 w-12 text-muted-foreground/40 mb-4" />
-      <p className="text-sm text-muted-foreground">
-        Nenhum check-in registrado ainda.
-      </p>
-    </div>
+    <EmptyState
+      icon={Calendar}
+      title="Nenhum check-in registrado"
+      description="Nenhum check-in registrado ainda."
+      compact
+    />
   );
 }
 
@@ -111,7 +112,7 @@ export function KrCheckinsTable({
   }
 
   if (!checkins?.length) {
-    return <EmptyState />;
+    return <KrCheckinsEmptyState />;
   }
 
   return (

@@ -182,12 +182,10 @@ export function CollaboratorReflectionStep({
             className="flex-1" 
             size="lg"
             disabled={isSubmitting}
+            isLoading={isSubmitting}
+            loadingText="Enviando..."
           >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4 mr-2" />
-            )}
+            <Send className="h-4 w-4 mr-2" />
             Enviar atualização
           </Button>
         </div>

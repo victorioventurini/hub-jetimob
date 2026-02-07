@@ -164,10 +164,14 @@ export default function PartnerDetailPage() {
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
+                      disabled={deletePartner.isPending}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       {deletePartner.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Excluindo...
+                        </>
                       ) : (
                         "Excluir"
                       )}

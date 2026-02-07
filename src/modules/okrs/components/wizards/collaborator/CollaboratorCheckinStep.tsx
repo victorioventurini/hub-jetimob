@@ -503,12 +503,11 @@ export function CollaboratorCheckinStep({
             onClick={handleSave}
             disabled={!canSubmit || createCheckin.isPending}
             className="flex-1"
+            isLoading={createCheckin.isPending}
+            loadingText={isLast ? 'Salvando...' : 'Salvando...'}
           >
-            {createCheckin.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : null}
             {isLast ? 'Salvar e concluir' : 'Salvar e próximo'}
-            {!isLast && <ArrowRight className="h-4 w-4 ml-2" />}
+            {!isLast && !createCheckin.isPending && <ArrowRight className="h-4 w-4 ml-2" />}
           </Button>
         </div>
 
