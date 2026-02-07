@@ -5,7 +5,6 @@ import {
   Plus,
   Building2,
   Star,
-  Loader2,
   Pencil,
   Trash2,
   Power,
@@ -387,17 +386,15 @@ export function LocationsList({ buId, canManage = false }: LocationsListProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              isLoading={deleteMutation.isPending}
+              loadingText="Removendo..."
             >
-              {deleteMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
+              <Trash2 className="mr-2 h-4 w-4" />
               Remover
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

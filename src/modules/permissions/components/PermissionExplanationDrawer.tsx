@@ -6,10 +6,11 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileStack, Shield, Clock, User, Zap } from "lucide-react";
+import { FileStack, Shield, Clock, User, Zap } from "lucide-react";
 import { usePermissionExplanation } from "../hooks";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { LoadingSpinner } from "@/components/ui/loading-state";
 
 interface PermissionExplanationDrawerProps {
   open: boolean;
@@ -47,7 +48,7 @@ export function PermissionExplanationDrawer({
           <div className="p-4 pb-8">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <LoadingSpinner size="md" />
               </div>
             ) : explanations.length === 0 ? (
               <div className="text-center py-8">

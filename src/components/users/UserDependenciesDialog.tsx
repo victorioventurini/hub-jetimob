@@ -21,8 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  Loader2, 
-  AlertTriangle, 
+  AlertTriangle,
   Info, 
   Target, 
   ListChecks, 
@@ -36,6 +35,7 @@ import {
 import { DependencyItem, useUserDependencies } from "@/hooks/useUserDependencies";
 import { useAssetProfiles } from "@/modules/assets/hooks";
 import { TransferConfig, TransferItem } from "@/hooks/useProfiles";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface UserDependenciesDialogProps {
   open: boolean;
@@ -299,7 +299,7 @@ export function UserDependenciesDialog({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <LoadingState text="Carregando dependências..." />
           </div>
         ) : (
           <ScrollArea className="flex-1 -mx-6 px-6">
