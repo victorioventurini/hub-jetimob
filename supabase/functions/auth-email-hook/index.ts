@@ -96,6 +96,23 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Received auth email hook payload for:", payload.user?.email);
 
+    // Guard: Validate payload structure before destructuring
+    if (!payload.user?.email || !payload.email_data?.token_hash) {
+      console.warn("Invalid payload received - missing user.email or email_data.token_hash");
+      return new Response(
+        JSON.stringify({ 
+          error: {
+            http_code: 400,
+            message: "Invalid payload: missing required fields" 
+          }
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     const { user, email_data } = payload;
     const { token_hash, redirect_to, email_action_type } = email_data;
 
