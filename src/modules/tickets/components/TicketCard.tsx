@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { Clock, AlertCircle, Building2, User, UserCircle, MessageSquare, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StagnantBadge } from "./StagnantBadge";
 import type { Ticket, TicketStatus, TicketType } from "../types";
 
 interface TicketCardProps {
@@ -64,13 +65,14 @@ export function TicketCard({ ticket }: TicketCardProps) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               {/* Header: Type + Status */}
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className={cn("px-2 py-0.5 rounded text-xs font-medium", type.className)}>
                   {type.label}
                 </span>
                 <Badge variant={status.variant} className="text-xs">
                   {status.label}
                 </Badge>
+                <StagnantBadge ticket={ticket} />
                 {isOverdue && (
                   <span className="flex items-center gap-1 text-xs text-destructive">
                     <AlertCircle className="h-3 w-3" />

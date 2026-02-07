@@ -20,6 +20,7 @@ import {
 import { AlertTriangle, Clock, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TICKET_STATUS_STYLES, TICKET_TYPE_STYLES } from "@/lib/colors";
+import { StagnantBadge } from "./StagnantBadge";
 import type { Ticket, TicketStatus, TicketType } from "../types";
 
 interface TicketsTableProps {
@@ -108,10 +109,13 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                 </TableCell>
                 
                 <TableCell>
-                  <Badge className={cn("gap-1.5", TICKET_STATUS_STYLES[ticket.status].badge)}>
-                    <span className={cn("h-1.5 w-1.5 rounded-full", TICKET_STATUS_STYLES[ticket.status].dot)} />
-                    {statusLabels[ticket.status]}
-                  </Badge>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Badge className={cn("gap-1.5", TICKET_STATUS_STYLES[ticket.status].badge)}>
+                      <span className={cn("h-1.5 w-1.5 rounded-full", TICKET_STATUS_STYLES[ticket.status].dot)} />
+                      {statusLabels[ticket.status]}
+                    </Badge>
+                    <StagnantBadge ticket={ticket} />
+                  </div>
                 </TableCell>
                 
                 <TableCell>
