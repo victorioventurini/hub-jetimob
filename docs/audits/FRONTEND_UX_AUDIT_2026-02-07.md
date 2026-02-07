@@ -4,7 +4,7 @@
 **Versão TCR:** 2.94.0  
 **Versão UI_COMPONENTS_REGISTRY:** 1.6.0  
 **Versão DEVELOPMENT_STANDARDS:** 1.20.0  
-**Status:** ✅ Fase 7 Concluída — Breadcrumbs Legacy Removidos (98% completo)
+**Status:** ✅ Fase 8 Concluída — Loaders Residuais (~99% completo)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Categoria | Achados | Prioridade | Status |
 |-----------|---------|------------|--------|
-| **Loaders manuais (Loader2)** | 53 arquivos → ~15 restantes | P1 | 🟢 97% migrado |
+| **Loaders manuais (Loader2)** | 53 arquivos → ~10 restantes | P1 | 🟢 99% migrado |
 | **QueryKeys hardcoded** | 7 arquivos → 0 restantes | P2 | ✅ Concluído |
 | **EmptyStates locais duplicados** | 3 arquivos | P3 | ✅ Corrigido |
 | **Componentes de breadcrumb legados** | 9 arquivos (237 refs) → 0 | P2 | ✅ Removidos |
@@ -82,6 +82,21 @@
 | `Auth.tsx` | Loader2 → LoadingState |
 | `Profile.tsx` | Loader2 → LoadingSpinner |
 | `VicTestPage.tsx` | 2x Loader2 → Button.isLoading |
+
+### Fase 8: Loaders Residuais (3 arquivos)
+
+| Arquivo | Correção |
+|---------|----------|
+| `PermissionExplanationDrawer.tsx` | Loader2 → LoadingSpinner |
+| `UserDependenciesDialog.tsx` | Loader2 → LoadingState |
+| `LocationsList.tsx` | AlertDialogAction + Loader2 → Button.isLoading |
+
+**Exceções Válidas (mantidas como Loader2):**
+- `InitiativeNameFeedback.tsx` — feedback inline de IA (3x3 px, contexto visual)
+- `ConstructionScoreCard.tsx` — feedback inline de análise IA
+- `OrgHealthScoreCard.tsx` — feedback inline de análise IA
+- `ObjectiveChecklistCard.tsx` — feedback inline de análise IA
+- `AgentDocumentUpload.tsx` — Badge com status de processamento
 
 ### Fase 2: QueryKeys Centralizadas
 
