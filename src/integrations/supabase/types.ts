@@ -9725,6 +9725,13 @@ export type Database = {
       my_profile_id: { Args: never; Returns: string }
       my_profile_id_strict: { Args: never; Returns: string }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
+      process_recommendation_expiry_notifications: {
+        Args: never
+        Returns: {
+          notifications_sent: number
+          recommendations_checked: number
+        }[]
+      }
       profile_has_bu_access: {
         Args: { p_bu_id: string; p_profile_id: string }
         Returns: boolean

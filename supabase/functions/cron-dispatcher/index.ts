@@ -52,6 +52,8 @@ interface MaintenanceResult {
   cron_logs_cleaned: number;
   perf_snapshots_cleaned: number;
   perf_metrics_collected: boolean;
+  recommendation_notifications_sent: number;
+  recommendation_notifications_checked: number;
 }
 
 interface ExecutionResult {
@@ -146,7 +148,9 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     agent_logs_cleaned: 0,
     cron_logs_cleaned: 0,
     perf_snapshots_cleaned: 0,
-    perf_metrics_collected: false
+    perf_metrics_collected: false,
+    recommendation_notifications_sent: 0,
+    recommendation_notifications_checked: 0
   };
 
   try {
@@ -213,6 +217,18 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     }
   } catch {
     console.log("[cron-dispatcher] cleanup_old_perf_snapshots RPC not available");
+  }
+
+  // Process recommendation expiry notifications
+  try {
+    const { data, error } = await supabase.rpc("process_recommendation_expiry_notifications");
+    if (!error && data && data.length > 0) {
+      result.recommendation_notifications_sent = data[0].notifications_sent || 0;
+      result.recommendation_notifications_checked = data[0].recommendations_checked || 0;
+      console.log(`[cron-dispatcher] Recommendation notifications: ${result.recommendation_notifications_sent} sent, ${result.recommendation_notifications_checked} checked`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] process_recommendation_expiry_notifications RPC not available");
   }
 
   return result;
