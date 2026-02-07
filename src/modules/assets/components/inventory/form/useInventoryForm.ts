@@ -15,9 +15,11 @@ interface UseInventoryFormProps {
   item?: AssetInventory | null;
   cloneMode?: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pre-selected recommendation (skips recommendation step) */
+  preSelectedRecommendation?: AssetRecommendation | null;
 }
 
-export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }: UseInventoryFormProps) {
+export function useInventoryForm({ open, item, cloneMode = false, onOpenChange, preSelectedRecommendation }: UseInventoryFormProps) {
   const { items, categories, createItemAsync, updateItemAsync, isCreatingItem, isUpdatingItem } = useInventory();
   const { rootLocations, getRooms, defaultLocation } = useLocations();
   const { isInventoryAdmin, canManageInventory } = useAssetPermissionsV2();
@@ -139,16 +141,17 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
       });
       setShowRecommendationStep(false);
     } else {
-      // New item - show recommendation step
+      // New item
+      const hasPreSelected = !!preSelectedRecommendation;
       form.reset({
         internal_code: "",
-        name: "",
-        category_id: undefined,
+        name: hasPreSelected ? preSelectedRecommendation.name : "",
+        category_id: hasPreSelected && preSelectedRecommendation.category_id ? preSelectedRecommendation.category_id : undefined,
         home_location_id: defaultLocation?.id || "",
         room_id: undefined,
         description: "",
-        brand: "",
-        model: "",
+        brand: hasPreSelected ? preSelectedRecommendation.brand : "",
+        model: hasPreSelected && preSelectedRecommendation.model ? preSelectedRecommendation.model : "",
         acquired_at: "",
         serial_number: "",
         no_serial_number: false,
@@ -156,10 +159,17 @@ export function useInventoryForm({ open, item, cloneMode = false, onOpenChange }
         notes: "",
         assigned_to_user_id: undefined,
         due_at: "",
-        recommendation_id: undefined,
+        recommendation_id: hasPreSelected ? preSelectedRecommendation.id : undefined,
       });
-      setShowRecommendationStep(true);
-      setSelectedRecommendation(null);
+
+      if (hasPreSelected) {
+        // Skip recommendation step, already selected
+        setShowRecommendationStep(false);
+        setSelectedRecommendation(preSelectedRecommendation);
+      } else {
+        setShowRecommendationStep(true);
+        setSelectedRecommendation(null);
+      }
     }
     setDuplicateError(null);
   }, [open, itemId, cloneMode, form, defaultLocation?.id]);

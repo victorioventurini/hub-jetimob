@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, CheckCircle, Eye } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, CheckCircle, Eye, PackagePlus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RecommendationReviewBadge } from "./RecommendationReviewBadge";
@@ -39,6 +39,8 @@ interface RecommendationsTableProps {
   onMarkReviewed: (recommendation: AssetRecommendation) => void;
   onView: (recommendation: AssetRecommendation) => void;
   canManage?: boolean;
+  /** Optional callback to create an inventory item from a recommendation */
+  onCreateItem?: (recommendation: AssetRecommendation) => void;
 }
 
 function RecommendationRow({
@@ -48,6 +50,7 @@ function RecommendationRow({
   onMarkReviewed,
   onView,
   canManage,
+  onCreateItem,
 }: {
   recommendation: AssetRecommendation;
   onEdit: (rec: AssetRecommendation) => void;
@@ -55,6 +58,7 @@ function RecommendationRow({
   onMarkReviewed: (rec: AssetRecommendation) => void;
   onView: (rec: AssetRecommendation) => void;
   canManage?: boolean;
+  onCreateItem?: (rec: AssetRecommendation) => void;
 }) {
   const { data: lastPurchase } = useLastPurchaseValue(recommendation.id);
   
@@ -137,6 +141,12 @@ function RecommendationRow({
               <Eye className="h-4 w-4 mr-2" />
               Visualizar
             </DropdownMenuItem>
+            {onCreateItem && (
+              <DropdownMenuItem onClick={() => onCreateItem(recommendation)}>
+                <PackagePlus className="h-4 w-4 mr-2" />
+                Criar item no inventário
+              </DropdownMenuItem>
+            )}
             {canManage && (
               <>
                 <DropdownMenuItem onClick={() => onEdit(recommendation)}>
@@ -172,6 +182,7 @@ export function RecommendationsTable({
   onMarkReviewed,
   onView,
   canManage,
+  onCreateItem,
 }: RecommendationsTableProps) {
   if (isLoading) {
     return (
@@ -217,6 +228,7 @@ export function RecommendationsTable({
               onMarkReviewed={onMarkReviewed}
               onView={onView}
               canManage={canManage}
+              onCreateItem={onCreateItem}
             />
           ))}
         </TableBody>

@@ -3,14 +3,16 @@
  * 
  * Optional first step in inventory form to select a recommendation.
  * Provides pre-filled values when a recommendation is selected.
+ * Includes inline team/job title filters for discovery.
  */
 
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Lightbulb, SkipForward, AlertCircle } from "lucide-react";
+import { Search, Lightbulb, SkipForward } from "lucide-react";
+import { MultiTeamSelect } from "@/components/selects/MultiTeamSelect";
+import { MultiJobTitleSelect } from "@/components/selects/MultiJobTitleSelect";
 import { RecommendationCard } from "./RecommendationCard";
 import { useRecommendations } from "../../hooks";
 import { 
@@ -24,28 +26,24 @@ interface RecommendationSelectStepProps {
   onSkip: () => void;
   /** Optional: pre-filter by category */
   categoryId?: string;
-  /** Optional: user's team for relevance ranking */
-  userTeamId?: string;
-  /** Optional: user's job title for relevance ranking */
-  userJobTitleId?: string;
 }
 
 export function RecommendationSelectStep({
   onSelect,
   onSkip,
   categoryId,
-  userTeamId,
-  userJobTitleId,
 }: RecommendationSelectStepProps) {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filterTeamId, setFilterTeamId] = useState<string | undefined>();
+  const [filterJobTitleId, setFilterJobTitleId] = useState<string | undefined>();
 
   const { recommendations, isLoading } = useRecommendations({
     status: "active",
     categoryId,
   });
 
-  // Filter by search and rank by relevance
+  // Filter by search and rank by relevance using selected team/job title
   const filteredRecommendations = useMemo(() => {
     let filtered = recommendations;
 
@@ -60,28 +58,24 @@ export function RecommendationSelectStep({
       );
     }
 
-    return filterAndRankRecommendations(filtered, undefined, userTeamId, userJobTitleId);
-  }, [recommendations, search, userTeamId, userJobTitleId]);
+    return filterAndRankRecommendations(filtered, undefined, filterTeamId, filterJobTitleId);
+  }, [recommendations, search, filterTeamId, filterJobTitleId]);
 
   // Group by scope for display
   const { byJobTitle, byTeam, global } = useMemo(
-    () => groupRecommendationsByScope(filteredRecommendations, userTeamId, userJobTitleId),
-    [filteredRecommendations, userTeamId, userJobTitleId]
+    () => groupRecommendationsByScope(filteredRecommendations, filterTeamId, filterJobTitleId),
+    [filteredRecommendations, filterTeamId, filterJobTitleId]
   );
 
   const handleSelect = (rec: AssetRecommendation) => {
     if (selectedId === rec.id) {
-      // Confirm selection
       onSelect(rec);
     } else {
-      // First click: highlight
       setSelectedId(rec.id);
     }
   };
 
   const hasRecommendations = filteredRecommendations.length > 0;
-  const showJobTitleHint = !userJobTitleId && byTeam.length > 0 && 
-    recommendations.some(r => r.applicable_job_title_ids.length > 0);
 
   return (
     <div className="space-y-4">
@@ -93,26 +87,32 @@ export function RecommendationSelectStep({
         </span>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar recomendação..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Search + Filters */}
+      <div className="flex flex-wrap gap-2">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar recomendação..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="w-[180px]">
+          <MultiTeamSelect
+            value={filterTeamId ? [filterTeamId] : []}
+            onValueChange={(v) => setFilterTeamId(v[0] || undefined)}
+            placeholder="Filtrar por time"
+          />
+        </div>
+        <div className="w-[180px]">
+          <MultiJobTitleSelect
+            value={filterJobTitleId ? [filterJobTitleId] : []}
+            onValueChange={(v) => setFilterJobTitleId(v[0] || undefined)}
+            placeholder="Filtrar por cargo"
+          />
+        </div>
       </div>
-
-      {/* Hint about job title specificity */}
-      {showJobTitleHint && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Alguns cargos possuem recomendação específica. Selecione um cargo para maior precisão.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Recommendations list */}
       <ScrollArea className="h-[300px] pr-4">
@@ -134,7 +134,7 @@ export function RecommendationSelectStep({
               {byJobTitle.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground">
-                    🏆 Recomendado para seu cargo
+                    🏆 Recomendado para o cargo
                   </h4>
                   {byJobTitle.map((rec) => (
                     <RecommendationCard
