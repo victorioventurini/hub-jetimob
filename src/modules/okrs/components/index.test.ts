@@ -66,10 +66,7 @@ describe('OKR Components exports', () => {
       expect(OkrKrTypeBadge).toBeDefined();
     });
 
-    it('should export OkrBreadcrumb', async () => {
-      const { OkrBreadcrumb } = await import('./ui/OkrBreadcrumb');
-      expect(OkrBreadcrumb).toBeDefined();
-    });
+    // NOTE: OkrBreadcrumb was removed in favor of PageHeader.breadcrumbs (canonical standard)
   });
 
   describe('Initiative components', () => {
@@ -137,7 +134,7 @@ describe('Component naming conventions', () => {
       'OkrScopeBadge',
       'OkrOwnerInfo',
       'OkrContributionLink',
-      'OkrBreadcrumb',
+      // OkrBreadcrumb removed - now using PageHeader.breadcrumbs
     ];
     
     okrComponents.forEach(name => {
