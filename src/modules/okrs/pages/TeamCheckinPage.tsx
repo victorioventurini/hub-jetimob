@@ -13,6 +13,8 @@ import {
   useTeamPendingKrs,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
+import { useBu } from '@/contexts/BuContext';
+import { supabase } from '@/integrations/supabase/client';
 
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -67,6 +69,7 @@ export default function TeamCheckinPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const teamIdParam = searchParams.get('team');
+  const { currentBu } = useBu();
   // Get teams
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
   const selectedTeam = useMemo(() => {
@@ -95,6 +98,7 @@ export default function TeamCheckinPage() {
     isSaving,
     isResumingDraft,
     lastSavedAt,
+    sessionId,
   } = useGenericWizardDraft<WizardStep, TeamCheckinDraftData>({
     wizardType: 'team-checkin',
     teamId: teamIdParam,
@@ -163,10 +167,28 @@ export default function TeamCheckinPage() {
   }, [discardDraft]);
   
   const handleComplete = useCallback(async () => {
+    // 1. First: clear draft and navigate (does not block user)
     await clearDraft();
     toast.success('Check-in do time concluído!');
     navigate('/okrs');
-  }, [clearDraft, navigate]);
+
+    // 2. Then: trigger summary email (best-effort, non-blocking)
+    if (sessionId && teamIdParam && quarterlyCycle?.id && currentBu?.id) {
+      try {
+        await supabase.functions.invoke('team-checkin-summary', {
+          body: {
+            teamId: teamIdParam,
+            cycleId: quarterlyCycle.id,
+            sessionId,
+            bu_id: currentBu.id,
+          }
+        });
+      } catch (e) {
+        // Non-blocking: log warning but don't show error to user
+        console.warn('Summary email failed (non-blocking):', e);
+      }
+    }
+  }, [clearDraft, navigate, sessionId, teamIdParam, quarterlyCycle, currentBu]);
   
   // Handle team change (admin only)
   const handleTeamChange = useCallback((newTeamId: string) => {
