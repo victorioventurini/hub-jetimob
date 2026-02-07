@@ -1,9 +1,9 @@
 # Comprehensive Hygiene Audit — Hub da Jet
 
 **Data:** 2026-02-07  
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Auditor:** Lovable AI  
-**TCR Base:** v2.98.0  
+**TCR Base:** v3.0.0  
 **Escopo:** Débitos técnicos, higienização, refatoração, centralização, performance
 
 ---

@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-02-07  
-**TCR Version:** 2.99.0  
+**TCR Version:** 3.0.0  
 **System Health:** 10/10 ✅
 
 ---
@@ -29,16 +29,17 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v2.78.0 |
-| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.17.0 |
-| `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | Canônico |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.0.0 |
+| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.21.0 |
+| `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | v1.2.2 |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.1 |
 | `PERMISSIONS_AND_RBAC_MODEL.md` | Modelo completo de permissões V2 | v1.2.0 |
 | `RBAC_TEMPLATES_V3.md` | Sistema de templates de permissão | v3.0 |
 | `QUERY_KEYS_STANDARD.md` | Padrão de query keys centralizadas | Normativo |
 | `BU_SCOPED_SUPABASE_RULES.md` | Regras PRE-BU/POST-BU | Normativo |
-| `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.2.0 |
+| `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.4.0 |
 | `SCHEMA_QUICK_REFERENCE.md` | Referência rápida de schema | v1.0.0 |
+| `RESPONSIBILITY_MIGRATION_POLICY.md` | Política de migração de responsabilidades | v1.0.0 |
 
 ---
 
