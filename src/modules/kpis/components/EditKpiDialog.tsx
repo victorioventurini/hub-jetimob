@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -169,6 +169,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   // Reset form when KPI changes
   useEffect(() => {
     if (kpi && open) {
+      // Reset ref so cleanup effect skips the first run after reset
+      prevScopeRef.current = null;
+
       form.reset({
         name: kpi.name,
         description: kpi.description || "",
@@ -201,21 +204,29 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     }
   }, [watchScope, inferredAreaId, form]);
 
-  // Efeito para limpar campos dependentes quando escopo muda
+  // Track previous scope to only clear fields on actual user changes, not on mount/reset
+  const prevScopeRef = useRef<string | null>(null);
+
+  // Efeito para limpar campos dependentes quando escopo muda (somente mudanças do usuário)
   useEffect(() => {
+    // Skip first run and runs triggered by form.reset (prevScopeRef is set after reset)
+    if (prevScopeRef.current === null) {
+      prevScopeRef.current = watchScope;
+      return;
+    }
+    // If scope didn't actually change, skip
+    if (prevScopeRef.current === watchScope) {
+      return;
+    }
+    prevScopeRef.current = watchScope;
+
     // Limpa team_id quando escopo não é 'team'
     if (watchScope !== "team") {
-      const currentTeamId = form.getValues("team_id");
-      if (currentTeamId) {
-        form.setValue("team_id", undefined, { shouldDirty: true });
-      }
+      form.setValue("team_id", undefined, { shouldDirty: true });
     }
     // Limpa area_id quando escopo é 'team' (inferido) ou 'org' (global)
     if (watchScope === "team" || watchScope === "org") {
-      const currentAreaId = form.getValues("area_id");
-      if (currentAreaId) {
-        form.setValue("area_id", undefined, { shouldDirty: true });
-      }
+      form.setValue("area_id", undefined, { shouldDirty: true });
     }
   }, [watchScope, form]);
 
