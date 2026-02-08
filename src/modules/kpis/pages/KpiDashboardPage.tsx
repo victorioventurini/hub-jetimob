@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useKpiData } from "@/modules/kpis/hooks";
+import { useKpiData, useKpiKrLinks } from "@/modules/kpis/hooks";
 import { useAreas } from "@/modules/areas/hooks";
 import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
 import { KpiAreaSection } from "../components/KpiAreaSection";
@@ -19,7 +19,7 @@ import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
-import { KpiScope, KpiIndicatorType, KpiRagStatus, KpiWithValues } from "../types";
+import { KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
@@ -27,7 +27,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { SavedLinksPopover } from "@/shared/saved-links";
 
 /**
- * v2.89.0 - Dashboard de Indicadores
+ * v2.90.0 - Dashboard de Indicadores
  * 
  * Mudanças:
  * - v2.83.0: Agrupamento por Área (em vez de Categoria)
@@ -36,6 +36,7 @@ import { SavedLinksPopover } from "@/shared/saved-links";
  * - v2.86.0: Adicionado recurso de filtros salvos (SavedLinksPopover)
  * - v2.88.0: Layout padronizado - Linha 1 (Filtros) + Linha 2 (ViewOptionsBar)
  * - v2.89.0: Deep-linking via ?kpi= para abrir KpiDetailDialog automaticamente
+ * - v2.90.0: Filtro de Vínculo com KRs (Primário, Guardrail, Sem vínculo)
  */
 
 export default function KpiDashboardPage() {
@@ -64,6 +65,13 @@ export default function KpiDashboardPage() {
     parse: (v) => v as KpiRagStatus | "all",
   });
   
+  // v2.90.0: KR Link filter state
+  const krLinkStatusState = useUrlState<KpiKrLinkStatus | "all">({
+    key: 'kr_link',
+    defaultValue: 'all',
+    parse: (v) => v as KpiKrLinkStatus | "all",
+  });
+  
   // v2.86.0: View mode state synced to URL
   const viewModeState = useUrlState<KpiViewMode>({
     key: 'view',
@@ -84,6 +92,8 @@ export default function KpiDashboardPage() {
   const setTeamFilter = teamState.set;
   const ragStatusFilter = ragStatusState.value;
   const setRagStatusFilter = ragStatusState.set;
+  const krLinkStatusFilter = krLinkStatusState.value;
+  const setKrLinkStatusFilter = krLinkStatusState.set;
   const viewMode = viewModeState.value;
   const setViewMode = viewModeState.set;
   
@@ -122,6 +132,9 @@ export default function KpiDashboardPage() {
 
   // Fetch areas for grouping
   const { data: areas = [] } = useAreas();
+  
+  // v2.90.0: Fetch KPI-KR links for filtering
+  const { data: krLinks } = useKpiKrLinks();
 
   // Use real data from hook
   const { kpis: allKpis, isLoading, error } = useKpiData({
@@ -131,13 +144,29 @@ export default function KpiDashboardPage() {
     indicatorType: indicatorTypeFilter === 'all' ? undefined : indicatorTypeFilter,
   });
 
-  // v2.87.0: Client-side text and status filtering
+  // v2.87.0: Client-side text, status and KR link filtering
   const filteredKpis = useMemo(() => {
     let result = allKpis;
     
     // Filter by RAG status
     if (ragStatusFilter !== 'all') {
       result = result.filter((kpi) => kpi.rag_status === ragStatusFilter);
+    }
+    
+    // v2.90.0: Filter by KR link status
+    if (krLinkStatusFilter !== 'all') {
+      result = result.filter((kpi) => {
+        switch (krLinkStatusFilter) {
+          case 'primary':
+            return krLinks.primaryKpiIds.has(kpi.id);
+          case 'guardrail':
+            return krLinks.guardrailKpiIds.has(kpi.id);
+          case 'none':
+            return !krLinks.linkedKpiIds.has(kpi.id);
+          default:
+            return true;
+        }
+      });
     }
     
     // Filter by text search
@@ -157,7 +186,7 @@ export default function KpiDashboardPage() {
     }
     
     return result;
-  }, [allKpis, searchValue, ragStatusFilter]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks]);
 
   // Calculate summary from filtered data
   const summary = {
@@ -253,12 +282,14 @@ export default function KpiDashboardPage() {
             scope={scopeFilter}
             indicatorType={indicatorTypeFilter}
             ragStatus={ragStatusFilter}
+            krLinkStatus={krLinkStatusFilter}
             onCategoryChange={() => {}} // No-op, category deprecated
             onTeamChange={setTeamFilter}
             onAreaChange={setAreaFilter}
             onScopeChange={setScopeFilter}
             onIndicatorTypeChange={setIndicatorTypeFilter}
             onRagStatusChange={setRagStatusFilter}
+            onKrLinkStatusChange={setKrLinkStatusFilter}
           />
         </ListPageFilters>
 

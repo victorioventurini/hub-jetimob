@@ -29,6 +29,15 @@ export type KpiConfidenceLevel = 'high' | 'medium' | 'low';
 // === v2.2 Governance Types ===
 export type KpiScope = 'team' | 'area' | 'org';
 
+// === v2.89.0: KR Link Filter Types ===
+export type KpiKrLinkStatus = 'primary' | 'guardrail' | 'none';
+
+export const KR_LINK_STATUS_LABELS: Record<KpiKrLinkStatus, string> = {
+  primary: 'É KPI Primário de KR',
+  guardrail: 'É Guardrail de KR',
+  none: 'Sem vínculo com KRs',
+};
+
 export interface KpiMetric {
   id: string;
   name: string;

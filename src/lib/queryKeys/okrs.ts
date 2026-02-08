@@ -269,4 +269,6 @@ export const kpisKeys = {
   // v2.86.0: KPI evolution page list
   evolutionList: (buId: string | null, filters?: Record<string, unknown>) => 
     ['kpis', 'evolution-list', buId, filters] as const,
+  // v2.89.0: All KPI-KR links for filtering (maps kpi_id -> role[])
+  allKrLinks: (buId: string | null) => ['kpis', 'all-kr-links', buId] as const,
 } as const;
