@@ -201,23 +201,28 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     }
   }, [watchScope, inferredAreaId, form]);
 
+  // Efeito para limpar campos dependentes quando escopo muda
+  useEffect(() => {
+    // Limpa team_id quando escopo não é 'team'
+    if (watchScope !== "team") {
+      const currentTeamId = form.getValues("team_id");
+      if (currentTeamId) {
+        form.setValue("team_id", undefined, { shouldDirty: true });
+      }
+    }
+    // Limpa area_id quando escopo é 'team' (inferido) ou 'org' (global)
+    if (watchScope === "team" || watchScope === "org") {
+      const currentAreaId = form.getValues("area_id");
+      if (currentAreaId) {
+        form.setValue("area_id", undefined, { shouldDirty: true });
+      }
+    }
+  }, [watchScope, form]);
+
   // Defense in Depth: block render if no permission
   if (!isLoadingPermission && !canEditIndicator) {
     return null;
   }
-
-  const handleScopeChange = (newScope: KpiScope) => {
-    form.setValue("scope", newScope, { shouldDirty: true });
-    // Limpa team_id quando escopo não é 'team'
-    if (newScope !== "team") {
-      form.setValue("team_id", undefined, { shouldDirty: true });
-    }
-    // Limpa area_id quando mudando PARA 'team' (será inferido) ou 'org' (global)
-    // Mantém area_id quando mudando PARA 'area' (será selecionado pelo usuário)
-    if (newScope === "team" || newScope === "org") {
-      form.setValue("area_id", undefined, { shouldDirty: true });
-    }
-  };
 
   // Governança: quando usuário sem permissão tenta selecionar KPI
   const handleIndicatorTypeChange = (type: KpiIndicatorType) => {
@@ -556,7 +561,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         }
                       />
                     </FormLabel>
-                    <Select onValueChange={handleScopeChange} value={field.value}>
+                    <Select onValueChange={(val) => field.onChange(val)} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
