@@ -47,14 +47,24 @@ export function KrMetricsSection({
   const [showGuardrailSelect, setShowGuardrailSelect] = useState(false);
 
   // Queries
-  const { data: primaryMetric, isLoading: isLoadingPrimary } = usePrimaryKrMetric(krId, krType);
-  const { data: guardrails = [], isLoading: isLoadingGuardrails } = useGuardrailKrMetrics(krId, krType);
+  const { 
+    data: primaryMetric, 
+    isLoading: isLoadingPrimary,
+    isPending: isPendingPrimary,
+  } = usePrimaryKrMetric(krId, krType);
+  const { 
+    data: guardrails = [], 
+    isLoading: isLoadingGuardrails,
+    isPending: isPendingGuardrails,
+  } = useGuardrailKrMetrics(krId, krType);
 
   // Mutations
   const createMutation = useCreateKrMetric();
   const deleteMutation = useDeleteKrMetric();
 
-  const isLoading = isLoadingPrimary || isLoadingGuardrails;
+  // isPending = true when query has never fetched (including when disabled)
+  // isLoading = true when actively fetching for first time
+  const isLoading = isLoadingPrimary || isLoadingGuardrails || isPendingPrimary || isPendingGuardrails;
 
   // IDs já vinculados (para excluir do select)
   const excludeIds = [
