@@ -28,6 +28,12 @@ import {
 import { useKrKpiHistory, useKpiChartData, type KpiHistoryData } from "../hooks";
 import { cn } from "@/lib/utils";
 
+// Null-safe formatting helper
+const safeFormat = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '—';
+  return value.toLocaleString('pt-BR');
+};
+
 interface KpiHistoryChartProps {
   krId: string;
   krType: "org" | "team";
@@ -156,7 +162,7 @@ function SingleKpiChart({ history, compact = false }: SingleKpiChartProps) {
           {history.currentValue !== null && (
             <div className="flex items-center gap-2 text-xs">
               <span className="text-2xl font-semibold">
-                {history.currentValue.toLocaleString("pt-BR")}
+                {safeFormat(history.currentValue)}
               </span>
               <span className="text-muted-foreground">{history.kpi.unit}</span>
               <TrendIcon className={cn("w-4 h-4", trendColor)} />
@@ -174,11 +180,11 @@ function SingleKpiChart({ history, compact = false }: SingleKpiChartProps) {
               <TooltipTrigger asChild>
                 <Badge variant={isOnTrack ? "default" : "secondary"} className="flex items-center gap-1">
                   <Target className="w-3 h-3" />
-                  {targetLine.toLocaleString("pt-BR")}
+                  {safeFormat(targetLine)}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                Meta: {targetLine.toLocaleString("pt-BR")} {history.kpi.unit}
+                Meta: {safeFormat(targetLine)} {history.kpi.unit}
               </TooltipContent>
             </Tooltip>
           )}
@@ -230,11 +236,11 @@ function SingleKpiChart({ history, compact = false }: SingleKpiChartProps) {
                     <div className="bg-popover border rounded-lg shadow-lg p-2 text-xs">
                       <p className="font-medium">{data.fullDate}</p>
                       <p className="text-muted-foreground">
-                        Valor: <span className="text-foreground font-medium">{data.value.toLocaleString("pt-BR")} {history.kpi.unit}</span>
+                        Valor: <span className="text-foreground font-medium">{safeFormat(data.value)} {history.kpi.unit}</span>
                       </p>
                       {data.target !== null && (
                         <p className="text-muted-foreground">
-                          Meta: <span className="text-foreground">{data.target.toLocaleString("pt-BR")}</span>
+                          Meta: <span className="text-foreground">{safeFormat(data.target)}</span>
                         </p>
                       )}
                     </div>

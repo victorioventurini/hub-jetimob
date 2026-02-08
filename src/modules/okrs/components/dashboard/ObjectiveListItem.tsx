@@ -521,7 +521,8 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
   const calculatedStatus = mapRagToCalculated(kr.status);
   const statusConfig = STATUS_CONFIG[calculatedStatus];
 
-  const formatValue = (value: number, unit: string) => {
+  const formatValue = (value: number | null | undefined, unit: string) => {
+    if (value === null || value === undefined) return '—';
     if (unit === '%') return `${value}%`;
     if (unit === 'R$') return `R$ ${value.toLocaleString('pt-BR')}`;
     if (unit === '$') return `$ ${value.toLocaleString('en-US')}`;
