@@ -78,6 +78,10 @@ export const okrsKeys = {
     ['okr-kr-metrics', krId, krType] as const,
   krMetricsRole: (role: string, krId: string, krType: string) => 
     ['okr-kr-metrics', role, krId, krType] as const,
+
+  /** v3.4.0: KPI primário (fonte única) para KR — query dedicada (evita colisão de cache) */
+  krPrimaryKpi: (krId: string, krType: string) =>
+    ['okr-kr-primary-kpi', krId, krType] as const,
   
   // Initiatives
   initiatives: (krId: string) => ['okr-initiatives', krId] as const,

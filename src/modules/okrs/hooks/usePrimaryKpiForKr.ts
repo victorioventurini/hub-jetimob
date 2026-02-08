@@ -97,7 +97,10 @@ export function usePrimaryKpiForKr(
   const { client: supabase, isReady } = useOptionalBuClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.okrs.krMetricsRole('primary', krId ?? '', krType),
+    // IMPORTANT: não usar krMetricsRole('primary', ...) aqui.
+    // krMetricsRole é consumida por usePrimaryKrMetric e retorna outro shape (OkrKrMetric).
+    // Se compartilharmos a mesma key, o cache pode ficar com um shape incompatível e o select renderiza como "Nenhum".
+    queryKey: queryKeys.okrs.krPrimaryKpi(krId ?? '', krType),
     queryFn: async (): Promise<PrimaryKpiData | null> => {
       if (!supabase || !krId) return null;
 

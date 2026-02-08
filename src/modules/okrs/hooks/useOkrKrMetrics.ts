@@ -108,6 +108,8 @@ export function useCreateKrMetric() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.kr_id, variables.kr_type) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('primary', variables.kr_id, variables.kr_type) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('guardrails', variables.kr_id, variables.kr_type) });
+      // v3.4.0: manter banner (fonte única) em sync
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpi(variables.kr_id, variables.kr_type) });
       toast.success(variables.role === 'primary' ? 'KPI primário vinculado' : 'Guardrail adicionado');
     },
     onError: (error: Error) => {
@@ -171,9 +173,10 @@ export function useDeleteKrMetric() {
     onSuccess: (_, id) => {
       // Invalidate broad pattern - we don't have context of which KR this was
       // The queryKey pattern will match all krMetrics queries
-      queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          Array.isArray(query.queryKey) && query.queryKey[0] === 'okr-kr-metrics'
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          (query.queryKey[0] === 'okr-kr-metrics' || query.queryKey[0] === 'okr-kr-primary-kpi'),
       });
       toast.success('KPI desvinculado');
     },
