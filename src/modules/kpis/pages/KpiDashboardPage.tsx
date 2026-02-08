@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, TrendingUp, BarChart3 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { LoadingSpinner } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -27,7 +27,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { SavedLinksPopover } from "@/shared/saved-links";
 
 /**
- * v2.88.0 - Dashboard de Indicadores
+ * v2.89.0 - Dashboard de Indicadores
  * 
  * Mudanças:
  * - v2.83.0: Agrupamento por Área (em vez de Categoria)
@@ -35,6 +35,7 @@ import { SavedLinksPopover } from "@/shared/saved-links";
  * - v2.86.0: Adicionado toggle de visualização (Cards/Tabela)
  * - v2.86.0: Adicionado recurso de filtros salvos (SavedLinksPopover)
  * - v2.88.0: Layout padronizado - Linha 1 (Filtros) + Linha 2 (ViewOptionsBar)
+ * - v2.89.0: Deep-linking via ?kpi= para abrir KpiDetailDialog automaticamente
  */
 
 export default function KpiDashboardPage() {
@@ -86,12 +87,38 @@ export default function KpiDashboardPage() {
   const viewMode = viewModeState.value;
   const setViewMode = viewModeState.set;
   
+  // v2.89.0: Deep-linking - Read ?kpi= from URL to open KpiDetailDialog automatically
+  const [searchParams, setSearchParams] = useSearchParams();
+  const kpiIdFromUrl = searchParams.get('kpi');
+  
   // Local state for dialogs
   const [selectedKpiId, setSelectedKpiId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [addValueOpen, setAddValueOpen] = useState(false);
   const [addValueKpi, setAddValueKpi] = useState<KpiWithValues | null>(null);
+  
+  // v2.89.0: Effect to open dialog when ?kpi= is in URL
+  useEffect(() => {
+    if (kpiIdFromUrl) {
+      setSelectedKpiId(kpiIdFromUrl);
+      setDetailOpen(true);
+    }
+  }, [kpiIdFromUrl]);
+  
+  // v2.89.0: Handle closing the detail dialog (clears URL param if present)
+  const handleDetailOpenChange = (open: boolean) => {
+    setDetailOpen(open);
+    if (!open) {
+      setSelectedKpiId(null);
+      // Clear ?kpi= from URL if it was a deep-link
+      if (kpiIdFromUrl) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('kpi');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  };
 
   // Fetch areas for grouping
   const { data: areas = [] } = useAreas();
@@ -307,7 +334,7 @@ export default function KpiDashboardPage() {
       <KpiDetailDialog
         kpiId={selectedKpiId}
         open={detailOpen}
-        onOpenChange={setDetailOpen}
+        onOpenChange={handleDetailOpenChange}
       />
 
       <CreateKpiDialog open={createOpen} onOpenChange={setCreateOpen} />
