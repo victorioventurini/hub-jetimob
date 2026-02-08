@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { AreaBadge } from "@/components/ui/area-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, AlertCircle, Building2, Globe } from "lucide-react";
@@ -8,7 +9,7 @@ import { LinkedKrsSection } from "./LinkedKrsSection";
 import { KpiTargetHistorySection } from "./KpiTargetHistorySection";
 import { KpiActionsMenu } from "./KpiActionsMenu";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { CATEGORY_LABELS, CATEGORY_COLORS, FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
+import { FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -137,12 +138,10 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
             <div className="space-y-2 flex-1">
               <DialogTitle className="text-xl">{kpi.name}</DialogTitle>
               <div className="flex items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className={cn("text-xs text-white", CATEGORY_COLORS[kpi.category])}
-                >
-                  {CATEGORY_LABELS[kpi.category]}
-                </Badge>
+                {/* v2.82.0: Área dona (substitui category depreciado) */}
+                {kpi.area && (
+                  <AreaBadge area={kpi.area} />
+                )}
                 <Badge variant="outline" className={cn("text-xs gap-1", getSourceColor(kpi.source_type))}>
                   <SourceIcon type={kpi.source_type} />
                   {SOURCE_TYPE_LABELS[kpi.source_type]}
