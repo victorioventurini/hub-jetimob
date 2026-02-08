@@ -273,6 +273,7 @@ export function OrgKrFormDialog({
                   placeholder="Selecione o responsável"
                   allowNone={true}
                   noneLabel="Nenhum"
+                  excludeExternal={true}
                 />
               </div>
 
