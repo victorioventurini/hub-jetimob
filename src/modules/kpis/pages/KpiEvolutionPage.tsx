@@ -7,7 +7,7 @@
  * @see TCR v2.86.0
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   ChartLine, 
@@ -50,6 +50,7 @@ import { ptBR } from "date-fns/locale";
 
 import { useKpiEvolutionList, type KpiEvolutionItem } from "../hooks/useKpiEvolutionList";
 import { useKpiWithHistory } from "../hooks/useKpiWithHistory";
+import { useKpiKrLinks } from "../hooks/useKpiKrLinks";
 import { KpiEvolutionChart } from "../components/KpiEvolutionChart";
 import { KpiHistoryDialog, type KpiHistoryDialogData } from "../components/KpiHistoryDialog";
 import { 
@@ -59,6 +60,7 @@ import {
   type KpiIndicatorType, 
   type KpiScope, 
   type KpiRagStatus,
+  type KpiKrLinkStatus,
 } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { useAreas } from "@/modules/areas/hooks";
@@ -263,14 +265,23 @@ export default function KpiEvolutionPage() {
     defaultValue: 'all',
     parse: (v) => v as KpiRagStatus | 'all',
   });
+  // v2.90.0: KR Link filter state
+  const krLinkStatusState = useUrlState<KpiKrLinkStatus | 'all'>({
+    key: 'kr_link',
+    defaultValue: 'all',
+    parse: (v) => v as KpiKrLinkStatus | 'all',
+  });
 
   const [selectedKpi, setSelectedKpi] = useState<KpiHistoryDialogData | null>(null);
 
   // Fetch areas for filter
   const { data: areas = [] } = useAreas();
+  
+  // v2.90.0: Fetch KPI-KR links for filtering
+  const { data: krLinks } = useKpiKrLinks();
 
   // Fetch KPIs with all filters
-  const { kpis, aggregates, isLoading, error } = useKpiEvolutionList({
+  const { kpis: rawKpis, aggregates, isLoading, error } = useKpiEvolutionList({
     indicatorType: indicatorTypeState.value === 'all' ? undefined : indicatorTypeState.value,
     areaId: areaState.value === 'all' ? undefined : areaState.value,
     scope: scopeState.value === 'all' ? undefined : scopeState.value,
@@ -278,6 +289,24 @@ export default function KpiEvolutionPage() {
     ragStatus: ragStatusState.value === 'all' ? undefined : ragStatusState.value,
     search: searchState.value || undefined,
   });
+  
+  // v2.90.0: Apply KR link filter client-side
+  const kpis = useMemo(() => {
+    if (krLinkStatusState.value === 'all' || !krLinks) return rawKpis;
+    
+    return rawKpis.filter((kpi) => {
+      switch (krLinkStatusState.value) {
+        case 'primary':
+          return krLinks.primaryKpiIds.has(kpi.id);
+        case 'guardrail':
+          return krLinks.guardrailKpiIds.has(kpi.id);
+        case 'none':
+          return !krLinks.linkedKpiIds.has(kpi.id);
+        default:
+          return true;
+      }
+    });
+  }, [rawKpis, krLinkStatusState.value, krLinks]);
 
   // Single KPI mode (when only one result from search)
   const singleKpiMode = kpis.length === 1 && searchState.value;
@@ -390,12 +419,14 @@ export default function KpiEvolutionPage() {
             scope={scopeState.value}
             indicatorType={indicatorTypeState.value}
             ragStatus={ragStatusState.value}
+            krLinkStatus={krLinkStatusState.value}
             onCategoryChange={() => {}}
             onTeamChange={teamState.set}
             onAreaChange={areaState.set}
             onScopeChange={scopeState.set}
             onIndicatorTypeChange={indicatorTypeState.set}
             onRagStatusChange={ragStatusState.set}
+            onKrLinkStatusChange={krLinkStatusState.set}
           />
         </ListPageFilters>
 
