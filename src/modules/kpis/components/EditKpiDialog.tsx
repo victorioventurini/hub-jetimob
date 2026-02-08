@@ -207,14 +207,15 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   }
 
   const handleScopeChange = (newScope: KpiScope) => {
-    form.setValue("scope", newScope);
+    form.setValue("scope", newScope, { shouldDirty: true });
     // Limpa team_id quando escopo não é 'team'
     if (newScope !== "team") {
-      form.setValue("team_id", undefined);
+      form.setValue("team_id", undefined, { shouldDirty: true });
     }
     // Limpa area_id quando mudando PARA 'team' (será inferido) ou 'org' (global)
+    // Mantém area_id quando mudando PARA 'area' (será selecionado pelo usuário)
     if (newScope === "team" || newScope === "org") {
-      form.setValue("area_id", undefined);
+      form.setValue("area_id", undefined, { shouldDirty: true });
     }
   };
 
