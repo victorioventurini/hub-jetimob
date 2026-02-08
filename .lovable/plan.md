@@ -26,6 +26,7 @@ O Hub da Jet está em **excelente estado técnico** com **System Health Score 10
 | **Técnica Completa** | `docs/audits/COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md` | 10/10 |
 | **Banco de Dados** | `docs/audits/DATABASE_OPTIMIZATION_AUDIT_2026-02-08.md` | Saudável |
 | **Front-End UX** | `docs/audits/FRONTEND_UX_AUDIT_2026-02-08.md` | 9.5/10 |
+| **Back-End** | `docs/audits/BACKEND_ROBUSTNESS_AUDIT_2026-02-08.md` | 9.5/10 |
 
 ---
 
