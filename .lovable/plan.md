@@ -1,233 +1,158 @@
-# Plano: Importador de Contatos Externos
 
-## Objetivo
-Implementar um importador de contatos externos (partner_contacts) a partir de arquivo CSV, reaproveitando a estrutura do `InventoryImportDialog`.
+## Pré-checklist obrigatório (executado antes do plano)
+### Documentos canônicos revisados
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (TCR v3.0.0) — padrões de arquitetura, PRE-BU/POST-BU, singletons, governança.
+- `docs/canonical/DEVELOPMENT_STANDARDS.md` (v1.21.0) — padrões obrigatórios (query keys, invalidação, context resilience, etc.).
+- `docs/canonical/IDENTITY_CONVENTION.md` (v2.1.1) — regra de ouro `auth.uid()` vs `profiles.id` (para garantir que nada de mutation/RLS está “misturando IDs”).
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` (v1.4.0) — permission keys e escopos.
+- `docs/canonical/DATA_MODEL_REGISTRY.md` (v1.2.2) — confirma `kpi_metrics` como BU-scoped e campos de ownership.
 
----
-
-## Pré-Checklist Consultado ✅
-
-| Documento | Status | Descobertas Relevantes |
-|-----------|--------|------------------------|
-| TCR v3.0.0 | ✅ | `partner_contacts` é **GLOBAL** por email (v2.46.0), usar `partner_contact_bu_associations` para BU |
-| DATA_MODEL_REGISTRY.md | ✅ | Tabelas: `partner_contacts`, `partner_contact_capabilities`, `partner_contact_bu_associations` |
-| IDENTITY_CONVENTION.md | ✅ | Usar `profile_id` para `created_by` (não auth.uid) |
-| EXTERNAL_USER_IDENTITY_PATTERN.md | ✅ | Contatos externos seguem padrão diferente de usuários internos |
+### Implementações similares verificadas no codebase
+- Padrão canônico de “resetar form só ao abrir dialog”: `src/hooks/useDialogFormReset.ts` + usos em múltiplos dialogs (ex.: `AreaFormDialog`, `EditBuDialog`, etc.).
+- Padrão de troca de escopo no KPI Create: `src/modules/kpis/components/CreateKpiDialog.tsx` usa handler (`handleScopeChange`) e não um `useEffect` reativo para limpar campos.
+- Query keys canônicas para KPIs: `src/lib/queryKeys/okrs.ts` exporta `kpisKeys` (via `queryKeys.kpis.*`).
 
 ---
 
-## Análise de Contexto
+## Diagnóstico provável (por que “não consigo mudar escopo” continua)
+Há dois pontos que, combinados, explicam perfeitamente o sintoma “eu salvo/mudo mas volta a ser Global / não reflete”:
 
-### Estrutura Existente (Referência)
-- `src/modules/assets/components/settings/InventoryImportDialog.tsx` - Importador de inventário com:
-  - Upload de CSV
-  - Parsing com tratamento de campos entre aspas
-  - Validação Zod
-  - Resolução de entidades relacionadas (categorias, localizações, usuários)
-  - Progresso visual
-  - Resumo de resultados (criados, ignorados, warnings)
-  - Download de template
+1) **Reset indevido do formulário enquanto o dialog está aberto**
+- O `EditKpiDialog` atualmente faz `form.reset(...)` em um `useEffect` que roda sempre que `kpi` mudar e `open` for true.
+- Se a query do KPI/lista refetchar (por foco de janela, reconexão, invalidations de outros lugares, ou re-render do pai), isso pode “puxar” o form de volta para os valores originais (ex.: `scope='org'`) e dar a sensação de que “não deixa mudar”.
 
-### Tabela Alvo: `partner_contacts` (TCR v2.46.0+)
-| Coluna | Tipo | Obrigatório | Descrição |
-|--------|------|-------------|-----------|
-| `id` | uuid | auto | PK |
-| `bu_id` | uuid | **DEPRECATED** | Manter para backward compat, mas criar association |
-| `external_company_id` | uuid | **sim** | FK → external_companies |
-| `name` | text | **sim** | Nome do contato |
-| `email` | text | **sim** | Email **ÚNICO GLOBAL** (lowercase) |
-| `phone` | text | não | Telefone |
-| `status` | enum | default 'active' | active/inactive |
-| `profile_user_id` | uuid | não | FK profiles se usuário existir |
-
-### Tabela: `partner_contact_bu_associations` (v2.46.0)
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| `partner_contact_id` | uuid | FK → partner_contacts |
-| `bu_id` | uuid | FK → bu_units |
-| `is_active` | bool | Se ativo na BU |
-| `created_by` | uuid | FK → profiles (quem criou) |
-
-### Tabela: `partner_contact_capabilities`
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| `contact_id` | uuid | FK → partner_contacts |
-| `external_company_id` | uuid | FK → external_companies |
-| `category_id` | uuid | FK → ticket_categories |
-| `subcategory_id` | uuid | FK → ticket_subcategories (null = generalista) |
-
-### Entidades Relacionadas
-- **external_companies**: Empresa já selecionada no contexto do dialog
-- **ticket_categories**: Resolver nome → ID para capacidades
-- **ticket_subcategories**: Resolver nome → ID para capacidades específicas
-- **Duplicidade**: Email é **ÚNICO GLOBAL** (não apenas por empresa)
+2) **Invalidação de cache incorreta nas mutations de KPI**
+- Em `useKpiMutations.ts`, após `updateKpi`, está sendo feito:
+  - `invalidateQueries({ queryKey: queryKeys.kpis.all(null) })`
+- Porém os KPIs são buscados com keys do tipo:
+  - `queryKeys.kpis.list(null, filters)` → `['kpis','list', null, filters]`
+- **`['kpis', null]` não casa com `['kpis','list', null, ...]`**, então a lista não refetch, e a UI pode ficar “presa” no estado anterior mesmo que o banco tenha atualizado.
+- Isso é um bug funcional (e é testável).
 
 ---
 
-## Decisões de Design
+## Objetivo do que vamos fazer
+1) **Criar testes (unitários) que reproduzam exatamente a falha atual**:
+   - Trocar escopo de `org → area` e `org → team`, preencher campos dependentes, salvar, e garantir que a mutation recebe o payload correto.
+   - Simular “re-render do pai com novo objeto kpi enquanto o dialog está aberto” e verificar que a escolha do usuário não é perdida.
+   - Criar testes específicos para invalidação (garantir que as keys certas são invalidadas).
 
-### 1. Escopo do Importador
-O importador será específico para uma empresa parceira selecionada, pois:
-- Simplifica a UI (empresa já pré-selecionada)
-- Evita erros de mapeamento de empresa
-- Segue o padrão de "adicionar contatos a uma empresa"
-
-### 2. Colunas do CSV
-| Coluna CSV | Mapeamento | Obrigatório |
-|------------|------------|-------------|
-| `name` | name | ✅ |
-| `email` | email | ✅ |
-| `phone` | phone | ❌ |
-| `status` | status (active/inactive) | ❌ (default: active) |
-| `categories` | partner_contact_capabilities | ❌ |
-
-**Formato da coluna `categories`:**
-- Lista de categorias separadas por ponto-e-vírgula (`;`)
-- Cada item pode ser: `"NomeCategoria"` (generalista) ou `"NomeCategoria > NomeSubcategoria"` (específico)
-- Exemplo: `"Suporte > Financeiro; Suporte > Técnico; Comercial"`
-
-### 3. Validações
-- Email único dentro da mesma empresa
-- Email com formato válido
-- Nome não vazio
-- Phone normalizado (apenas dígitos)
-- Categorias/subcategorias devem existir na BU atual (warnings se não encontradas)
-
-### 4. Fluxo de Convite
-- Opção de enviar convite automático para cada contato importado
-- Default: **não enviar** (evitar spam em importações grandes)
+2) **Corrigir o comportamento para que:**
+   - O form só resete quando o dialog abre (padrão canônico), e não em qualquer mudança do objeto `kpi`.
+   - A limpeza de campos dependentes ao trocar escopo seja determinística (idealmente via handler, como no CreateKpiDialog).
+   - O cache refaça fetch corretamente depois de update/delete/archive/reactivate, refletindo a mudança de escopo imediatamente sem refresh.
 
 ---
 
-## Componentes a Criar
+## Plano de implementação (com testes primeiro)
+### 1) Testes unitários: EditKpiDialog (reprodução + regressão)
+Atualizar/adicionar casos em `src/modules/kpis/components/__tests__/EditKpiDialog.test.tsx`:
 
-### 1. `PartnerContactImportDialog.tsx`
-Localização: `src/modules/tickets/components/settings/PartnerContactImportDialog.tsx`
+1. **Troca de escopo: org → area**
+   - Render com KPI `scope='org'`.
+   - Usuário muda `Escopo` para `Área`.
+   - `AreaSelect` aparece.
+   - Seleciona uma área.
+   - Submete.
+   - Asserções:
+     - `updateKpi.mutateAsync` foi chamado com `scope='area'`, `team_id=null`, `area_id='area-1'` (ou a escolhida).
 
-Reutiliza de `InventoryImportDialog`:
-- ✅ Estrutura do Dialog
-- ✅ FileInputRef + drag-and-drop
-- ✅ parseCSV (com tratamento de aspas)
-- ✅ Progress bar
-- ✅ Result summary (criados, ignorados, warnings)
-- ✅ Download template button
+2. **Troca de escopo: org → team**
+   - Render com KPI `scope='org'`.
+   - Usuário muda `Escopo` para `Time`.
+   - `TeamSelect` aparece.
+   - Seleciona um time.
+   - Submete.
+   - Asserções:
+     - `updateKpi.mutateAsync` foi chamado com `scope='team'`, `team_id='team-1'`.
+     - `area_id` no payload segue regra do produto: inferida via `useTeamArea` (mock já existe no teste), então esperamos `area_id='inferred-area-id'` (ou null se time não tem área).
 
-Customizações específicas:
-- Schema Zod para contatos
-- Props: `companyId`, `companyName`
-- Validação de email duplicado
-- Checkbox para enviar convites
+3. **Regressão principal: não perder alteração por “reset enquanto aberto”**
+   - Render com `open=true`.
+   - Usuário muda scope (ex.: para `area`) mas não salva ainda.
+   - Forçar `rerender` do componente passando um novo objeto `kpi` (mesmo id, mesmos dados) simulando “refetch”.
+   - Asserção: o `Select` de `scope` continua com o valor escolhido pelo usuário, e os inputs já editados permanecem.
+   - Esse teste deve falhar no estado atual (prova do bug) e passar após a correção.
 
-### 2. Template CSV
-Localização: `public/templates/partner-contacts-import-template.csv`
-
-Conteúdo:
-```csv
-name,email,phone,status,categories
-"João Silva","joao.silva@empresa.com.br","+55 11 99999-9999","active","Suporte > Financeiro; Suporte > Técnico"
-"Maria Santos","maria@empresa.com.br","","active","Comercial"
-"Carlos Pereira","carlos@empresa.com.br","+55 21 88888-8888","active","Suporte"
-```
-
-**Formato da coluna `categories`:**
-- `"Suporte > Financeiro; Suporte > Técnico"` = 2 subcategorias específicas
-- `"Comercial"` = categoria generalista (atende todas subcategorias)
-- `"Suporte"` = generalista na categoria Suporte
-
-### 3. Atualização: `PartnerContactsTab.tsx`
-- Adicionar botão "Importar" ao lado do "Novo Contato"
-- Estado para controlar abertura do dialog
+Critérios de aceite (unit):
+- Todos os testes anteriores continuam passando.
+- Esses 3 novos testes passam.
 
 ---
 
-## Componente Centralizado (Opcional Futuro)
+### 2) Correção: reset do form seguindo padrão canônico (useDialogFormReset)
+Em `src/modules/kpis/components/EditKpiDialog.tsx`:
+- Substituir o `useEffect` “Reset form when KPI changes” por `useDialogFormReset(open, ...)` para executar `form.reset(...)` **somente quando o dialog transiciona fechado → aberto**.
+- Garantir que ao trocar de KPI (id diferente) o reset aconteça no próximo open (ou, se o dialog permite trocar KPI aberto, tratar esse caso explicitamente por id-change — mas sem destruir edições por refetch do mesmo KPI).
 
-Identificamos padrões comuns entre os importadores:
-- CSV parsing
-- File upload UI
-- Progress tracking
-- Result display
-
-**Decisão**: Para este sprint, criar o componente específico. Refatorar para componente genérico em sprint futuro quando tivermos 3+ importadores.
-
----
-
-## Tarefas de Implementação
-
-| # | Tarefa | Arquivo |
-|---|--------|---------|
-| 1 | Criar template CSV | `public/templates/partner-contacts-import-template.csv` |
-| 2 | Criar PartnerContactImportDialog | `src/modules/tickets/components/settings/PartnerContactImportDialog.tsx` |
-| 3 | Adicionar botão de importação na tab | `src/modules/tickets/components/settings/PartnerContactsTab.tsx` |
+Critérios de aceite:
+- O teste de regressão (1.3) passa.
+- Usuário consegue trocar scope sem “voltar sozinho”.
 
 ---
 
-## Validações e Regras de Negócio
+### 3) Correção: troca de escopo com limpeza determinística (evitar efeito reativo frágil)
+Ainda em `EditKpiDialog.tsx`:
+- Alinhar com o padrão do `CreateKpiDialog`: criar um `handleScopeChange(newScope)` que:
+  - `setValue('scope', newScope)`
+  - Se `newScope !== 'team'`: limpar `team_id`
+  - Se `newScope !== 'area'`: limpar `area_id` (porque `org` não usa e `team` infere)
+- Remover ou simplificar o `useEffect` que hoje tenta limpar campos ao detectar mudança via `watchScope` + `prevScopeRef`. Esse approach é mais suscetível a edge cases (reset/refetch).
 
-### Linhas Ignoradas (não importadas)
-- Nome vazio
-- Email vazio
-- Email inválido (regex)
-
-### Warnings (importado com aviso)
-- Status inválido (usa default 'active')
-- Telefone com formato estranho
-- Categoria não encontrada (ignora capacidade, mas importa contato)
-- Subcategoria não encontrada (ignora capacidade específica)
-- **Email já existe global**: Contato não é criado novamente, mas é **associado à BU atual** e capacidades são adicionadas
+Critérios de aceite:
+- Testes 1.1 e 1.2 passam.
+- UI reflete corretamente campos dependentes.
 
 ---
 
-## Fluxo de Importação (Regras v2.46.0)
+### 4) Correção: invalidação de cache para KPIs (causa provável de “não refletir depois de salvar”)
+Em `src/modules/kpis/hooks/useKpiMutations.ts` (e também onde houver `queryKeys.kpis.all(null)` em mutations relacionadas):
+- Trocar a estratégia de invalidação para uma que realmente case com as keys existentes:
+  - Opção A (preferível e consistente): adicionar helpers de prefix em `kpisKeys` (em `src/lib/queryKeys/okrs.ts`), por exemplo:
+    - `prefix: () => ['kpis']`
+    - `listPrefix: () => ['kpis','list']`
+    - `evolutionListPrefix: () => ['kpis','evolution-list']`
+  - E então invalidar:
+    - `invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' })`
+    - `invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' })` (se aplicável)
+    - `invalidateQueries({ queryKey: queryKeys.kpis.detail(kpiId), refetchType: 'active' })`
 
-Para cada linha do CSV:
-1. Validar campos obrigatórios (name, email)
-2. Normalizar email para lowercase
-3. Verificar se email já existe em `partner_contacts`:
-   - **SE EXISTE**: 
-     - Verificar se já está associado à BU atual
-     - Se não, criar `partner_contact_bu_association`
-     - Warning: "Contato já existente, adicionado à BU"
-   - **SE NÃO EXISTE**: Criar novo registro com `external_company_id` da empresa selecionada
-4. Parsear coluna `categories` e criar `partner_contact_capabilities`
-5. Invalidar queries afetadas
+- Repetir o ajuste para delete/archive/reactivate e qualquer outra mutation KPI que hoje invalida `queryKeys.kpis.all(null)`.
 
----
-
-## Fluxo de Usuário
-
-1. Usuário acessa `/tickets/settings?tab=contacts`
-2. Seleciona uma empresa no filtro
-3. Clica em "Importar Contatos"
-4. Baixa template (opcional)
-5. Seleciona arquivo CSV
-6. Opcionalmente marca "Enviar convite para novos contatos"
-7. Clica "Importar"
-8. Vê progresso e resultado final
-9. Lista de contatos é atualizada automaticamente
+Critérios de aceite:
+- Ao salvar, a lista/telas que dependem de `kpis.list(...)` atualizam sem refresh.
+- O usuário vê o escopo atualizado imediatamente após salvar.
 
 ---
 
-## QueryKeys Impactadas
-- `queryKeys.tickets.partnerContacts(buId, companyId)` - invalidar após importação
-- `queryKeys.tickets.contactCapabilitiesPrefix()` - invalidar após criação de capacidades
-- `queryKeys.tickets.companyContactCapabilitiesPrefix()` - invalidar após criação de capacidades
+### 5) Testes unitários adicionais (cache invalidation)
+Adicionar teste para `useKpiMutations` validando que `invalidateQueries` é chamado com as keys prefix certas após `onSuccess`.
+- Estratégia: mock do `useQueryClient()` e asserção em `invalidateQueries` com as keys esperadas.
+
+Critérios de aceite:
+- Teste falha antes do fix e passa depois.
 
 ---
 
-## Considerações de Segurança
-- Importação usa `useBuScopedSupabase` (respeita RLS)
-- `created_by` populado com `profile_id` do usuário autenticado (via `useIdentity().realProfileId`)
-- Emails são convertidos para lowercase para garantir unicidade
-- Validação Zod no frontend + constraints no banco
+## Validação manual (pós-merge)
+1) No app (logado), abrir uma KPI Global (scope org) e editar:
+   - Mudar para Área, escolher área, salvar → reabrir → permanece Área.
+   - Mudar para Time, escolher time, salvar → reabrir → permanece Time e área inferida aparece como badge.
+2) Confirmar que a lista de KPIs e qualquer dashboard que mostre scope reflete sem precisar refresh.
+3) (Opcional) Verificar também a tela de evolução (`useKpiEvolutionList`) para garantir que os filtros/agrupamentos refletiram a mudança.
 
 ---
 
-## Hooks Canônicos Utilizados
-| Hook | Uso |
-|------|-----|
-| `useBuScopedSupabase()` | Cliente BU-scoped para todas as operações |
-| `useIdentity()` | Obter `realProfileId` para `created_by` |
-| `useBu()` | Obter `buId` atual |
-| `useTicketCategories('external')` | Resolver nomes de categorias → IDs |
-| `usePartnerContacts(companyId)` | Verificar emails existentes |
+## Riscos/edge cases que vamos cobrir
+- Refetch de dados enquanto modal aberto não deve apagar edições.
+- Troca de escopo não pode deixar `team_id` setado quando `scope='org'/'area'` (o trigger de governança também rejeita isso).
+- Para `scope='team'`, `area_id` deve ser inferida, e não exigida manualmente.
+- Manter conformidade com PRE-BU/POST-BU: mutations continuam usando cliente BU-scoped via `useOptionalBuScopedSupabase()` + `assertSupabaseClient`.
+
+---
+
+## Entregáveis
+- Testes unitários novos e cobrindo o bug real.
+- Refactor do `EditKpiDialog` para seguir padrão canônico de reset.
+- Correção de invalidação de cache de KPIs (principal suspeita de “não refletir”).
+- Pequena evolução de `kpisKeys` com prefix helpers (mantendo padrão de query keys centralizadas).
