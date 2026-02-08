@@ -5,6 +5,7 @@
 // v2.85.0: Added useCanEditKpi for ownership-based edit permissions
 // v2.86.0: Added useKpiTargetHistory for target/benchmark change tracking
 // v2.86.0: Added useKpiWithHistory for evolution visualization
+// v2.89.0: Added useKpiKrLinks for KR link filtering
 
 export { useKpiData, useKpiDetail } from "./useKpiData";
 export { useKpiMutations } from "./useKpiMutations";
@@ -17,6 +18,7 @@ export { useCanEditKpi } from "./useCanEditKpi";
 export { useKpiTargetHistory } from "./useKpiTargetHistory";
 export { useKpiWithHistory } from "./useKpiWithHistory";
 export { useKpiEvolutionList } from "./useKpiEvolutionList";
+export { useKpiKrLinks } from "./useKpiKrLinks";
 
 // Types
 export type { KpiForWizard, UseKpisForWizardOptions, UseKpisForWizardResult } from "./useKpisForWizard";
