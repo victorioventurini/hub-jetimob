@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.21.0  
-**Última atualização:** 2026-02-07  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance**
-**Referência:** TCR v3.0.0
+**Versão:** 1.22.0  
+**Última atualização:** 2026-02-08  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0**
+**Referência:** TCR v3.1.0
 
 ---
 
@@ -501,9 +501,38 @@ const updateMutation = useMutation({
 });
 ```
 
+#### Query Key Prefixes para Invalidação (v1.22.0)
+
+Para garantir invalidação correta de múltiplas variações de queries, usar **prefix helpers**:
+
+```typescript
+// src/lib/queryKeys/okrs.ts
+export const kpisKeys = {
+  // Keys específicas
+  list: (buId: string | null, filters: KpiFilters) => ['kpis', 'list', buId, filters] as const,
+  detail: (kpiId: string) => ['kpis', kpiId] as const,
+  
+  // ✅ PREFIXES para invalidação ampla
+  listPrefix: () => ['kpis', 'list'] as const,
+  evolutionListPrefix: () => ['kpis', 'evolution-list'] as const,
+  valuesPrefix: () => ['kpis', 'values'] as const,
+};
+```
+
+```typescript
+// ✅ CORRETO: Invalidar usando prefix (afeta todas as variações de filtros)
+queryClient.invalidateQueries({ 
+  queryKey: queryKeys.kpis.listPrefix(), 
+  refetchType: 'active' 
+});
+
+// ❌ ERRADO: Invalidar key que não casa com as queries reais
+queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null) }); // BUG!
+```
+
 **Regras:**
 - ✅ Usar `queryKeys` centralizadas para invalidação (nunca strings hardcoded)
-- ✅ Invalidar usando prefixo para afetar variações (ex: `queryKeys.myModule.all()`)
+- ✅ Invalidar usando prefixo para afetar variações (ex: `queryKeys.myModule.listPrefix()`)
 - ✅ Fechar modal no `onSuccess` APÓS invalidação
 - ❌ NUNCA exigir que usuário recarregue página para ver alterações
 
@@ -682,6 +711,76 @@ const { data: teamKrs } = await supabase
 ```
 
 > ⚠️ **IMPORTANTE:** Esta regra aplica-se a TODAS as queries de leitura, incluindo queries aninhadas e de contexto.
+
+### D.8 useDialogFormReset — Padrão Canônico para Dialogs de Edição (v1.22.0)
+
+```
+⚠️ PROBLEMA: useEffect que reseta form em "kpi changes + open" apaga edições do usuário durante refetch.
+✅ SOLUÇÃO: Usar useDialogFormReset() que só reseta ao transicionar closed → open.
+```
+
+O hook `useDialogFormReset` garante que formulários em dialogs só sejam resetados quando o dialog realmente abre, evitando perda de edições durante refetches ou re-renders.
+
+#### Localização
+
+```typescript
+import { useDialogFormReset } from "@/hooks/useDialogFormReset";
+```
+
+#### Uso Correto
+
+```typescript
+function EditKpiDialog({ kpi, open, onOpenChange }: Props) {
+  const form = useForm<FormData>({ /* ... */ });
+  
+  // ✅ CORRETO: Reseta apenas quando dialog transiciona closed → open
+  useDialogFormReset(open, () => {
+    form.reset({
+      name: kpi.name,
+      scope: kpi.scope,
+      // ... outros campos
+    });
+  });
+  
+  // ❌ ERRADO: useEffect com dependências que mudam durante edição
+  // useEffect(() => {
+  //   if (open && kpi) form.reset({ ... });  // BUG: reseta a cada refetch!
+  // }, [kpi, open]);
+  
+  return <Dialog open={open} onOpenChange={onOpenChange}>...</Dialog>;
+}
+```
+
+#### Quando o KPI ID muda (dialog aberto)
+
+Se o componente permite trocar de entidade com o dialog aberto (raro), detectar mudança de ID:
+
+```typescript
+const prevIdRef = useRef(kpi?.id);
+
+useDialogFormReset(open, () => {
+  form.reset({ ...kpi });
+  prevIdRef.current = kpi?.id;
+});
+
+// Detectar troca de entidade enquanto aberto
+useEffect(() => {
+  if (open && kpi?.id && kpi.id !== prevIdRef.current) {
+    form.reset({ ...kpi });
+    prevIdRef.current = kpi.id;
+  }
+}, [open, kpi?.id, form, kpi]);
+```
+
+#### Aplicação Obrigatória
+
+Todos os dialogs de edição DEVEM usar este padrão:
+- ✅ `EditKpiDialog`
+- ✅ `TeamKrFormDialog`  
+- ✅ `OrgKrFormDialog`
+- ✅ `EditBuDialog`
+- ✅ `AreaFormDialog`
+- ✅ Qualquer dialog com `react-hook-form` que carrega dados de uma entidade
 
 ---
 
