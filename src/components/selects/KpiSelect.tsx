@@ -202,6 +202,12 @@ export function KpiSelect({
                 <span className="text-xs text-muted-foreground">({displayedKpi.unit})</span>
               )}
             </div>
+          ) : value ? (
+            // Loading state: KPI ID exists but data not loaded yet
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Activity className="h-4 w-4 animate-pulse flex-shrink-0" />
+              <span className="truncate">Carregando...</span>
+            </div>
           ) : null}
         </SelectValue>
       </SelectTrigger>
