@@ -95,9 +95,23 @@ export function useCreateKrMetric() {
     }) => {
       if (!supabase) throw new Error('Cliente não disponível');
       
+      // v3.4.1: Usar upsert para evitar erro de unique constraint
+      // Se o KPI já está vinculado (com outro role ou soft-deleted), atualiza ao invés de inserir
       const { data, error } = await supabase
         .from('okr_kr_metrics')
-        .insert(metric)
+        .upsert(
+          {
+            kr_id: metric.kr_id,
+            kr_type: metric.kr_type,
+            kpi_id: metric.kpi_id,
+            role: metric.role,
+            deleted_at: null, // Reativa se estava soft-deleted
+          },
+          {
+            onConflict: 'kr_id,kr_type,kpi_id',
+            ignoreDuplicates: false,
+          }
+        )
         .select(KR_METRIC_FIELDS)
         .single();
 
@@ -114,8 +128,10 @@ export function useCreateKrMetric() {
     },
     onError: (error: Error) => {
       console.error('Error creating KR metric:', error);
-      if (error.message.includes('primary')) {
+      if (error.message.includes('primary') || error.message.includes('validate_kr_primary_metric')) {
         toast.error('Este KR já possui um KPI primário');
+      } else if (error.message.includes('duplicate')) {
+        toast.error('Este KPI já está vinculado ao KR');
       } else {
         toast.error('Erro ao vincular KPI');
       }
