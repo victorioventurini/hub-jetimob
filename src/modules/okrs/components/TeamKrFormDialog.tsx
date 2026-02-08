@@ -362,6 +362,7 @@ export function TeamKrFormDialog({
                   teamId={teamId}
                   allowNone={true}
                   noneLabel="Nenhum"
+                  excludeExternal={true}
                 />
               </div>
 
