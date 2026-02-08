@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, Minus, AlertCircle, Plug, FileSpreadsheet, Database, Edit3, Webhook, Sparkles, Clock, User } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AreaBadge } from "@/components/ui/area-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -102,13 +103,7 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               {kpi.area && (
-                <Badge
-                  variant="secondary"
-                  className="text-xs px-2 py-0.5 shrink-0"
-                  style={{ backgroundColor: kpi.area.color || 'hsl(var(--muted))' }}
-                >
-                  {kpi.area.name}
-                </Badge>
+                <AreaBadge area={kpi.area} className="shrink-0" />
               )}
               <Tooltip>
                 <TooltipTrigger asChild>

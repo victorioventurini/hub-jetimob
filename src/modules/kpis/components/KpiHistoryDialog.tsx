@@ -10,6 +10,7 @@
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { AreaBadge } from "@/components/ui/area-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -141,16 +142,7 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                   {ragConfig.label}
                 </Badge>
                 {kpi.area && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs"
-                    style={{ 
-                      borderColor: kpi.area.color || undefined,
-                      color: kpi.area.color || undefined,
-                    }}
-                  >
-                    {kpi.area.name}
-                  </Badge>
+                  <AreaBadge area={kpi.area} />
                 )}
                 {kpi.team && (
                   <span className="text-xs text-muted-foreground">• {kpi.team.name}</span>

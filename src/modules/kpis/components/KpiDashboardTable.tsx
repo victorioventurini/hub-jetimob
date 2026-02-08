@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AreaBadge } from "@/components/ui/area-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -148,16 +149,7 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                 {/* Área */}
                 <TableCell>
                   {kpi.area ? (
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs whitespace-nowrap"
-                      style={{ 
-                        borderColor: kpi.area.color || undefined, 
-                        color: kpi.area.color || undefined 
-                      }}
-                    >
-                      {kpi.area.name}
-                    </Badge>
+                    <AreaBadge area={kpi.area} />
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
