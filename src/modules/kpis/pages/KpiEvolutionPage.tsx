@@ -26,6 +26,7 @@ import { PageHeader } from "@/components/ui/page-header";
 // Breadcrumb handled via PageHeader's breadcrumbs prop
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AreaBadge } from "@/components/ui/area-badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -166,16 +167,7 @@ function KpiEvolutionCard({
         />
         <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
           {kpi.area && (
-            <Badge 
-              variant="outline" 
-              className="text-xs"
-              style={{ 
-                borderColor: kpi.area.color || undefined,
-                color: kpi.area.color || undefined,
-              }}
-            >
-              {kpi.area.name}
-            </Badge>
+            <AreaBadge area={kpi.area} />
           )}
           {kpi.owner && (
             <div className="flex items-center gap-1.5">
@@ -208,12 +200,7 @@ function KpiExpandedChart({ kpi }: { kpi: KpiEvolutionItem }) {
               <Badge variant="secondary">{INDICATOR_TYPE_LABELS[kpi.indicator_type]}</Badge>
               <Badge variant="outline" className={ragConfig.color}>{ragConfig.label}</Badge>
               {kpi.area && (
-                <Badge 
-                  variant="outline"
-                  style={{ borderColor: kpi.area.color || undefined, color: kpi.area.color || undefined }}
-                >
-                  {kpi.area.name}
-                </Badge>
+                <AreaBadge area={kpi.area} />
               )}
             </div>
           </div>
@@ -511,13 +498,7 @@ export default function KpiEvolutionPage() {
                       </TableCell>
                       <TableCell>
                         {kpi.area ? (
-                          <Badge 
-                            variant="outline" 
-                            className="text-xs"
-                            style={{ borderColor: kpi.area.color || undefined, color: kpi.area.color || undefined }}
-                          >
-                            {kpi.area.name}
-                          </Badge>
+                          <AreaBadge area={kpi.area} />
                         ) : '—'}
                       </TableCell>
                       <TableCell className="text-right font-medium">

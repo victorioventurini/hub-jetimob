@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown, Minus, BarChart3, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { AreaBadge } from "@/components/ui/area-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useKpiData } from "../hooks";
@@ -93,13 +93,7 @@ export function KpiSidePanel({ className }: KpiSidePanelProps) {
                   {kpi.area && (
                     <Tooltip>
                       <TooltipTrigger>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] px-1.5 py-0"
-                          style={{ backgroundColor: kpi.area.color || 'hsl(var(--muted))' }}
-                        >
-                          {kpi.area.name.slice(0, 3)}
-                        </Badge>
+                        <AreaBadge area={kpi.area} size="sm" compact />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{kpi.area.name}</p>
