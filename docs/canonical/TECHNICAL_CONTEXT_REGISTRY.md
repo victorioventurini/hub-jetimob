@@ -25,8 +25,9 @@
 > - [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) — Sistema de templates de permissão
 >
 > ### Relatórios de Saúde e Compliance
-> - [SYSTEMIC_HEALTH_AUDIT_2026-02-07.md](../audits/SYSTEMIC_HEALTH_AUDIT_2026-02-07.md) — **Auditoria sistêmica de saúde** ⭐
-> - [COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md](../audits/COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md) — **Auditoria de higienização** ⭐
+> - [COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md](../audits/COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md) — **Auditoria técnica completa** ⭐ NOVO
+> - [SYSTEMIC_HEALTH_AUDIT_2026-02-07.md](../audits/SYSTEMIC_HEALTH_AUDIT_2026-02-07.md) — Auditoria sistêmica de saúde
+> - [COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md](../audits/COMPREHENSIVE_HYGIENE_AUDIT_2026-02-07.md) — Auditoria de higienização
 > - [HEALTH_REPORT_2026-01-22.md](../audits/HEALTH_REPORT_2026-01-22.md) — Relatório de saúde técnica
 > - [COMPLIANCE_BASELINE.md](../audits/COMPLIANCE_BASELINE.md) — Baseline de compliance e audits
 >
