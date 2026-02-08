@@ -71,8 +71,12 @@ export function useKpiMutations() {
       return result;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+      // Invalidate list and evolution queries using prefix helpers
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.id), refetchType: 'active' });
+      // Also invalidate values and target history for complete reactivity
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
       toast({
         title: "KPI atualizado",
         description: "As alterações foram salvas com sucesso.",
@@ -101,7 +105,8 @@ export function useKpiMutations() {
       return kpiId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       toast({
         title: "KPI removido",
         description: "O KPI foi removido com sucesso.",
@@ -130,7 +135,8 @@ export function useKpiMutations() {
       return kpiId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       toast({
         title: "KPI arquivado",
         description: "O KPI foi desativado e não aparecerá mais no dashboard.",
@@ -159,7 +165,8 @@ export function useKpiMutations() {
       return kpiId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       toast({
         title: "KPI reativado",
         description: "O KPI está ativo novamente.",

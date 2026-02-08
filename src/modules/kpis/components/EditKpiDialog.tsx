@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -50,6 +50,7 @@ import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ChevronDown, Info } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 
 /**
  * v2.82.0 - Formulário de edição de Indicadores
@@ -166,36 +167,50 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     watchScope === 'team' ? watchTeamId : undefined
   );
 
-  // Reset form when KPI changes
-  useEffect(() => {
-    if (kpi && open) {
-      // Reset ref so cleanup effect skips the first run after reset
-      prevScopeRef.current = null;
+  // Track the last KPI id to detect when switching to a different KPI
+  const lastKpiIdRef = useRef<string | null>(null);
 
-      form.reset({
-        name: kpi.name,
-        description: kpi.description || "",
-        unit: kpi.unit,
-        direction: kpi.direction,
-        frequency: kpi.frequency === 'manual' ? 'monthly' : kpi.frequency as DbKpiFrequency,
-        team_id: kpi.team_id || undefined,
-        owner_user_id: kpi.owner_user_id || undefined,
-        target_value: kpi.target_value || undefined,
-        // Governance fields
-        indicator_type: kpi.indicator_type || "kpi",
-        lifecycle_status: kpi.lifecycle_status || "active",
-        target_source: kpi.target_source || "",
-        recovery_protocol: kpi.recovery_protocol || "",
-        // Scope and ownership
-        area_id: kpi.area_id || undefined,
-        scope: kpi.scope || "team",
-      });
-      // Open advanced if there are values
-      if (kpi.target_source || kpi.recovery_protocol) {
-        setShowAdvanced(true);
-      }
+  // Canonical reset: only reset form when dialog transitions from closed to open
+  // or when switching to a different KPI (different id)
+  const resetFormWithKpiData = useCallback(() => {
+    if (!kpi) return;
+    
+    form.reset({
+      name: kpi.name,
+      description: kpi.description || "",
+      unit: kpi.unit,
+      direction: kpi.direction,
+      frequency: kpi.frequency === 'manual' ? 'monthly' : kpi.frequency as DbKpiFrequency,
+      team_id: kpi.team_id || undefined,
+      owner_user_id: kpi.owner_user_id || undefined,
+      target_value: kpi.target_value || undefined,
+      // Governance fields
+      indicator_type: kpi.indicator_type || "kpi",
+      lifecycle_status: kpi.lifecycle_status || "active",
+      target_source: kpi.target_source || "",
+      recovery_protocol: kpi.recovery_protocol || "",
+      // Scope and ownership
+      area_id: kpi.area_id || undefined,
+      scope: kpi.scope || "team",
+    });
+    
+    // Open advanced if there are values
+    if (kpi.target_source || kpi.recovery_protocol) {
+      setShowAdvanced(true);
     }
-  }, [kpi, open, form]);
+    
+    lastKpiIdRef.current = kpi.id;
+  }, [kpi, form]);
+
+  // Use canonical hook: only reset when dialog opens (closed → open transition)
+  useDialogFormReset(open, resetFormWithKpiData);
+
+  // Also reset if KPI id changes while dialog is open (switching to different KPI)
+  useEffect(() => {
+    if (open && kpi && kpi.id !== lastKpiIdRef.current) {
+      resetFormWithKpiData();
+    }
+  }, [open, kpi, resetFormWithKpiData]);
 
   // Atualizar area_id quando inferido (e não há área já definida)
   useEffect(() => {
@@ -204,31 +219,20 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     }
   }, [watchScope, inferredAreaId, form]);
 
-  // Track previous scope to only clear fields on actual user changes, not on mount/reset
-  const prevScopeRef = useRef<string | null>(null);
-
-  // Efeito para limpar campos dependentes quando escopo muda (somente mudanças do usuário)
-  useEffect(() => {
-    // Skip first run and runs triggered by form.reset (prevScopeRef is set after reset)
-    if (prevScopeRef.current === null) {
-      prevScopeRef.current = watchScope;
-      return;
-    }
-    // If scope didn't actually change, skip
-    if (prevScopeRef.current === watchScope) {
-      return;
-    }
-    prevScopeRef.current = watchScope;
-
-    // Limpa team_id quando escopo não é 'team'
-    if (watchScope !== "team") {
+  // Deterministic scope change handler - clears dependent fields immediately
+  const handleScopeChange = useCallback((newScope: KpiScope) => {
+    form.setValue("scope", newScope, { shouldDirty: true });
+    
+    // Clear team_id when scope is not 'team'
+    if (newScope !== "team") {
       form.setValue("team_id", undefined, { shouldDirty: true });
     }
-    // Limpa area_id quando escopo é 'team' (inferido) ou 'org' (global)
-    if (watchScope === "team" || watchScope === "org") {
+    
+    // Clear area_id when scope is 'team' (inferred) or 'org' (global)
+    if (newScope === "team" || newScope === "org") {
       form.setValue("area_id", undefined, { shouldDirty: true });
     }
-  }, [watchScope, form]);
+  }, [form]);
 
   // Defense in Depth: block render if no permission
   if (!isLoadingPermission && !canEditIndicator) {
@@ -572,7 +576,10 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         }
                       />
                     </FormLabel>
-                    <Select onValueChange={(val) => field.onChange(val)} value={field.value}>
+                    <Select 
+                      onValueChange={(val) => handleScopeChange(val as KpiScope)} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
