@@ -150,7 +150,7 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
               </div>
             </div>
             {/* Actions Menu for owners/admins */}
-            <KpiActionsMenu kpi={kpi} />
+            <KpiActionsMenu kpi={kpi} alwaysVisible />
           </div>
         </DialogHeader>
 
