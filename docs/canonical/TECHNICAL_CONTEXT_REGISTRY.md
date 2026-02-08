@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.0.0  
-**Última atualização:** 2026-02-07 (v3.0.0 - PII Security Hardening v1.0 - Field-level privacy functions for external_companies documents, Security Scan 0 errors, Systemic Health Audit + Hygiene Audit complete)
+**Versão:** 3.1.0  
+**Última atualização:** 2026-02-08 (v3.1.0 - KPI Scope Editing Fix v1.0 - Canonical useDialogFormReset pattern, Query Key Prefixes for proper cache invalidation, Data governance fix for imported KPIs)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI Scope Editing Fix v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -286,6 +286,8 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 | **Impersonação opcional** | `useOptionalImpersonation()` | Retorna null se fora do contexto de impersonação |
 | **Focus Recovery (Radix)** | `useRadixFocusRecovery()` | Recupera pointer-events após troca de aba (chamar UMA VEZ no App.tsx) |
 | **KPIs para Wizards** | `useKpisForWizard()` | Hook fail-safe para wizards OKR — retorna KPIs ativos com latest value, RAG status e flag `needs_update` |
+| **Dialog Form Reset** | `useDialogFormReset()` | Reset de form APENAS quando dialog abre (closed→open), evita perda de edições por refetch |
+| **Team Area (auto-inference)** | `useTeamArea()` | Busca área associada a um time para inferência automática em escopo='team' |
 
 #### Componentes Canônicos por Domínio
 
