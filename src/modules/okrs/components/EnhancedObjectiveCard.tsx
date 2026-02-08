@@ -339,7 +339,8 @@ interface EnhancedKrRowProps {
 function EnhancedKrRow({ kr, index, type, onEdit, onCheckin }: EnhancedKrRowProps) {
   const progress = calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
 
-  const formatValue = (value: number, unit: string) => {
+  const formatValue = (value: number | null | undefined, unit: string) => {
+    if (value === null || value === undefined) return '—';
     if (unit === '%') return `${value}%`;
     if (unit === 'R$') return `R$ ${value.toLocaleString('pt-BR')}`;
     if (unit === '$') return `$ ${value.toLocaleString('en-US')}`;

@@ -20,6 +20,12 @@ interface OkrProgressBarProps {
   className?: string;
 }
 
+// Null-safe formatting helper
+const safeFormat = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '—';
+  return value.toLocaleString('pt-BR');
+};
+
 export function OkrProgressBar({
   baseline,
   current,
@@ -31,7 +37,7 @@ export function OkrProgressBar({
   size = 'md',
   className,
 }: OkrProgressBarProps) {
-  const progress = calculateProgress(baseline, current, target, direction);
+  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction);
   const isOverachieved = progress > 100;
 
   const getStatusColor = () => {
@@ -65,7 +71,7 @@ export function OkrProgressBar({
       {showLabels && (
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
           <span>
-            {current.toLocaleString('pt-BR')} {unit}
+            {safeFormat(current)} {unit}
           </span>
           <div className="flex items-center gap-1.5">
             {isOverachieved && (
@@ -98,7 +104,7 @@ export function OkrProgressBar({
                 {isOverachieved && (
                   <TooltipContent side="top" className="max-w-xs">
                     <p className="text-sm">
-                      {progress.toFixed(1)}% da meta ({current.toLocaleString('pt-BR')} / {target.toLocaleString('pt-BR')})
+                      {progress.toFixed(1)}% da meta ({safeFormat(current)} / {safeFormat(target)})
                     </p>
                   </TooltipContent>
                 )}
@@ -115,8 +121,8 @@ export function OkrProgressBar({
       </div>
       {showLabels && (
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-          <span>Base: {baseline.toLocaleString('pt-BR')}</span>
-          <span>Meta: {target.toLocaleString('pt-BR')}</span>
+          <span>Base: {safeFormat(baseline)}</span>
+          <span>Meta: {safeFormat(target)}</span>
         </div>
       )}
     </div>

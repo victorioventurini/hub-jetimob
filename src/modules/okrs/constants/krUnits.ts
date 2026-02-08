@@ -71,11 +71,20 @@ export function getUnitLabel(value: string): string {
   return unit?.label || value;
 }
 
+/**
+ * Formats a numeric value with its unit.
+ * Returns fallback '—' for null/undefined values.
+ */
 export function formatValueWithUnit(
-  value: number,
+  value: number | null | undefined,
   unit: string,
   showPrefix = true
 ): string {
+  // Null-safe: return fallback for missing values
+  if (value === null || value === undefined) {
+    return '—';
+  }
+
   const numStr = value.toLocaleString('pt-BR');
   
   // Units that come before the number

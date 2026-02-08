@@ -55,7 +55,8 @@ const STATUS_CONFIG = {
   not_started: { label: 'Não iniciado', variant: 'secondary' as const, className: '' },
 };
 
-function formatValue(value: number, unit?: string): string {
+function formatValue(value: number | null | undefined, unit?: string): string {
+  if (value === null || value === undefined) return '—';
   if (unit === '%') return `${value}%`;
   if (unit === 'R$') return `R$ ${value.toLocaleString('pt-BR')}`;
   return value.toLocaleString('pt-BR') + (unit ? ` ${unit}` : '');
