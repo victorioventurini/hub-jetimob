@@ -116,6 +116,22 @@ export function useCreateKrMetric() {
         .single();
 
       if (error) throw error;
+      
+      // v3.4.2: Sincronizar meta da KR com target_value do KPI primário
+      if (metric.role === 'primary' && data?.kpi?.target_value !== null && data?.kpi?.target_value !== undefined) {
+        const krTable = metric.kr_type === 'org' ? 'okr_org_key_results' : 'okr_team_key_results';
+        
+        await supabase
+          .from(krTable)
+          .update({ 
+            target: data.kpi.target_value,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', metric.kr_id);
+        
+        // Nota: ignoramos erro aqui para não bloquear a vinculação caso a atualização da meta falhe
+      }
+      
       return data;
     },
     onSuccess: (_, variables) => {
@@ -124,7 +140,21 @@ export function useCreateKrMetric() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('guardrails', variables.kr_id, variables.kr_type) });
       // v3.4.0: manter banner (fonte única) em sync
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpi(variables.kr_id, variables.kr_type) });
-      toast.success(variables.role === 'primary' ? 'KPI primário vinculado' : 'Guardrail adicionado');
+      
+      // v3.4.2: Invalidar queries de KRs para refletir a meta atualizada
+      if (variables.role === 'primary') {
+        if (variables.kr_type === 'org') {
+          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+        } else {
+          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+        }
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+        toast.success('KPI primário vinculado e meta sincronizada');
+      } else {
+        toast.success('Guardrail adicionado');
+      }
     },
     onError: (error: Error) => {
       console.error('Error creating KR metric:', error);
