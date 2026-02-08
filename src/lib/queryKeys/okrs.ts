@@ -225,6 +225,19 @@ export const okrsKeys = {
 } as const;
 
 export const kpisKeys = {
+  // ── Prefix helpers for broad invalidation ──
+  /** Invalidate all KPI queries */
+  prefix: () => ['kpis'] as const,
+  /** Invalidate all KPI list queries */
+  listPrefix: () => ['kpis', 'list'] as const,
+  /** Invalidate all KPI evolution list queries */
+  evolutionListPrefix: () => ['kpis', 'evolution-list'] as const,
+  /** Invalidate all KPI detail queries */
+  detailPrefix: () => ['kpis', 'detail'] as const,
+  /** Invalidate all KPI values queries */
+  valuesPrefix: () => ['kpis', 'values'] as const,
+
+  // ── Standard keys ──
   all: (buId: string | null) => ['kpis', buId] as const,
   list: (buId: string | null, filters?: Record<string, unknown>) => 
     ['kpis', 'list', buId, filters] as const,
