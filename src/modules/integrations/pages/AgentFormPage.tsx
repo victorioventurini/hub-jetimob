@@ -66,10 +66,10 @@ interface ModelOption {
 
 const MODELS: ModelOption[] = [
   // Google Gemini (via Lovable AI Gateway)
-  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Balanceado: boa performance com baixo custo', provider: 'google', recommended: true },
+  { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)', description: 'Nova geração — velocidade otimizada', provider: 'google', recommended: true },
   { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Melhor raciocínio e contexto estendido', provider: 'google' },
   { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', description: 'Mais rápido e econômico', provider: 'google' },
-  { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)', description: 'Nova geração — velocidade otimizada', provider: 'google' },
+  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Balanceado: boa performance com baixo custo', provider: 'google' },
   // OpenAI (via Lovable AI Gateway)
   { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini', description: 'Excelente custo-benefício', provider: 'openai' },
   { value: 'openai/gpt-5', label: 'GPT-5', description: 'Mais poderoso, maior custo', provider: 'openai' },
@@ -111,7 +111,7 @@ export default function AgentFormPage() {
   const [outputFormat, setOutputFormat] = useState<'text' | 'json'>('text');
   const [outputSchema, setOutputSchema] = useState('');
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
-  const [modelName, setModelName] = useState('google/gemini-2.5-flash');
+  const [modelName, setModelName] = useState('google/gemini-3-flash-preview');
   const [maxTokens, setMaxTokens] = useState<string>('');
   const [temperature, setTemperature] = useState<string>('0.7');
   
@@ -145,7 +145,7 @@ export default function AgentFormPage() {
             setOutputFormat(agent.output_format);
             setOutputSchema(agent.output_schema ? JSON.stringify(agent.output_schema, null, 2) : '');
             setSelectedTools(agent.allowed_tools as string[] || []);
-            setModelName(agent.model_name || 'google/gemini-2.5-flash');
+            setModelName(agent.model_name || 'google/gemini-3-flash-preview');
             setMaxTokens(agent.max_tokens?.toString() || '');
             setTemperature(agent.temperature?.toString() || '0.7');
           }
