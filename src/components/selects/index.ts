@@ -59,3 +59,7 @@ export { AreaSelect } from "./AreaSelect";
 // KPIs / Indicators
 export { KpiSelect } from "./KpiSelect";
 export type { KpiSelectProps } from "./KpiSelect";
+
+// Units (KRs, KPIs, Metrics)
+export { UnitSelect } from "./UnitSelect";
+export type { UnitSelectProps } from "./UnitSelect";
