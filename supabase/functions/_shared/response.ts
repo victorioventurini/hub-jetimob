@@ -20,7 +20,7 @@
  * ```
  */
 
-import { corsHeaders } from "./middleware.ts";
+import { corsHeaders } from "./cors.ts";
 
 // =============================================================================
 // TYPES
