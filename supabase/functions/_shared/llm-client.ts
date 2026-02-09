@@ -3,7 +3,7 @@
  * Handles OpenAI and Lovable AI Gateway
  */
 
-import { corsHeaders } from "./middleware.ts";
+import { corsHeaders } from "./cors.ts";
 
 export interface LLMConfig {
   apiUrl: string;

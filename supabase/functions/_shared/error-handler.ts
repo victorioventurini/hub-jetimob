@@ -5,7 +5,7 @@
  * Uses standard HTTP status codes and error codes.
  */
 
-import { corsHeaders } from "./middleware.ts";
+import { corsHeaders } from "./cors.ts";
 
 // ============================================================================
 // Error Types

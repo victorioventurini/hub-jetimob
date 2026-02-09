@@ -8,12 +8,9 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ============================================================================
-// CORS Headers - Standard for all functions
+// CORS Headers - Re-exported from cors.ts (single source of truth)
 // ============================================================================
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-current-bu-id, x-correlation-id, x-cron-secret, x-api-key",
-};
+export { corsHeaders } from "./cors.ts";
 
 // ============================================================================
 // Types
@@ -47,15 +44,16 @@ export interface MiddlewareResult {
 }
 
 // ============================================================================
-// Response Helpers - Re-exported from response.ts for backward compatibility
+// Response Helpers - Import for internal use + re-export for backward compat
 // ============================================================================
-// NOTE: These are re-exported from response.ts to avoid code duplication.
-// For new code, prefer importing directly from response.ts.
-export {
-  successResponse as jsonResponse,
+import {
+  successResponse,
   errorResponse,
   corsResponse,
 } from "./response.ts";
+
+// Re-export for backward compatibility (functions importing from middleware.ts)
+export { successResponse as jsonResponse, errorResponse, corsResponse };
 
 // Internal error details interface (used only within middleware)
 interface MiddlewareErrorDetails {
