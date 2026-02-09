@@ -280,3 +280,56 @@ export function getStatusLabel(status: OkrStatus): string {
       return 'Descartado';
   }
 }
+
+// ============================================================
+// v3.4.2: KR Effective Target Helper
+// ============================================================
+
+/**
+ * Interface para dados da KPI primária aninhados na KR
+ */
+export interface KrPrimaryKpiData {
+  id: string;
+  role: string;
+  kpi_id: string;
+  kpi?: {
+    id: string;
+    name: string;
+    target_value: number | null;
+  } | null;
+}
+
+/**
+ * Extrai o target efetivo de uma KR.
+ * Se há KPI primária vinculada, usa target_value da KPI.
+ * Caso contrário, usa o target original da KR.
+ * 
+ * @param krTarget - Target original da KR
+ * @param primaryKpiLinks - Array de links KPI-KR (vem do JOIN na query)
+ */
+export function getKrEffectiveTarget(
+  krTarget: number,
+  primaryKpiLinks?: KrPrimaryKpiData[] | null
+): number {
+  if (!primaryKpiLinks || primaryKpiLinks.length === 0) {
+    return krTarget;
+  }
+  
+  // Encontrar o link primário
+  const primaryLink = primaryKpiLinks.find(link => link.role === 'primary');
+  if (!primaryLink?.kpi?.target_value) {
+    return krTarget;
+  }
+  
+  return primaryLink.kpi.target_value;
+}
+
+/**
+ * Verifica se a KR tem uma KPI primária vinculada
+ */
+export function hasKrPrimaryKpi(primaryKpiLinks?: KrPrimaryKpiData[] | null): boolean {
+  if (!primaryKpiLinks || primaryKpiLinks.length === 0) {
+    return false;
+  }
+  return primaryKpiLinks.some(link => link.role === 'primary');
+}
