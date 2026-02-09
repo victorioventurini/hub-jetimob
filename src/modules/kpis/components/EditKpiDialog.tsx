@@ -108,7 +108,11 @@ const formSchema = z.object({
     }
   }
   // v2.86.0: Fonte da meta obrigatória quando meta preenchida
-  if (data.target_value !== undefined && data.target_value !== null && !data.target_source?.trim()) {
+  // Verificar se target_value é um número válido (não undefined, null, ou NaN)
+  const hasValidTarget = data.target_value !== undefined && 
+                         data.target_value !== null && 
+                         !Number.isNaN(data.target_value);
+  if (hasValidTarget && !data.target_source?.trim()) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Fonte da meta é obrigatória quando há meta definida",
