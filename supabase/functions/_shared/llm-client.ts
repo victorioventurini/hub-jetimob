@@ -82,7 +82,12 @@ export async function getIntegrationApiKey(
 }
 
 /**
- * Resolve LLM configuration based on available providers
+ * Resolve LLM configuration based on model prefix (multi-provider routing).
+ *
+ * Routing rules:
+ *  • google/* or openai/* → Lovable AI Gateway (LOVABLE_API_KEY)
+ *  • gpt-* (legacy)       → OpenAI Direct if API Key exists, else Gateway fallback
+ *  • null / unknown       → Gateway with default model (gemini-2.5-flash)
  */
 export async function resolveLLMConfig(
   serviceClient: any,
@@ -95,21 +100,61 @@ export async function resolveLLMConfig(
     return null;
   }
 
-  const useOpenAI = !!openAIApiKey;
+  const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+  const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+  const DEFAULT_MODEL = "google/gemini-2.5-flash";
 
-  return {
-    apiUrl: useOpenAI
-      ? "https://api.openai.com/v1/chat/completions"
-      : "https://ai.gateway.lovable.dev/v1/chat/completions",
-    apiKey: (useOpenAI ? openAIApiKey : lovableApiKey)!,
-    model: useOpenAI
-      ? preferredModel && preferredModel.startsWith("gpt")
-        ? preferredModel
-        : "gpt-4o-mini"
-      : preferredModel || "google/gemini-2.5-flash",
-    maxTokens: 800,
-    temperature: 0.7,
-  };
+  // Determine provider by model prefix
+  const modelPrefix = preferredModel?.split("/")[0];
+  const isGatewayModel = modelPrefix === "google" || modelPrefix === "openai";
+  const isLegacyGptModel = preferredModel?.startsWith("gpt-");
+
+  // 1. Gateway models: always route through Lovable Gateway
+  if (isGatewayModel && lovableApiKey) {
+    return {
+      apiUrl: GATEWAY_URL,
+      apiKey: lovableApiKey,
+      model: preferredModel!,
+      maxTokens: 800,
+      temperature: 0.7,
+    };
+  }
+
+  // 2. Legacy GPT models: prefer OpenAI Direct, fallback to Gateway
+  if (isLegacyGptModel) {
+    if (openAIApiKey) {
+      return {
+        apiUrl: OPENAI_URL,
+        apiKey: openAIApiKey,
+        model: preferredModel!,
+        maxTokens: 800,
+        temperature: 0.7,
+      };
+    }
+    // Fallback: map legacy to gateway equivalent
+    if (lovableApiKey) {
+      return {
+        apiUrl: GATEWAY_URL,
+        apiKey: lovableApiKey,
+        model: DEFAULT_MODEL,
+        maxTokens: 800,
+        temperature: 0.7,
+      };
+    }
+  }
+
+  // 3. Default fallback: Gateway with default model
+  if (lovableApiKey) {
+    return {
+      apiUrl: GATEWAY_URL,
+      apiKey: lovableApiKey,
+      model: DEFAULT_MODEL,
+      maxTokens: 800,
+      temperature: 0.7,
+    };
+  }
+
+  return null;
 }
 
 /**

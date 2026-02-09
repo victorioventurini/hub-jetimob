@@ -38,6 +38,9 @@ import type { AiAgent } from '../types';
 import type { Json } from '@/integrations/supabase/types';
 import { AgentDocumentUpload } from '../components/AgentDocumentUpload';
 import { InstructionSourcesManager } from '../components/InstructionSourcesManager';
+import { InfoNotice } from '@/components/ui/info-notice';
+import { Badge } from '@/components/ui/badge';
+import { SelectGroup, SelectLabel } from '@/components/ui/select';
 
 const AVAILABLE_TOOLS = [
   { key: 'query_okrs', label: 'Consultar OKRs', description: 'Acesso aos objetivos e key results' },
@@ -52,10 +55,27 @@ const OUTPUT_FORMATS = [
   { value: 'json', label: 'JSON estruturado', description: 'Resposta em formato JSON com schema definido' },
 ];
 
-const MODELS = [
-  { value: 'gpt-4o', label: 'GPT-4o', description: 'Mais capaz e versátil' },
-  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Rápido e econômico' },
-  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', description: 'Contexto estendido' },
+interface ModelOption {
+  value: string;
+  label: string;
+  description: string;
+  provider: 'google' | 'openai' | 'openai-direct';
+  recommended?: boolean;
+  legacy?: boolean;
+}
+
+const MODELS: ModelOption[] = [
+  // Google Gemini (via Lovable AI Gateway)
+  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Balanceado: boa performance com baixo custo', provider: 'google', recommended: true },
+  { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Melhor raciocínio e contexto estendido', provider: 'google' },
+  { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', description: 'Mais rápido e econômico', provider: 'google' },
+  { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)', description: 'Nova geração — velocidade otimizada', provider: 'google' },
+  // OpenAI (via Lovable AI Gateway)
+  { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini', description: 'Excelente custo-benefício', provider: 'openai' },
+  { value: 'openai/gpt-5', label: 'GPT-5', description: 'Mais poderoso, maior custo', provider: 'openai' },
+  // Legacy (requer API Key OpenAI própria)
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Legacy)', description: 'Usa API Key OpenAI configurada', provider: 'openai-direct', legacy: true },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo (Legacy)', description: 'Usa API Key OpenAI configurada', provider: 'openai-direct', legacy: true },
 ];
 
 export default function AgentFormPage() {
@@ -91,7 +111,7 @@ export default function AgentFormPage() {
   const [outputFormat, setOutputFormat] = useState<'text' | 'json'>('text');
   const [outputSchema, setOutputSchema] = useState('');
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
-  const [modelName, setModelName] = useState('gpt-4o-mini');
+  const [modelName, setModelName] = useState('google/gemini-2.5-flash');
   const [maxTokens, setMaxTokens] = useState<string>('');
   const [temperature, setTemperature] = useState<string>('0.7');
   
@@ -125,7 +145,7 @@ export default function AgentFormPage() {
             setOutputFormat(agent.output_format);
             setOutputSchema(agent.output_schema ? JSON.stringify(agent.output_schema, null, 2) : '');
             setSelectedTools(agent.allowed_tools as string[] || []);
-            setModelName(agent.model_name || 'gpt-4o-mini');
+            setModelName(agent.model_name || 'google/gemini-2.5-flash');
             setMaxTokens(agent.max_tokens?.toString() || '');
             setTemperature(agent.temperature?.toString() || '0.7');
           }
@@ -425,23 +445,63 @@ export default function AgentFormPage() {
           <CardHeader>
             <CardTitle>Configurações do Modelo</CardTitle>
             <CardDescription>
-              Ajuste parâmetros avançados (opcional)
+              Selecione o modelo de IA que este agente utilizará
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <InfoNotice variant="info">
+              Modelos <strong>Google Gemini</strong> e <strong>OpenAI via Gateway</strong> são
+              provisionados automaticamente — sem necessidade de API Key adicional.
+              Modelos <strong>Legacy</strong> requerem a API Key OpenAI configurada na integração.
+            </InfoNotice>
+
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label>Modelo</Label>
                 <Select value={modelName} onValueChange={setModelName}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o modelo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {MODELS.map((model) => (
-                      <SelectItem key={model.value} value={model.value}>
-                        {model.label}
-                      </SelectItem>
-                    ))}
+                    {/* Google Gemini */}
+                    <SelectGroup>
+                      <SelectLabel className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground">GOOGLE GEMINI</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">Recomendado</Badge>
+                      </SelectLabel>
+                      {MODELS.filter(m => m.provider === 'google').map((model) => (
+                        <SelectItem key={model.value} value={model.value}>
+                          <span className="flex items-center gap-1.5">
+                            {model.label}
+                            {model.recommended && <span className="text-xs">⭐</span>}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+
+                    {/* OpenAI via Gateway */}
+                    <SelectGroup>
+                      <SelectLabel className="text-xs font-semibold text-muted-foreground">
+                        OPENAI (VIA GATEWAY)
+                      </SelectLabel>
+                      {MODELS.filter(m => m.provider === 'openai').map((model) => (
+                        <SelectItem key={model.value} value={model.value}>
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+
+                    {/* Legacy */}
+                    <SelectGroup>
+                      <SelectLabel className="text-xs font-semibold text-muted-foreground">
+                        LEGACY (API KEY PRÓPRIA)
+                      </SelectLabel>
+                      {MODELS.filter(m => m.legacy).map((model) => (
+                        <SelectItem key={model.value} value={model.value}>
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
