@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { TeamSelect, BuUserSelect, AreaSelect } from "@/components/selects";
+import { TeamSelect, BuUserSelect, AreaSelect, UnitSelect } from "@/components/selects";
 import { Badge } from "@/components/ui/badge";
 import { useKpiData } from "../hooks";
 import { useTeamArea } from "../hooks/useTeamArea";
@@ -419,22 +419,15 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   <FormItem>
                     <FormLabel>
                       Unidade
-                      <HelpTooltip content="Formato de exibição do valor (%, R$, pontos, dias ou número absoluto)." />
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="%">%</SelectItem>
-                        <SelectItem value="R$">R$</SelectItem>
-                        <SelectItem value="pontos">Pontos</SelectItem>
-                        <SelectItem value="dias">Dias</SelectItem>
-                        <SelectItem value="número">Número</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <UnitSelect
+                        value={field.value}
+                        onChange={field.onChange}
+                        showLabel={false}
+                        showCustomOption={true}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

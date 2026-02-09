@@ -16,20 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Target, Link2, Wrench, TrendingUp, TrendingDown, Equal, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { BuUserSelect, UnitSelect } from '@/components/selects';
 import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
 import type { KrPlan } from './TeamOkrKrTypeStep';
 
@@ -95,8 +88,6 @@ const TYPE_CONFIG = {
     ],
   },
 };
-
-const UNITS = ['%', 'un', 'R$', 'pontos', 'dias', 'horas', 'NPS', 'CSAT'];
 
 // ============================================================
 // COMPONENT
@@ -338,20 +329,12 @@ export function TeamOkrKrDetailStep({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="kr-unit">Unidade</Label>
-              <Select
+              <UnitSelect
                 value={currentKr.unit}
-                onValueChange={(value) => updateKrField('unit', value)}
-              >
-                <SelectTrigger id="kr-unit">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {UNITS.map(unit => (
-                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => updateKrField('unit', value)}
+                showLabel={true}
+                showCustomOption={true}
+              />
             </div>
           </div>
 
