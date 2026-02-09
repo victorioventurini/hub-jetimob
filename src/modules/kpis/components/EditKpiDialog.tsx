@@ -31,6 +31,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamSelect, BuUserSelect, AreaSelect, UnitSelect } from "@/components/selects";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useKpiMutations } from "../hooks/useKpiMutations";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
@@ -48,9 +49,10 @@ import {
 } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { ChevronDown, Info } from "lucide-react";
+import { ChevronDown, Info, Lock } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
+import { InfoNotice } from "@/components/ui/info-notice";
 
 /**
  * v2.82.0 - Formulário de edição de Indicadores
@@ -84,6 +86,9 @@ const formSchema = z.object({
   // Scope and ownership
   area_id: z.string().optional(),
   scope: z.enum(["team", "area", "org"]),
+  // v2.90.0: Operational responsibility
+  responsible_area_id: z.string().optional(),
+  responsible_team_id: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.scope === 'team' && !data.team_id) {
     ctx.addIssue({
@@ -108,6 +113,14 @@ const formSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: "Área é obrigatória para indicadores de escopo 'Área'",
         path: ["area_id"],
+      });
+    }
+    // v2.90.0: scope=org ativo → responsible_area_id OBRIGATÓRIO
+    if (data.scope === 'org' && !data.responsible_area_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Área Responsável é obrigatória para KPIs Globais ativos",
+        path: ["responsible_area_id"],
       });
     }
   }
@@ -163,6 +176,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
       recovery_protocol: "",
       area_id: undefined,
       scope: "team",
+      // v2.90.0: Operational responsibility
+      responsible_area_id: undefined,
+      responsible_team_id: undefined,
     },
   });
 
@@ -200,6 +216,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
       // Scope and ownership
       area_id: kpi.area_id || undefined,
       scope: kpi.scope || "team",
+      // v2.90.0: Operational responsibility
+      responsible_area_id: kpi.responsible_area_id || undefined,
+      responsible_team_id: kpi.responsible_team_id || undefined,
     });
     
     // Open advanced if there are values
@@ -282,6 +301,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         // Scope and ownership
         area_id: finalAreaId || null,
         scope: values.scope as KpiScope,
+        // v2.90.0: Operational responsibility
+        responsible_area_id: values.responsible_area_id || null,
+        responsible_team_id: values.responsible_team_id || null,
       });
       onOpenChange(false);
     } finally {
@@ -566,21 +588,23 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 name="scope"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="flex items-center gap-1.5">
                       Escopo
-                      <HelpTooltip 
-                        content={
-                          <div className="space-y-1">
-                            <p><strong>Time:</strong> Indicador específico (área inferida).</p>
-                            <p><strong>Área:</strong> Indicador compartilhado.</p>
-                            <p><strong>{currentBu?.name || 'Organização'}:</strong> Indicador global.</p>
-                          </div>
-                        }
-                      />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>O escopo é definido na criação e não pode ser alterado.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </FormLabel>
                     <Select 
                       onValueChange={(val) => handleScopeChange(val as KpiScope)} 
                       value={field.value}
+                      disabled // v2.90.0: Escopo imutável após criação
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -643,6 +667,95 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                 </FormItem>
               ) : null}
             </div>
+
+            {/* v2.90.0: Responsabilidade Operacional para scope=org */}
+            {watchScope === 'org' && (
+              <div className="space-y-3 p-4 border border-border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-info" />
+                  <span className="text-sm font-medium">Responsabilidade Operacional</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Esta KPI é Global, mas quem responde por ela no dia a dia é:
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="responsible_area_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Área Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                          <HelpTooltip content="Qual área é responsável por acompanhar e agir em desvios deste indicador global?" />
+                        </FormLabel>
+                        <FormControl>
+                          <AreaSelect
+                            value={field.value}
+                            onValueChange={(val) => field.onChange(val ?? undefined)}
+                            placeholder="Selecione..."
+                            triggerClassName="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="responsible_team_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Time Responsável (opcional)
+                          <HelpTooltip content="Opcionalmente, especifique um time dentro da área responsável." />
+                        </FormLabel>
+                        <FormControl>
+                          <TeamSelect
+                            value={field.value}
+                            onValueChange={(val) => field.onChange(val ?? undefined)}
+                            placeholder="Selecione..."
+                            triggerClassName="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <InfoNotice variant="info">
+                  KPIs Globais impactam toda a organização e requerem uma área 
+                  operacionalmente responsável por acompanhar e agir em desvios.
+                </InfoNotice>
+              </div>
+            )}
+
+            {/* v2.90.0: Time responsável opcional para scope=area */}
+            {watchScope === 'area' && (
+              <FormField
+                control={form.control}
+                name="responsible_team_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Time Responsável (opcional)
+                      <HelpTooltip content="Qual time é o principal responsável por acompanhar este indicador da área?" />
+                    </FormLabel>
+                    <FormControl>
+                      <TeamSelect
+                        value={field.value}
+                        onValueChange={(val) => field.onChange(val ?? undefined)}
+                        placeholder="Selecione..."
+                        triggerClassName="w-full"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               {watchScope === 'team' && (
