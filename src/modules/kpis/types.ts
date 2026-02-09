@@ -68,6 +68,9 @@ export interface KpiMetric {
   // v2.2 governance fields
   area_id: string | null;
   scope: KpiScope;
+  // v2.90.0: Operational Responsibility (separate from scope/ownership)
+  responsible_area_id: string | null;
+  responsible_team_id: string | null;
   // Relations
   owner?: {
     id: string;
@@ -82,6 +85,16 @@ export interface KpiMetric {
     id: string;
     name: string;
     color: string | null;
+  };
+  // v2.90.0: Responsible entities (optional relations)
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  };
+  responsible_team?: {
+    id: string;
+    name: string;
   };
 }
 

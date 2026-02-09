@@ -52,6 +52,9 @@ interface KpiForActions {
   target_source?: string | null;
   recovery_protocol?: string | null;
   scope?: KpiScope | string;
+  // v2.90.0: operational responsibility
+  responsible_area_id?: string | null;
+  responsible_team_id?: string | null;
   area?: { id: string; name: string; color: string | null };
   created_at?: string;
   updated_at?: string;
@@ -145,6 +148,9 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
     // v2.2 governance fields
     area_id: kpi.area_id ?? null,
     scope: (kpi.scope ?? 'team') as KpiScope,
+    // v2.90.0: operational responsibility
+    responsible_area_id: kpi.responsible_area_id ?? null,
+    responsible_team_id: kpi.responsible_team_id ?? null,
     area: kpi.area,
   };
 

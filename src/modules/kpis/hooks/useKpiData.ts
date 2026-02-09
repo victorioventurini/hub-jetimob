@@ -51,6 +51,9 @@ interface DbKpiMetric {
   // v2.2 governance fields
   area_id: string | null;
   scope: KpiScope;
+  // v2.90.0: operational responsibility
+  responsible_area_id: string | null;
+  responsible_team_id: string | null;
   owner?: {
     id: string;
     display_name: string;
@@ -225,6 +228,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       // v2.2 governance fields
       area_id: kpi.area_id,
       scope: kpi.scope || 'team',
+      // v2.90.0: operational responsibility
+      responsible_area_id: kpi.responsible_area_id ?? null,
+      responsible_team_id: kpi.responsible_team_id ?? null,
       owner: kpi.owner,
       team: kpi.team,
       area: kpi.area,
@@ -263,6 +269,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       // v2.2 governance fields
       area_id?: string | null;
       scope?: KpiScope;
+      // v2.90.0: operational responsibility
+      responsible_area_id?: string | null;
+      responsible_team_id?: string | null;
     }) => {
       const client = assertSupabaseClient(supabase, "createKpi");
 
@@ -279,6 +288,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         // v2.2 governance fields
         area_id: data.area_id || null,
         scope: data.scope || 'team',
+        // v2.90.0: operational responsibility
+        responsible_area_id: data.responsible_area_id || null,
+        responsible_team_id: data.responsible_team_id || null,
       };
 
       const { data: result, error } = await client
