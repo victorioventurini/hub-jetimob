@@ -9816,6 +9816,10 @@ export type Database = {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: Json
       }
+      rpc_kpi_dashboard_summary: {
+        Args: { p_scope?: string; p_team_id?: string }
+        Returns: Json
+      }
       rpc_leader_dashboard_focus: { Args: { p_team_id: string }; Returns: Json }
       rpc_leader_dashboard_summary: {
         Args: { p_team_id: string }

@@ -1,6 +1,6 @@
 /**
  * Leader Dashboard Types
- * TCR v2.4.0 - Leader Dashboard Evolution
+ * TCR v3.4.x - Dashboard KPI Card with Real Data
  */
 
 // Team info returned by get_leader_teams RPC
@@ -56,12 +56,22 @@ export interface AssetLoanItem {
   due_at: string | null;
 }
 
-// KPI summary from dashboard
+// KPI summary from dashboard (legacy format - used by rpc_leader_dashboard_summary)
 export interface KpiSummary {
   tracked_count: number;
   at_risk_count: number;
   breached_count: number;
+  needs_update?: number;
+  rag_summary?: RagSummary;
   top: KpiItem[];
+}
+
+// RAG Summary for KPIs
+export interface RagSummary {
+  green: number;
+  yellow: number;
+  red: number;
+  gray: number;
 }
 
 export interface KpiItem {
@@ -71,6 +81,25 @@ export interface KpiItem {
   unit: string;
   trend: 'up' | 'down' | 'stable';
   status: 'green' | 'yellow' | 'red';
+}
+
+// KPI Dashboard Summary (new format from rpc_kpi_dashboard_summary)
+export interface KpiDashboardSummary {
+  rag_summary: RagSummary;
+  needs_update: number;
+  total: number;
+  top_critical: KpiCriticalItem[];
+}
+
+export interface KpiCriticalItem {
+  id: string;
+  name: string;
+  current_value: number | null;
+  target_value: number | null;
+  unit: string;
+  rag_status: 'on_track' | 'at_risk' | 'off_track' | 'no_data';
+  days_since_update: number;
+  owner_name: string | null;
 }
 
 // Full dashboard summary response

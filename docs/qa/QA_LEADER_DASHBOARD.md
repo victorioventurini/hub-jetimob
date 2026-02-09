@@ -86,10 +86,13 @@
 
 | Cenário | Status | Observação |
 |---------|--------|------------|
-| Mostra até 4 KPIs | ⏳ | |
-| Trend icons corretos (up/down/stable) | ⏳ | |
-| CTA navega para KPIs | ⏳ | |
-| Card hidden se sem permission kpis.read | ⏳ | |
+| Mostra contadores RAG (green/yellow/red/gray) | ⏳ | |
+| Mostra alerta de KPIs pendentes de atualização | ⏳ | |
+| Lista top 5 KPIs críticos (vermelho/amarelo/sem dados) | ⏳ | |
+| CTA navega para KPIs com filtro de time | ⏳ | |
+| Card hidden se sem permission kpis.view:bu | ⏳ | |
+| Empty state educativo com CTA para criar indicador | ⏳ | |
+| Clique em KPI crítico navega para detalhes | ⏳ | |
 
 #### 9. Vic Insights Card (VicLeaderInsightsCard)
 
@@ -137,7 +140,7 @@
 
 ### Notas de Implementação
 
-- RPCs criadas: `get_leader_teams`, `rpc_leader_dashboard_summary`, `rpc_leader_dashboard_focus`, `is_user_leader`
+- RPCs criadas: `get_leader_teams`, `rpc_leader_dashboard_summary`, `rpc_leader_dashboard_focus`, `is_user_leader`, `rpc_kpi_dashboard_summary`
 - Funções auxiliares: `get_team_member_ids`, `get_descendant_team_ids`
 - Índices criados para performance
-- useBuScopedSupabase utilizado nos hooks
+- Hook: `useKpiDashboardSummary` para buscar dados de KPIs adaptados ao perfil
