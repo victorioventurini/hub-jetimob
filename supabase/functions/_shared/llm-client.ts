@@ -82,46 +82,141 @@ export async function getIntegrationApiKey(
 }
 
 /**
+ * Get Google API key from the chatgpt integration config
+ */
+export async function getGoogleApiKey(
+  serviceClient: any
+): Promise<string | null> {
+  const { data, error } = await serviceClient
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", "chatgpt")
+    .maybeSingle();
+
+  if (error || !data || !data.is_enabled_global) {
+    return null;
+  }
+
+  const config = data.config_encrypted as {
+    google_api_key?: string;
+    google_source?: string;
+  } | null;
+
+  // Only return the key if the user chose 'own_key' mode
+  if (config?.google_source === "own_key" && config?.google_api_key) {
+    return config.google_api_key;
+  }
+  return null;
+}
+
+/**
+ * Check if OpenAI source is set to 'own_key' in config
+ */
+async function getOpenAISourcePreference(
+  serviceClient: any
+): Promise<{ apiKey: string | null; useOwnKey: boolean }> {
+  const { data, error } = await serviceClient
+    .from("hub_integrations_global_config")
+    .select("config_encrypted, is_enabled_global")
+    .eq("integration_key", "chatgpt")
+    .maybeSingle();
+
+  if (error || !data || !data.is_enabled_global) {
+    return { apiKey: null, useOwnKey: false };
+  }
+
+  const config = data.config_encrypted as {
+    api_key?: string;
+    openai_source?: string;
+  } | null;
+
+  return {
+    apiKey: config?.api_key || null,
+    useOwnKey: config?.openai_source === "own_key",
+  };
+}
+
+/**
  * Resolve LLM configuration based on model prefix (multi-provider routing).
  *
  * Routing rules:
- *  • google/* or openai/* → Lovable AI Gateway (LOVABLE_API_KEY)
- *  • gpt-* (legacy)       → OpenAI Direct if API Key exists, else Gateway fallback
- *  • null / unknown       → Gateway with default model (gemini-2.5-flash)
+ *  • google/* → Own Google API Key (if configured) → Gateway fallback
+ *  • openai/* → Own OpenAI Key (if configured) → Gateway fallback
+ *  • gpt-* (legacy) → OpenAI Direct if API Key exists, else Gateway fallback
+ *  • null / unknown → Gateway with default model
  */
 export async function resolveLLMConfig(
   serviceClient: any,
   preferredModel: string | null
 ): Promise<LLMConfig | null> {
-  const openAIApiKey = await getIntegrationApiKey(serviceClient, "chatgpt");
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-
-  if (!openAIApiKey && !lovableApiKey) {
-    return null;
-  }
 
   const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
   const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+  const GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
   const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 
   // Determine provider by model prefix
   const modelPrefix = preferredModel?.split("/")[0];
-  const isGatewayModel = modelPrefix === "google" || modelPrefix === "openai";
+  const isGoogleModel = modelPrefix === "google";
+  const isOpenAIGatewayModel = modelPrefix === "openai";
   const isLegacyGptModel = preferredModel?.startsWith("gpt-");
 
-  // 1. Gateway models: always route through Lovable Gateway
-  if (isGatewayModel && lovableApiKey) {
-    return {
-      apiUrl: GATEWAY_URL,
-      apiKey: lovableApiKey,
-      model: preferredModel!,
-      maxTokens: 800,
-      temperature: 0.7,
-    };
+  // 1. Google models: prefer own key if configured
+  if (isGoogleModel) {
+    const googleApiKey = await getGoogleApiKey(serviceClient);
+    if (googleApiKey) {
+      // Strip "google/" prefix for direct Google API
+      const googleModelName = preferredModel!.replace("google/", "");
+      return {
+        apiUrl: GOOGLE_URL,
+        apiKey: googleApiKey,
+        model: googleModelName,
+        maxTokens: 800,
+        temperature: 0.7,
+      };
+    }
+    // Fallback to Gateway
+    if (lovableApiKey) {
+      return {
+        apiUrl: GATEWAY_URL,
+        apiKey: lovableApiKey,
+        model: preferredModel!,
+        maxTokens: 800,
+        temperature: 0.7,
+      };
+    }
   }
 
-  // 2. Legacy GPT models: prefer OpenAI Direct, fallback to Gateway
+  // 2. OpenAI gateway models: prefer own key if configured
+  if (isOpenAIGatewayModel) {
+    const { apiKey: openAIKey, useOwnKey } = await getOpenAISourcePreference(serviceClient);
+    if (useOwnKey && openAIKey) {
+      // Strip "openai/" prefix for direct OpenAI API
+      const openaiModelName = preferredModel!.replace("openai/", "");
+      return {
+        apiUrl: OPENAI_URL,
+        apiKey: openAIKey,
+        model: openaiModelName,
+        maxTokens: 800,
+        temperature: 0.7,
+      };
+    }
+    // Fallback to Gateway
+    if (lovableApiKey) {
+      return {
+        apiUrl: GATEWAY_URL,
+        apiKey: lovableApiKey,
+        model: preferredModel!,
+        maxTokens: 800,
+        temperature: 0.7,
+      };
+    }
+  }
+
+  // 3. Legacy GPT models: prefer OpenAI Direct, fallback to Gateway
   if (isLegacyGptModel) {
+    const openAIApiKey = await getIntegrationApiKey(serviceClient, "chatgpt");
     if (openAIApiKey) {
       return {
         apiUrl: OPENAI_URL,
@@ -131,7 +226,6 @@ export async function resolveLLMConfig(
         temperature: 0.7,
       };
     }
-    // Fallback: map legacy to gateway equivalent
     if (lovableApiKey) {
       return {
         apiUrl: GATEWAY_URL,
@@ -143,12 +237,12 @@ export async function resolveLLMConfig(
     }
   }
 
-  // 3. Default fallback: Gateway with default model
+  // 4. Default fallback: Gateway with default model
   if (lovableApiKey) {
     return {
       apiUrl: GATEWAY_URL,
       apiKey: lovableApiKey,
-      model: DEFAULT_MODEL,
+      model: preferredModel || DEFAULT_MODEL,
       maxTokens: 800,
       temperature: 0.7,
     };

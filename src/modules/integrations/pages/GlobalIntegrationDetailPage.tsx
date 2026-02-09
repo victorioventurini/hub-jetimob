@@ -8,7 +8,9 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
+import { InfoNotice } from '@/components/ui/info-notice';
 import { 
   ArrowLeft, 
   Key, 
@@ -18,6 +20,7 @@ import {
   Play, 
   Bot,
   Activity,
+  Sparkles,
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { IntegrationIcon } from '../components/IntegrationIcon';
@@ -33,6 +36,116 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useUrlTab } from '@/shared/url';
 
+// ============================================================================
+// LLM Config Sub-component (chatgpt integration only)
+// ============================================================================
+type LlmKeySource = 'gateway' | 'own_key';
+
+interface LlmProviderConfig {
+  label: string;
+  placeholder: string;
+  configField: string;
+  description: string;
+}
+
+const LLM_PROVIDERS: Record<string, LlmProviderConfig> = {
+  openai: {
+    label: 'OpenAI (GPT)',
+    placeholder: 'sk-...',
+    configField: 'api_key',
+    description: 'Modelos legacy gpt-* usarão esta chave diretamente. Modelos openai/* podem usar Gateway ou chave própria.',
+  },
+  google: {
+    label: 'Google (Gemini)',
+    placeholder: 'AIza...',
+    configField: 'google_api_key',
+    description: 'Modelos google/* podem usar Gateway (automático) ou chave própria do Google AI Studio.',
+  },
+};
+
+function LlmKeyField({
+  provider,
+  config,
+  existingConfig,
+  isAdmin,
+  onChange,
+}: {
+  provider: LlmProviderConfig;
+  config: { source: LlmKeySource; apiKey: string };
+  existingConfig: Record<string, unknown> | null;
+  isAdmin: boolean;
+  onChange: (source: LlmKeySource, apiKey: string) => void;
+}) {
+  const [showKey, setShowKey] = useState(false);
+  const hasExistingKey = !!(existingConfig?.[provider.configField]);
+
+  return (
+    <div className="space-y-3 rounded-lg border p-4">
+      <div className="flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-primary" />
+        <Label className="text-base font-semibold">{provider.label}</Label>
+      </div>
+      <p className="text-xs text-muted-foreground">{provider.description}</p>
+      
+      <RadioGroup
+        value={config.source}
+        onValueChange={(v) => onChange(v as LlmKeySource, config.apiKey)}
+        className="gap-3"
+        disabled={!isAdmin}
+      >
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="gateway" id={`${provider.configField}-gateway`} />
+          <Label htmlFor={`${provider.configField}-gateway`} className="font-normal cursor-pointer">
+            Usar Lovable AI Gateway <span className="text-xs text-muted-foreground">(automático, sem chave)</span>
+          </Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="own_key" id={`${provider.configField}-own`} />
+          <Label htmlFor={`${provider.configField}-own`} className="font-normal cursor-pointer">
+            Usar chave própria
+          </Label>
+        </div>
+      </RadioGroup>
+
+      {config.source === 'own_key' && (
+        <div className="space-y-2 pl-6">
+          <Label htmlFor={provider.configField}>
+            <Key className="w-3 h-3 inline mr-1" />
+            API Key
+          </Label>
+          <div className="relative">
+            <Input
+              id={provider.configField}
+              type={showKey ? 'text' : 'password'}
+              value={config.apiKey}
+              onChange={(e) => onChange('own_key', e.target.value)}
+              placeholder={hasExistingKey ? '••••••••••••••••' : provider.placeholder}
+              disabled={!isAdmin}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full"
+              onClick={() => setShowKey(!showKey)}
+            >
+              {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
+          </div>
+          {hasExistingKey && !config.apiKey && (
+            <p className="text-xs text-muted-foreground">
+              Uma API Key já está configurada. Digite uma nova para substituir.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Page Component
+// ============================================================================
 export default function GlobalIntegrationDetailPage() {
   const { integrationKey } = useParams<{ integrationKey: string }>();
   const navigate = useNavigate();
@@ -55,23 +168,37 @@ export default function GlobalIntegrationDetailPage() {
   // URL State for tab
   const [activeTab, setActiveTab] = useUrlTab<string>('config');
   
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const [isEnabled, setIsEnabled] = useState(globalConfig?.is_enabled_global ?? false);
   const [isTesting, setIsTesting] = useState(false);
   
-  // Detectar tipo de integração para customizar UI
+  // ----------- LLM-specific state -----------
+  const isLlmIntegration = integrationKey === 'chatgpt';
+  
+  const [openaiConfig, setOpenaiConfig] = useState<{ source: LlmKeySource; apiKey: string }>({ source: 'gateway', apiKey: '' });
+  const [googleConfig, setGoogleConfig] = useState<{ source: LlmKeySource; apiKey: string }>({ source: 'gateway', apiKey: '' });
+  
+  // ----------- Generic (non-LLM) state -----------
   const isGtmIntegration = integrationKey === 'google-tag-manager';
   const fieldLabel = isGtmIntegration ? 'Container ID' : 'API Key';
   const fieldPlaceholder = isGtmIntegration ? 'GTM-XXXXXXX' : 'sk-...';
   const fieldKey = isGtmIntegration ? 'container_id' : 'api_key';
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKey, setApiKey] = useState('');
   
-  // Update state when config loads
-  useState(() => {
+  // Sync config on load
+  useEffect(() => {
     if (globalConfig) {
       setIsEnabled(globalConfig.is_enabled_global);
+      
+      if (isLlmIntegration) {
+        const enc = globalConfig.config_encrypted as Record<string, unknown> | null;
+        const hasOpenAIKey = !!(enc?.api_key);
+        const hasGoogleKey = !!(enc?.google_api_key);
+        setOpenaiConfig({ source: hasOpenAIKey ? 'own_key' : 'gateway', apiKey: '' });
+        setGoogleConfig({ source: hasGoogleKey ? 'own_key' : 'gateway', apiKey: '' });
+      }
     }
-  });
+  }, [globalConfig, isLlmIntegration]);
   
   const handleSave = () => {
     if (!integrationKey) return;
@@ -80,9 +207,28 @@ export default function GlobalIntegrationDetailPage() {
       ...(globalConfig?.config_encrypted || {}),
     };
     
-    if (apiKey.trim()) {
-      // Usar campo dinâmico baseado no tipo de integração
-      config[fieldKey] = apiKey.trim();
+    if (isLlmIntegration) {
+      // OpenAI key
+      if (openaiConfig.source === 'gateway') {
+        delete config.api_key;
+      } else if (openaiConfig.apiKey.trim()) {
+        config.api_key = openaiConfig.apiKey.trim();
+      }
+      
+      // Google key
+      if (googleConfig.source === 'gateway') {
+        delete config.google_api_key;
+      } else if (googleConfig.apiKey.trim()) {
+        config.google_api_key = googleConfig.apiKey.trim();
+      }
+      
+      // Store source preferences
+      config.openai_source = openaiConfig.source;
+      config.google_source = googleConfig.source;
+    } else {
+      if (apiKey.trim()) {
+        config[fieldKey] = apiKey.trim();
+      }
     }
     
     upsertConfig.mutate({
@@ -101,15 +247,18 @@ export default function GlobalIntegrationDetailPage() {
       last_test_status: 'pending',
     });
     
-    // Simulate test - in production this would call an edge function
     setTimeout(() => {
-      const hasApiKey = apiKey.trim() || (globalConfig?.config_encrypted as any)?.api_key;
+      const enc = globalConfig?.config_encrypted as Record<string, unknown> | null;
+      const hasAnyKey = apiKey.trim() || enc?.api_key || enc?.google_api_key || openaiConfig.apiKey.trim() || googleConfig.apiKey.trim();
+      const isGatewayOnly = isLlmIntegration && openaiConfig.source === 'gateway' && googleConfig.source === 'gateway';
       
-      if (hasApiKey) {
+      if (hasAnyKey || isGatewayOnly) {
         updateTestStatus.mutate({
           integration_key: integrationKey,
           last_test_status: 'ok',
-          last_test_message: 'Conexão estabelecida com sucesso.',
+          last_test_message: isGatewayOnly 
+            ? 'Usando Lovable AI Gateway (automático).'
+            : 'Conexão estabelecida com sucesso.',
         });
         toast.success('Teste de conexão bem-sucedido!');
       } else {
@@ -149,7 +298,6 @@ export default function GlobalIntegrationDetailPage() {
     );
   }
   
-  // Verificar se já existe valor configurado (api_key ou container_id)
   const existingConfig = globalConfig?.config_encrypted as Record<string, unknown> | null;
   const hasExistingValue = !!(existingConfig?.[fieldKey]);
   
@@ -193,7 +341,10 @@ export default function GlobalIntegrationDetailPage() {
             <CardHeader>
               <CardTitle>Configuração Global</CardTitle>
               <CardDescription>
-                Credenciais e configurações compartilhadas com todas as BUs que optarem por usar a configuração global.
+                {isLlmIntegration 
+                  ? 'Configure como os modelos de IA são acessados: via Gateway automático ou com chaves próprias.'
+                  : 'Credenciais e configurações compartilhadas com todas as BUs que optarem por usar a configuração global.'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -214,42 +365,69 @@ export default function GlobalIntegrationDetailPage() {
                 
                 <Separator />
                 
-                {/* API Key / Container ID */}
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">
-                    <Key className="w-4 h-4 inline mr-1" />
-                    {fieldLabel}
-                  </Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Input
-                        id="apiKey"
-                        type={showApiKey ? 'text' : 'password'}
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder={hasExistingValue ? '••••••••••••••••' : fieldPlaceholder}
-                        disabled={!isAdmin}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                      >
-                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                    </div>
+                {/* LLM-specific: dual provider config */}
+                {isLlmIntegration ? (
+                  <div className="space-y-4">
+                    <InfoNotice variant="info">
+                      O <strong>Lovable AI Gateway</strong> provê acesso a modelos Google Gemini e OpenAI sem 
+                      necessidade de chave — ideal para volume baixo/médio. Para <strong>volume alto ou controle 
+                      de custos</strong>, configure suas próprias chaves abaixo.
+                    </InfoNotice>
+                    
+                    <LlmKeyField
+                      provider={LLM_PROVIDERS.openai}
+                      config={openaiConfig}
+                      existingConfig={existingConfig}
+                      isAdmin={isAdmin}
+                      onChange={(source, apiKey) => setOpenaiConfig({ source, apiKey })}
+                    />
+                    
+                    <LlmKeyField
+                      provider={LLM_PROVIDERS.google}
+                      config={googleConfig}
+                      existingConfig={existingConfig}
+                      isAdmin={isAdmin}
+                      onChange={(source, apiKey) => setGoogleConfig({ source, apiKey })}
+                    />
                   </div>
-                  {hasExistingValue && !apiKey && (
-                    <p className="text-xs text-muted-foreground">
-                      {isGtmIntegration 
-                        ? 'Um Container ID já está configurado. Digite um novo para substituir.'
-                        : 'Uma API Key já está configurada. Digite uma nova para substituir.'
-                      }
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  /* Generic single-key field */
+                  <div className="space-y-2">
+                    <Label htmlFor="apiKey">
+                      <Key className="w-4 h-4 inline mr-1" />
+                      {fieldLabel}
+                    </Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          id="apiKey"
+                          type={showApiKey ? 'text' : 'password'}
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder={hasExistingValue ? '••••••••••••••••' : fieldPlaceholder}
+                          disabled={!isAdmin}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                        >
+                          {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    {hasExistingValue && !apiKey && (
+                      <p className="text-xs text-muted-foreground">
+                        {isGtmIntegration 
+                          ? 'Um Container ID já está configurado. Digite um novo para substituir.'
+                          : 'Uma API Key já está configurada. Digite uma nova para substituir.'
+                        }
+                      </p>
+                    )}
+                  </div>
+                )}
                 
                 <Separator />
                 
