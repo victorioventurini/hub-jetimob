@@ -121,6 +121,9 @@ const makeKpi = (overrides: Partial<KpiMetric> = {}): KpiMetric => ({
   recovery_protocol: null,
   area_id: 'area-1',
   scope: 'team',
+  // v2.90.0: operational responsibility
+  responsible_area_id: null,
+  responsible_team_id: null,
   category: 'operacoes',
   bu_id: 'test-bu-id',
   created_at: '2026-01-01',

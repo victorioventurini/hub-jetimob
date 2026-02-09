@@ -25,6 +25,9 @@ interface UpdateKpiData {
   // v2.2 governance fields
   area_id?: string | null;
   scope?: KpiScope;
+  // v2.90.0: operational responsibility
+  responsible_area_id?: string | null;
+  responsible_team_id?: string | null;
 }
 
 /**
@@ -58,6 +61,9 @@ export function useKpiMutations() {
         recovery_protocol: updateData.recovery_protocol || null,
         // v2.2 governance
         scope: updateData.scope,
+        // v2.90.0: operational responsibility
+        responsible_area_id: updateData.responsible_area_id || null,
+        responsible_team_id: updateData.responsible_team_id || null,
       };
 
       const { data: result, error } = await client

@@ -3507,6 +3507,8 @@ export type Database = {
           name: string
           owner_user_id: string | null
           recovery_protocol: string | null
+          responsible_area_id: string | null
+          responsible_team_id: string | null
           scope: Database["public"]["Enums"]["kpi_scope"]
           status: Database["public"]["Enums"]["kpi_status"]
           target_source: string | null
@@ -3531,6 +3533,8 @@ export type Database = {
           name: string
           owner_user_id?: string | null
           recovery_protocol?: string | null
+          responsible_area_id?: string | null
+          responsible_team_id?: string | null
           scope?: Database["public"]["Enums"]["kpi_scope"]
           status?: Database["public"]["Enums"]["kpi_status"]
           target_source?: string | null
@@ -3555,6 +3559,8 @@ export type Database = {
           name?: string
           owner_user_id?: string | null
           recovery_protocol?: string | null
+          responsible_area_id?: string | null
+          responsible_team_id?: string | null
           scope?: Database["public"]["Enums"]["kpi_scope"]
           status?: Database["public"]["Enums"]["kpi_status"]
           target_source?: string | null
@@ -3597,6 +3603,27 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_metrics_responsible_area_id_fkey"
+            columns: ["responsible_area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_metrics_responsible_team_id_fkey"
+            columns: ["responsible_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_metrics_responsible_team_id_fkey"
+            columns: ["responsible_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
           {

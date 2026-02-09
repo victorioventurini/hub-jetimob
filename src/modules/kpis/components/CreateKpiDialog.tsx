@@ -31,6 +31,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TeamSelect, BuUserSelect, AreaSelect, UnitSelect } from "@/components/selects";
 import { Badge } from "@/components/ui/badge";
+import { InfoNotice } from "@/components/ui/info-notice";
 import { useKpiData } from "../hooks";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
@@ -48,15 +49,20 @@ import {
 import { useBu } from "@/contexts/BuContext";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
-import { ChevronDown, Info } from "lucide-react";
+import { ChevronDown, Info, Lock } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 /**
- * v2.82.0 - Formulário de criação de Indicadores
+ * v2.90.0 - Formulário de criação de Indicadores
  * 
- * Governança:
- * - KPIs: Apenas líderes/admins podem criar
- * - Métricas: Qualquer colaborador pode criar
+ * Governança por Escopo vs Responsabilidade Operacional:
+ * - Escopo (org/area/team): Define ONDE o indicador impacta
+ * - Responsabilidade: Define QUEM cuida no dia a dia
+ * 
+ * Regras de Permissão:
+ * - scope=org: Apenas Admin/Super Admin
+ * - scope=area: Apenas Admin/Super Admin  
+ * - scope=team: Admin/Super Admin, Líder do time
  * 
  * Auto-inferência:
  * - Quando scope=team, a área é inferida automaticamente do time
@@ -70,7 +76,6 @@ const formSchema = z.object({
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
-  // Fix: string vazia -> undefined, número válido -> number
   target_value: z.preprocess(
     (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
     z.number().optional()
@@ -83,6 +88,9 @@ const formSchema = z.object({
   // Scope and ownership
   area_id: z.string().optional(),
   scope: z.enum(["team", "area", "org"]),
+  // v2.90.0: Operational responsibility
+  responsible_area_id: z.string().optional(),
+  responsible_team_id: z.string().optional(),
 }).superRefine((data, ctx) => {
   // Validação: se scope='team', exigir team_id
   if (data.scope === 'team' && !data.team_id) {
@@ -102,8 +110,6 @@ const formSchema = z.object({
       });
     }
     // Área obrigatória apenas para scope=area (e ativos)
-    // scope=team: área é auto-inferida do time
-    // scope=org: indicador global, não pertence a uma área específica
     if (data.scope === 'area' && !data.area_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -111,9 +117,16 @@ const formSchema = z.object({
         path: ["area_id"],
       });
     }
+    // v2.90.0: scope=org ativo → responsible_area_id OBRIGATÓRIO
+    if (data.scope === 'org' && !data.responsible_area_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Área Responsável é obrigatória para KPIs Globais ativos",
+        path: ["responsible_area_id"],
+      });
+    }
   }
   // v2.86.0: Fonte da meta obrigatória quando meta preenchida
-  // Verificar se target_value é um número válido (não undefined, null, ou NaN)
   const hasValidTarget = data.target_value !== undefined && 
                          data.target_value !== null && 
                          !Number.isNaN(data.target_value);
@@ -139,17 +152,18 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { createKpi } = useKpiData();
-  const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
+  const { has: hasPermission, isLoading: isLoadingPermission, isWildcard } = usePermissions();
   const { currentBu } = useBu();
   
   // Dynamic scope labels with BU name
   const scopeLabels = getScopeLabels(currentBu?.name);
   
   // Governança: verificar permissões
-  // Pode criar métricas OU KPIs
   const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
-  // Pode criar KPIs (estratégicos) - apenas líderes/admins
   const canCreateKpi = hasPermission("kpis.settings.manage:bu");
+  
+  // v2.90.0: Apenas admins podem criar KPIs Globais e de Área
+  const canCreateStrategicScopes = isWildcard || hasPermission("kpis.settings.manage:bu");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -159,14 +173,14 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       unit: "%",
       direction: "up",
       frequency: "monthly",
-      // Governance defaults - métricas são mais acessíveis
       indicator_type: "metric",
       lifecycle_status: "proposed",
       target_source: "",
       recovery_protocol: "",
-      // Scope defaults
       area_id: undefined,
       scope: "team",
+      responsible_area_id: undefined,
+      responsible_team_id: undefined,
     },
   });
 
@@ -199,21 +213,25 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
     return null;
   }
 
-
-  // Limpar team_id quando mudar escopo para area/org
+  // Limpar campos quando mudar escopo
   const handleScopeChange = (newScope: KpiScope) => {
     form.setValue("scope", newScope);
     if (newScope !== "team") {
       form.setValue("team_id", undefined);
-      // Limpar área inferida quando mudar de scope
       form.setValue("area_id", undefined);
+    }
+    // Limpar responsible fields ao mudar escopo
+    if (newScope !== "org") {
+      form.setValue("responsible_area_id", undefined);
+    }
+    if (newScope === "team") {
+      form.setValue("responsible_team_id", undefined);
     }
   };
 
   // Governança: quando usuário sem permissão tenta selecionar KPI
   const handleIndicatorTypeChange = (type: KpiIndicatorType) => {
     if (type === 'kpi' && !canCreateKpi) {
-      // Não permitir, manter como métrica
       return;
     }
     form.setValue("indicator_type", type);
@@ -228,7 +246,6 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
-        // category removed v2.82.0
         unit: values.unit,
         direction: values.direction as KpiDirection,
         frequency: values.frequency as DbKpiFrequency,
@@ -236,14 +253,15 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
         status: "active",
-        // Governance fields
         indicator_type: values.indicator_type as KpiIndicatorType,
         lifecycle_status: values.lifecycle_status as KpiLifecycleStatus,
         target_source: values.target_source || null,
         recovery_protocol: values.recovery_protocol || null,
-        // Scope and ownership
         area_id: finalAreaId || null,
         scope: values.scope as KpiScope,
+        // v2.90.0: operational responsibility
+        responsible_area_id: values.responsible_area_id || null,
+        responsible_team_id: values.responsible_team_id || null,
       });
       form.reset();
       setShowAdvanced(false);
@@ -363,7 +381,6 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                    {/* Mensagem educativa para quem não pode criar KPIs */}
                     {!canCreateKpi && (
                       <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md mt-2">
                         <Info className="h-4 w-4 mt-0.5 shrink-0" />
@@ -581,6 +598,12 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                             <p><strong>Time:</strong> Indicador específico de um time (área inferida automaticamente).</p>
                             <p><strong>Área:</strong> Indicador compartilhado por toda uma área.</p>
                             <p><strong>{currentBu?.name || 'Organização'}:</strong> Indicador global visível para toda a BU.</p>
+                            {!canCreateStrategicScopes && (
+                              <p className="text-muted-foreground text-xs mt-2">
+                                <Lock className="h-3 w-3 inline mr-1" />
+                                Escopos Área e Global requerem permissões de administrador.
+                              </p>
+                            )}
                           </div>
                         }
                       />
@@ -593,8 +616,15 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       </FormControl>
                       <SelectContent>
                         {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
-                          <SelectItem key={sc} value={sc}>
+                          <SelectItem 
+                            key={sc} 
+                            value={sc}
+                            disabled={(sc === 'org' || sc === 'area') && !canCreateStrategicScopes}
+                          >
                             {scopeLabels[sc]}
+                            {(sc === 'org' || sc === 'area') && !canCreateStrategicScopes && (
+                              <Lock className="h-3 w-3 inline ml-1 text-muted-foreground" />
+                            )}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -605,8 +635,6 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               />
 
               {/* Área: mostrar seletor apenas quando scope === 'area' */}
-              {/* scope=team: área é inferida do time */}
-              {/* scope=org: indicador global, não pertence a área específica */}
               {watchScope === 'area' ? (
                 <FormField
                   control={form.control}
@@ -630,7 +658,6 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                   )}
                 />
               ) : watchScope === 'team' ? (
-                /* Quando scope=team, mostrar área inferida como badge read-only */
                 <FormItem>
                   <FormLabel>
                     Área (inferida)
@@ -652,6 +679,96 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 </FormItem>
               ) : null}
             </div>
+
+            {/* v2.90.0: Seção de Responsabilidade Operacional para scope=org */}
+            {watchScope === 'org' && (
+              <div className="space-y-3 p-4 border border-border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-info" />
+                  <span className="text-sm font-medium">Responsabilidade Operacional</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Esta KPI é Global, mas quem responde por ela no dia a dia é:
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="responsible_area_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Área Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                        </FormLabel>
+                        <FormControl>
+                          <AreaSelect
+                            value={field.value}
+                            onValueChange={(val) => field.onChange(val ?? undefined)}
+                            placeholder="Selecione..."
+                            triggerClassName="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="responsible_team_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Time Responsável (opcional)
+                        </FormLabel>
+                        <FormControl>
+                          <TeamSelect
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Selecione..."
+                            triggerClassName="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <InfoNotice variant="info">
+                  KPIs Globais impactam toda a organização e requerem uma área 
+                  operacionalmente responsável por acompanhar e agir em desvios.
+                </InfoNotice>
+              </div>
+            )}
+
+            {/* v2.90.0: Seção opcional de Responsabilidade para scope=area */}
+            {watchScope === 'area' && (
+              <FormField
+                control={form.control}
+                name="responsible_team_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Time Responsável (opcional)
+                      <HelpTooltip content="Qual time é o principal responsável por acompanhar este indicador?" />
+                    </FormLabel>
+                    <FormControl>
+                      <TeamSelect
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Selecione..."
+                        triggerClassName="w-full"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Recomendado para delegar o acompanhamento operacional a um time específico.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               {watchScope === 'team' && (
