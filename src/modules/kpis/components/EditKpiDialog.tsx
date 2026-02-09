@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useKpiMutations } from "../hooks/useKpiMutations";
 import { useTeamArea } from "../hooks/useTeamArea";
+import { useCanChangeKpiScope } from "../hooks/useCanChangeKpiScope";
 import {
   KpiDirection,
   KpiFrequency,
@@ -153,6 +154,9 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const { updateKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   const { currentBu } = useBu();
+  
+  // v2.91.0: Scope change permissions
+  const scopePermissions = useCanChangeKpiScope(kpi);
   
   // Dynamic scope labels with BU name
   const scopeLabels = getScopeLabels(currentBu?.name);
@@ -593,10 +597,24 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                            {scopePermissions.canChangeScope ? (
+                              scopePermissions.allowedScopes.length === 1 ? (
+                                <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                              ) : null
+                            ) : (
+                              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>O escopo é definido na criação e não pode ser alterado.</p>
+                            {!scopePermissions.canChangeScope ? (
+                              <p>
+                                {kpi?.scope === 'org' || kpi?.scope === 'area'
+                                  ? "Apenas administradores podem alterar o escopo de KPIs Globais ou de Área."
+                                  : "Você não tem permissão para alterar o escopo deste indicador."}
+                              </p>
+                            ) : scopePermissions.allowedScopes.length === 1 ? (
+                              <p>Como líder de time, você pode mover este indicador para outros times que lidera.</p>
+                            ) : null}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -604,7 +622,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                     <Select 
                       onValueChange={(val) => handleScopeChange(val as KpiScope)} 
                       value={field.value}
-                      disabled // v2.90.0: Escopo imutável após criação
+                      disabled={!scopePermissions.canChangeScope}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -612,13 +630,22 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
-                          <SelectItem key={sc} value={sc}>
-                            {scopeLabels[sc]}
-                          </SelectItem>
-                        ))}
+                        {(Object.keys(scopeLabels) as KpiScope[])
+                          .filter(sc => scopePermissions.canChangeScope 
+                            ? scopePermissions.allowedScopes.includes(sc) 
+                            : sc === field.value)
+                          .map((sc) => (
+                            <SelectItem key={sc} value={sc}>
+                              {scopeLabels[sc]}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
+                    {scopePermissions.canChangeScope && scopePermissions.allowedScopes.length === 1 && (
+                      <FormDescription>
+                        Você pode mover para outro time que lidera.
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -771,6 +798,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
                           onValueChange={field.onChange}
                           placeholder="Selecione..."
                           triggerClassName="w-full"
+                          filterTeamIds={scopePermissions.allowedTeamIds.length > 0 ? scopePermissions.allowedTeamIds : undefined}
                         />
                       </FormControl>
                       <FormMessage />

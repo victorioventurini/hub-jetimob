@@ -15,6 +15,8 @@ export { useKpiContributors, useUserContributedKpis } from "./useKpiContributors
 export { useTeamArea } from "./useTeamArea";
 export { useKpiLinkedKrs } from "./useKpiLinkedKrs";
 export { useCanEditKpi } from "./useCanEditKpi";
+export { useCanChangeKpiScope } from "./useCanChangeKpiScope";
+export type { ScopeChangePermissions } from "./useCanChangeKpiScope";
 export { useKpiTargetHistory } from "./useKpiTargetHistory";
 export { useKpiWithHistory } from "./useKpiWithHistory";
 export { useKpiEvolutionList } from "./useKpiEvolutionList";

@@ -17,6 +17,8 @@ interface TeamSelectProps {
   teams?: FlatTeamItem[];
   /** Team IDs to exclude from the list */
   excludeIds?: string[];
+  /** If provided, only show teams with these IDs */
+  filterTeamIds?: string[];
 }
 
 /**
@@ -36,13 +38,15 @@ export function TeamSelect({
   triggerClassName,
   teams: externalTeams,
   excludeIds = [],
+  filterTeamIds,
 }: TeamSelectProps) {
   const { teams: hookTeams, isLoading } = useHierarchicalTeamList();
   
-  // Filter out excluded IDs
-  const filteredTeams = (externalTeams ?? hookTeams).filter(
-    (team) => !excludeIds.includes(team.id)
-  );
+  // Filter by filterTeamIds first, then exclude
+  const baseTeams = externalTeams ?? hookTeams;
+  const filteredTeams = baseTeams
+    .filter((team) => !excludeIds.includes(team.id))
+    .filter((team) => !filterTeamIds || filterTeamIds.includes(team.id));
 
   const handleValueChange = (newValue: string) => {
     if (newValue === "all" || newValue === "none") {
