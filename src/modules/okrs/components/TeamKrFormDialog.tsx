@@ -109,11 +109,15 @@ export function TeamKrFormDialog({
     }
   }, [direction, baseline]);
 
-  // v3.4.2: Sync target/baseline from primary KPI when linked
+  // v3.4.2: Sync target/baseline AND unit from primary KPI when linked
   useEffect(() => {
     if (hasPrimaryKpi && primaryKpi) {
       if (primaryKpi.targetValue !== null) {
         setTarget(primaryKpi.targetValue.toString());
+      }
+      // Sync unit from KPI to ensure consistency
+      if (primaryKpi.kpiUnit) {
+        setUnit(primaryKpi.kpiUnit);
       }
     }
   }, [hasPrimaryKpi, primaryKpi]);
@@ -453,7 +457,7 @@ export function TeamKrFormDialog({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <KrUnitSelect value={unit} onChange={setUnit} disabled={mutation.isPending} />
+                <KrUnitSelect value={unit} onChange={setUnit} disabled={mutation.isPending || hasPrimaryKpi} />
                 <div className="space-y-2">
                   <Label htmlFor="direction">Direção *</Label>
                   <Select value={direction} onValueChange={(v) => setDirection(v as OkrDirection)} disabled={mutation.isPending}>
