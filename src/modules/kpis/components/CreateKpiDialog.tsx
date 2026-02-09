@@ -70,7 +70,11 @@ const formSchema = z.object({
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
-  target_value: z.coerce.number().optional(),
+  // Fix: string vazia -> undefined, número válido -> number
+  target_value: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
+    z.number().optional()
+  ),
   // Governance fields
   indicator_type: z.enum(["kpi", "metric"]),
   lifecycle_status: z.enum(["proposed", "active", "observing", "deprecated"]),
