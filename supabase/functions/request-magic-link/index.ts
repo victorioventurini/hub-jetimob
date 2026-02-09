@@ -64,19 +64,22 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
       .is("deleted_at", null)
       .maybeSingle(),
     
-    // 2. Check external company domain associations via external_companies table
-    // For domain-based matching when no direct partner_contact exists
+    // 2. Check external company domain associations via external_company_bu_associations
+    // TCR: "Empresa Parceira" → external_company_bu_associations → external_companies
+    // FK: external_company_bu_associations.external_company_id → external_companies.id
+    //     (constraint: partner_company_bu_associations_partner_company_id_fkey)
+    // FK: external_company_bu_associations.bu_id → bu_units.id
+    //     (constraint: partner_company_bu_associations_bu_id_fkey)
     supabase
-      .from("external_companies")
+      .from("external_company_bu_associations")
       .select(`
         id,
-        name,
-        allowed_domains,
-        status,
         bu_id,
-        bu:bu_units!partner_companies_bu_id_fkey(id, name, status)
+        is_active,
+        external_company:external_companies!partner_company_bu_associations_partner_company_id_fkey(id, name, allowed_domains, status),
+        bu:bu_units!partner_company_bu_associations_bu_id_fkey(id, name, status)
       `)
-      .eq("status", "active")
+      .eq("is_active", true)
       .is("deleted_at", null),
     
     // 3. Get all active BUs with their domains
@@ -131,14 +134,21 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     }
   }
 
-  // Check external company domain associations (fallback when no direct partner_contact match)
+  // Check external company domain associations via external_company_bu_associations (TCR-compliant)
   if (partnerBuAssociationsResult.data) {
-    for (const company of partnerBuAssociationsResult.data as Array<{ id: string; name: string; allowed_domains: string[]; status: string; bu_id: string; bu: { id: string; name: string; status: string } | null }>) {
-      const allowedDomains = company.allowed_domains || [];
-      const bu = company.bu;
+    for (const assoc of partnerBuAssociationsResult.data as Array<{
+      id: string;
+      bu_id: string;
+      is_active: boolean;
+      external_company: { id: string; name: string; allowed_domains: string[]; status: string } | null;
+      bu: { id: string; name: string; status: string } | null;
+    }>) {
+      const company = assoc.external_company;
+      const bu = assoc.bu;
+      const allowedDomains = company?.allowed_domains || [];
       
-      if (bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
-        console.log(`Partner domain: ${domain} (${company.name})`);
+      if (company?.status === 'active' && bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+        console.log(`Partner domain: ${domain} (${company.name}) via BU association`);
         return { allowed: true, buName: bu.name, isPartnerContact: true };
       }
     }
