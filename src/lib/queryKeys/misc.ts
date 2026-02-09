@@ -16,6 +16,9 @@ export const homeKeys = {
     ['home', 'leader-teams', buId, userId] as const,
   myTicketsHome: (buId: string | null, profileId: string | null, impersonatedUserId?: string | null) =>
     ['home', 'my-tickets', buId, profileId, impersonatedUserId] as const,
+  /** KPI dashboard summary for leader/admin/collaborator */
+  kpiSummary: (buId: string | null, scope: 'admin' | 'leader' | 'collaborator', teamId?: string | null) =>
+    ['home', 'kpi-summary', buId, scope, teamId] as const,
 } as const;
 
 export const searchKeys = {
