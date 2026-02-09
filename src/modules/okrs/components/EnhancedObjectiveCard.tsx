@@ -31,11 +31,13 @@ import {
   OkrContributionLink,
   OkrKrTypeBadge,
   OkrCycleProgress,
+  KrPrimaryKpiBadge,
 } from './ui';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { SharedOkrBadge } from './SharedOkrBadge';
 import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 import { calculateProgress } from '../types';
+import { useKrPrimaryKpiBatch } from '../hooks';
 
 interface Owner {
   display_name: string;
@@ -126,7 +128,9 @@ export function EnhancedObjectiveCard({
 }: EnhancedObjectiveCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
-  // Calculate progress and RAG counts
+  // v3.4.2: Batch fetch primary KPIs for all KRs in this objective
+  const krIds = useMemo(() => keyResults.map(kr => kr.id), [keyResults]);
+  const { hasKrPrimaryKpi, getKrPrimaryKpi } = useKrPrimaryKpiBatch(krIds, type);
   const { avgProgress, greenCount, yellowCount, redCount, notStartedCount } = useMemo(() => {
     if (keyResults.length === 0) {
       return { avgProgress: 0, greenCount: 0, yellowCount: 0, redCount: 0, notStartedCount: 0 };
@@ -309,16 +313,21 @@ export function EnhancedObjectiveCard({
               </div>
             ) : (
               <div className="divide-y divide-border/50">
-                {keyResults.map((kr, index) => (
-                  <EnhancedKrRow
-                    key={kr.id}
-                    kr={kr}
-                    index={index}
-                    type={type}
-                    onEdit={onKrEdit ? () => onKrEdit(kr) : undefined}
-                    onCheckin={onKrCheckin ? () => onKrCheckin(kr) : undefined}
-                  />
-                ))}
+                {keyResults.map((kr, index) => {
+                  const kpiInfo = getKrPrimaryKpi(kr.id);
+                  return (
+                    <EnhancedKrRow
+                      key={kr.id}
+                      kr={kr}
+                      index={index}
+                      type={type}
+                      hasPrimaryKpi={hasKrPrimaryKpi(kr.id)}
+                      primaryKpiInfo={kpiInfo}
+                      onEdit={onKrEdit ? () => onKrEdit(kr) : undefined}
+                      onCheckin={onKrCheckin ? () => onKrCheckin(kr) : undefined}
+                    />
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -332,11 +341,15 @@ interface EnhancedKrRowProps {
   kr: KeyResult;
   index: number;
   type: 'org' | 'team';
+  /** v3.4.2: Se a KR tem KPI primária vinculada */
+  hasPrimaryKpi?: boolean;
+  /** v3.4.2: Dados da KPI primária */
+  primaryKpiInfo?: { kpiId: string; kpiName: string; direction: 'up' | 'down' | 'maintain' };
   onEdit?: () => void;
   onCheckin?: () => void;
 }
 
-function EnhancedKrRow({ kr, index, type, onEdit, onCheckin }: EnhancedKrRowProps) {
+function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit, onCheckin }: EnhancedKrRowProps) {
   const progress = calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
 
   const formatValue = (value: number | null | undefined, unit: string) => {
@@ -371,6 +384,16 @@ function EnhancedKrRow({ kr, index, type, onEdit, onCheckin }: EnhancedKrRowProp
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-medium">{kr.title}</p>
                 {kr.type && <OkrKrTypeBadge type={kr.type} />}
+                {/* v3.4.2: Primary KPI indicator badge */}
+                {hasPrimaryKpi && primaryKpiInfo && (
+                  <KrPrimaryKpiBadge
+                    kpiName={primaryKpiInfo.kpiName}
+                    kpiId={primaryKpiInfo.kpiId}
+                    direction={primaryKpiInfo.direction}
+                    variant="compact"
+                    clickable
+                  />
+                )}
               </div>
               
               {/* Contribution link for team KRs */}

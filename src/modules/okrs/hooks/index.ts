@@ -150,6 +150,11 @@ export {
   type UsePrimaryKpiForKrResult,
 } from './usePrimaryKpiForKr';
 export {
+  useKrPrimaryKpiBatch,
+  type KrPrimaryKpiInfo,
+  type UseKrPrimaryKpiBatchResult,
+} from './useKrPrimaryKpiBatch';
+export {
   useKrEffectiveValues,
   getEffectiveTarget,
   type KrEffectiveValues,

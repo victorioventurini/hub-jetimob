@@ -9,6 +9,8 @@ import { StatusDot } from '@/components/ui/status-badge';
 import { Users, Clock, History } from 'lucide-react';
 import { formatValueWithUnit } from '../../constants/krUnits';
 import { KrHistoryDialog } from '../KrHistoryDialog';
+import { KrPrimaryKpiBadge } from '../ui';
+import { usePrimaryKpiForKr } from '../../hooks';
 import type { TeamKrLinked } from '../../hooks';
 
 interface TeamKrListItemProps {
@@ -31,6 +33,9 @@ const typeLabels = {
 
 export function TeamKrListItem({ teamKr }: TeamKrListItemProps) {
   const [showHistory, setShowHistory] = useState(false);
+  
+  // v3.4.2: Check if KR has primary KPI linked
+  const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(teamKr.id, 'team');
 
   const initials = teamKr.owner_name
     ?.split(' ')
@@ -69,8 +74,19 @@ export function TeamKrListItem({ teamKr }: TeamKrListItemProps) {
             )}
           </div>
 
-          {/* KR Title */}
-          <p className="text-sm font-medium leading-tight">{teamKr.title}</p>
+          {/* KR Title with Primary KPI badge */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-medium leading-tight">{teamKr.title}</p>
+            {hasPrimaryKpi && primaryKpi && (
+              <KrPrimaryKpiBadge
+                kpiName={primaryKpi.kpiName}
+                kpiId={primaryKpi.kpiId}
+                direction={primaryKpi.direction}
+                variant="compact"
+                clickable
+              />
+            )}
+          </div>
 
           {/* Progress */}
           <div className="flex items-center gap-3">
