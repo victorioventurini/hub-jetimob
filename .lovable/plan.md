@@ -25,3 +25,28 @@
 - ✅ Para KPIs de Área (`scope=area`), aparece campo opcional de "Time Responsável"
 - ✅ Escopo é readonly com ícone de cadeado e tooltip explicativo
 - ✅ Valores existentes de `responsible_area_id` e `responsible_team_id` são carregados corretamente
+
+---
+
+## ✅ IMPLEMENTADO (v2.91.0) — Alteração Hierárquica de Escopo
+
+### Alterações Realizadas
+
+| Alteração | Status |
+|-----------|--------|
+| Hook `useCanChangeKpiScope` criado | ✅ |
+| Exportado no barrel `hooks/index.ts` | ✅ |
+| Escopo dinâmico no EditKpiDialog | ✅ |
+| Admin/Super Admin: todas as opções | ✅ |
+| Líder: apenas `team`, times gerenciáveis | ✅ |
+| Colaborador: campo bloqueado (Lock) | ✅ |
+| Tooltips contextuais por papel | ✅ |
+| TeamSelect com `filterTeamIds` | ✅ |
+
+### Resultado
+
+- ✅ Admin pode alterar escopo livremente (org ↔ area ↔ team)
+- ✅ Líder pode mover KPI de time para outro time que lidera
+- ✅ Líder NÃO pode alterar escopo para org/area
+- ✅ Colaborador não pode alterar escopo
+- ✅ TeamSelect filtra apenas times gerenciáveis para líderes
