@@ -7,3 +7,4 @@ export { OkrOwnerInfo, OkrOwnersRow } from './OkrOwnerInfo';
 export { OkrCycleProgress } from './OkrCycleProgress';
 export { OkrContributionLink, OkrKrTypeBadge } from './OkrContributionLink';
 export { OkrHealthIndicator, RagStatusDot, RagSummary, type HealthStatus } from './OkrHealthIndicator';
+export { KrPrimaryKpiBadge, type KrPrimaryKpiBadgeProps } from './KrPrimaryKpiBadge';

@@ -86,6 +86,10 @@ export const okrsKeys = {
   /** v3.4.2: Valores efetivos da KR (considerando KPI primária) */
   krEffectiveValues: (krId: string, krType: string) =>
     ['okr-kr-effective-values', krId, krType] as const,
+
+  /** v3.4.2: Batch de KPIs primárias para listagem de KRs */
+  krPrimaryKpiBatch: (krIds: string[], krType: string) =>
+    ['okr-kr-primary-kpi-batch', krIds.sort().join(','), krType] as const,
   
   // Initiatives
   initiatives: (krId: string) => ['okr-initiatives', krId] as const,

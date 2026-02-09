@@ -26,8 +26,9 @@ import { OrgObjectiveFormDialog } from '../OrgObjectiveFormDialog';
 import { TeamObjectiveFormDialog } from '../TeamObjectiveFormDialog';
 import { CheckinDialog } from '../CheckinDialog';
 import { SharedOkrBadge } from '../SharedOkrBadge';
-import { OkrScopeBadge, OkrOwnerInfo, RagSummary, OkrKrTypeBadge } from '../ui';
+import { OkrScopeBadge, OkrOwnerInfo, RagSummary, OkrKrTypeBadge, KrPrimaryKpiBadge } from '../ui';
 import { KrHistoryDialog } from '../KrHistoryDialog';
+import { useKrPrimaryKpiBatch } from '../../hooks';
 
 interface KeyResult {
   id: string;
@@ -105,6 +106,10 @@ export function ObjectiveListItem({
   const [editingKr, setEditingKr] = useState<KeyResult | null>(null);
   const [checkinKr, setCheckinKr] = useState<KeyResult | null>(null);
   const [historyKr, setHistoryKr] = useState<KeyResult | null>(null);
+
+  // v3.4.2: Batch fetch primary KPIs for all KRs in this objective
+  const krIds = useMemo(() => keyResults.map(kr => kr.id), [keyResults]);
+  const { hasKrPrimaryKpi, getKrPrimaryKpi } = useKrPrimaryKpiBatch(krIds, type);
 
   const { progress, status, krCount } = useMemo(() => {
     if (!keyResults || keyResults.length === 0) {
@@ -328,6 +333,8 @@ export function ObjectiveListItem({
                       canCheckin={canCheckin || canEdit}
                       filterInitiativesForUser={filterInitiativesForUser}
                       defaultInitiativesExpanded={!!filterInitiativesForUser}
+                      hasPrimaryKpi={hasKrPrimaryKpi(kr.id)}
+                      primaryKpiInfo={getKrPrimaryKpi(kr.id)}
                       onEdit={() => setEditingKr(kr)}
                       onCheckin={() => setCheckinKr(kr)}
                       onShowHistory={() => setHistoryKr(kr)}
@@ -488,12 +495,16 @@ interface KeyResultRowProps {
   filterInitiativesForUser?: string;
   /** Se as iniciativas devem iniciar expandidas */
   defaultInitiativesExpanded?: boolean;
+  /** v3.4.2: Se a KR tem KPI primária vinculada */
+  hasPrimaryKpi?: boolean;
+  /** v3.4.2: Dados da KPI primária */
+  primaryKpiInfo?: { kpiId: string; kpiName: string; direction: 'up' | 'down' | 'maintain' };
   onEdit: () => void;
   onCheckin: () => void;
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, hasPrimaryKpi = false, primaryKpiInfo, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(defaultInitiativesExpanded);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   const currentProfileId = useProfileId();
@@ -553,7 +564,19 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
             {/* Mobile: Stack layout / Desktop: Row layout */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
+                  {/* v3.4.2: Primary KPI indicator badge */}
+                  {hasPrimaryKpi && primaryKpiInfo && (
+                    <KrPrimaryKpiBadge
+                      kpiName={primaryKpiInfo.kpiName}
+                      kpiId={primaryKpiInfo.kpiId}
+                      direction={primaryKpiInfo.direction}
+                      variant="compact"
+                      clickable
+                    />
+                  )}
+                </div>
                 <div className="mt-1 sm:mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                   <span className={cn("font-medium", statusConfig.color)}>
                     {statusConfig.label}
