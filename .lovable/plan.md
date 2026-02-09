@@ -1,177 +1,283 @@
 
-# Plano: Unificação do UnitSelect (KRs + KPIs)
+# Plano: Governança de KPIs — Escopo vs Responsabilidade Operacional
 
-## Resumo Executivo
+## 1. Diagnóstico Completo
 
-Criar um componente canônico `UnitSelect` compartilhado entre os módulos de OKRs e KPIs, eliminando duplicação de código e garantindo consistência de UX em todo o sistema.
+### 1.1 Estrutura Atual
 
-## Situação Atual
+**Schema `kpi_metrics` (colunas relevantes):**
+| Coluna | Tipo | Propósito Atual |
+|--------|------|-----------------|
+| `scope` | `kpi_scope` (enum) | Define impacto: `team`, `area`, `org` |
+| `area_id` | `uuid` | Área "dona" (apenas quando `scope=area`) |
+| `team_id` | `uuid` | Time "dono" (apenas quando `scope=team`) |
+| `owner_user_id` | `uuid` | Pessoa accountable |
 
-| Local | Implementação | Opções |
-|-------|---------------|--------|
-| **Modal KR** (`KrUnitSelect`) | Componente com 18 opções categorizadas + custom | Completo |
-| **Modal KPI** (`CreateKpiDialog`, `EditKpiDialog`) | Select inline hardcoded | 5 opções fixas (%, R$, pontos, dias, número) |
-| **Wizard OKR** (`TeamOkrKrDetailStep`) | Constante `UNITS` local | 8 opções fixas |
-
-**Problema:** KPIs têm apenas 5 unidades, enquanto KRs têm 18+ categorizadas. Isso gera inconsistência quando uma KR está vinculada a uma KPI primária.
-
-## Arquitetura Proposta
-
-```text
-src/
-├── shared/
-│   └── constants/
-│       ├── index.ts              # Nova exportação
-│       └── units.ts              # Constantes unificadas (NOVO)
-├── components/
-│   └── selects/
-│       ├── UnitSelect.tsx        # Componente canônico (NOVO)
-│       └── index.ts              # Atualizar export
-└── modules/
-    ├── okrs/
-    │   ├── constants/
-    │   │   └── krUnits.ts        # Re-export (backward compat)
-    │   └── components/
-    │       ├── KrUnitSelect.tsx  # Wrapper (deprecated)
-    │       └── wizards/.../TeamOkrKrDetailStep.tsx
-    └── kpis/
-        └── components/
-            ├── CreateKpiDialog.tsx
-            └── EditKpiDialog.tsx
+**Trigger `kpi_metrics_governance_validate()` atual:**
+```sql
+-- Regra 1: scope=team → team_id obrigatório
+-- Regra 2: scope=org/area → team_id PROIBIDO ❌ (problema!)
+-- Regra 3: KPI ativo → owner_user_id obrigatório
+-- Regra 4: scope=area ativo → area_id obrigatório
 ```
 
-## Etapas de Implementação
+**Problema identificado:** A regra 2 impede que KPIs Globais (`scope=org`) tenham qualquer vínculo com área ou time, deixando-os "sem dono operacional".
 
-### Etapa 1: Criar Constantes Unificadas
+### 1.2 Componentes Afetados
 
-**Arquivo:** `src/shared/constants/units.ts`
+| Componente | Arquivo | Estado |
+|------------|---------|--------|
+| **CreateKpiDialog** | `src/modules/kpis/components/CreateKpiDialog.tsx` | Bloqueia área/time para `scope=org` |
+| **EditKpiDialog** | `src/modules/kpis/components/EditKpiDialog.tsx` | Mesma lógica |
+| **useCanEditKpi** | `src/modules/kpis/hooks/useCanEditKpi.ts` | Não verifica scope nem liderança |
+| **Trigger SQL** | `kpi_metrics_governance_validate()` | Proíbe team_id para scope=org/area |
 
-Mover e renomear as constantes de `src/modules/okrs/constants/krUnits.ts`:
-- `KR_UNIT_CATEGORIES` -> `UNIT_CATEGORIES`
-- Manter mesmas 6 categorias: Financeiro, Volume, Experiência, Tempo, Taxas, Customizada
-- Exportar helpers: `ALL_UNITS`, `getUnitLabel`, `formatValueWithUnit`
+### 1.3 Hooks e Funções Existentes para Reutilizar
 
-### Etapa 2: Criar Componente Canônico UnitSelect
+| Recurso | Descrição |
+|---------|-----------|
+| `useLeaderTeams()` | Retorna times liderados pelo usuário |
+| `useTeamManagement()` | Verifica se pode gerenciar time específico via `canManageTeam(teamId)` |
+| `usePermissions()` | Verifica `isWildcard` e permission keys |
+| `is_team_leader(user_id, team_id)` | Função SQL que verifica liderança direta |
+| `user_can_manage_team(user_id, team_id)` | Função SQL com escopo completo (admin, super_admin, líder) |
 
-**Arquivo:** `src/components/selects/UnitSelect.tsx`
+---
 
-Props:
+## 2. Solução Proposta
+
+### 2.1 Modelo Conceitual Corrigido
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ESCOPO (imutável)                                               │
+│ Define ONDE o indicador impacta                                 │
+├─────────────────────────────────────────────────────────────────┤
+│ • org    → Saúde do negócio como um todo                        │
+│ • area   → Saúde de uma área estratégica                        │
+│ • team   → Performance de um time específico                    │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ RESPONSABILIDADE OPERACIONAL                                    │
+│ Define QUEM cuida, analisa e age                                │
+├─────────────────────────────────────────────────────────────────┤
+│ • responsible_area_id  → Área responsável (obrigatório p/ org)  │
+│ • responsible_team_id  → Time responsável (opcional)            │
+│ • owner_user_id        → Pessoa accountable (obrigatório)       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Novas Colunas no Schema
+
+| Coluna | Tipo | Nullable | Default | Propósito |
+|--------|------|----------|---------|-----------|
+| `responsible_area_id` | `uuid` → `areas(id)` | YES | NULL | Área operacionalmente responsável |
+| `responsible_team_id` | `uuid` → `teams(id)` | YES | NULL | Time operacionalmente responsável |
+
+### 2.3 Regras de Validação por Escopo
+
+| Escopo | `area_id` | `team_id` | `responsible_area_id` | `responsible_team_id` |
+|--------|-----------|-----------|----------------------|----------------------|
+| **team** | Inferido do time | Obrigatório | Ignorado | Ignorado |
+| **area** | Obrigatório | Proibido | Opcional | Recomendado |
+| **org** | Proibido | Proibido | **Obrigatório** | Opcional |
+
+### 2.4 Regras de Permissão (Enforcement)
+
+| Ação | Escopo | Quem Pode |
+|------|--------|-----------|
+| **CRIAR** | `org` | Admin, Super Admin |
+| **CRIAR** | `area` | Admin, Super Admin |
+| **CRIAR** | `team` | Admin, Super Admin, Líder do time |
+| **EDITAR** | `org` | Admin, Super Admin |
+| **EDITAR** | `area` | Admin, Super Admin |
+| **EDITAR** | `team` | Admin, Super Admin, Líder do time, Owner |
+| **ATUALIZAR VALORES** | Qualquer | Owner, Contribuidores, Admin |
+
+---
+
+## 3. Implementação
+
+### 3.1 Migration SQL
+
+**Alterações:**
+1. Adicionar colunas `responsible_area_id` e `responsible_team_id`
+2. Criar foreign keys e índices
+3. Atualizar trigger `kpi_metrics_governance_validate()`
+4. Backfill KPIs globais existentes (inferir área do owner quando possível)
+
+**Nova lógica do trigger:**
+```sql
+-- scope=org ativo → responsible_area_id OBRIGATÓRIO
+-- scope=area ativo → responsible_team_id RECOMENDADO (warning no log, não erro)
+-- Mantém regras existentes para team_id/area_id (ownership hierárquico)
+```
+
+### 3.2 Atualização de Types
+
+**Arquivo:** `src/modules/kpis/types.ts`
+
+Adicionar:
 ```typescript
-interface UnitSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  showCustomOption?: boolean;  // default: true
-  showLabel?: boolean;         // default: true
-  label?: string;              // default: "Unidade"
-  placeholder?: string;
-  className?: string;
+interface KpiMetric {
+  // ... campos existentes ...
+  // v2.90.0: Responsabilidade Operacional
+  responsible_area_id: string | null;
+  responsible_team_id: string | null;
 }
 ```
 
-Características:
-- Select agrupado por categoria (como `KrUnitSelect` atual)
-- Suporte a unidade customizada (input livre)
-- Tooltip educativo sobre % vs p.p.
-- Compatível com React Hook Form via `onChange`
+### 3.3 Atualização do CreateKpiDialog
 
-### Etapa 3: Atualizar Módulo OKRs (Backward Compatibility)
+**Mudanças:**
+1. **Seção "Responsabilidade Operacional"** quando `scope=org`:
+   - Campo: `Área Responsável` (obrigatório)
+   - Campo: `Time Responsável` (opcional)
+   - Copy educativo: "Esta KPI é Global, mas quem responde por ela no dia a dia é:"
 
-**`src/modules/okrs/constants/krUnits.ts`:**
-- Re-exportar de `@/shared/constants/units`
-- Manter exports originais como alias deprecated
+2. **Seção opcional para `scope=area`:**
+   - Campo: `Time Responsável` (opcional)
+   - Copy: "Qual time é o principal responsável por acompanhar este indicador?"
 
-**`src/modules/okrs/components/KrUnitSelect.tsx`:**
-- Marcar como `@deprecated`
-- Internamente usar novo `UnitSelect`
+3. **Escopo imutável após criação:**
+   - Não se aplica na criação (campo editável)
 
-**`src/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrDetailStep.tsx`:**
-- Remover constante local `UNITS`
-- Substituir por `UnitSelect` canônico
+4. **Bloqueio de escopo por permissão:**
+   - Se não for Admin/Super Admin: desabilitar opções `org` e `area`
+   - Mostrar tooltip explicativo
 
-### Etapa 4: Atualizar Módulo KPIs
+5. **InfoNotice educativo** sobre governança:
+   - Quando `scope=org`: Alerta informando que KPIs globais requerem área responsável
+   - Quando `scope=area`: Alerta informando que é recomendado atribuir time responsável
 
-**`src/modules/kpis/components/CreateKpiDialog.tsx`:**
-- Remover select inline de unidades (linhas 424-438)
-- Substituir por `<UnitSelect value={field.value} onChange={field.onChange} showLabel={false} />`
+### 3.4 Atualização do EditKpiDialog
 
-**`src/modules/kpis/components/EditKpiDialog.tsx`:**
-- Mesma substituição (linhas 428-442)
+**Mudanças:**
+1. **Escopo READONLY:**
+   - Campo `scope` desabilitado com tooltip: "O escopo é definido na criação e não pode ser alterado"
 
-### Etapa 5: Atualizar Exports e Barrel Files
+2. **Seção "Responsabilidade Operacional"** (mesma lógica do Create)
 
-**`src/shared/constants/index.ts` (NOVO):**
+3. **Bloqueio de edição por escopo:**
+   - Se `scope=org` ou `scope=area` e não for Admin: formulário readonly ou botão Salvar desabilitado
+
+### 3.5 Atualização do useCanEditKpi
+
+**Nova lógica:**
 ```typescript
-export * from './units';
+const canEdit = useMemo(() => {
+  if (!kpi || !profileId) return false;
+
+  // Admin sempre pode editar
+  if (isWildcard) return true;
+  if (hasPermission("kpis.settings.manage:bu")) return true;
+
+  // KPIs Globais e de Área: APENAS admins
+  if (kpi.scope === 'org' || kpi.scope === 'area') {
+    return false;
+  }
+
+  // KPIs de Time: verificar liderança
+  if (kpi.scope === 'team' && kpi.team_id) {
+    // Usa canManageTeam do useTeamManagement
+    if (canManageTeam(kpi.team_id)) return true;
+  }
+
+  // É owner do KPI (para scope=team)
+  if (kpi.owner_user_id === profileId) return true;
+
+  // É contribuidor (para atualização de valores)
+  if (contributors.includes(profileId)) return true;
+
+  return false;
+}, [kpi, profileId, isWildcard, hasPermission, contributors, canManageTeam]);
 ```
 
-**`src/shared/index.ts`:**
+**Nova prop retornada:**
 ```typescript
-export * from "./constants";
+return { 
+  canEdit,          // Pode editar metadados do KPI
+  canUpdateValues,  // Pode atualizar valores (owner ou contribuidor)
+  isLoading 
+};
 ```
 
-**`src/components/selects/index.ts`:**
-```typescript
-export { UnitSelect } from "./UnitSelect";
-export type { UnitSelectProps } from "./UnitSelect";
+---
+
+## 4. Arquivos a Criar
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `supabase/migrations/XXXX_kpi_responsible_governance.sql` | Migration com novas colunas e trigger |
+| `docs/engineering/KPI_GOVERNANCE_MODEL.md` | Documentação do modelo de governança |
+
+## 5. Arquivos a Modificar
+
+| Arquivo | Alterações |
+|---------|------------|
+| `src/modules/kpis/types.ts` | Adicionar `responsible_area_id`, `responsible_team_id` |
+| `src/modules/kpis/components/CreateKpiDialog.tsx` | Seção responsabilidade, bloqueio de escopo, InfoNotice |
+| `src/modules/kpis/components/EditKpiDialog.tsx` | Escopo readonly, seção responsabilidade, bloqueio por permissão |
+| `src/modules/kpis/hooks/useCanEditKpi.ts` | Verificar scope + liderança via useTeamManagement |
+| `src/modules/kpis/hooks/useKpiMutations.ts` | Incluir novos campos no update |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | Documentar modelo de governança |
+
+---
+
+## 6. Garantia de Não-Conflito com Wizards
+
+**Análise realizada:**
+- Wizards de OKRs (`CollaboratorCheckinPage`, `LeaderPrepPage`, `ManagersCheckinPage`, `CLevelCheckinPage`) usam `useKpisForWizardV2` apenas para **leitura e atualização de valores**
+- Nenhum wizard faz criação ou edição de metadados de KPI
+- A separação `canEdit` (metadados) vs `canUpdateValues` (valores) garante que contribuidores continuem podendo atualizar valores sem poder editar metadados
+
+**Impacto nos wizards:** ZERO — apenas leitura e atualização de valores, que continuam funcionando via `owner_user_id` e `kpi_data_contributors`.
+
+---
+
+## 7. UX: Mensagens Educativas
+
+### 7.1 InfoNotice no CreateKpiDialog (scope=org)
+
+```
+ℹ️ KPIs Globais impactam toda a organização e requerem uma área 
+   operacionalmente responsável por acompanhar e agir em desvios.
 ```
 
-### Etapa 6: Atualizar Testes
+### 7.2 Tooltip no campo Escopo (bloqueado para não-admin)
 
-**`src/modules/okrs/components/KrUnitSelect.test.tsx`:**
-- Atualizar para testar via novo componente se necessário
-- Manter testes existentes funcionando
+```
+KPIs Globais e de Área só podem ser criados por administradores.
+Colaboradores podem criar KPIs de Time.
+```
 
-## Categorias de Unidades Unificadas
+### 7.3 Tooltip no campo Escopo (EditDialog)
 
-| Categoria | Opções |
-|-----------|--------|
-| **Financeiro** | R$, R$ mil, R$ milhão |
-| **Volume / Quantidade** | Número, Clientes, Contas, Usuários, Leads, Tickets, Features, Projetos |
-| **Experiência / Qualidade** | Pontos (NPS, eNPS), Score, Índice |
-| **Tempo** | Dias, Horas, Minutos |
-| **Taxas e Proporções** | %, p.p. (pontos percentuais) |
-| **Customizada** | Unidade personalizada (input livre) |
+```
+O escopo define onde o indicador impacta e é definido na criação.
+Para alterar, crie um novo indicador com o escopo desejado.
+```
 
-## Benefícios
+---
 
-| Aspecto | Antes | Depois |
-|---------|-------|--------|
-| **Consistência UX** | 3 implementações diferentes | 1 componente canônico |
-| **Manutenção** | Alterações em 3+ lugares | Alteração única |
-| **Opções em KPIs** | 5 opções fixas | 18+ opções categorizadas |
-| **Customização** | Só KRs suportam | Todos suportam |
-| **Documentação** | Inexistente | Componente no TCR |
+## 8. Critérios de Sucesso
 
-## Arquivos a Criar
+- [ ] Nenhuma KPI Global fica sem `responsible_area_id` quando ativa
+- [ ] Escopo é imutável após criação (campo readonly no Edit)
+- [ ] Apenas admins podem criar/editar KPIs com `scope=org` ou `scope=area`
+- [ ] Líderes podem criar/editar KPIs apenas de times que lideram
+- [ ] Colaboradores podem atualizar valores (owner/contribuidor) mas não editar metadados de KPIs estratégicos
+- [ ] Wizards continuam funcionando sem alterações
+- [ ] Backfill de KPIs globais existentes não quebra dados
 
-1. `src/shared/constants/units.ts`
-2. `src/shared/constants/index.ts`
-3. `src/components/selects/UnitSelect.tsx`
+---
 
-## Arquivos a Modificar
-
-1. `src/shared/index.ts` - adicionar export
-2. `src/components/selects/index.ts` - adicionar export
-3. `src/modules/okrs/constants/krUnits.ts` - re-export com alias
-4. `src/modules/okrs/components/KrUnitSelect.tsx` - deprecated wrapper
-5. `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrDetailStep.tsx` - usar UnitSelect
-6. `src/modules/kpis/components/CreateKpiDialog.tsx` - usar UnitSelect
-7. `src/modules/kpis/components/EditKpiDialog.tsx` - usar UnitSelect
-8. `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` - documentar componente
-
-## Riscos e Mitigações
+## 9. Riscos e Mitigações
 
 | Risco | Mitigação |
 |-------|-----------|
-| Dados históricos com unidades diferentes | Qualquer string é aceita, compatibilidade mantida |
-| Testes existentes quebram | Aliases deprecated mantêm imports funcionais |
-| Performance | Constantes são estáticas, sem impacto |
-
-## Validação Pós-Implementação
-
-1. Modal de edição de KR exibe todas as unidades categorizadas
-2. Modal de criação/edição de KPI exibe as mesmas unidades
-3. Wizard de OKR usa o novo componente
-4. Unidades customizadas funcionam em todos os contextos
-5. Backward compatibility: imports antigos continuam funcionando
+| KPIs globais existentes sem responsible_area_id | Backfill: inferir área do time do owner; marcar sem área para revisão manual |
+| Quebra de RLS | Trigger não cria novas políticas RLS, apenas validação |
+| UX confusa entre "Área" (ownership) e "Área Responsável" | Copy claro + seção separada "Responsabilidade Operacional" |
+| Líder perde acesso a KPI após mudança de time | Migration não altera KPIs existentes; acesso mantido via owner |
