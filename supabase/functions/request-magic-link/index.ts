@@ -40,7 +40,8 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     buUnitsResult,
     profileResult
   ] = await Promise.all([
-    // 1. Check partner contacts WITH their BU associations in one query
+    // 1. Check partner contacts WITH their company and BU associations in one query
+    // FK: partner_contacts.external_company_id -> external_companies.id (constraint: partner_contacts_partner_company_id_fkey)
     supabase
       .from("partner_contacts")
       .select(`
@@ -48,13 +49,13 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
         name,
         email,
         bu_id,
-        partner_company:partner_companies!inner(id, name, status),
+        partner_company:external_companies!partner_contacts_partner_company_id_fkey(id, name, status, allowed_domains),
         partner_contact_bu_associations!left(
           id,
           bu_id,
           is_active,
           deleted_at,
-          bu:bu_units!inner(id, name, status)
+          bu:bu_units!partner_contact_bu_associations_bu_id_fkey(id, name, status)
         ),
         legacy_bu:bu_units!partner_contacts_bu_id_fkey(id, name, status)
       `)
@@ -63,17 +64,19 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
       .is("deleted_at", null)
       .maybeSingle(),
     
-    // 2. Check partner company domain associations
+    // 2. Check external company domain associations via external_companies table
+    // For domain-based matching when no direct partner_contact exists
     supabase
-      .from("partner_company_bu_associations")
+      .from("external_companies")
       .select(`
         id,
+        name,
+        allowed_domains,
+        status,
         bu_id,
-        is_active,
-        partner_company:partner_companies!inner(id, name, allowed_domains, status),
-        bu:bu_units!inner(id, name, status)
+        bu:bu_units!partner_companies_bu_id_fkey(id, name, status)
       `)
-      .eq("is_active", true)
+      .eq("status", "active")
       .is("deleted_at", null),
     
     // 3. Get all active BUs with their domains
@@ -128,14 +131,13 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
     }
   }
 
-  // Check partner company domain associations
+  // Check external company domain associations (fallback when no direct partner_contact match)
   if (partnerBuAssociationsResult.data) {
-    for (const assoc of partnerBuAssociationsResult.data) {
-      const company = assoc.partner_company as unknown as { id: string; name: string; allowed_domains: string[]; status: string } | null;
-      const bu = assoc.bu as unknown as { id: string; name: string; status: string } | null;
-      const allowedDomains = company?.allowed_domains || [];
+    for (const company of partnerBuAssociationsResult.data as Array<{ id: string; name: string; allowed_domains: string[]; status: string; bu_id: string; bu: { id: string; name: string; status: string } | null }>) {
+      const allowedDomains = company.allowed_domains || [];
+      const bu = company.bu;
       
-      if (company?.status === 'active' && bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
+      if (bu?.status === 'active' && allowedDomains.some((d: string) => d.toLowerCase() === domain)) {
         console.log(`Partner domain: ${domain} (${company.name})`);
         return { allowed: true, buName: bu.name, isPartnerContact: true };
       }
