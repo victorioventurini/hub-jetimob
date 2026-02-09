@@ -96,11 +96,21 @@ export function OrgKrFormDialog({
     }
   }, [direction, baseline]);
 
+  // v3.4.2: Sync target from primary KPI when linked
+  useEffect(() => {
+    if (hasPrimaryKpi && primaryKpi) {
+      if (primaryKpi.targetValue !== null) {
+        setTarget(primaryKpi.targetValue.toString());
+      }
+    }
+  }, [hasPrimaryKpi, primaryKpi]);
+
   useDialogFormReset(open, useCallback(() => {
     setTitle(kr?.title || '');
     setDescription('');
     setBaseline(kr?.baseline?.toString() || '0');
     setNoBaseline(false);
+    // Use KR target initially, will be overridden by primaryKpi effect if linked
     setTarget(kr?.target?.toString() || '');
     setUnit(kr?.unit || '%');
     setDirection(kr?.direction || 'up');

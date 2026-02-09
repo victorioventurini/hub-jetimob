@@ -149,6 +149,12 @@ export {
   type PrimaryKpiData,
   type UsePrimaryKpiForKrResult,
 } from './usePrimaryKpiForKr';
+export {
+  useKrEffectiveValues,
+  getEffectiveTarget,
+  type KrEffectiveValues,
+  type UseKrEffectiveValuesResult,
+} from './useKrEffectiveValues';
 export { 
   useTeamContributionView,
   type TeamOkrContribution,
