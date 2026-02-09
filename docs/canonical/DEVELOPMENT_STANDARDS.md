@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.22.0  
-**Última atualização:** 2026-02-08  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0**
-**Referência:** TCR v3.1.0
+**Versão:** 1.23.0  
+**Última atualização:** 2026-02-09  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0**
+**Referência:** TCR v3.4.3
 
 ---
 
@@ -1143,8 +1143,32 @@ Os seguintes padrões são **PROIBIDOS** no Hub da Jet. Não há exceções.
 | 10 | Insert sem `bu_id` explícito | Falha no trigger, dado sem escopo |
 | 11 | `INNER JOIN bu_user_memberships` para listar usuários | Exclui usuários sem primeiro login (`user_id NULL`) |
 | 12 | Query em `profiles` filtrando por `user_id IS NOT NULL` | Idem acima, usar `v_bu_active_profiles` |
+| 13 | Select inline hardcoded para unidades (%, R$, dias) | Inconsistência de UX, usar `UnitSelect` |
+| 14 | Constante local `UNITS` em wizards/modais | Duplicação, usar `@/shared/constants/units` |
 
-### I.1 User Directory Global — Contrato Inquebrável
+### I.1 Seleção de Unidades — Componente Canônico
+
+```
+⚠️ REGRA: Toda seleção de unidade de medida (KRs, KPIs, Wizards) DEVE usar o componente UnitSelect.
+```
+
+| ✅ CORRETO | ❌ PROIBIDO |
+|------------|-------------|
+| `<UnitSelect value={unit} onChange={setUnit} />` | `<Select>` inline com opções hardcoded |
+| `import { UNIT_CATEGORIES } from "@/shared/constants/units"` | Constante `UNITS` local em arquivo de wizard |
+| `getUnitLabel(value)` para exibição | Switch/if-else para mapear labels |
+
+**Categorias disponíveis:**
+- Financeiro (R$, R$ mil, R$ milhão)
+- Volume/Quantidade (Número, Clientes, Leads, etc.)
+- Experiência/Qualidade (NPS, Score, Índice)
+- Tempo (Dias, Horas, Minutos)
+- Taxas (%, p.p.)
+- Customizada (input livre)
+
+> 📚 Ver: [UI_COMPONENTS_REGISTRY.md - UnitSelect](./UI_COMPONENTS_REGISTRY.md#64-unitselect)
+
+### I.2 User Directory Global — Contrato Inquebrável
 
 ```
 ⚠️ REGRA GLOBAL: Listas de usuários internos vêm de profiles (domínio), não de memberships (auth).
@@ -1184,6 +1208,7 @@ SELECT * FROM v_bu_active_profiles WHERE bu_id = current_bu_id();
 | `useBuUsersDirectory()` | Hook canônico para listar usuários da BU |
 | `BuUserSelect` | Componente de seleção única de usuário |
 | `BuUserMultiSelect` | Componente de seleção múltipla |
+| `UnitSelect` | Componente canônico para seleção de unidades de medida |
 
 ### J.3 Regras Invioláveis
 

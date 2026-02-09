@@ -1,9 +1,9 @@
 # UI Components Registry — Hub da Jet
 
-**Versão:** 1.6.0  
-**Última atualização:** 2026-02-06  
+**Versão:** 1.7.0  
+**Última atualização:** 2026-02-09  
 **Status:** Normativo  
-**Referência:** TCR v2.94.0 / DEVELOPMENT_STANDARDS v1.20.0
+**Referência:** TCR v3.4.2 / DEVELOPMENT_STANDARDS v1.22.0
 
 ---
 
@@ -432,6 +432,79 @@ Para seleção de times/squads da BU.
 />
 ```
 
+### 6.4 UnitSelect
+
+**Arquivo:** `src/components/selects/UnitSelect.tsx`
+
+Componente canônico **obrigatório** para seleção de unidades de medida em KRs, KPIs e Wizards. Garante consistência de UX e suporta unidades customizadas.
+
+**Categorias disponíveis:**
+- **Financeiro:** R$, R$ mil, R$ milhão
+- **Volume / Quantidade:** Número, Clientes, Contas, Usuários, Leads, Tickets, Features, Projetos
+- **Experiência / Qualidade:** Pontos (NPS, eNPS), Score, Índice
+- **Tempo:** Dias, Horas, Minutos
+- **Taxas e Proporções:** %, p.p. (pontos percentuais)
+- **Customizada:** Unidade personalizada (input livre)
+
+```tsx
+// ✅ CORRETO: Componente canônico
+<UnitSelect
+  value={unit}
+  onChange={setUnit}
+  showCustomOption={true}      // Permite input livre (default: true)
+  showLabel={false}            // Oculta label (default: true)
+  placeholder="Selecione..."
+/>
+
+// ✅ CORRETO: Com React Hook Form
+<FormField
+  control={form.control}
+  name="unit"
+  render={({ field }) => (
+    <FormItem>
+      <UnitSelect 
+        value={field.value} 
+        onChange={field.onChange}
+        showLabel={false}
+      />
+    </FormItem>
+  )}
+/>
+
+// ❌ PROIBIDO: Select inline hardcoded
+<Select value={unit} onValueChange={setUnit}>
+  <SelectTrigger><SelectValue /></SelectTrigger>
+  <SelectContent>
+    <SelectItem value="%">%</SelectItem>
+    <SelectItem value="R$">R$</SelectItem>
+    <SelectItem value="pontos">Pontos</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+**Props disponíveis:**
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `value` | `string` | — | Valor atual da unidade |
+| `onChange` | `(value: string) => void` | — | Callback de mudança |
+| `disabled` | `boolean` | `false` | Desabilita o componente |
+| `showCustomOption` | `boolean` | `true` | Mostra opção de unidade customizada |
+| `showLabel` | `boolean` | `true` | Exibe label "Unidade" |
+| `label` | `string` | `"Unidade"` | Label customizada |
+| `placeholder` | `string` | `"Selecione..."` | Placeholder do select |
+| `className` | `string` | — | Classes CSS adicionais |
+
+**Constantes compartilhadas:** `src/shared/constants/units.ts`
+
+```typescript
+import { UNIT_CATEGORIES, ALL_UNITS, getUnitLabel } from "@/shared/constants/units";
+
+// UNIT_CATEGORIES - Categorias com suas opções
+// ALL_UNITS - Array flat com todas as unidades
+// getUnitLabel(value) - Retorna label amigável
+```
+
 ---
 
 ## 7. Padrões Obrigatórios
@@ -530,6 +603,8 @@ if (isLoading) {
 | 14 | Botão complementar (Organograma, Links Salvos) fora do PageHeader | Mover para `PageHeader.actions` |
 | 15 | Label "Ver X" para botões de navegação | Label direto: "Organograma", "Dashboard", "Evolução" |
 | 16 | Página de detalhe aninhada em layout com header próprio | Registrar como rota standalone com `HubLayout` próprio |
+| 17 | Select inline hardcoded para unidades (%, R$, dias) | `<UnitSelect />` canônico |
+| 18 | Constante local `UNITS` em wizards/modais | Importar de `@/shared/constants/units` |
 
 ---
 
@@ -731,6 +806,8 @@ O componente `KpiActionsMenu` (`src/modules/kpis/components/KpiActionsMenu.tsx`)
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.7.0 | 2026-02-09 | Adicionado UnitSelect canônico (seção 6.4) + anti-patterns #17 e #18 |
+| 1.6.0 | 2026-02-06 | Anti-pattern #16 (rotas standalone) |
 | 1.5.0 | 2026-02-04 | Anti-patterns #14 e #15 (botões complementares no PageHeader, labels sem "Ver") |
 | 1.4.0 | 2026-02-04 | Adicionada seção 11 - Menus de Ações em Tabelas |
 | 1.3.0 | 2026-02-04 | Adicionada seção 10 - Componentes de Insights |
