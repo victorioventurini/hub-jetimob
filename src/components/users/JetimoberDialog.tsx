@@ -335,7 +335,6 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         last_name: data.last_name,
         display_name,
         work_email: data.work_email.toLowerCase().trim(),
-        job_title: "", // Deprecated: usando job_title_id
         job_title_id: data.job_title_id,
         city: data.city,
         state: data.state,
