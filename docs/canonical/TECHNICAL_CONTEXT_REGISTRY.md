@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.5.0  
-**Última atualização:** 2026-02-10 (v3.5.0 - External User Type Consistency - Trigger handle_new_user corrigida para setar user_type, views e RPCs deduplicados)
+**Versão:** 3.6.0  
+**Última atualização:** 2026-02-10 (v3.6.0 - Frontend BU Isolation Enforcement - Regra inquebrável de filtragem frontend por bu_id em queries operacionais)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -221,6 +221,10 @@ const supabase = useBuScopedSupabase();
 - ✅ Mutations em tabelas com `bu_id`
 
 **Guard de segurança:** Lança erro se chamado antes de `BuProvider` inicializar.
+
+> ⚠️ **REGRA INQUEBRÁVEL (v3.6.0):** Usar `useBuScopedSupabase()` **NÃO É SUFICIENTE** para isolamento. Toda query de listagem **DEVE** incluir `.eq('bu_id', currentBuId)` explicitamente, e toda query de detalhe **DEVE** validar `data.bu_id !== currentBuId` pós-fetch. A RLS permite acesso multi-BU para admins — sem filtro frontend, dados vazam entre BUs.
+>
+> **Referência completa:** [DEVELOPMENT_STANDARDS.md §A.3](./DEVELOPMENT_STANDARDS.md) | [BU_SCOPED_SUPABASE_RULES.md §Filtragem](./BU_SCOPED_SUPABASE_RULES.md)
 
 #### `supabase` (Cliente Global Singleton) — USO RESTRITO
 **Importar de `globalClient.ts`, NUNCA de `client.ts`:**
