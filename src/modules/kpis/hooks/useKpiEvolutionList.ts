@@ -79,6 +79,7 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
 
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.kpis.evolutionList(buId ?? null, { indicatorType, areaId, scope, teamId, ragStatus, search }),
+    enabled: !!supabase && !!buId,
     queryFn: async (): Promise<{ kpis: KpiEvolutionItem[]; aggregates: KpiEvolutionAggregates }> => {
       if (!supabase) {
         return { 
@@ -98,6 +99,7 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           area:areas!kpi_metrics_area_id_fkey(id, name, color)
         `)
         .eq('status', 'active')
+        .eq('bu_id', buId!)
         .is('deleted_at', null)
         .order('name');
 
@@ -208,7 +210,7 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
 
       return { kpis: filteredKpis, aggregates };
     },
-    enabled: !!supabase,
+    // enabled already set above
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 

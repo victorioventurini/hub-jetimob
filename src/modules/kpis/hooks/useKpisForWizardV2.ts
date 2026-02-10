@@ -12,6 +12,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { kpisKeys } from "@/lib/queryKeys/okrs";
 import type { 
   KpiForWizardV2,
@@ -51,15 +52,16 @@ import type {
  */
 export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisForWizardV2Result {
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBuId } = useBu();
   const { userId, teamId, areaId, scope = 'collaborator', includeGuardrailsAtRisk = false } = options;
 
   const { data, error, isLoading } = useQuery({
     queryKey: kpisKeys.forWizardV2({ userId, teamId, areaId, scope }),
-    enabled: !!supabase && !!userId,
+    enabled: !!supabase && !!userId && !!currentBuId,
     staleTime: 5 * 60 * 1000, // 5 min cache
     queryFn: async () => {
       try {
-        if (!supabase || !userId) {
+        if (!supabase || !userId || !currentBuId) {
           return emptyResult();
         }
 
@@ -84,6 +86,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             area:areas!area_id(id, name, color)
           `)
           .eq('lifecycle_status', 'active')
+          .eq('bu_id', currentBuId)
           .is('deleted_at', null);
 
         // Apply scope-based filtering
