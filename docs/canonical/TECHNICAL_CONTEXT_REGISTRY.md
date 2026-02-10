@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.4.3  
-**Última atualização:** 2026-02-09 (v3.4.3 - UnitSelect Canonical Component - Componente e constantes unificadas para seleção de unidades em KRs, KPIs e Wizards)
+**Versão:** 3.5.0  
+**Última atualização:** 2026-02-10 (v3.5.0 - External User Type Consistency - Trigger handle_new_user corrigida para setar user_type, views e RPCs deduplicados)
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅
 
@@ -79,7 +79,7 @@
   5. Envia link por email via SendGrid (com Resend como fallback)
   6. Usuário clica no link e é redirecionado para `/auth/callback`
   7. `AuthCallback.tsx` verifica o `token_hash` via `supabase.auth.verifyOtp()` para estabelecer sessão
-  8. Profile é criado automaticamente via trigger `handle_new_user()` (se não existir)
+  8. Profile é criado automaticamente via trigger `handle_new_user()` (se não existir), com `user_type = 'external'` e `employment_status = 'external'` para usuários externos
 
 > **Nota (v2.65.0):** O sistema usa Magic Link com `token_hash` no URL (não hash fragment) para evitar problemas com SendGrid click tracking que remove fragmentos de URL.
 
@@ -2292,6 +2292,23 @@ export type { SomeType } from './types';
     - `usePartnerServices.ts` → `queryKeys.tickets.partnerServices()`
     - `useTeamArea.ts` → `queryKeys.teams.area()`
 - **100% Query Keys Compliance** ✅
+
+### v3.5.0 (2026-02-10) — External User Type Consistency
+- **Trigger `handle_new_user` Corrigida**:
+  - Agora seta `user_type = 'external'` para usuários externos (antes mantinha default `'internal'`)
+  - Aplica tanto no INSERT (novo profile) quanto no UPDATE (profile pré-existente sem user_id)
+- **Dados Corrigidos**: 6 profiles com `employment_status = 'external'` mas `user_type = 'internal'` atualizados
+- **View `v_all_participants` Corrigida**:
+  - Adicionado filtro `AND p.user_type = 'internal'` na parte profiles do UNION ALL
+  - Evita duplicação de usuários externos (que aparecem via `partner_contacts`)
+- **RPC `search_mention_candidates` Corrigida**:
+  - Mesmo filtro `AND p.user_type = 'internal'` adicionado
+  - Dropdown de menções agora mostra externos apenas 1x
+- **Edge Function `send-partner-invite` Corrigida**:
+  - Join legado `partner_companies(id, name)` → `external_company:external_companies(id, name)`
+- **Documentação Atualizada**:
+  - `EXTERNAL_USER_IDENTITY_PATTERN.md`: `user_type = 'external'` documentado no trigger, nomes legados corrigidos
+  - `UNIFIED_PARTICIPANT_LAYER.md`: SQL da view atualizado
 
 ### v2.98.0 (2026-02-07) — Systemic Health Audit v1.0
 - **auth-email-hook Bug Fix**:
