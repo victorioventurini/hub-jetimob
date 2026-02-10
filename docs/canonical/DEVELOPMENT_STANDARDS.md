@@ -1,6 +1,6 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.23.0  
+**Versão:** 1.24.0  
 **Última atualização:** 2026-02-09  
 **Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0**
 **Referência:** TCR v3.4.3
@@ -185,6 +185,63 @@ const buSelected = buContext?.buSelected ?? false;
 | `current_bu_id()` | Retorna BU do contexto. NUNCA retorna NULL. |
 | `is_current_bu(bu_id)` | Helper para RLS: verifica se bu_id = contexto |
 | `assert_bu_scope(bu_id)` | Trigger: valida bu_id do payload |
+
+#### Frontend: Filtragem Obrigatória por BU (v1.23.1)
+
+> ⚠️ **REGRA INQUEBRÁVEL:** Toda query de listagem ou detalhe de dados operacionais **DEVE** incluir `.eq('bu_id', currentBuId)` no frontend, **independente da RLS existente**.
+>
+> **Motivo:** A RLS permite acesso a múltiplas BUs para admins e platform admins. Sem filtro explícito no frontend, dados de outras BUs vazam na UI.
+
+```typescript
+// ✅ CORRETO: Listagem com filtro explícito de BU
+const { currentBuId } = useBu();
+const supabase = useBuScopedSupabase();
+
+const { data } = useQuery({
+  queryKey: kpiKeys.list(currentBuId),
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("kpi_metrics")
+      .select("id, name, status")
+      .eq("bu_id", currentBuId);  // ✅ OBRIGATÓRIO
+    return data;
+  },
+  enabled: !!currentBuId,  // ✅ OBRIGATÓRIO: gating por BU
+});
+
+// ✅ CORRETO: Detalhe com validação pós-fetch
+const { data } = useQuery({
+  queryKey: kpiKeys.detail(id),
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("kpi_metrics")
+      .select("id, name, bu_id")
+      .eq("id", id)
+      .single();
+    // Validação: rejeitar se BU não corresponde
+    if (data?.bu_id !== currentBuId) return null;
+    return data;
+  },
+  enabled: !!currentBuId && !!id,
+});
+
+// ❌ ERRADO: Listagem SEM filtro de BU (dados de outras BUs aparecem para admins)
+const { data } = await supabase.from("kpi_metrics").select("id, name");
+
+// ❌ ERRADO: Detalhe SEM validação de BU
+const { data } = await supabase.from("kpi_metrics").select("*").eq("id", id).single();
+```
+
+#### Checklist para Novos Hooks de Dados Operacionais
+
+| Tipo | Requisito | Exemplo |
+|------|-----------|---------|
+| **Listagem** | `.eq('bu_id', currentBuId)` na query | `useKpiData()`, `useTeams()` |
+| **Detalhe por ID** | Validação pós-fetch `data.bu_id !== currentBuId → null` | `useKpiDetail()`, `useTicketDetail()` |
+| **RPCs com JOIN** | Parâmetro `p_bu_id` ou `AND t.bu_id = current_bu_id()` | `get_cycle_checkins()` |
+| **Habilitação** | `enabled: !!currentBuId` (nunca rodar sem BU) | Todos os hooks operacionais |
+
+> **A RLS é a última linha de defesa, não a única.** O frontend DEVE filtrar proativamente.
 
 #### Frontend: Helper para Inserts
 

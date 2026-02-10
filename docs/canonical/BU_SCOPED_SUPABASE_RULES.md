@@ -1,7 +1,7 @@
 # Regras de Uso do Cliente Supabase com Escopo de BU
 
-**Versão**: 4.0.0  
-**Última atualização**: 2026-01-23
+**Versão**: 4.1.0  
+**Última atualização**: 2026-02-10
 
 ## Visão Geral
 
@@ -144,11 +144,37 @@ export async function processData(buId: string, data: any) {
 }
 ```
 
+## Filtragem Obrigatória por BU no Frontend (v4.1.0)
+
+> ⚠️ **REGRA INQUEBRÁVEL:** Usar `useBuScopedSupabase()` **não é suficiente** para isolamento de dados.
+> Toda query de listagem ou detalhe **DEVE** incluir `.eq('bu_id', currentBuId)` explicitamente.
+
+### Por quê?
+
+O header `x-current-bu-id` alimenta a função `current_bu_id()` usada em RLS policies. Porém, **admins e platform admins** têm policies que concedem acesso a múltiplas BUs (ex: `is_platform_admin()`). Sem o filtro frontend, dados de outras BUs vazam na interface.
+
+### Regra
+
+| Tipo de Query | Requisito Frontend |
+|---------------|-------------------|
+| **Listagem (SELECT múltiplo)** | `.eq('bu_id', currentBuId)` + `enabled: !!currentBuId` |
+| **Detalhe (SELECT único por ID)** | Validar `data.bu_id !== currentBuId → return null` |
+| **Insert/Update** | `withBuId()` helper (já documentado) |
+| **RPCs** | Parâmetro `p_bu_id` ou filtro `AND bu_id = current_bu_id()` no SQL |
+
+### Incidentes Resolvidos
+
+| Data | Módulo | Problema | Causa |
+|------|--------|----------|-------|
+| 2026-02-10 | KPIs | KPIs da BU Jetimob visíveis na BU Jet Experience | Hooks sem `.eq('bu_id')` |
+| 2026-02-09 | Teams | Times de outra BU visíveis após troca de contexto | View sem filtro de BU no JOIN |
+
 ## Consequências de Violação
 
 - **Desenvolvimento**: Script de auditoria falha (exit code 1)
 - **Runtime (dev)**: Erro lançado ao acessar tabela operacional via global
 - **Runtime (prod)**: Warning logado, operação pode falhar por RLS
+- **Segurança**: Dados de outras BUs expostos na UI para admins multi-BU
 
 ---
 

@@ -135,6 +135,26 @@ Este documento descreve os testes manuais para validar a segurança do escopo de
 
 ---
 
+### 7. Frontend Query BU Filter (v4.1.0)
+
+**Objetivo:** Verificar que queries de listagem filtram por BU no frontend.
+
+**Passos:**
+1. Login como platform admin (acesso a múltiplas BUs)
+2. Na BU A, navegar para KPIs → verificar que lista mostra apenas KPIs da BU A
+3. Alternar para BU B → verificar que lista mostra apenas KPIs da BU B
+4. Repetir para OKRs, Assets, Tickets, Teams
+5. Verificar no DevTools > Network que as requests incluem filtro `bu_id=eq.{buId}`
+
+**Resultado Esperado:**
+- [x] Cada módulo lista apenas dados da BU ativa
+- [x] Requests REST incluem filtro `bu_id` explícito
+- [x] Nenhum dado cross-BU aparece mesmo para admins
+
+**Status:** ⬜ Não testado | ✅ PASS | ❌ FAIL
+
+---
+
 ## Resumo da Execução
 
 | Data | Executor | PASS | FAIL | N/A |
