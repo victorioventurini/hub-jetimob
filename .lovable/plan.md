@@ -1,48 +1,96 @@
 
 
-# Correção: user_type inconsistente em usuários externos
+# Correção: Menções de Externos como Internos + Redirect de Perfil
 
-## Status: ✅ COMPLETO (2026-02-10)
+## Problema Identificado
 
-## Contexto (Pré-Checklist Validado)
+Antes da correção do `search_mention_candidates`, era possível mencionar usuários externos como se fossem internos. Isso gerou dois problemas:
 
-Documentos consultados:
-- **TCR v3.4.3** → atualizado para **v3.5.0**
-- **IDENTITY_CONVENTION v2.1.1** — Sem menção a `user_type` (foco em `user_id` vs `profile_id`)
-- **DATA_MODEL_REGISTRY v1.2.2** — Tabela `profiles` com `user_type` (valores: internal/external)
-- **EXTERNAL_USER_IDENTITY_PATTERN v1.0.0** — ✅ Atualizado
-- **PERMISSIONS_AND_RBAC_MODEL v1.4.0** — Persona "Externo" identificada por `user_roles.role = 'external'`
+1. **Dados corrompidos no banco**: 2 menções em `ticket_messages` armazenadas como `@[nome](internal:profileId)` quando deveriam ser `@[nome](external:contactId)`
+2. **Menções na tabela `mentions`**: 2 registros com `mentioned_user_id` preenchido (profile ID) quando deveriam ter `mentioned_contact_id` preenchido
+3. **Links quebrados**: Clicar nessas menções leva a `/users/{profileId}` que mostra uma página de perfil interno para um usuário externo
 
-## Problema
+### Dados Afetados (escopo exato)
 
-A trigger `handle_new_user` setava `employment_status = 'external'` corretamente, mas **nunca setava `user_type`**, que tem default `'internal'`. Isso causava duplicação de usuários externos em menções e diretório de participantes.
+| Usuário | Profile ID | Contact ID | Mensagens |
+|---------|-----------|------------|-----------|
+| Mariana Papaleo Montardo | `eef74ee3-...` | `e33df2cf-...` | 1 mensagem |
+| Luana dos Santos Sarmento | `06efb1a2-...` | `97c0ca51-...` | 1 mensagem |
 
-## Ações Executadas
+## Solucao Recomendada: Abordagem Combinada (Opcoes 1 + 2)
 
-### ✅ Passo 1: Corrigir dados existentes
-- 6 profiles atualizados de `user_type = 'internal'` para `'external'`
-- Verificação: 0 linhas inconsistentes
+Ambas as abordagens se complementam e devem ser aplicadas juntas:
 
-### ✅ Passo 2: Corrigir trigger `handle_new_user`
-- `user_type` agora é setado explicitamente no INSERT e UPDATE
+### Passo 1: Corrigir dados no banco (opcao 2)
+Corrigir as menções na origem para que os dados fiquem corretos permanentemente.
 
-### ✅ Passo 3: Corrigir deduplicação em views/RPCs
-- `v_all_participants`: Adicionado `AND p.user_type = 'internal'`
-- `search_mention_candidates`: Adicionado `AND p.user_type = 'internal'`
-- `search_bu_users_for_mention`: Já filtrava corretamente ✅
+**1a. Corrigir `body_richtext` das mensagens:**
+- Substituir `@[mariana](internal:eef74ee3-...)` por `@[mariana](external:e33df2cf-...)`
+- Substituir `@[luana](internal:06efb1a2-...)` por `@[luana](external:97c0ca51-...)`
 
-### ✅ Passo 4: Corrigir referências legadas
-- `send-partner-invite` edge function: `partner_companies` → `external_companies`
-- `EXTERNAL_USER_IDENTITY_PATTERN.md`: 5 correções (nomes legados + `user_type`)
-- `UNIFIED_PARTICIPANT_LAYER.md`: SQL da view atualizado
+**1b. Corrigir tabela `mentions`:**
+- Mover `mentioned_user_id` para `mentioned_contact_id` nos 2 registros afetados
 
-### ✅ Passo 5: Atualizar documentação
-- **TCR**: v3.4.3 → v3.5.0, changelog adicionado, linha 82 atualizada
-- **EXTERNAL_USER_IDENTITY_PATTERN.md**: `user_type` documentado
-- **UNIFIED_PARTICIPANT_LAYER.md**: SQL corrigido
-- **Plan.md**: Finalizado
+### Passo 2: Adicionar redirect defensivo na pagina de perfil (opcao 1)
+Para prevenir que links antigos ou cache do navegador continuem levando a pagina errada.
 
-## Verificação Final
-- `SELECT ... WHERE employment_status = 'external' AND user_type != 'external'` → 0 linhas ✅
-- `v_all_participants WHERE display_name ILIKE '%luana%'` → 1 linha (external) ✅
-- `search_mention_candidates(..., 'luana')` → 1 linha (partner_contact) ✅
+Na pagina `/users/:id`, adicionar logica que:
+1. Verifica se o profile tem `user_type = 'external'`
+2. Se sim, busca o `partner_contacts.id` correspondente
+3. Redireciona automaticamente para `/contacts/{contactId}`
+
+Isso funciona como uma rede de seguranca para qualquer link residual.
+
+### Passo 3: Atualizar documentacao
+- Registrar a correcao no TCR
+- Atualizar plan.md
+
+---
+
+## Detalhes Tecnicos
+
+### Migracao SQL (Passo 1)
+
+```sql
+-- 1a: Fix body_richtext in ticket_messages
+UPDATE public.ticket_messages
+SET body_richtext = jsonb_set(
+  body_richtext,
+  '{content}',
+  to_jsonb(replace(body_richtext->>'content',
+    '@[mariana](internal:eef74ee3-c51b-4007-9338-5ae023eedfac)',
+    '@[mariana](external:e33df2cf-d0c2-4ebb-9a77-6fec6a21b25d)'))
+)
+WHERE id = '77a9944d-d159-45c3-9eca-040d8e1bf67e';
+
+UPDATE public.ticket_messages
+SET body_richtext = jsonb_set(
+  body_richtext,
+  '{content}',
+  to_jsonb(replace(body_richtext->>'content',
+    '@[luana](internal:06efb1a2-6470-4fee-a05d-01179caf50e5)',
+    '@[luana](external:97c0ca51-cb9a-4155-8cb0-b5ccef6abb3d)'))
+)
+WHERE id = 'c73e0800-44f2-4570-8aa1-36dbd2d904db';
+
+-- 1b: Fix mentions table
+UPDATE public.mentions
+SET mentioned_contact_id = 'e33df2cf-d0c2-4ebb-9a77-6fec6a21b25d',
+    mentioned_user_id = NULL
+WHERE id = '4ecd2c60-cfb5-43fc-aed4-5eaf31e88912';
+
+UPDATE public.mentions
+SET mentioned_contact_id = '97c0ca51-cb9a-4155-8cb0-b5ccef6abb3d',
+    mentioned_user_id = NULL
+WHERE id = 'e46f1864-fc41-40db-97cd-9d0e58a2e171';
+```
+
+### Redirect no UserProfile (Passo 2)
+
+Na pagina que renderiza `/users/:id`, adicionar um hook/efeito que:
+1. Faz query em `profiles` pelo ID da URL
+2. Se `user_type = 'external'`, busca `partner_contacts` pelo `user_id`
+3. Faz `navigate('/contacts/{contactId}', { replace: true })`
+
+Isso e uma rede de seguranca permanente, nao apenas para esses 2 casos.
+
