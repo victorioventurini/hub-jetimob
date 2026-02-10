@@ -44,7 +44,7 @@ Criar um padrão documentado e hooks específicos para detectar e tratar usuári
 │  └── partner_contacts (1:1 via user_id)                         │
 │      └── partner_contact_bu_associations (1:N)                  │
 │          └── bu_units                                            │
-│      └── partner_companies (N:1)                                │
+│      └── external_companies (N:1)                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,8 +54,8 @@ Criar um padrão documentado e hooks específicos para detectar e tratar usuári
 |--------|-----------|
 | `partner_contacts` | Contatos externos globais (únicos por email) |
 | `partner_contact_bu_associations` | Associação contato ↔ BU (N:N) |
-| `partner_companies` | Empresas parceiras globais |
-| `partner_company_bu_associations` | Associação empresa ↔ BU |
+| `external_companies` | Empresas parceiras globais |
+| `external_company_bu_associations` | Associação empresa ↔ BU |
 
 ## Hooks Canônicos
 
@@ -123,6 +123,7 @@ Usuários externos **PASSAM** pelo fluxo de onboarding (possuem `profiles` criad
 
 O trigger `handle_new_user` cria um registro em `profiles` para todos os usuários (internos e externos) com:
 - `employment_status = 'external'` para usuários externos
+- `user_type = 'external'` para usuários externos (garante consistência com `employment_status`)
 - `onboarding_completed = false` (padrão)
 
 ```typescript
@@ -201,7 +202,7 @@ async function getEmailBu(email: string) {
   // 1. Check partner_contacts first
   const { data: partnerContact } = await supabase
     .from("partner_contacts")
-    .select(`id, partner_company:partner_companies(status)`)
+    .select(`id, external_company:external_companies(status)`)
     .eq("email", email.toLowerCase())
     .eq("status", "active")
     .maybeSingle();
