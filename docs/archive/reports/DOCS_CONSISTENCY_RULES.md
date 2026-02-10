@@ -48,6 +48,8 @@ Afirmações que contradizem regras canônicas:
 | "líder pode gerenciar time pai" | Líder gerencia apenas próprio time + filhos diretos |
 | "select('*')" como recomendação | Sempre listar campos explícitos |
 | "permission keys hardcoded" | Usar `usePermissions()` + catálogo |
+| "RLS garante isolamento de BU" (sem filtro frontend) | Frontend DEVE filtrar `.eq('bu_id', currentBuId)` em toda query operacional |
+| "query sem filtro bu_id" como aceitável | Toda listagem/detalhe operacional requer `.eq('bu_id')` explícito |
 
 ---
 
