@@ -49,8 +49,17 @@ export function usePublicProfile(profileId?: string) {
 
       const profileData = data[0];
       
-      // Verify BU membership (extra security check)
-      if (profileData.bu_id !== currentBu.id) return null;
+      // Verify BU access: user must have active membership in current BU
+      // Note: profiles.bu_id is the "home" BU, but users can be members of multiple BUs
+      const { data: membershipCheck } = await supabase
+        .from("bu_user_memberships")
+        .select("id")
+        .eq("profile_id", profileData.id)
+        .eq("bu_id", currentBu.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      
+      if (!membershipCheck) return null;
 
       // Fetch team data
       let team = null;
@@ -239,16 +248,18 @@ export function useUserSquads(userId?: string) {
           squad:squads!squad_memberships_squad_id_fkey(
             id,
             name,
-            description
+            description,
+            team:teams!squads_team_id_fkey(id, name, bu_id)
           )
         `)
         .eq("user_id", userId)
         .is("deleted_at", null);
 
       if (error) throw error;
-      return data || [];
+      // Filter squads to only those belonging to current BU
+      return (data || []).filter((m: any) => m.squad?.team?.bu_id === currentBu?.id);
     },
-    enabled: !!userId,
+    enabled: !!userId && !!currentBu?.id,
   });
 }
 
