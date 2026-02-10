@@ -7,6 +7,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { kpisKeys } from "@/lib/queryKeys/okrs";
 import type { 
   KpiRagStatus, 
@@ -70,15 +71,16 @@ export interface UseKpisForWizardResult {
  */
 export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpisForWizardResult {
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBuId } = useBu();
   const { ownerId, teamId } = options;
 
   const { data, error, isLoading } = useQuery({
     queryKey: kpisKeys.forWizard({ ownerId, teamId }),
-    enabled: !!supabase,
+    enabled: !!supabase && !!currentBuId,
     staleTime: 5 * 60 * 1000, // 5 min cache
     queryFn: async () => {
       try {
-        if (!supabase) return { kpis: [], guardrails: [] };
+        if (!supabase || !currentBuId) return { kpis: [], guardrails: [] };
 
         // 1. Fetch active KPIs
         let kpiQuery = supabase
@@ -88,6 +90,7 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
             lifecycle_status, recovery_protocol, team_id, owner_user_id
           `)
           .eq('lifecycle_status', 'active')
+          .eq('bu_id', currentBuId)
           .is('deleted_at', null);
           
         if (ownerId) {

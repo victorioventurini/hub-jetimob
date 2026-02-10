@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, KpiLifecycleStatus, calculateRagStatus } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
@@ -91,14 +92,15 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBuId } = useBu();
   // v2.82.0: category deprecated - using areaId for filtering
   // v2.83.0: Added indicatorType filter
   const { teamId, ownerId, areaId, scope, indicatorType } = options;
 
   // Fetch all KPIs with their latest values
   const { data: kpis, isLoading, error } = useQuery({
-    queryKey: queryKeys.kpis.list(null, { teamId, ownerId, areaId, scope, indicatorType }),
-    enabled: !!supabase,
+    queryKey: queryKeys.kpis.list(currentBuId, { teamId, ownerId, areaId, scope, indicatorType }),
+    enabled: !!supabase && !!currentBuId,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return [];
@@ -115,6 +117,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
           area:areas!kpi_metrics_area_id_fkey(id, name, color)
         `)
         .eq("status", "active")
+        .eq("bu_id", currentBuId!)
         .is("deleted_at", null)
         .order("area_id", { nullsFirst: false })
         .order("name");
@@ -387,6 +390,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
 // Hook for fetching a single KPI with full history
 export function useKpiDetail(kpiId: string) {
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBuId } = useBu();
   
   const { data: kpi, isLoading } = useQuery({
     queryKey: queryKeys.kpis.detail(kpiId),
@@ -409,6 +413,11 @@ export function useKpiDetail(kpiId: string) {
         .maybeSingle();
 
       if (error) throw error;
+      if (!data) return null;
+
+      // BU isolation: ensure KPI belongs to current BU
+      if (currentBuId && (data as any).bu_id !== currentBuId) return null;
+
       return data as DbKpiMetric | null;
     },
     enabled: !!supabase && !!kpiId,

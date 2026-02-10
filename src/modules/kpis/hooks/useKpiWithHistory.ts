@@ -8,6 +8,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import type { KpiValue, KpiDirection, KpiRagStatus, KpiValueSource, KpiIndicatorType, KpiLifecycleStatus, KpiScope } from "../types";
 import { calculateRagStatus } from "../types";
@@ -48,6 +49,7 @@ export interface KpiWithHistoryData {
 
 export function useKpiWithHistory(kpiId: string | null | undefined) {
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBuId } = useBu();
 
   return useQuery({
     queryKey: queryKeys.kpis.kpiWithHistory(kpiId ?? null),
@@ -59,7 +61,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         .from('kpi_metrics')
         .select(`
           id, name, description, unit, direction, target_value, target_source,
-          indicator_type, lifecycle_status, scope,
+          indicator_type, lifecycle_status, scope, bu_id,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
           area:areas!kpi_metrics_area_id_fkey(id, name, color)
@@ -69,6 +71,9 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
 
       if (kpiError) throw kpiError;
       if (!kpi) return null;
+
+      // BU isolation: ensure KPI belongs to current BU
+      if (currentBuId && (kpi as any).bu_id !== currentBuId) return null;
 
       // Fetch values with user info
       const { data: rawValues, error: valuesError } = await supabase
