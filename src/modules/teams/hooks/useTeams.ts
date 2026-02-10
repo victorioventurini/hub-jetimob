@@ -107,6 +107,7 @@ export function useTeams(optionsOrIncludeInactive: UseTeamsOptions | boolean = f
 
 export function useTeam(teamId: string | undefined) {
   const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
   
   return useQuery({
     queryKey: queryKeys.teams.detail(teamId),
@@ -124,6 +125,9 @@ export function useTeam(teamId: string | undefined) {
 
       if (error) throw error;
       if (!data) return null;
+
+      // BU isolation: ensure team belongs to current BU
+      if (currentBuId && data.bu_id !== currentBuId) return null;
 
       // Get child teams
       const { data: childTeams } = await supabase
