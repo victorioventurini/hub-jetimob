@@ -207,7 +207,7 @@ async function getEmailBu(email: string) {
     .eq("status", "active")
     .maybeSingle();
 
-  if (partnerContact?.partner_company?.status === 'active') {
+  if (partnerContact?.external_company?.status === 'active') {
     // Check for active BU associations
     const { data: associations } = await supabase
       .from("partner_contact_bu_associations")
