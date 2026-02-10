@@ -61,7 +61,8 @@ Criar uma camada de abstração que:
 ### View: `v_all_participants`
 
 ```sql
-CREATE VIEW public.v_all_participants AS
+CREATE VIEW public.v_all_participants
+WITH (security_invoker = true) AS
 SELECT 
   'internal'::text as user_type,
   p.id as participant_id,
@@ -80,6 +81,7 @@ LEFT JOIN public.teams t ON p.team_id = t.id
 LEFT JOIN public.job_titles jt ON p.job_title_id = jt.id
 WHERE p.deleted_at IS NULL 
   AND p.employment_status != 'terminated'
+  AND p.user_type = 'internal'  -- Exclui externos para evitar duplicação com partner_contacts
 
 UNION ALL
 
@@ -91,14 +93,14 @@ SELECT
   pc.email,
   NULL::text as photo_url,
   pca.bu_id,
-  pc.partner_company_id as company_id,
+  pc.external_company_id as company_id,
   pco.name as company_name,
   NULL::text as team_name,
   NULL::text as job_title,
   pc.status::text as status
 FROM public.partner_contacts pc
-JOIN public.partner_contact_bu_associations pca ...
-JOIN public.partner_companies pco ...
+JOIN public.partner_contact_bu_associations pca ON pc.id = pca.partner_contact_id AND pca.is_active = true AND pca.deleted_at IS NULL
+JOIN public.external_companies pco ON pc.external_company_id = pco.id
 WHERE pc.deleted_at IS NULL AND pc.status = 'active';
 ```
 
