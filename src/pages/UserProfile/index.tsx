@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
@@ -32,6 +32,7 @@ import {
 } from "@/hooks/usePublicProfile";
 import { TeamLink } from "@/components/links";
 import { useBu } from "@/contexts/BuContext";
+import { useExternalProfileRedirect } from "@/hooks/useExternalProfileRedirect";
 
 
 const workModeLabels: Record<string, string> = {
@@ -59,6 +60,7 @@ const monthNames = [
 
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
+  useExternalProfileRedirect(id);
   const { data: profile, isLoading } = usePublicProfile(id);
   const { data: kpis } = useUserKpis(profile?.id);
   const { data: squads } = useUserSquads(profile?.id);
