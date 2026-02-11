@@ -169,17 +169,21 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
     onSuccess: () => {
       toast.success("Bem-vindo ao Hub Jetimob! 🚀");
       
-      // CRITICAL: Navegar PRIMEIRO, antes de invalidar queries
-      // O invalidateQueries causa refetch → profile.onboarding_completed = true
-      // → re-render → race condition com Navigate antes do navigate() executar
-      // Chamando onComplete() primeiro, o navigate("/select-bu") executa imediatamente
+      // CRITICAL: Atualizar cache SINCRONAMENTE antes de navegar.
+      // Sem isso, OnboardingGuard monta com dados stale (onboarding_completed=false)
+      // e redireciona de volta para /onboarding → tela branca / loop.
+      queryClient.setQueryData(
+        queryKeys.onboarding.check(userId),
+        (old: { id: string; onboarding_completed: boolean } | null | undefined) =>
+          old ? { ...old, onboarding_completed: true } : old,
+      );
+      
+      // Navegar para seleção de BU
       onComplete();
       
-      // Invalidar queries DEPOIS do navigate para evitar race condition
-      // Usamos setTimeout(0) para garantir que o navigate execute antes
+      // Invalidar queries restantes em background (profile completo, etc.)
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.myProfile(), refetchType: 'active' });
-        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.check(userId), refetchType: 'active' });
         queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.page(userId), refetchType: 'active' });
       }, 0);
     },
