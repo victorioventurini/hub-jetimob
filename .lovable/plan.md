@@ -1,80 +1,86 @@
 
 
-# Correcao: Atualizar lista de usuarios em tempo real apos cadastrar, editar ou remover
+# Auto-atribuicao de gestor baseado no lider do time
 
 ## Pre-checklist executado
 
-- [x] **TCR v3.6.0**: Consultado. Query Keys 100% centralizadas, prefixos obrigatorios.
-- [x] **DEVELOPMENT_STANDARDS v1.24.0**: Consultado. POST-BU, invalidacao via queryKeys.*.
-- [x] **QUERY_KEYS_STANDARD**: Consultado. Nunca inline, prefixos para invalidar variantes filtradas.
-- [x] **Memory query-key-prefix-standard**: Confirmado padrao de prefixos para invalidacao.
+- [x] **TCR v3.6.0**: Consultado. `profiles.manager_user_id` armazena `profiles.id`. `teams.leader_user_id` armazena `profiles.id`. Nenhum trigger existente faz sync entre eles.
+- [x] **IDENTITY_CONVENTION v2.1.1**: Consultado. Ambas colunas usam `profiles.id` (dominio). Sem conversao necessaria.
+- [x] **DATA_MODEL_REGISTRY**: Consultado. `profiles.manager_user_id` FK para `profiles.id`. `teams.leader_user_id` FK para `profiles.id`.
+- [x] **PERMISSIONS_AND_RBAC_MODEL**: Consultado. Lideranca definida em `teams.leader_user_id`. Nao impacta RBAC.
+- [x] **Triggers existentes**: Verificados. `auto_assign_leader_permissions` no `teams` ja segue padrao de reagir a mudancas em `leader_user_id`. Nenhum trigger de sync de manager existe.
+
+## Dados verificados no banco
+
+| Membro (time Onboarding) | manager_user_id | Esperado |
+|---------------------------|-----------------|----------|
+| Veronica Bonotto | Thiago (OK) | OK |
+| Pedro Casani | Thiago (OK) | OK |
+| Raissa Grehs | Thiago (OK) | OK |
+| **Caroline Dotto** | **NULL** | Thiago |
+| Thiago Silveira (lider) | NULL | NULL (lider nao e gestor de si) |
+
+Total no sistema: **5 profiles** com `manager_user_id = NULL` que deveriam herdar o lider do time.
 
 ## Problema
 
-A pagina `/users` usa a query key `queryKeys.users.directory(buId, filters)` para buscar dados. Porem, todas as mutacoes (criar, editar, excluir, bulk edit) invalidam `queryKeys.profiles.all(buId)` — uma chave de namespace diferente. Resultado: a lista nunca atualiza automaticamente apos uma acao.
-
-**Leitura:**
-- `Users.tsx` (linha 106): `queryKeys.users.directory(currentBu?.id, { q, areaId, teamId, status, ... })`
-- `useBuUsersDirectory.ts` (linha 74): `queryKeys.users.directory(buId, { q, teamId, includeTerminated, excludeExternal })`
-
-**Invalidacao atual (todas erradas para o directory):**
-- `JetimoberDialog.tsx`: `queryKeys.profiles.all(currentBu?.id)`
-- `useProfiles.ts` (delete): `queryKeys.profiles.all(currentBu?.id)`
-- `useProfiles.ts` (transfer): `queryKeys.profiles.all(buId)`
-- `BulkEditDialog.tsx`: `queryKeys.profiles.all(null)` (BU errada tambem)
+Nao existe automacao que atribua o lider do time como gestor (`manager_user_id`) quando:
+1. Um profile e criado/editado com `team_id` preenchido
+2. O `leader_user_id` de um time muda (membros existentes nao sao atualizados)
 
 ## Solucao
 
-### 1. Adicionar `directoryPrefix` em `src/lib/queryKeys/misc.ts`
+### 1. Trigger em `profiles`: auto-preencher gestor ao atribuir time
 
-Seguindo o padrao de prefixos do projeto, adicionar helper para invalidacao de todas as variantes filtradas:
+Criar funcao `sync_manager_from_team_leader()` e trigger em INSERT/UPDATE de `profiles`.
 
-```typescript
-export const usersKeys = {
-  all: () => ['users'] as const,
-  directoryPrefix: (buId: string | null) =>
-    ['users', 'directory', buId] as const,
-  directory: (buId, filters?) => ['users', 'directory', buId, filters] as const,
-  // ... demais keys inalteradas
-};
+**Regras:**
+- Executa somente quando `team_id` muda (ou e inserido pela primeira vez)
+- Somente preenche se `manager_user_id` for NULL (respeita atribuicao manual)
+- Nao atribui o lider como gestor de si mesmo
+- `SECURITY DEFINER` com `search_path = 'public'`
+
+### 2. Trigger em `teams`: propagar mudanca de lider para membros
+
+Criar funcao `propagate_leader_change_to_members()` e trigger em UPDATE de `teams`.
+
+**Regras:**
+- Executa somente quando `leader_user_id` muda
+- Atualiza apenas membros cujo `manager_user_id` apontava para o lider **antigo** (preserva gestores manuais)
+- Nao atribui o novo lider como gestor de si mesmo
+- `SECURITY DEFINER` com `search_path = 'public'`
+
+### 3. Migration one-time: corrigir 5 registros existentes
+
+```sql
+UPDATE profiles p
+SET manager_user_id = t.leader_user_id
+FROM teams t
+WHERE p.team_id = t.id
+  AND p.manager_user_id IS NULL
+  AND t.leader_user_id IS NOT NULL
+  AND p.id <> t.leader_user_id
+  AND p.employment_status <> 'terminated'
+  AND p.deleted_at IS NULL;
 ```
 
-### 2. Corrigir invalidacao em `src/components/users/JetimoberDialog.tsx`
+### 4. Frontend: pre-preencher gestor ao selecionar time (JetimoberDialog)
 
-Nos 3 callbacks `onSuccess` (create, update, addToBu), adicionar invalidacao do directory:
-
-```typescript
-queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
-```
-
-Manter `queryKeys.profiles.all()` existente para nao quebrar outros consumidores (hover cards, selects).
-
-### 3. Corrigir invalidacao em `src/hooks/useProfiles.ts`
-
-No `useDeleteProfile.onSuccess` e `useTransferDependencies.onSuccess`, adicionar:
-
-```typescript
-queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(buId) });
-```
-
-### 4. Corrigir invalidacao em `src/components/users/BulkEditDialog.tsx`
-
-Substituir `queryKeys.profiles.all(null)` por `queryKeys.users.directoryPrefix(currentBu?.id ?? null)` (com BU correta):
-
-```typescript
-queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
-```
+No `JetimoberDialog.tsx`, ao alterar o campo "Time":
+- Buscar o `leader_user_id` do time selecionado
+- Se o campo "Gestor" estiver vazio ("Nenhum"), pre-preencher com o lider
+- Permitir que o usuario altere manualmente (nao e forcado)
 
 ## Arquivos alterados
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/lib/queryKeys/misc.ts` | Adicionar `directoryPrefix` ao `usersKeys` |
-| `src/components/users/JetimoberDialog.tsx` | Adicionar invalidacao do directory nos 3 onSuccess |
-| `src/hooks/useProfiles.ts` | Adicionar invalidacao do directory em delete e transfer |
-| `src/components/users/BulkEditDialog.tsx` | Corrigir invalidacao com BU correta e key do directory |
+| Nova migration SQL | 2 triggers + fix de dados existentes |
+| `src/components/users/JetimoberDialog.tsx` | Pre-preencher gestor ao selecionar time |
 
-## Nota
+## Seguranca
 
-A invalidacao existente de `queryKeys.profiles.all(buId)` sera mantida em todos os pontos para nao quebrar outros consumidores (profile selects, hover cards, etc). A addicao do `directoryPrefix` e puramente aditiva.
-
+- Triggers usam `SECURITY DEFINER` com `search_path = 'public'` (padrao do projeto)
+- Nao alteram gestores definidos manualmente (apenas NULL -> lider)
+- Seguem padrao do trigger `auto_assign_leader_permissions` ja existente no `teams`
+- Ambas colunas (`manager_user_id`, `leader_user_id`) usam `profiles.id` — sem conversao de identidade
