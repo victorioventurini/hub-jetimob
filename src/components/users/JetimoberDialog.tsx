@@ -438,6 +438,35 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     }
   };
 
+  // Pre-fill manager when team changes and manager is empty
+  const handleTeamChange = async (teamId: string | null) => {
+    handleChange("team_id", teamId);
+    
+    // Only pre-fill if manager is currently empty and a team is selected
+    if (teamId && !formData.manager_user_id) {
+      try {
+        const { data: team } = await supabase
+          .from("teams")
+          .select("leader_user_id")
+          .eq("id", teamId)
+          .maybeSingle();
+        
+        if (team?.leader_user_id) {
+          // Don't assign leader as their own manager (when editing the leader's profile)
+          if (!profile || profile.id !== team.leader_user_id) {
+            setFormData(prev => ({
+              ...prev,
+              team_id: teamId,
+              manager_user_id: prev.manager_user_id || team.leader_user_id,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch team leader for auto-fill:", err);
+      }
+    }
+  };
+
   const getInitials = (name: string) =>
     name
       .split(" ")
@@ -697,7 +726,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           <Label>Time</Label>
           <TeamSelect
             value={formData.team_id || undefined}
-            onValueChange={(v) => handleChange("team_id", v || null)}
+            onValueChange={(v) => handleTeamChange(v || null)}
             includeNone
             noneLabel="Nenhum"
             placeholder="Selecione"
