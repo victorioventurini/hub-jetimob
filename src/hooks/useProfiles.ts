@@ -58,6 +58,7 @@ export function useDeleteProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
       toast.success("Jetimober excluído com sucesso");
     },
     onError: () => {
@@ -227,6 +228,7 @@ export function useTransferDependencies() {
       const buId = currentBu?.id ?? null;
       // Invalidate all affected caches
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });

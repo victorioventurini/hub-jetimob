@@ -309,6 +309,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.buMembers(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
       toast.success(`${existingProfile?.display_name} adicionado à ${currentBu?.name}!`);
       onOpenChange(false);
     },
@@ -350,6 +351,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
       toast.success("Jetimober cadastrado com sucesso!");
       onOpenChange(false);
     },
@@ -392,6 +394,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
       toast.success("Jetimober atualizado com sucesso!");
       onOpenChange(false);
     },
