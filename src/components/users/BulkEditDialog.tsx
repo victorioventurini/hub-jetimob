@@ -79,7 +79,8 @@ export function BulkEditDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.directoryPrefix(currentBu?.id ?? null) });
       toast.success(`${selectedIds.length} Jetimobers atualizados com sucesso!`);
       handleClose();
       onComplete();
