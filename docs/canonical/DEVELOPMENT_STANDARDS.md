@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.24.0  
-**Última atualização:** 2026-02-10  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0**
-**Referência:** TCR v3.6.0
+**Versão:** 1.25.0  
+**Última atualização:** 2026-02-12  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0**
+**Referência:** TCR v3.7.0
 
 ---
 
@@ -1202,6 +1202,19 @@ Os seguintes padrões são **PROIBIDOS** no Hub da Jet. Não há exceções.
 | 12 | Query em `profiles` filtrando por `user_id IS NOT NULL` | Idem acima, usar `v_bu_active_profiles` |
 | 13 | Select inline hardcoded para unidades (%, R$, dias) | Inconsistência de UX, usar `UnitSelect` |
 | 14 | Constante local `UNITS` em wizards/modais | Duplicação, usar `@/shared/constants/units` |
+| 15 | `.sort((a, b) => a.name.localeCompare(b.name))` sem null-guard | Crash se `name` for `undefined`/`null` |
+
+### I.1 Null-Safe Sort — Padrão Obrigatório (v1.25.0)
+
+```
+⚠️ REGRA: Todo `.sort()` com `localeCompare` DEVE usar null-guard `?? ''`.
+```
+
+| ✅ CORRETO | ❌ PROIBIDO |
+|------------|-------------|
+| `.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt-BR'))` | `.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))` |
+
+**Motivo:** Views e queries podem retornar linhas com campos `null`/`undefined` (ex: `v_partner_services_by_bu` retorna `subcategory_name: NULL` para empresas generalistas). Sem null-guard, `null.localeCompare()` causa `TypeError` em runtime.
 
 ### I.1 Seleção de Unidades — Componente Canônico
 

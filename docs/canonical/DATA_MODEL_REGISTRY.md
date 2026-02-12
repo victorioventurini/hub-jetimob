@@ -288,7 +288,7 @@ Lista completa das tabelas no schema `public`:
 | `asset_key_movements` | `authorized_by_user_id` | ❌ (inferido) | Autorizador |
 | `asset_gift_movements` | `performed_by_user_id` | ❌ (inferido) | Executor |
 | `mentions` | `mentioned_user_id` | ✅ → `profiles.id` | Usuário mencionado |
-| `profiles` | `manager_user_id` | ❌ (inferido) | Gestor direto |
+| `profiles` | `manager_user_id` | ❌ (inferido) | Gestor direto (**auto-atribuído** via trigger `sync_manager_from_team_leader`) |
 | `partner_contacts` | `profile_user_id` | ❌ (inferido) | Perfil vinculado |
 | `notification_health_alert_actions` | `actor_profile_id` | ✅ → `profiles.id` | Ator |
 | `bu_user_permission_templates_v2` | `user_id` | ✅ → `profiles.id` | Usuário |
@@ -409,6 +409,8 @@ Lista completa das tabelas no schema `public`:
 | `update_*_updated_at` | Todas | `update_updated_at_column()` | Auto-update de `updated_at` |
 | `trg_enforce_bu_scope_*` | BU-scoped | `enforce_bu_scope()` | Valida bu_id no insert/update |
 | `trg_set_bu_id_*` | Algumas | Específica | Auto-preenche bu_id de FK |
+| `trg_sync_manager_from_team_leader` | `profiles` | `sync_manager_from_team_leader()` | Auto-preenche `manager_user_id` com líder do time ao atribuir `team_id` (v3.7.0) |
+| `trg_propagate_leader_change` | `teams` | `propagate_leader_change_to_members()` | Propaga mudança de `leader_user_id` para `manager_user_id` dos membros (v3.7.0) |
 
 ---
 

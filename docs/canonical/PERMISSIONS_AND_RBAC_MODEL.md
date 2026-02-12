@@ -1,9 +1,9 @@
 # Permissions & RBAC Model — Hub da Jet
 
-**Versão:** 1.4.0  
-**Data:** 2026-02-06  
-**Status:** Normativo (V2-only mode) | RLS 100% migrado | Wave 8 Audit Complete | **users_admin_v2 membership fix**  
-**Referência:** TCR v2.94.0, RBAC_TEMPLATES_V3.md
+**Versão:** 1.5.0  
+**Data:** 2026-02-12  
+**Status:** Normativo (V2-only mode) | RLS 100% migrado | Wave 8 Audit Complete | **users_admin_v2 membership fix** | **Manager Auto-Assignment v1.0**  
+**Referência:** TCR v3.7.0, RBAC_TEMPLATES_V3.md
 
 ---
 
@@ -258,6 +258,21 @@ $$;
 | Líder gerencia time pai | ❌ Proibido |
 | Líder gerencia times irmãos | ❌ Proibido |
 | Admin gerencia qualquer time da BU | ✅ Permitido |
+
+### 5.4 Auto-Atribuição de Gestor (v1.5.0)
+
+> **Liderança de time implica gestão.** Quando um membro é atribuído a um time, o líder é automaticamente atribuído como seu gestor (`profiles.manager_user_id`).
+
+| Cenário | Comportamento |
+|---------|---------------|
+| Membro atribuído a time com líder | `manager_user_id` = `teams.leader_user_id` (se estava NULL) |
+| Líder do time muda | Membros que reportavam ao líder antigo são atualizados para o novo líder |
+| Gestor definido manualmente | Triggers **não sobrescrevem** — respeitam atribuição manual |
+| Líder é ele mesmo membro do time | Trigger **não se auto-atribui** como gestor |
+
+**Frontend:** `JetimoberDialog.tsx` pré-preenche o campo "Gestor" ao selecionar um time, permitindo ajuste manual.
+
+**Triggers SQL:** `sync_manager_from_team_leader` (em `profiles`) e `propagate_leader_change_to_members` (em `teams`).
 
 ---
 
