@@ -124,7 +124,7 @@ export default function CreateTicketPage() {
   
   // Ordenar empresas parceiras alfabeticamente
   const partnersByCategory = useMemo(() => 
-    [...partnersByCategoryRaw].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [...partnersByCategoryRaw].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt-BR')),
     [partnersByCategoryRaw]
   );
   
@@ -149,7 +149,7 @@ export default function CreateTicketPage() {
   
   // Ordenar contatos alfabeticamente
   const availableContacts = useMemo(() => 
-    [...availableContactsRaw].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [...availableContactsRaw].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt-BR')),
     [availableContactsRaw]
   );
 
@@ -215,7 +215,7 @@ export default function CreateTicketPage() {
       categories = allCategories.filter(cat => cat.scope === "external" || cat.scope === "both");
     }
     
-    return [...categories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    return [...categories].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt-BR'));
   }, [selectedType, allCategories]);
 
   // Determinar subcategorias disponíveis - Ordenar alfabeticamente
@@ -247,7 +247,7 @@ export default function CreateTicketPage() {
       }
     }
     
-    return [...subcategories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    return [...subcategories].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt-BR'));
   }, [selectedType, selectedPartnerId, selectedCategoryId, isGeneralistCategory, partnerSubcategories, allCategories]);
 
   // Auto-preencher mensagem inicial quando subcategoria mudar
