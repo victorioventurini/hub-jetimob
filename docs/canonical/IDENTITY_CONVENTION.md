@@ -1,8 +1,8 @@
 # Convenção de Identidade: user_id vs profile_id
 
-**Versão:** 2.1.1  
-**Última atualização:** 2026-01-21  
-**Status:** Ativo | Impersonation Support v2.0 | **Profile ID Naming Convention v2.1**
+**Versão:** 2.2.0  
+**Última atualização:** 2026-02-12  
+**Status:** Ativo | Impersonation Support v2.0 | **Profile ID Naming Convention v2.1** | **Manager Auto-Assignment v1.0**
 
 ---
 
@@ -569,6 +569,7 @@ O script `scripts/identity-gate.sh` implementa enforcement automatizado de CI pa
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 2.2.0 | 2026-02-12 | Manager Auto-Assignment: triggers `sync_manager_from_team_leader` e `propagate_leader_change_to_members` documentados. `profiles.manager_user_id` agora auto-atribuído via `teams.leader_user_id`. |
 | 2.1.1 | 2026-01-21 | `ticket_participants.user_id` renomeado para `profile_id`; Identity Gate CI script adicionado |
 | 2.1.0 | 2026-01-12 | Profile ID naming convention documentation |
 | 2.0.0 | 2026-01-10 | Identity Cutover v3.0 completo, canary gates, strict mode |

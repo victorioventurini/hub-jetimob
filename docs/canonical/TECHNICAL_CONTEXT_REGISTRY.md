@@ -1,14 +1,14 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.6.0  
-**Última atualização:** 2026-02-10 (v3.6.0 - Frontend BU Isolation Enforcement - Regra inquebrável de filtragem frontend por bu_id em queries operacionais)
+**Versão:** 3.7.0  
+**Última atualização:** 2026-02-12 (v3.7.0 - Manager Auto-Assignment from Team Leader, Null-Safe Sort Fix, Onboarding Race Condition Fix)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
 > ### Padrões de Desenvolvimento
-> - [DEVELOPMENT_STANDARDS.md v1.17.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
+> - [DEVELOPMENT_STANDARDS.md v1.25.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
 > - [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
 > - [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state para filtros e paginação
@@ -407,9 +407,16 @@ Dados do perfil de cada usuário.
 | onboarding_completed | bool | Onboarding concluído |
 | bu_id | uuid | BU principal |
 | team_id | uuid | Time principal |
-| manager_user_id | uuid | Gestor direto |
+| manager_user_id | uuid | Gestor direto (**auto-atribuído** via trigger `sync_manager_from_team_leader` quando `team_id` é definido e gestor está vazio — ver §4.8) |
 
 **Escopo:** Por BU (via bu_id)
+
+**Triggers de Gestão Automática (v3.7.0):**
+
+| Trigger | Evento | Função |
+|---------|--------|--------|
+| `trg_sync_manager_from_team_leader` | INSERT/UPDATE em `profiles` (quando `team_id` muda) | Se `manager_user_id IS NULL` e time tem líder, preenche com `teams.leader_user_id`. Não se auto-atribui. |
+| `trg_propagate_leader_change` | UPDATE em `teams` (quando `leader_user_id` muda) | Atualiza `manager_user_id` de membros que apontavam para o líder antigo. Preserva gestores manuais. |
 
 ---
 
@@ -3197,7 +3204,21 @@ export type { SomeType } from './types';
   - Identificados débitos técnicos P1/P2/P3 e plano de ação
 
 ### v2.58.0 (2026-01-22)
-- **Comprehensive Technical Audit Completion**:
+### v3.7.0 (2026-02-12)
+- **Manager Auto-Assignment v1.0**:
+  - **Trigger `sync_manager_from_team_leader`** em `profiles`: Auto-preenche `manager_user_id` com `teams.leader_user_id` quando `team_id` é atribuído e gestor está vazio. Não se auto-atribui.
+  - **Trigger `propagate_leader_change_to_members`** em `teams`: Ao mudar `leader_user_id`, atualiza `manager_user_id` de membros que apontavam para o líder antigo. Preserva gestores manuais.
+  - **Frontend `JetimoberDialog.tsx`**: Pré-preenche campo "Gestor" ao selecionar time, permitindo ajuste manual.
+  - **Migration one-time**: Corrigidos 5 profiles com `manager_user_id = NULL` que deveriam herdar o líder do time.
+- **Null-Safe Sort Standard v1.0**:
+  - Corrigidos 4 `.sort()` com `localeCompare` em `CreateTicketPage.tsx` que crashavam com `name: undefined`.
+  - Causa raiz: `v_partner_services_by_bu` retorna `subcategory_name: NULL` para empresas generalistas.
+  - **Nova regra em DEVELOPMENT_STANDARDS §I (anti-pattern #15)**: Todo `.sort()` com `localeCompare` DEVE usar `?? ''`.
+- **Onboarding Race Condition Fix**:
+  - `OnboardingWizard.tsx`: Cache atualizado sincronamente (`setQueryData`) antes de navegar para `/select-bu`.
+  - Evita que `OnboardingGuard` leia dados stale e redirecione de volta para `/onboarding` (tela branca).
+
+
   - **7 Partial Indexes para Soft-Delete**: Criados índices parciais (`WHERE deleted_at IS NULL`) para:
     - `partner_company_bu_associations`, `squad_memberships`, `squads`, `ticket_categories`
     - `ticket_messages`, `ticket_routing_rules`, `ticket_subcategories`
