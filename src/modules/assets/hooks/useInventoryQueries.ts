@@ -166,7 +166,7 @@ export function useInventoryListQuery(filters: UseInventoryFilters = {}) {
 
   return useQuery({
     queryKey: queryKeys.assets.inventory.list(buId ?? null, { 
-      search, statusFilter, categoryFilter, holderFilter, locationFilter 
+      search, statusFilter, holderFilter,
     }),
     enabled: !!supabase && !!buId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -191,17 +191,15 @@ export function useInventoryListQuery(filters: UseInventoryFilters = {}) {
         query = query.eq('status', statusFilter as 'available' | 'loaned' | 'maintenance' | 'written_off');
       }
 
-      if (categoryFilter && categoryFilter !== 'all') {
-        query = query.eq('category_id', categoryFilter);
-      }
+      // Category filter is applied CLIENT-SIDE only (hierarchical: parent includes children)
+      // Do NOT filter here — see InventoryPage.tsx filteredItems
 
       if (holderFilter && holderFilter !== 'all') {
         query = query.eq('current_user_id', holderFilter);
       }
 
-      if (locationFilter && locationFilter !== 'all') {
-        query = query.or(`home_location_id.eq.${locationFilter},current_location_id.eq.${locationFilter}`);
-      }
+      // Location filter is applied CLIENT-SIDE only (hierarchical: HQ includes rooms)
+      // Do NOT filter here — see InventoryPage.tsx filteredItems
 
       const { data, error } = await query;
 
