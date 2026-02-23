@@ -157,7 +157,7 @@ export function CollaboratorCheckinStep({
   const newProgress = useMemo(() => {
     const range = kr.target - kr.baseline;
     if (range === 0) return 0;
-    return Math.min(100, Math.max(0, ((numericValue - kr.baseline) / range) * 100));
+    return Math.max(0, ((numericValue - kr.baseline) / range) * 100);
   }, [numericValue, kr.baseline, kr.target]);
 
   // Can submit
@@ -381,7 +381,7 @@ export function CollaboratorCheckinStep({
             {/* New progress preview */}
             {change !== 0 && (
               <p className="text-xs text-muted-foreground">
-                Novo progresso: <span className="font-medium">{Math.round(newProgress)}%</span> (atual: {Math.round(kr.progress)}%)
+                Novo progresso: <span className={cn("font-medium", newProgress > 100 && "text-status-green")}>{Math.round(newProgress)}%</span>{newProgress > 100 && ' 🚀'} (atual: {Math.round(kr.progress)}%)
               </p>
             )}
           </div>
