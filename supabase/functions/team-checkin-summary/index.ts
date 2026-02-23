@@ -733,9 +733,9 @@ Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
 
 serve(async (req) => {
   const mw = await withMiddleware(req, {
-    requireAuth: true,
+    requireAuth: false,
     requireBu: true,
-    validateBuAccess: true,
+    validateBuAccess: false,
     logRequest: true,
   });
 
@@ -745,7 +745,6 @@ serve(async (req) => {
 
   const ctx = mw.context as RequestContext;
   const requestId = ctx.requestId;
-  const userId = ctx.user!.id;
   const buId = ctx.buId!;
   const serviceClient = ctx.serviceClient;
 
