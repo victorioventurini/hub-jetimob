@@ -45,7 +45,7 @@ export interface UseGenericWizardDraftReturn<TStep extends string, TData> {
   draft: GenericWizardDraft<TStep, TData>;
   updateDraft: (updates: Partial<TData>) => void;
   setStep: (step: TStep) => void;
-  clearDraft: () => Promise<void>;
+  clearDraft: () => Promise<string | null>;
   discardDraft: () => Promise<void>;
   saveDraft: () => Promise<void>;
   isDirty: boolean;
@@ -320,7 +320,8 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft]);
   
   // Clear draft (after successful completion)
-  const clearDraft = useCallback(async () => {
+  // Returns the sessionId (existing or newly created) for post-completion actions
+  const clearDraft = useCallback(async (): Promise<string | null> => {
     // Clear localStorage
     try {
       localStorage.removeItem(storageKey);
@@ -328,15 +329,46 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       console.error('Failed to clear wizard draft:', e);
     }
     
-    // Mark session as completed in DB
+    let resultId: string | null = null;
+    
     if (sessionId) {
+      // Mark existing session as completed
       try {
         await buSupabase
           .from('okr_wizard_sessions')
           .update({ status: 'completed', completed_at: new Date().toISOString() })
           .eq('id', sessionId);
+        resultId = sessionId;
       } catch (e) {
         console.error('Failed to complete wizard session:', e);
+        resultId = sessionId; // Still return the ID even if update failed
+      }
+    } else if (profile?.id && currentBu?.id) {
+      // No session exists — create a completed session record
+      try {
+        const reflectionData = JSON.parse(JSON.stringify(draft));
+        const { data: inserted, error } = await buSupabase
+          .from('okr_wizard_sessions')
+          .insert([{
+            bu_id: currentBu.id,
+            wizard_type: wizardType,
+            team_id: teamId,
+            cycle_id: cycleId,
+            started_by: profile.id,
+            status: 'completed' as const,
+            completed_at: new Date().toISOString(),
+            reflection_data: reflectionData,
+          }])
+          .select('id')
+          .single();
+        
+        if (error) {
+          console.error('Failed to create completed wizard session:', error);
+        } else {
+          resultId = inserted.id;
+        }
+      } catch (e) {
+        console.error('Failed to create completed wizard session:', e);
       }
     }
     
@@ -345,7 +377,9 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setLastSavedAt(null);
     setIsDirty(false);
     setIsResumingDraft(false);
-  }, [storageKey, sessionId, createEmptyDraft]);
+    
+    return resultId;
+  }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId]);
   
   // Persist changes to localStorage
   useEffect(() => {
