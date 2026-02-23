@@ -1,104 +1,126 @@
 
-
-# Exibir dados do ultimo check-in do colaborador nos wizards Leader Prep e Team Check-in
+# Registros de Decisao em cada step do wizard Team Check-in
 
 ## Contexto
 
-Quando um colaborador faz check-in pelo wizard `/collaborator-checkin`, ele preenche:
-- **Valor atual** (numerico)
-- **Confianca** (alta/media/baixa)
-- **Comentario** (o que fez o KR avancar)
-- **Bloqueadores** (opcional)
-
-Esses dados ficam na tabela `okr_checkins` com campos `current_value`, `confidence`, `comments`, `blockers`, `user_id`, `date`. Porem, nos wizards `/leader-prep` e `/team-checkin`, o lider e o time **so veem metricas agregadas** (progresso, status, dias sem check-in) -- sem acesso ao contexto qualitativo reportado pelo colaborador.
+Atualmente, decisoes/ajustes de foco/proximos passos so podem ser registrados na etapa final ("Decisoes e Proximos Passos") do wizard team-checkin. O objetivo e permitir registros em **todos os steps intermediarios** (Opening, KR Review, Initiatives), consolidando tudo na etapa final com CRUD completo.
 
 ## Pre-checklist Canonico
 
 Documentos consultados:
-- **TCR v3.8.0** -- Stack, modelo de auth, padroes confirmados
-- **IDENTITY_CONVENTION v2.2.0** -- `user_id` em `okr_checkins` e `profiles.id` (profile_id de dominio)
-- **DATA_MODEL_REGISTRY** -- Tabela `okr_checkins` confirmada com RLS e BU-scoped
-- **SCHEMA_QUICK_REFERENCE** -- Campos: `id, kr_id, date, previous_value, current_value, confidence, blockers, comments, user_id, created_at, team_id, bu_id`
-- **OKR_FIELDS.checkin** -- Select explicito ja definido: `id, kr_id, kr_type, user_id, date, previous_value, current_value, confidence, comments, blockers, created_at`
-
-## Abordagem
-
-Enriquecer o tipo `WizardKr` com dados do ultimo check-in (batch query unica), criar componente visual compartilhado, e injetar nos steps de revisao dos dois wizards.
+- **TCR v3.8.0** -- Stack, `useBuScopedSupabase`, padroes de hooks/components
+- **DATA_MODEL_REGISTRY** -- `okr_wizard_sessions.reflection_data` (campo JSONB onde decisions sao persistidas)
+- **WIZARD_DEVELOPMENT_GUIDE** -- Padrao de steps, draft persistence via `useGenericWizardDraft`
+- **Edge Function `team-checkin-summary`** -- Le decisions de `reflection_data.data.decisions` (linhas 552-577). Mapeamento atual: campo `decision.type` (mas frontend usa `decision.category` -- mismatch a corrigir)
 
 ## Alteracoes
 
-### 1. Estender tipo `WizardKr` em `useTeamPendingKrs.ts`
+### 1. Estender tipo `TeamCheckinDecision` com `sourceStep`
 
-Adicionar campo opcional ao tipo:
-
-```typescript
-latest_checkin?: {
-  confidence: 'high' | 'medium' | 'low';
-  comments: string | null;
-  blockers: string | null;
-  author_name: string | null;
-  author_photo: string | null;
-  date: string;
-} | null;
-```
-
-### 2. Enriquecer dados no `useTeamPendingKrs` (batch, sem N+1)
-
-Apos obter os KR IDs, fazer uma unica query batch:
+Em `src/modules/okrs/types/wizard.ts` (linha 161-169), adicionar campo opcional:
 
 ```typescript
-const krIds = (data || []).map(kr => kr.id);
-const { data: checkins } = await supabase
-  .from('okr_checkins')
-  .select('kr_id, confidence, comments, blockers, date, user_id')
-  .in('kr_id', krIds)
-  .order('date', { ascending: false });
-
-// Agrupar: primeiro registro por kr_id = ultimo check-in
-const latestCheckinMap = new Map();
-for (const c of (checkins || [])) {
-  if (!latestCheckinMap.has(c.kr_id)) {
-    latestCheckinMap.set(c.kr_id, c);
-  }
+export interface TeamCheckinDecision {
+  id: string;
+  text: string;
+  category: 'decision' | 'focus_adjustment' | 'next_step';
+  sourceStep?: 'opening' | 'kr-review' | 'initiatives' | 'decisions';
+  owner?: {
+    id: string;
+    name: string;
+  };
 }
 ```
 
-Os profiles dos autores serao resolvidos extendendo o `ownerMap` existente com quaisquer `user_id` de checkins que nao estejam la.
+### 2. Novo componente `InlineDecisionInput`
 
-### 3. Aplicar mesmo enriquecimento em `useUserKrsForWizard.ts`
+Local: `src/modules/okrs/components/wizards/shared/InlineDecisionInput.tsx`
 
-Mesma logica de batch query para consistencia do tipo `WizardKr` compartilhado.
+Componente compacto e colapsavel (usa Collapsible) que aparece no rodape dos steps intermediarios. Inclui:
+- Botao "Adicionar nota" que expande o input
+- Input de texto + seletor de categoria (3 badges clicaveis)
+- Botao "+" para adicionar
+- Lista compacta dos registros daquele step (com botao de remover)
+- Filtra e exibe somente decisions com `sourceStep` correspondente
 
-### 4. Novo componente `LatestCheckinSummary`
+Props:
+```typescript
+interface InlineDecisionInputProps {
+  decisions: TeamCheckinDecision[];
+  onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  sourceStep: string;
+  placeholder?: string;
+}
+```
 
-Local: `src/modules/okrs/components/wizards/shared/LatestCheckinSummary.tsx`
+### 3. Integrar nos 3 steps intermediarios
 
-Card compacto que exibe:
-- Avatar + nome do autor (usando `OptimizedAvatar`)
-- Data formatada (`formatDistanceToNow` com locale ptBR)
-- Badge de confianca com cores semanticas (Alta = verde, Media = amarelo, Baixa = vermelho)
-- Comentario (com truncamento e expand via Collapsible)
-- Bloqueador com icone de alerta (se houver)
+Cada step recebe `decisions` e `onDecisionsChange` como props adicionais:
 
-### 5. Integrar no `LeaderPrepStep.tsx`
+| Step | Componente | Posicao do input | sourceStep |
+|------|-----------|-----------------|------------|
+| Opening | `TeamOpeningStep` | Antes do `WizardFirstStepFooter` | `'opening'` |
+| KR Review | `TeamKrReviewStep` | Dentro do card do KR atual, apos LatestCheckinSummary | `'kr-review'` |
+| Initiatives | `TeamInitiativesStep` | Antes do `WizardStepFooter` | `'initiatives'` |
 
-Dentro do `CollapsibleContent` (linhas 253-267), apos os dados de progresso existentes, renderizar `LatestCheckinSummary` quando `kr.latest_checkin` existir. Isso da ao lider o contexto qualitativo ao decidir o que discutir em grupo vs 1:1.
+### 4. Atualizar `TeamCheckinPage.tsx` para passar decisions a todos os steps
 
-### 6. Integrar no `TeamKrReviewStep.tsx`
+O draft ja possui `decisions: TeamCheckinDecision[]`. Passar `decisions` e `onDecisionsChange` handler para Opening, KR Review e Initiatives:
 
-Dentro do card de revisao de cada KR (linhas 300-307, apos "Ultimo check-in"), renderizar `LatestCheckinSummary` quando `currentKr.latest_checkin` existir. Isso permite ao time ver o que o colaborador reportou durante a revisao conjunta.
+```typescript
+case 'opening':
+  return (
+    <TeamOpeningStep
+      // ... props existentes
+      decisions={draft.data.decisions}
+      onDecisionsChange={(decisions) => updateDraft({ decisions })}
+    />
+  );
+```
+
+Mesmo padrao para kr-review e initiatives.
+
+### 5. Refatorar `TeamDecisionsStep` (etapa final)
+
+Manter funcionalidade atual, com as seguintes melhorias:
+- Exibir **todos** os registros consolidados (vindos de qualquer step)
+- Agrupar visualmente por `sourceStep` com headers ("Da Abertura", "Da Revisao de KRs", "Das Iniciativas", "Desta Etapa")
+- Permitir edicao inline do texto (click no texto para editar)
+- Manter opcao de adicionar novos registros (com `sourceStep: 'decisions'`)
+- Manter o CRUD completo (adicionar, editar, remover) para todos os registros
+- Checklist de saida permanece inalterado
+
+### 6. Corrigir e atualizar Edge Function `team-checkin-summary`
+
+Em `supabase/functions/team-checkin-summary/index.ts`:
+
+**Bug encontrado**: A funcao `loadSessionDecisions` (linha 568-573) le `decision.type` mas o frontend armazena `decision.category`. Corrigir para ler `category`:
+
+```typescript
+decisions.push({
+  text: decision.text || '',
+  type: decision.category || decision.type || 'decision',
+});
+```
+
+Tambem enriquecer o contexto do agente `facilitador-decisoes` para incluir as decisions agrupadas por categoria com labels em portugues:
+
+```typescript
+const categoryLabels = {
+  decision: 'Decisao',
+  focus_adjustment: 'Ajuste de Foco',
+  next_step: 'Proximo Passo',
+};
+```
 
 ### 7. Exportar componente no barrel
 
-Adicionar `LatestCheckinSummary` ao barrel `src/modules/okrs/components/wizards/shared/index.ts`.
+Adicionar `InlineDecisionInput` ao barrel `src/modules/okrs/components/wizards/shared/index.ts`.
 
 ## Detalhes Tecnicos
 
-- **BU Isolation**: Query de checkins usa `useBuScopedSupabase` (ja em uso nos hooks)
-- **Select explicito**: `select('kr_id, confidence, comments, blockers, date, user_id')` -- sem `select('*')`
-- **Batch unica**: Uma query para todos os KR IDs retornados, agrupamento em memoria
-- **Identity**: Campo `user_id` em `okr_checkins` e `profiles.id` (profile_id de dominio, conforme IDENTITY_CONVENTION)
-- **Profile resolution**: Reusar `ownerMap` existente + complementar com autores de checkin ausentes
-- **Performance**: Nenhuma query adicional se nao houver KRs; profiles extras so se houver autores nao presentes no ownerMap
-- **Sem alteracao de schema**: Tabela `okr_checkins` ja tem todos os campos necessarios
-
+- **Draft persistence**: Decisions sao persistidas via `useGenericWizardDraft` em `reflection_data.data.decisions`. O campo `sourceStep` e `category` sao serializados no JSON. Nenhuma alteracao de schema necessaria.
+- **Retrocompatibilidade**: Decisions sem `sourceStep` serao tratadas como `sourceStep: 'decisions'` (comportamento atual).
+- **Edge Function**: O campo `category` passa a ser lido (com fallback para `type` por retrocompatibilidade).
+- **UX**: `InlineDecisionInput` comeca colapsado nos steps intermediarios para nao poluir a interface. Um badge com contagem aparece quando ha registros.
+- **Sem migracao de banco**: Tudo dentro do JSONB `reflection_data`.
