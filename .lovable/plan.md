@@ -1,87 +1,64 @@
 
 
-## Bug: Sessao do wizard nao e criada na conclusao, bloqueando e-mail de resumo
+## Recuperacao do Check-in de Marketing + Correcao de Tabelas na Edge Function
 
-### Diagnostico Confirmado (com base no TCR v3.8.0 e codigo-fonte)
+### Problema Encontrado Durante Investigacao
 
-O `useGenericWizardDraft` so cria um registro em `okr_wizard_sessions` quando o usuario clica **"Salvar rascunho"** (que chama `saveDraft` -> `saveDraftMutation`). Se o usuario completa o wizard sem salvar rascunho:
+Alem da sessao ausente no banco, a Edge Function `team-checkin-summary` referencia **2 tabelas que nao existem**:
 
-1. `sessionId` permanece `null` durante todo o wizard
-2. `clearDraft()` apenas limpa localStorage (o bloco `if (sessionId)` no banco nao executa)
-3. **TeamCheckinPage**: O disparo do e-mail de resumo falha porque `if (sessionId && ...)` e `false`
-4. **Todos os outros wizards**: Nenhum registro de conclusao e salvo em `okr_wizard_sessions`
+| Referencia na Edge Function | Tabela Real no Banco |
+|---|---|
+| `okr_cycles` (linha 363) | `cycles` |
+| `okr_objectives` (linha 381) | `okr_team_objectives` |
 
-### Wizards Afetados (5 arquivos)
+Se invocarmos a Edge Function sem corrigir isso, ela falhara no carregamento de dados.
 
-| Wizard | Arquivo | Consequencia |
-|--------|---------|--------------|
-| Check-in do Time | `TeamCheckinPage.tsx` | E-mail de resumo NAO enviado + sem registro de conclusao |
-| Check-in do Colaborador | `CollaboratorCheckinPage.tsx` | Sem registro de conclusao |
-| Preparacao do Lider | `LeaderPrepPage.tsx` | Sem registro de conclusao |
-| Check-in de Gestores | `ManagersCheckinPage.tsx` | Sem registro de conclusao |
-| Check-in C-Level | `CLevelCheckinPage.tsx` | Sem registro de conclusao |
+### Plano de Execucao (3 passos)
 
-### Solucao
+**Passo 1: Corrigir Edge Function `team-checkin-summary/index.ts`**
 
-Modificar `clearDraft` no `useGenericWizardDraft.ts` para **criar automaticamente uma sessao `completed`** quando `sessionId` for `null` no momento da conclusao. Isso resolve o problema de forma centralizada para todos os 5 wizards.
+Atualizar as referencias de tabelas no `loadTeamData`:
+- Linha 363: `okr_cycles` -> `cycles`  
+- Linha 381-389: `okr_objectives` -> `okr_team_objectives`, ajustar campo de KRs de `okr_key_results` para `okr_team_key_results`, e campo de join de `owner_team_id` para `team_id`
 
-### Detalhamento Tecnico
+Deploy automatico apos a alteracao.
 
-**Arquivo 1: `src/modules/okrs/hooks/useGenericWizardDraft.ts`** (alteracao principal)
+**Passo 2: Criar sessao retroativa via SQL migration**
 
-Modificar a funcao `clearDraft` (linhas 323-348) para:
-1. Se `sessionId` for `null`, inserir um novo registro em `okr_wizard_sessions` com `status = 'completed'` e `completed_at = now()`
-2. Retornar o `sessionId` resultante (existente ou recem-criado) como retorno da funcao `clearDraft`
-
-Mudanca de assinatura: `clearDraft: () => Promise<void>` passa a `clearDraft: () => Promise<string | null>` (retorna o sessionId).
-
-Pseudo-codigo da nova `clearDraft`:
-```text
-clearDraft():
-  1. localStorage.removeItem(storageKey)
-  2. Se sessionId existir:
-     - UPDATE okr_wizard_sessions SET status='completed', completed_at=now() WHERE id=sessionId
-     - resultId = sessionId
-  3. Se sessionId == null E profile.id E currentBu.id existirem:
-     - INSERT okr_wizard_sessions (bu_id, wizard_type, team_id, cycle_id, started_by, status, completed_at, reflection_data)
-     - resultId = novo ID
-  4. Reset state local (draft, sessionId, isDirty, etc)
-  5. return resultId
-```
-
-**Arquivo 2: `src/modules/okrs/pages/TeamCheckinPage.tsx`** (ajuste do disparo do e-mail)
-
-Modificar `handleComplete` (linhas 169-191) para usar o `sessionId` retornado por `clearDraft()`:
+Inserir registro em `okr_wizard_sessions` com os dados confirmados:
 
 ```text
-handleComplete():
-  1. const completedSessionId = await clearDraft()
-  2. toast.success + navigate('/okrs')
-  3. Se completedSessionId && teamIdParam && quarterlyCycle && currentBu:
-     - Invocar 'team-checkin-summary' com completedSessionId (best-effort)
+INSERT INTO okr_wizard_sessions (
+  bu_id,          -- a0000000-0000-0000-0000-000000000001
+  wizard_type,    -- 'team_checkin'
+  team_id,        -- c8e5d7a7-0b36-4910-bdf1-6cc912f849fe (Marketing)
+  cycle_id,       -- 15b092b9-86f1-4cfd-97e1-62d2026c42e0 (2026-Q1)
+  started_by,     -- 110f72b1-ea51-4d31-8235-43aff585022e (Vitor Severo - profile_id)
+  status,         -- 'completed'
+  completed_at,   -- now()
+  summary_sent_at -- NULL (permite envio)
+)
 ```
 
-**Arquivo 3: `src/modules/okrs/pages/TeamCheckinPage.tsx`** (remover import global client)
+**Passo 3: Invocar Edge Function via curl**
 
-A linha 17 importa `supabase` de `@/integrations/supabase/client` (violacao do padrao BU_SCOPED_SUPABASE_RULES - deve usar globalClient ou buScopedSupabase). Como `clearDraft` ja usa `buSupabase` internamente, o import global pode ser substituido por `useBuScopedSupabase` para o invoke da Edge Function.
+Chamar `team-checkin-summary` com o `sessionId` recem-criado para disparar o e-mail de resumo aos membros do time Marketing.
 
-**Nenhuma alteracao nos outros 4 wizards** e necessaria, pois a correcao no `clearDraft` e centralizada no hook. O retorno do `sessionId` sera ignorado nos wizards que nao precisam dele.
+### Dados Confirmados
 
-### Atualizacao da Interface `UseGenericWizardDraftReturn`
-
-```text
-// ANTES
-clearDraft: () => Promise<void>;
-
-// DEPOIS
-clearDraft: () => Promise<string | null>;
-```
+| Campo | Valor |
+|---|---|
+| BU ID | `a0000000-0000-0000-0000-000000000001` |
+| Team (Marketing) | `c8e5d7a7-0b36-4910-bdf1-6cc912f849fe` |
+| Cycle (2026-Q1) | `15b092b9-86f1-4cfd-97e1-62d2026c42e0` |
+| Vitor profile_id | `110f72b1-ea51-4d31-8235-43aff585022e` |
+| Tabela `okr_wizard_sessions` | Existe com 17 colunas, atualmente vazia |
 
 ### Conformidade
 
-- **PRE-BU vs POST-BU**: `clearDraft` usa `buSupabase` (POST-BU, correto)
-- **Identity**: Usa `profile.id` para `started_by` (correto, conforme IDENTITY_CONVENTION)
-- **BU Scope**: Insert inclui `bu_id: currentBu.id` (correto)
-- **Client**: Remove import proibido de `@/integrations/supabase/client` no TeamCheckinPage
-- **Wizard Standards**: Alinhado com `WIZARD_DEVELOPMENT_GUIDE.md`
+- **Identity**: Usa `profile_id` para `started_by` (conforme IDENTITY_CONVENTION)
+- **BU Scope**: Insert inclui `bu_id` (correto)
+- **Edge Function Standard**: Usa `withMiddleware` com `requireAuth` + `requireBu` (padrao v4)
+- **Idempotencia**: `summary_sent_at` garante que o e-mail nao sera enviado em duplicata
+- **Tabelas corrigidas**: `cycles` e `okr_team_objectives` sao os nomes reais no banco
 
