@@ -10,6 +10,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -276,27 +277,16 @@ export function TeamKrReviewStep({
                 <span className="font-medium">{currentKr.owner_name || 'Não atribuído'}</span>
               </p>
 
-              {/* Progress */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progresso</span>
-                  <span className={cn("font-bold", currentKr.progress > 100 && "text-status-green")}>{Math.round(currentKr.progress)}%{currentKr.progress > 100 && ' 🚀'}</span>
-                </div>
-                <Progress 
-                  value={Math.min(100, currentKr.progress)} 
-                  className={cn(
-                    "h-2",
-                    currentKr.status === 'green' && "[&>div]:bg-status-green",
-                    currentKr.status === 'yellow' && "[&>div]:bg-status-yellow",
-                    currentKr.status === 'red' && "[&>div]:bg-status-red"
-                  )}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Base: {currentKr.baseline}</span>
-                  <span>Atual: {currentKr.current_value}</span>
-                  <span>Meta: {currentKr.target}</span>
-                </div>
-              </div>
+              {/* Progress - using canonical OkrProgressBar */}
+              <OkrProgressBar
+                baseline={currentKr.baseline}
+                current={currentKr.current_value}
+                target={currentKr.target}
+                direction={currentKr.direction}
+                status={currentKr.status}
+                unit={currentKr.unit}
+                size="md"
+              />
 
               {/* Last check-in */}
               <p className="text-xs text-muted-foreground">

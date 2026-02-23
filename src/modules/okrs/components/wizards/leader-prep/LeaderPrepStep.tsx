@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KrAction, KrActionType } from '@/modules/okrs/types/wizard';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { LatestCheckinSummary } from '../shared/LatestCheckinSummary';
 
@@ -252,14 +253,20 @@ export function LeaderPrepStep({
 
                   {/* Expanded content */}
                   <CollapsibleContent className="mt-3 pt-3 border-t">
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-3 text-sm">
                       <p className="text-muted-foreground">
                         <strong>Objetivo:</strong> {kr.objective_title}
                       </p>
-                      <p className="text-muted-foreground">
-                        <strong>Progresso:</strong> {kr.current_value} / {kr.target} {kr.unit}
-                      </p>
-                      <p className="text-muted-foreground">
+                      <OkrProgressBar
+                        baseline={kr.baseline}
+                        current={kr.current_value}
+                        target={kr.target}
+                        direction={kr.direction}
+                        status={kr.status}
+                        unit={kr.unit}
+                        size="sm"
+                      />
+                      <p className="text-muted-foreground text-xs">
                         <strong>Último check-in:</strong>{' '}
                         {kr.last_checkin_at
                           ? `há ${kr.days_since_checkin} dias`
