@@ -1,12 +1,4 @@
 # Memory: features/okrs/team-checkin-summary-architecture
-Updated: 2026-02-07
+Updated: 2026-02-23
 
-O "E-mail de Resumo do Check-in do Time" é um rito oficial de fechamento automatizado. Arquitetura: 1) Disparo best-effort no frontend ('TeamCheckinPage.tsx') aciona a Edge Function 'team-checkin-summary'; 2) A função orquestra 4 agentes de IA existentes ('analista-kpis', 'facilitador-decisoes', 'cultura', 'revisor-comunicacao') em paralelo via 'invoke-vic'; 3) Idempotência garantida pela coluna 'summary_sent_at' na tabela 'okr_wizard_sessions'; 4) Entrega via evento de notificação 'team.checkin.summary' no pipeline canônico. O conteúdo foca em gestão por exceção (sinais relevantes, riscos e focos) para leitura rápida.
-
-**REGRA CANÔNICA DE INTERPRETAÇÃO DE PROGRESSO (v2.87.0):**
-- KPIs não possuem ciclo próprio; herdam o ciclo da KR vinculada
-- Avaliação por RITMO (acima/dentro/abaixo do ritmo), não por valor final
-- Metas de longo prazo interpretadas proporcionalmente ao tempo transcorrido
-- Linguagem estratégica: evitar "atrasado", usar "abaixo do ritmo esperado"
-- Início de ciclo (<15%): não fazer julgamentos precipitados
-- As regras são injetadas automaticamente em todos os agentes via 'CANONICAL_PROGRESS_INTERPRETATION_RULES' no 'agent-loader.ts'
+O 'E-mail de Resumo do Check-in do Time' consolida insights estratégicos orquestrados por 4 agentes (analista-kpis, facilitador-decisoes, cultura, revisor-comunicacao). O resumo é enviado para todos os membros ativos do time, para o líder, e também para membros de **subtimes diretos que não possuem OKRs próprias no ciclo atual** (trimestre). A resolução de destinatários: 1) Prioriza 'user_team_memberships', com fallback para 'profiles.team_id'; 2) O líder (autor) recebe o resumo via 'p_actor_id: null'; 3) Subtimes diretos sem OKRs próprias (status != cancelled/discarded) têm seus membros e líderes incluídos como destinatários; 4) Subtimes COM OKRs próprias no ciclo NÃO recebem (farão seu próprio check-in); 5) Deduplicação automática de todos os IDs. Respostas de agentes de IA são sanitizadas para remover blocos de código markdown (json). A função utiliza integração direta com o Gateway de IA. Idempotência via 'summary_sent_at'. Variável '{{user_name}}' garante saudações personalizadas.
