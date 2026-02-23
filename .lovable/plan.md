@@ -1,87 +1,87 @@
 
 
-## Problema
+## Bug: Sessao do wizard nao e criada na conclusao, bloqueando e-mail de resumo
 
-A KR "Aumentar taxa média de abertura JetNews" atingiu **156% da meta** (Base: 0, Atual: 28, Meta: 18), mas os wizards exibem **100%** porque o cálculo de progresso está limitado com `Math.min(100, ...)`.
+### Diagnostico Confirmado (com base no TCR v3.8.0 e codigo-fonte)
 
-O componente `OkrProgressBar` (usado no dashboard `/okrs`) já trata superação corretamente desde uma iteração anterior: exibe badge "Meta superada", texto verde, e percentual real (ex: 156%). Porém, **os wizards e outros cards não seguem o mesmo padrão**.
+O `useGenericWizardDraft` so cria um registro em `okr_wizard_sessions` quando o usuario clica **"Salvar rascunho"** (que chama `saveDraft` -> `saveDraftMutation`). Se o usuario completa o wizard sem salvar rascunho:
 
-## Locais Afetados (13 arquivos)
+1. `sessionId` permanece `null` durante todo o wizard
+2. `clearDraft()` apenas limpa localStorage (o bloco `if (sessionId)` no banco nao executa)
+3. **TeamCheckinPage**: O disparo do e-mail de resumo falha porque `if (sessionId && ...)` e `false`
+4. **Todos os outros wizards**: Nenhum registro de conclusao e salvo em `okr_wizard_sessions`
 
-### Grupo 1: Cálculo de progresso limitado a 100% (LÓGICA)
+### Wizards Afetados (5 arquivos)
 
-| Arquivo | Linha | Problema |
-|---------|-------|----------|
-| `CollaboratorCheckinStep.tsx` | 160 | `Math.min(100, Math.max(0, ...))` no `newProgress` |
-| `OrgObjectiveCard.tsx` | 64-67 | `Math.min(100, ...)` no `avgProgress` de cada KR |
-| `TeamObjectiveCard.tsx` | 98-101 | Idem ao anterior |
-| `KrHistoryDialog.tsx` | 82 | `Math.min(100, ...)` no cálculo de progresso |
+| Wizard | Arquivo | Consequencia |
+|--------|---------|--------------|
+| Check-in do Time | `TeamCheckinPage.tsx` | E-mail de resumo NAO enviado + sem registro de conclusao |
+| Check-in do Colaborador | `CollaboratorCheckinPage.tsx` | Sem registro de conclusao |
+| Preparacao do Lider | `LeaderPrepPage.tsx` | Sem registro de conclusao |
+| Check-in de Gestores | `ManagersCheckinPage.tsx` | Sem registro de conclusao |
+| Check-in C-Level | `CLevelCheckinPage.tsx` | Sem registro de conclusao |
 
-### Grupo 2: Barra visual sem tratamento de superacao (UI)
+### Solucao
 
-| Arquivo | Linha | Problema |
-|---------|-------|----------|
-| `TeamKrReviewStep.tsx` | 274 | `<Progress value={currentKr.progress}` sem cap visual mas sem indicador de superacao |
-| `TeamOpeningStep.tsx` | 102 | `<Progress value={stats.avgProgress}` sem cap visual |
-| `LeaderAlignmentStep.tsx` | 131, 160 | `<Progress value={teamProgress}` e `value={obj.progress}` sem cap |
-| `KrContextCard.tsx` | 113, 166 | Ja tem `Math.min(100, progress)` na barra (correto) e mostra % real (correto) |
-
-## Solucao
-
-Aplicar o **mesmo padrao do `OkrProgressBar`** em todos os componentes dos wizards:
-
-1. **Barra visual**: Sempre `Math.min(100, progress)` (a barra enche ate 100% no maximo)
-2. **Label de percentual**: Mostrar o valor real (ex: 156%), com cor verde quando > 100%
-3. **Badge "Meta superada"**: Exibir quando progress > 100%
+Modificar `clearDraft` no `useGenericWizardDraft.ts` para **criar automaticamente uma sessao `completed`** quando `sessionId` for `null` no momento da conclusao. Isso resolve o problema de forma centralizada para todos os 5 wizards.
 
 ### Detalhamento Tecnico
 
-**Arquivo 1: `CollaboratorCheckinStep.tsx` (linha 160)**
-- Remover `Math.min(100, ...)` do calculo `newProgress` para permitir valores > 100
-- Na renderizacao da barra, usar `Math.min(100, newProgress)` 
-- No label, exibir `newProgress` real com estilizacao verde se > 100%
+**Arquivo 1: `src/modules/okrs/hooks/useGenericWizardDraft.ts`** (alteracao principal)
 
-**Arquivo 2: `OrgObjectiveCard.tsx` (linhas 64-67)**
-- Remover `Math.min(100, ...)` do calculo individual de cada KR
-- Usar `calculateProgress` da fonte de verdade (`src/modules/okrs/utils/progressCalculation.ts`) que ja nao limita a 100%
-- Na barra visual, manter `Math.min(100, avgProgress)`
+Modificar a funcao `clearDraft` (linhas 323-348) para:
+1. Se `sessionId` for `null`, inserir um novo registro em `okr_wizard_sessions` com `status = 'completed'` e `completed_at = now()`
+2. Retornar o `sessionId` resultante (existente ou recem-criado) como retorno da funcao `clearDraft`
 
-**Arquivo 3: `TeamObjectiveCard.tsx` (linhas 98-101)**
-- Mesmo tratamento do `OrgObjectiveCard`
+Mudanca de assinatura: `clearDraft: () => Promise<void>` passa a `clearDraft: () => Promise<string | null>` (retorna o sessionId).
 
-**Arquivo 4: `KrHistoryDialog.tsx` (linha 82)**
-- Remover `Math.min(100, ...)` do calculo
-- Usar `calculateProgress` util
-- Na barra visual (linha 172), ja esta com `Math.min(100, progress)` (correto)
-- Adicionar indicador visual de superacao no label
-
-**Arquivo 5: `TeamKrReviewStep.tsx` (linhas 271-281)**
-- Adicionar `Math.min(100, currentKr.progress)` na prop `value` da barra
-- Estilizar o label `{Math.round(currentKr.progress)}%` com cor verde quando > 100%
-- Adicionar badge "Meta superada" quando progress > 100%
-
-**Arquivo 6: `TeamOpeningStep.tsx` (linhas 102, 133, 156)**
-- Adicionar `Math.min(100, ...)` na barra (linha 102)
-- Estilizar labels com cor verde quando > 100%
-
-**Arquivo 7: `LeaderAlignmentStep.tsx` (linhas 131, 160)**
-- Adicionar `Math.min(100, ...)` na barra
-- Estilizar labels verde quando > 100%
-
-### Padrao Visual Unificado (extraido do `OkrProgressBar`)
-
+Pseudo-codigo da nova `clearDraft`:
 ```text
-Se progress > 100%:
-  - Barra:  width = 100% (visual cap)
-  - Label:  "156%" em cor text-status-green + font-medium
-  - Badge:  [Rocket icon] "Meta superada" (bg-status-green/15, text-status-green)
-
-Se progress <= 100%:
-  - Comportamento normal (sem alteracoes)
+clearDraft():
+  1. localStorage.removeItem(storageKey)
+  2. Se sessionId existir:
+     - UPDATE okr_wizard_sessions SET status='completed', completed_at=now() WHERE id=sessionId
+     - resultId = sessionId
+  3. Se sessionId == null E profile.id E currentBu.id existirem:
+     - INSERT okr_wizard_sessions (bu_id, wizard_type, team_id, cycle_id, started_by, status, completed_at, reflection_data)
+     - resultId = novo ID
+  4. Reset state local (draft, sessionId, isDirty, etc)
+  5. return resultId
 ```
 
-### Atualizacao de Documentacao
+**Arquivo 2: `src/modules/okrs/pages/TeamCheckinPage.tsx`** (ajuste do disparo do e-mail)
 
-- Atualizar `DEVELOPMENT_STANDARDS.md` com regra explicita: "Nunca limitar o CALCULO de progresso a 100%. Limitar apenas a BARRA VISUAL. O label deve exibir o valor real."
-- Atualizar `TECHNICAL_CONTEXT_REGISTRY.md` com changelog da correcao
+Modificar `handleComplete` (linhas 169-191) para usar o `sessionId` retornado por `clearDraft()`:
+
+```text
+handleComplete():
+  1. const completedSessionId = await clearDraft()
+  2. toast.success + navigate('/okrs')
+  3. Se completedSessionId && teamIdParam && quarterlyCycle && currentBu:
+     - Invocar 'team-checkin-summary' com completedSessionId (best-effort)
+```
+
+**Arquivo 3: `src/modules/okrs/pages/TeamCheckinPage.tsx`** (remover import global client)
+
+A linha 17 importa `supabase` de `@/integrations/supabase/client` (violacao do padrao BU_SCOPED_SUPABASE_RULES - deve usar globalClient ou buScopedSupabase). Como `clearDraft` ja usa `buSupabase` internamente, o import global pode ser substituido por `useBuScopedSupabase` para o invoke da Edge Function.
+
+**Nenhuma alteracao nos outros 4 wizards** e necessaria, pois a correcao no `clearDraft` e centralizada no hook. O retorno do `sessionId` sera ignorado nos wizards que nao precisam dele.
+
+### Atualizacao da Interface `UseGenericWizardDraftReturn`
+
+```text
+// ANTES
+clearDraft: () => Promise<void>;
+
+// DEPOIS
+clearDraft: () => Promise<string | null>;
+```
+
+### Conformidade
+
+- **PRE-BU vs POST-BU**: `clearDraft` usa `buSupabase` (POST-BU, correto)
+- **Identity**: Usa `profile.id` para `started_by` (correto, conforme IDENTITY_CONVENTION)
+- **BU Scope**: Insert inclui `bu_id: currentBu.id` (correto)
+- **Client**: Remove import proibido de `@/integrations/supabase/client` no TeamCheckinPage
+- **Wizard Standards**: Alinhado com `WIZARD_DEVELOPMENT_GUIDE.md`
 
