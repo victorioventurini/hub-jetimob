@@ -201,8 +201,14 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
       persistSession: true,
       autoRefreshToken: true,
       // CRITICAL: Disable URL detection to prevent competing with global client
-      detectSessionInUrl: false,
+    detectSessionInUrl: false,
+    // CRITICAL: Disable Navigator Lock to prevent timeout conflict with globalClient.
+    // Both clients share the same storage key. Only globalClient should hold the lock.
+    // buScopedClient syncs auth tokens from globalClient via custom fetch.
+    lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => {
+      return await fn();
     },
+  },
   });
 
   // Hydrate auth state immediately
