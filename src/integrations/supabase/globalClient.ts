@@ -52,6 +52,15 @@ function createGlobalClient(): SupabaseClient<Database> {
       // CRITICAL: Disable URL detection to prevent competing with BU-scoped client
       // The AuthCallback page handles session extraction from URL explicitly
       detectSessionInUrl: false,
+      // CRITICAL: Disable Navigator Lock to prevent self-deadlock.
+      // When onAuthStateChange triggers initialize() and getSession() is called
+      // concurrently (both in useAuth's useEffect), they compete for the same
+      // exclusive lock, causing a 10s timeout. The no-op lock executes operations
+      // immediately without Navigator LockManager coordination.
+      // Multi-tab token refresh is handled gracefully by the auth server.
+      lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => {
+        return await fn();
+      },
     },
   });
 
