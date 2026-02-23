@@ -254,6 +254,7 @@ const handler = async (req: Request): Promise<Response> => {
         const updateData: Record<string, unknown> = { 
           status: "sent",
           processed_at: new Date().toISOString(),
+          sent_at: new Date().toISOString(),
         };
         
         const providerInfo = result.provider;
