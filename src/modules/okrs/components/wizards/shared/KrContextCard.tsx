@@ -7,7 +7,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { 
   Target, 
   TrendingUp, 
@@ -108,13 +108,20 @@ export function KrContextCard({
             <p className="text-xs text-muted-foreground truncate mt-0.5">
               {objectiveTitle}
             </p>
-            <div className="flex items-center gap-2 mt-2">
-              {/* Barra visual limitada a 100% */}
-              <Progress value={Math.min(100, progress)} className="h-1.5 flex-1" />
-              <span className={cn("text-xs font-medium", progress > 100 && "text-status-green")}>
-                {Math.round(progress)}%
-              </span>
-            </div>
+            <OkrProgressBar
+              baseline={baseline}
+              current={currentValue}
+              target={target}
+              direction={direction}
+              status={status}
+              unit={unit}
+              size="sm"
+              showLabels={false}
+              className="mt-2"
+            />
+            <span className={cn("text-xs font-medium mt-1", progress > 100 && "text-status-green")}>
+              {Math.round(progress)}%
+            </span>
           </div>
           <Badge 
             variant={statusConfig.variant}
@@ -153,43 +160,16 @@ export function KrContextCard({
         </Badge>
       </div>
 
-      {/* Progress */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Progresso</span>
-          <span className={cn("font-medium", progress > 100 && "text-status-green")}>
-            {Math.round(progress)}%
-            {progress > 100 && ' 🚀'}
-          </span>
-        </div>
-        {/* Barra visual limitada a 100% */}
-        <Progress value={Math.min(100, progress)} className="h-2" />
-        
-        {/* Values */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <span>Base:</span>
-            <span className="font-medium text-foreground">
-              {formatValue(baseline, unit)}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <DirectionIcon className="h-3 w-3" />
-            <span>Meta:</span>
-            <span className="font-medium text-foreground">
-              {formatValue(target, unit)}
-            </span>
-          </div>
-        </div>
-        
-        {/* Current value highlight */}
-        <div className="flex items-center justify-center py-2 rounded-md bg-muted/50">
-          <span className="text-xs text-muted-foreground mr-2">Atual:</span>
-          <span className="text-lg font-bold text-primary">
-            {formatValue(currentValue, unit)}
-          </span>
-        </div>
-      </div>
+      {/* Progress - using canonical OkrProgressBar */}
+      <OkrProgressBar
+        baseline={baseline}
+        current={currentValue}
+        target={target}
+        direction={direction}
+        status={status}
+        unit={unit}
+        size="md"
+      />
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t">
