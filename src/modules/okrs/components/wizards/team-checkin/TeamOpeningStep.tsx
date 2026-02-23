@@ -13,9 +13,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardFirstStepFooter } from '../shared';
+import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput } from '../shared';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -28,6 +29,8 @@ export interface TeamOpeningStepProps {
   markedForDiscussion: string[];
   isLoading?: boolean;
   lastCompletedAt?: string | null;
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
 }
 
@@ -42,6 +45,8 @@ export function TeamOpeningStep({
   markedForDiscussion,
   isLoading,
   lastCompletedAt,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
 }: TeamOpeningStepProps) {
   // Calculate stats
@@ -178,6 +183,18 @@ export function TeamOpeningStep({
           )}
         </div>
       </div>
+
+      {/* Inline decision input */}
+      {onDecisionsChange && (
+        <div className="border-t">
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="opening"
+            placeholder="Alguma decisão ou nota sobre a abertura?"
+          />
+        </div>
+      )}
 
       <WizardFirstStepFooter
         primaryLabel="Revisar KRs"

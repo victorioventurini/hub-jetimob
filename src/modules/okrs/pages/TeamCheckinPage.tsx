@@ -232,6 +232,8 @@ export default function TeamCheckinPage() {
             markedForDiscussion={draft.data.reviewedKrs}
             isLoading={isLoadingKrs}
             lastCompletedAt={lastCheckin.lastCompletedAt}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onContinue={goNext}
           />
         );
@@ -242,6 +244,8 @@ export default function TeamCheckinPage() {
             krs={krs}
             markedForDiscussion={[]}
             reviewedKrs={new Set(draft.data.reviewedKrs)}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onMarkReviewed={(krId) => {
               const updated = [...draft.data.reviewedKrs, krId];
               updateDraft({ reviewedKrs: updated });
@@ -255,6 +259,8 @@ export default function TeamCheckinPage() {
         return (
           <TeamInitiativesStep
             initiatives={[]}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />

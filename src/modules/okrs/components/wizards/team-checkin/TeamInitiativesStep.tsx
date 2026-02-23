@@ -12,7 +12,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Zap, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter } from '../shared';
+import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -29,6 +30,8 @@ interface Initiative {
 
 export interface TeamInitiativesStepProps {
   initiatives: Initiative[];
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -46,6 +49,8 @@ const STATUS_CONFIG = {
 
 export function TeamInitiativesStep({
   initiatives,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: TeamInitiativesStepProps) {
@@ -138,6 +143,18 @@ export function TeamInitiativesStep({
           )}
         </div>
       </ScrollArea>
+
+      {/* Inline decision input */}
+      {onDecisionsChange && (
+        <div className="border-t">
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="initiatives"
+            placeholder="Alguma decisão sobre iniciativas?"
+          />
+        </div>
+      )}
 
       <WizardStepFooter
         onBack={onBack}

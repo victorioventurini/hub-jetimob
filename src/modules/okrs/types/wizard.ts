@@ -158,10 +158,13 @@ export interface LeaderPrepWizardState {
 // TEAM CHECKIN WIZARD
 // ============================================================
 
+export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions';
+
 export interface TeamCheckinDecision {
   id: string;
   text: string;
   category: 'decision' | 'focus_adjustment' | 'next_step';
+  sourceStep?: TeamCheckinDecisionSourceStep;
   owner?: {
     id: string;
     name: string;

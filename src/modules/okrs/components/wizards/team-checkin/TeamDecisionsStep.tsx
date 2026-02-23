@@ -1,13 +1,13 @@
 /**
  * TeamDecisionsStep - Etapa 4 do Wizard Check-in do Time
  * 
- * Registro de decisões e próximos passos:
- * - Decisões tomadas na reunião
- * - Ajustes de foco
+ * Consolidação de decisões e próximos passos:
+ * - Exibe todos os registros de steps anteriores agrupados por sourceStep
+ * - Permite adicionar, editar e remover registros
  * - Checklist de saída
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, Plus, X, Lightbulb, Target, Users } from 'lucide-react';
+import { CheckCircle2, Plus, X, Lightbulb, Target, Users, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardLastStepFooter } from '../shared';
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
@@ -35,6 +35,103 @@ export interface TeamDecisionsStepProps {
 }
 
 // ============================================================
+// CONSTANTS
+// ============================================================
+
+const CATEGORY_CONFIG = {
+  decision: { label: 'Decisão', icon: Lightbulb, color: 'bg-status-blue-muted text-status-blue' },
+  focus_adjustment: { label: 'Ajuste de Foco', icon: Target, color: 'bg-status-purple-muted text-status-purple' },
+  next_step: { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' },
+} as const;
+
+const SOURCE_STEP_LABELS: Record<string, string> = {
+  opening: 'Da Abertura',
+  'kr-review': 'Da Revisão de KRs',
+  initiatives: 'Das Iniciativas',
+  decisions: 'Desta Etapa',
+};
+
+// ============================================================
+// SUBCOMPONENTS
+// ============================================================
+
+function DecisionCard({
+  decision,
+  onUpdate,
+  onRemove,
+}: {
+  decision: TeamCheckinDecision;
+  onUpdate: (id: string, text: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(decision.text);
+  const config = CATEGORY_CONFIG[decision.category];
+  const Icon = config.icon;
+
+  const handleSave = () => {
+    if (editText.trim()) {
+      onUpdate(decision.id, editText.trim());
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-start gap-3">
+          <Icon className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            {isEditing ? (
+              <div className="flex gap-2">
+                <Input
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="h-8 text-sm"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSave();
+                    if (e.key === 'Escape') setIsEditing(false);
+                  }}
+                />
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleSave}>
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm">{decision.text}</p>
+            )}
+            <Badge variant="secondary" className={cn("text-xs mt-1", config.color)}>
+              {config.label}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => { setEditText(decision.text); setIsEditing(true); }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={() => onRemove(decision.id)}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -49,6 +146,23 @@ export function TeamDecisionsStep({
   const [newDecision, setNewDecision] = useState('');
   const [decisionCategory, setDecisionCategory] = useState<TeamCheckinDecision['category']>('decision');
 
+  // Group decisions by sourceStep
+  const groupedDecisions = useMemo(() => {
+    const groups: Record<string, TeamCheckinDecision[]> = {};
+    const stepOrder = ['opening', 'kr-review', 'initiatives', 'decisions'];
+    
+    for (const d of decisions) {
+      const step = d.sourceStep || 'decisions';
+      if (!groups[step]) groups[step] = [];
+      groups[step].push(d);
+    }
+    
+    // Return ordered
+    return stepOrder
+      .filter(step => groups[step]?.length > 0)
+      .map(step => ({ step, label: SOURCE_STEP_LABELS[step] || step, items: groups[step] }));
+  }, [decisions]);
+
   const handleAddDecision = () => {
     if (!newDecision.trim()) return;
 
@@ -56,6 +170,7 @@ export function TeamDecisionsStep({
       id: `decision-${Date.now()}`,
       text: newDecision.trim(),
       category: decisionCategory,
+      sourceStep: 'decisions',
     };
 
     onDecisionsChange([...decisions, decision]);
@@ -66,6 +181,10 @@ export function TeamDecisionsStep({
     onDecisionsChange(decisions.filter(d => d.id !== id));
   };
 
+  const handleUpdateDecision = (id: string, text: string) => {
+    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, text } : d));
+  };
+
   const handleChecklistChange = (key: keyof TeamCheckinChecklist, value: boolean) => {
     onChecklistChange({ ...checklist, [key]: value });
   };
@@ -74,23 +193,12 @@ export function TeamDecisionsStep({
                      checklist.knowWhatNotToDo && 
                      checklist.knowWhoIsResponsible;
 
-  const getCategoryConfig = (category: TeamCheckinDecision['category']) => {
-    switch (category) {
-      case 'decision':
-        return { label: 'Decisão', icon: Lightbulb, color: 'bg-status-blue-muted text-status-blue' };
-      case 'focus_adjustment':
-        return { label: 'Ajuste de Foco', icon: Target, color: 'bg-status-purple-muted text-status-purple' };
-      case 'next_step':
-        return { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' };
-    }
-  };
-
   return (
     <div className="flex flex-col h-full">
       <WizardStepHeader
         icon={CheckCircle2}
         title="Decisões e Próximos Passos"
-        description="Registre o que foi decidido nesta reunião"
+        description={`${decisions.length} registro${decisions.length !== 1 ? 's' : ''} no total`}
         variant="green"
       />
 
@@ -113,7 +221,7 @@ export function TeamDecisionsStep({
             </div>
             <div className="flex gap-2">
               {(['decision', 'focus_adjustment', 'next_step'] as const).map((cat) => {
-                const config = getCategoryConfig(cat);
+                const config = CATEGORY_CONFIG[cat];
                 return (
                   <Badge
                     key={cat}
@@ -131,38 +239,31 @@ export function TeamDecisionsStep({
             </div>
           </div>
 
-          {/* Decisions list */}
-          {decisions.length > 0 && (
-            <div className="space-y-2">
-              {decisions.map((decision) => {
-                const config = getCategoryConfig(decision.category);
-                const Icon = config.icon;
-
-                return (
-                  <Card key={decision.id}>
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-3">
-                        <Icon className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm">{decision.text}</p>
-                          <Badge variant="secondary" className={cn("text-xs mt-1", config.color)}>
-                            {config.label}
-                          </Badge>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleRemoveDecision(decision.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+          {/* Consolidated decisions grouped by sourceStep */}
+          {groupedDecisions.length > 0 && (
+            <div className="space-y-4">
+              {groupedDecisions.map(({ step, label, items }) => (
+                <div key={step} className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {label}
+                  </p>
+                  {items.map((decision) => (
+                    <DecisionCard
+                      key={decision.id}
+                      decision={decision}
+                      onUpdate={handleUpdateDecision}
+                      onRemove={handleRemoveDecision}
+                    />
+                  ))}
+                </div>
+              ))}
             </div>
+          )}
+
+          {decisions.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Nenhum registro ainda. Adicione decisões, ajustes de foco ou próximos passos.
+            </p>
           )}
 
           <Separator />
