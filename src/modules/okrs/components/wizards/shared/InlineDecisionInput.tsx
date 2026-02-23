@@ -45,7 +45,7 @@ export function InlineDecisionInput({
   sourceStep,
   placeholder = 'Registrar decisão, ajuste de foco ou próximo passo...',
 }: InlineDecisionInputProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [text, setText] = useState('');
   const [category, setCategory] = useState<TeamCheckinDecision['category']>('decision');
 
