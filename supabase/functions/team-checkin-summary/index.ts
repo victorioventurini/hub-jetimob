@@ -564,11 +564,18 @@ async function loadSessionDecisions(
   const reflectionData = session.reflection_data as any;
   const decisions: DecisionSummary[] = [];
 
+  const categoryToType: Record<string, string> = {
+    decision: 'Decisão',
+    focus_adjustment: 'Ajuste de Foco',
+    next_step: 'Próximo Passo',
+  };
+
   if (reflectionData.data?.decisions) {
     for (const decision of reflectionData.data.decisions) {
+      const rawCategory = decision.category || decision.type || 'decision';
       decisions.push({
         text: decision.text || decision.description || '',
-        type: decision.type || 'decision',
+        type: categoryToType[rawCategory] || rawCategory,
       });
     }
   }

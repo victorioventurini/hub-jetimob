@@ -16,11 +16,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter, LatestCheckinSummary } from '../shared';
+import { WizardStepHeader, WizardStepFooter, LatestCheckinSummary, InlineDecisionInput } from '../shared';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { KrLinkedKpiCard, type KpiLinkReason } from './KrLinkedKpiCard';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
@@ -35,6 +36,8 @@ export interface TeamKrReviewStepProps {
   linkedKpis?: KpiForWizardV2[];
   /** v2.83.0: KPI IDs marked for discussion by leader */
   kpisMarkedForDiscussion?: string[];
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onMarkReviewed: (krId: string) => void;
   onContinue: () => void;
   onBack: () => void;
@@ -102,6 +105,8 @@ export function TeamKrReviewStep({
   reviewedKrs,
   linkedKpis = [],
   kpisMarkedForDiscussion = [],
+  decisions = [],
+  onDecisionsChange,
   onMarkReviewed,
   onContinue,
   onBack,
@@ -309,6 +314,16 @@ export function TeamKrReviewStep({
               kr={currentKr}
               linkedKpis={relevantKpis.map(r => r.kpi)}
               showReason={relevantKpis[0].reason}
+            />
+          )}
+
+          {/* Inline decision input for KR review */}
+          {onDecisionsChange && (
+            <InlineDecisionInput
+              decisions={decisions}
+              onDecisionsChange={onDecisionsChange}
+              sourceStep="kr-review"
+              placeholder="Nota sobre este KR..."
             />
           )}
 

@@ -55,3 +55,6 @@ export type { WizardStepDefinition } from './WizardStepper';
 
 export { AdminContextSwitcher } from './AdminContextSwitcher';
 export type { AdminContextSwitcherProps } from './AdminContextSwitcher';
+
+export { InlineDecisionInput } from './InlineDecisionInput';
+export type { InlineDecisionInputProps } from './InlineDecisionInput';
