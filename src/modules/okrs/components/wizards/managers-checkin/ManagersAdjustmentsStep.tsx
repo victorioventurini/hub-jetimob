@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -79,13 +79,15 @@ export function ManagersAdjustmentsStep({
           <div className="space-y-3">
             <Label>Adicionar ajuste</Label>
             <div className="flex gap-2">
-              <Input
+              <TextareaAutoSubmit
                 value={newAdjustment}
                 onChange={(e) => setNewAdjustment(e.target.value)}
                 placeholder="Ex: Área X prioriza entrega para Área Y"
-                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                onSubmit={() => handleAdd()}
+                minRows={1}
+                maxRows={4}
               />
-              <Button onClick={handleAdd} disabled={!newAdjustment.trim()}>
+              <Button onClick={handleAdd} disabled={!newAdjustment.trim()} className="self-end">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
