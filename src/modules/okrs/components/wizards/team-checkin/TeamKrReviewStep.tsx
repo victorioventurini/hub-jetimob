@@ -132,11 +132,23 @@ export function TeamKrReviewStep({
   }, [currentKr, linkedKpis, kpisMarkedForDiscussion]);
 
   const handlePrev = () => {
-    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+    if (currentIndex > 0) {
+      // Auto-mark current KR as reviewed when navigating away
+      if (currentKr && !reviewedKrs.has(currentKr.id)) {
+        onMarkReviewed(currentKr.id);
+      }
+      setCurrentIndex(currentIndex - 1);
+    }
   };
 
   const handleNext = () => {
-    if (currentIndex < sortedKrs.length - 1) setCurrentIndex(currentIndex + 1);
+    if (currentIndex < sortedKrs.length - 1) {
+      // Auto-mark current KR as reviewed when navigating away
+      if (currentKr && !reviewedKrs.has(currentKr.id)) {
+        onMarkReviewed(currentKr.id);
+      }
+      setCurrentIndex(currentIndex + 1);
+    }
   };
 
   const handleMarkReviewed = () => {
