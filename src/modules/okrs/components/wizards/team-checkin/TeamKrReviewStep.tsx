@@ -345,7 +345,13 @@ export function TeamKrReviewStep({
         onBack={onBack}
         primaryLabel="Ver iniciativas"
         onPrimary={onContinue}
+        primaryDisabled={reviewedCount < totalCount}
       />
+      {reviewedCount < totalCount && (
+        <p className="text-xs text-muted-foreground text-center pb-2">
+          Revise todos os KRs para continuar ({reviewedCount}/{totalCount})
+        </p>
+      )}
     </div>
   );
 }

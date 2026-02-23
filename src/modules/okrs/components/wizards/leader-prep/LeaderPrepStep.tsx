@@ -312,11 +312,20 @@ export function LeaderPrepStep({
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>
-          <Button onClick={onContinue} className="flex-1">
+          <Button
+            onClick={onContinue}
+            className="flex-1"
+            disabled={krActions.length === 0 && krs.length > 0}
+          >
             Ver alinhamento
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
+        {krActions.length === 0 && krs.length > 0 && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Marque pelo menos um KR para discussão em grupo ou 1:1
+          </p>
+        )}
       </div>
     </div>
   );
