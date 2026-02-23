@@ -1,86 +1,87 @@
 
 
-# Auto-atribuicao de gestor baseado no lider do time
-
-## Pre-checklist executado
-
-- [x] **TCR v3.6.0**: Consultado. `profiles.manager_user_id` armazena `profiles.id`. `teams.leader_user_id` armazena `profiles.id`. Nenhum trigger existente faz sync entre eles.
-- [x] **IDENTITY_CONVENTION v2.1.1**: Consultado. Ambas colunas usam `profiles.id` (dominio). Sem conversao necessaria.
-- [x] **DATA_MODEL_REGISTRY**: Consultado. `profiles.manager_user_id` FK para `profiles.id`. `teams.leader_user_id` FK para `profiles.id`.
-- [x] **PERMISSIONS_AND_RBAC_MODEL**: Consultado. Lideranca definida em `teams.leader_user_id`. Nao impacta RBAC.
-- [x] **Triggers existentes**: Verificados. `auto_assign_leader_permissions` no `teams` ja segue padrao de reagir a mudancas em `leader_user_id`. Nenhum trigger de sync de manager existe.
-
-## Dados verificados no banco
-
-| Membro (time Onboarding) | manager_user_id | Esperado |
-|---------------------------|-----------------|----------|
-| Veronica Bonotto | Thiago (OK) | OK |
-| Pedro Casani | Thiago (OK) | OK |
-| Raissa Grehs | Thiago (OK) | OK |
-| **Caroline Dotto** | **NULL** | Thiago |
-| Thiago Silveira (lider) | NULL | NULL (lider nao e gestor de si) |
-
-Total no sistema: **5 profiles** com `manager_user_id = NULL` que deveriam herdar o lider do time.
-
 ## Problema
 
-Nao existe automacao que atribua o lider do time como gestor (`manager_user_id`) quando:
-1. Um profile e criado/editado com `team_id` preenchido
-2. O `leader_user_id` de um time muda (membros existentes nao sao atualizados)
+A KR "Aumentar taxa média de abertura JetNews" atingiu **156% da meta** (Base: 0, Atual: 28, Meta: 18), mas os wizards exibem **100%** porque o cálculo de progresso está limitado com `Math.min(100, ...)`.
+
+O componente `OkrProgressBar` (usado no dashboard `/okrs`) já trata superação corretamente desde uma iteração anterior: exibe badge "Meta superada", texto verde, e percentual real (ex: 156%). Porém, **os wizards e outros cards não seguem o mesmo padrão**.
+
+## Locais Afetados (13 arquivos)
+
+### Grupo 1: Cálculo de progresso limitado a 100% (LÓGICA)
+
+| Arquivo | Linha | Problema |
+|---------|-------|----------|
+| `CollaboratorCheckinStep.tsx` | 160 | `Math.min(100, Math.max(0, ...))` no `newProgress` |
+| `OrgObjectiveCard.tsx` | 64-67 | `Math.min(100, ...)` no `avgProgress` de cada KR |
+| `TeamObjectiveCard.tsx` | 98-101 | Idem ao anterior |
+| `KrHistoryDialog.tsx` | 82 | `Math.min(100, ...)` no cálculo de progresso |
+
+### Grupo 2: Barra visual sem tratamento de superacao (UI)
+
+| Arquivo | Linha | Problema |
+|---------|-------|----------|
+| `TeamKrReviewStep.tsx` | 274 | `<Progress value={currentKr.progress}` sem cap visual mas sem indicador de superacao |
+| `TeamOpeningStep.tsx` | 102 | `<Progress value={stats.avgProgress}` sem cap visual |
+| `LeaderAlignmentStep.tsx` | 131, 160 | `<Progress value={teamProgress}` e `value={obj.progress}` sem cap |
+| `KrContextCard.tsx` | 113, 166 | Ja tem `Math.min(100, progress)` na barra (correto) e mostra % real (correto) |
 
 ## Solucao
 
-### 1. Trigger em `profiles`: auto-preencher gestor ao atribuir time
+Aplicar o **mesmo padrao do `OkrProgressBar`** em todos os componentes dos wizards:
 
-Criar funcao `sync_manager_from_team_leader()` e trigger em INSERT/UPDATE de `profiles`.
+1. **Barra visual**: Sempre `Math.min(100, progress)` (a barra enche ate 100% no maximo)
+2. **Label de percentual**: Mostrar o valor real (ex: 156%), com cor verde quando > 100%
+3. **Badge "Meta superada"**: Exibir quando progress > 100%
 
-**Regras:**
-- Executa somente quando `team_id` muda (ou e inserido pela primeira vez)
-- Somente preenche se `manager_user_id` for NULL (respeita atribuicao manual)
-- Nao atribui o lider como gestor de si mesmo
-- `SECURITY DEFINER` com `search_path = 'public'`
+### Detalhamento Tecnico
 
-### 2. Trigger em `teams`: propagar mudanca de lider para membros
+**Arquivo 1: `CollaboratorCheckinStep.tsx` (linha 160)**
+- Remover `Math.min(100, ...)` do calculo `newProgress` para permitir valores > 100
+- Na renderizacao da barra, usar `Math.min(100, newProgress)` 
+- No label, exibir `newProgress` real com estilizacao verde se > 100%
 
-Criar funcao `propagate_leader_change_to_members()` e trigger em UPDATE de `teams`.
+**Arquivo 2: `OrgObjectiveCard.tsx` (linhas 64-67)**
+- Remover `Math.min(100, ...)` do calculo individual de cada KR
+- Usar `calculateProgress` da fonte de verdade (`src/modules/okrs/utils/progressCalculation.ts`) que ja nao limita a 100%
+- Na barra visual, manter `Math.min(100, avgProgress)`
 
-**Regras:**
-- Executa somente quando `leader_user_id` muda
-- Atualiza apenas membros cujo `manager_user_id` apontava para o lider **antigo** (preserva gestores manuais)
-- Nao atribui o novo lider como gestor de si mesmo
-- `SECURITY DEFINER` com `search_path = 'public'`
+**Arquivo 3: `TeamObjectiveCard.tsx` (linhas 98-101)**
+- Mesmo tratamento do `OrgObjectiveCard`
 
-### 3. Migration one-time: corrigir 5 registros existentes
+**Arquivo 4: `KrHistoryDialog.tsx` (linha 82)**
+- Remover `Math.min(100, ...)` do calculo
+- Usar `calculateProgress` util
+- Na barra visual (linha 172), ja esta com `Math.min(100, progress)` (correto)
+- Adicionar indicador visual de superacao no label
 
-```sql
-UPDATE profiles p
-SET manager_user_id = t.leader_user_id
-FROM teams t
-WHERE p.team_id = t.id
-  AND p.manager_user_id IS NULL
-  AND t.leader_user_id IS NOT NULL
-  AND p.id <> t.leader_user_id
-  AND p.employment_status <> 'terminated'
-  AND p.deleted_at IS NULL;
+**Arquivo 5: `TeamKrReviewStep.tsx` (linhas 271-281)**
+- Adicionar `Math.min(100, currentKr.progress)` na prop `value` da barra
+- Estilizar o label `{Math.round(currentKr.progress)}%` com cor verde quando > 100%
+- Adicionar badge "Meta superada" quando progress > 100%
+
+**Arquivo 6: `TeamOpeningStep.tsx` (linhas 102, 133, 156)**
+- Adicionar `Math.min(100, ...)` na barra (linha 102)
+- Estilizar labels com cor verde quando > 100%
+
+**Arquivo 7: `LeaderAlignmentStep.tsx` (linhas 131, 160)**
+- Adicionar `Math.min(100, ...)` na barra
+- Estilizar labels verde quando > 100%
+
+### Padrao Visual Unificado (extraido do `OkrProgressBar`)
+
+```text
+Se progress > 100%:
+  - Barra:  width = 100% (visual cap)
+  - Label:  "156%" em cor text-status-green + font-medium
+  - Badge:  [Rocket icon] "Meta superada" (bg-status-green/15, text-status-green)
+
+Se progress <= 100%:
+  - Comportamento normal (sem alteracoes)
 ```
 
-### 4. Frontend: pre-preencher gestor ao selecionar time (JetimoberDialog)
+### Atualizacao de Documentacao
 
-No `JetimoberDialog.tsx`, ao alterar o campo "Time":
-- Buscar o `leader_user_id` do time selecionado
-- Se o campo "Gestor" estiver vazio ("Nenhum"), pre-preencher com o lider
-- Permitir que o usuario altere manualmente (nao e forcado)
+- Atualizar `DEVELOPMENT_STANDARDS.md` com regra explicita: "Nunca limitar o CALCULO de progresso a 100%. Limitar apenas a BARRA VISUAL. O label deve exibir o valor real."
+- Atualizar `TECHNICAL_CONTEXT_REGISTRY.md` com changelog da correcao
 
-## Arquivos alterados
-
-| Arquivo | Alteracao |
-|---------|-----------|
-| Nova migration SQL | 2 triggers + fix de dados existentes |
-| `src/components/users/JetimoberDialog.tsx` | Pre-preencher gestor ao selecionar time |
-
-## Seguranca
-
-- Triggers usam `SECURITY DEFINER` com `search_path = 'public'` (padrao do projeto)
-- Nao alteram gestores definidos manualmente (apenas NULL -> lider)
-- Seguem padrao do trigger `auto_assign_leader_permissions` ja existente no `teams`
-- Ambas colunas (`manager_user_id`, `leader_user_id`) usam `profiles.id` — sem conversao de identidade
