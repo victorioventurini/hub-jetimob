@@ -360,7 +360,7 @@ async function loadTeamData(
     
     // Cycle info with dates for pace calculation
     serviceClient
-      .from('okr_cycles')
+      .from('cycles')
       .select('id, name, type, start_date, end_date')
       .eq('id', cycleId)
       .single(),
@@ -377,14 +377,14 @@ async function loadTeamData(
     
     // Team objectives with KRs
     serviceClient
-      .from('okr_objectives')
+      .from('okr_team_objectives')
       .select(`
         id, title, progress,
-        okr_key_results!inner (
+        okr_team_key_results!inner (
           id, title, current_value, target_value, progress, updated_at
         )
       `)
-      .eq('owner_team_id', teamId)
+      .eq('team_id', teamId)
       .eq('cycle_id', cycleId)
       .is('deleted_at', null),
   ]);
@@ -461,7 +461,7 @@ async function loadTeamData(
     });
 
     // Filter KRs for exceptions only
-    for (const kr of (obj.okr_key_results || [])) {
+    for (const kr of (obj.okr_team_key_results || [])) {
       const updatedAt = kr.updated_at ? new Date(kr.updated_at) : null;
       const updatedRecently = updatedAt ? updatedAt > oneWeekAgo : false;
       const progress = kr.progress || 0;
