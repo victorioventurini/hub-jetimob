@@ -9,7 +9,8 @@
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
+
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -84,17 +85,20 @@ function DecisionCard({
           <div className="flex-1 min-w-0">
             {isEditing ? (
               <div className="flex gap-2">
-                <Input
+                <TextareaAutoSubmit
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
-                  className="h-8 text-sm"
+                  className="text-sm"
                   autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSave();
+                  onSubmit={() => handleSave()}
+                  minRows={1}
+                  maxRows={4}
+                  onBlur={() => { /* keep editing on blur */ }}
+                  onKeyDownCapture={(e) => {
                     if (e.key === 'Escape') setIsEditing(false);
                   }}
                 />
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleSave}>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 self-end" onClick={handleSave}>
                   <Check className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -209,13 +213,15 @@ export function TeamDecisionsStep({
           <div className="space-y-3">
             <Label>Adicionar registro</Label>
             <div className="flex gap-2">
-              <Input
+              <TextareaAutoSubmit
                 value={newDecision}
                 onChange={(e) => setNewDecision(e.target.value)}
                 placeholder="Ex: Priorizar feature X esta semana"
-                onKeyDown={(e) => e.key === 'Enter' && handleAddDecision()}
+                onSubmit={() => handleAddDecision()}
+                minRows={1}
+                maxRows={4}
               />
-              <Button onClick={handleAddDecision} disabled={!newDecision.trim()}>
+              <Button onClick={handleAddDecision} disabled={!newDecision.trim()} className="self-end">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>

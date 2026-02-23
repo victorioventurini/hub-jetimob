@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Plus, X, ChevronDown, Lightbulb, Target, CheckCircle2 } from 'lucide-react';
@@ -115,19 +115,20 @@ export function InlineDecisionInput({
             ))}
           </div>
 
-          {/* Input */}
           <div className="flex gap-2">
-            <Input
+            <TextareaAutoSubmit
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={placeholder}
-              className="h-8 text-sm"
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              className="text-sm"
+              onSubmit={() => handleAdd()}
+              minRows={1}
+              maxRows={3}
             />
             <Button
               size="sm"
               variant="outline"
-              className="h-8 w-8 p-0 flex-shrink-0"
+              className="h-8 w-8 p-0 flex-shrink-0 self-end"
               onClick={handleAdd}
               disabled={!text.trim()}
             >
