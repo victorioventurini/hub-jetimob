@@ -11,6 +11,7 @@ import {
   useGenericWizardDraft,
   useActiveCycles,
   useTeamPendingKrs,
+  useLastCompletedSession,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
@@ -77,6 +78,7 @@ export default function TeamCheckinPage() {
     if (!teamIdParam || !teams) return null;
     return teams.find(t => t.id === teamIdParam) || null;
   }, [teamIdParam, teams]);
+  const lastCheckin = useLastCompletedSession('team-checkin', teamIdParam);
   
   usePageTitle(selectedTeam ? `Check-in - ${selectedTeam.name}` : 'Check-in do Time');
   
@@ -229,6 +231,7 @@ export default function TeamCheckinPage() {
             krs={krs}
             markedForDiscussion={draft.data.reviewedKrs}
             isLoading={isLoadingKrs}
+            lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
           />
         );

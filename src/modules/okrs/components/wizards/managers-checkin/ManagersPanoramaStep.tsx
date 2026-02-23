@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import {
   ArrowRight,
   TrendingUp,
@@ -35,6 +36,7 @@ export interface ManagersPanoramaStepProps {
   areas: AreaOkrSummary[];
   companyProgress: number;
   isLoading?: boolean;
+  lastCompletedAt?: string | null;
   onContinue: () => void;
 }
 
@@ -61,6 +63,7 @@ export function ManagersPanoramaStep({
   areas,
   companyProgress,
   isLoading,
+  lastCompletedAt,
   onContinue,
 }: ManagersPanoramaStepProps) {
   const totalAtRisk = useMemo(() => 
@@ -113,6 +116,7 @@ export function ManagersPanoramaStep({
             <p className="text-sm text-muted-foreground">
               {areas.length} áreas em análise
             </p>
+            <LastCheckinBadge lastCompletedAt={lastCompletedAt ?? null} />
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold">{companyProgress}%</p>

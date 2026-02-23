@@ -13,6 +13,7 @@ import {
   useActiveCycles,
   useTeamOverviewMetrics,
   useTeamPendingKrs,
+  useLastCompletedSession,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
@@ -78,6 +79,7 @@ export default function LeaderPrepPage() {
     if (!teamIdParam || !teams) return null;
     return teams.find(t => t.id === teamIdParam) || null;
   }, [teamIdParam, teams]);
+  const lastCheckin = useLastCompletedSession('leader-prep', teamIdParam);
   
   usePageTitle(selectedTeam ? `Preparação - ${selectedTeam.name}` : 'Preparação do Check-in');
   
@@ -245,6 +247,7 @@ export default function LeaderPrepPage() {
             cycleName={quarterlyCycle?.name || ''}
             metrics={metrics?.metrics || null}
             isLoading={isLoadingMetrics}
+            lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
           />
         );

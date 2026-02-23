@@ -7,7 +7,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft } from '@/modules/okrs/hooks/useGenericWizardDraft';
+import { useGenericWizardDraft, useLastCompletedSession } from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
@@ -55,6 +55,7 @@ const DEFAULT_DATA: CLevelDraftData = {
 export default function CLevelCheckinPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const lastCheckin = useLastCompletedSession('clevel-checkin');
   
   usePageTitle('Check-in Estratégico');
   
@@ -167,6 +168,7 @@ export default function CLevelCheckinPage() {
           <CLevelCompanyOkrsStep 
             okrs={okrs} 
             isLoading={isLoadingOkrs} 
+            lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext} 
           />
         );

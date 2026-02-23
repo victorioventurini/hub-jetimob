@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import {
   ArrowRight,
   CheckCircle2,
@@ -39,6 +40,7 @@ export interface LeaderOverviewStepProps {
   teamName: string;
   cycleName?: string;
   isLoading?: boolean;
+  lastCompletedAt?: string | null;
   onContinue: () => void;
 }
 
@@ -51,6 +53,7 @@ export function LeaderOverviewStep({
   teamName,
   cycleName,
   isLoading,
+  lastCompletedAt,
   onContinue,
 }: LeaderOverviewStepProps) {
   // Calculate percentages
@@ -110,6 +113,7 @@ export function LeaderOverviewStep({
               {cycleName && (
                 <p className="text-sm text-muted-foreground mt-1">{cycleName}</p>
               )}
+              <LastCheckinBadge lastCompletedAt={lastCompletedAt ?? null} />
             </div>
             <WizardTooltipInline tooltipKey="leader-overview" />
             <AskToVicStepHelper

@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter } from '../shared';
+import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 
 // ============================================================
@@ -26,6 +27,7 @@ export interface TeamOpeningStepProps {
   krs: WizardKr[];
   markedForDiscussion: string[];
   isLoading?: boolean;
+  lastCompletedAt?: string | null;
   onContinue: () => void;
 }
 
@@ -39,6 +41,7 @@ export function TeamOpeningStep({
   krs,
   markedForDiscussion,
   isLoading,
+  lastCompletedAt,
   onContinue,
 }: TeamOpeningStepProps) {
   // Calculate stats
@@ -76,9 +79,12 @@ export function TeamOpeningStep({
         description={cycleName}
         variant="primary"
         rightContent={
-          <div className="text-right">
-            <p className="text-2xl font-bold">{stats.avgProgress}%</p>
-            <p className="text-xs text-muted-foreground">progresso médio</p>
+          <div className="flex flex-col items-end gap-1">
+            <div className="text-right">
+              <p className="text-2xl font-bold">{stats.avgProgress}%</p>
+              <p className="text-xs text-muted-foreground">progresso médio</p>
+            </div>
+            <LastCheckinBadge lastCompletedAt={lastCompletedAt ?? null} />
           </div>
         }
       />
