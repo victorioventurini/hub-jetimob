@@ -15,7 +15,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
 import { queryKeys } from "@/lib/queryKeys";
 import { differenceInDays, parseISO } from "date-fns";
-import type { WizardKr, WizardKrFilter } from "./useTeamPendingKrs";
+import type { WizardKr, WizardKrFilter, LatestCheckinData } from "./useTeamPendingKrs";
 
 // ============================================================
 // HOOK
@@ -106,18 +106,41 @@ export function useUserKrsForWizard(
       const now = new Date();
       const PENDING_THRESHOLD_DAYS = 7;
 
-      // Batch fetch all owner profiles to avoid N+1
+      // Batch fetch latest checkins for all KR IDs
+      const krIds = (data || []).map(kr => kr.id);
+      const latestCheckinMap = new Map<string, { confidence: string; comments: string | null; blockers: string | null; date: string; user_id: string | null }>();
+      if (krIds.length > 0) {
+        const { data: checkins } = await supabase
+          .from('okr_checkins')
+          .select('kr_id, confidence, comments, blockers, date, user_id')
+          .in('kr_id', krIds)
+          .order('date', { ascending: false });
+        
+        for (const c of (checkins || [])) {
+          if (!latestCheckinMap.has(c.kr_id)) {
+            latestCheckinMap.set(c.kr_id, c);
+          }
+        }
+      }
+
+      // Batch fetch all owner profiles + checkin authors to avoid N+1
       const ownerIds = [...new Set((data || [])
         .map(kr => kr.owner_user_id)
         .filter((id): id is string => !!id)
       )];
+      const checkinAuthorIds = [...new Set(
+        [...latestCheckinMap.values()]
+          .map(c => c.user_id)
+          .filter((id): id is string => !!id && !ownerIds.includes(id))
+      )];
+      const allProfileIds = [...ownerIds, ...checkinAuthorIds];
       
       let ownerMap = new Map<string, { display_name: string | null; photo_url: string | null }>();
-      if (ownerIds.length > 0) {
+      if (allProfileIds.length > 0) {
         const { data: owners } = await supabase
           .from('profiles')
           .select('id, display_name, photo_url')
-          .in('id', ownerIds);
+          .in('id', allProfileIds);
         
         ownerMap = new Map((owners || []).map(o => [o.id, { display_name: o.display_name, photo_url: o.photo_url }]));
       }
@@ -145,6 +168,18 @@ export function useUserKrsForWizard(
         // Get owner info from batch lookup
         const owner = kr.owner_user_id ? ownerMap.get(kr.owner_user_id) : null;
 
+        // Get latest checkin data
+        const checkinData = latestCheckinMap.get(kr.id);
+        const checkinAuthor = checkinData?.user_id ? ownerMap.get(checkinData.user_id) : null;
+        const latestCheckin: LatestCheckinData | null = checkinData ? {
+          confidence: checkinData.confidence as LatestCheckinData['confidence'],
+          comments: checkinData.comments,
+          blockers: checkinData.blockers,
+          author_name: checkinAuthor?.display_name || null,
+          author_photo: checkinAuthor?.photo_url || null,
+          date: checkinData.date,
+        } : null;
+
         return {
           id: kr.id,
           title: kr.title,
@@ -166,6 +201,7 @@ export function useUserKrsForWizard(
           is_pending: isPending,
           is_at_risk: isAtRisk,
           progress,
+          latest_checkin: latestCheckin,
         };
       });
 

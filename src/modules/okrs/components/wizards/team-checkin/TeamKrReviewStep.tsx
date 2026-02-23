@@ -15,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter } from '../shared';
+import { WizardStepHeader, WizardStepFooter, LatestCheckinSummary } from '../shared';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { KrLinkedKpiCard, type KpiLinkReason } from './KrLinkedKpiCard';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
@@ -305,6 +305,11 @@ export function TeamKrReviewStep({
                   : 'Nunca'
                 }
               </p>
+
+              {/* Qualitative data from collaborator's last check-in */}
+              {currentKr.latest_checkin && (
+                <LatestCheckinSummary checkin={currentKr.latest_checkin} className="mt-2" />
+              )}
             </CardContent>
           </Card>
 

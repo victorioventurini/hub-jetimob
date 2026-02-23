@@ -29,6 +29,7 @@ import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KrAction, KrActionType } from '@/modules/okrs/types/wizard';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
+import { LatestCheckinSummary } from '../shared/LatestCheckinSummary';
 
 // ============================================================
 // TYPES
@@ -265,6 +266,9 @@ export function LeaderPrepStep({
                           : 'Nunca'}
                       </p>
                     </div>
+                    {kr.latest_checkin && (
+                      <LatestCheckinSummary checkin={kr.latest_checkin} className="mt-3" />
+                    )}
                   </CollapsibleContent>
                 </div>
               </Collapsible>

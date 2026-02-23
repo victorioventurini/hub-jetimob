@@ -44,6 +44,9 @@ export type { WizardStepHeaderProps, WizardHeaderVariant } from './WizardStepHea
 
 export { LastCheckinBadge } from './LastCheckinBadge';
 
+export { LatestCheckinSummary } from './LatestCheckinSummary';
+export type { LatestCheckinSummaryProps } from './LatestCheckinSummary';
+
 export { FullPageWizardShell } from './FullPageWizardShell';
 export type { FullPageWizardShellProps } from './FullPageWizardShell';
 
