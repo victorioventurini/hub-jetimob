@@ -474,7 +474,78 @@ async function loadTeamData(
   if (teamLeader?.profiles?.user_id) {
     memberAuthIds.push(teamLeader.profiles.user_id);
   }
-  
+
+  // ── Expand recipients: include members of direct sub-teams WITHOUT own OKRs ──
+  const { data: directSubteams } = await serviceClient
+    .from('teams')
+    .select('id, name, leader_user_id')
+    .eq('parent_team_id', teamId)
+    .eq('status', 'active')
+    .is('deleted_at', null);
+
+  if (directSubteams && directSubteams.length > 0) {
+    const subteamIds = directSubteams.map((s: any) => s.id);
+
+    // Check which sub-teams have their own OKRs in the current cycle
+    const { data: subteamOkrs } = await serviceClient
+      .from('okr_team_objectives')
+      .select('team_id')
+      .in('team_id', subteamIds)
+      .eq('cycle_id', cycleId)
+      .is('deleted_at', null)
+      .not('status', 'in', '("cancelled","discarded")');
+
+    const subteamsWithOkrs = new Set((subteamOkrs || []).map((o: any) => o.team_id));
+    const subteamsWithoutOkrs = directSubteams.filter((s: any) => !subteamsWithOkrs.has(s.id));
+
+    if (subteamsWithoutOkrs.length > 0) {
+      const subteamIdsWithoutOkrs = subteamsWithoutOkrs.map((s: any) => s.id);
+      console.log(`[loadTeamData] Including members from ${subteamsWithoutOkrs.length} sub-team(s) without own OKRs: ${subteamsWithoutOkrs.map((s: any) => s.name).join(', ')}`);
+
+      // Fetch members via user_team_memberships (canonical)
+      const { data: subMembers } = await serviceClient
+        .from('user_team_memberships')
+        .select('profiles!inner(user_id)')
+        .in('team_id', subteamIdsWithoutOkrs);
+
+      if (subMembers && subMembers.length > 0) {
+        const subMemberIds = subMembers
+          .map((m: any) => m.profiles?.user_id)
+          .filter(Boolean);
+        memberAuthIds.push(...subMemberIds);
+      } else {
+        // Fallback: profiles.team_id
+        console.log(`[loadTeamData] user_team_memberships empty for sub-teams, falling back to profiles.team_id`);
+        const { data: subProfileMembers } = await serviceClient
+          .from('profiles')
+          .select('user_id')
+          .in('team_id', subteamIdsWithoutOkrs)
+          .is('deleted_at', null)
+          .not('user_id', 'is', null);
+
+        if (subProfileMembers) {
+          memberAuthIds.push(...subProfileMembers.map((p: any) => p.user_id).filter(Boolean));
+        }
+      }
+
+      // Include leaders of sub-teams without OKRs
+      for (const sub of subteamsWithoutOkrs) {
+        if (sub.leader_user_id) {
+          // leader_user_id is profiles.id, resolve to auth user_id
+          const { data: leaderProfile } = await serviceClient
+            .from('profiles')
+            .select('user_id')
+            .eq('id', sub.leader_user_id)
+            .single();
+
+          if (leaderProfile?.user_id) {
+            memberAuthIds.push(leaderProfile.user_id);
+          }
+        }
+      }
+    }
+  }
+
   // Deduplicate
   memberAuthIds = [...new Set(memberAuthIds)];
 
