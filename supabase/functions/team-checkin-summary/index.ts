@@ -6,7 +6,7 @@
  * 2. Checks idempotency via summary_sent_at
  * 3. Loads team data, members, OKRs, KRs, KPIs in parallel
  * 4. Filters exceptions (management by exception)
- * 5. Orchestrates 4 AI agents in parallel via invoke-vic
+ * 5. Orchestrates 4 AI agents in parallel via direct LLM calls
  * 6. Emits notification via canonical emit_notification_event RPC
  * 7. Marks session as summary sent
  */
@@ -23,6 +23,8 @@ import {
   successResponse,
   errorResponse,
 } from "../_shared/response.ts";
+import { loadAgent, buildSystemPrompt } from "../_shared/agent-loader.ts";
+import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
 
 // ============================================================================
 // Types
@@ -51,7 +53,7 @@ interface PaceAnalysis {
   interpretation: string;
 }
 
-interface AgentContext {
+interface AgentContextData {
   teamName: string;
   cycleName: string;
   cycleType: string;
@@ -130,10 +132,6 @@ function formatDate(date: Date): string {
   });
 }
 
-/**
- * Calculate expected progress based on cycle elapsed time.
- * CANONICAL: This is the source of truth for pace analysis.
- */
 function calculateExpectedProgress(
   cycleStart: Date,
   cycleEnd: Date,
@@ -152,10 +150,6 @@ function calculateExpectedProgress(
   return Math.round((elapsed / totalDuration) * 100);
 }
 
-/**
- * CANONICAL: Analyze progress pace relative to cycle.
- * Uses rhythm-based language, NOT failure-based language.
- */
 function analyzePace(
   actualProgress: number,
   cycleStart: Date,
@@ -175,7 +169,6 @@ function analyzePace(
   };
   const cycleLabel = cycleLabels[cycleType] || cycleType;
   
-  // Meta já atingida
   if (actualProgress >= 100) {
     return {
       status: 'completed',
@@ -186,7 +179,6 @@ function analyzePace(
     };
   }
   
-  // Não iniciado
   if (actualProgress === 0 && cycleElapsed > 10) {
     return {
       status: 'not_started',
@@ -197,7 +189,6 @@ function analyzePace(
     };
   }
   
-  // Início do ciclo (primeiros 15%) - não fazer julgamentos precipitados
   if (cycleElapsed <= 15) {
     return {
       status: 'on_pace',
@@ -208,7 +199,6 @@ function analyzePace(
     };
   }
   
-  // Análise de ritmo com tolerância
   if (gap >= tolerancePercent) {
     return {
       status: 'above_pace',
@@ -238,10 +228,6 @@ function analyzePace(
   };
 }
 
-/**
- * Get KR status with pace-based interpretation.
- * DEPRECATED: Use analyzePace() for new code.
- */
 function getKrStatus(progress: number, updatedRecently: boolean): string {
   if (!updatedRecently) return 'desatualizado';
   if (progress >= 100) return 'atingido';
@@ -250,9 +236,6 @@ function getKrStatus(progress: number, updatedRecently: boolean): string {
   return 'fora da trilha';
 }
 
-/**
- * Generate canonical pace guidance for AI agents.
- */
 function generatePaceGuidance(cycleType: string, cycleElapsed: number): string {
   const cycleLabels: Record<string, string> = {
     month: 'mensal',
@@ -288,39 +271,62 @@ function extractOrFallback(
 }
 
 // ============================================================================
-// Agent Invocation
+// Agent Invocation — Direct LLM (no HTTP invoke-vic dependency)
 // ============================================================================
 
-async function invokeVicAgent(
-  supabaseUrl: string,
-  authHeader: string,
+/**
+ * Invoke an AI agent directly using shared modules.
+ * This bypasses invoke-vic HTTP calls and doesn't require a user JWT.
+ * Respects model/provider configured in hub_integrations_global_config.
+ */
+async function invokeAgentDirect(
+  serviceClient: any,
   agentSlug: string,
-  actionContext: string,
-  context: Record<string, unknown>,
-  buId: string
+  userPromptContent: string,
+  buId: string,
+  requestId: string
 ): Promise<string> {
-  const response = await fetch(`${supabaseUrl}/functions/v1/invoke-vic`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': authHeader,
-    },
-    body: JSON.stringify({
-      agentSlug,
-      actionContext,
-      context,
-      bu_id: buId,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Agent ${agentSlug} failed:`, response.status, errorText);
-    throw new Error(`Agent ${agentSlug} failed: ${response.status}`);
+  // 1. Load agent config (cached)
+  const loaded = await loadAgent(serviceClient, agentSlug, buId, requestId);
+  if (!loaded) {
+    console.warn(`[${requestId}] Agent ${agentSlug} not found or disabled, using fallback`);
+    return '';
   }
 
-  const data = await response.json();
-  return data.data?.content || data.content || '';
+  if (!loaded.isEnabledInBu) {
+    console.warn(`[${requestId}] Agent ${agentSlug} disabled for BU ${buId}`);
+    return '';
+  }
+
+  // 2. Resolve LLM config (respects hub integration settings)
+  const llmConfig = await resolveLLMConfig(serviceClient, loaded.agent.model_name);
+  if (!llmConfig) {
+    console.error(`[${requestId}] No LLM config resolved for agent ${agentSlug}`);
+    throw new Error(`NO_LLM_CONFIG for ${agentSlug}`);
+  }
+
+  // 3. Build system prompt (with Vic persona, canonical rules, documents, instruction sources)
+  const systemPrompt = await buildSystemPrompt(
+    serviceClient,
+    loaded.agent,
+    loaded.effectiveSystemPrompt,
+    buId,
+    requestId
+  );
+
+  // 4. Call LLM
+  const messages: LLMMessage[] = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPromptContent },
+  ];
+
+  const maxTokens = loaded.agent.max_tokens || llmConfig.maxTokens;
+  const temperature = loaded.agent.temperature ?? llmConfig.temperature;
+
+  console.log(`[${requestId}] Calling LLM for agent ${agentSlug} (model: ${llmConfig.model})`);
+  const response = await llmComplete(llmConfig, messages, { maxTokens, temperature });
+
+  return response.content || '';
 }
 
 // ============================================================================
@@ -350,6 +356,8 @@ async function loadTeamData(
     buResult,
     membersResult,
     objectivesResult,
+    kpisResult,
+    krMetricsResult,
   ] = await Promise.all([
     // Team info
     serviceClient
@@ -372,8 +380,12 @@ async function loadTeamData(
       .eq('id', buId)
       .single(),
     
-    // Team members (returns auth.users.id per IDENTITY_CONVENTION)
-    serviceClient.rpc('get_team_member_auth_ids', { p_team_id: teamId }),
+    // Team members via user_team_memberships + profiles (IDENTITY_CONVENTION)
+    serviceClient
+      .from('user_team_memberships')
+      .select('profiles!inner(user_id)')
+      .eq('team_id', teamId)
+      .is('deleted_at', null),
     
     // Team objectives with KRs
     serviceClient
@@ -387,19 +399,27 @@ async function loadTeamData(
       .eq('team_id', teamId)
       .eq('cycle_id', cycleId)
       .is('deleted_at', null),
-  ]);
 
-  // Load KPIs for team
-  const { data: kpisData } = await serviceClient
-    .from('kpis')
-    .select('id, name, current_value, target_value, is_primary, updated_at')
-    .eq('owner_team_id', teamId)
-    .is('deleted_at', null);
+    // KPIs: kpi_metrics + latest kpi_values
+    serviceClient
+      .from('kpi_metrics')
+      .select('id, name, target_value, updated_at, team_id, direction, kpi_values(value, reference_date, rag_status)')
+      .eq('team_id', teamId)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+      .order('reference_date', { referencedTable: 'kpi_values', ascending: false })
+      .limit(1, { referencedTable: 'kpi_values' }),
+
+    // KR-KPI links to determine primary KPIs
+    serviceClient
+      .from('okr_kr_metrics')
+      .select('kpi_metric_id, role')
+      .eq('role', 'primary'),
+  ]);
 
   const team = teamResult.data || { id: teamId, name: 'Time' };
   const cycleData = cycleResult.data;
   
-  // Build cycle info with proper dates
   const cycle: CycleInfo = {
     id: cycleData?.id || cycleId,
     name: cycleData?.name || 'Ciclo',
@@ -410,41 +430,37 @@ async function loadTeamData(
   
   const buName = buResult.data?.name || 'Empresa';
   
-  // Calculate cycle elapsed for canonical pace interpretation
   const cycleElapsedPercent = calculateExpectedProgress(cycle.startDate, cycle.endDate);
   const paceGuidance = generatePaceGuidance(cycle.type, cycleElapsedPercent);
   
-  // Get auth user IDs - fallback to manual query if RPC doesn't exist
+  // Build member auth IDs from user_team_memberships
   let memberAuthIds: string[] = [];
   if (membersResult.data) {
-    memberAuthIds = membersResult.data;
-  } else {
-    // Fallback: manual query following IDENTITY_CONVENTION
-    const { data: membersManual } = await serviceClient
-      .from('user_team_memberships')
-      .select('profiles!inner(user_id)')
-      .eq('team_id', teamId)
-      .is('deleted_at', null);
-    
-    if (membersManual) {
-      memberAuthIds = membersManual
-        .map((m: any) => m.profiles?.user_id)
-        .filter(Boolean);
+    memberAuthIds = membersResult.data
+      .map((m: any) => m.profiles?.user_id)
+      .filter(Boolean);
+  }
+  
+  // Add team leader
+  const { data: teamLeader } = await serviceClient
+    .from('teams')
+    .select('profiles!leader_user_id(user_id)')
+    .eq('id', teamId)
+    .single();
+  
+  if (teamLeader?.profiles?.user_id) {
+    memberAuthIds.push(teamLeader.profiles.user_id);
+  }
+  
+  // Deduplicate
+  memberAuthIds = [...new Set(memberAuthIds)];
+
+  // Build set of primary KPI IDs
+  const primaryKpiIds = new Set<string>();
+  if (krMetricsResult.data) {
+    for (const link of krMetricsResult.data) {
+      primaryKpiIds.add(link.kpi_metric_id);
     }
-    
-    // Add team leader
-    const { data: teamLeader } = await serviceClient
-      .from('teams')
-      .select('profiles!leader_user_id(user_id)')
-      .eq('id', teamId)
-      .single();
-    
-    if (teamLeader?.profiles?.user_id) {
-      memberAuthIds.push(teamLeader.profiles.user_id);
-    }
-    
-    // Deduplicate
-    memberAuthIds = [...new Set(memberAuthIds)];
   }
 
   // Process objectives and KRs
@@ -454,20 +470,22 @@ async function loadTeamData(
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   for (const obj of (objectivesResult.data || [])) {
+    const objPace = analyzePace(obj.progress || 0, cycle.startDate, cycle.endDate, cycle.type);
     objectives.push({
       title: obj.title,
-      status: obj.progress >= 70 ? 'no ritmo' : obj.progress >= 40 ? 'atenção' : 'fora da trilha',
+      status: objPace.label,
       progress: obj.progress || 0,
+      paceStatus: objPace.status,
+      paceInterpretation: objPace.interpretation,
     });
 
-    // Filter KRs for exceptions only
     for (const kr of (obj.okr_team_key_results || [])) {
       const updatedAt = kr.updated_at ? new Date(kr.updated_at) : null;
       const updatedRecently = updatedAt ? updatedAt > oneWeekAgo : false;
       const progress = kr.progress || 0;
       const status = getKrStatus(progress, updatedRecently);
+      const krPace = analyzePace(progress, cycle.startDate, cycle.endDate, cycle.type);
 
-      // Include only exceptions: off track, stagnant, exceeded, not updated
       if (status !== 'no ritmo' || progress >= 100) {
         krsHighlight.push({
           title: kr.title,
@@ -476,29 +494,44 @@ async function loadTeamData(
           currentValue: kr.current_value,
           targetValue: kr.target_value,
           progress,
+          paceStatus: krPace.status,
+          paceInterpretation: krPace.interpretation,
         });
       }
     }
   }
 
-  // Process KPIs - only primary or with issues
+  // Process KPIs from kpi_metrics + kpi_values
   const kpisRelevant: KpiSummary[] = [];
-  for (const kpi of (kpisData || [])) {
-    const updatedAt = kpi.updated_at ? new Date(kpi.updated_at) : null;
-    const updatedRecently = updatedAt ? updatedAt > oneWeekAgo : false;
+  for (const kpi of (kpisResult.data || [])) {
+    const latestValue = kpi.kpi_values?.[0] || null;
+    const currentValue = latestValue?.value ?? null;
+    const ragStatus = latestValue?.rag_status || null;
     const hasTarget = kpi.target_value !== null;
-    const onTarget = hasTarget && kpi.current_value !== null 
-      ? kpi.current_value >= kpi.target_value 
-      : true;
+    const isPrimary = primaryKpiIds.has(kpi.id);
+
+    // Determine update freshness
+    const referenceDate = latestValue?.reference_date ? new Date(latestValue.reference_date) : null;
+    const updatedRecently = referenceDate ? referenceDate > oneWeekAgo : false;
+
+    // Determine status from rag_status or compute
+    let status = 'ok';
+    if (!updatedRecently) {
+      status = 'desatualizado';
+    } else if (ragStatus === 'red') {
+      status = 'atenção';
+    } else if (ragStatus === 'yellow') {
+      status = 'atenção';
+    }
 
     // Include if primary, off target, or not updated
-    if (kpi.is_primary || !onTarget || !updatedRecently) {
+    if (isPrimary || status !== 'ok') {
       kpisRelevant.push({
         name: kpi.name,
-        currentValue: kpi.current_value,
+        currentValue,
         targetValue: kpi.target_value,
-        status: !updatedRecently ? 'desatualizado' : onTarget ? 'ok' : 'atenção',
-        isPrimary: kpi.is_primary || false,
+        status,
+        isPrimary,
       });
     }
   }
@@ -511,6 +544,8 @@ async function loadTeamData(
     objectives,
     krsHighlight,
     kpisRelevant,
+    cycleElapsedPercent,
+    paceGuidance,
   };
 }
 
@@ -529,7 +564,6 @@ async function loadSessionDecisions(
   const reflectionData = session.reflection_data as any;
   const decisions: DecisionSummary[] = [];
 
-  // Extract decisions from wizard data structure
   if (reflectionData.data?.decisions) {
     for (const decision of reflectionData.data.decisions) {
       decisions.push({
@@ -547,10 +581,10 @@ async function loadSessionDecisions(
 // ============================================================================
 
 async function orchestrateAgents(
-  supabaseUrl: string,
-  authHeader: string,
+  serviceClient: any,
   buId: string,
-  agentContext: AgentContext
+  agentContext: AgentContextData,
+  requestId: string
 ): Promise<AgentSections> {
   const contextJson = JSON.stringify(agentContext);
 
@@ -561,60 +595,48 @@ async function orchestrateAgents(
     culturaResult,
     revisorResult,
   ] = await Promise.allSettled([
-    // Analista de KPIs - objectives, KRs, KPIs analysis
-    invokeVicAgent(supabaseUrl, authHeader, 'analista-kpis', 'checkin_summary', {
-      type: 'checkin_summary',
-      teamName: agentContext.teamName,
-      cycleName: agentContext.cycleName,
-      objectives: agentContext.objectives,
-      krs: agentContext.krsHighlight,
-      kpis: agentContext.kpisRelevant,
-      pendingUpdates: agentContext.pendingUpdates,
-      instructions: `Gere um resumo executivo do check-in do time focando em exceções.
+    // Analista de KPIs
+    invokeAgentDirect(serviceClient, 'analista-kpis', 
+      `Contexto do check-in:\n${contextJson}\n\nGere um resumo executivo do check-in do time focando em exceções.
 Retorne em formato JSON com as chaves:
 - objectives_summary: resumo dos objetivos (2-3 frases)
 - krs_highlight: KRs em destaque formatados como lista markdown
 - kpis_summary: indicadores relevantes formatados como lista markdown
 Foque apenas no que está fora do esperado. Não seja punitivo.`,
-    }, buId),
+      buId, requestId),
 
-    // Facilitador de Decisões - risks, initiatives, next focus
-    invokeVicAgent(supabaseUrl, authHeader, 'facilitador-decisoes', 'risks_focus', {
-      type: 'risks_focus',
-      teamName: agentContext.teamName,
-      decisions: agentContext.decisions,
-      krsAtRisk: agentContext.krsHighlight.filter(kr => kr.status === 'fora da trilha'),
-      instructions: `Analise as decisões e riscos do check-in.
+    // Facilitador de Decisões
+    invokeAgentDirect(serviceClient, 'facilitador-decisoes',
+      `Contexto do check-in:\n${contextJson}\n\nAnalise as decisões e riscos do check-in.
 Retorne em formato JSON com as chaves:
 - initiatives_summary: resumo das iniciativas e decisões (2-3 frases)
 - risks_summary: até 3 riscos/bloqueios formatados como lista markdown
 - next_focus: 2-4 próximos focos práticos formatados como lista markdown
 Linguagem construtiva, orientada a ação.`,
-    }, buId),
+      buId, requestId),
 
-    // Guardião da Cultura - cultural message
-    invokeVicAgent(supabaseUrl, authHeader, 'cultura', 'culture_message', {
-      type: 'culture_message',
-      teamName: agentContext.teamName,
-      cycleName: agentContext.cycleName,
-      hasRisks: agentContext.krsHighlight.some(kr => kr.status === 'fora da trilha'),
-      instructions: `Gere uma mensagem cultural curta (máximo 60 caracteres).
+    // Guardião da Cultura
+    invokeAgentDirect(serviceClient, 'cultura',
+      `Contexto: culture_message
+Time: ${agentContext.teamName}, Ciclo: ${agentContext.cycleName}
+Tem riscos: ${agentContext.krsHighlight.some(kr => kr.status === 'fora da trilha')}
+
+Gere uma mensagem cultural curta (máximo 60 caracteres).
 Deve ser inspiradora, contextual ao momento do time.
 Tom positivo, orientado a aprendizado. Sem aspas.`,
-    }, buId),
+      buId, requestId),
 
-    // Revisor de Comunicação - opening and closing
-    invokeVicAgent(supabaseUrl, authHeader, 'revisor-comunicacao', 'opening_closing', {
-      type: 'opening_closing',
-      teamName: agentContext.teamName,
-      cycleName: agentContext.cycleName,
-      buName: agentContext.buName,
-      instructions: `Crie abertura e encerramento para o e-mail de resumo do check-in.
+    // Revisor de Comunicação
+    invokeAgentDirect(serviceClient, 'revisor-comunicacao',
+      `Contexto: abertura e encerramento do e-mail de check-in
+Time: ${agentContext.teamName}, Ciclo: ${agentContext.cycleName}, BU: ${agentContext.buName}
+
+Crie abertura e encerramento para o e-mail de resumo do check-in.
 Retorne em formato JSON com as chaves:
 - opening_text: 2-3 frases de abertura contextualizando o fechamento do check-in
 - closing_text: 1-2 frases de encerramento com tom positivo
 Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
-    }, buId),
+      buId, requestId),
   ]);
 
   // Extract results with fallbacks
@@ -639,7 +661,6 @@ Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
     if (analistaJson.kpis_summary) sections.kpis_summary = analistaJson.kpis_summary;
   } catch (e) {
     console.warn('Failed to parse analista response:', e);
-    // Use raw content if not JSON
     const raw = extractOrFallback(analistaResult, '');
     if (raw && !raw.startsWith('{')) {
       sections.objectives_summary = raw;
@@ -697,11 +718,8 @@ serve(async (req) => {
   const userId = ctx.user!.id;
   const buId = ctx.buId!;
   const serviceClient = ctx.serviceClient;
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const authHeader = req.headers.get('Authorization')!;
 
   try {
-    // Parse request body
     const body: TeamCheckinSummaryRequest = await req.json();
     const { teamId, cycleId, sessionId } = body;
 
@@ -714,7 +732,7 @@ serve(async (req) => {
 
     console.log(`[${requestId}] Team checkin summary: team=${teamId}, cycle=${cycleId}, session=${sessionId}`);
 
-    // Check idempotency - skip if already sent
+    // Check idempotency
     const { data: session, error: sessionError } = await serviceClient
       .from('okr_wizard_sessions')
       .select('id, summary_sent_at, status')
@@ -753,20 +771,23 @@ serve(async (req) => {
     ];
 
     // Build agent context
-    const agentContext: AgentContext = {
+    const agentContext: AgentContextData = {
       teamName: teamData.team.name,
       cycleName: teamData.cycle.name,
+      cycleType: teamData.cycle.type,
+      cycleElapsedPercent: teamData.cycleElapsedPercent,
       buName: teamData.buName,
       objectives: teamData.objectives,
       krsHighlight: teamData.krsHighlight,
       kpisRelevant: teamData.kpisRelevant,
       decisions,
       pendingUpdates,
+      paceGuidance: teamData.paceGuidance,
     };
 
-    // Orchestrate AI agents
-    console.log(`[${requestId}] Orchestrating AI agents...`);
-    const sections = await orchestrateAgents(supabaseUrl, authHeader, buId, agentContext);
+    // Orchestrate AI agents (direct LLM, no HTTP invoke-vic)
+    console.log(`[${requestId}] Orchestrating AI agents (direct LLM)...`);
+    const sections = await orchestrateAgents(serviceClient, buId, agentContext, requestId);
 
     // Build notification metadata
     const currentDatetime = formatDate(new Date());
@@ -806,7 +827,6 @@ serve(async (req) => {
 
     if (notifyError) {
       console.error(`[${requestId}] Notification emit failed:`, notifyError);
-      // Continue anyway - mark as sent to avoid retries
     }
 
     // Mark session as summary sent (idempotency)
