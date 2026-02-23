@@ -12,7 +12,8 @@ import {
   useGenericWizardDraft,
   useActiveCycles, 
   useManagersPanorama, 
-  useCrossDependencies 
+  useCrossDependencies,
+  useLastCompletedSession,
 } from '@/modules/okrs/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useIdentity } from '@/hooks/useIdentity';
@@ -59,6 +60,7 @@ const DEFAULT_DATA: ManagersDraftData = {
 export default function ManagersCheckinPage() {
   const navigate = useNavigate();
   const { profileId } = useIdentity();
+  const lastCheckin = useLastCompletedSession('managers-checkin');
   
   usePageTitle('Check-in de Gestores');
   
@@ -185,6 +187,7 @@ export default function ManagersCheckinPage() {
             areas={areas}
             companyProgress={companyProgress}
             isLoading={isLoading}
+            lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
           />
         );

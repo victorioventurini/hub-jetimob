@@ -16,6 +16,7 @@ import {
   useGenericWizardDraft,
   useActiveCycles,
   useUserKrsForWizard,
+  useLastCompletedSession,
 } from '@/modules/okrs/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useAuth } from '@/hooks/useAuth';
@@ -82,6 +83,7 @@ export default function CollaboratorCheckinPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile, isAdmin, isLoading: isAuthLoading } = useAuth();
   const { isImpersonating } = useOptionalImpersonation();
+  const lastCheckin = useLastCompletedSession('collaborator-checkin');
   
   // Check if user is admin - isAdmin already includes super_admin
   // During impersonation, disable user switch since it's redundant
@@ -276,6 +278,7 @@ export default function CollaboratorCheckinPage() {
             krs={krs}
             kpisToUpdate={kpis}
             cycleName={quarterlyCycle?.name || 'Ciclo atual'}
+            lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
           />
         );

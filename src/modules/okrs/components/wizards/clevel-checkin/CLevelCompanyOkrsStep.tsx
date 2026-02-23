@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import {
   Target,
   ArrowRight,
@@ -27,6 +28,7 @@ interface CompanyOkr {
 export interface CLevelCompanyOkrsStepProps {
   okrs: CompanyOkr[];
   isLoading?: boolean;
+  lastCompletedAt?: string | null;
   onContinue: () => void;
 }
 
@@ -45,6 +47,7 @@ const getTrendLabel = (trend: string) => {
 export function CLevelCompanyOkrsStep({
   okrs,
   isLoading,
+  lastCompletedAt,
   onContinue,
 }: CLevelCompanyOkrsStepProps) {
   if (isLoading) {
@@ -72,16 +75,19 @@ export function CLevelCompanyOkrsStep({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Building2 className="h-5 w-5 text-primary" />
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">OKRs da Empresa</h3>
+              <p className="text-sm text-muted-foreground">
+                Visão geral dos objetivos estratégicos
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-lg">OKRs da Empresa</h3>
-            <p className="text-sm text-muted-foreground">
-              Visão geral dos objetivos estratégicos
-            </p>
-          </div>
+          <LastCheckinBadge lastCompletedAt={lastCompletedAt ?? null} />
         </div>
       </div>
 

@@ -203,6 +203,7 @@ export { useGenericWizardDraft } from './useGenericWizardDraft';
 export { useWizardAI } from './useWizardAI';
 export { useWizardOrchestrator } from './useWizardOrchestrator';
 export { useWizardSession } from './useWizardSession';
+export { useLastCompletedSession } from './useLastCompletedSession';
 export { useUserKrsForWizard } from './useUserKrsForWizard';
 
 // =========================

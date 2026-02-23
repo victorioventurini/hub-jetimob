@@ -27,6 +27,7 @@ import type { KpiForWizard } from '@/modules/kpis/hooks';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { KpiContextSection } from '@/modules/kpis/components/KpiContextSection';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
@@ -43,6 +44,8 @@ export interface CollaboratorContextStepProps {
   kpisStrategic?: KpiForWizardV2[];
   isLoading?: boolean;
   cycleName?: string;
+  /** Data do último check-in completado */
+  lastCompletedAt?: string | null;
   onContinue: () => void;
 }
 
@@ -87,6 +90,7 @@ export function CollaboratorContextStep({
   kpisStrategic = [],
   isLoading,
   cycleName,
+  lastCompletedAt,
   onContinue,
 }: CollaboratorContextStepProps) {
   const groupedKrs = useMemo(() => groupKrsByObjective(krs), [krs]);
@@ -145,11 +149,14 @@ export function CollaboratorContextStep({
             <p className="text-sm text-muted-foreground mt-1">
               Ela ajuda você, seu líder e seu time a manter foco no que realmente importa.
             </p>
-            {cycleName && (
-              <Badge variant="outline" className="mt-2">
-                {cycleName}
-              </Badge>
-            )}
+            <div className="flex items-center gap-3 mt-2">
+              {cycleName && (
+                <Badge variant="outline">
+                  {cycleName}
+                </Badge>
+              )}
+              <LastCheckinBadge lastCompletedAt={lastCompletedAt ?? null} />
+            </div>
           </div>
         </div>
       </div>
