@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
@@ -82,6 +83,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const buSupabase = useBuScopedSupabase();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const storageKey = getDraftKey(wizardType);
   
@@ -178,6 +180,14 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       setIsResumingDraft(true);
     }
   }, []);
+  
+  // Sync step FROM URL on mount (URL takes priority if present)
+  useEffect(() => {
+    const urlStep = searchParams.get('step');
+    if (urlStep && urlStep !== draft.currentStep) {
+      setDraft(prev => ({ ...prev, currentStep: urlStep as TStep }));
+    }
+  }, []); // Only on mount
   
   const [isDirty, setIsDirty] = useState(false);
   const [hasSavedDraft] = useState(() => {
@@ -276,11 +286,21 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setIsDirty(true);
   }, []);
   
-  // Set step
+  // Set step — sync with URL param ?step=
   const setStep = useCallback((step: TStep) => {
     setDraft(prev => ({ ...prev, currentStep: step }));
     setIsDirty(true);
-  }, []);
+    // Sync step to URL
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (step === defaultStep) {
+        next.delete('step');
+      } else {
+        next.set('step', step);
+      }
+      return next;
+    }, { replace: true });
+  }, [defaultStep, setSearchParams]);
   
   // Save draft explicitly
   const saveDraft = useCallback(async () => {
@@ -313,11 +333,13 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setLastSavedAt(null);
     setIsDirty(false);
     setIsResumingDraft(false);
+    // Clear step from URL
+    setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('step'); return next; }, { replace: true });
     
     queryClient.invalidateQueries({ 
       queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType) 
     });
-  }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft]);
+  }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft, setSearchParams]);
   
   // Clear draft (after successful completion)
   // Returns the sessionId (existing or newly created) for post-completion actions
@@ -377,9 +399,11 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setLastSavedAt(null);
     setIsDirty(false);
     setIsResumingDraft(false);
+    // Clear step from URL
+    setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('step'); return next; }, { replace: true });
     
     return resultId;
-  }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId]);
+  }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId, setSearchParams]);
   
   // Persist changes to localStorage
   useEffect(() => {
