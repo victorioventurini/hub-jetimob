@@ -1,61 +1,104 @@
 
 
-# Exibir data do ultimo check-in no primeiro step de cada wizard
+# Exibir dados do ultimo check-in do colaborador nos wizards Leader Prep e Team Check-in
 
 ## Contexto
 
-Atualmente, nenhum dos 5 wizards de check-in exibe a data do ultimo ritual realizado em seu primeiro step. A informacao existe na tabela `okr_wizard_sessions` (campo `completed_at` com `status = 'completed'`), mas nao e consumida pelos componentes de abertura.
+Quando um colaborador faz check-in pelo wizard `/collaborator-checkin`, ele preenche:
+- **Valor atual** (numerico)
+- **Confianca** (alta/media/baixa)
+- **Comentario** (o que fez o KR avancar)
+- **Bloqueadores** (opcional)
+
+Esses dados ficam na tabela `okr_checkins` com campos `current_value`, `confidence`, `comments`, `blockers`, `user_id`, `date`. Porem, nos wizards `/leader-prep` e `/team-checkin`, o lider e o time **so veem metricas agregadas** (progresso, status, dias sem check-in) -- sem acesso ao contexto qualitativo reportado pelo colaborador.
+
+## Pre-checklist Canonico
+
+Documentos consultados:
+- **TCR v3.8.0** -- Stack, modelo de auth, padroes confirmados
+- **IDENTITY_CONVENTION v2.2.0** -- `user_id` em `okr_checkins` e `profiles.id` (profile_id de dominio)
+- **DATA_MODEL_REGISTRY** -- Tabela `okr_checkins` confirmada com RLS e BU-scoped
+- **SCHEMA_QUICK_REFERENCE** -- Campos: `id, kr_id, date, previous_value, current_value, confidence, blockers, comments, user_id, created_at, team_id, bu_id`
+- **OKR_FIELDS.checkin** -- Select explicito ja definido: `id, kr_id, kr_type, user_id, date, previous_value, current_value, confidence, comments, blockers, created_at`
 
 ## Abordagem
 
-Criar um hook reutilizavel que consulta a ultima sessao completada por `wizard_type` (e opcionalmente `team_id`), e injetar a data resultante no primeiro step de cada wizard.
+Enriquecer o tipo `WizardKr` com dados do ultimo check-in (batch query unica), criar componente visual compartilhado, e injetar nos steps de revisao dos dois wizards.
 
 ## Alteracoes
 
-### 1. Nova query key em `src/lib/queryKeys/okrs.ts`
+### 1. Estender tipo `WizardKr` em `useTeamPendingKrs.ts`
 
-Adicionar:
+Adicionar campo opcional ao tipo:
+
 ```typescript
-lastCompletedSession: (wizardType: string, teamId?: string | null) =>
-  ['okr-wizard-last-completed', wizardType, teamId] as const,
+latest_checkin?: {
+  confidence: 'high' | 'medium' | 'low';
+  comments: string | null;
+  blockers: string | null;
+  author_name: string | null;
+  author_photo: string | null;
+  date: string;
+} | null;
 ```
 
-### 2. Novo hook `src/modules/okrs/hooks/useLastCompletedSession.ts`
+### 2. Enriquecer dados no `useTeamPendingKrs` (batch, sem N+1)
 
-Hook que consulta `okr_wizard_sessions` filtrando por:
-- `wizard_type = <tipo>`
-- `status = 'completed'`
-- `team_id = <teamId>` (quando aplicavel: team-checkin, leader-prep)
-- Ordenado por `completed_at DESC`, `limit(1)`
+Apos obter os KR IDs, fazer uma unica query batch:
 
-Retorna `{ lastCompletedAt: string | null, isLoading: boolean }`.
+```typescript
+const krIds = (data || []).map(kr => kr.id);
+const { data: checkins } = await supabase
+  .from('okr_checkins')
+  .select('kr_id, confidence, comments, blockers, date, user_id')
+  .in('kr_id', krIds)
+  .order('date', { ascending: false });
 
-### 3. Componente compartilhado `LastCheckinBadge`
+// Agrupar: primeiro registro por kr_id = ultimo check-in
+const latestCheckinMap = new Map();
+for (const c of (checkins || [])) {
+  if (!latestCheckinMap.has(c.kr_id)) {
+    latestCheckinMap.set(c.kr_id, c);
+  }
+}
+```
 
-Pequeno componente inline (icone Calendar + texto formatado) para exibir "Ultimo check-in: DD/MM/AAAA" ou "Nenhum check-in realizado". Sera adicionado ao `WizardStepHeader` via prop `rightContent` ou diretamente no header de cada step.
+Os profiles dos autores serao resolvidos extendendo o `ownerMap` existente com quaisquer `user_id` de checkins que nao estejam la.
 
-### 4. Integracao nos 5 wizards (primeiro step de cada)
+### 3. Aplicar mesmo enriquecimento em `useUserKrsForWizard.ts`
 
-| Wizard | Pagina | Step 1 | wizard_type | Escopo team_id |
-|--------|--------|--------|-------------|----------------|
-| Collaborator | `CollaboratorCheckinPage` | `CollaboratorContextStep` | `collaborator-checkin` | Nao |
-| Leader Prep | `LeaderPrepPage` | `LeaderOverviewStep` | `leader-prep` | Sim |
-| Team Check-in | `TeamCheckinPage` | `TeamOpeningStep` | `team-checkin` | Sim |
-| Managers | `ManagersCheckinPage` | `ManagersPanoramaStep` | `managers-checkin` | Nao |
-| C-Level | `CLevelCheckinPage` | `CLevelCompanyOkrsStep` | `clevel-checkin` | Nao |
+Mesma logica de batch query para consistencia do tipo `WizardKr` compartilhado.
 
-Para cada wizard:
-- Chamar `useLastCompletedSession(wizardType, teamId?)` na **Page**
-- Passar `lastCompletedAt` como prop para o step 1
-- Renderizar `LastCheckinBadge` no header do step
+### 4. Novo componente `LatestCheckinSummary`
 
-### 5. Exportar hook no barrel `src/modules/okrs/hooks/index.ts`
+Local: `src/modules/okrs/components/wizards/shared/LatestCheckinSummary.tsx`
+
+Card compacto que exibe:
+- Avatar + nome do autor (usando `OptimizedAvatar`)
+- Data formatada (`formatDistanceToNow` com locale ptBR)
+- Badge de confianca com cores semanticas (Alta = verde, Media = amarelo, Baixa = vermelho)
+- Comentario (com truncamento e expand via Collapsible)
+- Bloqueador com icone de alerta (se houver)
+
+### 5. Integrar no `LeaderPrepStep.tsx`
+
+Dentro do `CollapsibleContent` (linhas 253-267), apos os dados de progresso existentes, renderizar `LatestCheckinSummary` quando `kr.latest_checkin` existir. Isso da ao lider o contexto qualitativo ao decidir o que discutir em grupo vs 1:1.
+
+### 6. Integrar no `TeamKrReviewStep.tsx`
+
+Dentro do card de revisao de cada KR (linhas 300-307, apos "Ultimo check-in"), renderizar `LatestCheckinSummary` quando `currentKr.latest_checkin` existir. Isso permite ao time ver o que o colaborador reportou durante a revisao conjunta.
+
+### 7. Exportar componente no barrel
+
+Adicionar `LatestCheckinSummary` ao barrel `src/modules/okrs/components/wizards/shared/index.ts`.
 
 ## Detalhes Tecnicos
 
-- Query usa `useBuScopedSupabase` (dados POST-BU conforme regra #1)
-- Query key via `queryKeys.okrs.lastCompletedSession(...)` (regra #5)
-- Select explicito: `select('completed_at')` (regra #4 - sem `select('*')`)
-- `staleTime: 5 * 60 * 1000` (5 min, dado que nao muda com frequencia)
-- Formatacao de data com `date-fns` (`format(date, "dd/MM/yyyy 'as' HH:mm")`) em pt-BR
+- **BU Isolation**: Query de checkins usa `useBuScopedSupabase` (ja em uso nos hooks)
+- **Select explicito**: `select('kr_id, confidence, comments, blockers, date, user_id')` -- sem `select('*')`
+- **Batch unica**: Uma query para todos os KR IDs retornados, agrupamento em memoria
+- **Identity**: Campo `user_id` em `okr_checkins` e `profiles.id` (profile_id de dominio, conforme IDENTITY_CONVENTION)
+- **Profile resolution**: Reusar `ownerMap` existente + complementar com autores de checkin ausentes
+- **Performance**: Nenhuma query adicional se nao houver KRs; profiles extras so se houver autores nao presentes no ownerMap
+- **Sem alteracao de schema**: Tabela `okr_checkins` ja tem todos os campos necessarios
 
