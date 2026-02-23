@@ -14,7 +14,7 @@ import {
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -70,6 +70,7 @@ export default function TeamCheckinPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const teamIdParam = searchParams.get('team');
   const { currentBu } = useBu();
+  const buSupabase = useBuScopedSupabase();
   // Get teams
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
   const selectedTeam = useMemo(() => {
@@ -98,7 +99,6 @@ export default function TeamCheckinPage() {
     isSaving,
     isResumingDraft,
     lastSavedAt,
-    sessionId,
   } = useGenericWizardDraft<WizardStep, TeamCheckinDraftData>({
     wizardType: 'team-checkin',
     teamId: teamIdParam,
@@ -167,19 +167,19 @@ export default function TeamCheckinPage() {
   }, [discardDraft]);
   
   const handleComplete = useCallback(async () => {
-    // 1. First: clear draft and navigate (does not block user)
-    await clearDraft();
+    // 1. Clear draft — creates completed session if none existed, returns sessionId
+    const completedSessionId = await clearDraft();
     toast.success('Check-in do time concluído!');
     navigate('/okrs');
 
-    // 2. Then: trigger summary email (best-effort, non-blocking)
-    if (sessionId && teamIdParam && quarterlyCycle?.id && currentBu?.id) {
+    // 2. Trigger summary email (best-effort, non-blocking)
+    if (completedSessionId && teamIdParam && quarterlyCycle?.id && currentBu?.id) {
       try {
-        await supabase.functions.invoke('team-checkin-summary', {
+        await buSupabase.functions.invoke('team-checkin-summary', {
           body: {
             teamId: teamIdParam,
             cycleId: quarterlyCycle.id,
-            sessionId,
+            sessionId: completedSessionId,
             bu_id: currentBu.id,
           }
         });
@@ -188,7 +188,7 @@ export default function TeamCheckinPage() {
         console.warn('Summary email failed (non-blocking):', e);
       }
     }
-  }, [clearDraft, navigate, sessionId, teamIdParam, quarterlyCycle, currentBu]);
+  }, [clearDraft, navigate, buSupabase, teamIdParam, quarterlyCycle, currentBu]);
   
   // Handle team change (admin only)
   const handleTeamChange = useCallback((newTeamId: string) => {
