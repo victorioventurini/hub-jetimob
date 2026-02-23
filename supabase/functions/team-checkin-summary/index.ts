@@ -270,6 +270,16 @@ function extractOrFallback(
   return fallback;
 }
 
+/**
+ * Sanitize JSON response from AI agents that may wrap output in markdown code fences.
+ * E.g. ```json\n{...}\n``` → {...}
+ */
+function sanitizeJsonResponse(raw: string): string {
+  let cleaned = raw.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+  return cleaned.trim();
+}
+
 // ============================================================================
 // Agent Invocation — Direct LLM (no HTTP invoke-vic dependency)
 // ============================================================================
@@ -381,11 +391,11 @@ async function loadTeamData(
       .single(),
     
     // Team members via user_team_memberships + profiles (IDENTITY_CONVENTION)
+    // Note: user_team_memberships has no deleted_at column; existence = active
     serviceClient
       .from('user_team_memberships')
       .select('profiles!inner(user_id)')
-      .eq('team_id', teamId)
-      .is('deleted_at', null),
+      .eq('team_id', teamId),
     
     // Team objectives with KRs
     serviceClient
@@ -433,12 +443,25 @@ async function loadTeamData(
   const cycleElapsedPercent = calculateExpectedProgress(cycle.startDate, cycle.endDate);
   const paceGuidance = generatePaceGuidance(cycle.type, cycleElapsedPercent);
   
-  // Build member auth IDs from user_team_memberships
+  // Build member auth IDs from user_team_memberships (with fallback to profiles.team_id)
   let memberAuthIds: string[] = [];
-  if (membersResult.data) {
+  if (membersResult.data && membersResult.data.length > 0) {
     memberAuthIds = membersResult.data
       .map((m: any) => m.profiles?.user_id)
       .filter(Boolean);
+  } else {
+    // Fallback: profiles.team_id (canonical source when junction table is empty)
+    console.log(`[loadTeamData] user_team_memberships empty for team ${teamId}, falling back to profiles.team_id`);
+    const { data: profileMembers } = await serviceClient
+      .from('profiles')
+      .select('user_id')
+      .eq('team_id', teamId)
+      .is('deleted_at', null)
+      .not('user_id', 'is', null);
+
+    if (profileMembers) {
+      memberAuthIds = profileMembers.map((p: any) => p.user_id).filter(Boolean);
+    }
   }
   
   // Add team leader
@@ -661,7 +684,7 @@ Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
 
   // Parse Analista response
   try {
-    const analistaContent = extractOrFallback(analistaResult, '{}');
+    const analistaContent = sanitizeJsonResponse(extractOrFallback(analistaResult, '{}'));
     const analistaJson = JSON.parse(analistaContent);
     if (analistaJson.objectives_summary) sections.objectives_summary = analistaJson.objectives_summary;
     if (analistaJson.krs_highlight) sections.krs_highlight = analistaJson.krs_highlight;
@@ -676,7 +699,7 @@ Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
 
   // Parse Facilitador response
   try {
-    const facilitadorContent = extractOrFallback(facilitadorResult, '{}');
+    const facilitadorContent = sanitizeJsonResponse(extractOrFallback(facilitadorResult, '{}'));
     const facilitadorJson = JSON.parse(facilitadorContent);
     if (facilitadorJson.initiatives_summary) sections.initiatives_summary = facilitadorJson.initiatives_summary;
     if (facilitadorJson.risks_summary) sections.risks_summary = facilitadorJson.risks_summary;
@@ -693,7 +716,7 @@ Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
 
   // Parse Revisor response
   try {
-    const revisorContent = extractOrFallback(revisorResult, '{}');
+    const revisorContent = sanitizeJsonResponse(extractOrFallback(revisorResult, '{}'));
     const revisorJson = JSON.parse(revisorContent);
     if (revisorJson.opening_text) sections.opening_text = revisorJson.opening_text;
     if (revisorJson.closing_text) sections.closing_text = revisorJson.closing_text;
@@ -819,11 +842,12 @@ serve(async (req) => {
 
     // Emit notification via canonical RPC
     console.log(`[${requestId}] Emitting notification to ${teamData.members.length} recipients`);
+    // Pass null actor_id so the leader (who triggered the check-in) also receives the summary
     const { error: notifyError } = await serviceClient.rpc('emit_notification_event', {
       p_event_slug: 'team.checkin.summary',
       p_bu_id: buId,
       p_recipient_user_ids: teamData.members,
-      p_actor_id: userId,
+      p_actor_id: null,
       p_title: `Check-in do time ${teamData.team.name}`,
       p_message: `Resumo do check-in do ciclo ${teamData.cycle.name}`,
       p_context_type: 'team_checkin',
