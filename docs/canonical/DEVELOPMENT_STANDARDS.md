@@ -1,8 +1,8 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.25.0  
-**Última atualização:** 2026-02-12  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0**
+**Versão:** 1.26.0  
+**Última atualização:** 2026-02-23  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0**
 **Referência:** TCR v3.7.0
 
 ---
@@ -1802,3 +1802,42 @@ export function useDeleteTeam() {
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Guia de testes automatizados |
 | [RESPONSIBILITY_MIGRATION_POLICY.md](./RESPONSIBILITY_MIGRATION_POLICY.md) | Política de migração de responsabilidades |
+
+---
+
+## U. Progress Overachievement Display (v1.26.0)
+
+**Regra inquebrável:** Nunca limitar o **CÁLCULO** de progresso a 100%. Limitar apenas a **BARRA VISUAL**. O label deve exibir o valor real.
+
+### Padrão Visual
+
+```text
+Se progress > 100%:
+  - Barra:  width = Math.min(100, progress)% (visual cap)
+  - Label:  "156%" em cor text-status-green + font-medium
+  - Emoji:  🚀 após o percentual
+  - Badge (quando aplicável): "Meta superada" (bg-status-green/15, text-status-green)
+
+Se progress <= 100%:
+  - Comportamento normal (sem alterações)
+```
+
+### Fonte de verdade
+
+- `calculateProgress()` em `src/modules/okrs/utils/progressCalculation.ts` — NÃO limita a 100%
+- `OkrProgressBar` — Componente de referência com tratamento completo de superação
+
+### Anti-patterns
+
+```typescript
+// ❌ PROIBIDO: Limitar cálculo
+const progress = Math.min(100, ((current - baseline) / (target - baseline)) * 100);
+
+// ✅ CORRETO: Permitir superação no cálculo
+const progress = Math.max(0, ((current - baseline) / (target - baseline)) * 100);
+
+// ✅ CORRETO: Limitar apenas a barra visual
+<Progress value={Math.min(100, progress)} />
+// ou
+style={{ width: `${Math.min(100, progress)}%` }}
+```

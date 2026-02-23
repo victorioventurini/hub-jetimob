@@ -126,9 +126,9 @@ export function LeaderAlignmentStep({
                 <span className="text-sm text-muted-foreground">
                   {teamKrs.length} KRs no ciclo
                 </span>
-                <span className="font-bold">{teamProgress}%</span>
+                <span className={cn("font-bold", teamProgress > 100 && "text-status-green")}>{teamProgress}%{teamProgress > 100 && ' 🚀'}</span>
               </div>
-              <Progress value={teamProgress} className="h-2" />
+              <Progress value={Math.min(100, teamProgress)} className="h-2" />
             </CardContent>
           </Card>
 
@@ -153,11 +153,11 @@ export function LeaderAlignmentStep({
                           RAG_STATUS_COLORS[obj.status]?.badge
                         )}
                       >
-                        {obj.progress}%
+                        <span className={obj.progress > 100 ? "text-status-green" : ""}>{obj.progress}%{obj.progress > 100 && ' 🚀'}</span>
                       </Badge>
                     </div>
                     <Progress
-                      value={obj.progress}
+                      value={Math.min(100, obj.progress)}
                       className={cn(
                         "h-1.5",
                         obj.status === 'green' && "[&>div]:bg-status-green",

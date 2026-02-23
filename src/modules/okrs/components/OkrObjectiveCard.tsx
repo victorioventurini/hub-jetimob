@@ -151,12 +151,12 @@ export function OkrObjectiveCard({
         <div>
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-muted-foreground">Progresso</span>
-            <span className="font-semibold">{avgProgress.toFixed(0)}%</span>
+            <span className={cn("font-semibold", avgProgress > 100 && "text-status-green")}>{avgProgress.toFixed(0)}%{avgProgress > 100 && ' 🚀'}</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
             <div
               className={cn('h-full rounded-full transition-all', getProgressColor())}
-              style={{ width: `${avgProgress}%` }}
+              style={{ width: `${Math.min(100, avgProgress)}%` }}
             />
           </div>
         </div>

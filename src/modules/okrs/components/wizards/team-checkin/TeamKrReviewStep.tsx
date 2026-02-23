@@ -268,10 +268,10 @@ export function TeamKrReviewStep({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Progresso</span>
-                  <span className="font-bold">{Math.round(currentKr.progress)}%</span>
+                  <span className={cn("font-bold", currentKr.progress > 100 && "text-status-green")}>{Math.round(currentKr.progress)}%{currentKr.progress > 100 && ' 🚀'}</span>
                 </div>
                 <Progress 
-                  value={currentKr.progress} 
+                  value={Math.min(100, currentKr.progress)} 
                   className={cn(
                     "h-2",
                     currentKr.status === 'green' && "[&>div]:bg-status-green",

@@ -61,10 +61,10 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
         const direction = kr.direction as 'up' | 'down';
         if (direction === 'up') {
           if (kr.target === kr.baseline) return acc + (kr.current_value >= kr.target ? 100 : 0);
-          return acc + Math.max(0, Math.min(100, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100));
+          return acc + Math.max(0, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100);
         } else {
           if (kr.baseline === kr.target) return acc + (kr.current_value <= kr.target ? 100 : 0);
-          return acc + Math.max(0, Math.min(100, ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100));
+          return acc + Math.max(0, ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100);
         }
       }, 0) / activeKrs.length
     : 0;
@@ -138,7 +138,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
             {/* Progress summary */}
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Progresso geral</span>
-              <span className="font-semibold">{avgProgress.toFixed(0)}%</span>
+              <span className={cn("font-semibold", avgProgress > 100 && "text-status-green")}>{avgProgress.toFixed(0)}%{avgProgress > 100 && ' 🚀'}</span>
             </div>
             <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
               <div
@@ -148,7 +148,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                   redCount === 0 && yellowCount > 0 && 'bg-warning',
                   redCount === 0 && yellowCount === 0 && 'bg-success'
                 )}
-                style={{ width: `${avgProgress}%` }}
+                style={{ width: `${Math.min(100, avgProgress)}%` }}
               />
             </div>
 

@@ -99,7 +99,7 @@ export function TeamOpeningStep({
             <span className="text-sm">{stats.offTrack} em risco</span>
           </div>
         </div>
-        <Progress value={stats.avgProgress} className="h-2 mt-3" />
+        <Progress value={Math.min(100, stats.avgProgress)} className="h-2 mt-3" />
       </div>
 
       {/* Content */}
@@ -130,7 +130,7 @@ export function TeamOpeningStep({
                         kr.status === 'red' && "bg-status-red-muted text-status-red"
                       )}
                     >
-                      {Math.round(kr.progress)}%
+                      <span className={kr.progress > 100 ? "text-status-green" : ""}>{Math.round(kr.progress)}%{kr.progress > 100 && ' 🚀'}</span>
                     </Badge>
                   </div>
                 </CardContent>
@@ -153,7 +153,7 @@ export function TeamOpeningStep({
               >
                 <p className="truncate font-medium">{kr.title}</p>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-muted-foreground">{Math.round(kr.progress)}%</span>
+                  <span className={cn("text-xs", kr.progress > 100 ? "text-status-green font-medium" : "text-muted-foreground")}>{Math.round(kr.progress)}%{kr.progress > 100 && ' 🚀'}</span>
                   <div className={cn(
                     "w-2 h-2 rounded-full",
                     kr.status === 'green' && "bg-status-green",
