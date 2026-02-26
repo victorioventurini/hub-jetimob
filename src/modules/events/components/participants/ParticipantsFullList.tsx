@@ -49,22 +49,25 @@ const OPERATION_AREAS: { value: string; label: string }[] = [
 
 const COMPANY_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "Todos os tipos" },
-  { value: "Imobiliária", label: "Imobiliária" },
-  { value: "Incorporadora", label: "Incorporadora" },
-  { value: "Construtora", label: "Construtora" },
-  { value: "Loteadora", label: "Loteadora" },
-  { value: "Administradora de condomínios", label: "Administradora de condomínios" },
+  { value: "Imobiliária de vendas", label: "Imobiliária de vendas" },
+  { value: "Imobiliária de aluguéis", label: "Imobiliária de aluguéis" },
+  { value: "Imobiliária de vendas e aluguéis", label: "Imobiliária de vendas e aluguéis" },
+  { value: "Corretor autônomo", label: "Corretor autônomo" },
+  { value: "Incorporadora / loteadora", label: "Incorporadora / loteadora" },
+  { value: "Agência de marketing", label: "Agência de marketing" },
+  { value: "Empresa de tecnologia", label: "Empresa de tecnologia" },
   { value: "Outros", label: "Outros" },
 ];
 
 const JOB_TITLES: { value: string; label: string }[] = [
   { value: "all", label: "Todos os cargos" },
-  { value: "Diretor(a)", label: "Diretor(a)" },
-  { value: "Gerente Comercial", label: "Gerente Comercial" },
-  { value: "Corretor autônomo", label: "Corretor autônomo" },
-  { value: "Gestor(a) de Vendas", label: "Gestor(a) de Vendas" },
-  { value: "Coordenador(a)", label: "Coordenador(a)" },
-  { value: "Analista", label: "Analista" },
+  { value: "Analista de marketing", label: "Analista de marketing" },
+  { value: "Gerente de marketing", label: "Gerente de marketing" },
+  { value: "Assessor de locações", label: "Assessor de locações" },
+  { value: "Gerente de locações", label: "Gerente de locações" },
+  { value: "Corretor de imóveis", label: "Corretor de imóveis" },
+  { value: "Gerente de vendas", label: "Gerente de vendas" },
+  { value: "Diretor geral / Proprietário / CEO", label: "Diretor / CEO" },
   { value: "Outros", label: "Outros" },
 ];
 
@@ -339,9 +342,9 @@ export function ParticipantsFullList() {
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{p.city}/{p.uf}</TableCell>
                 <TableCell className="text-sm">{p.jobTitle}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{p.jobTitle === "Corretor autônomo" ? "—" : p.companyType}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{p.companyType === "Corretor autônomo" ? "—" : p.companyType}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {p.jobTitle === "Corretor autônomo" ? "—" : p.companyName}
+                  {p.companyType === "Corretor autônomo" ? "—" : p.companyName}
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="text-xs">{p.operationArea}</Badge>
