@@ -15,7 +15,7 @@ import { LeadQualificationFunnel } from "../components/dashboard/LeadQualificati
 
 import { SegmentationCharts } from "../components/dashboard/SegmentationCharts";
 import { PainRankingTable } from "../components/dashboard/PainRankingTable";
-import { OpportunitiesVolumeChart } from "../components/dashboard/OpportunitiesVolumeChart";
+
 import { BrandRecallLeadsOverlap } from "../components/dashboard/BrandRecallLeadsOverlap";
 
 export default function EventsDashboardPage() {
@@ -57,11 +57,8 @@ export default function EventsDashboardPage() {
         {/* Segmentation donuts */}
         <SegmentationCharts />
 
-        {/* Row 5: Volume + Recall×Leads */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <OpportunitiesVolumeChart />
-          <BrandRecallLeadsOverlap />
-        </div>
+        {/* Row 5: Recall×Leads */}
+        <BrandRecallLeadsOverlap />
       </div>
     </HubLayout>
   );
