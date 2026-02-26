@@ -1,0 +1,167 @@
+/**
+ * RoiMetricsTab — Métricas para cálculo de ROI + parâmetros de Fit
+ */
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { DollarSign, SlidersHorizontal } from "lucide-react";
+
+const JOB_TITLES = [
+  "Diretor(a)",
+  "Gerente Comercial",
+  "Corretor autônomo",
+  "Gestor(a) de Vendas",
+  "Coordenador(a)",
+  "Analista",
+];
+
+const COMPANY_TYPES = [
+  "Imobiliária",
+  "Incorporadora",
+  "Construtora",
+  "Loteadora",
+  "Administradora de condomínios",
+];
+
+const BUSINESS_AREAS = [
+  "Venda de imóveis",
+  "Locação",
+  "Incorporação",
+  "Loteamento",
+  "Administração",
+  "Avaliação",
+];
+
+export function RoiMetricsTab() {
+  const [ltv, setLtv] = useState("150000");
+  const [selectedTitles, setSelectedTitles] = useState<string[]>(["Diretor(a)", "Gerente Comercial"]);
+  const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária", "Incorporadora"]);
+  const [selectedAreas, setSelectedAreas] = useState<string[]>(["Venda de imóveis", "Locação"]);
+
+  const toggleItem = (list: string[], item: string, setter: (v: string[]) => void) => {
+    setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* LTV */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            Métricas Financeiras
+            <HelpTooltip content="Valores usados como base para cálculo de ROI projetado nos dashboards de eventos." />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-sm space-y-2">
+            <Label className="text-xs">
+              LTV Médio por Cliente
+              <HelpTooltip content="Lifetime Value médio estimado de um cliente convertido. Usado como multiplicador no cálculo de ROI projetado do pipeline de oportunidades." size="sm" />
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+              <Input
+                value={ltv}
+                onChange={(e) => setLtv(e.target.value.replace(/\D/g, ""))}
+                className="pl-10 text-sm font-mono"
+                placeholder="150000"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Valor atual: {Number(ltv || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Fit Parameters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+            Parâmetros de Fit
+            <HelpTooltip content="Defina os critérios que compõem o score de Fit do lead. Leads que atendem mais critérios recebem score mais alto, priorizando oportunidades com maior potencial de conversão." />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Cargo */}
+          <div className="space-y-3">
+            <Label className="text-xs font-medium">
+              Cargos com peso positivo
+              <HelpTooltip content="Cargos que aumentam o score de Fit quando presentes no perfil do participante." size="sm" />
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {JOB_TITLES.map((title) => (
+                <label key={title} className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={selectedTitles.includes(title)}
+                    onCheckedChange={() => toggleItem(selectedTitles, title, setSelectedTitles)}
+                  />
+                  <span className="text-sm">{title}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {selectedTitles.map((t) => (
+                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Tipo de empresa */}
+          <div className="space-y-3">
+            <Label className="text-xs font-medium">
+              Tipos de empresa com peso positivo
+              <HelpTooltip content="Tipos de empresa que indicam maior aderência ao perfil ideal de cliente (ICP)." size="sm" />
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {COMPANY_TYPES.map((ct) => (
+                <label key={ct} className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={selectedCompanyTypes.includes(ct)}
+                    onCheckedChange={() => toggleItem(selectedCompanyTypes, ct, setSelectedCompanyTypes)}
+                  />
+                  <span className="text-sm">{ct}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {selectedCompanyTypes.map((t) => (
+                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Área de atuação */}
+          <div className="space-y-3">
+            <Label className="text-xs font-medium">
+              Áreas de atuação com peso positivo
+              <HelpTooltip content="Segmentos de mercado que indicam alinhamento com a proposta de valor da marca patrocinadora." size="sm" />
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {BUSINESS_AREAS.map((area) => (
+                <label key={area} className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={selectedAreas.includes(area)}
+                    onCheckedChange={() => toggleItem(selectedAreas, area, setSelectedAreas)}
+                  />
+                  <span className="text-sm">{area}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {selectedAreas.map((t) => (
+                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
