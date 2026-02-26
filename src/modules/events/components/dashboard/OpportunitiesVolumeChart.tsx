@@ -6,14 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { EVENTS_MOCK } from "../../mocks/events";
 import { useEventsContext } from "../../context/EventsContext";
 
 export function OpportunitiesVolumeChart() {
-  const { opportunities } = useEventsContext();
+  const { filteredOpportunities: opportunities, filteredEvents } = useEventsContext();
   const navigate = useNavigate();
 
-  const data = EVENTS_MOCK.map((evt) => ({
+  const data = filteredEvents.map((evt) => ({
     event: evt.name.replace("Jet Experience ", ""),
     total: opportunities.filter((o) => o.eventId === evt.id).length,
   }));

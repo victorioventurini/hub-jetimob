@@ -5,15 +5,14 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { EVENTS_MOCK } from "../../mocks/events";
 import { useEventsContext } from "../../context/EventsContext";
 
 export function LeadQualificationFunnel() {
-  const { opportunities } = useEventsContext();
+  const { filteredOpportunities: opportunities, filteredEvents } = useEventsContext();
   const navigate = useNavigate();
 
-  const totalRegistrations = EVENTS_MOCK.reduce((s, e) => s + e.totalRegistrations, 0);
-  const totalAttendees = EVENTS_MOCK.reduce((s, e) => s + e.totalAttendees, 0);
+  const totalRegistrations = filteredEvents.reduce((s, e) => s + e.totalRegistrations, 0);
+  const totalAttendees = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
   const totalOpps = opportunities.length;
   const highFit = opportunities.filter((o) => o.fitScore >= 75).length;
 

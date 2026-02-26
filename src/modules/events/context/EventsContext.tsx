@@ -1,14 +1,17 @@
 /**
  * Events Context — state local para oportunidades em sessão
  */
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
 import type { Opportunity, WebhookConfig, WebhookLog, ViewMode, EventsFilters } from "../types";
 import { OPPORTUNITIES_MOCK } from "../mocks/opportunities";
+import { JOURNEYS_MOCK, EVENTS_MOCK } from "../mocks/events";
 import { simulateWebhookSend } from "../utils/webhook";
 
 interface EventsContextValue {
   // Opportunities
   opportunities: Opportunity[];
+  filteredOpportunities: Opportunity[];
+  filteredEvents: typeof EVENTS_MOCK;
   addOpportunity: (opp: Omit<Opportunity, "id" | "capturedAt">) => void;
   // View mode
   viewMode: ViewMode;
@@ -57,10 +60,38 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     setWebhookLogs((prev) => [log, ...prev]);
   }, []);
 
+  const filteredOpportunities = useMemo(() => {
+    if (filters.scope === "event" && filters.selectedEventId) {
+      return opportunities.filter((o) => o.eventId === filters.selectedEventId);
+    }
+    if (filters.scope === "journey" && filters.selectedJourneyId) {
+      const journey = JOURNEYS_MOCK.find((j) => j.id === filters.selectedJourneyId);
+      if (journey) {
+        return opportunities.filter((o) => journey.eventIds.includes(o.eventId));
+      }
+    }
+    return opportunities;
+  }, [opportunities, filters.scope, filters.selectedEventId, filters.selectedJourneyId]);
+
+  const filteredEvents = useMemo(() => {
+    if (filters.scope === "event" && filters.selectedEventId) {
+      return EVENTS_MOCK.filter((e) => e.id === filters.selectedEventId);
+    }
+    if (filters.scope === "journey" && filters.selectedJourneyId) {
+      const journey = JOURNEYS_MOCK.find((j) => j.id === filters.selectedJourneyId);
+      if (journey) {
+        return EVENTS_MOCK.filter((e) => journey.eventIds.includes(e.id));
+      }
+    }
+    return EVENTS_MOCK;
+  }, [filters.scope, filters.selectedEventId, filters.selectedJourneyId]);
+
   return (
     <EventsContext.Provider
       value={{
         opportunities,
+        filteredOpportunities,
+        filteredEvents,
         addOpportunity,
         viewMode,
         setViewMode,

@@ -15,7 +15,7 @@ const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact" }).format(v);
 
 export function PipelineRoiChart() {
-  const { opportunities } = useEventsContext();
+  const { filteredOpportunities: opportunities } = useEventsContext();
   const navigate = useNavigate();
   // Count opps per area, multiply by LTV
   const areaMap = new Map<string, { opps: number; ltv: number }>();

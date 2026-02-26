@@ -80,7 +80,7 @@ const EVENT_DISTRIBUTION: OppSeed[] = [
   { eventId: "evt-pelotas-2026", date: "2026-06-25", count: 3 },
   { eventId: "evt-capao-2026", date: "2026-07-09", count: 4 },
   { eventId: "evt-poa-2026", date: "2026-08-14", count: 3 },
-  { eventId: "evt-je-2026", date: "2026-09-03", count: 32 },
+  { eventId: "evt-je-2026", date: "2026-09-03", count: 45 },
 ];
 
 function generateOpportunities(): Opportunity[] {
