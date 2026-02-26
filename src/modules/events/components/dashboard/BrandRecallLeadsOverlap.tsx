@@ -11,11 +11,12 @@ import { BRAND_RECALL_MOCK } from "../../mocks/brand-metrics";
 export function BrandRecallLeadsOverlap() {
   const { getDisplayName } = useAnonymize();
   const navigate = useNavigate();
-  // Mock: leads qualificados correlacionados com recall
-  const data = BRAND_RECALL_MOCK.map((b) => ({
+  // Leads qualificados correlacionados com recall (seeded, sem Math.random)
+  const SEED_FACTORS = [0.42, 0.35, 0.30, 0.38, 0.28, 0.33];
+  const data = BRAND_RECALL_MOCK.map((b, i) => ({
     brand: getDisplayName(b.brandId),
     "Brand Recall": b.stimulated,
-    "Leads Qualificados": Math.round(b.stimulated * (0.3 + Math.random() * 0.25)),
+    "Leads Qualificados": Math.round(b.stimulated * (SEED_FACTORS[i % SEED_FACTORS.length])),
   }));
 
   return (
