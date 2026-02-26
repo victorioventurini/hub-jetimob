@@ -62,12 +62,15 @@ function pick<T>(arr: T[], index: number): T {
 
 function generateParticipants(): Participant[] {
   const eventAssignments = [
-    ["evt-floripa-2026"],
-    ["evt-sp-2026"],
+    ["evt-sm-2026"],
+    ["evt-pelotas-2026"],
+    ["evt-capao-2026"],
     ["evt-poa-2026"],
-    ["evt-floripa-2026", "evt-sp-2026"],
-    ["evt-sp-2026", "evt-poa-2026"],
-    ["evt-floripa-2026", "evt-sp-2026", "evt-poa-2026"],
+    ["evt-je-2026"],
+    ["evt-sm-2026", "evt-pelotas-2026"],
+    ["evt-capao-2026", "evt-poa-2026"],
+    ["evt-poa-2026", "evt-je-2026"],
+    ["evt-sm-2026", "evt-capao-2026", "evt-je-2026"],
   ];
 
   return Array.from({ length: 50 }, (_, i) => {
@@ -89,8 +92,8 @@ function generateParticipants(): Participant[] {
       companyType: pick(companyTypes, i),
       operationArea: pick(operationAreas, i),
       eventIds: pick(eventAssignments, i),
-      registeredAt: `2026-0${1 + (i % 6)}-${String(10 + (i % 18)).padStart(2, "0")}T10:00:00Z`,
-      attendedAt: i % 7 !== 0 ? `2026-0${1 + (i % 6)}-${String(10 + (i % 18)).padStart(2, "0")}T08:30:00Z` : undefined,
+      registeredAt: `2026-0${6 + (i % 4)}-${String(1 + (i % 28)).padStart(2, "0")}T10:00:00Z`,
+      attendedAt: i % 7 !== 0 ? `2026-0${6 + (i % 4)}-${String(1 + (i % 28)).padStart(2, "0")}T08:30:00Z` : undefined,
     };
   });
 }
