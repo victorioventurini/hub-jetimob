@@ -49,7 +49,6 @@ export function ParticipantsList() {
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Empresa</th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Cargo</th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Cidade/UF</th>
-                <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Atuação</th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Código</th>
               </tr>
             </thead>
@@ -70,9 +69,6 @@ export function ParticipantsList() {
                   </td>
                   <td className="py-2.5 px-3 text-xs text-muted-foreground">{p.jobTitle}</td>
                   <td className="py-2.5 px-3 text-xs text-muted-foreground">{p.city}/{p.uf}</td>
-                  <td className="py-2.5 px-3">
-                    <Badge variant="secondary" className="text-[10px]">{p.operationArea}</Badge>
-                  </td>
                   <td className="py-2.5 px-3 text-xs font-mono text-muted-foreground">{p.code}</td>
                 </tr>
               ))}
