@@ -37,15 +37,7 @@ const FIT_RANGES: { value: FitRange; label: string }[] = [
   { value: "76-100", label: "76 – 100" },
 ];
 
-const OPERATION_AREAS: { value: string; label: string }[] = [
-  { value: "all", label: "Todas as atuações" },
-  { value: "Venda de imóveis", label: "Venda de imóveis" },
-  { value: "Locação", label: "Locação" },
-  { value: "Incorporação", label: "Incorporação" },
-  { value: "Loteamento", label: "Loteamento" },
-  { value: "Administração", label: "Administração" },
-  { value: "Avaliação", label: "Avaliação" },
-];
+
 
 const COMPANY_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "Todos os tipos" },
@@ -103,7 +95,7 @@ export function ParticipantsFullList() {
 
   // Filter state
   const [fitRange, setFitRange] = useState<FitRange>("all");
-  const [operationArea, setOperationArea] = useState("all");
+  
   const [companyType, setCompanyType] = useState("all");
   const [jobTitle, setJobTitle] = useState("all");
   const [city, setCity] = useState("all");
@@ -145,7 +137,7 @@ export function ParticipantsFullList() {
     }
 
     // Inline filters
-    if (operationArea !== "all") data = data.filter((p) => p.operationArea === operationArea);
+    
     if (companyType !== "all") data = data.filter((p) => p.companyType === companyType);
     if (jobTitle !== "all") data = data.filter((p) => p.jobTitle === jobTitle);
     if (city !== "all") data = data.filter((p) => p.city === city);
@@ -170,7 +162,7 @@ export function ParticipantsFullList() {
 
     // Sort by fit desc
     return [...data].sort((a, b) => b.fitScore - a.fitScore);
-  }, [filters, segment, search, fitRange, operationArea, companyType, jobTitle, city, uf, status]);
+  }, [filters, segment, search, fitRange, companyType, jobTitle, city, uf, status]);
 
   const counts = useMemo(() => {
     let base = PARTICIPANTS_FULL_MOCK.filter((p) => p.year === filters.year);
@@ -213,17 +205,6 @@ export function ParticipantsFullList() {
         onSearchChange={setSearch}
         searchPlaceholder="Buscar por nome, email ou empresa..."
       >
-        <Select value={operationArea} onValueChange={setOperationArea}>
-          <SelectTrigger className="h-9 w-[160px] text-xs">
-            <SelectValue placeholder="Atua com" />
-          </SelectTrigger>
-          <SelectContent>
-            {OPERATION_AREAS.map((o) => (
-              <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Select value={fitRange} onValueChange={(v) => setFitRange(v as FitRange)}>
           <SelectTrigger className="h-9 w-[130px] text-xs">
             <SelectValue placeholder="Fit" />
