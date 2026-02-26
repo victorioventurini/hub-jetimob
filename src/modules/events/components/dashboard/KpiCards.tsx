@@ -1,6 +1,8 @@
 /**
  * KPI Cards — Top-level metrics
+ * Clicking any card navigates to /events/participants
  */
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Users, Target, DollarSign, Brain, Award } from "lucide-react";
 import { useEventsContext } from "../../context/EventsContext";
@@ -19,9 +21,8 @@ export function KpiCards() {
   const highFit = opportunities.filter((o) => o.fitScore >= 75).length;
   const qualifiedPct = totalOpps > 0 ? Math.round((highFit / totalOpps) * 100) : 0;
 
-  // ROI estimate: avg LTV across sponsor areas * high-fit opps
   const avgLtv = SPONSOR_MOCK.areasOfOperation.reduce((s, a) => s + a.ltvPerLead, 0) / SPONSOR_MOCK.areasOfOperation.length;
-  const estimatedRoi = Math.round(highFit * avgLtv * 0.35); // 35% conversion assumption
+  const estimatedRoi = Math.round(highFit * avgLtv * 0.35);
 
   const totalAttendees = EVENTS_MOCK.reduce((s, e) => s + e.totalAttendees, 0);
 
@@ -37,15 +38,17 @@ export function KpiCards() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {kpis.map((kpi) => (
-        <Card key={kpi.label} className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-              <span className="text-xs text-muted-foreground font-medium truncate">{kpi.label}</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
-          </CardContent>
-        </Card>
+        <Link key={kpi.label} to="/events/participants" className="group">
+          <Card className="border-border/50 transition-shadow group-hover:shadow-md group-hover:border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
+                <span className="text-xs text-muted-foreground font-medium truncate">{kpi.label}</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+            </CardContent>
+          </Card>
+        </Link>
       ))}
     </div>
   );

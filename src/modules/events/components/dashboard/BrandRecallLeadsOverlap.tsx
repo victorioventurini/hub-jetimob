@@ -1,6 +1,7 @@
 /**
  * BrandRecallLeadsOverlap — Comparative bars: brand recall × qualified leads
  */
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useAnonymize } from "../../hooks/useAnonymize";
@@ -8,7 +9,7 @@ import { BRAND_RECALL_MOCK } from "../../mocks/brand-metrics";
 
 export function BrandRecallLeadsOverlap() {
   const { getDisplayName } = useAnonymize();
-
+  const navigate = useNavigate();
   // Mock: leads qualificados correlacionados com recall
   const data = BRAND_RECALL_MOCK.map((b) => ({
     brand: getDisplayName(b.brandId),
@@ -29,8 +30,8 @@ export function BrandRecallLeadsOverlap() {
             <YAxis tick={{ fontSize: 10 }} unit="%" />
             <Tooltip contentStyle={{ fontSize: 12 }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="Brand Recall" fill="hsl(210, 80%, 55%)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Leads Qualificados" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Brand Recall" fill="hsl(210, 80%, 55%)" radius={[4, 4, 0, 0]} cursor="pointer" onClick={() => navigate("/events/participants")} />
+            <Bar dataKey="Leads Qualificados" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} cursor="pointer" onClick={() => navigate("/events/participants")} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

@@ -1,11 +1,13 @@
 /**
  * BaselineEndlineChart — Line/area: evolution before/after
  */
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 import { BASELINE_ENDLINE_MOCK } from "../../mocks/brand-metrics";
 
 export function BaselineEndlineChart() {
+  const navigate = useNavigate();
   const data = BASELINE_ENDLINE_MOCK.map((m) => ({
     metric: m.metric,
     Baseline: m.baseline,
@@ -25,8 +27,8 @@ export function BaselineEndlineChart() {
             <XAxis dataKey="metric" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} angle={-15} textAnchor="end" height={60} />
             <YAxis tick={{ fontSize: 10 }} unit="%" />
             <Tooltip contentStyle={{ fontSize: 12 }} />
-            <Bar dataKey="Baseline" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} opacity={0.5} />
-            <Bar dataKey="Endline" fill="hsl(210, 80%, 45%)" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="Baseline" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} opacity={0.5} cursor="pointer" onClick={() => navigate("/events/participants")} />
+            <Bar dataKey="Endline" fill="hsl(210, 80%, 45%)" radius={[4, 4, 0, 0]} cursor="pointer" onClick={() => navigate("/events/participants")}>
               <LabelList dataKey="Delta" position="top" formatter={(v: number) => `+${v}pp`} style={{ fontSize: 10, fill: "hsl(142, 71%, 35%)" }} />
             </Bar>
           </BarChart>
