@@ -17,14 +17,18 @@ const companyTypes: CompanyType[] = [
 const operationAreas: OperationArea[] = ["vendas", "aluguéis", "vendas e aluguéis"];
 
 const cities: { city: string; uf: string }[] = [
-  { city: "Florianópolis", uf: "SC" }, { city: "São Paulo", uf: "SP" },
-  { city: "Porto Alegre", uf: "RS" }, { city: "Curitiba", uf: "PR" },
-  { city: "Joinville", uf: "SC" }, { city: "Blumenau", uf: "SC" },
-  { city: "Campinas", uf: "SP" }, { city: "Belo Horizonte", uf: "MG" },
-  { city: "Rio de Janeiro", uf: "RJ" }, { city: "Brasília", uf: "DF" },
-  { city: "Goiânia", uf: "GO" }, { city: "Recife", uf: "PE" },
-  { city: "Salvador", uf: "BA" }, { city: "Fortaleza", uf: "CE" },
-  { city: "Manaus", uf: "AM" },
+  // RS — maioria
+  { city: "Porto Alegre", uf: "RS" }, { city: "Caxias do Sul", uf: "RS" },
+  { city: "Canoas", uf: "RS" }, { city: "Pelotas", uf: "RS" },
+  { city: "Santa Maria", uf: "RS" }, { city: "Gravataí", uf: "RS" },
+  { city: "Viamão", uf: "RS" }, { city: "Novo Hamburgo", uf: "RS" },
+  { city: "São Leopoldo", uf: "RS" }, { city: "Rio Grande", uf: "RS" },
+  // PR
+  { city: "Curitiba", uf: "PR" }, { city: "Londrina", uf: "PR" },
+  // SC
+  { city: "Florianópolis", uf: "SC" }, { city: "Joinville", uf: "SC" },
+  // SP
+  { city: "São Paulo", uf: "SP" }, { city: "Campinas", uf: "SP" },
 ];
 
 const firstNames = [
