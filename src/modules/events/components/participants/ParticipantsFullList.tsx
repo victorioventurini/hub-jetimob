@@ -29,7 +29,7 @@ const SEGMENT_TABS: { value: SegmentTab; label: string }[] = [
 ];
 
 const FIT_RANGES: { value: FitRange; label: string }[] = [
-  { value: "all", label: "Todos" },
+  { value: "all", label: "Todos os fits" },
   { value: "0-25", label: "0 – 25" },
   { value: "26-50", label: "26 – 50" },
   { value: "51-75", label: "51 – 75" },
@@ -37,14 +37,14 @@ const FIT_RANGES: { value: FitRange; label: string }[] = [
 ];
 
 const OPERATION_AREAS: { value: string; label: string }[] = [
-  { value: "all", label: "Todos" },
+  { value: "all", label: "Todas as atuações" },
   { value: "vendas", label: "Vendas" },
   { value: "aluguéis", label: "Aluguéis" },
   { value: "vendas e aluguéis", label: "Vendas e aluguéis" },
 ];
 
 const COMPANY_TYPES: { value: string; label: string }[] = [
-  { value: "all", label: "Todos" },
+  { value: "all", label: "Todos os tipos" },
   { value: "Imobiliária", label: "Imobiliária" },
   { value: "Incorporadora", label: "Incorporadora" },
   { value: "Loteadora", label: "Loteadora" },
@@ -54,7 +54,7 @@ const COMPANY_TYPES: { value: string; label: string }[] = [
 ];
 
 const JOB_TITLES: { value: string; label: string }[] = [
-  { value: "all", label: "Todos" },
+  { value: "all", label: "Todos os cargos" },
   { value: "Corretor autônomo", label: "Corretor autônomo" },
   { value: "Gerente de vendas", label: "Gerente de vendas" },
   { value: "Gerente de aluguéis", label: "Gerente de aluguéis" },
@@ -256,7 +256,7 @@ export function ParticipantsFullList() {
             <SelectValue placeholder="Cidade" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">Todas</SelectItem>
+            <SelectItem value="all" className="text-xs">Todas as cidades</SelectItem>
             {allCities.map((c) => (
               <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
             ))}
@@ -268,7 +268,7 @@ export function ParticipantsFullList() {
             <SelectValue placeholder="UF" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">Todos</SelectItem>
+            <SelectItem value="all" className="text-xs">Todos os UFs</SelectItem>
             {allUfs.map((u) => (
               <SelectItem key={u} value={u} className="text-xs">{u}</SelectItem>
             ))}
@@ -280,7 +280,7 @@ export function ParticipantsFullList() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">Todos</SelectItem>
+            <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
             <SelectItem value="inscrito" className="text-xs">Inscrito</SelectItem>
             <SelectItem value="participante" className="text-xs">Participante</SelectItem>
           </SelectContent>
