@@ -7,16 +7,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Users, Target, DollarSign, Brain, Award } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
-import { SPONSOR_MOCK } from "../../mocks/sponsor";
 import { EVENTS_MOCK } from "../../mocks/events";
-import { PARTICIPANTS_MOCK } from "../../mocks/participants";
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
+const LTV_DEFAULT = 150_000; // R$ 150k — conforme /events/settings?tab=kpis
+const CONVERSION_RATE = 0.18; // 18% — benchmark B2B mercado imobiliário Brasil
+
 const KPI_TOOLTIPS: Record<string, string> = {
   "Oportunidades Capturadas": "Total de oportunidades de negócio identificadas durante os eventos, com base nas interações e interesses declarados pelos participantes.",
-  "ROI Estimado": "Retorno sobre investimento projetado, calculado com base no LTV médio por lead qualificado e na taxa de conversão estimada (35%).",
+  "ROI Estimado": `Retorno sobre investimento projetado, calculado com base no LTV médio (${LTV_DEFAULT.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}) × leads qualificados × taxa de conversão estimada (${(CONVERSION_RATE * 100).toFixed(0)}%).`,
   "Fit Score Médio": "Média do score de adequação dos leads aos critérios de qualificação do patrocinador (0–100%).",
   "Leads Qualificados": "Percentual de oportunidades com Fit Score ≥ 75, indicando alta aderência ao perfil ideal de cliente.",
   "Brand Recall": "Percentual de participantes que lembraram da marca do patrocinador espontaneamente ou de forma estimulada após o evento.",
@@ -31,8 +32,7 @@ export function KpiCards() {
   const highFit = opportunities.filter((o) => o.fitScore >= 75).length;
   const qualifiedPct = totalOpps > 0 ? Math.round((highFit / totalOpps) * 100) : 0;
 
-  const avgLtv = SPONSOR_MOCK.areasOfOperation.reduce((s, a) => s + a.ltvPerLead, 0) / SPONSOR_MOCK.areasOfOperation.length;
-  const estimatedRoi = Math.round(highFit * avgLtv * 0.35);
+  const estimatedRoi = Math.round(highFit * LTV_DEFAULT * CONVERSION_RATE);
 
   const totalAttendees = EVENTS_MOCK.reduce((s, e) => s + e.totalAttendees, 0);
 
