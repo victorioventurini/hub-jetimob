@@ -4,6 +4,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { PAIN_RANKING_MOCK } from "../../mocks/brand-metrics";
 
 const trendIcons = {
@@ -18,7 +19,10 @@ export function PainRankingTable() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Ranking de Dores Mais Citadas</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Ranking de Dores Mais Citadas
+          <HelpTooltip content="Ranking das principais dores e necessidades mencionadas pelos participantes, com percentual de citações e tendência em relação ao período anterior." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">

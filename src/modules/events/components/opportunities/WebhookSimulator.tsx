@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Send, CheckCircle2, XCircle } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
 import { Label } from "@/components/ui/label";
 
@@ -27,12 +28,18 @@ export function WebhookSimulator() {
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Novas oportunidades</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Novas oportunidades
+            <HelpTooltip content="Configure o webhook para receber notificações em tempo real quando novas oportunidades forem capturadas nos eventos." size="sm" />
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">URL do Webhook</Label>
+              <Label className="text-xs">
+                URL do Webhook
+                <HelpTooltip content="Endpoint HTTPS que receberá os payloads via POST quando houver novos eventos." size="sm" />
+              </Label>
               <Input
                 value={webhookConfig.url}
                 onChange={(e) => setWebhookConfig({ ...webhookConfig, url: e.target.value })}
@@ -41,7 +48,10 @@ export function WebhookSimulator() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Secret</Label>
+              <Label className="text-xs">
+                Secret
+                <HelpTooltip content="Chave secreta usada para assinar os payloads (HMAC-SHA256), permitindo validar a autenticidade das requisições recebidas." size="sm" />
+              </Label>
               <Input
                 value={webhookConfig.secret}
                 onChange={(e) => setWebhookConfig({ ...webhookConfig, secret: e.target.value })}
@@ -68,7 +78,10 @@ export function WebhookSimulator() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Logs de Envio ({webhookLogs.length})</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Logs de Envio ({webhookLogs.length})
+            <HelpTooltip content="Histórico das últimas chamadas do webhook com status HTTP, tempo de resposta e payload enviado." size="sm" />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {webhookLogs.length === 0 ? (
