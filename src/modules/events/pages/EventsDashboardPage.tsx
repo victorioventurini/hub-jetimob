@@ -9,7 +9,6 @@ import { Settings } from "lucide-react";
 import { ScopeFilter } from "../components/shared/ScopeFilter";
 import { KpiCards } from "../components/dashboard/KpiCards";
 import { ShareOfMindRadar } from "../components/dashboard/ShareOfMindRadar";
-import { BrandRecallChart } from "../components/dashboard/BrandRecallChart";
 import { BrandPainMatrix } from "../components/dashboard/BrandPainMatrix";
 import { BaselineEndlineChart } from "../components/dashboard/BaselineEndlineChart";
 import { LeadQualificationFunnel } from "../components/dashboard/LeadQualificationFunnel";
@@ -43,17 +42,14 @@ export default function EventsDashboardPage() {
         {/* KPIs */}
         <KpiCards />
 
-        {/* Row 1: Radar + Recall */}
+        {/* Row 1: Radar + Pain Matrix */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ShareOfMindRadar />
-          <BrandRecallChart />
+          <BrandPainMatrix />
         </div>
 
-        {/* Row 2: Pain Matrix + Baseline/Endline */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <BrandPainMatrix />
-          <BaselineEndlineChart />
-        </div>
+        {/* Row 2: Baseline/Endline */}
+        <BaselineEndlineChart />
 
         {/* Row 3: Funnel + Pipeline ROI */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
