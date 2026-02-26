@@ -13,7 +13,7 @@ export default function EventsWebhookPage() {
           title="Webhook"
           description="Simulador de webhooks para integração"
           breadcrumbs={[
-            { label: "Jet Experience", href: "/events" },
+            { label: "Eventos", href: "/events" },
             { label: "Webhook" },
           ]}
         />

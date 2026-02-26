@@ -33,7 +33,7 @@ export default function EventsSettingsPage() {
           title="Configurações"
           description="Gerencie os eventos e configurações de integração"
           breadcrumbs={[
-            { label: "Jet Experience", href: "/events" },
+            { label: "Eventos", href: "/events" },
             { label: "Configurações" },
           ]}
         />

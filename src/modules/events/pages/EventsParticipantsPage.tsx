@@ -14,7 +14,7 @@ export default function EventsParticipantsPage() {
           title="Participantes"
           description="Lista de participantes dos eventos"
           breadcrumbs={[
-            { label: "Jet Experience", href: "/events" },
+            { label: "Eventos", href: "/events" },
             { label: "Participantes" },
           ]}
         />

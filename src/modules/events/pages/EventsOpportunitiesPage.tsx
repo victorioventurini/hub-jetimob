@@ -14,7 +14,7 @@ export default function EventsOpportunitiesPage() {
           title="Oportunidades"
           description="Oportunidades capturadas nos eventos"
           breadcrumbs={[
-            { label: "Jet Experience", href: "/events" },
+            { label: "Eventos", href: "/events" },
             { label: "Oportunidades" },
           ]}
         />
