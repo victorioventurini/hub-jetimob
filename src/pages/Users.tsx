@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
 import { useBu } from "@/contexts/BuContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useBuBranding } from "@/modules/bu/hooks";
 import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TeamSelect, AreaSelect } from "@/components/selects";
@@ -38,7 +39,8 @@ import { useBuUsers, type BuUser } from "@/modules/permissions/hooks";
 import { UserPermissionsV2Sheet } from "@/modules/permissions/components/UserPermissionsV2Sheet";
 
 export default function UsersPage() {
-  usePageTitle("Jetimobers");
+  const { memberDisplayName } = useBuBranding();
+  usePageTitle(memberDisplayName);
   
   const { isWildcard, has } = usePermissions();
   const { currentBu, isLoading: isBuLoading } = useBu();
@@ -318,9 +320,9 @@ export default function UsersPage() {
       <div className="space-y-6">
         {/* Header com breadcrumbs integrados */}
         <PageHeader
-          title="Jetimobers"
-          description="Diretório de colaboradores da Jetimob"
-          breadcrumbs={[{ label: "Jetimobers" }]}
+          title={memberDisplayName}
+          description={`Diretório de colaboradores`}
+          breadcrumbs={[{ label: memberDisplayName }]}
           actions={
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
@@ -332,7 +334,7 @@ export default function UsersPage() {
               {canManageUsers && (
                 <Button className="gap-2" onClick={handleCreate}>
                   <Plus className="h-4 w-4" />
-                  Novo Jetimober
+                  Novo
                 </Button>
               )}
             </div>
@@ -391,8 +393,8 @@ export default function UsersPage() {
         {/* Linha 2: Contador */}
         <ViewOptionsBar
           resultCount={totalProfiles}
-          resultCountLabel="Jetimobers encontrados"
-          resultCountLabelSingular="Jetimober encontrado"
+          resultCountLabel={`${memberDisplayName} encontrados`}
+          resultCountLabelSingular={`${memberDisplayName} encontrado`}
         />
 
         {/* Bulk action bar */}
