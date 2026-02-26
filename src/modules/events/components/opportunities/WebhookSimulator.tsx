@@ -27,7 +27,7 @@ export function WebhookSimulator() {
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Configuração do Webhook</CardTitle>
+          <CardTitle className="text-sm font-semibold">Novas oportunidades</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
