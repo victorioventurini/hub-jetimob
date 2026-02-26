@@ -48,6 +48,8 @@ export default function EventsDashboardPage() {
           <BrandPainMatrix />
         </div>
 
+        {/* Row 2: Pain ranking */}
+        <PainRankingTable />
 
         {/* Row 3: Funnel */}
         <LeadQualificationFunnel />
@@ -60,9 +62,6 @@ export default function EventsDashboardPage() {
           <OpportunitiesVolumeChart />
           <BrandRecallLeadsOverlap />
         </div>
-
-        {/* Pain ranking */}
-        <PainRankingTable />
       </div>
     </HubLayout>
   );
