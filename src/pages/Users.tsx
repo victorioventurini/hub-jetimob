@@ -39,7 +39,7 @@ import { useBuUsers, type BuUser } from "@/modules/permissions/hooks";
 import { UserPermissionsV2Sheet } from "@/modules/permissions/components/UserPermissionsV2Sheet";
 
 export default function UsersPage() {
-  const { memberDisplayName } = useBuBranding();
+  const { memberDisplayName, buName } = useBuBranding();
   usePageTitle(memberDisplayName);
   
   const { isWildcard, has } = usePermissions();
@@ -321,7 +321,7 @@ export default function UsersPage() {
         {/* Header com breadcrumbs integrados */}
         <PageHeader
           title={memberDisplayName}
-          description={`Diretório de colaboradores`}
+          description={`Diretório de colaboradores da ${buName}`}
           breadcrumbs={[{ label: memberDisplayName }]}
           actions={
             <div className="flex items-center gap-2">
