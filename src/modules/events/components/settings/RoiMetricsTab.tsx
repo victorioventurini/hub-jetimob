@@ -109,9 +109,9 @@ export function RoiMetricsTab() {
   const [conversionRate, setConversionRate] = useState("18");
   const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária de aluguéis", "Imobiliária de vendas e aluguéis"]);
   const [selectedTitles, setSelectedTitles] = useState<string[]>(["Assessor de locações", "Gerente de locações", "Diretor geral / Proprietário / CEO"]);
-  const [selectedBrandSubs, setSelectedBrandSubs] = useState<string[]>(
-    BRAND_FRONTS.flatMap((f) => f.subcategories)
-  );
+  const [selectedBrandSubs, setSelectedBrandSubs] = useState<string[]>([
+    "Bancos", "Fintechs de crédito", "Garantidoras", "Seguradoras",
+  ]);
   const [selectedPains, setSelectedPains] = useState<string[]>([
     "Negócios que caem no final por reprovação de crédito ou garantia.",
     "Lentidão e burocracia para assinar contratos e fazer vistorias.",
