@@ -62,6 +62,7 @@ const iconMap: Record<string, LucideIcon> = {
   assets: Briefcase,
   tickets: FileText,
   wizards: Rocket,
+  events: Calendar,
 };
 
 // Itens fixos (sempre aparecem)
@@ -81,6 +82,7 @@ const buMenuItems = [
   { name: "Tickets", href: "/tickets", icon: FileText, slug: "tickets" },
   { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
+  { name: "Events", href: "/events", icon: Calendar, slug: "events" },
 ];
 
 // Módulos globais que aparecem sempre (mesmo com BU selecionada)
