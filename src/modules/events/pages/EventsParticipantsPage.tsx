@@ -1,15 +1,24 @@
 /**
- * EventsParticipantsPage — List of participants
+ * EventsParticipantsPage — Legacy participants list (kept for participant detail back-nav)
  */
 import { HubLayout } from "@/components/layout/HubLayout";
-import { SponsorHeader } from "../components/shared/SponsorHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { ScopeFilter } from "../components/shared/ScopeFilter";
 import { ParticipantsList } from "../components/participants/ParticipantsList";
 
 export default function EventsParticipantsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        <SponsorHeader title="Participantes" />
+        <PageHeader
+          title="Participantes"
+          description="Lista de participantes dos eventos"
+          breadcrumbs={[
+            { label: "Jet Experience", href: "/events" },
+            { label: "Participantes" },
+          ]}
+        />
+        <ScopeFilter />
         <ParticipantsList />
       </div>
     </HubLayout>
