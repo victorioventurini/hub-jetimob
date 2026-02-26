@@ -303,6 +303,7 @@ export function ParticipantsFullList() {
               <TableHead className="text-xs">Cidade/UF</TableHead>
               <TableHead className="text-xs">Cargo</TableHead>
               <TableHead className="text-xs">Tipo empresa</TableHead>
+              <TableHead className="text-xs">Nome empresa</TableHead>
               <TableHead className="text-xs">Atua com</TableHead>
               <TableHead className="text-xs">Fit</TableHead>
               <TableHead className="text-xs">Status</TableHead>
@@ -311,7 +312,7 @@ export function ParticipantsFullList() {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Nenhum participante encontrado.
                 </TableCell>
               </TableRow>
@@ -327,6 +328,9 @@ export function ParticipantsFullList() {
                 <TableCell className="text-xs text-muted-foreground">{p.city}/{p.uf}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.jobTitle}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.companyType}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {p.jobTitle === "Corretor autônomo" ? "" : p.companyName}
+                </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="text-[10px]">{p.operationArea}</Badge>
                 </TableCell>
