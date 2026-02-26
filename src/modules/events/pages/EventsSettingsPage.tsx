@@ -34,7 +34,7 @@ export default function EventsSettingsPage() {
             </TabsTrigger>
             <TabsTrigger value="kpis" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Métricas para ROI
+              Métricas para ROI e FIT
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="gap-2">
               <Webhook className="h-4 w-4" />
