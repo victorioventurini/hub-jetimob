@@ -1,10 +1,11 @@
 /**
- * ParticipantsFullList — Full participants list with segment tabs, fit column, search
+ * ParticipantsFullList — Full participants list with segment tabs, fit column, search + filters
  */
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { ArrowDownWideNarrow, Flame, TrendingUp, Minus } from "lucide-react";
 import {
@@ -14,14 +15,53 @@ import {
 } from "../../mocks/participantsFull";
 import { useEventsContext } from "../../context/EventsContext";
 import { JOURNEYS_MOCK } from "../../mocks/events";
+import type { JobTitle, CompanyType, OperationArea } from "../../types";
 
 type SegmentTab = "inscritos" | "participantes" | "oportunidades" | "fit_alto";
+type FitRange = "all" | "0-25" | "26-50" | "51-75" | "76-100";
 
 const SEGMENT_TABS: { value: SegmentTab; label: string }[] = [
   { value: "inscritos", label: "Inscritos" },
   { value: "participantes", label: "Participantes" },
   { value: "oportunidades", label: "Oportunidades" },
   { value: "fit_alto", label: "Fit alto" },
+];
+
+const FIT_RANGES: { value: FitRange; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "0-25", label: "0 – 25" },
+  { value: "26-50", label: "26 – 50" },
+  { value: "51-75", label: "51 – 75" },
+  { value: "76-100", label: "76 – 100" },
+];
+
+const OPERATION_AREAS: { value: string; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "vendas", label: "Vendas" },
+  { value: "aluguéis", label: "Aluguéis" },
+  { value: "vendas e aluguéis", label: "Vendas e aluguéis" },
+];
+
+const COMPANY_TYPES: { value: string; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "Imobiliária", label: "Imobiliária" },
+  { value: "Incorporadora", label: "Incorporadora" },
+  { value: "Loteadora", label: "Loteadora" },
+  { value: "Agência de marketing", label: "Agência de marketing" },
+  { value: "Empresa de tecnologia", label: "Empresa de tecnologia" },
+  { value: "Outros", label: "Outros" },
+];
+
+const JOB_TITLES: { value: string; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "Corretor autônomo", label: "Corretor autônomo" },
+  { value: "Gerente de vendas", label: "Gerente de vendas" },
+  { value: "Gerente de aluguéis", label: "Gerente de aluguéis" },
+  { value: "Diretor geral", label: "Diretor geral" },
+  { value: "Assistente de locações", label: "Assistente de locações" },
+  { value: "Analista de marketing", label: "Analista de marketing" },
+  { value: "Gerente de marketing", label: "Gerente de marketing" },
+  { value: "Outros", label: "Outros" },
 ];
 
 function FitBadge({ score, label }: { score: number; label: string }) {
@@ -44,10 +84,27 @@ function FitBadge({ score, label }: { score: number; label: string }) {
   );
 }
 
+/** Extract unique sorted values from participants */
+function uniqueValues(data: ParticipantFull[], key: "city" | "uf"): string[] {
+  return [...new Set(data.map((p) => p[key]))].sort();
+}
+
 export function ParticipantsFullList() {
   const { filters } = useEventsContext();
   const [segment, setSegment] = useState<SegmentTab>("inscritos");
   const [search, setSearch] = useState("");
+
+  // Filter state
+  const [fitRange, setFitRange] = useState<FitRange>("all");
+  const [operationArea, setOperationArea] = useState("all");
+  const [companyType, setCompanyType] = useState("all");
+  const [jobTitle, setJobTitle] = useState("all");
+  const [city, setCity] = useState("all");
+  const [uf, setUf] = useState("all");
+
+  // Derive city/uf options from data
+  const allCities = useMemo(() => uniqueValues(PARTICIPANTS_FULL_MOCK, "city"), []);
+  const allUfs = useMemo(() => uniqueValues(PARTICIPANTS_FULL_MOCK, "uf"), []);
 
   const filtered = useMemo(() => {
     let data: ParticipantFull[] = PARTICIPANTS_FULL_MOCK;
@@ -77,7 +134,18 @@ export function ParticipantsFullList() {
       case "fit_alto":
         data = data.filter((p) => p.fitScore >= FIT_HIGH_THRESHOLD);
         break;
-      // "inscritos" = all
+    }
+
+    // Inline filters
+    if (operationArea !== "all") data = data.filter((p) => p.operationArea === operationArea);
+    if (companyType !== "all") data = data.filter((p) => p.companyType === companyType);
+    if (jobTitle !== "all") data = data.filter((p) => p.jobTitle === jobTitle);
+    if (city !== "all") data = data.filter((p) => p.city === city);
+    if (uf !== "all") data = data.filter((p) => p.uf === uf);
+
+    if (fitRange !== "all") {
+      const [min, max] = fitRange.split("-").map(Number);
+      data = data.filter((p) => p.fitScore >= min && p.fitScore <= max);
     }
 
     // Search
@@ -93,7 +161,7 @@ export function ParticipantsFullList() {
 
     // Sort by fit desc
     return [...data].sort((a, b) => b.fitScore - a.fitScore);
-  }, [filters, segment, search]);
+  }, [filters, segment, search, fitRange, operationArea, companyType, jobTitle, city, uf]);
 
   const counts = useMemo(() => {
     let base = PARTICIPANTS_FULL_MOCK.filter((p) => p.year === filters.year);
@@ -130,12 +198,80 @@ export function ParticipantsFullList() {
         </TabsList>
       </Tabs>
 
-      {/* Search */}
+      {/* Search + Filters */}
       <ListPageFilters
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar por nome, email ou empresa..."
-      />
+      >
+        <Select value={operationArea} onValueChange={setOperationArea}>
+          <SelectTrigger className="h-9 w-[160px] text-xs">
+            <SelectValue placeholder="Atua com" />
+          </SelectTrigger>
+          <SelectContent>
+            {OPERATION_AREAS.map((o) => (
+              <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={fitRange} onValueChange={(v) => setFitRange(v as FitRange)}>
+          <SelectTrigger className="h-9 w-[130px] text-xs">
+            <SelectValue placeholder="Fit" />
+          </SelectTrigger>
+          <SelectContent>
+            {FIT_RANGES.map((f) => (
+              <SelectItem key={f.value} value={f.value} className="text-xs">{f.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={companyType} onValueChange={setCompanyType}>
+          <SelectTrigger className="h-9 w-[180px] text-xs">
+            <SelectValue placeholder="Tipo empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            {COMPANY_TYPES.map((c) => (
+              <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={jobTitle} onValueChange={setJobTitle}>
+          <SelectTrigger className="h-9 w-[180px] text-xs">
+            <SelectValue placeholder="Cargo" />
+          </SelectTrigger>
+          <SelectContent>
+            {JOB_TITLES.map((j) => (
+              <SelectItem key={j.value} value={j.value} className="text-xs">{j.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={city} onValueChange={setCity}>
+          <SelectTrigger className="h-9 w-[160px] text-xs">
+            <SelectValue placeholder="Cidade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">Todas</SelectItem>
+            {allCities.map((c) => (
+              <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={uf} onValueChange={setUf}>
+          <SelectTrigger className="h-9 w-[100px] text-xs">
+            <SelectValue placeholder="UF" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">Todos</SelectItem>
+            {allUfs.map((u) => (
+              <SelectItem key={u} value={u} className="text-xs">{u}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </ListPageFilters>
 
       {/* Results count */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
