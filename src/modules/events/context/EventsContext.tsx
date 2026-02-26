@@ -29,7 +29,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>(OPPORTUNITIES_MOCK);
   const [viewMode] = useState<ViewMode>("sponsor");
   const setViewMode = useCallback((_mode: ViewMode) => { /* locked to sponsor */ }, []);
-  const [filters, setFilters] = useState<EventsFilters>({ scope: "event", selectedEventId: "evt-capao-2026", year: 2026 });
+  const [filters, setFilters] = useState<EventsFilters>({ scope: "event", selectedEventId: "evt-je-2026", year: 2026 });
   const [webhookConfig, setWebhookConfig] = useState<WebhookConfig>({
     url: "https://hooks.example.com/jet-experience",
     secret: "whsec_mock_secret_key_123",
