@@ -52,24 +52,29 @@ export interface JourneyMock {
 // ===== Participants =====
 
 export type JobTitle =
+  | "Diretor(a)"
+  | "Gerente Comercial"
   | "Corretor autônomo"
-  | "Gerente de vendas"
-  | "Gerente de aluguéis"
-  | "Diretor geral"
-  | "Assistente de locações"
-  | "Analista de marketing"
-  | "Gerente de marketing"
+  | "Gestor(a) de Vendas"
+  | "Coordenador(a)"
+  | "Analista"
   | "Outros";
 
 export type CompanyType =
   | "Imobiliária"
   | "Incorporadora"
+  | "Construtora"
   | "Loteadora"
-  | "Agência de marketing"
-  | "Empresa de tecnologia"
+  | "Administradora de condomínios"
   | "Outros";
 
-export type OperationArea = "vendas" | "aluguéis" | "vendas e aluguéis";
+export type OperationArea =
+  | "Venda de imóveis"
+  | "Locação"
+  | "Incorporação"
+  | "Loteamento"
+  | "Administração"
+  | "Avaliação";
 
 export interface Participant {
   id: string;

@@ -39,30 +39,32 @@ const FIT_RANGES: { value: FitRange; label: string }[] = [
 
 const OPERATION_AREAS: { value: string; label: string }[] = [
   { value: "all", label: "Todas as atuações" },
-  { value: "vendas", label: "Vendas" },
-  { value: "aluguéis", label: "Aluguéis" },
-  { value: "vendas e aluguéis", label: "Vendas e aluguéis" },
+  { value: "Venda de imóveis", label: "Venda de imóveis" },
+  { value: "Locação", label: "Locação" },
+  { value: "Incorporação", label: "Incorporação" },
+  { value: "Loteamento", label: "Loteamento" },
+  { value: "Administração", label: "Administração" },
+  { value: "Avaliação", label: "Avaliação" },
 ];
 
 const COMPANY_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "Todos os tipos" },
   { value: "Imobiliária", label: "Imobiliária" },
   { value: "Incorporadora", label: "Incorporadora" },
+  { value: "Construtora", label: "Construtora" },
   { value: "Loteadora", label: "Loteadora" },
-  { value: "Agência de marketing", label: "Agência de marketing" },
-  { value: "Empresa de tecnologia", label: "Empresa de tecnologia" },
+  { value: "Administradora de condomínios", label: "Administradora de condomínios" },
   { value: "Outros", label: "Outros" },
 ];
 
 const JOB_TITLES: { value: string; label: string }[] = [
   { value: "all", label: "Todos os cargos" },
+  { value: "Diretor(a)", label: "Diretor(a)" },
+  { value: "Gerente Comercial", label: "Gerente Comercial" },
   { value: "Corretor autônomo", label: "Corretor autônomo" },
-  { value: "Gerente de vendas", label: "Gerente de vendas" },
-  { value: "Gerente de aluguéis", label: "Gerente de aluguéis" },
-  { value: "Diretor geral", label: "Diretor geral" },
-  { value: "Assistente de locações", label: "Assistente de locações" },
-  { value: "Analista de marketing", label: "Analista de marketing" },
-  { value: "Gerente de marketing", label: "Gerente de marketing" },
+  { value: "Gestor(a) de Vendas", label: "Gestor(a) de Vendas" },
+  { value: "Coordenador(a)", label: "Coordenador(a)" },
+  { value: "Analista", label: "Analista" },
   { value: "Outros", label: "Outros" },
 ];
 

@@ -1,20 +1,25 @@
 /**
- * Mock: Participants (~50)
+ * Mock: Participants (~50) — alinhado com /events/settings
  */
 import type { Participant, JobTitle, CompanyType, OperationArea } from "../types";
 
+/** Cargos — alinhados com /events/settings?tab=kpis */
 const jobTitles: JobTitle[] = [
-  "Corretor autônomo", "Gerente de vendas", "Gerente de aluguéis",
-  "Diretor geral", "Assistente de locações", "Analista de marketing",
-  "Gerente de marketing", "Outros",
+  "Diretor(a)", "Gerente Comercial", "Corretor autônomo",
+  "Gestor(a) de Vendas", "Coordenador(a)", "Analista", "Outros",
 ];
 
+/** Tipos de empresa — alinhados com /events/settings?tab=kpis */
 const companyTypes: CompanyType[] = [
-  "Imobiliária", "Incorporadora", "Loteadora",
-  "Agência de marketing", "Empresa de tecnologia", "Outros",
+  "Imobiliária", "Incorporadora", "Construtora",
+  "Loteadora", "Administradora de condomínios", "Outros",
 ];
 
-const operationAreas: OperationArea[] = ["vendas", "aluguéis", "vendas e aluguéis"];
+/** Áreas de atuação — alinhadas com /events/settings?tab=kpis */
+const operationAreas: OperationArea[] = [
+  "Venda de imóveis", "Locação", "Incorporação",
+  "Loteamento", "Administração", "Avaliação",
+];
 
 /**
  * Distribuição geográfica: ~80% RS (cidades-sede dos eventos + região metropolitana),
