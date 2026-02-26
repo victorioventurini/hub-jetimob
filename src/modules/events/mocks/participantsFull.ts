@@ -16,7 +16,7 @@
  */
 import type { JobTitle, CompanyType, OperationArea } from "../types";
 
-export type StatusInscricao = "inscrito" | "participante";
+export type StatusInscricao = "inscrito" | "participante" | "lead" | "oportunidade";
 export type FitLabel = "baixo" | "medio" | "alto";
 
 export interface ParticipantFull {
@@ -244,8 +244,7 @@ function generateParticipantsFull(): ParticipantFull[] {
       eventRegCount.set(eid, (eventRegCount.get(eid) || 0) + 1);
     }
 
-    // Determine status per event attendance ratios
-    // Use the primary event's attendance rate
+    // Determine status following funnel: inscrito → participante → lead → oportunidade
     const target = EVENT_TARGETS.find((e) => e.id === primaryEvent)!;
     const attendanceRate = target.attendees / target.registrations;
     const isParticipante = pseudoRandom(i * 7 + 5) < attendanceRate;
@@ -256,12 +255,8 @@ function generateParticipantsFull(): ParticipantFull[] {
       }
     }
 
-    const firstName = pick(firstNames, i);
-    const lastName = pick(lastNames, i + 3);
-    const loc = pick(cities, i);
-    const rand = pseudoRandom(i);
-
     // Fit score: ~30% alto (≥80), ~35% medio (50-79), ~35% baixo (<50)
+    const rand = pseudoRandom(i);
     let fitScore: number;
     if (rand < 0.30) {
       fitScore = 80 + Math.round(pseudoRandom(i + 1) * 20); // 80-100
@@ -274,6 +269,22 @@ function generateParticipantsFull(): ParticipantFull[] {
     const oppCount = fitScore >= 70
       ? Math.floor(pseudoRandom(i + 10) * 3) + 1
       : (pseudoRandom(i + 20) > 0.85 ? 1 : 0);
+
+    // Funnel status: oportunidade > lead > participante > inscrito
+    let statusInscricao: StatusInscricao;
+    if (isParticipante && fitScore >= FIT_HIGH_THRESHOLD) {
+      statusInscricao = "oportunidade";
+    } else if (isParticipante && oppCount > 0) {
+      statusInscricao = "lead";
+    } else if (isParticipante) {
+      statusInscricao = "participante";
+    } else {
+      statusInscricao = "inscrito";
+    }
+
+    const firstName = pick(firstNames, i);
+    const lastName = pick(lastNames, i + 3);
+    const loc = pick(cities, i);
 
     participants.push({
       id: `pfull-${i + 1}`,
@@ -290,7 +301,7 @@ function generateParticipantsFull(): ParticipantFull[] {
       eventIds,
       journeyId: "jrn-journey-2026",
       year: 2026,
-      statusInscricao: isParticipante ? "participante" : "inscrito",
+      statusInscricao,
       oportunidadesCount: oppCount,
       fitScore,
       fitLabel: deriveFitLabel(fitScore),
